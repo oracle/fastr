@@ -25,25 +25,11 @@ package com.oracle.truffle.r.nodes.builtin;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.unary.CastComplexNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
-import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNode;
-import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.builtin.RBuiltinBaseNode;
 
@@ -61,62 +47,10 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
         return RError.NO_CALLER;
     }
 
-    // TODO: these should be in the build nodes
-    @Child private CastLogicalNode castLogical;
-    @Child private CastIntegerNode castInt;
-    @Child private CastDoubleNode castDouble;
-    @Child private CastComplexNode castComplex;
-    @Child private CastToVectorNode castVector;
     @Children private final CastNode[] argumentCasts;
 
     public RExternalBuiltinNode() {
         this.argumentCasts = getCasts();
-    }
-
-    protected byte castLogical(RAbstractVector operand) {
-        if (castLogical == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castLogical = insert(CastLogicalNodeGen.create(false, false, false));
-        }
-        return ((RAbstractLogicalVector) castLogical.doCast(operand)).getDataAt(0);
-    }
-
-    protected int castInt(RAbstractVector operand) {
-        if (castInt == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castInt = insert(CastIntegerNodeGen.create(false, false, false));
-        }
-        return ((RAbstractIntVector) castInt.doCast(operand)).getDataAt(0);
-    }
-
-    protected RAbstractDoubleVector castDouble(RAbstractVector operand) {
-        if (castDouble == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castDouble = insert(CastDoubleNodeGen.create(false, false, false));
-        }
-        return (RAbstractDoubleVector) castDouble.doCast(operand);
-    }
-
-    protected RAbstractVector castVector(Object value) {
-        if (castVector == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castVector = insert(CastToVectorNodeGen.create(false));
-        }
-        return (RAbstractVector) castVector.doCast(value);
-    }
-
-    protected static String isString(Object arg) {
-        if (arg instanceof String) {
-            return (String) arg;
-        } else if (arg instanceof RAbstractStringVector) {
-            if (((RAbstractStringVector) arg).getLength() == 0) {
-                return null;
-            } else {
-                return ((RAbstractStringVector) arg).getDataAt(0);
-            }
-        } else {
-            return null;
-        }
     }
 
     protected void checkLength(RArgsValuesAndNames args, int expectedLength) {
