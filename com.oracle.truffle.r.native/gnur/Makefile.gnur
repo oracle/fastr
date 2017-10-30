@@ -56,7 +56,8 @@ else
 	$(error OS $(OSNAME) is not supported)
 endif
 
-all: Makefile $(GNUR_HOME_BINARY) $(PATCH_BUILD) iconv config $(PATCH_BUILD)/include
+all: Makefile iconv $(GNUR_HOME_BINARY)/gnur.done $(PATCH_BUILD) config $(PATCH_BUILD)/include
+
 
 # After this platform check, GNUR_CONFIG_FLAGS must be set
 ifeq ($(OSNAME), SunOS)
@@ -141,18 +142,15 @@ ifndef FASTR_RELEASE
 RECPKGS := "--without-recommended-packages"
 endif
 
-ifeq ($(wildcard $(GNUR_HOME_BINARY)),)
 GNUR_HOME_BINARY_PARENT := $(dir $(GNUR_HOME_BINARY))
 
-$(info Installing R-$(R_VERSION) into $(GNUR_HOME_BINARY) ...)
-
-$(GNUR_HOME_BINARY):
+$(GNUR_HOME_BINARY)/gnur.done:
+	echo Installing R-$(R_VERSION) into $(GNUR_HOME_BINARY)
+	rm -rf $(GNUR_HOME_BINARY)
 	mkdir -p $(GNUR_HOME_BINARY_PARENT)
-	tar xf $(TOPDIR)/../libdownloads/R-$(R_VERSION).tar.gz -C $(GNUR_HOME_BINARY_PARENT)
+	(cd $(GNUR_HOME_BINARY_PARENT); tar xf R-$(R_VERSION).tar.gz)
 	(cd $(GNUR_HOME_BINARY); ./configure --with-x=no --with-aqua=no $(RECPKGS) --enable-memory-profiling $(GNUR_CONFIG_FLAGS) > gnur_configure.log 2>&1; $(MAKE) MAKE=$(MAKE) -j > gnur_make.log 2>&1)
-else
-$(GNUR_HOME_BINARY): 
-endif
+	touch $(GNUR_HOME_BINARY)/gnur.done
 
 IN_FILES := $(patsubst %.in,%,$(abspath $(shell find $(PATCH) -name '*.in')))
 IN_FILES_PREFIX := $(abspath $(PATCH))
@@ -173,7 +171,7 @@ $(PATCH_BUILD)/Makefile:
 	ln -s $(GNUR_HOME_BINARY)/config.log $(PATCH_BUILD)/config.log
 	for target in $(IN_FILES); do \
 		f=`echo $$target | cut -c $(IN_FILES_PREFIX_LEN)-`; \
-		cp -v $(GNUR_HOME_BINARY)$$f $(PATCH_BUILD)$$f; \
+		cp $(GNUR_HOME_BINARY)$$f $(PATCH_BUILD)$$f; \
 	done
 
 $(PATCH_BUILD)/include:
