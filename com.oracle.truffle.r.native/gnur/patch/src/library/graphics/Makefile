@@ -21,6 +21,14 @@
 # questions.
 #
 
+ifneq (,$(wildcard $(TOPDIR)/platform.mk))
+include $(TOPDIR)/platform.mk
+else
+ifneq ($(MAKECMDGOALS),clean)
+$(error no platform.mk available)
+endif
+endif
+
 OBJ = lib
 
 include $(TOPDIR)/fficall/src/include/gnurheaders.mk
@@ -31,10 +39,14 @@ GNUR_INCLUDES := -I$(TOPDIR)/fficall/src/include
 GRAPHICS_INCLUDES := -I$(GNUR_HOME)/src/library/graphics
 PKG_INCLUDES := $(GNUR_INCLUDES) $(GNUR_HEADER_DEFS) $(GRAPHICS_INCLUDES)
 # Suppress warnings
-XTRA_C_OPTS := -Wno-int-conversion -Wno-implicit-function-declaration
+ifeq ($(OS_NAME), SunOS)
+    XTRA_C_OPTS :=
+else
+	XTRA_C_OPTS := -Wno-int-conversion -Wno-implicit-function-declaration
+endif
 
 include ../lib.mk
 
 # plot.c needs to include the GNUR internal Print.h
 $(OBJ)/plot.o: src/plot.c
-	$(CC) $(CFLAGS) $(GNUR_INCLUDES) $(INCLUDES) $(GNUR_HEADER_DEFS) $(GRAPHICS_INCLUDES) $(SUPPRESS_WARNINGS) -c $< -o $@
+	$(CC) $(CFLAGS) $(GNUR_INCLUDES) $(INCLUDES) $(GNUR_HEADER_DEFS) $(GRAPHICS_INCLUDES) -c $< -o $@
