@@ -582,6 +582,9 @@ public class FastRDebugTest {
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
 
                 DebugScope scope = frame.getScope();
+                if (scope == null) {
+                    scope = suspendedEvent.getSession().getTopScope("application/x-r");
+                }
 
                 Set<String> actualIdentifiers = new HashSet<>();
                 scope.getArguments().forEach((x) -> actualIdentifiers.add(x.getName()));
@@ -627,11 +630,21 @@ public class FastRDebugTest {
             Object expectedValue = expectedFrame[i + 1];
             String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
             DebugScope scope = frame.getScope();
-            DebugValue value;
-            do {
-                value = scope.getDeclaredValue(expectedIdentifier);
-                scope = scope.getParent();
-            } while (includeAncestors && value == null && scope != null && !REnvironment.baseEnv().getName().equals(scope.getName()));
+            DebugValue value = null;
+            if (scope != null) {
+                do {
+                    value = scope.getDeclaredValue(expectedIdentifier);
+                    scope = scope.getParent();
+                } while (includeAncestors && value == null && scope != null && !REnvironment.baseEnv().getName().equals(scope.getName()));
+            }
+            if (value == null) {
+                // Ask the top scope:
+                scope = suspendedEvent.getSession().getTopScope("application/x-r");
+                do {
+                    value = scope.getDeclaredValue(expectedIdentifier);
+                    scope = scope.getParent();
+                } while (includeAncestors && value == null && scope != null && !REnvironment.baseEnv().getName().equals(scope.getName()));
+            }
             assertNotNull("identifier \"" + expectedIdentifier + "\" not found", value);
             String valueStr = value.as(String.class);
             assertEquals(expectedValueStr, valueStr);
