@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -124,7 +123,6 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
         if (unary == null) {
             throw error(RError.Message.ARGUMENT_EMPTY, 2);
         } else {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
             return UnaryArithmeticNodeGen.create(unary);
         }
     }

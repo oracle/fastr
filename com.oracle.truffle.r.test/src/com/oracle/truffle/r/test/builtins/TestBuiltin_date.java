@@ -21,6 +21,6 @@ public class TestBuiltin_date extends TestBase {
     public void testDate() {
         // Date at real time differs by milliseconds.
         // Here the output would always differ since the GnuR test outputs are pre-generated
-        assertEval(Ignored.OutputFormatting, "{date()}");
+        assertEval(Ignored.Unstable, "{date()}");
     }
 }
