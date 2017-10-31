@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -52,10 +53,10 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@ImportStatic(RRuntime.class)
 public abstract class ClassHierarchyNode extends UnaryNode {
 
     /**
@@ -218,13 +219,9 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         }
     }
 
-    protected static boolean isRTypedValue(Object obj) {
-        return obj instanceof RTypedValue;
-    }
-
-    @Specialization(guards = "!isRTypedValue(object)")
+    @Specialization(guards = "isForeignObject(object)")
     protected RStringVector getClassHrTruffleObject(@SuppressWarnings("unused") TruffleObject object) {
-        return truffleObjectClassHeader;
+        return withImplicitTypes ? truffleObjectClassHeader : null;
     }
 
     @Specialization
