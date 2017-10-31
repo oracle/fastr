@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
@@ -70,6 +71,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -84,7 +86,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
-public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction, ClosureCache {
 
     private final FormalArguments formalArguments;
 
@@ -134,6 +136,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      * Profiling for catching {@link ReturnException}s.
      */
     private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
+
+    @CompilationFinal private IdentityHashMap<RNode, Closure> languageClosureCache;
 
     public static FunctionDefinitionNode create(TruffleRLanguage language, SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments,
                     RSyntaxNode body,
@@ -368,8 +372,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                                     CompilerDirectives.transferToInterpreter();
                                     RInternalError.shouldNotReachHere("unexpected type for on.exit entry: " + expr.car());
                                 }
-                                Closure closure = RContext.getInstance().languageClosureCache.getOrCreateLanguageClosure((RNode) expr.car());
-                                onExitExpressionCache.execute(frame, closure);
+                                onExitExpressionCache.execute(frame, getOrCreateLanguageClosure((RNode) expr.car()));
                             }
                         }
                     } catch (ReturnException ex) {
@@ -553,5 +556,14 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             handlerStackSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.HandlerStack, FrameSlotKind.Object);
         }
         return handlerStackSlot;
+    }
+
+    @Override
+    public IdentityHashMap<RNode, Closure> getContent() {
+        if (languageClosureCache == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            languageClosureCache = new IdentityHashMap<>();
+        }
+        return languageClosureCache;
     }
 }

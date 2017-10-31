@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.lang.ref.WeakReference;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -29,7 +30,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public class LanguageClosureCache {
 
-    private final WeakHashMap<RNode, Closure> cache = new WeakHashMap<>();
+    private final WeakHashMap<RNode, WeakReference<Closure>> cache = new WeakHashMap<>();
 
     /**
      * @param expr
@@ -42,10 +43,11 @@ public class LanguageClosureCache {
             return null;
         }
 
-        Closure result = cache.get(expr);
+        WeakReference<Closure> weakRef = cache.get(expr);
+        Closure result = weakRef != null ? weakRef.get() : null;
         if (result == null) {
             result = Closure.createLanguageClosure(expr);
-            cache.put(expr, result);
+            cache.put(expr, new WeakReference<>(result));
         }
         return result;
     }
