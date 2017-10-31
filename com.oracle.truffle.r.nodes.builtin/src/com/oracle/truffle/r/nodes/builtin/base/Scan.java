@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -77,6 +78,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
 
     @SuppressWarnings("unused")
     private static class LocalData {
+        final HashMap<String, String> stringTable = new HashMap<>();
         RAbstractStringVector naStrings = null;
         boolean quiet = false;
         char sepchar = 0; // 0 means any whitespace
@@ -513,7 +515,8 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
                     if (isNaString(buffer, 1, data)) {
                         return RRuntime.STRING_NA;
                     } else {
-                        return buffer;
+                        String oldEntry = data.stringTable.putIfAbsent(buffer, buffer);
+                        return oldEntry == null ? buffer : oldEntry;
                     }
                 case Raw:
                     if (isNaString(buffer, 0, data)) {

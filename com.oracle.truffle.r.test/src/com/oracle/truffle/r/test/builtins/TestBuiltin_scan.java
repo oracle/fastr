@@ -87,6 +87,10 @@ public class TestBuiltin_scan extends TestBase {
         assertEval("{ con<-textConnection(c(\"1 2 3\", \"4 5 6\")); .Internal(scan(con, 1L, 2, NULL, '.', '\"', 0, 3, \"NA\", F, F, F, T, T, '', '#', T, 'utf8', F)) }");
         // NULL 5th 'dec' parameter
         assertEval("{ con<-textConnection(c(\"1.5 2.89 3\", \"4 5 6\")); .Internal(scan(con, 1.2, 2, ' ', NULL, '\"', 0, 3, \"NA\", F, F, F, T, T, '', '#', T, 'utf8', F)) }");
+    }
 
+    @Test
+    public void testPooling() {
+        assertEvalFastR("s <- scan(textConnection(paste0(rep('asdf\\n', 1000))), character(0), quiet=T); all(sapply(s, function(x) .fastr.identity(x) == .fastr.identity(s[[1]])))", "TRUE");
     }
 }
