@@ -25,7 +25,8 @@ package com.oracle.truffle.r.nodes.builtin.base.infix;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
@@ -34,13 +35,16 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * This a rather strange function. It is where, in GnuR, that the "formula" class is set and the
@@ -54,6 +58,7 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
     private static final RStringVector FORMULA_CLASS = RDataFactory.createStringVectorFromScalar(RRuntime.FORMULA_CLASS);
 
     @Child private SetClassAttributeNode setClassAttrNode = SetClassAttributeNode.create();
+    @Child private SetFixedAttributeNode setEnvAttrNode;
 
     static {
         Casts.noCasts(Tilde.class);
@@ -69,9 +74,13 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RLanguage tilde(VirtualFrame frame, @SuppressWarnings("unused") Object response, @SuppressWarnings("unused") Object model,
-                    @Cached("createSetEnvAttrNode()") SetFixedAttributeNode setEnvAttrNode) {
-        RCallNode call = (RCallNode) ((RBaseNode) getParent()).asRSyntaxNode();
+    protected RLanguage tilde(VirtualFrame frame, Object x, Object y) {
+
+        if (setEnvAttrNode == null) {
+            setEnvAttrNode = insert(createSetEnvAttrNode());
+        }
+
+        RCallNode call = createCall(x, y);
 
         // Do not cache the closure because formulas are usually not evaluated.
         RLanguage lang = RDataFactory.createLanguage(Closure.createLanguageClosure(call));
@@ -80,4 +89,24 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
         setEnvAttrNode.execute(lang, env);
         return lang;
     }
+
+    @TruffleBoundary
+    private static RCallNode createCall(Object response, Object model) {
+        RCodeBuilder<RSyntaxNode> astBuilder = RContext.getASTBuilder();
+
+        RSyntaxNode functionLookup = astBuilder.lookup(RSyntaxNode.LAZY_DEPARSE, "~", true);
+        if (model == RMissing.instance) {
+            return (RCallNode) astBuilder.call(RSyntaxNode.LAZY_DEPARSE, functionLookup, getRep(response));
+        }
+        return (RCallNode) astBuilder.call(RSyntaxNode.LAZY_DEPARSE, functionLookup, getRep(response), getRep(model));
+    }
+
+    private static RSyntaxNode getRep(Object o) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (o instanceof RPromise) {
+            return RContext.getRRuntimeASTAccess().unwrapPromiseRep((RPromise) o);
+        }
+        return RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, o);
+    }
+
 }
