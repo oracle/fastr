@@ -116,6 +116,24 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
         return stride;
     }
 
+    public int getIndexFor(String element) {
+        if ((prefix.length() > 0 && !element.startsWith(prefix)) || (suffix.length() > 0 && !element.endsWith(suffix))) {
+            return -1;
+        }
+        String c = element.substring(prefix.length(), element.length() - suffix.length());
+        try {
+            int current = Integer.parseInt(c);
+            if (current < getStart() || current > getEnd()) {
+                return -1;
+            }
+            if ((current - getStart()) % getStride() == 0) {
+                return (current - getStart()) / getStride();
+            }
+        } catch (NumberFormatException e) {
+        }
+        return -1;
+    }
+
     @Override
     @TruffleBoundary
     public Object getStartObject() {

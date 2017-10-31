@@ -207,4 +207,220 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(c(7, 42), NULL, 1L) }");
         assertEval("{ match(NULL, NULL) }");
     }
+
+    @Test
+    public void testMatch2() {
+        // logical
+        assertEval("{ match(T, T) }");
+        assertEval("{ match(F, c(T,F)) }");
+        assertEval("{ match(c(T, F), T) }");
+        assertEval("{ match(c(T, F), c(T,F)) }");
+
+        assertEval("{ match(T, 1) }");
+        assertEval("{ match(F, c(1,0)) }");
+        assertEval("{ match(c(T, F), 1) }");
+        assertEval("{ match(c(T, F), c(1,0)) }");
+
+        assertEval("{ match(T, 1L) }");
+        assertEval("{ match(F, c(1L, 0L)) }");
+        assertEval("{ match(T, c(1L,0L)) }");
+        assertEval("{ match(c(T, F), c(1L,0L)) }");
+
+        assertEval("{ match(T, 1+0i) }");
+        assertEval("{ match(F, c(1+0i, 0+0i)) }");
+        assertEval("{ match(T, c(1+0i,0+0i)) }");
+        assertEval("{ match(c(T, F), c(1+0i, 0+0i)) }");
+
+        assertEval("{ match(T, as.raw(1)) }");
+        assertEval("{ match(T, as.raw(c(1, 0))) }");
+        assertEval("{ match(c(T,F), as.raw(1)) }");
+        assertEval("{ match(c(T,F), as.raw(c(1, 0))) }");
+
+        assertEval("{ match(T, 'TRUE') }");
+        assertEval("{ match(T, c('TRUE', 'FALSE')) }");
+        assertEval("{ match(c(T,F), 'TRUE') }");
+        assertEval("{ match(c(T,F), c('TRUE', 'FALSE')) }");
+
+        // raw
+        assertEval("{ match(as.raw(1), as.raw(1)) }");
+        assertEval("{ match(as.raw(1), as.raw(c(1, 0))) }");
+        assertEval("{ match(as.raw(c(1,0)), as.raw(1)) }");
+        assertEval("{ match(as.raw(c(1,0)), as.raw(c(1, 0))) }");
+
+        assertEval("{ match(as.raw(16), 10) }");
+        assertEval("{ match(as.raw(c(16, 17)), 10) }");
+        assertEval("{ match(as.raw(16), c(16, 11)) }");
+        assertEval("{ match(as.raw(c(16, 17)), c(10,11)) }");
+
+        assertEval("{ match(as.raw(16), 10L) }");
+        assertEval("{ match(as.raw(c(16, 17)), 10L) }");
+        assertEval("{ match(as.raw(16), c(16, 11L)) }");
+        assertEval("{ match(as.raw(c(16, 17)), c(10L,11L)) }");
+
+        assertEval("{ match(as.raw(1), T) }");
+        assertEval("{ match(as.raw(c(1, 0)), T) }");
+        assertEval("{ match(as.raw(1), c(T,F)) }");
+        assertEval("{ match(as.raw(c(1, 0)), c(T,F)) }");
+        assertEval("{ match(as.raw(0:255), c(F, T)) }");
+
+        assertEval("{ match(as.raw(16), '10') }");
+        assertEval("{ match(as.raw(c(16, 17)), '10') }");
+        assertEval("{ match(as.raw(16), c('10', '11')) }");
+        assertEval("{ match(as.raw(c(16, 17)), c('10', '11')) }");
+
+        assertEval("{ match(as.raw(16), 10+0i) }");
+        assertEval("{ match(as.raw(c(16, 17)), 10+0i) }");
+        assertEval("{ match(as.raw(16), c(10+0i, 11+0i)) }");
+        assertEval("{ match(as.raw(c(16, 17)), c(10+0i, 11+0i)) }");
+        assertEval("{ match(as.raw(0:255), complex(real=0:255, imaginary=0)) }");
+
+        // int
+        assertEval("{ match(1L, 1L) }");
+        assertEval("{ match(0L, c(1L, 0L)) }");
+        assertEval("{ match(c(1L, 0L), 1L) }");
+        assertEval("{ match(c(1L, 0L), c(1L, 0L)) }");
+
+        assertEval("{ match(1L, T) }");
+        assertEval("{ match(0L, c(T, F)) }");
+        assertEval("{ match(c(1L, 0L), T) }");
+        assertEval("{ match(c(1L, 0L), c(T, F)) }");
+
+        assertEval("{ match(10L, as.raw(16)) }");
+        assertEval("{ match(10L, as.raw(c(16, 17))) }");
+        assertEval("{ match(c(10L, 11L), as.raw(16)) }");
+        assertEval("{ match(c(10L, 11L), as.raw(c(16, 17))) }");
+
+        assertEval("{ match(1L, 1) }");
+        assertEval("{ match(1L, c(1, 0)) }");
+        assertEval("{ match(c(1L,0L), 1) }");
+        assertEval("{ match(c(1L,0L), c(1, 0)) }");
+
+        assertEval("{ match(1L, 1+0i) }");
+        assertEval("{ match(1L, c(1+0i, 0+0i)) }");
+        assertEval("{ match(c(1L,0L), 1+0i) }");
+        assertEval("{ match(c(1L,0L), c(1+0i, 0+0i)) }");
+
+        assertEval("{ match(1L, '1') }");
+        assertEval("{ match(1L, c('1', '0')) }");
+        assertEval("{ match(c(1L,0L), '1') }");
+        assertEval("{ match(c(1L,0L), c('1', '0')) }");
+
+        // double
+        assertEval("{ match(1, 1) }");
+        assertEval("{ match(0, c(1, 0)) }");
+        assertEval("{ match(c(1, 0), 1) }");
+        assertEval("{ match(c(1, 0), c(1, 0)) }");
+
+        assertEval("{ match(1, T) }");
+        assertEval("{ match(0, c(T, F)) }");
+        assertEval("{ match(c(1, 0), T) }");
+        assertEval("{ match(c(1, 0), c(T, F)) }");
+
+        assertEval("{ match(10, as.raw(16)) }");
+        assertEval("{ match(10, as.raw(c(16, 17))) }");
+        assertEval("{ match(c(10, 11), as.raw(16)) }");
+        assertEval("{ match(c(10, 11), as.raw(c(16, 17))) }");
+
+        assertEval("{ match(1, 1L) }");
+        assertEval("{ match(0, c(1L, 0L)) }");
+        assertEval("{ match(c(1, 0), 1L) }");
+        assertEval("{ match(c(1, 0), c(1L, 0L)) }");
+
+        assertEval("{ match(1, 1+0i) }");
+        assertEval("{ match(0, c(1+0i, 0+0i)) }");
+        assertEval("{ match(c(1, 0), 1+0i) }");
+        assertEval("{ match(c(1, 0), c(1+0i, 0+0i)) }");
+
+        assertEval("{ match(1, '1') }");
+        assertEval("{ match(0, c('1', '0')) }");
+        assertEval("{ match(c(1, 0), '1') }");
+        assertEval("{ match(c(1, 0), c('1', '0')) }");
+
+        // complex
+        assertEval("{ match(1+0i, 1+0i) }");
+        assertEval("{ match(1+0i, c(1+0i, 0+0i)) }");
+        assertEval("{ match(c(1+0i,0+0i), 1+0i) }");
+        assertEval("{ match(c(1+0i,0+0i), c(1+0i, 0+0i)) }");
+
+        assertEval("{ match(1+0i, T) }");
+        assertEval("{ match(1+0i, c(T, F)) }");
+        assertEval("{ match(c(1+0i,0+0i), T) }");
+        assertEval("{ match(c(1+0i,0+0i), c(T, F)) }");
+
+        assertEval("{ match(10+0i, as.raw(16)) }");
+        assertEval("{ match(10+0i, as.raw(c(16, 17))) }");
+        assertEval("{ match(c(10+0i,11+0i), as.raw(16)) }");
+        assertEval("{ match(c(10+0i,11+0i), as.raw(c(16, 17))) }");
+
+        assertEval("{ match(10+0i, 10L) }");
+        assertEval("{ match(10+0i, c(10L, 11L)) }");
+        assertEval("{ match(c(10+0i,11+0i), 10L) }");
+        assertEval("{ match(c(10+0i,11+0i), c(10L, 11L)) }");
+
+        assertEval("{ match(10+0i, 10) }");
+        assertEval("{ match(10+0i, c(10, 11)) }");
+        assertEval("{ match(c(10+0i,11+0i), 10) }");
+        assertEval("{ match(c(10+0i,11+0i), c(10, 11)) }");
+
+        assertEval("{ match(10+0i, '10') }");
+        assertEval("{ match(10+0i, c('10', '11')) }");
+        assertEval("{ match(c(10+0i,11+0i), '10') }");
+        assertEval("{ match(c(10+0i,11+0i), c('10', '11')) }");
+
+        // string
+        assertEval("{ match('a', 'a') }");
+        assertEval("{ match('a', c('a', 'b')) }");
+        assertEval("{ match(c('a', 'b'), 'a') }");
+        assertEval("{ match(c('a', 'b'), c('a', 'b')) }");
+
+        assertEval("{ match('TRUE', T) }");
+        assertEval("{ match('TRUE', c(T, F)) }");
+        assertEval("{ match(c('TRUE', 'FALSE'), T) }");
+        assertEval("{ match(c('TRUE', 'FALSE'), c(T, F)) }");
+
+        assertEval("{ match('10', as.raw(16)) }");
+        assertEval("{ match('10', as.raw(c(16, 17))) }");
+        assertEval("{ match(c('10', '11'), as.raw(16)) }");
+        assertEval("{ match(c('10', '11'), as.raw(c(16, 17))) }");
+
+        assertEval("{ match('1', 1) }");
+        assertEval("{ match('1', c(1, 0)) }");
+        assertEval("{ match(c('1', '0'), 1) }");
+        assertEval("{ match(c('1', '1'), c(1, 0)) }");
+
+        assertEval("{ match('1', 1L) }");
+        assertEval("{ match('1', c(1L, 0L)) }");
+        assertEval("{ match(c('1', '0'), 1L) }");
+        assertEval("{ match(c('1', '1'), c(1L, 0L)) }");
+
+        assertEval("{ match('1+0i', 1+0i) }");
+        assertEval("{ match('1+0i', c(1+0i, 0+0i)) }");
+        assertEval("{ match(c('1+0i', '0+0i'), 1+0i) }");
+        assertEval("{ match(c('1+0i', '0+0i'), c(1+0i, 0+0i)) }");
+    }
+
+    @Test
+    public void testMatchInSequence() {
+        assertEval("{ match(c(-2L, -1L, 0L, 1L, 10L, 11L), seq.int(from=-1L, to=10L, by=1L)) }");
+        assertEval("{ match(c( 1L, 2L, 3L), seq.int(from=1L, to=10L, by=2L)) }");
+        assertEval("{ match(seq.int(from=1L, to=10L, by=1L), seq.int(from=1L, to=10L, by=4L)) }");
+
+        testMatchStringSequence("a", "b");
+        testMatchStringSequence("", "b");
+        testMatchStringSequence("", "");
+    }
+
+    private void testMatchStringSequence(String preffix, String suffix) {
+        String x = String.format("c('%1$s-2%2$s', '%1$s-1%2$s', '%1$s0%2$s', '%1$s1%2$s', '%1$s10%2$s', '%1$s11%2$s')", preffix, suffix);
+        String table = String.format("paste('%1$s', -1:10, '%2$s', sep='')", preffix, suffix);
+        assertEval("{ match(" + x + "," + table + ")}");
+
+        x = String.format("c('%1$s1%2$s', '%1$s2%2$s', '%1$s3%2$s')", preffix, suffix);
+        table = String.format("paste('%1$s', seq(from=1, to=10, by=2), '%2$s', sep='')", preffix, suffix);
+        assertEval("{ match(" + x + "," + table + ")}");
+
+        x = String.format("paste('%1$s', seq(from=1, to=10, by=1), '%2$s', sep='')", preffix, suffix);
+        table = String.format("paste('%1$s', seq(from=1, to=10, by=4), '%2$s', sep='')", preffix, suffix);
+        assertEval("{ match(" + x + "," + table + ")}");
+    }
 }
