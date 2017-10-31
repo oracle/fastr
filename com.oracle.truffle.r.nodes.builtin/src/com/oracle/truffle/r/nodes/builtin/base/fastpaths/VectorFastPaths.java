@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -94,6 +95,21 @@ public abstract class VectorFastPaths {
         @Fallback
         @SuppressWarnings("unused")
         protected Object fallback(Object length) {
+            return null;
+        }
+    }
+
+    public abstract static class ComplexFastPath extends RFastPathNode {
+
+        @Specialization
+        @SuppressWarnings("unused")
+        protected RComplex get(RMissing lengthOut, double real, double imaginary, RMissing modulus, RMissing argument) {
+            return RComplex.valueOf(real, imaginary);
+        }
+
+        @Fallback
+        @SuppressWarnings("unused")
+        protected Object fallback(Object lengthOut, Object real, Object imaginary, Object modulus, Object argument) {
             return null;
         }
     }

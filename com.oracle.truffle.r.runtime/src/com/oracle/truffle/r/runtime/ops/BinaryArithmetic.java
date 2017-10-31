@@ -122,7 +122,9 @@ public abstract class BinaryArithmetic extends Operation {
         }
     }
 
-    public static class Add extends BinaryArithmetic {
+    public static final class Add extends BinaryArithmetic {
+
+        @CompilationFinal private boolean introducesNA = false;
 
         public Add() {
             super(true, true, true);
@@ -134,12 +136,23 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public boolean introducesNA() {
+            return introducesNA;
+        }
+
+        @Override
         public int op(int left, int right) {
+            if (!introducesNA) {
+                try {
+                    return Math.addExact(left, right);
+                } catch (ArithmeticException e) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    introducesNA = true;
+                }
+            }
+            // Borrowed from ExactMath
             int r = left + right;
-            // TODO: not using ExactMath because of perf problems
             if (((left ^ r) & (right ^ r)) < 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace(new AddOverflow());
                 return INT_NA;
             }
             return r;
@@ -161,26 +174,9 @@ public abstract class BinaryArithmetic extends Operation {
         }
     }
 
-    private static final class AddOverflow extends Add {
+    public static final class Subtract extends BinaryArithmetic {
 
-        @Override
-        public boolean introducesNA() {
-            return true;
-        }
-
-        @Override
-        public int op(int left, int right) {
-            // Borrowed from ExactMath.addExact
-            int r = left + right;
-            if (((left ^ r) & (right ^ r)) < 0) {
-                // TODO introduced NA call
-                return INT_NA;
-            }
-            return r;
-        }
-    }
-
-    public static class Subtract extends BinaryArithmetic {
+        @CompilationFinal private boolean introducesNA = false;
 
         public Subtract() {
             super(false, false, true);
@@ -192,12 +188,23 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public boolean introducesNA() {
+            return introducesNA;
+        }
+
+        @Override
         public int op(int left, int right) {
+            if (!introducesNA) {
+                try {
+                    return Math.subtractExact(left, right);
+                } catch (ArithmeticException e) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    introducesNA = true;
+                }
+            }
+            // Borrowed from ExactMath
             int r = left - right;
-            // TODO: not using ExactMath because of perf problems
             if (((left ^ right) & (left ^ r)) < 0) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace(new SubtractOverflow());
                 return INT_NA;
             }
             return r;
@@ -219,25 +226,9 @@ public abstract class BinaryArithmetic extends Operation {
         }
     }
 
-    private static final class SubtractOverflow extends Subtract {
+    public static final class Multiply extends BinaryArithmetic {
 
-        @Override
-        public boolean introducesNA() {
-            return true;
-        }
-
-        @Override
-        public int op(int left, int right) {
-            // Borrowed from ExactMath.removeExact
-            int r = left - right;
-            if (((left ^ right) & (left ^ r)) < 0) {
-                return INT_NA;
-            }
-            return r;
-        }
-    }
-
-    public static class Multiply extends BinaryArithmetic {
+        @CompilationFinal private boolean introducesNA = false;
 
         public Multiply() {
             super(true, true, true);
@@ -249,45 +240,35 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
+        public boolean introducesNA() {
+            return introducesNA;
+        }
+
+        @Override
         public int op(int left, int right) {
+            if (!introducesNA) {
+                try {
+                    return Math.multiplyExact(left, right);
+                } catch (ArithmeticException e) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    introducesNA = true;
+                }
+            }
             long r = (long) left * (long) right;
-            // TODO: not using ExactMath because of perf problems
             if ((int) r != r) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace(new MultiplyOverflow());
                 return INT_NA;
             }
             return (int) r;
         }
 
         @Override
-        public final double op(double left, double right) {
+        public double op(double left, double right) {
             return left * right;
         }
 
-        // The code for complex multiplication is transcribed from Purdue FastR:
-        // LICENSE: this code is derived from the multiplication code, which is transcribed code
-        // from GCC, which is licensed under GPL
-
         @Override
         public RComplex op(double leftReal, double leftImag, double rightReal, double rightImag) {
-            double[] res = new double[2];
-            double[] interm = new double[4];
-            complexMult(leftReal, leftImag, rightReal, rightImag, res, interm);
-            /*
-             * LStadler: removed the special code for handling NaNs in the result, since it works
-             * fine (and the tests are broken either way). to revive it, get it from the history.
-             */
-            return RDataFactory.createComplex(res[0], res[1]);
-        }
-
-        private void complexMult(double leftReal, double leftImag, double rightReal, double rightImag, double[] res, double[] interm) {
-            interm[0] = op(leftReal, rightReal);
-            interm[1] = op(leftImag, rightImag);
-            interm[2] = op(leftImag, rightReal);
-            interm[3] = op(leftReal, rightImag);
-            res[0] = interm[0] - interm[1];
-            res[1] = interm[2] + interm[3];
+            return RDataFactory.createComplex(leftReal * rightReal - leftImag * rightImag, leftReal * rightImag + leftImag * rightReal);
         }
 
         @Override
@@ -296,25 +277,7 @@ public abstract class BinaryArithmetic extends Operation {
         }
     }
 
-    private static final class MultiplyOverflow extends Multiply {
-
-        @Override
-        public boolean introducesNA() {
-            return true;
-        }
-
-        @Override
-        public int op(int left, int right) {
-            // Borrowed from ExactMath.removeExact
-            long r = (long) left * (long) right;
-            if ((int) r != r) {
-                return INT_NA;
-            }
-            return (int) r;
-        }
-    }
-
-    public static class Div extends BinaryArithmetic {
+    public static final class Div extends BinaryArithmetic {
 
         public Div() {
             super(false, false, false);
@@ -326,12 +289,12 @@ public abstract class BinaryArithmetic extends Operation {
         }
 
         @Override
-        public final int op(int left, int right) {
+        public int op(int left, int right) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        public final double op(double left, double right) {
+        public double op(double left, double right) {
             return left / right;
         }
 
@@ -392,13 +355,15 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static final class IntegerDiv extends BinaryArithmetic {
 
+        @CompilationFinal private boolean introducesNA = false;
+
         public IntegerDiv() {
             super(false, false, true);
         }
 
         @Override
         public boolean introducesNA() {
-            return true;
+            return introducesNA;
         }
 
         @Override
@@ -411,6 +376,10 @@ public abstract class BinaryArithmetic extends Operation {
             if (right != 0) {
                 return (int) Math.floor((double) left / (double) right);
             } else {
+                if (!introducesNA) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    introducesNA = true;
+                }
                 return RRuntime.INT_NA;
             }
         }
@@ -440,9 +409,11 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static final class Mod extends BinaryArithmetic {
 
+        @CompilationFinal private boolean introducesNA = false;
         @CompilationFinal private boolean tryInt = true;
-        private final BranchProfile isNaProfile = BranchProfile.create();
+
         private final BranchProfile isZeroProfile = BranchProfile.create();
+        private final BranchProfile isNaNProfile = BranchProfile.create();
         private final ConditionProfile resultZeroProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile simpleProfile = ConditionProfile.createBinaryProfile();
 
@@ -452,7 +423,7 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public boolean introducesNA() {
-            return true;
+            return introducesNA;
         }
 
         @Override
@@ -464,7 +435,10 @@ public abstract class BinaryArithmetic extends Operation {
         public int op(int left, int right) {
             // LICENSE: transcribed code from GNU R, which is licensed under GPL
             if (right == 0) {
-                isNaProfile.enter();
+                if (!introducesNA) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    introducesNA = true;
+                }
                 return RRuntime.INT_NA;
             }
             if (left == 0) {
@@ -486,7 +460,7 @@ public abstract class BinaryArithmetic extends Operation {
         @Override
         public double op(double left, double right) {
             if (right == 0) {
-                isNaProfile.enter();
+                isNaNProfile.enter();
                 return Double.NaN;
             }
             if (tryInt) {
@@ -547,15 +521,16 @@ public abstract class BinaryArithmetic extends Operation {
 
             // Special case with exponent always integer.
             if (powIntegerProfile.profile(castExponent == b)) {
-                if (cachedCastExponent != GENERIC && cachedCastExponent != castExponent) {
+                int cached = cachedCastExponent;
+                if (cached != GENERIC && cached != castExponent) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     if (castExponent == UNINITIALIZED) {
-                        cachedCastExponent = GENERIC;
+                        cachedCastExponent = cached = GENERIC;
                     } else {
-                        cachedCastExponent = cachedCastExponent == UNINITIALIZED ? castExponent : GENERIC;
+                        cachedCastExponent = cached = (cached == UNINITIALIZED ? castExponent : GENERIC);
                     }
                 }
-                if (cachedCastExponent == GENERIC) {
+                if (cached == GENERIC) {
                     if (powIntegerPositiveProfile.profile(castExponent >= 0)) {
                         return positivePow(a, castExponent);
                     } else {
@@ -565,13 +540,13 @@ public abstract class BinaryArithmetic extends Operation {
                         return 1 / positivePow(a, -castExponent);
                     }
                 } else {
-                    if (powIntegerPositiveProfile.profile(cachedCastExponent >= 0)) {
-                        return positivePowUnrolled(a, cachedCastExponent);
+                    if (powIntegerPositiveProfile.profile(cached >= 0)) {
+                        return positivePowUnrolled(a, cached);
                     } else {
                         if (powIntegerPositiveProfile.profile(a == 0.0)) {
                             return Double.POSITIVE_INFINITY;
                         }
-                        return 1 / positivePowUnrolled(a, -cachedCastExponent);
+                        return 1 / positivePowUnrolled(a, -cached);
                     }
                 }
             }
@@ -872,11 +847,6 @@ public abstract class BinaryArithmetic extends Operation {
     }
 
     private static final class PowFull extends Pow {
-
-        @Override
-        public boolean introducesNA() {
-            return true;
-        }
 
         private final ConditionProfile pow2 = ConditionProfile.createBinaryProfile();
         private final ConditionProfile one = ConditionProfile.createBinaryProfile();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
 
     protected final NACheck leftNACheck = NACheck.create();
     protected final NACheck rightNACheck = NACheck.create();
-    protected final NACheck resultNACheck = NACheck.create();
 
     /**
      * Enables all NA checks for the given input vectors.
@@ -38,17 +37,16 @@ public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
     public final void enable(RAbstractVector left, RAbstractVector right) {
         leftNACheck.enable(left);
         rightNACheck.enable(right);
-        resultNACheck.enable(resultNeedsNACheck());
     }
 
     /**
      * Returns <code>true</code> if there was never a <code>NA</code> value encountered when using
-     * this node. Make you have enabled the NA check properly using
+     * this node. Make sure you have enabled the NA check properly using
      * {@link #enable(RAbstractVector, RAbstractVector)} before relying on this method.
      */
     @Override
     public final boolean isComplete() {
-        return leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA() && resultNACheck.neverSeenNA();
+        return leftNACheck.neverSeenNA() && rightNACheck.neverSeenNA() && !introducesNA();
     }
 
     public final NACheck getLeftNACheck() {
@@ -59,13 +57,12 @@ public abstract class BinaryMapNAFunctionNode extends BinaryMapFunctionNode {
         return rightNACheck;
     }
 
-    public final NACheck getResultNACheck() {
-        return resultNACheck;
-    }
-
     /**
-     * Returns <code>true</code> if the result of the operation might produce NA results.
+     * Returns <code>true</code> if the result of the operation might may contain NA results. This
+     * is queried only after the operation has been executed. Ideally, this will only return true
+     * once an NA result has been generated out of non-NA operands (because it is used to initialize
+     * the "complete" flag of the result vector).
      */
-    protected abstract boolean resultNeedsNACheck();
+    protected abstract boolean introducesNA();
 
 }

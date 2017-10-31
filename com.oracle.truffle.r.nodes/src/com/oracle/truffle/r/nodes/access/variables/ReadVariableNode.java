@@ -260,8 +260,7 @@ public final class ReadVariableNode extends RBaseNode {
                 promiseHelper = insert(new PromiseHelperNode());
             }
             result = promiseHelper.evaluate(frame, (RPromise) result);
-        }
-        if (isActiveBindingProfile.profile(ActiveBinding.isActiveBinding(result))) {
+        } else if (isActiveBindingProfile.profile(ActiveBinding.isActiveBinding(result))) {
             Object readValue = ((ActiveBinding) result).readValue();
             if (readValue == RMissing.instance) {
                 throw error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);

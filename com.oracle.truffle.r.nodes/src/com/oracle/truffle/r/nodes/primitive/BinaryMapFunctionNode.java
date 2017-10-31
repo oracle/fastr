@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,17 +82,13 @@ public abstract class BinaryMapFunctionNode extends RBaseNode {
      * Returns <code>true</code> if one of the vector classes may require constant time folding with
      * {@link #tryFoldConstantTime(RAbstractVector, int, RAbstractVector, int)}.
      */
-    public boolean mayFoldConstantTime(Class<? extends RAbstractVector> left, Class<? extends RAbstractVector> right) {
-        return false;
-    }
+    public abstract boolean mayFoldConstantTime(Class<? extends RAbstractVector> left, Class<? extends RAbstractVector> right);
 
     /**
      * Returns a folded version of the left and right vector if both can be folded for this scalar
      * operation. Returns <code>null</code> if folding was not possible.
      */
-    public RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        return null;
-    }
+    public abstract RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength);
 
     /**
      * Enables the node for the two operation. Invoked once for each BinaryMap operation invocation.

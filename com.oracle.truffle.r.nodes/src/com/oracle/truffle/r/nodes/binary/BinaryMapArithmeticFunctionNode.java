@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNode {
 
     @Child private BinaryArithmetic arithmetic;
+    protected final NACheck resultNACheck = NACheck.create();
 
     private final ConditionProfile finiteResult = ConditionProfile.createBinaryProfile();
 
@@ -56,7 +57,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
     }
 
     @Override
-    protected boolean resultNeedsNACheck() {
+    protected boolean introducesNA() {
         return arithmetic.introducesNA();
     }
 
@@ -108,9 +109,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             return RRuntime.DOUBLE_NA;
         }
         try {
-            double value = arithmetic.op(left, right);
-            resultNACheck.check(value);
-            return value;
+            return arithmetic.op(left, right);
         } catch (Throwable e) {
             CompilerDirectives.transferToInterpreter();
             throw Operation.handleException(e);
@@ -128,9 +127,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             return RRuntime.INT_NA;
         }
         try {
-            int value = arithmetic.op(left, right);
-            resultNACheck.check(value);
-            return value;
+            return arithmetic.op(left, right);
         } catch (Throwable e) {
             CompilerDirectives.transferToInterpreter();
             throw Operation.handleException(e);
@@ -148,9 +145,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             return RRuntime.DOUBLE_NA;
         }
         try {
-            double value = arithmetic.op((double) left, (double) right);
-            resultNACheck.check(value);
-            return value;
+            return arithmetic.op((double) left, (double) right);
         } catch (Throwable e) {
             CompilerDirectives.transferToInterpreter();
             throw Operation.handleException(e);
@@ -180,9 +175,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             return RComplex.createNA();
         }
         try {
-            RComplex value = arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
-            resultNACheck.check(value);
-            return value;
+            return arithmetic.op(left.getRealPart(), left.getImaginaryPart(), right.getRealPart(), right.getImaginaryPart());
         } catch (Throwable e) {
             CompilerDirectives.transferToInterpreter();
             throw Operation.handleException(e);
@@ -247,6 +240,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         }
         RDoubleSequence castSequence = (RDoubleSequence) sequence;
         double newStart = applyDouble(castSequence.getStart(), otherStartDouble);
+        resultNACheck.enable(arithmetic.introducesNA());
         if (resultNACheck.check(newStart)) {
             return null;
         }
@@ -261,6 +255,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 return null;
             }
             newStride = applyDouble(castSequence.getStride(), otherStrideDouble);
+            resultNACheck.enable(arithmetic.introducesNA());
             if (resultNACheck.check(newStride)) {
                 return null;
             }
@@ -293,6 +288,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
     private RAbstractVector foldIntSequenceDoubleResult(RSequence sequence, int otherStartInt, Object otherStride, NACheck otherNACheck) {
         RIntSequence castSequence = (RIntSequence) sequence;
         double newStart = applyDouble(castSequence.getStart(), otherStartInt);
+        resultNACheck.enable(arithmetic.introducesNA());
         if (resultNACheck.check(newStart)) {
             return null;
         }
@@ -307,6 +303,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 return null;
             }
             newStride = applyDouble(castSequence.getStride(), otherStrideInt);
+            resultNACheck.enable(arithmetic.introducesNA());
             if (resultNACheck.check(newStride)) {
                 return null;
             }
@@ -328,6 +325,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
         RIntSequence castSequence = (RIntSequence) sequence;
         int currentStart = castSequence.getStart();
         int newStart = applyInteger(currentStart, otherStartInt);
+        resultNACheck.enable(arithmetic.introducesNA());
         if (resultNACheck.check(newStart)) {
             return null;
         }
@@ -341,6 +339,7 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
                 return null;
             }
             newStride = applyInteger(castSequence.getStride(), otherStrideInt);
+            resultNACheck.enable(arithmetic.introducesNA());
             if (resultNACheck.check(newStride)) {
                 return null;
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,17 +43,16 @@ public final class BinaryMapBooleanFunctionNode extends BinaryMapNAFunctionNode 
 
     @Override
     public boolean mayFoldConstantTime(Class<? extends RAbstractVector> left, Class<? extends RAbstractVector> right) {
-        return super.mayFoldConstantTime(left, right);
+        return false;
     }
 
     @Override
     public RAbstractVector tryFoldConstantTime(RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-
-        return super.tryFoldConstantTime(left, leftLength, right, rightLength);
+        return null;
     }
 
     @Override
-    protected boolean resultNeedsNACheck() {
+    protected boolean introducesNA() {
         return false;
     }
 

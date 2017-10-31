@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,9 +37,7 @@ public class TestSimpleValues extends TestBase {
     public static final boolean GENERATE_INSTEAD_OF_CHECK = false;
     public static final String SPLIT_CHAR = "|";
 
-    // TODO: Add when printing of double numbers is more compliant.
-    // "0.1234567", "123456789000"
-    private static final String[] SCALAR_NORMAL_VALUES = {"TRUE", "FALSE", "1", "as.raw(10)", "3.4", "1L", "NULL", "1i", "\"hello\""};
+    private static final String[] SCALAR_NORMAL_VALUES = {"TRUE", "FALSE", "1", "as.raw(10)", "3.4", "1L", "NULL", "1i", "\"hello\"", "0.1234567", "123456789000"};
     private static final String[] SCALAR_SPECIAL_VALUES = {"(1+NA)", "(3.4+NA)", "(1i+NA)", "(0/0)", "((0/0)+1i)", "NULL", "(1/0)", "(-(1/0))", "(-(0/0))", "(-0.0)"};
     private static final String[] VECTOR_VALUES = template("c(%0,%0,%0)", SCALAR_NORMAL_VALUES);
     private static final String[] SCALAR_VALUES = join(SCALAR_NORMAL_VALUES, SCALAR_SPECIAL_VALUES);
@@ -114,7 +112,6 @@ public class TestSimpleValues extends TestBase {
         assertEval("x <- 1:10; for (i in 1:2) { x[[1]] <- x[[1]]; x <- c(1, 2, 3) }; x");
         assertEval("v <- double(5) ; v[[3]] <- c(1) ; v");
         assertEval("v <- double(5) ; v[[3]] <- matrix(c(1)) ; v");
-        // TODO(tw): Expand this test.
         assertEval(Output.MayIgnoreErrorContext, Output.MayIgnoreWarningContext,
                         template("{ x <- %2; x[%0] <- %1; x }", join(SUBSCRIPT_VECTOR_THREE_VALUES, SUBSCRIPT_SEQUENCE_VALUES), INT_UPDATE_VALUES, TESTED_VECTORS));
     }

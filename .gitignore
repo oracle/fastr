@@ -47,6 +47,7 @@
 /com.oracle.truffle.r.release/README.md
 /deparse/
 /DEPARSE_ERROR
+/dumps/
 /Rpkgsource/*
 /install.cran.logs/
 /library/
