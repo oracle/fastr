@@ -121,4 +121,8 @@ public abstract class R2Foreign extends RBaseNode {
     public static Object doObject(Object obj) {
         return obj;
     }
+
+    public static R2Foreign create() {
+        return R2ForeignNodeGen.create();
+    }
 }

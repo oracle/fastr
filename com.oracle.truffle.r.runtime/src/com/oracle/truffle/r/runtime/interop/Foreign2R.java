@@ -44,7 +44,7 @@ public abstract class Foreign2R extends RBaseNode {
     @Child private Node isBoxed;
     @Child private Node unbox;
 
-    public static Foreign2R createForeign2R() {
+    public static Foreign2R create() {
         return Foreign2RNodeGen.create();
     }
 

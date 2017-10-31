@@ -40,8 +40,8 @@ public abstract class CastForeignNode extends CastNode {
 
     @Specialization(guards = {"isForeignVector(obj, hasSize)"})
     protected Object castForeign(TruffleObject obj,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R) {
+                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize,
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
         return foreignArray2R.convert(obj);
     }
 

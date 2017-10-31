@@ -250,7 +250,7 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("READ.createNode()") Node read,
                     @Cached("createExecute(0).createNode()") Node execute,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
-                    @Cached("createForeign2R()") Foreign2R foreign2R) {
+                    @Cached("create()") Foreign2R foreign2R) {
         int precedence = -1;
         try {
             TruffleObject itFunction = (TruffleObject) ForeignAccess.sendRead(read, obj, "iterator");
@@ -279,7 +279,7 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("GET_SIZE.createNode()") Node getSize,
                     @Cached("READ.createNode()") Node read,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
-                    @Cached("createForeign2R()") Foreign2R foreign2R) {
+                    @Cached("create()") Foreign2R foreign2R) {
         int precedence = -1;
         try {
             if (JavaInterop.isJavaObject(obj)) {

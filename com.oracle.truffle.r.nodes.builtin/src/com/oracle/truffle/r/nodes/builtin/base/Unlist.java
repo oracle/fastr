@@ -61,7 +61,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 
 @ImportStatic({Message.class, RRuntime.class})
 @RBuiltin(name = "unlist", kind = INTERNAL, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
@@ -182,7 +181,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                         @Cached("READ.createNode()") Node read,
                         @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("GET_SIZE.createNode()") Node getSize,
-                        @Cached("createForeign2R()") Foreign2R foreign2R) {
+                        @Cached("create()") Foreign2R foreign2R) {
             int totalSize = 0;
             try {
                 int size = (int) ForeignAccess.sendGetSize(getSize, obj);
@@ -214,7 +213,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         protected int getJavaIterableLength(TruffleObject obj,
                         @Cached("READ.createNode()") Node read,
                         @Cached("createExecute(0).createNode()") Node execute,
-                        @Cached("createForeign2R()") Foreign2R foreign2R) {
+                        @Cached("create()") Foreign2R foreign2R) {
             int totalSize = 0;
             try {
                 TruffleObject itFunction = (TruffleObject) ForeignAccess.sendRead(read, obj, "iterator");
@@ -316,13 +315,13 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     @Specialization(guards = {"isForeignArray(obj)"})
     protected Object unlistForeignArray(VirtualFrame frame, TruffleObject obj, boolean recursive, boolean useNames,
                     @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
         return unlistForeign(frame, obj, recursive, useNames, foreignArray2R);
     }
 
     @Specialization(guards = {"isJavaIterable(obj)"})
     protected Object unlistJavaIterable(VirtualFrame frame, TruffleObject obj, boolean recursive, boolean useNames,
-                    @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
         return unlistForeign(frame, obj, recursive, useNames, foreignArray2R);
     }
 
@@ -343,10 +342,6 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     @Fallback
     protected Object unlist(Object o, Object recursive, Object useNames) {
         return o;
-    }
-
-    protected ForeignArray2R createForeignArray2R() {
-        return ForeignArray2RNodeGen.create();
     }
 
     protected boolean isForeignVector(Object obj) {
@@ -374,7 +369,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     private ForeignArray2R getForeignArray2RNode() {
         if (foreignArray2RNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreignArray2RNode = insert(ForeignArray2R.createForeignArray2R());
+            foreignArray2RNode = insert(ForeignArray2R.create());
         }
         return foreignArray2RNode;
     }

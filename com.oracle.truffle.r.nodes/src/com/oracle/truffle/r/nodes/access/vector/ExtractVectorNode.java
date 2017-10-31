@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R.ForeignArrayData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -122,10 +121,6 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot coerce position to character for foreign access.");
     }
 
-    protected static Foreign2R createForeign2RNode() {
-        return Foreign2RNodeGen.create();
-    }
-
     protected boolean positionsByVector(Object[] positions) {
         return positions.length == 1 && positions[0] instanceof RAbstractVector && ((RAbstractVector) positions[0]).getLength() > 1;
     }
@@ -184,7 +179,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     @Cached("IS_NULL.createNode()") Node isNullNode,
                     @Cached("IS_BOXED.createNode()") Node isBoxedNode,
                     @Cached("UNBOX.createNode()") Node unboxNode,
-                    @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
+                    @Cached("create()") Foreign2R foreign2RNode) {
 
         RAbstractVector vec = (RAbstractVector) positions[0];
         ForeignArrayData arrayData = new ForeignArrayData();
@@ -209,7 +204,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     @Cached("create()") CastStringNode castNode,
                     @Cached("createFirstString()") FirstStringNode firstString,
                     @Cached("createClassProfile()") ValueProfile positionProfile,
-                    @Cached("createForeign2RNode()") Foreign2R foreign2RNode) {
+                    @Cached("create()") Foreign2R foreign2RNode) {
         Object[] pos = positionProfile.profile(positions);
         if (pos.length == 0) {
             throw error(RError.Message.GENERIC, "No positions for foreign access.");
