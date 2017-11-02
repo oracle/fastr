@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -32,7 +33,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -50,6 +54,8 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
     protected BaseWriteVariableNode(String name) {
         super(name);
     }
+
+    @Child private RExplicitCallNode writeActiveBinding;
 
     private final ConditionProfile isObjectProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isCurrentProfile = ConditionProfile.createBinaryProfile();
@@ -178,7 +184,16 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
         }
 
         if (isActiveBindingProfile.profile(object != null && ActiveBinding.isActiveBinding(object))) {
-            return ((ActiveBinding) object).writeValue(value);
+            if (writeActiveBinding == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                writeActiveBinding = insert(RExplicitCallNode.create());
+            }
+            ActiveBinding binding = (ActiveBinding) object;
+            try {
+                return writeActiveBinding.execute(execFrame, binding.getFunction(), new RArgsValuesAndNames(new Object[]{value}, ArgumentsSignature.empty(1)));
+            } finally {
+                binding.setInitialized();
+            }
         } else {
             Object newValue = shareObjectValue(lookupFrame, frameSlot, storedObjectProfile.profile(value), mode, false);
             FrameSlotChangeMonitor.setObjectAndInvalidate(lookupFrame, frameSlot, newValue, false, invalidateProfile);

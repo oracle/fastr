@@ -48,6 +48,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -107,8 +108,11 @@ final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSynta
             CompilerDirectives.transferToInterpreterAndInvalidate();
             visibility = insert(SetVisibilityNode.create());
         }
-        visibility.execute(frame, true);
-        return read.executeInternal(frame, frame);
+        try {
+            return read.executeInternal(frame, frame);
+        } finally {
+            visibility.execute(frame, true);
+        }
     }
 
     @Override
@@ -180,6 +184,7 @@ public final class ReadVariableNode extends RBaseNode {
 
     @Child private PromiseHelperNode promiseHelper;
     @Child private CheckTypeNode checkTypeNode;
+    @Child private RExplicitCallNode readActiveBinding;
 
     @CompilationFinal private FrameLevel read;
     @CompilationFinal private boolean needsCopying;
@@ -252,16 +257,25 @@ public final class ReadVariableNode extends RBaseNode {
             }
         }
         if (needsCopying && copyProfile.profile(result instanceof RAbstractVector)) {
-            result = ((RAbstractVector) result).copy();
+            return ((RAbstractVector) result).copy();
         }
         if (isPromiseProfile.profile(result instanceof RPromise)) {
             if (promiseHelper == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
             }
-            result = promiseHelper.evaluate(frame, (RPromise) result);
-        } else if (isActiveBindingProfile.profile(ActiveBinding.isActiveBinding(result))) {
-            Object readValue = ((ActiveBinding) result).readValue();
+            return promiseHelper.evaluate(frame, (RPromise) result);
+        }
+        if (isActiveBindingProfile.profile(ActiveBinding.isActiveBinding(result))) {
+            if (readActiveBinding == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                readActiveBinding = insert(RExplicitCallNode.create());
+            }
+            ActiveBinding binding = (ActiveBinding) result;
+            if (binding.isHidden() && !binding.isInitialized()) {
+                throw error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
+            }
+            Object readValue = readActiveBinding.execute(frame, binding.getFunction(), RArgsValuesAndNames.EMPTY);
             if (readValue == RMissing.instance) {
                 throw error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
