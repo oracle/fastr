@@ -164,7 +164,7 @@ public abstract class ConvertBooleanNode extends RNode {
     @Specialization
     protected byte doRawVector(RRawVector value) {
         checkLength(value);
-        return doRaw(value.getDataAt(0));
+        return RRuntime.raw2logical(value.getRawDataAt(0));
     }
 
     @Specialization

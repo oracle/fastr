@@ -260,7 +260,7 @@ final class RRawToListVectorClosure extends RToListVectorClosure {
     }
 
     @Override
-    public RRaw getDataAt(int index) {
-        return vector.getDataAt(index);
+    public Object getDataAt(int index) {
+        return RRaw.valueOf(vector.getRawDataAt(index));
     }
 }

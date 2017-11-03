@@ -267,7 +267,7 @@ public abstract class Array extends RBuiltinNode.Arg3 {
         int vecLength = vec.getLength();
         if (totalLength > 0 && vecLength > 0) {
             for (int i = 0; i < totalLength; i++) {
-                data[i] = vec.getDataAt(i % vec.getLength()).getValue();
+                data[i] = vec.getRawDataAt(i % vec.getLength());
             }
         } else {
             for (int i = 0; i < totalLength; i++) {

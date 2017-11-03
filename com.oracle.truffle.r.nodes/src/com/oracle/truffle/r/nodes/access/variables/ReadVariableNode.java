@@ -597,7 +597,7 @@ public final class ReadVariableNode extends RBaseNode {
     }
 
     private FrameLevel initialize(VirtualFrame frame, Frame variableFrame) {
-        if (identifier.toString().isEmpty()) {
+        if (identifierAsString.isEmpty()) {
             throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
         }
 

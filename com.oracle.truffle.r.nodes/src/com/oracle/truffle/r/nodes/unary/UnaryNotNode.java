@@ -84,7 +84,11 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
     }
 
     private static byte notRaw(RRaw operand) {
-        return (byte) (255 - operand.getValue());
+        return notRaw(operand.getValue());
+    }
+
+    private static byte notRaw(byte operand) {
+        return (byte) (255 - operand);
     }
 
     @Specialization
@@ -197,7 +201,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
         } else {
             result = new byte[length];
             for (int i = 0; i < length; i++) {
-                result[i] = notRaw(vector.getDataAt(i));
+                result[i] = notRaw(vector.getRawDataAt(i));
             }
         }
         RRawVector resultVector = RDataFactory.createRawVector(result);

@@ -617,10 +617,10 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         protected int matchSizeOne(RAbstractRawVector x, RAbstractRawVector table, int nomatch,
                         @Cached("create()") BranchProfile foundProfile,
                         @Cached("create()") BranchProfile notFoundProfile) {
-            byte element = x.getDataAt(0).getValue();
+            byte element = x.getRawDataAt(0);
             int length = table.getLength();
             for (int i = 0; i < length; i++) {
-                if (element == table.getDataAt(i).getValue()) {
+                if (element == table.getRawDataAt(i)) {
                     foundProfile.enter();
                     return i + 1;
                 }
@@ -639,10 +639,10 @@ public abstract class Match extends RBuiltinNode.Arg4 {
                 NonRecursiveHashSetRaw hashSet = new NonRecursiveHashSetRaw();
 
                 for (int i = 0; i < result.length; i++) {
-                    hashSet.add(x.getDataAt(i).getValue());
+                    hashSet.add(x.getRawDataAt(i));
                 }
                 for (int i = table.getLength() - 1; i >= 0; i--) {
-                    byte val = table.getDataAt(i).getValue();
+                    byte val = table.getRawDataAt(i);
                     if (hashSet.contains(val)) {
                         hashTable.put(val, i);
                     }
@@ -650,11 +650,11 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             } else {
                 hashTable = new NonRecursiveHashMapRaw();
                 for (int i = table.getLength() - 1; i >= 0; i--) {
-                    hashTable.put(table.getDataAt(i).getValue(), i);
+                    hashTable.put(table.getRawDataAt(i), i);
                 }
             }
             for (int i = 0; i < result.length; i++) {
-                byte xx = x.getDataAt(i).getValue();
+                byte xx = x.getRawDataAt(i);
                 int index = hashTable.get(xx);
                 if (index != -1) {
                     result[i] = index + 1;

@@ -637,13 +637,13 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractRawVector vec, @SuppressWarnings("unused") RMissing className, boolean flat) {
-            return toArray(vec, flat, byte.class, (array, i) -> Array.set(array, i, vec.getDataAt(i).getValue()));
+            return toArray(vec, flat, byte.class, (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
         }
 
         @Specialization
         @TruffleBoundary
         public Object toArray(RAbstractRawVector vec, String className, boolean flat) {
-            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, vec.getDataAt(i).getValue()));
+            return toArray(vec, flat, getClazz(className), (array, i) -> Array.set(array, i, vec.getRawDataAt(i)));
         }
 
         @Specialization(guards = "!isJavaLikeVector(vec)")

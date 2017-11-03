@@ -137,7 +137,7 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RRawVector repInt(RAbstractRawVector value, RAbstractIntVector times) {
-        return repInt(value, times, byte[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index).getValue(), (array, complete) -> RDataFactory.createRawVector(array));
+        return repInt(value, times, byte[]::new, (array, pos, val, index) -> array[pos] = val.getRawDataAt(index), (array, complete) -> RDataFactory.createRawVector(array));
     }
 
     @Specialization
