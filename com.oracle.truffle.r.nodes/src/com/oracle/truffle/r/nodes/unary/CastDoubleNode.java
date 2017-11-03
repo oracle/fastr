@@ -119,7 +119,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         if (useClosure()) {
             return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
         }
-        return createResultVector(operand, index -> RRuntime.raw2double(operand.getDataAt(index)));
+        return createResultVector(operand, index -> RRuntime.raw2double(operand.getRawDataAt(index)));
     }
 
     @Specialization

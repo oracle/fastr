@@ -98,7 +98,7 @@ public abstract class FirstBooleanNode extends CastNode {
     @Specialization
     protected boolean firstVector(RAbstractRawVector argument) {
         checkLength(argument);
-        return firstScalar(RRuntime.raw2logical(argument.getDataAt(0)));
+        return firstScalar(RRuntime.raw2logical(argument.getRawDataAt(0)));
     }
 
     @Fallback

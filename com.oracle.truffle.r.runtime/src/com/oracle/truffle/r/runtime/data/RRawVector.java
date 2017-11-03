@@ -125,7 +125,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     public String toString() {
-        return toString(i -> RRuntime.rawToString(getDataAt(i)));
+        return toString(i -> RRuntime.rawToString(getRawDataAt(i)));
     }
 
     @Override

@@ -56,7 +56,7 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
             case Complex:
                 return RComplex.valueOf(value, 0.0);
             case Character:
-                return RString.valueOf(RRuntime.rawToString(this));
+                return RString.valueOf(RRuntime.rawToString(value));
             default:
                 return null;
         }

@@ -210,6 +210,6 @@ final class RRawToIntVectorClosure extends RToIntVectorClosure implements RAbstr
 
     @Override
     public int getDataAt(int index) {
-        return RRuntime.raw2int(vector.getDataAt(index));
+        return RRuntime.raw2int(vector.getRawDataAt(index));
     }
 }
