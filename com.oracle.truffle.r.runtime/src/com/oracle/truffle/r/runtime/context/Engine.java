@@ -33,6 +33,7 @@ import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -101,7 +102,17 @@ public interface Engine {
 
         @Override
         public Node getLocation() {
-            return null;
+            if (line <= 0 || line > source.getLineCount()) {
+                return null;
+            } else {
+                SourceSection section = source.createSection(line);
+                return new Node() {
+                    @Override
+                    public SourceSection getSourceSection() {
+                        return section;
+                    }
+                };
+            }
         }
 
         @Override

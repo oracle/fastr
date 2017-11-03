@@ -53,8 +53,6 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.interop.R2Foreign;
-import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "3.3.2", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
@@ -194,11 +192,13 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         } catch (IncompleteSourceException e) {
             throw e;
         } catch (ParseException e) {
-            throw e.throwAsRError();
+            if (request.getSource().isInteractive()) {
+                throw e.throwAsRError();
+            } else {
+                throw e;
+            }
         }
     }
-
-    private static final R2Foreign r2foreign = R2ForeignNodeGen.create();
 
     @Override
     protected Object getLanguageGlobal(RContext context) {
