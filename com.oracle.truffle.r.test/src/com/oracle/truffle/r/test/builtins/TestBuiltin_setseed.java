@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -62,6 +62,7 @@ public class TestBuiltin_setseed extends TestBase {
     @Test
     public void testArgCasts() {
         assertEval(Output.IgnoreErrorMessage, "set.seed('hello world')");
+        assertEval("set.seed('1234'); runif(1)");
         assertEval("set.seed(FALSE)");
     }
 }

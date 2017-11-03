@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 @ImportStatic(RRuntime.class)
@@ -195,7 +194,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected RLogicalVector doForeignObject(TruffleObject obj,
-                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
         Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RLogicalVector) {
@@ -219,9 +218,5 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     public static CastLogicalNode createNonPreserving() {
         return CastLogicalNodeGen.create(false, false, false);
-    }
-
-    protected ForeignArray2R createForeignArray2RNode() {
-        return ForeignArray2RNodeGen.create();
     }
 }

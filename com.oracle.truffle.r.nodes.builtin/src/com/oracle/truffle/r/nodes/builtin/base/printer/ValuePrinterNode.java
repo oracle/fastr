@@ -96,7 +96,7 @@ public final class ValuePrinterNode extends RBaseNode {
         @Child private Node isBoxedNode = com.oracle.truffle.api.interop.Message.IS_BOXED.createNode();
         @Child private Node unboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
         @Child private Node keysNode = com.oracle.truffle.api.interop.Message.KEYS.createNode();
-        @Child private Foreign2R foreign2R = Foreign2R.createForeign2R();
+        @Child private Foreign2R foreign2R = Foreign2R.create();
 
         @TruffleBoundary
         public Object convert(TruffleObject obj) {

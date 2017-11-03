@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
@@ -176,7 +175,7 @@ public abstract class ConvertBooleanNode extends RNode {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected byte doForeignObject(VirtualFrame frame, TruffleObject obj,
-                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
         Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             return convertBooleanRecursive(frame, o);
@@ -185,7 +184,7 @@ public abstract class ConvertBooleanNode extends RNode {
     }
 
     @Fallback
-    protected byte doObject(Object o) {
+    protected byte doObject(@SuppressWarnings("unused") Object o) {
         throw error(RError.Message.ARGUMENT_NOT_INTERPRETABLE_LOGICAL);
     }
 
@@ -200,10 +199,6 @@ public abstract class ConvertBooleanNode extends RNode {
     @Override
     public RSyntaxNode getRSyntaxNode() {
         return getOperand().asRSyntaxNode();
-    }
-
-    protected ForeignArray2R createForeignArray2RNode() {
-        return ForeignArray2RNodeGen.create();
     }
 
     protected byte convertBooleanRecursive(VirtualFrame frame, Object o) {

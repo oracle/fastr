@@ -155,8 +155,8 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
 
         @Specialization(guards = {"isForeignVector(operand, hasSize)"})
         protected byte doForeignVector(TruffleObject operand,
-                        @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R,
+                        @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize,
+                        @Cached("create()") ForeignArray2R foreignArray2R,
                         @Cached("createRecursive()") LogicalScalarCastNode recursive) {
             Object o = foreignArray2R.convert(operand);
             return recursive.executeCast(o);

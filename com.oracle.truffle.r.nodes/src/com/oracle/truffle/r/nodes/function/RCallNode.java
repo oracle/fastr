@@ -99,9 +99,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
-import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -582,19 +580,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return RRuntime.isForeignObject(value);
     }
 
-    protected static Foreign2R createR2ForeignNode() {
-        return Foreign2RNodeGen.create();
-    }
-
-    protected R2Foreign createR2Foreign() {
-        return R2ForeignNodeGen.create();
-    }
-
     @Specialization(guards = "isForeignObject(function)")
     public Object call(VirtualFrame frame, TruffleObject function,
                     @Cached("createForeignCall()") ForeignCall foreignCall,
-                    @Cached("createR2ForeignNode()") Foreign2R foreign2RNode,
-                    @Cached("createR2Foreign()") R2Foreign r2Foreign) {
+                    @Cached("create()") Foreign2R foreign2RNode,
+                    @Cached("create()") R2Foreign r2Foreign) {
         return foreignCall.execute(frame, function, foreign2RNode, r2Foreign);
     }
 

@@ -182,11 +182,15 @@ public class RRuntime {
     public static final RSymbol PSEUDO_NULL = new RSymbol("\u0001NULL\u0001");
     public static final String UNBOUND = "UNBOUND";
 
+    @CompilationFinal(dimensions = 1) private static final String[] rawStringCache = new String[256];
     @CompilationFinal(dimensions = 1) private static final String[] numberStringCache = new String[4096];
     private static final int MIN_CACHED_NUMBER = -numberStringCache.length / 2;
     private static final int MAX_CACHED_NUMBER = numberStringCache.length / 2 - 1;
 
     static {
+        for (int i = 0; i < rawStringCache.length; i++) {
+            rawStringCache[i] = Utils.intern(new String(new char[]{Character.forDigit((i & 0xF0) >> 4, 16), Character.forDigit(i & 0x0F, 16)}));
+        }
         for (int i = 0; i < numberStringCache.length; i++) {
             numberStringCache[i] = String.valueOf(i + MIN_CACHED_NUMBER);
         }
@@ -347,10 +351,8 @@ public class RRuntime {
         return int2complex(raw2int(r));
     }
 
-    public static String rawToHexString(RRaw operand) {
-        int value = raw2int(operand);
-        char[] digits = new char[]{Character.forDigit((value & 0xF0) >> 4, 16), Character.forDigit(value & 0x0F, 16)};
-        return new String(digits);
+    public static String rawToHexString(byte operand) {
+        return rawStringCache[raw2int(operand)];
     }
 
     @TruffleBoundary

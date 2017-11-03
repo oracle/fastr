@@ -342,12 +342,12 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     @TruffleBoundary
-    private void acquireLock() {
+    private static void acquireLock() {
         accessLock.lock();
     }
 
     @TruffleBoundary
-    private void releaseLock() {
+    private static void releaseLock() {
         accessLock.unlock();
     }
 }

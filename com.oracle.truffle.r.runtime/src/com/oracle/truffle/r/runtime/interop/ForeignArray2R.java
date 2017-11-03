@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.runtime.interop;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -51,9 +54,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import java.util.Arrays;
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 @ImportStatic({Message.class, RRuntime.class})
 public abstract class ForeignArray2R extends RBaseNode {
@@ -66,14 +66,14 @@ public abstract class ForeignArray2R extends RBaseNode {
     @Child private Node isBoxed;
     @Child private Node unbox;
 
-    public static ForeignArray2R createForeignArray2R() {
+    public static ForeignArray2R create() {
         return ForeignArray2RNodeGen.create();
     }
 
     /**
      * Convert the provided foreign array to a vector. Multi dimensional arrays will be resolved
      * recursively.
-     * 
+     *
      * @param obj foreign array
      * @return a vector if obj is a foreign array, otherwise obj
      */
@@ -83,12 +83,12 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     /**
      * Convert the provided foreign array to a vector.
-     * 
+     *
      * @param obj foreign array
      * @param recursive determines whether a provided multi dimensional array should be resolved
      *            recursively or not.
      * @return a vector if obj is a foreign array, otherwise obj
-     * 
+     *
      */
     public Object convert(Object obj, boolean recursive) {
         Object result = execute(obj, recursive, null, 0);
@@ -109,10 +109,7 @@ public abstract class ForeignArray2R extends RBaseNode {
     protected ForeignArrayData doArray(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth,
                     @Cached("GET_SIZE.createNode()") Node getSize) {
         try {
-            if (arrayData == null) {
-                arrayData = new ForeignArrayData();
-            }
-            return collectArrayElements(arrayData, obj, recursive, getSize, depth);
+            return collectArrayElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, recursive, getSize, depth);
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
@@ -124,10 +121,7 @@ public abstract class ForeignArray2R extends RBaseNode {
                     @Cached("createExecute(0).createNode()") Node execute) {
 
         try {
-            if (arrayData == null) {
-                arrayData = new ForeignArrayData();
-            }
-            return getIterableElements(arrayData, obj, recursive, execute, depth);
+            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, recursive, execute, depth);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
             throw error(RError.Message.GENERIC, "error while casting external object to list: " + e.getMessage());
         }
@@ -197,7 +191,7 @@ public abstract class ForeignArray2R extends RBaseNode {
     private void recurse(ForeignArrayData arrayData, Object element, int depth) {
         if (foreignArray2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreignArray2R = insert(createForeignArray2R());
+            foreignArray2R = insert(create());
         }
         foreignArray2R.execute(element, true, arrayData, ++depth);
     }
@@ -236,7 +230,7 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     /**
      * Converts the elements collected from a foreign array or java iterable into a vector or list.
-     * 
+     *
      * @param arrayData foreign array data
      * @return a vector
      */
@@ -345,7 +339,7 @@ public abstract class ForeignArray2R extends RBaseNode {
     /**
      * Computes index in vector given by the element coordinates. <br>
      * cor[0] + cor[1] * dims[0] + ... + cor[n] * dim[0] * ... * dim[n-1]
-     * 
+     *
      * @param cor coordinates to compute the index from
      * @param dims vector dimensions
      * @return the index

@@ -236,7 +236,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
             return RRuntime.isNA(v) ? cna : ComplexVectorPrinter.encodeComplex(v);
         } else if (o instanceof RRaw) {
             RRaw v = (RRaw) o;
-            return RRuntime.rawToHexString(v);
+            return RRuntime.rawToHexString(v.getValue());
         }
         throw RInternalError.unimplemented();
     }
@@ -278,7 +278,7 @@ public abstract class WriteTable extends RExternalBuiltinNode.Arg11 {
         }
         if (x instanceof RAbstractRawVector) {
             RAbstractRawVector v = (RAbstractRawVector) x;
-            return RRuntime.rawToHexString(v.getDataAt(indx));
+            return RRuntime.rawToHexString(v.getRawDataAt(indx));
         }
         throw RInternalError.unimplemented();
     }

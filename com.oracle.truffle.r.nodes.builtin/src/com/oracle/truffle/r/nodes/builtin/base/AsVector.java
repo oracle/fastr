@@ -72,7 +72,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "as.vector", kind = INTERNAL, parameterNames = {"x", "mode"}, dispatch = INTERNAL_GENERIC, behavior = COMPLEX)
@@ -164,10 +163,6 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             return mode == cachedMode || indirectMatchProfile.profile(cachedMode.equals(mode));
         }
 
-        protected ForeignArray2R createForeignArray2R() {
-            return ForeignArray2RNodeGen.create();
-        }
-
         // there should never be more than ~12 specializations
         @SuppressWarnings("unused")
         @Specialization(limit = "99", guards = "matchesMode(mode, cachedMode)")
@@ -176,7 +171,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                         @Cached("fromMode(cachedMode)") RType type,
                         @Cached("createCast(type)") CastNode cast,
                         @Cached("create()") DropAttributesNode drop,
-                        @Cached("createForeignArray2R()") ForeignArray2R foreignArray2R) {
+                        @Cached("create()") ForeignArray2R foreignArray2R) {
             if (RRuntime.isForeignObject(x)) {
                 Object o = foreignArray2R.convert(x);
                 if (!RRuntime.isForeignObject(o)) {

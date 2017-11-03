@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 
 @ImportStatic(RRuntime.class)
 public abstract class CastStringNode extends CastStringBaseNode {
@@ -111,7 +110,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected RStringVector doForeignObject(TruffleObject obj,
-                    @Cached("createForeignArray2RNode()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
         Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RStringVector) {
@@ -140,10 +139,6 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     public static CastStringNode createNonPreserving() {
         return CastStringNodeGen.create(false, false, false);
-    }
-
-    protected ForeignArray2R createForeignArray2RNode() {
-        return ForeignArray2RNodeGen.create();
     }
 
     private Object castStringRecursive(Object o) {

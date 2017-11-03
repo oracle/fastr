@@ -89,9 +89,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
@@ -771,15 +769,11 @@ public class FastRInterop {
 
         private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
 
-        protected ForeignArray2R createForeignArray2R() {
-            return ForeignArray2RNodeGen.create();
-        }
-
         @Specialization(guards = {"isForeignObject(obj)"})
         @TruffleBoundary
         public Object fromArray(TruffleObject obj,
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("createForeignArray2R()") ForeignArray2R array2R) {
+                        @Cached("create()") ForeignArray2R array2R) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
                 return array2R.convert(obj);
             } else {
@@ -806,8 +800,8 @@ public class FastRInterop {
         public Object interopNew(TruffleObject clazz, RArgsValuesAndNames args,
                         @SuppressWarnings("unused") @Cached("args.getLength()") int length,
                         @Cached("createNew(length).createNode()") Node sendNew,
-                        @Cached("createR2Foreign()") R2Foreign r2Foreign,
-                        @Cached("createForeign2R()") Foreign2R foreign2R) {
+                        @Cached("create()") R2Foreign r2Foreign,
+                        @Cached("create()") Foreign2R foreign2R) {
             try {
                 Object[] argValues = new Object[args.getLength()];
                 for (int i = 0; i < argValues.length; i++) {
@@ -824,14 +818,6 @@ public class FastRInterop {
         @Fallback
         public Object interopNew(@SuppressWarnings("unused") Object clazz, @SuppressWarnings("unused") Object args) {
             throw error(RError.Message.GENERIC, "interop object needed as receiver of NEW message");
-        }
-
-        protected R2Foreign createR2Foreign() {
-            return R2ForeignNodeGen.create();
-        }
-
-        protected Foreign2R createForeign2R() {
-            return Foreign2RNodeGen.create();
         }
     }
 

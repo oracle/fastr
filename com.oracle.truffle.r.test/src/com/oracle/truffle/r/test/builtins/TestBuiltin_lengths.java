@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,7 +43,6 @@ public class TestBuiltin_lengths extends TestBase {
         assertEval("lengths(list(a=1, b=c(1,2)), use.names=FALSE)");
         assertEval("x<-c(1,2); names(x) <- c('a', 'b'); lengths(x)");
         assertEval("x<-c(1,2); names(x) <- c('a', 'b'); lengths(x, use.names=FALSE)");
-        // dimnames are not used:
         assertEval("lengths(matrix(1:4, nrow=2, ncol=2, dimnames=list(c('a', 'b'), c('d', 'e'))))");
     }
 
