@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.interop.TruffleObjectConverter;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -811,7 +812,14 @@ public class RDeparse {
                     append("<unevaluated>");
                 }
             } else if (value instanceof TruffleObject) {
-                append("<truffle object>");
+                Object rObject = new TruffleObjectConverter().convert((TruffleObject) value);
+                append("<foreign object: ");
+                if (rObject != null) {
+                    appendConstant(rObject);
+                } else {
+                    append("null");
+                }
+                append('>');
             } else {
                 throw RInternalError.shouldNotReachHere("unexpected type while deparsing constant: " + value == null ? "null" : value.getClass().getSimpleName());
             }
