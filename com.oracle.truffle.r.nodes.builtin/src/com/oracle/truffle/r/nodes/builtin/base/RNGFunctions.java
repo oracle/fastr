@@ -55,7 +55,7 @@ public class RNGFunctions {
 
         static {
             Casts casts = new Casts(SetSeed.class);
-            casts.arg("seed").allowNull().mustBe(numericValue(), SEED_NOT_VALID_INT).asIntegerVector().findFirst();
+            casts.arg("seed").allowNull().asIntegerVector().findFirst().mustNotBeNA(SEED_NOT_VALID_INT);
             CastsHelper.kindInteger(casts, "kind", INVALID_ARGUMENT, "kind");
             // TODO: implement normal.kind specializations with String
             casts.arg("normal.kind").allowNull().mustBe(anyValue().not(), UNIMPLEMENTED_TYPE_IN_FUNCTION, "String", "set.seed").mustBe(stringValue(), INVALID_NORMAL_TYPE_IN_RGNKIND);
