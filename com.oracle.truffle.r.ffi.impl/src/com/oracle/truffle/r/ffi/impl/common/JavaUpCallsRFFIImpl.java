@@ -812,7 +812,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_eval(Object expr, Object env) {
-        guarantee(env instanceof REnvironment);
+        guaranteeInstanceOf(env, REnvironment.class);
         Object result;
         if (expr instanceof RPromise) {
             result = RContext.getRRuntimeASTAccess().forcePromise(null, expr);
@@ -845,7 +845,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_findFun(Object symbolObj, Object envObj) {
-        guarantee(envObj instanceof REnvironment);
+        guaranteeInstanceOf(envObj, REnvironment.class);
         REnvironment env = (REnvironment) envObj;
         guarantee(symbolObj instanceof RSymbol);
         RSymbol symbol = (RSymbol) symbolObj;
@@ -862,7 +862,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_GetOption1(Object tag) {
-        guarantee(tag instanceof RSymbol);
+        guaranteeInstanceOf(tag, RSymbol.class);
         Object result = RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
         return result;
     }
@@ -870,7 +870,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public void Rf_gsetVar(Object symbol, Object value, Object rho) {
-        guarantee(symbol instanceof RSymbol);
+        guaranteeInstanceOf(symbol, RSymbol.class);
         REnvironment baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
         guarantee(rho == baseEnv);
         try {

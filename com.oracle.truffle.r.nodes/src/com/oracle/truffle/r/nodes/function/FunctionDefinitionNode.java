@@ -292,7 +292,11 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             return result;
         } catch (ReturnException ex) {
             if (returnTopLevelProfile.profile(ex.getTarget() == RArguments.getCall(frame))) {
-                return ex.getResult();
+                Object result = ex.getResult();
+                if (CompilerDirectives.inInterpreter() && result == null) {
+                    throw RInternalError.shouldNotReachHere("invalid null from ReturnException.getResult() of " + this);
+                }
+                return result;
             } else {
                 throw ex;
             }

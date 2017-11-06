@@ -249,6 +249,9 @@ final class TruffleNFI_Context extends RFFIContext {
         if (traceEnabled()) {
             traceDownCall("initialize");
         }
+        if (hasAccessLock) {
+            acquireLock();
+        }
         try {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
             if (context.isInitial()) {
@@ -278,6 +281,9 @@ final class TruffleNFI_Context extends RFFIContext {
             if (traceEnabled()) {
                 traceDownCallReturn("initialize", null);
             }
+            if (hasAccessLock) {
+                releaseLock();
+            }
         }
     }
 
@@ -305,6 +311,10 @@ final class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public long beforeDowncall() {
+        super.beforeDowncall();
+        if (hasAccessLock) {
+            acquireLock();
+        }
         return pushCallbacks();
     }
 
@@ -315,6 +325,10 @@ final class TruffleNFI_Context extends RFFIContext {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
         }
         transientAllocations.clear();
+        if (hasAccessLock) {
+            releaseLock();
+        }
+        super.afterDowncall(beforeValue);
     }
 
     public static TruffleNFI_Context getInstance() {
@@ -323,22 +337,6 @@ final class TruffleNFI_Context extends RFFIContext {
 
     public DLLInfo getRLibDLLInfo() {
         return rlibDLLInfo;
-    }
-
-    @Override
-    public void beforeUpcall(boolean canRunGc) {
-        super.beforeUpcall(canRunGc);
-        if (hasAccessLock) {
-            acquireLock();
-        }
-    }
-
-    @Override
-    public void afterUpcall(boolean canRunGc) {
-        super.afterUpcall(canRunGc);
-        if (hasAccessLock) {
-            releaseLock();
-        }
     }
 
     @TruffleBoundary
