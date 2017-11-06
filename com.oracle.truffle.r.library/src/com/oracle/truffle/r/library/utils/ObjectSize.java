@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObjectSize;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
@@ -42,15 +41,6 @@ public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
     static {
         noCasts(ObjectSize.class);
     }
-
-    private static class MyIgnoreObjectHandler implements RObjectSize.IgnoreObjectHandler {
-        @Override
-        public boolean ignore(Object rootObject, Object obj) {
-            return obj == RNull.instance;
-        }
-    }
-
-    private static final MyIgnoreObjectHandler ignoreObjectHandler = new MyIgnoreObjectHandler();
 
     @Specialization
     protected int objectSize(@SuppressWarnings("unused") int o) {
@@ -70,6 +60,6 @@ public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
     @Fallback
     @TruffleBoundary
     protected int objectSize(Object o) {
-        return (int) RObjectSize.getObjectSize(o, ignoreObjectHandler);
+        return (int) (RObjectSize.getRecursiveObjectSize(o) / 8L);
     }
 }

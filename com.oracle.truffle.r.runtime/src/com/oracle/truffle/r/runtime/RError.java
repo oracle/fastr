@@ -906,7 +906,8 @@ public final class RError extends RuntimeException implements TruffleException {
         OS_REQUEST_LOCALE("OS reports request to set locale to \"%s\" cannot be honored"),
         INVALID_TYPE("invalid type (%s) for '%s' (must be a %s)"),
         NOT_A_LIST_OF_SOCKETS("not a list of sockets"),
-        NOT_A_SOCKET_CONNECTION("not a socket connection");
+        NOT_A_SOCKET_CONNECTION("not a socket connection"),
+        UNEXPECTED_OBJ_IN_SIZE("Unexpected object type %s while calculating estimated object size.");
 
         public final String message;
         final boolean hasArgs;

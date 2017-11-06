@@ -20,32 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime.data;
+package com.oracle.truffle.r.test.builtins;
 
-import java.lang.instrument.Instrumentation;
+import org.junit.Test;
 
-/**
- * This is agent class for object sizing. It has to be separate as it is loaded from a jar file.
- * This implements the basic call to the JVM for the "struct" part of the object.
- * {@link AgentObjectSizeFactory} handles the recursive sizing based on the field/array types.
- *
- */
-public class ObjSizeAgent {
-    private static Instrumentation instrumentation;
+import com.oracle.truffle.r.test.TestBase;
 
-    public static void premain(@SuppressWarnings("unused") String agentArgs, Instrumentation inst) {
-        instrumentation = inst;
-    }
-
-    public static void agentmain(@SuppressWarnings("unused") String agentArgs, Instrumentation inst) {
-        instrumentation = inst;
-    }
-
-    public static long objectSize(Object obj) {
-        return instrumentation.getObjectSize(obj);
-    }
-
-    static boolean isInitialized() {
-        return instrumentation != null;
+// Checkstyle: stop line length check
+public class TestBuiltin_objectsize extends TestBase {
+    @Test
+    public void testAbs() {
+        assertEval("{ object.size(c(1,2,3,8,11,20,15,9)) > object.size(c(1,2,5)) }");
+        assertEval("{ object.size(list(c(1,2,3,6,11,20,1,5,9))) > object.size(list(c(1,10))) }");
+        assertEvalFastR("{ object.size(1:100) < object.size(c(1,2,3,10)) }", "print(TRUE)");
     }
 }

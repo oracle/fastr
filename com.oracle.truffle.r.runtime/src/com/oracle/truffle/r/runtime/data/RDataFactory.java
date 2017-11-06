@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -706,26 +705,6 @@ public final class RDataFactory {
     }
 
     private static long getSize(RTypedValue data) {
-        long multiplier = 8;
-        switch (data.getRType()) {
-            case Complex:
-                multiplier = 16;
-                break;
-            case Integer:
-                multiplier = 4;
-                break;
-            case Logical:
-            case Raw:
-                multiplier = 1;
-                break;
-        }
-        if (data instanceof RSequence) {
-            return 32 + 2 * multiplier;
-        } else if (data instanceof RAbstractVector) {
-            return 32 + ((RAbstractVector) data).getLength() * multiplier;
-        } else {
-            // take a default value for non-vector objects
-            return 64;
-        }
+        return RObjectSize.getObjectSize(data);
     }
 }

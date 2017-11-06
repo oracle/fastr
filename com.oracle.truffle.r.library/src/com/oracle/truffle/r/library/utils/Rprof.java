@@ -140,7 +140,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
             if (profState.memoryQuad == null) {
                 return;
             }
-            long size = RObjectSize.getObjectSize(data, Rprofmem.myIgnoreObjectHandler);
+            long size = RObjectSize.getObjectSize(data);
             if (data instanceof RAbstractVector) {
                 if (size >= Rprofmem.LARGE_VECTOR) {
                     profState.memoryQuad.largeV += size;
@@ -157,7 +157,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
     @TruffleBoundary
     public void reportCopying(RAbstractVector source, RAbstractVector dest) {
         RprofState profState = RprofState.get();
-        profState.memoryQuad.copied += RObjectSize.getObjectSize(source, Rprofmem.myIgnoreObjectHandler);
+        profState.memoryQuad.copied += RObjectSize.getObjectSize(source);
     }
 
     private static void endProfiling() {
