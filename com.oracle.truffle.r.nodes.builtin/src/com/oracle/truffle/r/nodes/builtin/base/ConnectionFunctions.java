@@ -1408,7 +1408,7 @@ public abstract class ConnectionFunctions {
 
         static {
             Casts casts = new Casts(SockSelect.class);
-            casts.arg("socklist").defaultError(Message.NOT_A_LIST_OF_SOCKETS).mustNotBeMissing().mustNotBeNull().asIntegerVector().findFirst();
+            casts.arg("socklist").defaultError(Message.NOT_A_LIST_OF_SOCKETS).mustNotBeMissing().mustNotBeNull().asIntegerVector();
             casts.arg("write").mustNotBeMissing().mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
             casts.arg("timeout").mustNotBeMissing().asIntegerVector().findFirst();
         }
