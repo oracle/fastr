@@ -115,8 +115,8 @@ public class RRNG {
 
         /**
          * Stores the current RNG seed. The type is Object because the user may assign an arbitrary
-         * value to variable {@value RRNG#RANDOM_SEED}. Allowed types are therefore any R value or
-         * an {@code int[]}.
+         * value to variable {@value RRNG#RANDOM_SEED}. Allowed types are therefore any R value, an
+         * {@code int[]} or {@code null}.
          */
         private Object currentSeeds = null;
 
@@ -364,10 +364,9 @@ public class RRNG {
             int[] seedsArr = (int[]) seeds;
             tmp = seedsArr.length == 0 ? RRuntime.INT_NA : seedsArr[0];
         } else {
-            assert seeds instanceof RTypedValue;
             // allow RMissing to indicate that ".Random.seed" has not been initialized yet
             if (seeds != RMissing.instance) {
-                RError.warning(RError.NO_CALLER, RError.Message.SEED_TYPE, ((RTypedValue) seeds).getRType().getName());
+                RError.warning(RError.SHOW_CALLER, RError.Message.SEED_TYPE, RRuntime.getRTypeName(seeds));
             }
             handleInvalidSeed();
             return;

@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin;
 import java.util.Arrays;
 import java.util.function.Function;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
@@ -72,7 +71,6 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -786,10 +784,7 @@ public final class CastBuilder {
          * @return a function returning the type name of its argument
          */
         public static Function<Object, String> typeName() {
-            return arg -> {
-                CompilerAsserts.neverPartOfCompilation();
-                return RRuntime.isForeignObject(arg) ? "external object" : ((RTypedValue) RRuntime.convertScalarVectors(arg)).getRType().getName();
-            };
+            return arg -> RRuntime.getRTypeName(arg);
         }
     }
 }

@@ -13,6 +13,7 @@ package com.oracle.truffle.r.runtime;
 
 import java.math.BigInteger;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
@@ -1039,6 +1040,11 @@ public class RRuntime {
 
     public static boolean isS4Object(Object o) {
         return o instanceof RTypedValue && ((RTypedValue) o).isS4();
+    }
+
+    public static String getRTypeName(Object arg) {
+        CompilerAsserts.neverPartOfCompilation();
+        return isForeignObject(arg) ? "external object" : ((RTypedValue) convertScalarVectors(arg)).getRType().getName();
     }
 
 }
