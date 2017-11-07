@@ -91,11 +91,12 @@ public class DefaultRParserFactory extends RParserFactory {
             CharSequence line = e.line <= source.getLineCount() ? source.getCharacters(e.line) : "";
             String substring = line.subSequence(0, Math.min(line.length(), e.charPositionInLine + 1)).toString();
             String token = e.token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : e.token.getText();
+            int lineNr = e.line > source.getLineCount() ? source.getLineCount() : e.line;
             if (e.getUnexpectedType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
                 // the parser got stuck at the eof, request another line
-                throw new IncompleteSourceException(e, source, token, substring, e.line);
+                throw new IncompleteSourceException(e, source, token, substring, lineNr);
             } else {
-                throw new ParseException(e, source, token, substring, e.line);
+                throw new ParseException(e, source, token, substring, lineNr);
             }
         }
     }
