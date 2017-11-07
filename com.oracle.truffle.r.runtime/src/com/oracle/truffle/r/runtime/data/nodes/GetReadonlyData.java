@@ -24,10 +24,13 @@ package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 /**
  * Nodes contained in this class return an array that is either directly backing the vector data, or
@@ -72,6 +75,29 @@ public class GetReadonlyData {
 
         public static Int create() {
             return GetReadonlyDataFactory.IntNodeGen.create();
+        }
+    }
+
+    public abstract static class ObjectContent extends Node {
+        public abstract Object[] execute(RAbstractListVector vector);
+
+        @Specialization(guards = "!vec.hasNativeMemoryData()")
+        protected Object[] doManagedRVector(RList vec) {
+            return vec.getInternalManagedData();
+        }
+
+        @Specialization(guards = "vec.hasNativeMemoryData()")
+        protected Object[] doNativeDataRVector(@SuppressWarnings("unused") RList vec) {
+            throw RInternalError.shouldNotReachHere("list cannot have native memory");
+        }
+
+        @Specialization
+        protected Object[] doGeneric(RAbstractListVector vec) {
+            return vec.materialize().getInternalManagedData();
+        }
+
+        public static ObjectContent create() {
+            return GetReadonlyDataFactory.ObjectContentNodeGen.create();
         }
     }
 }
