@@ -1,7 +1,7 @@
 
 # Quick start
 FastR supports a 'managed' mode, in which it does not execute any native code directly, especially code coming from GNU R and packages,
-and tries to avoid other potentially security sensitive code, e.g. instrumentation agents. To enable this mode, clean build and run
+and tries to avoid other potentially security sensitive code. To enable this mode, clean build and run
 FastR with environment variable `FASTR_RFFI` set to `managed`.
 
 # Details
@@ -18,14 +18,9 @@ some R code that ends up trying to call native code, which is again going to fai
 * Set `FastRConfig#InternalGridAwtSupport` to `false` before building FastR. This should remove usages of AWT from FastR's
 bytecode and thus reduce the amount of native code that can be invoked by running arbitrary R code in FastR.
 
-Following option can be useful for improving security when running FastR:
-
-* Set java property *fastr.objectsize.factory.class*  to `com.oracle.truffle.r.runtime.data.SimpleObjectSizeFactory` to avoid
-usage of otherwise more precise `AgentObjectSizeFactory`, which uses instrumentation agent.
-
 Note that boolean FastR options are passed using syntax R:+/-OptionName. Command line to run FastR with all the
 aforementioned options:
 
 ```
-mx --J @'-DR:-LoadPackagesNativeCode -DR:-LoadProfiles -Dfastr.objectsize.factory.class=com.oracle.truffle.r.runtime.data.SimpleObjectSizeFactory -Dfastr.rffi.factory.type=managed' r
+mx --J @'-DR:-LoadPackagesNativeCode -DR:-LoadProfiles -Dfastr.rffi.factory.type=managed' r
 ```

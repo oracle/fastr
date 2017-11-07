@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.library.utils;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
+
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
@@ -29,10 +33,6 @@ import java.io.PrintStream;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.nodes.Node;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
@@ -93,28 +93,6 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
     private static final int PAGE_SIZE = 2000;
     static final int LARGE_VECTOR = 128;
 
-    /**
-     * We ignore nested {@link RTypedValue} instances as these will have been counted already. We
-     * also ignore {@link Node} instances, except in {@link RFunction} objects.
-     */
-    private static class MyIgnoreObjectHandler implements RObjectSize.IgnoreObjectHandler {
-        @Override
-        public boolean ignore(Object rootObject, Object obj) {
-            if (obj == RNull.instance) {
-                return true;
-            } else {
-                Class<?> klass = obj.getClass();
-                if (RTypedValue.class.isAssignableFrom(klass)) {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
-        }
-    }
-
-    static final RObjectSize.IgnoreObjectHandler myIgnoreObjectHandler = new MyIgnoreObjectHandler();
-
     private static final RDataFactory.Listener LISTENER = new RDataFactory.Listener() {
         @Override
         public void reportAllocation(RTypedValue data) {
@@ -132,7 +110,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
             }
             String name = func.getRootNode().getName();
 
-            long size = RObjectSize.getObjectSize(data, myIgnoreObjectHandler);
+            long size = RObjectSize.getObjectSize(data);
             if (data instanceof RAbstractVector && size >= LARGE_VECTOR) {
                 if (size > profmemState.threshold) {
                     profmemState.out().printf("%d: %s\n", size, name);
