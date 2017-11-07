@@ -379,6 +379,7 @@ public final class RError extends RuntimeException implements TruffleException {
         NA_INTRODUCED_COERCION("NAs introduced by coercion"),
         NA_INTRODUCED_COERCION_INT("NAs introduced by coercion to integer range"),
         ARGUMENT_WHICH_NOT_LOGICAL("argument to 'which' is not logical"),
+        X_LONGER_THAN_Y("'%s' is longer than '%s'"),
         X_NUMERIC("'x' must be numeric"),
         X_LIST_ATOMIC("'x' must be a list or atomic vector"),
         X_ARRAY_TWO("'x' must be an array of at least two dimensions"),

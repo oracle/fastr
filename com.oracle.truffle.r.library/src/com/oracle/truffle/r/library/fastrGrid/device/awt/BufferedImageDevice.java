@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
@@ -75,7 +76,8 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
 
     private void saveImage() throws DeviceCloseException {
         try {
-            if (!Files.exists(Paths.get(filename).getParent())) {
+            Path parent = Paths.get(filename).getParent();
+            if (parent != null && !Files.exists(parent)) {
                 // Bug in JDK? when the path contains directory that does not exist, the code throws
                 // NPE and prints out to the standard output (!) stack trace of
                 // FileNotFoundException. We still catch the exception, because this check and
