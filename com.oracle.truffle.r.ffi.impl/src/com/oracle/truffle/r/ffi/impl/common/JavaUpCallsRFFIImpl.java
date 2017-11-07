@@ -48,7 +48,6 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
@@ -70,7 +69,6 @@ import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -791,55 +789,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return result;
     }
 
-    private static final Object processResult(Object value) {
-        if (value instanceof Integer) {
-            int v = (int) value;
-            return RDataFactory.createIntVector(new int[]{v}, RRuntime.isNA(v));
-        } else if (value instanceof Double) {
-            double v = (double) value;
-            return RDataFactory.createDoubleVector(new double[]{v}, RRuntime.isNA(v));
-        } else if (value instanceof Byte) {
-            byte v = (byte) value;
-            return RDataFactory.createLogicalVector(new byte[]{v}, RRuntime.isNA(v));
-        } else if (value instanceof String) {
-            String v = (String) value;
-            return RDataFactory.createStringVector(new String[]{v}, RRuntime.isNA(v));
-        } else {
-            return value;
-        }
-    }
-
     @Override
-    @TruffleBoundary
     public Object Rf_eval(Object expr, Object env) {
-        guaranteeInstanceOf(env, REnvironment.class);
-        Object result;
-        if (expr instanceof RPromise) {
-            result = RContext.getRRuntimeASTAccess().forcePromise(null, expr);
-        } else if (expr instanceof RExpression) {
-            result = RContext.getEngine().eval((RExpression) expr, (REnvironment) env, RCaller.topLevel);
-        } else if (expr instanceof RLanguage) {
-            result = RContext.getEngine().eval((RLanguage) expr, (REnvironment) env, RCaller.topLevel);
-        } else if (expr instanceof RPairList) {
-            RPairList l = (RPairList) expr;
-            RFunction f = (RFunction) l.car();
-            Object args = l.cdr();
-            if (args == RNull.instance) {
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, true, null, new Object[0]);
-            } else {
-                RList argsList = ((RPairList) args).toRList();
-                result = RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : ((REnvironment) env).getFrame(), RCaller.topLevel, true,
-                                ArgumentsSignature.fromNamesAttribute(argsList.getNames()),
-                                argsList.getDataTemp());
-            }
-        } else if (expr instanceof RSymbol) {
-            RSyntaxNode lookup = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) expr).getName(), false);
-            result = RContext.getEngine().eval(RDataFactory.createLanguage(Closure.createLanguageClosure(lookup.asRNode())), (REnvironment) env, RCaller.topLevel);
-        } else {
-            // just return value
-            result = expr;
-        }
-        return processResult(result);
+        throw implementedAsNode();
     }
 
     @Override

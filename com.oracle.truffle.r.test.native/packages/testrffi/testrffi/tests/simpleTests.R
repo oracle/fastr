@@ -92,3 +92,8 @@ for(i in seq(5000)) {
     obj <- preserved_objects[[i]]
     rffi.release_object(obj)
 }
+
+# Note: runif must not be used before this test so that it is still a promise!!!
+# Following code calls Rf_eval with a language object that contains a promise instead of the expected function
+set.seed(42)
+rffi.RfEvalWithPromiseInPairList()

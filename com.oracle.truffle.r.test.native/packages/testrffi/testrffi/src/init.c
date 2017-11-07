@@ -81,6 +81,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_readConnection, 1),
         CALLDEF(test_createNativeConnection, 0),
         CALLDEF(test_ParseVector, 1),
+        CALLDEF(test_RfEvalWithPromiseInPairList, 0),
         {NULL, NULL, 0}
 };
 
