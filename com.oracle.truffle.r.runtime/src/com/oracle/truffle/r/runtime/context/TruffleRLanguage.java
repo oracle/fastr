@@ -31,4 +31,10 @@ public abstract class TruffleRLanguage extends TruffleLanguage<RContext> {
 
     public abstract HashMap<String, RFunction> getBuiltinFunctionCache();
 
+    @Override
+    protected boolean isThreadAccessAllowed(Thread thread, boolean singleThreaded) {
+        // FastR does not support access to a single context from multiple threads, mainly because
+        // it has to maintain thread local variables on the native side.
+        return Thread.currentThread() == thread;
+    }
 }
