@@ -304,7 +304,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    }\n");
         w.append("                    RFFIContext ctx = RContext.getInstance().getStateRFFI();\n");
         if (returnKind != TypeKind.VOID) {
-            w.append("                Object resultRObj;");
+            w.append("                    Object resultRObj;\n");
         }
         w.append("                    ctx.beforeUpcall(" + canRunGc + ");\n");
         w.append("                    try {\n");

@@ -50,6 +50,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
@@ -253,6 +254,7 @@ public interface StdUpCallsRFFI {
     Object R_FindNamespace(Object name);
 
     @RFFIRunGC
+    @RFFIUpCallNode(RfEvalNode.class)
     Object Rf_eval(Object expr, Object env);
 
     Object Rf_findFun(Object symbolObj, Object envObj);

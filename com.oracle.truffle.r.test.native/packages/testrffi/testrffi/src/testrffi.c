@@ -540,3 +540,17 @@ SEXP test_ParseVector(SEXP src) {
     UNPROTECT(2);
     return result;
 }
+
+SEXP test_RfEvalWithPromiseInPairList() {
+    SEXP fun = Rf_findVarInFrame(R_FindNamespace(ScalarString(mkChar("stats"))), Rf_install("runif"));
+    if (TYPEOF(fun) != PROMSXP) {
+        printf("ERROR: Rf_findVarInFrame evaluated the promise!");
+    }
+    SEXP e, ptr;
+    PROTECT(e = Rf_allocVector(LANGSXP, 2));
+    SETCAR(e, fun); ptr = CDR(e);
+    SETCAR(ptr, ScalarInteger(5));
+    SEXP result = Rf_eval(e, R_GlobalEnv);
+    UNPROTECT(1);
+    return result;
+}
