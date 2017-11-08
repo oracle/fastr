@@ -713,6 +713,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Tabulate.class, TabulateNodeGen::create);
         add(TempDir.class, TempDirNodeGen::create);
         add(TempFile.class, TempFileNodeGen::create);
+        add(CharTr.class, CharTr::create);
         add(ToLowerOrUpper.ToLower.class, ToLowerOrUpperFactory.ToLowerNodeGen::create);
         add(ToLowerOrUpper.ToUpper.class, ToLowerOrUpperFactory.ToUpperNodeGen::create);
         add(Traceback.class, TracebackNodeGen::create);
