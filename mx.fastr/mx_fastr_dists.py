@@ -122,10 +122,25 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         with open(rcmd, 'w') as f:
             for line in lines:
                 if line.startswith('R_HOME_DIR='):
-                    f.write('R_HOME_DIR="$(dirname $0)/.."\n')
-                    # produces a canonical path
-                    line = 'R_HOME_DIR="$(unset CDPATH && cd ${R_HOME_DIR} && pwd)"\n'
-                f.write(line)
+                    f.write(
+"""
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ] ; do
+  prev_source="$source"
+  source="$(readlink "$source")";
+  if [[ "$source" != /* ]]; then
+    # if the link was relative, it was relative to where it came from
+    dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
+    source="$dir/$source"
+  fi
+done
+r_bin="$( cd -P "$( dirname "$source" )" && pwd )"
+R_HOME_DIR="$( dirname "$r_bin" )"
+""")
+                elif line.strip() == "#!/bin/sh":
+                    f.write("#!/usr/bin/env bash\n")
+                else:
+                    f.write(line)
         # jar files for the launchers
         jars_dir = join(bin_dir, 'fastr_jars')
         if not os.path.exists(jars_dir):
