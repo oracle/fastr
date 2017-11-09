@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.IllegalFormatException;
 import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -35,6 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -293,14 +295,14 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         }
     }
 
-    private static String format(String fmt, Object... args) {
+    private String format(String fmt, Object... args) {
         char[] conversions = new char[args.length];
         String format = processFormat(fmt, args, conversions);
         adjustValues(args, conversions);
-        return stringFormat(format, args);
+        return stringFormat(format, fmt, args);
     }
 
-    private static String processFormat(String fmt, Object[] args, char[] conversions) {
+    private String processFormat(String fmt, Object[] args, char[] conversions) {
         int i = 0;
         char[] cs = fmt.toCharArray();
         StringBuilder sb = new StringBuilder();
@@ -319,13 +321,23 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
             FormatInfo fi = extractFormatInfo(cs, i, argc);
             argc = fi.argc;
             if (fi.conversion != '%') {
+                if (fi.numArg > conversions.length) {
+                    throw error(Message.TOO_FEW_ARGUMENTS);
+                }
+                Object arg = args[fi.numArg - 1];
+                if (isNA(arg)) {
+                    fi.conversion = 's';
+                    fi.padZero = false;
+                    fi.alwaysSign = false;
+                    args[fi.numArg - 1] = "NA";
+                }
                 // take care of width/precision being defined by args
                 int w = 0;
                 int p = 0;
-                if (fi.width != 0 || fi.widthIsArg) {
+                if (fi.width >= 0 || fi.widthIsArg) {
                     w = fi.widthIsArg ? intValue(args[fi.width - 1]) : fi.width;
                 }
-                if (fi.precision != 0 || fi.precisionIsArg) {
+                if (fi.precision >= 0 || fi.precisionIsArg) {
                     p = fi.precisionIsArg ? intValue(args[fi.precision - 1]) : fi.precision;
                 }
                 // which argument to print
@@ -347,23 +359,34 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
                     sb.append(' ');
                 }
                 // width and precision
-                if (fi.width != 0 || fi.widthIsArg) {
+                if (fi.width >= 0 || fi.widthIsArg) {
                     sb.append(intString(w));
                 }
-                if (fi.precision != 0 || fi.precisionIsArg) {
+                if (fi.precision >= 0 || fi.precisionIsArg) {
                     sb.append('.').append(intString(p));
+                }
+                if (Character.toLowerCase(fi.conversion) == 'g' && arg instanceof Number && !(arg instanceof Double)) {
+                    // Only for g/G type and numeric value other than doubles (including logical)
+                    // the type is converted to 'd', which discards any decimal points even if
+                    // requested by the formatting command. Otherwise method 'adjustValues' takes
+                    // care of converting the value to Double (e.g. for 'f').
+                    fi.conversion = 'd';
                 }
                 conversions[fi.numArg - 1] = fi.conversion;
             }
-            char conversion = fi.conversion;
-            if (conversion == 'g' && args[fi.numArg - 1] instanceof Integer) {
-                conversion = 'd';
-            }
-            sb.append(conversion);
+            sb.append(fi.conversion);
             i = fi.nextChar;
         }
 
         return sb.toString();
+    }
+
+    private static boolean isNA(Object val) {
+        // TODO: not correct for raw value that happens to be logical NA
+        return (val instanceof Integer && RRuntime.isNA((Integer) val)) ||
+                        (val instanceof Double && RRuntime.isNA((Double) val)) ||
+                        (val instanceof String && RRuntime.isNA((String) val)) ||
+                        (val instanceof Byte && RRuntime.isNA((Byte) val));
     }
 
     private static int intValue(Object o) {
@@ -400,23 +423,64 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
     }
 
     @TruffleBoundary
-    private static String stringFormat(String format, Object[] args) {
-        return String.format((Locale) null, format, args);
+    private static String stringFormat(String format, String originalFormat, Object[] args) {
+        try {
+            return String.format((Locale) null, format, args);
+        } catch (IllegalFormatException ex) {
+            String message = String.format("Error in Java format String '%s', R format string was '%s'.", format, originalFormat);
+            throw RInternalError.shouldNotReachHere(ex, message);
+        }
     }
 
-    private static void adjustValues(Object[] args, char[] conversions) {
+    private void adjustValues(Object[] args, char[] conversions) {
         for (int i = 0; i < args.length; i++) {
             if (conversions[i] == 0) {
                 continue;
             }
-            if (conversions[i] == 'd') {
+            boolean wrongConversion = false;
+            char c = conversions[i];
+            char lowerC = Character.toLowerCase(c);
+            if (c == 'd' || c == 'i' || c == 'o' || lowerC == 'x') {
                 if (args[i] instanceof Double) {
-                    args[i] = ((Double) args[i]).intValue();
+                    double doubleVal = (Double) args[i];
+                    if (doubleVal == (int) doubleVal) {
+                        args[i] = (int) doubleVal;
+                    } else {
+                        wrongConversion = false;
+                    }
+                } else if (args[i] instanceof Byte) {
+                    args[i] = ((Byte) args[i]).intValue();
+                }
+            } else if (lowerC == 'f' || lowerC == 'g' || lowerC == 'e' || lowerC == 'a') {
+                if (args[i] instanceof Number) {
+                    args[i] = ((Number) args[i]).doubleValue();
+                } else {
+                    wrongConversion = true;
+                }
+            } else if (conversions[i] == 's') {
+                if (args[i] instanceof Byte) {
+                    // TODO: this will be wrong if the type was actually raw
+                    args[i] = RRuntime.logicalToString((Byte) args[i]);
+                } else if (args[i] instanceof Double) {
+                    double doubleVal = (Double) args[i];
+                    if (doubleVal == (int) doubleVal) {
+                        args[i] = Integer.toString((int) doubleVal);
+                    } else {
+                        args[i] = Double.toString(doubleVal);
+                    }
+                } else {
+                    args[i] = args[i].toString();
                 }
             }
-            if (conversions[i] == 's') {
-                if (args[i] instanceof Byte) {
-                    args[i] = RRuntime.logicalToString((Byte) args[i]);
+            if (wrongConversion) {
+                if (args[i] instanceof Integer) {
+                    throw error(Message.INVALID_FORMAT_INTEGER, conversions[i]);
+                } else if (args[i] instanceof Double) {
+                    throw error(Message.INVALID_FORMAT_DOUBLE, conversions[i]);
+                } else if (args[i] instanceof Byte) {
+                    throw error(Message.INVALID_FORMAT_LOGICAL, conversions[i]);
+                } else if (args[i] instanceof String) {
+                    throw error(Message.INVALID_FORMAT_STRING, conversions[i]);
                 }
             }
         }
@@ -428,8 +492,14 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
 
     private static class FormatInfo {
         char conversion;
-        int width;
-        int precision;
+        /**
+         * If set to non-negative value, gives the desired width.
+         */
+        int width = -1;
+        /**
+         * If set to non-negative value, gives the desired precision.
+         */
+        int precision = -1;
         boolean adjustLeft;
         boolean alwaysSign;
         boolean spacePrefix;
@@ -437,6 +507,9 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         boolean alternate;
         int numArg;
         boolean widthIsArg;
+        /**
+         * Indicates that the precision is not a constant, but determined by some other argument.
+         */
         boolean precisionIsArg;
         int nextChar;
         int argc;

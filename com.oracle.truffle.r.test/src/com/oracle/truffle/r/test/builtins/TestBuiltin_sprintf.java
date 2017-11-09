@@ -24,8 +24,7 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf2() {
-        // FIXME According to docs "a precision of 0 suppresses the decimal point"
-        assertEval(Ignored.ImplementationError, "argv <- list('%1.0f', 3.14159265358979); .Internal(sprintf(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list('%1.0f', 3.14159265358979); .Internal(sprintf(argv[[1]], argv[[2]]))");
     }
 
     @Test
@@ -51,8 +50,7 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf7() {
-        // FIXME NA translated to -1 in output
-        assertEval(Ignored.ImplementationError, "argv <- list('p,L,S = (%2d,%2d,%2d): ', TRUE, FALSE, NA); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list('p,L,S = (%2d,%2d,%2d): ', TRUE, FALSE, NA); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
     }
 
     @Test
@@ -67,8 +65,7 @@ public class TestBuiltin_sprintf extends TestBase {
 
     @Test
     public void testsprintf10() {
-        // FIXME According to docs "a precision of 0 suppresses the decimal point"
-        assertEval(Ignored.ImplementationError, "argv <- list('%.0f%% said yes (out of a sample of size %.0f)', 66.666, 3); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list('%.0f%% said yes (out of a sample of size %.0f)', 66.666, 3); .Internal(sprintf(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -174,5 +171,17 @@ public class TestBuiltin_sprintf extends TestBase {
     @Test
     public void testCornerCases() {
         assertEval(Ignored.ImplementationError, "{ sprintf(c('hello %d %s', 'world %d %s'), list(2, 'x')) }");
+        assertEval("{ sprintf('limited to %d part%s due to %.0f', 3L, 3.3) }");
+    }
+
+    @Test
+    public void testConversions() {
+        assertEval("{ sprintf('limited to %d part%s due to %.0f', 3L, 'a', 3L) }");
+        assertEval(template("{ sprintf('%s', %0) }", new String[]{"1L", "2", "2.2", "TRUE"}));
+        assertEval(template("{ sprintf('%d', %0) }", new String[]{"1L", "2", "2.2", "TRUE"}));
+        assertEval(template("{ sprintf('%f', %0) }", new String[]{"1L", "2", "2.2", "TRUE"}));
+        assertEval("sprintf('%02d', as.integer(NA))");
+        // Note: as.raw may be problematic also in the case of %d, %f, ...
+        assertEval(Ignored.Unimplemented, "{ sprintf('%s', as.raw(1)) }");
     }
 }
