@@ -2704,7 +2704,7 @@ public class RSerialize {
                 switch (pl.getType()) {
                     case BCODESXP:
                         RAbstractListVector list = (RAbstractListVector) pl.cdr();
-                        body = process(list.getDataAtAsObject(0), false, null);
+                        body = process(list.getDataAt(0), false, null);
                         break;
                     case LISTSXP:
                         assert pl.cdr() == RNull.instance || (pl.cadr() == RNull.instance && pl.cddr() == RNull.instance);

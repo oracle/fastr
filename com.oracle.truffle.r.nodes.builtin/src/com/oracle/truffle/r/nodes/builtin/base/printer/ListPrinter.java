@@ -71,7 +71,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         int ns = s.getLength();
         String[] t = new String[ns];
         for (int i = 0; i < ns; i++) {
-            Object tmp = RRuntime.convertScalarVectors(s.getDataAtAsObject(i));
+            Object tmp = RRuntime.convertScalarVectors(s.getDataAt(i));
             final String pbuf;
             if (tmp == null || tmp == RNull.instance) {
                 pbuf = RRuntime.NULL;
@@ -154,7 +154,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
     }
 
     @TruffleBoundary
-    static void printNoDimList(RAbstractContainer s, PrintContext printCtx) throws IOException {
+    static void printNoDimList(RAbstractListVector s, PrintContext printCtx) throws IOException {
         final PrintParameters pp = printCtx.parameters();
         final PrintWriter out = printCtx.output();
 
@@ -208,7 +208,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 }
 
                 out.println(tagbuf);
-                Object si = s.getDataAtAsObject(i);
+                Object si = s.getDataAt(i);
                 if (si instanceof RAttributable && ((RAttributable) si).isObject()) {
                     RContext.getEngine().printResult(si);
                 } else {

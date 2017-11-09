@@ -196,7 +196,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         int[] result = new int[length];
         boolean seenNA = false;
         for (int i = 0; i < length; i++) {
-            Object entry = list.getDataAtAsObject(i);
+            Object entry = list.getDataAt(i);
             if (entry instanceof RList) {
                 result[i] = RRuntime.INT_NA;
                 seenNA = true;

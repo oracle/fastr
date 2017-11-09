@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -172,21 +173,21 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
         Object recursiveLeft = left;
         if (isRAbstractListVector(left)) {
-            recursiveLeft = castListToAtomic(left, cast, right.getRType());
+            recursiveLeft = castListToAtomic((RAbstractListBaseVector) left, cast, right.getRType());
         }
         Object recursiveRight = right;
         if (isRAbstractListVector(right)) {
-            recursiveRight = castListToAtomic(right, cast, left.getRType());
+            recursiveRight = castListToAtomic((RAbstractListBaseVector) right, cast, left.getRType());
         }
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
 
     @TruffleBoundary
-    private static Object castListToAtomic(RAbstractVector source, CastTypeNode cast, RType type) {
+    private static Object castListToAtomic(RAbstractListBaseVector source, CastTypeNode cast, RType type) {
         RVector<?> result = type.create(source.getLength(), false);
         Object store = result.getInternalStore();
         for (int i = 0; i < source.getLength(); i++) {
-            Object value = source.getDataAtAsObject(i);
+            Object value = source.getDataAt(i);
             if (type == RType.Character) {
                 value = RDeparse.deparse(value);
                 ((RStringVector) result).setDataAt(store, i, (String) value);

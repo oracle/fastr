@@ -25,11 +25,8 @@ package com.oracle.truffle.r.runtime.data.model;
 public interface RAbstractListBaseVector extends RAbstractVector {
 
     @Override
-    Object getDataAtAsObject(int index);
-
-    @Override
     default Object getDataAtAsObject(Object store, int i) {
-        return getDataAtAsObject(i);
+        return getDataAt(i);
     }
 
     Object getDataAt(int index);
