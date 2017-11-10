@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -21,6 +21,8 @@
  * questions.
  */
 package com.oracle.truffle.r.test.builtins;
+
+import static com.oracle.truffle.r.test.builtins.TestBuiltin_sysparent.SYS_PARENT_SETUP;
 
 import org.junit.Test;
 
@@ -51,5 +53,10 @@ public class TestBuiltin_parentframe extends TestBase {
     public void testParentFramePromises() {
         assertEval("{ f <- function(frame) frame; g <- function() f(parent.frame()); g() }");
         assertEval("{ f <- function(frame) frame; g <- function() f(parent.frame(3)); g() }");
+    }
+
+    @Test
+    public void frameAccessCommonTest() {
+        assertEval("{ foo <- function(x) sapply(1:7, function(fr) sort(tolower(ls(parent.frame(fr)))));" + SYS_PARENT_SETUP + "}");
     }
 }

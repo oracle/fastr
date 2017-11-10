@@ -149,5 +149,6 @@ public class TestBuiltin_sort extends TestBase {
         assertEval("{ .Internal(qsort(list(1), F)) }");
         assertEval("{ .Internal(qsort(1, F)) }");
         assertEval("{ .Internal(qsort(c(1), F)) }");
+        assertEval(Ignored.ImplementationError, "sort(c('FUN', 'simplify', 'USENAMES', 'X'))");
     }
 }

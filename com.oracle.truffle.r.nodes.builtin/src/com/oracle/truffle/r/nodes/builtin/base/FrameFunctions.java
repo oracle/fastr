@@ -541,7 +541,11 @@ public class FrameFunctions {
         @Specialization
         protected int sysParent(VirtualFrame frame, int n) {
             RCaller call = RArguments.getCall(frame);
-            for (int i = 0; i < n + 1; i++) {
+            int i = 0;
+            while (i < n + 1) {
+                if (call.hasInternalParent()) {
+                    i--;    // in this loop iteration, we deal with the parent, but do not count it
+                }
                 call = call.getParent();
                 if (call == null) {
                     nullCallerProfile.enter();
@@ -551,6 +555,7 @@ public class FrameFunctions {
                     promiseProfile.enter();
                     call = call.getParent();
                 }
+                i++;
             }
             nonNullCallerProfile.enter();
             return call.getDepth();
@@ -609,7 +614,11 @@ public class FrameFunctions {
                     public int[] apply(Frame f) {
                         RCaller currentCall = RArguments.getCall(f);
                         if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
-                            result[currentCall.getDepth() - 1] = currentCall.getParent().getDepth();
+                            int currentCallIdx = currentCall.getDepth() - 1;
+                            while (currentCall != null && (currentCall.hasInternalParent() || currentCall.isPromise())) {
+                                currentCall = currentCall.getParent();
+                            }
+                            result[currentCallIdx] = currentCall == null ? 0 : currentCall.getParent().getDepth();
                         }
                         return RArguments.getDepth(f) == 1 ? result : null;
                     }

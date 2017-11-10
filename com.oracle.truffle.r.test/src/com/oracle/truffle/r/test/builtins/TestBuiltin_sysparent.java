@@ -17,6 +17,15 @@ import com.oracle.truffle.r.test.TestBase;
 // Checkstyle: stop line length check
 public class TestBuiltin_sysparent extends TestBase {
 
+    /**
+     * This is common test case used to test all the frame access related built-ins.
+     */
+    public static final String SYS_PARENT_SETUP = "bar <- function(ba) do.call(foo, list(ba));" +
+                    "boo <- function(bo) bar(bo);" +
+                    "callboo <- function(cb) do.call('boo', list(cb));" +
+                    "fun <- function(f) callboo(f);" +
+                    "fun(42);";
+
     @Test
     public void testsysparent1() {
         assertEval("argv <- list(2); .Internal(sys.parent(argv[[1]]))");
@@ -42,5 +51,10 @@ public class TestBuiltin_sysparent extends TestBase {
         // f is not on the stack because z=u() is being evaluated eagerly and not inside f
         assertEval(Ignored.ImplementationError, "{ v <- function() sys.parent() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
         assertEval("{ f <- function(x) { print(sys.parent()); x }; g <- function(x) f(x); m <- function() g(g(sys.parent())); callm <- function() m(); callm() }");
+    }
+
+    @Test
+    public void frameAccessCommonTest() {
+        assertEval("{ foo <- function(x) sapply(1:7, function(i) sys.parent(i)); " + SYS_PARENT_SETUP + "}");
     }
 }
