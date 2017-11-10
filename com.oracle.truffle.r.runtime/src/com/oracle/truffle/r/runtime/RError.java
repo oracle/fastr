@@ -635,6 +635,7 @@ public final class RError extends RuntimeException implements TruffleException {
         POS_NOT_ALLOWED_WITH_NUMERIC("pos argument not allowed with a numeric value"),
         OBJ_CANNOT_BE_ATTRIBUTED("external object cannot be attributed"),
         CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR("no method for coercing this external object to a %s"),
+        NO_METHOD_ASSIGNING_SUBSET_S4("no method for assigning subsets of this S4 class"),
         CANNOT_COERCE_S4_TO_VECTOR("no method for coercing this S4 class to a vector"),
         // the following list is incomplete (but like GNU-R)
         INVALID_FORMAT_DOUBLE("invalid format '%s'; use format %%f, %%e, %%g or %%a for numeric objects"),
@@ -723,6 +724,7 @@ public final class RError extends RuntimeException implements TruffleException {
         RNG_SYMBOL("%s not found in user rng library"),
         CUMMAX_UNDEFINED_FOR_COMPLEX("'cummax' not defined for complex numbers"),
         CUMMIN_UNDEFINED_FOR_COMPLEX("'cummin' not defined for complex numbers"),
+        OP_NOT_DEFINED_FOR_S4_CLASS("%s operator not defined for this S4 class"),
         NMAX_LESS_THAN_ONE("'nmax' must be positive"),
         CHAR_VEC_ARGUMENT("a character vector argument expected"),
         QUOTE_G_ONE("only the first character of 'quote' will be used"),

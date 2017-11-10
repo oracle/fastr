@@ -187,4 +187,12 @@ public class TestS4 extends TestRBase {
         assertEval("makeActiveBinding('someSymbol10', function(x) { if(missing(x)) print('get0') else print('set0'); NULL }, .GlobalEnv); someSymbol10; someSymbol10 <- 1; makeActiveBinding('someSymbol10', function(x) { if(missing(x)) print('get1') else print('set1'); NULL }, .GlobalEnv); someSymbol10; someSymbol10 <- 1");
         assertEval("makeActiveBinding('var_a', function(x) { if(missing(x)) { print('get'); return(123) } else { print('set'); return(x) } }, .GlobalEnv); inherits(var_a, 'numeric')");
     }
+
+    @Test
+    public void testRegularFieldAssign() {
+        assertEval(Output.IgnoreErrorContext, "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); obj$fld2 <- 'value'; }");
+        assertEval(Output.IgnoreErrorContext, "{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); obj$fld2; }");
+        assertEval("{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.Data') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.Data')), obj$fld2); }");
+        assertEval("{ setClass('TestS4CornerCases', representation(fld = 'character'));  obj <- new('TestS4CornerCases', fld = 'xyz'); attr(obj, '.xData') <- new.env(); obj$fld2 <- 'value'; list(obj, as.list(attr(obj, '.xData')), obj$fld2); }");
+    }
 }

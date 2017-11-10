@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -89,6 +90,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @Child private ExtractDimNamesNode extractDimNames;
 
+    @Child private ExtractS4ObjectNode extractS4ObjectNode;
+
     private final ConditionProfile resultHasDimensions = ConditionProfile.createBinaryProfile();
     private final ConditionProfile promiseInEnvironment = ConditionProfile.createBinaryProfile();
 
@@ -109,7 +112,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.exact = logicalAsBoolean(exact, DEFAULT_EXACT);
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
-        if (error == null && vectorType != RType.Null && vectorType != RType.Environment) {
+        if (error == null && vectorType != RType.Null && vectorType != RType.Environment && vectorType != RType.S4Object) {
             this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false, false);
         }
     }
@@ -148,6 +151,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                  * later.
                  */
                 return doEnvironment((REnvironment) castVector, positions);
+            case S4Object:
+                return doS4Object((RS4Object) castVector, positions);
             case Integer:
                 vector = (RAbstractContainer) castVector;
                 break;
@@ -266,6 +271,14 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             return obj == null ? RNull.instance : obj;
         }
         throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);
+    }
+
+    private Object doS4Object(RS4Object object, Object[] positions) {
+        if (extractS4ObjectNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            extractS4ObjectNode = insert(new ExtractS4ObjectNode(mode, exact, dropDimensions));
+        }
+        return extractS4ObjectNode.execute(object, positions);
     }
 
     private boolean isMissingSingleDimension() {

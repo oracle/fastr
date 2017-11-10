@@ -373,7 +373,7 @@ abstract class WriteIndexedVectorNode extends Node {
             case List:
                 return new WriteListAction(setListElementAsObject, isReplace);
             default:
-                throw RInternalError.shouldNotReachHere();
+                throw RInternalError.shouldNotReachHere("WriteIndexedScalarNode for " + type);
         }
     }
 
