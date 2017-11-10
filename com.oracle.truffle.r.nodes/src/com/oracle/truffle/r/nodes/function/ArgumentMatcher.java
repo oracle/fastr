@@ -604,7 +604,8 @@ public class ArgumentMatcher {
                     }
                     if (!matchedSuppliedArgs[suppliedIndex]) {
                         String suppliedName = signature.getName(suppliedIndex);
-                        if (suppliedName == null || suppliedName.isEmpty() || formalSignature.getName(formalIndex).isEmpty()) {
+                        String formalName = formalSignature.getName(formalIndex);
+                        if (suppliedName == null || suppliedName.isEmpty() || formalName == null || formalName.isEmpty()) {
                             // unnamed parameter, match by position
                             break;
                         }
@@ -732,6 +733,10 @@ public class ArgumentMatcher {
 
     /**
      * Searches for partial match of suppliedName inside formalNames and returns its (formal) index.
+     * If there are no varagrs and no match is found for given named actual argument, then this
+     * method raises "unused argument" error. However, if there are any null formal arguments, which
+     * may only happen in the case of builtins, then we let the argument matching proceed to
+     * positional matching. This situation may happen in S4 dispatch to a builtin, e.g. {@code $<-}.
      *
      * @return The position of the given suppliedName inside the formalNames. Throws errors if the
      *         argument has been matched before
@@ -739,6 +744,7 @@ public class ArgumentMatcher {
     private static <T> int findParameterPositionByPartialName(ArgumentsSignature formalsSignature, boolean[] formalsMatchedByExactName, String suppliedName, int[] resultPermutation, int suppliedIndex,
                     boolean hasVarArgs, RBaseNode callingNode, int varArgIndex, IntFunction<String> errorString) {
         assert suppliedName != null && !suppliedName.isEmpty();
+        boolean hasNullFormal = false;
         int found = MatchPermutation.UNMATCHED;
         for (int i = 0; i < formalsSignature.getLength(); i++) {
             if (formalsMatchedByExactName[i]) {
@@ -747,6 +753,7 @@ public class ArgumentMatcher {
             }
 
             String formalName = formalsSignature.getName(i);
+            hasNullFormal |= formalName == null;
             if (formalName != null) {
                 if (formalName.startsWith(suppliedName) && ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
                     // partial-match only if the formal argument is positioned before ...
@@ -760,7 +767,7 @@ public class ArgumentMatcher {
                 }
             }
         }
-        if (found >= 0 || hasVarArgs) {
+        if (found >= 0 || hasVarArgs || hasNullFormal) {
             return found;
         }
         throw callingNode.error(RError.Message.UNUSED_ARGUMENT, errorString.apply(suppliedIndex));
