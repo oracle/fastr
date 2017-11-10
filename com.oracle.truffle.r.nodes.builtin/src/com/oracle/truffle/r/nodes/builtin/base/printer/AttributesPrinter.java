@@ -73,7 +73,7 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
                     continue;
                 }
             }
-            if (RRuntime.R_COMMENT.equals(a.getName()) || RRuntime.R_SOURCE.equals(a.getName()) ||
+            if (RRuntime.COMMENT_ATTR_KEY.equals(a.getName()) || RRuntime.R_SOURCE.equals(a.getName()) ||
                             RRuntime.R_SRCREF.equals(a.getName()) || RRuntime.R_WHOLE_SRCREF.equals(a.getName()) ||
                             RRuntime.R_SRCFILE.equals(a.getName())) {
                 continue;

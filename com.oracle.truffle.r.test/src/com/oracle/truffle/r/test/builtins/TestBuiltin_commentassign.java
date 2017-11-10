@@ -19,20 +19,21 @@ public class TestBuiltin_commentassign extends TestBase {
 
     @Test
     public void testcommentassign1() {
-        // FIXME FastR output: Error: there is no .Internal function 'comment<-'
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(structure(1:12, .Dim = 3:4, comment = c('This is my very important data from experiment #0234', 'Jun 5, 1998')), c('This is my very important data from experiment #0234', 'Jun 5, 1998')); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(structure(1:12, .Dim = 3:4, comment = c('This is my very important data from experiment #0234', 'Jun 5, 1998')), c('This is my very important data from experiment #0234', 'Jun 5, 1998')); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testcommentassign2() {
-        // FIXME FastR output: Error: there is no .Internal function 'comment<-'
-        assertEval(Ignored.ImplementationError, "argv <- list(character(0), NULL); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(character(0), NULL); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testcommentassign3() {
-        // FIXME FastR output: Error: there is no .Internal function 'comment<-'
-        assertEval(Ignored.ImplementationError, "argv <- list(logical(0), NULL); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(logical(0), NULL); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testCommentAssign() {
+        assertEval("{ x <- matrix(1:12, 3, 4); comment(x) <- c('This is my very important data from experiment #0234', 'Jun 5, 1998'); print(x); comment(x) }");
     }
 }

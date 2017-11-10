@@ -288,6 +288,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ColSums.class, ColSumsNodeGen::create);
         add(Combine.class, CombineNodeGen::create);
         add(CommandArgs.class, CommandArgsNodeGen::create);
+        add(Comment.class, CommentNodeGen::create);
         add(Complex.class, ComplexNodeGen::create);
         add(CompileFunctions.CompilePKGS.class, CompileFunctionsFactory.CompilePKGSNodeGen::create);
         add(CompileFunctions.EnableJIT.class, CompileFunctionsFactory.EnableJITNodeGen::create);
@@ -731,6 +732,7 @@ public class BasePackage extends RBuiltinPackage {
         add(UpdateAttr.class, UpdateAttrNodeGen::create);
         add(UpdateAttributes.class, UpdateAttributesNodeGen::create);
         add(UpdateClass.class, UpdateClassNodeGen::create);
+        add(UpdateComment.class, UpdateCommentNodeGen::create);
         add(UpdateDim.class, UpdateDimNodeGen::create);
         add(UpdateDimNames.class, UpdateDimNamesNodeGen::create);
         add(Utf8ToInt.class, Utf8ToIntNodeGen::create);
