@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import static com.oracle.truffle.r.test.builtins.TestBuiltin_sysparent.SYS_PARENT_SETUP;
+
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -53,5 +55,12 @@ public class TestBuiltin_syscall extends TestBase {
 
         // whitespace in formatting of deparsed function
         assertEval(Output.IgnoreWhitespace, "{ x<-(function(f) f())(function() sys.call(1)); list(x[[1]], x[[2]][[1]], x[[2]][[2]], x[[2]][[3]]) }");
+    }
+
+    @Test
+    public void frameAccessCommonTest() {
+        // Note: we remove 4 and 7 from the result only due to different formatting. Code
+        // sys.call(4) and sys.call(7) is still executed.
+        assertEval("{ foo <- function(x) lapply(1:7, function(i) sys.call(i))[c(-4,-7)];" + SYS_PARENT_SETUP + "}");
     }
 }

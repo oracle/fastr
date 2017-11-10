@@ -10,6 +10,8 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
+import static com.oracle.truffle.r.test.builtins.TestBuiltin_sysparent.SYS_PARENT_SETUP;
+
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -25,5 +27,10 @@ public class TestBuiltin_sysparents extends TestBase {
         assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parents()) g(z) ; h() }");
 
         assertEval(Ignored.ImplementationError, "{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void frameAccessCommonTest() {
+        assertEval("{ foo <- function(x) sys.parents();" + SYS_PARENT_SETUP + "}");
     }
 }
