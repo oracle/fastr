@@ -886,6 +886,8 @@ public class FastRInterop {
 
         @Specialization
         public Object invoke(TruffleObject obj, String what, RAbstractListVector args,
+                        @Cached("create()") Foreign2R foreign2R,
+                        @Cached("create()") R2Foreign r2Foreign,
                         @Cached("createInvoke(args.getLength())") Node invokeNode) {
 
             if (getDataNode == null) {
@@ -893,8 +895,11 @@ public class FastRInterop {
             }
 
             Object[] argValues = getDataNode.execute(args);
+            for (int i = 0; i < argValues.length; i++) {
+                argValues[i] = r2Foreign.execute(argValues[i]);
+            }
             try {
-                return ForeignAccess.sendInvoke(invokeNode, obj, what, argValues);
+                return foreign2R.execute(ForeignAccess.sendInvoke(invokeNode, obj, what, argValues));
             } catch (UnsupportedTypeException e) {
                 throw error(RError.Message.GENERIC, "Invalid argument types provided");
             } catch (ArityException e) {
