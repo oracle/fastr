@@ -78,7 +78,7 @@ public class GetReadonlyData {
         }
     }
 
-    public abstract static class ObjectContent extends Node {
+    public abstract static class ListData extends Node {
         public abstract Object[] execute(RAbstractListVector vector);
 
         @Specialization(guards = "!vec.hasNativeMemoryData()")
@@ -96,8 +96,8 @@ public class GetReadonlyData {
             return vec.materialize().getInternalManagedData();
         }
 
-        public static ObjectContent create() {
-            return GetReadonlyDataFactory.ObjectContentNodeGen.create();
+        public static ListData create() {
+            return GetReadonlyDataFactory.ListDataNodeGen.create();
         }
     }
 }

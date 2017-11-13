@@ -878,7 +878,7 @@ public class FastRInterop {
             casts.arg("args").mustBe(RAbstractListVector.class, RError.Message.GENERIC, "third argument must be a list");
         }
 
-        @Child private GetReadonlyData.ObjectContent getDataNode;
+        @Child private GetReadonlyData.ListData getDataNode;
 
         protected Node createInvoke(int nargs) {
             return Message.createInvoke(nargs).createNode();
@@ -891,7 +891,7 @@ public class FastRInterop {
                         @Cached("createInvoke(args.getLength())") Node invokeNode) {
 
             if (getDataNode == null) {
-                getDataNode = insert(GetReadonlyData.ObjectContent.create());
+                getDataNode = insert(GetReadonlyData.ListData.create());
             }
 
             Object[] argValues = getDataNode.execute(args);
