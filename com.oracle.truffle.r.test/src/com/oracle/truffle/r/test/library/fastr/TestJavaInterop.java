@@ -1363,7 +1363,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listStringInt)", "c('1', '3')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listChar)", "c('a', 'c')");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("min(x, na.rm = na.rm)", "invalid 'type' (list) of argument"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("range(to)", "invalid 'type' (external object) of argument"));
     }
 
     private String getRValue(Object value) {
