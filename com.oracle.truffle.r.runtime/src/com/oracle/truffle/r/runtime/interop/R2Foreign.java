@@ -84,7 +84,7 @@ public abstract class R2Foreign extends RBaseNode {
 
     @Specialization(guards = "vec.getLength() == 1")
     public byte doRawVector(RAbstractRawVector vec) {
-        return vec.getDataAt(0).getValue();
+        return vec.getRawDataAt(0);
     }
 
     @Specialization(guards = "vec.getLength() == 1")

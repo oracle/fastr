@@ -1023,7 +1023,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     private static int unlistValueInt(Object dataAtAsObject) {
         if (dataAtAsObject instanceof RRaw) {
             RRaw rRaw = (RRaw) dataAtAsObject;
-            return RRuntime.raw2int(rRaw);
+            return RRuntime.raw2int(rRaw.getValue());
         } else if (dataAtAsObject instanceof Byte) {
             return RRuntime.logical2int((byte) dataAtAsObject);
         } else {
@@ -1034,7 +1034,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     private static byte unlistValueLogical(Object dataAtAsObject) {
         if (dataAtAsObject instanceof RRaw) {
             RRaw rRaw = (RRaw) dataAtAsObject;
-            return RRuntime.raw2logical(rRaw);
+            return RRuntime.raw2logical(rRaw.getValue());
         } else {
             return (byte) dataAtAsObject;
         }

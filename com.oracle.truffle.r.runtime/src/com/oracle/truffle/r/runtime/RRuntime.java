@@ -332,23 +332,19 @@ public class RRuntime {
 
     // conversions from raw
 
-    public static byte raw2logical(RRaw value) {
-        return value.getValue() == 0 ? LOGICAL_FALSE : LOGICAL_TRUE;
-    }
-
-    public static int raw2int(RRaw value) {
-        return raw2int(value.getValue());
+    public static byte raw2logical(byte value) {
+        return value == 0 ? LOGICAL_FALSE : LOGICAL_TRUE;
     }
 
     public static int raw2int(byte value) {
         return value & 0xFF;
     }
 
-    public static double raw2double(RRaw value) {
-        return int2double(value.getValue() & 0xFF);
+    public static double raw2double(byte value) {
+        return int2double(value & 0xFF);
     }
 
-    public static RComplex raw2complex(RRaw r) {
+    public static RComplex raw2complex(byte r) {
         return int2complex(raw2int(r));
     }
 
@@ -357,7 +353,7 @@ public class RRuntime {
     }
 
     @TruffleBoundary
-    public static String rawToString(RRaw operand) {
+    public static String rawToString(byte operand) {
         return intToString(raw2int(operand));
     }
 

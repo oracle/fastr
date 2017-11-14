@@ -114,7 +114,7 @@ public abstract class ToStringNode extends RBaseNode {
     @SuppressWarnings("unused")
     @Specialization
     protected String toString(RRaw raw, boolean quotes, String separator) {
-        return raw.toString();
+        return RRuntime.rawToHexString(raw.getValue());
     }
 
     @SuppressWarnings("unused")
@@ -201,7 +201,7 @@ public abstract class ToStringNode extends RBaseNode {
     @Specialization
     @TruffleBoundary
     protected String toString(RAbstractRawVector vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "raw(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
+        return createResultForVector(vector, quotes, separator, "raw(0)", (index, q, s) -> RRuntime.rawToHexString(vector.getRawDataAt(index)));
     }
 
     @Specialization

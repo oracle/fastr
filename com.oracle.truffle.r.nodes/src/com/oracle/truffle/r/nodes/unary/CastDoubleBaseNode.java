@@ -113,6 +113,6 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
 
     @Specialization
     protected double doRaw(RRaw operand) {
-        return RRuntime.raw2double(operand);
+        return RRuntime.raw2double(operand.getValue());
     }
 }

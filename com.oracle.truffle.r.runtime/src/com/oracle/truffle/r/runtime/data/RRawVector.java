@@ -88,11 +88,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    public RRaw getDataAt(int index) {
-        return RDataFactory.createRaw(NativeDataAccess.getData(this, data, index));
-    }
-
-    @Override
     public byte getRawDataAt(int index) {
         return NativeDataAccess.getData(this, data, index);
     }
@@ -125,7 +120,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     public String toString() {
-        return toString(i -> RRuntime.rawToString(getDataAt(i)));
+        return toString(i -> RRuntime.rawToString(getRawDataAt(i)));
     }
 
     @Override
@@ -197,11 +192,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     @Override
     public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         NativeDataAccess.setData(this, data, toIndex, ((RAbstractRawVector) fromVector).getRawDataAt(fromIndex));
-    }
-
-    @Override
-    public Object getDataAtAsObject(int index) {
-        return getDataAt(index);
     }
 
     public long allocateNativeContents() {

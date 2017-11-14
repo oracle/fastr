@@ -271,7 +271,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                 collectResults[resultIndex] = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
                 collect = collectResults[resultIndex];
             }
-            collect[collectResultSize[resultIndex]++] = x.getDataAt(i).getValue();
+            collect[collectResultSize[resultIndex]++] = x.getRawDataAt(i);
         }
 
         Object[] results = new Object[nLevels];

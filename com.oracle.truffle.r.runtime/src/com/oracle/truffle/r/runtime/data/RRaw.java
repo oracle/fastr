@@ -26,7 +26,6 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -56,7 +55,7 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
             case Complex:
                 return RComplex.valueOf(value, 0.0);
             case Character:
-                return RString.valueOf(RRuntime.rawToString(this));
+                return RString.valueOf(RRuntime.rawToString(value));
             default:
                 return null;
         }
@@ -73,12 +72,6 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
     public byte getRawDataAt(int index) {
         assert index == 0;
         return value;
-    }
-
-    @Override
-    public RRaw getDataAt(int index) {
-        assert index == 0;
-        return this;
     }
 
     public byte getValue() {
@@ -100,7 +93,7 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
 
     @Override
     public String toString() {
-        return Utils.stringFormat("%02x", value);
+        return RRuntime.rawToHexString(value);
     }
 
     public static RRaw valueOf(byte value) {

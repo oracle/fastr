@@ -36,7 +36,6 @@ import com.oracle.truffle.r.nodes.builtin.base.Order.CmpNode;
 import com.oracle.truffle.r.nodes.builtin.base.OrderNodeGen.CmpNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -122,15 +121,15 @@ public abstract class IsUnsorted extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected byte isUnsorted(RAbstractRawVector x, boolean strictly) {
-        RRaw last = x.getDataAt(0);
+        byte last = x.getRawDataAt(0);
         for (int k = 1; k < x.getLength(); k++) {
-            RRaw current = x.getDataAt(k);
+            byte current = x.getRawDataAt(k);
             if (strictlyProfile.profile(strictly)) {
-                if (ge.applyRaw(last.getValue(), current.getValue()) == RRuntime.LOGICAL_TRUE) {
+                if (ge.applyRaw(last, current) == RRuntime.LOGICAL_TRUE) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             } else {
-                if (gt.applyRaw(last.getValue(), current.getValue()) == RRuntime.LOGICAL_TRUE) {
+                if (gt.applyRaw(last, current) == RRuntime.LOGICAL_TRUE) {
                     return RRuntime.LOGICAL_TRUE;
                 }
             }

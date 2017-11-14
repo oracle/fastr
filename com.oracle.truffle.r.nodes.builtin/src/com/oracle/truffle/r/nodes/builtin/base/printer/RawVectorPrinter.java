@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 
 final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
@@ -59,11 +60,15 @@ final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
         @Override
         @TruffleBoundary
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            String rs = vector.getDataAt(i).toString();
-            int gap = fm.maxWidth - 2;
-            String fmt = "%" + Utils.asBlankArg(gap) + "s%s";
-            String s = String.format(fmt, "", rs);
-            printCtx.output().print(s);
+            String rs = RRuntime.rawToHexString(vector.getRawDataAt(i));
+            if (fm.maxWidth > 2) {
+                StringBuilder str = new StringBuilder(fm.maxWidth);
+                for (int j = 2; j < fm.maxWidth; j++) {
+                    str.append(' ');
+                }
+                rs = str.append(rs).toString();
+            }
+            printCtx.output().print(rs);
         }
 
         @Override

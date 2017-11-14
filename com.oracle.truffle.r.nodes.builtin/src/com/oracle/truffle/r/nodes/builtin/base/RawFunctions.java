@@ -87,14 +87,14 @@ public class RawFunctions {
             if (multiple) {
                 String[] data = new String[x.getLength()];
                 for (int i = 0; i < data.length; i++) {
-                    data[i] = new String(new byte[]{x.getDataAt(i).getValue()});
+                    data[i] = new String(new byte[]{x.getRawDataAt(i)});
                 }
                 result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             } else {
                 int j = 0;
                 byte[] data = new byte[x.getLength()];
                 for (int i = 0; i < data.length; i++) {
-                    byte b = x.getDataAt(i).getValue();
+                    byte b = x.getRawDataAt(i);
                     if (b != 0) {
                         data[j++] = b;
                     }
@@ -120,11 +120,11 @@ public class RawFunctions {
             byte[] data = new byte[x.getLength()];
             if (negativeShiftProfile.profile(n < 0)) {
                 for (int i = 0; i < data.length; i++) {
-                    data[i] = (byte) ((x.getDataAt(i).getValue() & 0xff) >> (-n));
+                    data[i] = (byte) ((x.getRawDataAt(i) & 0xff) >> (-n));
                 }
             } else {
                 for (int i = 0; i < data.length; i++) {
-                    data[i] = (byte) (x.getDataAt(i).getValue() << n);
+                    data[i] = (byte) (x.getRawDataAt(i) << n);
                 }
             }
             return RDataFactory.createRawVector(data);

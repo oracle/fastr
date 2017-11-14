@@ -141,7 +141,7 @@ public abstract class RepeatLength extends RBuiltinNode.Arg2 {
     protected RRawVector repLen(RRawVector value, int length) {
         byte[] array = new byte[length];
         for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j).getValue();
+            array[i] = value.getRawDataAt(j);
         }
         return RDataFactory.createRawVector(array);
     }

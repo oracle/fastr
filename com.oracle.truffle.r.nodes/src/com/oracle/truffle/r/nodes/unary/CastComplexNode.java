@@ -217,7 +217,7 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     @Specialization
     protected RComplexVector doRawVector(RRawVector operand) {
-        return createResultVector(operand, index -> RDataFactory.createComplex(operand.getDataAt(index).getValue(), 0));
+        return createResultVector(operand, index -> RDataFactory.createComplex(operand.getRawDataAt(index), 0));
     }
 
     @Specialization

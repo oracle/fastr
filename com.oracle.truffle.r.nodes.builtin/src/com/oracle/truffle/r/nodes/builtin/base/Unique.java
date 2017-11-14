@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.BitSet;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -51,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -453,28 +453,19 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, int nmax) {
+    protected RRawVector doUnique(RAbstractRawVector vec, byte incomparables, byte fromLast, int nmax,
+                    @Cached("createBinaryProfile()") ConditionProfile needsCopyProfile) {
         reportWork(vec.getLength());
-        if (bigProfile.profile(vec.getLength() * (long) vec.getLength() > BIG_THRESHOLD)) {
-            NonRecursiveHashSet<RRaw> set = new NonRecursiveHashSet<>(vec.getLength());
-            byte[] data = new byte[vec.getLength()];
-            int ind = 0;
-            for (int i = 0; i < vec.getLength(); i++) {
-                RRaw val = vec.getDataAt(i);
-                if (!set.add(val)) {
-                    data[ind++] = val.getValue();
-                }
+        BitSet bitset = new BitSet(256);
+        byte[] data = new byte[vec.getLength()];
+        int ind = 0;
+        for (int i = 0; i < vec.getLength(); i++) {
+            byte val = vec.getRawDataAt(i);
+            if (!bitset.get(val)) {
+                bitset.set(val);
+                data[ind++] = val;
             }
-            return RDataFactory.createRawVector(Arrays.copyOf(data, ind));
-        } else {
-            ByteArray dataList = new ByteArray(vec.getLength());
-            for (int i = 0; i < vec.getLength(); i++) {
-                byte val = vec.getDataAt(i).getValue();
-                if (!dataList.contains(val)) {
-                    dataList.add(val);
-                }
-            }
-            return RDataFactory.createRawVector(dataList.toArray());
         }
+        return RDataFactory.createRawVector(needsCopyProfile.profile(ind == vec.getLength()) ? data : Arrays.copyOf(data, ind));
     }
 }

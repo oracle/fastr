@@ -1147,8 +1147,7 @@ public abstract class ConnectionFunctions {
             int length = object.getLength();
             ByteBuffer buffer = allocate(length, swap);
             for (int i = 0; i < length; i++) {
-                RRaw value = object.getDataAt(i);
-                buffer.put(value.getValue());
+                buffer.put(object.getRawDataAt(i));
             }
             return buffer;
         }

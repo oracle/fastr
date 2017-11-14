@@ -199,6 +199,6 @@ final class RRawToComplexVectorClosure extends RToComplexVectorClosure implement
 
     @Override
     public RComplex getDataAt(int index) {
-        return RRuntime.raw2complex(vector.getDataAt(index));
+        return RRuntime.raw2complex(vector.getRawDataAt(index));
     }
 }

@@ -161,6 +161,6 @@ final class RRawToDoubleVectorClosure extends RToDoubleVectorClosure implements 
 
     @Override
     public double getDataAt(int index) {
-        return RRuntime.raw2double(vector.getDataAt(index));
+        return RRuntime.raw2double(vector.getRawDataAt(index));
     }
 }

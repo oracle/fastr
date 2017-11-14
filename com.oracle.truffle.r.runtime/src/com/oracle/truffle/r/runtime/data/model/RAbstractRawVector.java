@@ -30,7 +30,7 @@ public interface RAbstractRawVector extends RAbstractAtomicVector {
 
     @Override
     default Object getDataAtAsObject(int index) {
-        return getDataAt(index);
+        return RRaw.valueOf(getRawDataAt(index));
     }
 
     default byte getRawDataAt(@SuppressWarnings("unused") Object store, int index) {
@@ -41,8 +41,6 @@ public interface RAbstractRawVector extends RAbstractAtomicVector {
     default void setRawDataAt(Object store, int index, byte value) {
         throw new UnsupportedOperationException();
     }
-
-    RRaw getDataAt(int index);
 
     byte getRawDataAt(int index);
 

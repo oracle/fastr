@@ -187,7 +187,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         if (useClosure()) {
             return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
         }
-        return createResultVector(operand, index -> RRuntime.raw2int(operand.getDataAt(index)));
+        return createResultVector(operand, index -> RRuntime.raw2int(operand.getRawDataAt(index)));
     }
 
     @Specialization
@@ -196,7 +196,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         int[] result = new int[length];
         boolean seenNA = false;
         for (int i = 0; i < length; i++) {
-            Object entry = list.getDataAtAsObject(i);
+            Object entry = list.getDataAt(i);
             if (entry instanceof RList) {
                 result[i] = RRuntime.INT_NA;
                 seenNA = true;

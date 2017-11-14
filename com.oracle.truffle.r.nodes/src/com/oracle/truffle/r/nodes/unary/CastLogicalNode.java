@@ -144,7 +144,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     @Specialization
     protected RLogicalVector doRawVectorDims(RRawVector operand) {
-        return createResultVector(operand, index -> RRuntime.raw2logical(operand.getDataAt(index)));
+        return createResultVector(operand, index -> RRuntime.raw2logical(operand.getRawDataAt(index)));
     }
 
     @Specialization
