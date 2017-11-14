@@ -245,10 +245,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Specialization
-    public Object callForeign(VirtualFrame frame, @SuppressWarnings("unused") DeferredFunctionValue function,
-                    @SuppressWarnings("unused") @Cached("function") DeferredFunctionValue cachedFunction,
-                    @Cached("createForeignInvoke(cachedFunction)") ForeignInvoke call) {
-        return call.execute(frame);
+    public Object callForeign(VirtualFrame frame, DeferredFunctionValue function,
+                    @Cached("createForeignInvoke()") ForeignInvoke call) {
+        return call.execute(frame, function);
     }
 
     protected RNode createDispatchArgument(int index) {
@@ -610,38 +609,24 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      */
     protected final class ForeignInvoke extends ForeignCall {
 
-        @Child ForeignExecute fallbackForeignExecute;
-        @CompilationFinal private boolean invoke = true;
-        private final TruffleObject receiver;
-        private final String member;
-
-        protected ForeignInvoke(TruffleObject lhsReceiver, String lhsMember, CallArgumentsNode arguments) {
+        protected ForeignInvoke(CallArgumentsNode arguments) {
             super(arguments);
-            this.receiver = lhsReceiver;
-            this.member = lhsMember;
         }
 
-        protected Object execute(VirtualFrame frame) {
+        protected Object execute(VirtualFrame frame, DeferredFunctionValue lhs) {
+            TruffleObject receiver = lhs.getLHSReceiver();
+            String member = lhs.getLHSMember();
             Object[] argumentsArray = evaluateArgs(frame);
             if (messageNode == null || foreignCallArgCount != argumentsArray.length) {
-                messageNode = invoke ? insert(Message.createInvoke(argumentsArray.length).createNode()) : insert(Message.createExecute(argumentsArray.length).createNode());
+                messageNode = insert(Message.createInvoke(argumentsArray.length).createNode());
                 foreignCallArgCount = argumentsArray.length;
                 foreign2RNode = insert(Foreign2R.create());
             }
 
             try {
-                try {
-                    Object result = ForeignAccess.sendInvoke(messageNode, receiver, member, argumentsArray);
-                    return foreign2RNode.execute(result);
-                } catch (UnknownIdentifierException e) {
-                    if (invoke) {
-                        messageNode = insert(Message.createExecute(argumentsArray.length).createNode());
-                        invoke = false;
-                    }
-                    Object result = ForeignAccess.sendExecute(messageNode, receiver, argumentsArray);
-                    return foreign2RNode.execute(result);
-                }
-            } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
+                Object result = ForeignAccess.sendInvoke(messageNode, receiver, member, argumentsArray);
+                return foreign2RNode.execute(result);
+            } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException | UnknownIdentifierException e) {
                 CompilerDirectives.transferToInterpreter();
                 RInternalError.reportError(e);
                 throw RError.interopError(RError.findParentRBase(this), e, receiver);
@@ -656,8 +641,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     /**
      * Creates a foreign invoke node for a call of structure {@code lhsReceiver$lhsMember(args)}.
      */
-    protected ForeignInvoke createForeignInvoke(DeferredFunctionValue df) {
-        return new ForeignInvoke(df.getLHSReceiver(), df.getLHSMember(), createArguments(null, true, true));
+    protected ForeignInvoke createForeignInvoke() {
+        return new ForeignInvoke(createArguments(null, true, true));
     }
 
     protected static boolean isForeignObject(Object value) {
@@ -1135,8 +1120,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     /**
-     * Represents the LHS of a possible foreign member call like
-     * {@code lhsReceiver$lhsMember(args)}, i.e., {@code lhsReceiver$lhsMember}.
+     * Represents the LHS of a possible foreign member call.
      */
     protected static class DeferredFunctionValue {
         private final TruffleObject lhsReceiver;
@@ -1176,8 +1160,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         protected DeferredFunctionNode(RNode function) {
-            this.lhsReceiver = getLHSReceiver(function);
-            this.lhsMember = getLHSMember(function);
+            this.lhsReceiver = (RNode) getLHSReceiver(function).deepCopy();
+            this.lhsMember = (RNode) getLHSMember(function).deepCopy();
             this.function = function;
         }
 
