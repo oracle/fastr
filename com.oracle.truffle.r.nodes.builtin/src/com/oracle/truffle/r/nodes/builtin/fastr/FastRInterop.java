@@ -84,10 +84,12 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
@@ -867,4 +869,49 @@ public class FastRInterop {
         }
         return Class.forName(className);
     }
+
+    @RBuiltin(name = "do.call.external", visibility = ON, kind = PRIMITIVE, parameterNames = {"receiver", "what", "args"}, behavior = COMPLEX)
+    public abstract static class DoCallExternal extends RBuiltinNode.Arg3 {
+
+        static {
+            Casts casts = new Casts(DoCallExternal.class);
+            casts.arg("args").mustBe(RAbstractListVector.class, RError.Message.GENERIC, "third argument must be a list");
+        }
+
+        @Child private GetReadonlyData.ListData getDataNode;
+
+        protected Node createInvoke(int nargs) {
+            return Message.createInvoke(nargs).createNode();
+        }
+
+        @Specialization
+        public Object invoke(TruffleObject obj, String what, RAbstractListVector args,
+                        @Cached("create()") Foreign2R foreign2R,
+                        @Cached("create()") R2Foreign r2Foreign,
+                        @Cached("createInvoke(args.getLength())") Node invokeNode) {
+
+            if (getDataNode == null) {
+                getDataNode = insert(GetReadonlyData.ListData.create());
+            }
+
+            Object[] argValues = getDataNode.execute(args);
+            for (int i = 0; i < argValues.length; i++) {
+                argValues[i] = r2Foreign.execute(argValues[i]);
+            }
+            try {
+                return foreign2R.execute(ForeignAccess.sendInvoke(invokeNode, obj, what, argValues));
+            } catch (UnsupportedTypeException e) {
+                throw error(RError.Message.GENERIC, "Invalid argument types provided");
+            } catch (ArityException e) {
+                throw error(RError.Message.INVALID_ARG_NUMBER, what);
+            } catch (UnknownIdentifierException e) {
+                throw error(RError.Message.UNKNOWN_FUNCTION, what);
+            } catch (UnsupportedMessageException e) {
+                throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
+            } catch (RuntimeException e) {
+                throw error(RError.Message.GENERIC, e.getMessage());
+            }
+        }
+    }
+
 }

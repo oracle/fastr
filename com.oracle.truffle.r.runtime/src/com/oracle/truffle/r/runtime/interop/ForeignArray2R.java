@@ -193,7 +193,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             foreignArray2R = insert(create());
         }
-        foreignArray2R.execute(element, true, arrayData, ++depth);
+        foreignArray2R.execute(element, true, arrayData, depth + 1);
     }
 
     private Foreign2R getForeign2R() {
@@ -421,6 +421,8 @@ public abstract class ForeignArray2R extends RBaseNode {
             if (this.type != RType.NONE) {
                 if (this.type == null) {
                     this.type = check;
+                } else if (this.type == RType.INTEGER && check == RType.DOUBLE || check == RType.INTEGER && this.type == RType.DOUBLE) {
+                    this.type = RType.DOUBLE;
                 } else if (this.type != check) {
                     this.type = RType.NONE;
                 }

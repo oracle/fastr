@@ -272,12 +272,14 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode,
                     @Cached("createBinaryProfile()") ConditionProfile isS4Profile,
                     @Cached("new()") PromiseCheckHelperNode promiseHelper) {
+
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         Object dispatchObject = dispatchArgument.execute(frame);
         // Cannot dispatch on REmpty
         if (dispatchObject == REmpty.instance) {
             throw error(RError.Message.ARGUMENT_EMPTY, 1);
         }
+
         FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
         try {
             if (internalDispatchCall == null) {
@@ -287,7 +289,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
             if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
                 RList list = (RList) promiseHelper.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-                // TODO create a node that looksup the name in the names attribute
+                // TODO create a node that looks up the name in the names attribute
                 int index = list.getElementIndexByName(builtin.getName());
                 if (index != -1) {
                     RFunction basicFun = (RFunction) list.getDataAt(index);
@@ -341,7 +343,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
             RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-            // TODO create a node that looksup the name in the names attribute
+            // TODO create a node that looks up the name in the names attribute
             int index = list.getElementIndexByName(builtin.getName());
             if (index != -1) {
                 RFunction basicFun = (RFunction) list.getDataAt(index);
@@ -543,27 +545,36 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     protected final class ForeignCall extends Node {
 
-        @Child private CallArgumentsNode arguments;
-        @Child private Node foreignCall;
-        @CompilationFinal private int foreignCallArgCount;
+        @Child protected CallArgumentsNode arguments;
+        @Child protected Node messageNode;
+        @CompilationFinal protected int foreignCallArgCount;
+        @Child protected Foreign2R foreign2RNode;
+        @Child protected R2Foreign r2ForeignNode;
 
         public ForeignCall(CallArgumentsNode arguments) {
             this.arguments = arguments;
         }
 
-        public Object execute(VirtualFrame frame, TruffleObject function, Foreign2R foreign2R, R2Foreign r2Foreign) {
-            Object[] argumentsArray = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : arguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
-            if (foreignCall == null || foreignCallArgCount != argumentsArray.length) {
+        protected Object[] evaluateArgs(VirtualFrame frame) {
+            return explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : arguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
+        }
+
+        protected Object execute(VirtualFrame frame, TruffleObject function) {
+            Object[] argumentsArray = evaluateArgs(frame);
+            if (messageNode == null || foreignCallArgCount != argumentsArray.length) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                foreignCall = insert(Message.createExecute(argumentsArray.length).createNode());
+                messageNode = insert(Message.createExecute(argumentsArray.length).createNode());
                 foreignCallArgCount = argumentsArray.length;
+                foreign2RNode = insert(Foreign2R.create());
+                r2ForeignNode = insert(R2Foreign.create());
             }
+
             try {
                 for (int i = 0; i < argumentsArray.length; i++) {
-                    argumentsArray[i] = r2Foreign.execute(argumentsArray[i]);
+                    argumentsArray[i] = r2ForeignNode.execute(argumentsArray[i]);
                 }
-                Object result = ForeignAccess.sendExecute(foreignCall, function, argumentsArray);
-                return foreign2R.execute(result);
+                Object result = ForeignAccess.sendExecute(messageNode, function, argumentsArray);
+                return foreign2RNode.execute(result);
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 RInternalError.reportError(e);
@@ -582,10 +593,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     @Specialization(guards = "isForeignObject(function)")
     public Object call(VirtualFrame frame, TruffleObject function,
-                    @Cached("createForeignCall()") ForeignCall foreignCall,
-                    @Cached("create()") Foreign2R foreign2RNode,
-                    @Cached("create()") R2Foreign r2Foreign) {
-        return foreignCall.execute(frame, function, foreign2RNode, r2Foreign);
+                    @Cached("createForeignCall()") ForeignCall foreignCall) {
+        return foreignCall.execute(frame, function);
     }
 
     @TruffleBoundary
