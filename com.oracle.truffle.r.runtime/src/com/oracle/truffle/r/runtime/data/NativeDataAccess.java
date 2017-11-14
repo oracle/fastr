@@ -160,6 +160,7 @@ public final class NativeDataAccess {
             assert this.length == 0 || dataAddress != EMPTY_DATA_ADDRESS;
         }
 
+        // TODO: turn this into reference queues
         @Override
         protected void finalize() throws Throwable {
             super.finalize();

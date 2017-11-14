@@ -23,6 +23,10 @@
 #include <rffiutils.h>
 #include "../common/rffi_variablesindex.h"
 
+
+// TODO: this file can likely simply be removed, using the NFI version instead
+
+
 // Arith.h
 double R_NaN;		/* IEEE NaN */
 double R_PosInf;	/* IEEE Inf */

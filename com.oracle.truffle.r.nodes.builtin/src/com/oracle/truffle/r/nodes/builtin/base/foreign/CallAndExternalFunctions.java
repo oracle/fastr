@@ -581,14 +581,15 @@ public class CallAndExternalFunctions {
                 case "pacf1":
                 case "ar2ma":
                 case "Burg":
-                case "intgrt_vec":
-                    return PPSum.IntgrtVecNode.create();
                 case "pp_sum":
                 case "Fexact":
                 case "Fisher_sim":
                 case "chisq_sim":
                 case "d2x2xk":
                     return new UnimplementedExternal(name);
+
+                case "intgrt_vec":
+                    return PPSum.IntgrtVecNode.create();
 
                 case "updateform":
                     return getExternalModelBuiltinNode("updateform");

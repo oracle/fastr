@@ -13,6 +13,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+// TODO: this file can likely be removed, using the NFI version instead
+
 #define T_MEM_TABLE_INITIAL_SIZE 0
 // The table of transient objects that have been allocated dur the current FFI call
 static void **tMemTable;

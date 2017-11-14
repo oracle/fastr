@@ -26,10 +26,8 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.FileSystems;
-import java.nio.file.Path;
 import java.util.concurrent.TimeUnit;
 
-import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
@@ -48,7 +46,6 @@ public class GnuROneShotRSession implements RSession {
 
     private static final String[] GNUR_COMMANDLINE = new String[]{"<R>", "--vanilla", "--slave", "--silent", "--no-restore"};
     private static final String FASTR_TESTGEN_GNUR = "FASTR_TESTGEN_GNUR";
-    private static final String NATIVE_PROJECT = "com.oracle.truffle.r.native";
     private static final int DEFAULT_TIMEOUT_MINS = 5;
     private static int timeoutMins = DEFAULT_TIMEOUT_MINS;
 

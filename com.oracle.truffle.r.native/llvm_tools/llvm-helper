@@ -156,5 +156,6 @@ function create_bc_lib() {
 # we do not have the luxury of controlling the name of the entry (unlike in python)
 # it will be the pathname, which we will reduce to a module name on input in FastR
 
+# TODO: this should link the bitcode files into a single one using llvm-link before zipping it
   runit zip -r $lib $bcfiles
 }

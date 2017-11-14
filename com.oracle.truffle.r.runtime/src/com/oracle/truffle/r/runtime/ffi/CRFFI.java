@@ -96,6 +96,8 @@ class TemporaryWrapperMR {
 
     @Resolve(message = "WRITE")
     public abstract static class TemporaryWrapperWriteNode extends Node {
+        // TODO: maybe this should lazily create a copy?
+
         protected Object access(TemporaryWrapper receiver, long index, Object value) {
             receiver.write(index, value);
             return value;

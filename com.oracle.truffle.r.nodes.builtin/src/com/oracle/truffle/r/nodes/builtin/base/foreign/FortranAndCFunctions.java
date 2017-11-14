@@ -69,6 +69,7 @@ public class FortranAndCFunctions {
      */
     @RBuiltin(name = ".Fortran", kind = PRIMITIVE, parameterNames = {".NAME", "...", "NAOK", "DUP", "PACKAGE", "ENCODING"}, behavior = COMPLEX)
     public abstract static class Fortran extends CRFFIAdapter implements Lookup {
+        // TODO: rename to DotFortran
 
         static {
             Casts.noCasts(Fortran.class);

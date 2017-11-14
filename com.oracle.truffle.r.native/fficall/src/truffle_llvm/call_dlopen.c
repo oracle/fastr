@@ -36,6 +36,8 @@
 #include <dlfcn.h>
 #include <errno.h>
 
+// TODO: although this is not used with NFI, it can still be included, i.e., this could be moved to the common part
+
 long call_dlopen(void *callback(char *result), char *path, int local, int now) {
 	int flags = (local ? RTLD_LOCAL : RTLD_GLOBAL) | (now ? RTLD_NOW : RTLD_LAZY);
 	void *handle = dlopen(path, flags);
@@ -50,3 +52,5 @@ long call_dlopen(void *callback(char *result), char *path, int local, int now) {
 int call_dlclose(void *handle) {
 	return dlclose(handle);
 }
+
+
