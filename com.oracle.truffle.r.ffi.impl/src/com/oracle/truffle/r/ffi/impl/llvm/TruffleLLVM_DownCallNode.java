@@ -22,8 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.ffi.impl.common.DownCallNode;
@@ -34,15 +33,10 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 
 public abstract class TruffleLLVM_DownCallNode extends DownCallNode {
 
-    @CompilationFinal private TruffleObject target;
-
     @Override
     protected final TruffleObject getTarget() {
-        if (target == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            target = DLL.findSymbol(getFunction().getCallName(), null).asTruffleObject();
-        }
-        return target;
+        CompilerAsserts.neverPartOfCompilation();
+        return DLL.findSymbol(getFunction().getCallName(), null).asTruffleObject();
     }
 
     @Override

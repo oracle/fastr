@@ -56,6 +56,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
 
         @Override
         public String execute() {
+            // TODO: pass buf to "call" and do the wrapping inside wrapArguments
             byte[] buf = new byte[4096];
             NativeCharArray nativeBuf = new NativeCharArray(buf);
             int result = (int) call(nativeBuf, buf.length);

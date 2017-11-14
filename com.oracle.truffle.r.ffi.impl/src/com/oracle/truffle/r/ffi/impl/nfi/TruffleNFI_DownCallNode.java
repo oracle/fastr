@@ -32,6 +32,7 @@ public abstract class TruffleNFI_DownCallNode extends DownCallNode {
 
     @Override
     protected final TruffleObject getTarget() {
+        // TODO: this lookupNativeFunction function can exist in all FFI Contexts
         return TruffleNFI_Context.getInstance().lookupNativeFunction(getFunction());
     }
 
@@ -41,6 +42,7 @@ public abstract class TruffleNFI_DownCallNode extends DownCallNode {
     protected void wrapArguments(Object[] args) {
         for (int i = 0; i < args.length; i++) {
             Object obj = args[i];
+            // TODO: this could use the wrappers from LLVM
             if (obj instanceof double[]) {
                 args[i] = JavaInterop.asTruffleObject((double[]) obj);
             } else if (obj instanceof int[] || obj == null) {
@@ -53,6 +55,7 @@ public abstract class TruffleNFI_DownCallNode extends DownCallNode {
     @ExplodeLoop
     protected void finishArguments(Object[] args) {
         for (Object obj : args) {
+            // TODO: can this ever happen in NFI?
             if (obj instanceof NativeNACheck<?>) {
                 ((NativeNACheck<?>) obj).close();
             }
