@@ -81,6 +81,10 @@ public abstract class RFFIContext extends RFFI {
 
     public abstract TruffleObject lookupNativeFunction(NativeFunction function);
 
+    /**
+     * @param canRunGc {@code true} if this upcall can cause a gc on GNU R, and therefore can clear
+     *            the list of preserved objects.
+     */
     public void beforeUpcall(boolean canRunGc) {
     }
 
@@ -95,6 +99,9 @@ public abstract class RFFIContext extends RFFI {
         return 0;
     }
 
+    /**
+     * @param before the value returned by the corresponding call to {@link #beforeDowncall()}.
+     */
     public void afterDowncall(long before) {
         callDepth--;
         cooperativeGc();
@@ -104,7 +111,7 @@ public abstract class RFFIContext extends RFFI {
         return callDepth;
     }
 
-    // this emulates the GNUR's cooperative GC
+    // this emulates GNUR's cooperative GC
     @TruffleBoundary
     private void cooperativeGc() {
         protectedNativeReferences.clear();

@@ -172,7 +172,7 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
-    private static class TruffleLLVM_StrolNode extends TruffleLLVM_DownCallNode implements StrolNode {
+    private static class TruffleLLVM_StrtolNode extends TruffleLLVM_DownCallNode implements StrtolNode {
 
         @Override
         protected NativeFunction getFunction() {
@@ -259,8 +259,8 @@ public class TruffleLLVM_Base implements BaseRFFI {
     }
 
     @Override
-    public StrolNode createStrolNode() {
-        return new TruffleLLVM_StrolNode();
+    public StrtolNode createStrtolNode() {
+        return new TruffleLLVM_StrtolNode();
     }
 
     @Override

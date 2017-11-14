@@ -293,6 +293,7 @@ public final class FFIProcessor extends AbstractProcessor {
             }
 
         }
+        // TODO: turn this field into "@Child private", initialize lazily
         w.append("                HandleUpCallExceptionNode handleExceptionNode = HandleUpCallExceptionNode.create();");
         w.append("\n");
         w.append("                @Override\n");
@@ -384,17 +385,11 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("    }\n\n");
 
         w.append("    public static void createCalls(UpCallsRFFI upCallsRFFIImpl) {\n");
-        w.append("        for (Callbacks callback : values()) {\n");
-        w.append("            switch (callback) {\n");
         for (int i = 0; i < methods.length; i++) {
             ExecutableElement m = methods[i];
-            String callName = m.getSimpleName().toString() + "Call";
-            w.append("                case ").append(m.getSimpleName().toString()).append(":\n");
-            w.append("                    callback.call = new ").append(callName).append("(upCallsRFFIImpl);\n");
-            w.append("                    break;\n\n");
+            String callName = m.getSimpleName().toString();
+            w.append("        ").append(callName).append(".call = new ").append(callName).append("Call(upCallsRFFIImpl);\n");
         }
-        w.append("            }\n");
-        w.append("        }\n");
         w.append("    }\n");
         w.append("}\n");
         w.close();

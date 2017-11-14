@@ -116,14 +116,14 @@ public interface BaseRFFI {
         }
     }
 
-    interface StrolNode extends NodeInterface {
+    interface StrtolNode extends NodeInterface {
         /**
          * Convert string to long.
          */
         long execute(String s, int base) throws IllegalArgumentException;
 
-        static StrolNode create() {
-            return RFFIFactory.getBaseRFFI().createStrolNode();
+        static StrtolNode create() {
+            return RFFIFactory.getBaseRFFI().createStrtolNode();
         }
     }
 
@@ -183,7 +183,7 @@ public interface BaseRFFI {
 
     ChmodNode createChmodNode();
 
-    StrolNode createStrolNode();
+    StrtolNode createStrtolNode();
 
     UnameNode createUnameNode();
 

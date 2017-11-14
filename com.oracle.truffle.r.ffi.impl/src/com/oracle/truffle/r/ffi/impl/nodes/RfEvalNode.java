@@ -110,7 +110,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     }
 
     @TruffleBoundary
-    private Object evalFunction(RFunction f, REnvironment env, ArgumentsSignature argsNames, Object... args) {
+    private static Object evalFunction(RFunction f, REnvironment env, ArgumentsSignature argsNames, Object... args) {
         return RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : env.getFrame(), RCaller.topLevel, true, argsNames, args);
     }
 

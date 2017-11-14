@@ -155,7 +155,7 @@ public class Managed_Base implements BaseRFFI {
     }
 
     @Override
-    public StrolNode createStrolNode() {
+    public StrtolNode createStrtolNode() {
         return null;
     }
 

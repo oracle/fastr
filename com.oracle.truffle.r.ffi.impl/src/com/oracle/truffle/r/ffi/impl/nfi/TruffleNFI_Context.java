@@ -190,8 +190,8 @@ final class TruffleNFI_Context extends RFFIContext {
         try {
             Node bind = Message.createInvoke(1).createNode();
             Node executeNode = Message.createExecute(1).createNode();
-            TruffleObject addCallbackFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, DLL.findSymbol("Rinternals_getCallbacksAddress", null).asTruffleObject(), "bind", "(): sint64");
-            callbacksAddress = (long) ForeignAccess.sendExecute(executeNode, addCallbackFunction);
+            TruffleObject getCallbacksAddressFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, DLL.findSymbol("Rinternals_getCallbacksAddress", null).asTruffleObject(), "bind", "(): sint64");
+            callbacksAddress = (long) ForeignAccess.sendExecute(executeNode, getCallbacksAddressFunction);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }

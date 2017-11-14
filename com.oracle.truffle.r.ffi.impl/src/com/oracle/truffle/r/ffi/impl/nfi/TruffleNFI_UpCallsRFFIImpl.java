@@ -92,6 +92,8 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
             }
         }
 
+        // TODO: with separate version of this for the different types, it would be more efficient
+        // and not need the dispatch
         public abstract static class DispatchAllocate extends Node {
             private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
 
@@ -128,8 +130,9 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
             }
 
             @Specialization
-            protected static long get(RNull nullValue) {
-                // Note: GnuR is OK with e.g. INTEGER(RNull), it probably returns some garbage
+            protected static long get(@SuppressWarnings("unused") RNull nullValue) {
+                // Note: GnuR is OK with, e.g., INTEGER(NULL), but it's illegal to read from or
+                // write to the resulting address.
                 return EMPTY_DATA_ADDRESS;
             }
 
@@ -138,6 +141,8 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
                 throw RInternalError.shouldNotReachHere("invalid wrapped object " + vector.getClass().getSimpleName());
             }
         }
+
+        // TODO: "TO_NATIVE" should do the actual work of transferring the data
 
         @Resolve(message = "AS_POINTER")
         public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
@@ -150,6 +155,8 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
                 return address;
             }
         }
+
+        // TODO: "READ", "WRITE"
 
         @CanResolve
         public abstract static class VectorWrapperCheck extends Node {
