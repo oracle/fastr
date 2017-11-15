@@ -908,7 +908,8 @@ public final class RError extends RuntimeException implements TruffleException {
         INVALID_TYPE("invalid type (%s) for '%s' (must be a %s)"),
         NOT_A_LIST_OF_SOCKETS("not a list of sockets"),
         NOT_A_SOCKET_CONNECTION("not a socket connection"),
-        UNEXPECTED_OBJ_IN_SIZE("Unexpected object type %s while calculating estimated object size.");
+        UNEXPECTED_OBJ_IN_SIZE("Unexpected object type %s while calculating estimated object size."),
+        BAD_CONSTANT_COUNT("bad constant count");
 
         public final String message;
         final boolean hasArgs;

@@ -19,7 +19,6 @@ public class TestBuiltin_growconst extends TestBase {
 
     @Test
     public void testgrowconst1() {
-        // FIXME RInternalError: not implemented: .Internal growconst
-        assertEval(Ignored.Unimplemented, "argv <- list(list(list())); .Internal(growconst(argv[[1]]))");
+        assertEval("argv <- list(list(list())); .Internal(growconst(argv[[1]]))");
     }
 }

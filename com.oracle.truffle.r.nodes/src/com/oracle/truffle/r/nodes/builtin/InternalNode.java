@@ -349,8 +349,8 @@ public abstract class InternalNode extends OperatorNode {
                     "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper",
                     "format.info", "grepRaw", "regexec", "adist", "aregexec", "chartr", "packBits", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo", "gctorture", "gctorture2",
                     "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply", "inspect",
-                    "mem.limits", "capabilitiesX11", "Cstack_info", "file.choose", "polyroot", "mkCode", "bcClose", "is.builtin.internal", "disassemble", "bcVersion", "load.from.file", "save.to.file",
-                    "growconst", "putconst", "getconst", "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",
+                    "mem.limits", "capabilitiesX11", "Cstack_info", "file.choose", "polyroot",
+                    "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",
                     "rawConnectionValue", "sockSelect", "gzcon", "memCompress", "memDecompress", "mkUnbound", "env.profile", "setSessionTimeLimit", "icuSetCollate", "findInterval", "rowsum_df",
                     "La_qr_cmplx", "La_rs_cmplx", "La_rg_cmplx", "La_rs_cmplx", "La_dlange", "La_dgecon", "La_dtrcon", "La_zgecon", "La_ztrcon", "La_solve_cmplx", "La_chol2inv", "qr_qy_real",
                     "qr_coef_cmplx", "qr_qy_cmpl", "La_svd", "La_svd_cmplx");
