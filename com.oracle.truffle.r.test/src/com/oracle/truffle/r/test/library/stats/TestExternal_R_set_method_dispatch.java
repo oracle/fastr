@@ -31,7 +31,6 @@ public class TestExternal_R_set_method_dispatch extends TestBase {
     @Test
     public void testSetMethodDispatch() {
         assertEval(".Call(methods:::C_R_set_method_dispatch, TRUE)");
-        assertEval(".Call(methods:::C_R_set_method_dispatch, c(FALSE,TRUE))");
         assertEval(".Call(methods:::C_R_set_method_dispatch, NULL)");
         assertEval(".Call(methods:::C_R_set_method_dispatch, 1)");
     }

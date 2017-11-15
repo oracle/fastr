@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo.MethodCode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -189,10 +190,13 @@ public class MethodsListDispatch {
                 return RRuntime.asLogical(prev);
             }
             boolean value = RRuntime.fromLogical(onOff);
-            RContext.getInstance().setMethodTableDispatchOn(value);
-            if (value != prev) {
-                // TODO
+            if (!value) {
+                warning(Message.GENERIC, "FastR does not support R_set_method_dispatch(FALSE) yet. S4 dispatch may not work correctly.");
             }
+            // StandardGeneric, the default one (true case) is currently implemented in FastR,
+            // the other one is in GnuR implemented by R_standardGeneric and is not implemented
+            // in FastR yet.
+            RContext.getInstance().setMethodTableDispatchOn(value);
             return RRuntime.asLogical(prev);
         }
     }
