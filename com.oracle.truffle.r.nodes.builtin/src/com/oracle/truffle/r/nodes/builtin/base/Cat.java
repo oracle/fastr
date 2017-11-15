@@ -141,11 +141,11 @@ public abstract class Cat extends RBuiltinNode.Arg6 {
                 } else {
                     validateType(i + 1, obj);
                     for (int j = 0; j < objVec.getLength(); j++) {
-                        stringVecs.add(toString.executeString(objVec.getDataAtAsObject(j), false, ""));
+                        stringVecs.add(toString.executeString(objVec.getDataAtAsObject(j), ""));
                     }
                 }
             } else {
-                stringVecs.add(toString.executeString(obj, false, ""));
+                stringVecs.add(toString.executeString(obj, ""));
             }
         }
 

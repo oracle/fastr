@@ -22,7 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import com.oracle.truffle.api.CompilerAsserts;
+import java.util.EnumMap;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -32,23 +33,19 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -60,72 +57,58 @@ public abstract class ToStringNode extends RBaseNode {
 
     @Child private ToStringNode recursiveToString;
 
-    private final ConditionProfile isCachedIntProfile = ConditionProfile.createBinaryProfile();
-    private final NACheck naCheck = NACheck.create();
-
-    private String toStringRecursive(Object o, boolean quotes, String separator) {
+    private String toStringRecursive(Object o, String separator) {
         if (recursiveToString == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recursiveToString = insert(ToStringNodeGen.create());
         }
-        return recursiveToString.executeString(o, quotes, separator);
+        return recursiveToString.executeString(o, separator);
     }
 
-    public abstract String executeString(Object o, boolean quotes, String separator);
+    public abstract String executeString(Object o, String separator);
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(String value, boolean quotes, String separator) {
-        if (RRuntime.isNA(value)) {
-            return value;
-        }
-        if (quotes) {
-            return RRuntime.escapeString(value, false, true);
-        }
+    protected String toString(String value, @SuppressWarnings("unused") String separator) {
         return value;
 
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RNull vector, boolean quotes, String separator) {
+    protected String toString(@SuppressWarnings("unused") RNull vector, @SuppressWarnings("unused") String separator) {
         return "NULL";
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RFunction function, boolean quotes, String separator) {
+    protected String toString(RFunction function, @SuppressWarnings("unused") String separator) {
         return RRuntime.toString(function);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RSymbol symbol, boolean quotes, String separator) {
+    protected String toString(RSymbol symbol, @SuppressWarnings("unused") String separator) {
         return symbol.getName();
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RComplex complex, boolean quotes, String separator) {
+    protected String toString(RComplex complex, @SuppressWarnings("unused") String separator,
+                    @Cached("create()") NACheck naCheck) {
         naCheck.enable(complex);
         return naCheck.convertComplexToString(complex);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(RRaw raw, boolean quotes, String separator) {
+    protected String toString(RRaw raw, @SuppressWarnings("unused") String separator) {
         return RRuntime.rawToHexString(raw.getValue());
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(int operand, boolean quotes, String separator) {
+    protected String toString(int operand, @SuppressWarnings("unused") String separator) {
         return RRuntime.intToString(operand);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(double operand, boolean quotes, String separator) {
+    protected String toString(double operand, @SuppressWarnings("unused") String separator,
+                    @Cached("createBinaryProfile()") ConditionProfile isCachedIntProfile,
+                    @Cached("create()") NACheck naCheck) {
         int intValue = (int) operand;
         if (isCachedIntProfile.profile(intValue == operand && RRuntime.isCachedNumberString(intValue))) {
             return RRuntime.getCachedNumberString(intValue);
@@ -134,104 +117,84 @@ public abstract class ToStringNode extends RBaseNode {
         return naCheck.convertDoubleToString(operand);
     }
 
-    @SuppressWarnings("unused")
     @Specialization
-    protected String toString(byte operand, boolean quotes, String separator) {
+    protected String toString(byte operand, @SuppressWarnings("unused") String separator) {
         return RRuntime.logicalToString(operand);
     }
 
     @Specialization
-    protected String toString(RS4Object obj, @SuppressWarnings("unused") boolean quotes, String separator,
-                    @Cached(value = "createWithImplicit()") ClassHierarchyNode hierarchy) {
+    @TruffleBoundary
+    protected String toString(RS4Object obj, @SuppressWarnings("unused") String separator,
+                    @Cached("createWithImplicit()") ClassHierarchyNode hierarchy) {
         RStringVector classHierarchy = hierarchy.execute(obj);
-        Object clazz;
-        if (classHierarchy.getLength() > 0) {
-            clazz = toString(classHierarchy.getDataAt(0), true, separator);
-        } else {
+        if (classHierarchy.getLength() == 0) {
             throw RInternalError.shouldNotReachHere("S4 object has no class");
         }
-        return Utils.stringFormat("<S4 object of class %s>", clazz);
+        return "<S4 object of class \"" + classHierarchy.getDataAt(0) + "\">";
     }
 
-    @FunctionalInterface
-    private interface ElementFunction {
-        String apply(int index, boolean quotes, String separator);
+    private static final EnumMap<RType, String> EMPTY = new EnumMap<>(RType.class);
+
+    static {
+        EMPTY.put(RType.Integer, "integer(0)");
+        EMPTY.put(RType.Double, "numeric(0)");
+        EMPTY.put(RType.Character, "character(0)");
+        EMPTY.put(RType.Logical, "logical(0)");
+        EMPTY.put(RType.Raw, "raw(0)");
+        EMPTY.put(RType.Complex, "complex(0)");
+        EMPTY.put(RType.List, "list()");
     }
 
-    private static String createResultForVector(RAbstractVector vector, boolean quotes, String separator, String empty, ElementFunction elementFunction) {
-        CompilerAsserts.neverPartOfCompilation();
-        int length = vector.getLength();
-        if (length == 0) {
-            return empty;
-        }
-        StringBuilder b = new StringBuilder();
-        for (int i = 0; i < length; i++) {
-            if (i > 0) {
-                b.append(separator);
+    @TruffleBoundary
+    private String vectorToString(RAbstractVector vector, String separator, VectorAccess vectorAccess) {
+        try (SequentialIterator iter = vectorAccess.access(vector)) {
+            int length = vectorAccess.getLength(iter);
+            if (length == 0) {
+                return EMPTY.get(vectorAccess.getType());
             }
-            b.append(elementFunction.apply(i, quotes, separator));
-        }
-        return b.toString();
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected String toString(RAbstractIntVector vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "integer(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected String toString(RAbstractDoubleVector vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "numeric(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected String toString(RAbstractStringVector vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "character(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected String toString(RAbstractLogicalVector vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "logical(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected String toString(RAbstractRawVector vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "raw(0)", (index, q, s) -> RRuntime.rawToHexString(vector.getRawDataAt(index)));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected String toString(RAbstractComplexVector vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "complex(0)", (index, q, s) -> toString(vector.getDataAt(index), q, s));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected String toString(RList vector, boolean quotes, String separator) {
-        return createResultForVector(vector, quotes, separator, "list()", (index, q, s) -> {
-            Object value = vector.getDataAt(index);
-            if (value instanceof RList) {
-                RList l = (RList) value;
-                if (l.getLength() == 0) {
-                    return "list()";
-                } else {
-                    return "list(" + toStringRecursive(l, q, s) + ')';
+            StringBuilder b = new StringBuilder();
+            if (vectorAccess.next(iter)) {
+                while (true) {
+                    if (vectorAccess.getType() == RType.List) {
+                        Object value = vectorAccess.getListElement(iter);
+                        if (value instanceof RAbstractListVector) {
+                            RAbstractListVector l = (RAbstractListVector) value;
+                            if (l.getLength() == 0) {
+                                b.append("list()");
+                            } else {
+                                b.append("list(").append(toStringRecursive(l, separator)).append(')');
+                            }
+                        } else {
+                            b.append(toStringRecursive(value, separator));
+                        }
+                    } else {
+                        b.append(vectorAccess.getString(iter));
+                    }
+                    if (!vectorAccess.next(iter)) {
+                        break;
+                    }
+                    b.append(separator);
                 }
-            } else {
-                return toStringRecursive(value, q, s);
             }
-        });
+            return b.toString();
+        }
+    }
+
+    @Specialization(guards = "vectorAccess.supports(vector)")
+    protected String toStringVectorCached(RAbstractVector vector, String separator,
+                    @Cached("vector.access()") VectorAccess vectorAccess) {
+        return vectorToString(vector, separator, vectorAccess);
+    }
+
+    @Specialization(replaces = "toStringVectorCached")
+    protected String toStringVectorGeneric(RAbstractVector vector, String separator) {
+        return vectorToString(vector, separator, vector.slowPathAccess());
     }
 
     @SuppressWarnings("unused")
     @Specialization
     @TruffleBoundary
-    protected String toString(REnvironment env, boolean quotes, String separator) {
+    protected String toString(REnvironment env, String separator) {
         return env.toString();
     }
 }

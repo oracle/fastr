@@ -52,7 +52,7 @@ public abstract class CastStringBaseNode extends CastBaseNode {
     }
 
     protected String toString(Object value) {
-        return toString.executeString(value, false, ToStringNode.DEFAULT_SEPARATOR);
+        return toString.executeString(value, ToStringNode.DEFAULT_SEPARATOR);
     }
 
     @Specialization
