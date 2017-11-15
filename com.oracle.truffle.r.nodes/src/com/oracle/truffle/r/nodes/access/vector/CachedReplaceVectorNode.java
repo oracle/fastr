@@ -95,7 +95,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final boolean updatePositionNames;
 
     private final boolean isValueGt1;
-    private final boolean ignoreRecursive;
 
     @Child private WriteIndexedVectorNode writeVectorNode;
     @Child private PositionsCheckNode positionsCheckNode;
@@ -104,7 +103,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private DeleteElementsNode deleteElementsNode;
     @Child private SetNamesAttributeNode setNamesNode;
 
-    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive, boolean ignoreRecursive, boolean isValueGt1) {
+    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive,
+                    boolean ignoreRecursive, boolean isValueGt1) {
         super(mode, vector, positions, recursive);
 
         if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
@@ -113,7 +113,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             this.updatePositionNames = false;
         }
 
-        this.ignoreRecursive = ignoreRecursive;
         this.vectorClass = vector.getClass();
         this.valueClass = valueClass;
         this.valueType = valueType;
@@ -125,7 +124,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         Object[] convertedPositions = filterPositions(positions);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, true, true, recursive);
-        if (castType != null && !castType.isNull()) {
+        if (vectorType == RType.S4Object) {
+            replaceS4ObjectNode = new ReplaceS4ObjectNode(mode, ignoreRecursive);
+        } else if (castType != null && !castType.isNull()) {
             this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements(), true);
         }
     }
@@ -151,6 +152,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         Object castVector = vectorClass.cast(originalVector);
         Object castValue = valueClass.cast(originalValues);
+
+        if (vectorType == RType.Environment) {
+            return doEnvironment((REnvironment) castVector, positions, castValue);
+        } else if (vectorType == RType.S4Object) {
+            return doS4Object((RS4Object) castVector, positions, castValue);
+        }
 
         Object value;
         if (valueType == RType.Null) {
@@ -200,10 +207,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case PairList:
                 vector = ((RPairList) castVector).toRList();
                 break;
-            case Environment:
-                return doEnvironment((REnvironment) castVector, positions, castValue);
-            case S4Object:
-                return doS4Object((RS4Object) castVector, positions, castValue);
             case Language:
                 repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
                 vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
@@ -491,10 +494,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private ReplaceS4ObjectNode replaceS4ObjectNode;
 
     private Object doS4Object(RS4Object obj, Object[] positions, Object originalValues) {
-        if (replaceS4ObjectNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            replaceS4ObjectNode = insert(new ReplaceS4ObjectNode(mode, ignoreRecursive));
-        }
         return replaceS4ObjectNode.execute(obj, positions, originalValues);
     }
 

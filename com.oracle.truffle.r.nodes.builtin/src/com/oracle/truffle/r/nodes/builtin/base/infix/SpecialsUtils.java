@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -32,7 +31,6 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.nodes.attributes.HasAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertIndexNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.ConvertValueNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -40,7 +38,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -113,37 +110,6 @@ class SpecialsUtils {
         protected boolean isValidIndex(RAbstractVector vector, int index1, int index2) {
             int[] dimensions = getDimensions.getDimensions(vector);
             return dimensions != null && dimensions.length == 2 && index1 >= 1 && index1 <= dimensions[0] && index2 >= 1 && index2 <= dimensions[1];
-        }
-    }
-
-    /**
-     * Common code shared between specials accessing/updating fields.
-     */
-    abstract static class ListFieldSpecialBase extends RNode {
-
-        @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-
-        protected static int getIndex(RStringVector names, String field) {
-            if (names != null) {
-                int fieldHash = field.hashCode();
-                for (int i = 0; i < names.getLength(); i++) {
-                    String current = names.getDataAt(i);
-                    if (current == field || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
-                        return i;
-                    }
-                }
-            }
-            return -1;
-        }
-
-        @TruffleBoundary
-        private static boolean contentsEquals(String current, String field) {
-            return field.equals(current);
-        }
-
-        @TruffleBoundary
-        private static boolean hashCodeEquals(String current, int fieldHash) {
-            return current.hashCode() == fieldHash;
         }
     }
 
