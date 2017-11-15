@@ -10,56 +10,63 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
-import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(DoubleCentre.class);
-        casts.arg(0).mustBe(missingValue().not()).mustBe(nullValue().not(), RError.Message.MACRO_CAN_BE_APPLIED_TO, "REAL()", "numeric", "NULL").asDoubleVector();
+        casts.arg(0).mustNotBeNull(RError.Message.MACRO_CAN_BE_APPLIED_TO, "REAL()", "numeric", "NULL").mustNotBeMissing().asDoubleVector();
     }
 
-    @Specialization
-    protected RDoubleVector doubleCentre(RAbstractDoubleVector aVecAbs,
-                    @Cached("create()") VectorReadAccess.Double aAccess,
-                    @Cached("create()") SetDataAt.Double aSetter,
+    @Specialization(guards = {"aAccess.supports(a)", "reuse.supports(a)"})
+    protected RAbstractDoubleVector doubleCentre(RAbstractDoubleVector a,
+                    @Cached("a.access()") VectorAccess aAccess,
+                    @Cached("createNonShared(a)") VectorReuse reuse,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
-        RDoubleVector aVec = aVecAbs.materialize();
-        int n = getDimNode.nrows(aVec);
-        Object aStore = aAccess.getDataStore(aVec);
-        for (int i = 0; i < n; i++) {
-            double sum = 0;
-            for (int j = 0; j < n; j++) {
-                sum += aAccess.getDataAt(aVec, aStore, i + j * n);
+        int n = getDimNode.nrows(a);
+
+        try (RandomIterator aIter = aAccess.randomAccess(a)) {
+            RAbstractDoubleVector result = reuse.getResult(a);
+            VectorAccess resultAccess = reuse.access(result);
+            try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
+                for (int i = 0; i < n; i++) {
+                    double sum = 0;
+                    for (int j = 0; j < n; j++) {
+                        sum += aAccess.getDouble(aIter, i + j * n);
+                    }
+                    sum /= n;
+                    for (int j = 0; j < n; j++) {
+                        resultAccess.setDouble(resultIter, i + j * n, aAccess.getDouble(aIter, i + j * n) - sum);
+                    }
+                }
+                for (int j = 0; j < n; j++) {
+                    double sum = 0;
+                    for (int i = 0; i < n; i++) {
+                        sum += resultAccess.getDouble(aIter, i + j * n);
+                    }
+                    sum /= n;
+                    for (int i = 0; i < n; i++) {
+                        resultAccess.setDouble(resultIter, i + j * n, resultAccess.getDouble(aIter, i + j * n) - sum);
+                    }
+                }
             }
-            sum /= n;
-            for (int j = 0; j < n; j++) {
-                double val = aAccess.getDataAt(aVec, aStore, i + j * n);
-                aSetter.setDataAt(aVec, aStore, i + j * n, val - sum);
-            }
+            return result;
         }
-        for (int j = 0; j < n; j++) {
-            double sum = 0;
-            for (int i = 0; i < n; i++) {
-                sum += aAccess.getDataAt(aVec, aStore, i + j * n);
-            }
-            sum /= n;
-            for (int i = 0; i < n; i++) {
-                double val = aAccess.getDataAt(aVec, aStore, i + j * n);
-                aSetter.setDataAt(aVec, aStore, i + j * n, val - sum);
-            }
-        }
-        return aVec;
+    }
+
+    @Specialization(replaces = "doubleCentre")
+    protected RAbstractDoubleVector doubleCentreGeneric(RAbstractDoubleVector a,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuse,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
+        return doubleCentre(a, a.slowPathAccess(), reuse, getDimNode);
     }
 }
