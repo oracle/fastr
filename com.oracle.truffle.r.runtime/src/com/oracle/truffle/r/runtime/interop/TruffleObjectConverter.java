@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public final class TruffleObjectConverter {
 
@@ -289,6 +290,11 @@ public final class TruffleObjectConverter {
         }
 
         @Override
+        public Object getInternalStore() {
+            return this;
+        }
+
+        @Override
         public RAbstractVector copy() {
             throw RInternalError.shouldNotReachHere();
         }
@@ -407,6 +413,15 @@ public final class TruffleObjectConverter {
         public ForeignAccess getForeignAccess() {
             throw RInternalError.shouldNotReachHere();
         }
-    }
 
+        @Override
+        public VectorAccess access() {
+            throw RInternalError.unimplemented("access() for " + getClass().getSimpleName());
+        }
+
+        @Override
+        public VectorAccess slowPathAccess() {
+            throw RInternalError.unimplemented("slowPathAccess() for " + getClass().getSimpleName());
+        }
+    }
 }

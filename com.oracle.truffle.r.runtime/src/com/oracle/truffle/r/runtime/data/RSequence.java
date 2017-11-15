@@ -42,6 +42,11 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
+    public Object getInternalStore() {
+        return this;
+    }
+
+    @Override
     public final int getLength() {
         return length;
     }

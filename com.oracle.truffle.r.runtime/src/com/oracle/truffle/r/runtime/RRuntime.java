@@ -762,6 +762,10 @@ public class RRuntime {
         return isNA(value.getRealPart()) || isNA(value.getImaginaryPart());
     }
 
+    public static boolean isNA(double real, double imag) {
+        return isNA(real) || isNA(imag);
+    }
+
     @TruffleBoundary
     public static String escapeString(String value, boolean encodeNonASCII, boolean quote) {
         if (isNA(value)) {

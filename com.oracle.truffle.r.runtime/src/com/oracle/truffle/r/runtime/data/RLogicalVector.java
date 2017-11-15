@@ -29,8 +29,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromLogicalAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RLogicalVector extends RVector<byte[]> implements RAbstractLogicalVector {
@@ -95,6 +99,10 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         NativeDataAccess.setData(this, (byte[]) store, index, value);
     }
 
+    public void setDataAt(int index, byte value) {
+        NativeDataAccess.setData(this, data, index, value);
+    }
+
     @Override
     public byte getDataAt(Object store, int index) {
         assert data == store;
@@ -126,11 +134,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(this, data);
-    }
-
-    @Override
-    public String toString() {
-        return toString(i -> RRuntime.logicalToString(getDataAt(i)));
     }
 
     @Override
@@ -248,5 +251,50 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
             result[i] = getDataAt(i);
         }
         return result;
+    }
+
+    private static final class FastPathAccess extends FastPathFromLogicalAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected byte getLogical(Object store, int index) {
+            return hasStore ? ((byte[]) store)[index] : NativeDataAccess.getLogicalNativeMirrorData(store, index);
+        }
+
+        @Override
+        protected void setLogical(Object store, int index, byte value) {
+            if (hasStore) {
+                ((byte[]) store)[index] = value;
+            } else {
+                NativeDataAccess.setNativeMirrorLogicalData(store, index, value);
+            }
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromLogicalAccess SLOW_PATH_ACCESS = new SlowPathFromLogicalAccess() {
+        @Override
+        protected byte getLogical(Object store, int index) {
+            RLogicalVector vector = (RLogicalVector) store;
+            return NativeDataAccess.getData(vector, vector.data, index);
+        }
+
+        @Override
+        protected void setLogical(Object store, int index, byte value) {
+            RLogicalVector vector = (RLogicalVector) store;
+            NativeDataAccess.setData(vector, vector.data, index, value);
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

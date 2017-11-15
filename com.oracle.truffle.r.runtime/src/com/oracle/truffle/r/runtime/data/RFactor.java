@@ -36,10 +36,7 @@ public final class RFactor {
      * be replaced with FactorNodes.GetLevel in the future.
      */
     public static RVector<?> getLevels(RAbstractIntVector factor) {
-        return getLevelsImpl(factor.getAttr(RRuntime.LEVELS_ATTR_KEY));
-    }
-
-    private static RVector<?> getLevelsImpl(Object attr) {
+        Object attr = factor.getAttr(RRuntime.LEVELS_ATTR_KEY);
         // convert scalar to RVector<?>if necessary
         return attr instanceof RVector ? (RVector<?>) attr : (RVector<?>) RRuntime.asAbstractVector(attr);
     }

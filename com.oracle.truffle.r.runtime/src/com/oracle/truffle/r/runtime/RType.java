@@ -96,6 +96,20 @@ public enum RType {
         }
     }
 
+    public boolean isAtomic() {
+        switch (this) {
+            case Logical:
+            case Double:
+            case Integer:
+            case Complex:
+            case Character:
+            case Raw:
+                return true;
+            default:
+                return false;
+        }
+    }
+
     public boolean isVector() {
         switch (this) {
             case Logical:

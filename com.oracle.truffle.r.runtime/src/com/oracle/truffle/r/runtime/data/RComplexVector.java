@@ -30,7 +30,11 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromComplexAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RComplexVector extends RVector<double[]> implements RAbstractComplexVector {
@@ -104,20 +108,13 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         NativeDataAccess.setData(this, (double[]) store, index, value.getRealPart(), value.getImaginaryPart());
     }
 
-    @Override
-    public RComplex getDataAt(Object store, int index) {
-        assert data == store;
-        return NativeDataAccess.getData(this, (double[]) store, index);
+    public void setDataAt(int index, RComplex value) {
+        NativeDataAccess.setData(this, data, index, value.getRealPart(), value.getImaginaryPart());
     }
 
     @Override
     public RComplex getDataAt(int index) {
         return NativeDataAccess.getData(this, data, index);
-    }
-
-    @Override
-    public String toString() {
-        return toString(i -> getDataAt(i).toString());
     }
 
     @Override
@@ -218,5 +215,74 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
             data = null;
             complete = false;
         }
+    }
+
+    private static final class FastPathAccess extends FastPathFromComplexAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected RComplex getComplex(Object store, int index) {
+            return RComplex.valueOf(getComplexR(store, index), getComplexI(store, index));
+        }
+
+        @Override
+        protected double getComplexR(Object store, int index) {
+            return hasStore ? ((double[]) store)[index * 2] : NativeDataAccess.getDoubleNativeMirrorData(store, index * 2);
+        }
+
+        @Override
+        protected double getComplexI(Object store, int index) {
+            return hasStore ? ((double[]) store)[index * 2 + 1] : NativeDataAccess.getDoubleNativeMirrorData(store, index * 2 + 1);
+        }
+
+        @Override
+        protected void setComplex(Object store, int index, double real, double imaginary) {
+            if (hasStore) {
+                ((double[]) store)[index * 2] = real;
+                ((double[]) store)[index * 2 + 1] = imaginary;
+            } else {
+                NativeDataAccess.setNativeMirrorDoubleData(store, index * 2, real);
+                NativeDataAccess.setNativeMirrorDoubleData(store, index * 2 + 1, imaginary);
+            }
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromComplexAccess SLOW_PATH_ACCESS = new SlowPathFromComplexAccess() {
+        @Override
+        protected RComplex getComplex(Object store, int index) {
+            RComplexVector vector = (RComplexVector) store;
+            return NativeDataAccess.getData(vector, vector.data, index);
+        }
+
+        @Override
+        protected double getComplexR(Object store, int index) {
+            RComplexVector vector = (RComplexVector) store;
+            return NativeDataAccess.getDataR(vector, vector.data, index);
+        }
+
+        @Override
+        protected double getComplexI(Object store, int index) {
+            RComplexVector vector = (RComplexVector) store;
+            return NativeDataAccess.getDataI(vector, vector.data, index);
+        }
+
+        @Override
+        protected void setComplex(Object store, int index, double real, double imaginary) {
+            RComplexVector vector = (RComplexVector) store;
+            NativeDataAccess.setData(vector, vector.data, index, real, imaginary);
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

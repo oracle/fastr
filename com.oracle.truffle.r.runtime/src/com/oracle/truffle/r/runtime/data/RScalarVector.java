@@ -37,6 +37,11 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
+    public Object getInternalStore() {
+        return this;
+    }
+
+    @Override
     public void setComplete(boolean complete) {
         // scalar vectors don't need this information.
         // it is always rechecked

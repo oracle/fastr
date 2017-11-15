@@ -25,7 +25,12 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public final class RList extends RListBase implements RAbstractListVector {
 
@@ -82,5 +87,54 @@ public final class RList extends RListBase implements RAbstractListVector {
     @Override
     protected RList internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
+    }
+
+    private static final class FastPathAccess extends FastPathFromListAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        public RType getType() {
+            return RType.List;
+        }
+
+        @Override
+        protected Object getListElement(Object store, int index) {
+            return ((Object[]) store)[index];
+        }
+
+        @Override
+        protected void setListElement(Object store, int index, Object value) {
+            ((Object[]) store)[index] = value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromListAccess SLOW_PATH_ACCESS = new SlowPathFromListAccess() {
+        @Override
+        public RType getType() {
+            return RType.List;
+        }
+
+        @Override
+        protected Object getListElement(Object store, int index) {
+            return ((RList) store).data[index];
+        }
+
+        @Override
+        protected void setListElement(Object store, int index, Object value) {
+            ((RList) store).data[index] = value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

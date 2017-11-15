@@ -25,12 +25,15 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromRawAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RRawVector extends RVector<byte[]> implements RAbstractRawVector {
@@ -93,15 +96,13 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
-    public byte getRawDataAt(Object store, int index) {
-        assert data == store;
-        return NativeDataAccess.getData(this, (byte[]) store, index);
-    }
-
-    @Override
     public void setRawDataAt(Object store, int index, byte value) {
         assert data == store;
         NativeDataAccess.setData(this, (byte[]) store, index, value);
+    }
+
+    public void setRawDataAt(int index, byte value) {
+        NativeDataAccess.setData(this, data, index, value);
     }
 
     @Override
@@ -116,11 +117,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(this, data);
-    }
-
-    @Override
-    public String toString() {
-        return toString(i -> RRuntime.rawToString(getRawDataAt(i)));
     }
 
     @Override
@@ -201,5 +197,50 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
             data = null;
             complete = false;
         }
+    }
+
+    private static final class FastPathAccess extends FastPathFromRawAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected byte getRaw(Object store, int index) {
+            return hasStore ? ((byte[]) store)[index] : NativeDataAccess.getRawNativeMirrorData(store, index);
+        }
+
+        @Override
+        protected void setRaw(Object store, int index, byte value) {
+            if (hasStore) {
+                ((byte[]) store)[index] = value;
+            } else {
+                NativeDataAccess.setNativeMirrorRawData(store, index, value);
+            }
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromRawAccess SLOW_PATH_ACCESS = new SlowPathFromRawAccess() {
+        @Override
+        protected byte getRaw(Object store, int index) {
+            RRawVector vector = (RRawVector) store;
+            return NativeDataAccess.getData(vector, vector.data, index);
+        }
+
+        @Override
+        protected void setRaw(Object store, int index, byte value) {
+            RRawVector vector = (RRawVector) store;
+            NativeDataAccess.setData(vector, vector.data, index, value);
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

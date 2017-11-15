@@ -36,10 +36,6 @@ public interface RAbstractComplexVector extends RAbstractAtomicVector {
 
     RComplex getDataAt(int index);
 
-    default RComplex getDataAt(@SuppressWarnings("unused") Object store, int index) {
-        return getDataAt(index);
-    }
-
     @Override
     RComplexVector materialize();
 

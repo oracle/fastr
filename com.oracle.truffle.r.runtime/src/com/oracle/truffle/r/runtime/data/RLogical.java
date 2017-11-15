@@ -26,8 +26,12 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromLogicalAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromLogicalAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 public final class RLogical extends RScalarVector implements RAbstractLogicalVector {
@@ -104,5 +108,36 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
 
     public static boolean isValid(byte left) {
         return left == RRuntime.LOGICAL_NA || left == RRuntime.LOGICAL_FALSE || left == RRuntime.LOGICAL_TRUE;
+    }
+
+    private static final class FastPathAccess extends FastPathFromLogicalAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected byte getLogical(Object store, int index) {
+            assert index == 0;
+            return ((RLogical) store).value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromLogicalAccess SLOW_PATH_ACCESS = new SlowPathFromLogicalAccess() {
+        @Override
+        protected byte getLogical(Object store, int index) {
+            assert index == 0;
+            return ((RLogical) store).value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

@@ -25,8 +25,12 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 public final class RScalarList extends RScalarVector implements RAbstractListVector {
@@ -86,5 +90,46 @@ public final class RScalarList extends RScalarVector implements RAbstractListVec
     @Override
     public boolean isNA() {
         return false;
+    }
+
+    private static final class FastPathAccess extends FastPathFromListAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        public RType getType() {
+            return RType.List;
+        }
+
+        @Override
+        protected Object getListElement(Object store, int index) {
+            assert index == 0;
+            return ((RScalarList) store).value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromListAccess SLOW_PATH_ACCESS = new SlowPathFromListAccess() {
+        @Override
+        public RType getType() {
+            return RType.List;
+        }
+
+        @Override
+        protected Object getListElement(Object store, int index) {
+            assert index == 0;
+            return ((RScalarList) store).value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

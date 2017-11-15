@@ -26,8 +26,12 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public final class RDoubleSequence extends RSequence implements RAbstractDoubleVector {
 
@@ -133,5 +137,38 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return "[" + start + " - " + getEnd() + "]";
+    }
+
+    private static final class FastPathAccess extends FastPathFromDoubleAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected double getDouble(Object store, int index) {
+            RDoubleSequence vector = (RDoubleSequence) store;
+            assert index >= 0 && index < vector.getLength();
+            return vector.start + vector.stride * index;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
+        @Override
+        protected double getDouble(Object store, int index) {
+            RDoubleSequence vector = (RDoubleSequence) store;
+            assert index >= 0 && index < vector.getLength();
+            return vector.start + vector.stride * index;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

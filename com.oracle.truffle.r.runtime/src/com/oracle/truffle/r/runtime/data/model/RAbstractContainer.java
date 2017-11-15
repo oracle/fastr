@@ -28,6 +28,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public interface RAbstractContainer extends RAttributable, RTypedValue {
 
@@ -67,9 +68,7 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
      * vector's fields, but instead read the necessary data from a local variable, which could be
      * beneficial when in loop.
      */
-    default Object getInternalStore() {
-        return EmptyInternalStore.INSTANCE;
-    }
+    Object getInternalStore();
 
     default RStringVector getNames() {
         CompilerAsserts.neverPartOfCompilation();
@@ -101,10 +100,7 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
         setAttr(RRuntime.ROWNAMES_ATTR_KEY, rowNames);
     }
 
-    final class EmptyInternalStore {
-        private EmptyInternalStore() {
-        }
+    VectorAccess access();
 
-        public static final EmptyInternalStore INSTANCE = new EmptyInternalStore();
-    }
+    VectorAccess slowPathAccess();
 }

@@ -24,8 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 
-import java.util.function.Function;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -40,6 +38,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -780,18 +780,25 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     private static final int MAX_TOSTRING_LENGTH = 100;
 
-    protected final String toString(Function<Integer, String> element) {
+    @Override
+    public final String toString() {
         CompilerAsserts.neverPartOfCompilation();
         StringBuilder str = new StringBuilder("[");
-        for (int i = 0; i < getLength(); i++) {
-            if (i > 0) {
-                str.append(", ");
-            }
-            str.append(element.apply(i));
-            if (str.length() > MAX_TOSTRING_LENGTH - 1) {
-                str.setLength(MAX_TOSTRING_LENGTH - 4);
-                str.append("...");
-                break;
+        VectorAccess access = slowPathAccess();
+        try (SequentialIterator iter = access.access(this)) {
+            if (access.next(iter)) {
+                while (true) {
+                    str.append(access.getType().isAtomic() ? access.getString(iter) : access.getListElement(iter).toString());
+                    if (!access.next(iter)) {
+                        break;
+                    }
+                    str.append(", ");
+                    if (str.length() > MAX_TOSTRING_LENGTH - 1) {
+                        str.setLength(MAX_TOSTRING_LENGTH - 4);
+                        str.append("...");
+                        break;
+                    }
+                }
             }
         }
         return str.append(']').toString();

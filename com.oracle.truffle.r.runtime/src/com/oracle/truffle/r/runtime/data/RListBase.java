@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -92,11 +91,6 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
         Object value = valueArg;
         assert store == data;
         ((Object[]) store)[index] = value;
-    }
-
-    @Override
-    public String toString() {
-        return toString(i -> RRuntime.toString(getDataAt(i)));
     }
 
     @Override

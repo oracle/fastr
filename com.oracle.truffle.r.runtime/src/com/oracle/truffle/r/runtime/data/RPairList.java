@@ -33,6 +33,9 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 /**
@@ -71,6 +74,11 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.cdr = cdr;
         this.tag = tag;
         this.type = type;
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return this;
     }
 
     /**
@@ -374,5 +382,46 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                 return curr;
             }
         };
+    }
+
+    private static final class FastPathAccess extends FastPathFromListAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        public RType getType() {
+            return RType.PairList;
+        }
+
+        @TruffleBoundary
+        @Override
+        protected Object getListElement(Object store, int index) {
+            return ((RPairList) store).getDataAtAsObject(index);
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromListAccess SLOW_PATH_ACCESS = new SlowPathFromListAccess() {
+        @Override
+        public RType getType() {
+            return RType.PairList;
+        }
+
+        @TruffleBoundary
+        @Override
+        protected Object getListElement(Object store, int index) {
+            return ((RPairList) store).getDataAtAsObject(index);
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }
