@@ -62,9 +62,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "attributes<-", kind = PRIMITIVE, parameterNames = {"obj", "value"}, behavior = PURE)
 public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
-    private final ConditionProfile numAttributesProfile = ConditionProfile.createBinaryProfile();
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
@@ -128,16 +127,17 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected RAbstractContainer updateAttributes(RAbstractContainer container, RList list,
-                    @Cached("create()") GetNonSharedNode nonShared) {
-        Object listNamesObject = getNamesNode.getNames(list);
-        if (listNamesObject == null || listNamesObject == RNull.instance) {
-            throw error(RError.Message.ATTRIBUTES_NAMED);
-        }
-        RStringVector listNames = (RStringVector) listNamesObject;
+                    @Cached("create()") GetNonSharedNode nonShared,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyListProfile) {
         RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
-        if (numAttributesProfile.profile(list.getLength() == 0)) {
+        if (emptyListProfile.profile(list.getLength() == 0)) {
             result.resetAllAttributes(true);
         } else {
+            Object listNamesObject = getNamesNode.getNames(list);
+            if (listNamesObject == null || listNamesObject == RNull.instance) {
+                throw error(RError.Message.ATTRIBUTES_NAMED);
+            }
+            RStringVector listNames = (RStringVector) listNamesObject;
             result.resetAllAttributes(false);
             // error checking is a little weird - seems easier to separate it than weave it into the
             // update loop
