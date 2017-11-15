@@ -23,30 +23,27 @@
 package com.oracle.truffle.r.nodes.builtin.casts;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
-@ImportStatic({ForeignArray2R.class, Message.class})
+@ImportStatic({ForeignArray2R.class})
 public abstract class CastForeignNode extends CastNode {
 
     protected CastForeignNode() {
     }
 
-    @Specialization(guards = {"isForeignVector(obj, hasSize)"})
+    @Specialization(guards = {"foreignArray2R.isForeignVector(obj)"})
     protected Object castForeign(TruffleObject obj,
-                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize,
                     @Cached("create()") ForeignArray2R foreignArray2R) {
         return foreignArray2R.convert(obj);
     }
 
-    @Fallback
-    protected Object passThrough(Object x) {
-        return x;
+    @Specialization(guards = {"!foreignArray2R.isForeignVector(obj)"})
+    protected Object passThrough(Object obj,
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
+        return obj;
     }
 }
