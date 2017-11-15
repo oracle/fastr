@@ -19,13 +19,11 @@ public class TestBuiltin_getconst extends TestBase {
 
     @Test
     public void testgetconst1() {
-        // FIXME not implemented: .Internal getconst
-        assertEval(Ignored.Unimplemented, "argv <- list(list(list(), NULL), 1); .Internal(getconst(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(list(list(), NULL), 1); .Internal(getconst(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testgetconst2() {
-        // FIXME not implemented: .Internal getconst
-        assertEval(Ignored.Unimplemented, "argv <- list(list(FALSE), 1); .Internal(getconst(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(list(FALSE), 1); .Internal(getconst(argv[[1]], argv[[2]]))");
     }
 }

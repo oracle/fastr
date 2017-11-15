@@ -19,7 +19,6 @@ public class TestBuiltin_bcVersion extends TestBase {
 
     @Test
     public void testbcVersion1() {
-        // FIXME RInternalError: not implemented: .Internal bcVersion
-        assertEval(Ignored.Unimplemented, " .Internal(bcVersion())");
+        assertEval(".Internal(bcVersion())");
     }
 }

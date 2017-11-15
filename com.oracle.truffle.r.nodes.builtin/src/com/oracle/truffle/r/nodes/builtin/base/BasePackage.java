@@ -292,6 +292,16 @@ public class BasePackage extends RBuiltinPackage {
         add(Complex.class, ComplexNodeGen::create);
         add(CompileFunctions.CompilePKGS.class, CompileFunctionsFactory.CompilePKGSNodeGen::create);
         add(CompileFunctions.EnableJIT.class, CompileFunctionsFactory.EnableJITNodeGen::create);
+        add(CompileFunctions.MkCode.class, CompileFunctionsFactory.MkCodeNodeGen::create);
+        add(CompileFunctions.BcClose.class, CompileFunctionsFactory.BcCloseNodeGen::create);
+        add(CompileFunctions.IsBuiltinInternal.class, CompileFunctionsFactory.IsBuiltinInternalNodeGen::create);
+        add(CompileFunctions.Disassemble.class, CompileFunctionsFactory.DisassembleNodeGen::create);
+        add(CompileFunctions.BcVersion.class, CompileFunctionsFactory.BcVersionNodeGen::create);
+        add(CompileFunctions.LoadFromFile.class, CompileFunctionsFactory.LoadFromFileNodeGen::create);
+        add(CompileFunctions.SaveToFile.class, CompileFunctionsFactory.SaveToFileNodeGen::create);
+        add(CompileFunctions.Growconst.class, CompileFunctionsFactory.GrowconstNodeGen::create);
+        add(CompileFunctions.Putconst.class, CompileFunctionsFactory.PutconstNodeGen::create);
+        add(CompileFunctions.Getconst.class, CompileFunctionsFactory.GetconstNodeGen::create);
         add(ConditionFunctions.AddCondHands.class, ConditionFunctionsFactory.AddCondHandsNodeGen::create);
         add(ConditionFunctions.AddRestart.class, ConditionFunctionsFactory.AddRestartNodeGen::create);
         add(ConditionFunctions.DfltStop.class, ConditionFunctionsFactory.DfltStopNodeGen::create);
