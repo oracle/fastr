@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.CompareFilter;
@@ -660,6 +661,10 @@ public final class CastBuilder {
 
         public static TypeFilter<Object, RFunction> builtin() {
             return new TypeFilter<>(RFunction.class, x -> x.isBuiltin());
+        }
+
+        public static TypeFilter<Object, TruffleObject> foreign() {
+            return new TypeFilter<>(TruffleObject.class, x -> RRuntime.isForeignObject(x));
         }
 
         public static <R extends RAbstractIntVector> Filter<Object, R> integerValue() {

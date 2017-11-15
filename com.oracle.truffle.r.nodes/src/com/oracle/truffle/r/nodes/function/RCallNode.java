@@ -43,6 +43,7 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -240,6 +241,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     public Object call(VirtualFrame frame, RFunction function,
                     @Cached("createUninitializedCall()") FunctionDispatch call) {
         return call.execute(frame, function, lookupVarArgs(frame), null, null);
+    }
+
+    @Specialization
+    public Object callForeign(VirtualFrame frame, DeferredFunctionValue function,
+                    @Cached("createForeignInvoke()") ForeignInvoke call) {
+        return call.execute(frame, function);
     }
 
     protected RNode createDispatchArgument(int index) {
@@ -543,20 +550,39 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return call.execute(frame, resultFunction, new RArgsValuesAndNames(args, argsSignature), s3Args, s3DefaulArguments);
     }
 
-    protected final class ForeignCall extends Node {
+    protected abstract static class ForeignCall extends LeafCallNode {
 
         @Child protected CallArgumentsNode arguments;
         @Child protected Node messageNode;
-        @CompilationFinal protected int foreignCallArgCount;
         @Child protected Foreign2R foreign2RNode;
         @Child protected R2Foreign r2ForeignNode;
+        @CompilationFinal protected int foreignCallArgCount;
 
-        public ForeignCall(CallArgumentsNode arguments) {
+        protected ForeignCall(RCallNode originalCall, CallArgumentsNode arguments) {
+            super(originalCall);
             this.arguments = arguments;
         }
 
         protected Object[] evaluateArgs(VirtualFrame frame) {
-            return explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : arguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
+            Object[] argumentsArray = originalCall.explicitArgs != null ? ((RArgsValuesAndNames) originalCall.explicitArgs.execute(frame)).getArguments()
+                            : arguments.evaluateFlattenObjects(frame, originalCall.lookupVarArgs(frame));
+            if (r2ForeignNode == null) {
+                r2ForeignNode = insert(R2Foreign.create());
+            }
+            for (int i = 0; i < argumentsArray.length; i++) {
+                argumentsArray[i] = r2ForeignNode.execute(argumentsArray[i]);
+            }
+            return argumentsArray;
+        }
+    }
+
+    /**
+     * Calls a foreign function using message EXECUTE.
+     */
+    protected static final class ForeignExecute extends ForeignCall {
+
+        protected ForeignExecute(RCallNode originalCall, CallArgumentsNode arguments) {
+            super(originalCall, arguments);
         }
 
         protected Object execute(VirtualFrame frame, TruffleObject function) {
@@ -566,13 +592,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 messageNode = insert(Message.createExecute(argumentsArray.length).createNode());
                 foreignCallArgCount = argumentsArray.length;
                 foreign2RNode = insert(Foreign2R.create());
-                r2ForeignNode = insert(R2Foreign.create());
             }
 
             try {
-                for (int i = 0; i < argumentsArray.length; i++) {
-                    argumentsArray[i] = r2ForeignNode.execute(argumentsArray[i]);
-                }
                 Object result = ForeignAccess.sendExecute(messageNode, function, argumentsArray);
                 return foreign2RNode.execute(result);
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
@@ -583,8 +605,45 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
-    protected ForeignCall createForeignCall() {
-        return new ForeignCall(createArguments(null, true, true));
+    /**
+     * Calls a foreign function using message INVOKE.
+     */
+    protected static final class ForeignInvoke extends ForeignCall {
+
+        protected ForeignInvoke(RCallNode originalCall, CallArgumentsNode arguments) {
+            super(originalCall, arguments);
+        }
+
+        protected Object execute(VirtualFrame frame, DeferredFunctionValue lhs) {
+            TruffleObject receiver = lhs.getLHSReceiver();
+            String member = lhs.getLHSMember();
+            Object[] argumentsArray = evaluateArgs(frame);
+            if (messageNode == null || foreignCallArgCount != argumentsArray.length) {
+                messageNode = insert(Message.createInvoke(argumentsArray.length).createNode());
+                foreignCallArgCount = argumentsArray.length;
+                foreign2RNode = insert(Foreign2R.create());
+            }
+
+            try {
+                Object result = ForeignAccess.sendInvoke(messageNode, receiver, member, argumentsArray);
+                return foreign2RNode.execute(result);
+            } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException | UnknownIdentifierException e) {
+                CompilerDirectives.transferToInterpreter();
+                RInternalError.reportError(e);
+                throw RError.interopError(RError.findParentRBase(this), e, receiver);
+            }
+        }
+    }
+
+    protected ForeignExecute createForeignCall() {
+        return new ForeignExecute(this, createArguments(null, true, true));
+    }
+
+    /**
+     * Creates a foreign invoke node for a call of structure {@code lhsReceiver$lhsMember(args)}.
+     */
+    protected ForeignInvoke createForeignInvoke() {
+        return new ForeignInvoke(this, createArguments(null, true, true));
     }
 
     protected static boolean isForeignObject(Object value) {
@@ -593,7 +652,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     @Specialization(guards = "isForeignObject(function)")
     public Object call(VirtualFrame frame, TruffleObject function,
-                    @Cached("createForeignCall()") ForeignCall foreignCall) {
+                    @Cached("createForeignCall()") ForeignExecute foreignCall) {
         return foreignCall.execute(frame, function);
     }
 
@@ -699,7 +758,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             this.tempFrameSlot = tempFrameSlot;
         }
 
-        protected LeafCallNode createCacheNode(RootCallTarget cachedTarget) {
+        protected LeafCallFunctionNode createCacheNode(RootCallTarget cachedTarget) {
             CompilerAsserts.neverPartOfCompilation();
             RRootNode root = (RRootNode) cachedTarget.getRootNode();
             FormalArguments formals = root.getFormalArguments();
@@ -728,7 +787,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Specialization(limit = "CACHE_SIZE", guards = "function.getTarget() == cachedTarget")
         protected Object dispatch(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments,
                         @Cached("function.getTarget()") @SuppressWarnings("unused") RootCallTarget cachedTarget,
-                        @Cached("createCacheNode(cachedTarget)") LeafCallNode leafCall,
+                        @Cached("createCacheNode(cachedTarget)") LeafCallFunctionNode leafCall,
                         @Cached("createArguments(cachedTarget)") PrepareArguments prepareArguments) {
             RArgsValuesAndNames orderedArguments = prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
             return leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
@@ -736,10 +795,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         private static final class GenericCallEntry extends Node {
             private final RootCallTarget cachedTarget;
-            @Child private LeafCallNode leafCall;
+            @Child private LeafCallFunctionNode leafCall;
             @Child private PrepareArguments prepareArguments;
 
-            GenericCallEntry(RootCallTarget cachedTarget, LeafCallNode leafCall, PrepareArguments prepareArguments) {
+            GenericCallEntry(RootCallTarget cachedTarget, LeafCallFunctionNode leafCall, PrepareArguments prepareArguments) {
                 this.cachedTarget = cachedTarget;
                 this.leafCall = leafCall;
                 this.prepareArguments = prepareArguments;
@@ -793,15 +852,19 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return originalCall;
         }
 
-        /**
-         * @param orderedArguments arguments values and the original call signature reordered in the
-         *            same way as the arguments.
-         */
-        public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames orderedArguments, S3Args s3Args);
+    }
+
+    public abstract static class LeafCallFunctionNode extends LeafCallNode {
+
+        protected LeafCallFunctionNode(RCallNode originalCall) {
+            super(originalCall);
+        }
+
+        public abstract Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args);
     }
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static final class BuiltinCallNode extends LeafCallNode {
+    public static final class BuiltinCallNode extends LeafCallFunctionNode {
 
         @Child private RBuiltinNode builtin;
         @Child private PromiseCheckHelperNode varArgsPromiseHelper;
@@ -954,7 +1017,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
-    private static final class DispatchedCallNode extends LeafCallNode {
+    private static final class DispatchedCallNode extends LeafCallFunctionNode {
 
         @Child private CallRFunctionNode call;
         @Child private RFastPathNode fastPath;
@@ -1051,5 +1114,31 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return arguments == null ? new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "...", false)} : arguments;
+    }
+
+    /**
+     * Represents the LHS of a possible foreign member call.
+     */
+    protected static class DeferredFunctionValue {
+        private final TruffleObject lhsReceiver;
+        private final String lhsMember;
+
+        protected DeferredFunctionValue(TruffleObject lhsReceiver, String lhsMember) {
+            this.lhsReceiver = lhsReceiver;
+            this.lhsMember = lhsMember;
+        }
+
+        public String getLHSMember() {
+            return lhsMember;
+        }
+
+        public TruffleObject getLHSReceiver() {
+            return lhsReceiver;
+        }
+
+    }
+
+    public static Object createDeferredMemberAccess(TruffleObject object, String name) {
+        return new DeferredFunctionValue(object, name);
     }
 }

@@ -32,9 +32,9 @@ public class TestRRNG extends TestBase {
         // changes generator to MarsagliaMulticarry and sets its 2 seeds
         assertEval(".Random.seed <- c(401L, 1L, 2L); runif(3)");
         // wrong values: not integer
-        assertEval(Output.MayIgnoreWarningContext, ".Random.seed <- c(401, 1, 2); invisible(runif(3))");
+        assertEval(".Random.seed <- c(401, 1, 2); invisible(runif(3))");
         // wrong values: wrong generator number
-        assertEval(Output.MayIgnoreWarningContext, ".Random.seed <- c(999, 1, 2); invisible(runif(3))");
+        assertEval(".Random.seed <- c(999, 1, 2); invisible(runif(3))");
     }
 
     @Test
