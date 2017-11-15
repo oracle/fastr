@@ -634,6 +634,7 @@ public class BasePackage extends RBuiltinPackage {
         add(PMatch.class, PMatchNodeGen::create);
         add(PMinMax.PMax.class, PMinMaxNodeGen.PMaxNodeGen::create);
         add(PMinMax.PMin.class, PMinMaxNodeGen.PMinNodeGen::create);
+        add(PackBits.class, PackBitsNodeGen::create);
         add(Parse.class, ParseNodeGen::create);
         add(Paste.class, PasteNodeGen::create);
         add(Paste0.class, Paste0NodeGen::create);

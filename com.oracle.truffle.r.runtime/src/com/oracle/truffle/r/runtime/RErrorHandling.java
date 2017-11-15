@@ -228,7 +228,7 @@ public class RErrorHandling {
 
     public static Object createHandlers(RAbstractStringVector classes, RList handlers, REnvironment parentEnv, Object target, byte calling) {
         CompilerAsserts.neverPartOfCompilation();
-        Object oldStack = getRestartStack();
+        Object oldStack = getHandlerStack();
         Object newStack = oldStack;
         RList result = RDataFactory.createList(new Object[]{RNull.instance, RNull.instance, RNull.instance});
         int n = handlers.getLength();

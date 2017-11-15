@@ -38,21 +38,27 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EvalNodeGen.EvalEnvCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.FrameFunctions.SysFrame;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -200,17 +206,63 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         return GetNodeGen.create();
     }
 
-    @Specialization
+    @Specialization(guards = "!isVariadicSymbol(expr)")
     protected Object doEval(VirtualFrame frame, RSymbol expr, Object envir, Object enclos,
                     @Cached("createGet()") Get get) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
-
         try {
             // no need to do the full eval for symbols: just do the lookup
             return get.execute(frame, expr.getName(), environment, RType.Any.getName(), true);
         } finally {
             visibility.execute(frame, true);
         }
+    }
+
+    protected static PromiseCheckHelperNode createPromiseHelper() {
+        return new PromiseCheckHelperNode();
+    }
+
+    @Specialization(guards = "isVariadicSymbol(expr)")
+    protected Object doEvalVariadic(VirtualFrame frame, RSymbol expr, Object envir, Object enclos,
+                    @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelper) {
+        REnvironment environment = envCast.execute(frame, envir, enclos);
+        try {
+            int index = getVariadicIndex(expr);
+            Object args = ReadVariableNode.lookupAny(ArgumentsSignature.VARARG_NAME, environment.getFrame(), false);
+            if (args == null) {
+                throw error(RError.Message.NO_DOT_DOT, index + 1);
+            }
+            RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) args;
+            if (argsValuesAndNames.isEmpty()) {
+                throw error(RError.Message.NO_LIST_FOR_CDR);
+            }
+            if (argsValuesAndNames.getLength() <= index) {
+                throw error(RError.Message.DOT_DOT_SHORT, index + 1);
+            }
+            Object ret = argsValuesAndNames.getArgument(index);
+            return ret == null ? RMissing.instance : promiseHelper.checkEvaluate(frame, ret);
+        } finally {
+            visibility.execute(frame, true);
+        }
+    }
+
+    protected static boolean isVariadicSymbol(RSymbol sym) {
+        String x = sym.getName();
+        if (x != ArgumentsSignature.VARARG_NAME && x.length() > 2 && x.charAt(0) == '.' && x.charAt(1) == '.') {
+            for (int i = 2; i < x.length(); i++) {
+                if (!Character.isDigit(x.charAt(i))) {
+                    return false;
+                }
+            }
+            return true;
+        } else {
+            return false;
+        }
+    }
+
+    private static int getVariadicIndex(RSymbol sym) {
+        String x = sym.getName();
+        return Integer.parseInt(x.substring(2, x.length())) - 1;
     }
 
     @Fallback

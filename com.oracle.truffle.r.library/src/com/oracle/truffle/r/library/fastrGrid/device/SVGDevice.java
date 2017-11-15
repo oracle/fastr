@@ -150,6 +150,16 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     }
 
     @Override
+    public int getNativeWidth() {
+        return (int) width;
+    }
+
+    @Override
+    public int getNativeHeight() {
+        return (int) height;
+    }
+
+    @Override
     public double getStringWidth(DrawingContext ctx, String text) {
         // The architecture of the GridDevice and grid package requires the devices be able to
         // calculate the width of given string, this way one can e.g. create a box around text. SVG
