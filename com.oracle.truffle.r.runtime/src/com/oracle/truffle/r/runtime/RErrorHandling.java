@@ -789,7 +789,7 @@ public class RErrorHandling {
         String preamble = kind;
         String errorMsg = null;
         assert call instanceof RNull || call instanceof RLanguage;
-        if (call == RNull.instance || ((RLanguage) call).getRep().getSourceSection() == null) {
+        if (call == RNull.instance) {
             // generally means top-level of shell or similar
             preamble += ": ";
             errorMsg = preamble + formattedMsg;

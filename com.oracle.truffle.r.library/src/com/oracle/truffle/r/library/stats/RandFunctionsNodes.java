@@ -21,7 +21,6 @@ import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -57,7 +56,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * {@link RandFunction3_Double}, {@link RandFunction2_Double} or {@link RandFunction1_Double}.
  */
 public final class RandFunctionsNodes {
-    @CompilationFinal private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
+    private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
 
     private RandFunctionsNodes() {
         // static class

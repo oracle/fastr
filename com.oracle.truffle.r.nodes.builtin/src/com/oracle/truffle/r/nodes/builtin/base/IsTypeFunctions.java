@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -59,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -72,17 +74,14 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  */
 public class IsTypeFunctions {
 
-    protected abstract static class MissingAdapter extends RBuiltinNode.Arg1 {
-
-        protected static Casts createCasts(Class<? extends MissingAdapter> extCls) {
-            Casts casts = new Casts(extCls);
-            casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENT_MISSING, "x");
-            return casts;
-        }
+    protected static Casts createCasts(Class<? extends RBuiltinNode> extCls) {
+        Casts casts = new Casts(extCls);
+        casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENT_MISSING, "x");
+        return casts;
     }
 
     @RBuiltin(name = "is.array", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-    public abstract static class IsArray extends MissingAdapter {
+    public abstract static class IsArray extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsArray.class);
@@ -106,7 +105,7 @@ public class IsTypeFunctions {
 
     @ImportStatic(RRuntime.class)
     @RBuiltin(name = "is.recursive", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsRecursive extends MissingAdapter {
+    public abstract static class IsRecursive extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsRecursive.class);
@@ -144,9 +143,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.atomic", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsAtomic extends MissingAdapter {
-
-        @Child private InheritsCheckNode inheritsFactorCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+    public abstract static class IsAtomic extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsAtomic.class);
@@ -157,28 +154,19 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = {"!isRList(arg)", "!isRExpression(arg)"})
-        protected byte isAtomic(@SuppressWarnings("unused") RAbstractVector arg) {
+        @Specialization
+        protected byte isAtomic(@SuppressWarnings("unused") RAbstractAtomicVector arg) {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected static boolean isNonListVector(Object value) {
-            return value instanceof Integer || value instanceof Double || value instanceof RComplex || value instanceof String || value instanceof RRaw ||
-                            (value instanceof RAbstractVector && !(value instanceof RListBase));
-        }
-
-        protected boolean isFactor(Object value) {
-            return inheritsFactorCheck.execute(value);
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isFactor(value)", "!isNonListVector(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
     }
 
     @RBuiltin(name = "is.call", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsCall extends MissingAdapter {
+    public abstract static class IsCall extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(IsCall.class);
@@ -196,7 +184,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.character", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsCharacter extends MissingAdapter {
+    public abstract static class IsCharacter extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsCharacter.class);
@@ -218,7 +206,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.complex", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsComplex extends MissingAdapter {
+    public abstract static class IsComplex extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsComplex.class);
@@ -240,7 +228,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.double", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsDouble extends MissingAdapter {
+    public abstract static class IsDouble extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsDouble.class);
@@ -262,7 +250,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.expression", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsExpression extends MissingAdapter {
+    public abstract static class IsExpression extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsExpression.class);
@@ -280,7 +268,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.function", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsFunction extends MissingAdapter {
+    public abstract static class IsFunction extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsFunction.class);
@@ -298,7 +286,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.integer", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsInteger extends MissingAdapter {
+    public abstract static class IsInteger extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsInteger.class);
@@ -320,7 +308,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.language", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsLanguage extends MissingAdapter {
+    public abstract static class IsLanguage extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsLanguage.class);
@@ -348,7 +336,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.list", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsList extends MissingAdapter {
+    public abstract static class IsList extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsList.class);
@@ -373,7 +361,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.logical", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsLogical extends MissingAdapter {
+    public abstract static class IsLogical extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsLogical.class);
@@ -395,7 +383,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.matrix", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-    public abstract static class IsMatrix extends MissingAdapter {
+    public abstract static class IsMatrix extends RBuiltinNode.Arg1 {
 
         private final ConditionProfile isMatrixProfile = ConditionProfile.createBinaryProfile();
         @Child private GetDimAttributeNode getDim = GetDimAttributeNodeGen.create();
@@ -416,7 +404,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.name", aliases = {"is.symbol"}, kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsName extends MissingAdapter {
+    public abstract static class IsName extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsName.class);
@@ -434,10 +422,16 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.numeric", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
-    public abstract static class IsNumeric extends MissingAdapter {
+    public abstract static class IsNumeric extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsNumeric.class);
+        }
+
+        @Child private InheritsCheckNode inheritsCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+
+        protected boolean isFactor(Object o) {
+            return inheritsCheck.execute(o);
         }
 
         @Specialization(guards = "!isFactor(value)")
@@ -459,20 +453,14 @@ public class IsTypeFunctions {
             return value instanceof Integer || value instanceof Double || value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isAnyNumeric(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
-        }
-
-        @Child private InheritsCheckNode inheritsCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
-
-        protected boolean isFactor(Object o) {
-            return inheritsCheck.execute(o);
         }
     }
 
     @RBuiltin(name = "is.null", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsNull extends MissingAdapter {
+    public abstract static class IsNull extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsNull.class);
@@ -497,7 +485,7 @@ public class IsTypeFunctions {
      * {@code FALSE}.
      */
     @RBuiltin(name = "is.object", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsObject extends MissingAdapter {
+    public abstract static class IsObject extends RBuiltinNode.Arg1 {
 
         @Child private GetClassAttributeNode getClassNode = GetClassAttributeNode.create();
 
@@ -519,7 +507,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.pairlist", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsPairList extends MissingAdapter {
+    public abstract static class IsPairList extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsPairList.class);
@@ -542,7 +530,7 @@ public class IsTypeFunctions {
     }
 
     @RBuiltin(name = "is.raw", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
-    public abstract static class IsRaw extends MissingAdapter {
+    public abstract static class IsRaw extends RBuiltinNode.Arg1 {
 
         static {
             createCasts(IsRaw.class);
