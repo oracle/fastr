@@ -70,7 +70,7 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
     public RType getRType() {
         // Note: GnuR distinguishes "builtins" and "specials" (BUILTINSXP vs SPECIALSXP). The later
         // has non-evaluated args. FastR and GnuR built-ins differ in whether they have evaluated
-        // args, so we cannot correcly choose RType.Special here.
+        // args, so we cannot correctly choose RType.Special here.
         return isBuiltin() ? RType.Builtin : RType.Closure;
     }
 

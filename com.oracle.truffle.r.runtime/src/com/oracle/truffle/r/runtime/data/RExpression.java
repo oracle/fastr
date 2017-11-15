@@ -30,8 +30,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class RExpression extends RListBase implements RAbstractVector {
 
-    RExpression(Object[] data, int[] dims, RStringVector names) {
-        super(data, dims, names, null);
+    RExpression(Object[] data) {
+        super(data);
+    }
+
+    RExpression(Object[] data, int[] dims, RStringVector names, RList dimNames) {
+        super(data, dims, names, dimNames);
     }
 
     @Override
@@ -47,7 +51,7 @@ public final class RExpression extends RListBase implements RAbstractVector {
     @Override
     @TruffleBoundary
     protected RExpression internalCopy() {
-        return new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null);
+        return new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null, null);
     }
 
     @Override
@@ -55,7 +59,7 @@ public final class RExpression extends RListBase implements RAbstractVector {
     protected RExpression internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
-        RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null);
+        RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
             if (el instanceof RVector) {

@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public class RStringSequence extends RSequence implements RAbstractStringVector {
+public final class RStringSequence extends RSequence implements RAbstractStringVector {
 
     private final int start;
     private final int stride;
