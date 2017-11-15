@@ -25,6 +25,8 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -32,6 +34,8 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 @RBuiltin(name = "rawToBits", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
 public abstract class RawToBits extends RBuiltinNode.Arg1 {
@@ -41,17 +45,26 @@ public abstract class RawToBits extends RBuiltinNode.Arg1 {
         casts.arg("x").mustNotBeNull(RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x").mustBe(Predef.rawValue(), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
     }
 
-    @Specialization
-    protected RAbstractRawVector rawToBits(RAbstractRawVector x) {
-        byte[] result = new byte[8 * x.getLength()];
-        int pos = 0;
-        for (int j = 0; j < x.getLength(); j++) {
-            byte temp = x.getRawDataAt(j);
-            for (int i = 0; i < 8; i++) {
-                result[pos++] = (byte) (temp & 1);
-                temp >>= 1;
+    @Specialization(guards = "xAccess.supports(x)")
+    protected RAbstractRawVector rawToBits(RAbstractRawVector x,
+                    @Cached("x.access()") VectorAccess xAccess) {
+        try (SequentialIterator iter = xAccess.access(x)) {
+            byte[] result = new byte[8 * x.getLength()];
+            int pos = 0;
+            while (xAccess.next(iter)) {
+                byte temp = xAccess.getRaw(iter);
+                for (int i = 0; i < 8; i++) {
+                    result[pos++] = (byte) (temp & 1);
+                    temp >>= 1;
+                }
             }
+            return RDataFactory.createRawVector(result);
         }
-        return RDataFactory.createRawVector(result);
+    }
+
+    @Specialization(replaces = "rawToBits")
+    @TruffleBoundary
+    protected RAbstractRawVector rawToBitsGeneric(RAbstractRawVector x) {
+        return rawToBits(x, x.slowPathAccess());
     }
 }

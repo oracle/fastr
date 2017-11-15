@@ -40,9 +40,11 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 /**
  * Conversion and manipulation of objects of type "raw".
@@ -57,17 +59,26 @@ public class RawFunctions {
             casts.arg("x").defaultError(RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE).mustBe(stringValue()).asStringVector().mustBe(notEmpty());
         }
 
-        @Specialization
-        protected RRawVector charToRaw(RAbstractStringVector x) {
-            if (x.getLength() > 1) {
-                warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
+        @Specialization(guards = "xAccess.supports(x)")
+        protected RRawVector charToRaw(RAbstractStringVector x,
+                        @Cached("x.access()") VectorAccess xAccess) {
+            try (RandomIterator iter = xAccess.randomAccess(x)) {
+                if (xAccess.getLength(iter) != 1) {
+                    warning(RError.Message.ARG_SHOULD_BE_CHARACTER_VECTOR_LENGTH_ONE);
+                }
+                String s = xAccess.getString(iter, 0);
+                byte[] data = new byte[s.length()];
+                for (int i = 0; i < data.length; i++) {
+                    data[i] = (byte) s.charAt(i);
+                }
+                return RDataFactory.createRawVector(data);
             }
-            String s = x.getDataAt(0);
-            byte[] data = new byte[s.length()];
-            for (int i = 0; i < data.length; i++) {
-                data[i] = (byte) s.charAt(i);
-            }
-            return RDataFactory.createRawVector(data);
+        }
+
+        @Specialization(replaces = "charToRaw")
+        @TruffleBoundary
+        protected RRawVector charToRawGeneric(RAbstractStringVector x) {
+            return charToRaw(x, x.slowPathAccess());
         }
     }
 
@@ -80,28 +91,45 @@ public class RawFunctions {
             casts.arg("multiple").defaultError(RError.Message.INVALID_LOGICAL).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
-        @Specialization
         @TruffleBoundary
-        protected RStringVector rawToChar(RAbstractRawVector x, boolean multiple) {
-            RStringVector result;
-            if (multiple) {
-                String[] data = new String[x.getLength()];
-                for (int i = 0; i < data.length; i++) {
-                    data[i] = new String(new byte[]{x.getRawDataAt(i)});
-                }
-                result = RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-            } else {
-                int j = 0;
-                byte[] data = new byte[x.getLength()];
-                for (int i = 0; i < data.length; i++) {
-                    byte b = x.getRawDataAt(i);
-                    if (b != 0) {
-                        data[j++] = b;
+        private static String createString(int j, byte[] data) {
+            return new String(data, 0, j);
+        }
+
+        @TruffleBoundary
+        private static String createString(byte value) {
+            return new String(new byte[]{value});
+        }
+
+        @Specialization(guards = "xAccess.supports(x)")
+        protected Object rawToChar(RAbstractRawVector x, boolean multiple,
+                        @Cached("x.access()") VectorAccess xAccess) {
+            try (SequentialIterator iter = xAccess.access(x)) {
+                if (multiple) {
+                    String[] data = new String[xAccess.getLength(iter)];
+                    while (xAccess.next(iter)) {
+                        byte value = xAccess.getRaw(iter);
+                        data[iter.getIndex()] = createString(value);
                     }
+                    return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+                } else {
+                    int j = 0;
+                    byte[] data = new byte[xAccess.getLength(iter)];
+                    while (xAccess.next(iter)) {
+                        byte b = xAccess.getRaw(iter);
+                        if (b != 0) {
+                            data[j++] = b;
+                        }
+                    }
+                    return createString(j, data);
                 }
-                result = RDataFactory.createStringVectorFromScalar(new String(data, 0, j));
             }
-            return result;
+        }
+
+        @Specialization(replaces = "rawToChar")
+        @TruffleBoundary
+        protected Object rawToCharGeneric(RAbstractRawVector x, boolean multiple) {
+            return rawToChar(x, multiple, x.slowPathAccess());
         }
     }
 
@@ -114,23 +142,30 @@ public class RawFunctions {
             casts.arg("n").defaultError(RError.Message.MUST_BE_SMALL_INT, "shift").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(-8).and(lte(8)));
         }
 
-        @Specialization
+        @Specialization(guards = "xAccess.supports(x)")
         protected RRawVector rawShift(RAbstractRawVector x, int n,
-                        @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile) {
-            byte[] data = new byte[x.getLength()];
-            if (negativeShiftProfile.profile(n < 0)) {
-                for (int i = 0; i < data.length; i++) {
-                    data[i] = (byte) ((x.getRawDataAt(i) & 0xff) >> (-n));
+                        @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile,
+                        @Cached("x.access()") VectorAccess xAccess) {
+            try (SequentialIterator iter = xAccess.access(x)) {
+                byte[] data = new byte[xAccess.getLength(iter)];
+                if (negativeShiftProfile.profile(n < 0)) {
+                    while (xAccess.next(iter)) {
+                        data[iter.getIndex()] = (byte) ((xAccess.getRaw(iter) & 0xff) >> (-n));
+                    }
+                } else {
+                    while (xAccess.next(iter)) {
+                        data[iter.getIndex()] = (byte) (xAccess.getRaw(iter) << n);
+                    }
                 }
-            } else {
-                for (int i = 0; i < data.length; i++) {
-                    data[i] = (byte) (x.getRawDataAt(i) << n);
-                }
+                return RDataFactory.createRawVector(data);
             }
-            return RDataFactory.createRawVector(data);
+        }
+
+        @Specialization(replaces = "rawShift")
+        @TruffleBoundary
+        protected RRawVector rawShiftGeneric(RAbstractRawVector x, int n,
+                        @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile) {
+            return rawShift(x, n, negativeShiftProfile, x.slowPathAccess());
         }
     }
-
-    // TODO the rest of the functions
-
 }
