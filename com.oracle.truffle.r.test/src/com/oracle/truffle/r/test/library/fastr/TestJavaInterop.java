@@ -1103,6 +1103,17 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testElseIf() throws IllegalArgumentException {
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta)", errorIn("as.logical(test)", "no method for coercing this external object to a vector"));
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$booleanArray, 1, 2)", "c(1,2,1)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$booleanList, 1, 2)", "c(1,2,1)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$integerArray, 1, 2)", "c(1,1,1)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$integerList, 1, 2)", "c(1,1,1)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$stringArray, 1, 2)", "c(NA, NA, NA)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$stringList, 1, 2)", "c(NA, NA, NA)");
+    }
+
+    @Test
     public void testForeignVectorArithmeticOp() throws NoSuchFieldException,
                     IllegalAccessException {
         TestJavaInterop.this.testForeignVectorArithmeticOp("fieldBooleanArray", false, "integer(0)");

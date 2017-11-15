@@ -13,8 +13,12 @@ package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
@@ -28,9 +32,11 @@ import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @TypeSystemReference(RTypes.class)
+@ImportStatic({ForeignArray2R.class, Message.class})
 public abstract class CastTypeNode extends RBaseNode {
 
     protected static final int NUMBER_OF_TYPES = RType.values().length;
@@ -59,6 +65,17 @@ public abstract class CastTypeNode extends RBaseNode {
     protected static Object doCastUnknown(RAbstractVector value, RType type) {
         // FIXME should we really return null here?
         return null;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"isForeignVector(value, hasSize)", "typeof.execute(value) != type",
+                    "type == cachedType", "!isNull(cast)"}, limit = "NUMBER_OF_TYPES")
+    protected static Object doCast(TruffleObject value, RType type,
+                    @Cached("type") RType cachedType,
+                    @Cached("createCast(cachedType)") CastNode cast,
+                    @Cached("HAS_SIZE.createNode()") Node hasSize,
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
+        return cast.doCast(foreignArray2R.convert(value));
     }
 
     @TruffleBoundary
