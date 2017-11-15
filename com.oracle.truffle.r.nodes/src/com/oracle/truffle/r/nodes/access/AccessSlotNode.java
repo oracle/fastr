@@ -13,6 +13,7 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
@@ -21,6 +22,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClass
 import com.oracle.truffle.r.nodes.function.ImplicitClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -80,4 +82,10 @@ public abstract class AccessSlotNode extends BaseAccessSlotNode {
             throw error(RError.Message.SLOT_NON_S4, name, classAttr.getDataAt(0));
         }
     }
+
+    @Fallback
+    protected Object getSlot(Object object, String name) {
+        throw error(RError.Message.SLOT_CANNOT_GET, name, RRuntime.getRTypeName(object));
+    }
+
 }

@@ -17,16 +17,19 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.foreign;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallNode.BuiltinCallNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -34,11 +37,13 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode.Arg2 {
 
-    @CompilationFinal private boolean isLhsOfCall;
     @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
     @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true);
 
@@ -61,13 +66,28 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
         throw error(RError.Message.GENERIC, "invalid type or length for slot name");
     }
 
-    protected boolean isLhsOfForeignCall(Object o) {
-        return isLhsOfCall && RRuntime.isForeignObject(o);
+    private static boolean isLhsOfSyntaxCall(RSyntaxNode n) {
+        Node unwrapParent = RASTUtils.unwrapParent(n.asNode());
+        return unwrapParent instanceof RSyntaxCall && ((RSyntaxCall) unwrapParent).getSyntaxLHS() == n;
     }
 
-    @Specialization(guards = {"isLhsOfForeignCall(object)"})
+    protected boolean isForeignObject(Object obj) {
+        return RRuntime.isForeignObject(obj);
+    }
+
+    protected boolean isLhsOfCall() {
+        CompilerAsserts.neverPartOfCompilation();
+        Node unwrapParent = RASTUtils.unwrapParent(this);
+        assert ((BuiltinCallNode) unwrapParent).getBuiltin() == this;
+        return unwrapParent instanceof BuiltinCallNode && isLhsOfSyntaxCall(((RBaseNode) unwrapParent).asRSyntaxNode());
+    }
+
+    @Specialization(guards = {"isForeignObject(object)", "lhsOfCall"})
     protected Object getSlot(TruffleObject object, Object nameObj,
+                    @Cached("isLhsOfCall()") boolean lhsOfCall,
                     @Cached("createClassProfile()") ValueProfile nameObjProfile) {
+
+        assert lhsOfCall;
 
         String name = getName(nameObjProfile.profile(nameObj));
         assert Utils.isInterned(name);
@@ -76,7 +96,7 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
         return RCallNode.createDeferredMemberAccess(object, name);
     }
 
-    @Specialization(guards = "!isLhsOfForeignCall(object)")
+    @Specialization
     protected Object getSlot(Object object, Object nameObj,
                     @Cached("createClassProfile()") ValueProfile nameObjProfile) {
         String name = getName(nameObjProfile.profile(nameObj));
@@ -88,9 +108,4 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    @Override
-    public void setLhsOfCall(boolean value) {
-        CompilerDirectives.transferToInterpreterAndInvalidate();
-        this.isLhsOfCall = value;
-    }
 }

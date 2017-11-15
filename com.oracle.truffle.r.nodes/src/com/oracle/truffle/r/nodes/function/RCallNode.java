@@ -886,9 +886,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             varArgSeen = new boolean[formals.getLength()];
             nonWrapSeen = new boolean[formals.getLength()];
             wrapSeen = new boolean[formals.getLength()];
-
-            // Tell this builtin that it is LHS of a call which might imply different behavior.
-            builtin.setLhsOfCall(true);
         }
 
         @Override

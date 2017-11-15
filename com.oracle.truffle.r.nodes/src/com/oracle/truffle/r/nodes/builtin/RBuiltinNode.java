@@ -148,10 +148,6 @@ public abstract class RBuiltinNode extends RBuiltinBaseNode implements NodeWithA
         }
     }
 
-    public void setLhsOfCall(@SuppressWarnings("unused") boolean value) {
-        // default: do nothing
-    }
-
     public abstract static class Arg0 extends RBuiltinNode {
 
         public abstract Object execute(VirtualFrame frame);
