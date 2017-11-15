@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
-import com.oracle.truffle.r.runtime.data.nodes.GetDataCopy;
 
 /**
  * Nodes that implement {@code CAR}, {@code CDR}, etc. N.B. GNU R does not error check the
@@ -170,7 +169,6 @@ public final class ListAccessNodes {
 
         @Specialization
         protected Object cdr(RList list,
-                        @Cached("create()") GetDataCopy.String getDataCopyNode,
                         @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @Cached("create()") SetNamesAttributeNode setNamesNode) {
             if (list.getLength() == 1) {
@@ -179,7 +177,7 @@ public final class ListAccessNodes {
             RStringVector names = getNamesNode.getNames(list);
             RList copy = RDataFactory.createList(list.getDataCopy());
             if (names != null) {
-                String[] namesDataCopy = getDataCopyNode.execute(names);
+                String[] namesDataCopy = names.getDataCopy();
                 setNamesNode.setNames(copy, RDataFactory.createStringVector(namesDataCopy, true));
             }
             return copy;
