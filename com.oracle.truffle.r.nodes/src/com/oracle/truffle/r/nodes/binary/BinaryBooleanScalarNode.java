@@ -29,9 +29,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen.LogicalScalarCastNodeGen;
@@ -90,7 +88,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
         return left;
     }
 
-    @ImportStatic({ForeignArray2R.class, Message.class})
+    @ImportStatic({RRuntime.class})
     protected abstract static class LogicalScalarCastNode extends RBaseNode {
 
         protected static final int CACHE_LIMIT = 3;
@@ -153,13 +151,15 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
             return null;
         }
 
-        @Specialization(guards = {"isForeignVector(operand, hasSize)"})
+        @Specialization(guards = {"isForeignObject(operand)"})
         protected byte doForeignVector(TruffleObject operand,
-                        @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize,
                         @Cached("create()") ForeignArray2R foreignArray2R,
                         @Cached("createRecursive()") LogicalScalarCastNode recursive) {
-            Object o = foreignArray2R.convert(operand);
-            return recursive.executeCast(o);
+            if (foreignArray2R.isForeignVector(operand)) {
+                Object o = foreignArray2R.convert(operand);
+                return recursive.executeCast(o);
+            }
+            return doFallback(operand);
         }
 
         protected LogicalScalarCastNode createRecursive() {

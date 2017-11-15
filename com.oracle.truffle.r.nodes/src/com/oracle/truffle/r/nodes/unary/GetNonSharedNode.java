@@ -61,9 +61,14 @@ public abstract class GetNonSharedNode extends Node {
     }
 
     @Specialization(guards = "shareable.getClass() == shareableClass")
-    protected RTypedValue getNonShared(RSharingAttributeStorage shareable,
+    protected RTypedValue getNonSharedCached(RSharingAttributeStorage shareable,
                     @Cached("shareable.getClass()") Class<? extends RSharingAttributeStorage> shareableClass) {
         return shareableClass.cast(shareable).getNonShared();
+    }
+
+    @Specialization(replaces = "getNonSharedCached")
+    protected RTypedValue getNonShared(RSharingAttributeStorage shareable) {
+        return shareable.getNonShared();
     }
 
     @Fallback

@@ -360,7 +360,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSize, (TruffleObject) obj);
     }
 
-    protected boolean isForeignVector(Object obj) {
+    public boolean isForeignVector(Object obj) {
         return isJavaIterable(obj) || isForeignArray(obj, hasSize);
     }
 

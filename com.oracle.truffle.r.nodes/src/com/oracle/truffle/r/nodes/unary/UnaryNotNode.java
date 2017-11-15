@@ -32,9 +32,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -55,7 +53,7 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@ImportStatic({ForeignArray2R.class, Message.class})
+@ImportStatic({RRuntime.class})
 @RBuiltin(name = "!", kind = PRIMITIVE, parameterNames = {""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
 public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
@@ -219,13 +217,15 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
         return RDataFactory.createEmptyLogicalVector();
     }
 
-    @Specialization(guards = {"isForeignVector(obj, hasSize)"})
+    @Specialization(guards = {"isForeignObject(obj)"})
     protected Object doForeign(VirtualFrame frame, TruffleObject obj,
-                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize,
                     @Cached("create()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") UnaryNotNode recursive) {
-        Object vec = foreignArray2R.convert(obj);
-        return recursive.execute(frame, vec);
+        if (foreignArray2R.isForeignVector(obj)) {
+            Object vec = foreignArray2R.convert(obj);
+            return recursive.execute(frame, vec);
+        }
+        return invalidArgType(obj);
     }
 
     protected UnaryNotNode createRecursive() {

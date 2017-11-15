@@ -28,9 +28,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -60,7 +58,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * (e.g. logical). The only situation where semantics of finite is different to na.rm is double
  * values: na.rm removes NA and NaN, but not -/+Inf.
  */
-@ImportStatic({ForeignArray2R.class, Message.class, RRuntime.class})
+@ImportStatic({RRuntime.class})
 @TypeSystemReference(RTypes.class)
 public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
@@ -376,13 +374,15 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return handleString(operand, naRm, finite, 0);
     }
 
-    @Specialization(guards = {"isForeignVector(obj, hasSize)"})
+    @Specialization(guards = {"isForeignObject(obj)"})
     protected Object doForeignVector(TruffleObject obj, boolean naRm, boolean finite,
-                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize,
                     @Cached("create()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
-        Object vec = foreignArray2R.convert(obj);
-        return recursive.executeReduce(vec, naRm, finite);
+        if (foreignArray2R.isForeignVector(obj)) {
+            Object vec = foreignArray2R.convert(obj);
+            return recursive.executeReduce(vec, naRm, finite);
+        }
+        return doFallback(obj, naRm, finite);
     }
 
     @Fallback
