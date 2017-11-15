@@ -692,7 +692,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        return RCallNodeGen.create(src, arguments, signature, function);
+        return RCallNodeGen.create(src, arguments, signature, tagFunctionNode(function));
+    }
+
+    private static RNode tagFunctionNode(RNode function) {
+        // TODO Auto-generated method stub
+        return function;
     }
 
     /**
@@ -895,6 +900,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             varArgSeen = new boolean[formals.getLength()];
             nonWrapSeen = new boolean[formals.getLength()];
             wrapSeen = new boolean[formals.getLength()];
+
+            // Tell this builtin that it is LHS of a call which might imply different behavior.
+            builtin.setLhsOfCall(true);
         }
 
         @Override
@@ -1188,5 +1196,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return function.asRSyntaxNode();
         }
 
+    }
+
+    public static Object createDeferredMemberAccess(TruffleObject object, String name) {
+        return new DeferredFunctionValue(object, name);
     }
 }

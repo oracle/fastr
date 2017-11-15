@@ -13,18 +13,23 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.foreign;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -33,12 +38,13 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode.Arg2 {
 
+    @CompilationFinal private boolean isLhsOfCall;
     @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
     @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true);
 
     static {
         Casts casts = new Casts(Slot.class);
-        casts.arg(0).asAttributable(true, true, true);
+        casts.arg(0).returnIf(foreign()).asAttributable(true, true, true);
     }
 
     private String getName(Object nameObj) {
@@ -55,7 +61,22 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
         throw error(RError.Message.GENERIC, "invalid type or length for slot name");
     }
 
-    @Specialization
+    protected boolean isLhsOfForeignCall(Object o) {
+        return isLhsOfCall && RRuntime.isForeignObject(o);
+    }
+
+    @Specialization(guards = {"isLhsOfForeignCall(object)"})
+    protected Object getSlot(TruffleObject object, Object nameObj,
+                    @Cached("createClassProfile()") ValueProfile nameObjProfile) {
+
+        String name = getName(nameObjProfile.profile(nameObj));
+        assert Utils.isInterned(name);
+
+        // just return evaluated receiver object and name
+        return RCallNode.createDeferredMemberAccess(object, name);
+    }
+
+    @Specialization(guards = "!isLhsOfForeignCall(object)")
     protected Object getSlot(Object object, Object nameObj,
                     @Cached("createClassProfile()") ValueProfile nameObjProfile) {
         String name = getName(nameObjProfile.profile(nameObj));
@@ -65,5 +86,11 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
         // since we give the slot away, we probably have to increase the refCount
         sharedAttrUpdate.execute(object, result);
         return result;
+    }
+
+    @Override
+    public void setLhsOfCall(boolean value) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        this.isLhsOfCall = value;
     }
 }
