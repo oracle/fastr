@@ -28,29 +28,19 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.util.function.IntFunction;
-
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 @RBuiltin(name = "rep.int", kind = INTERNAL, parameterNames = {"x", "times"}, behavior = PURE)
 public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
@@ -64,136 +54,70 @@ public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
                         RError.Message.INVALID_VALUE, "times");
     }
 
-    @FunctionalInterface
-    private interface ArrayUpdateFunction<ValueT, ArrayT> {
-        void update(ArrayT array, int pos, ValueT value, int index);
-    }
+    private RAbstractVector performRep(RAbstractVector value, RAbstractIntVector times, VectorFactory factory, VectorAccess valueAccess, VectorAccess timesAccess, VectorAccess resultAccess) {
+        try (SequentialIterator valueIter = valueAccess.access(value); SequentialIterator timesIter = timesAccess.access(times)) {
+            int valueLength = valueAccess.getLength(valueIter);
+            int timesLength = timesAccess.getLength(timesIter);
 
-    @FunctionalInterface
-    private interface CreateResultFunction<ResultT, ArrayT> {
-        ResultT create(ArrayT array, boolean complete);
-    }
-
-    private <ValueT extends RAbstractVector, ResultT extends ValueT, ArrayT> ResultT repInt(ValueT value, RAbstractIntVector times, IntFunction<ArrayT> arrayConstructor,
-                    ArrayUpdateFunction<ValueT, ArrayT> arrayUpdate, CreateResultFunction<ResultT, ArrayT> createResult) {
-        ArrayT result;
-        int timesLength = times.getLength();
-        int valueLength = value.getLength();
-        if (timesOneProfile.profile(timesLength == 1)) {
-            int timesValue = times.getDataAt(0);
-            if (timesValue < 0) {
-                throw error(RError.Message.INVALID_VALUE, "times");
-            }
-            int count = timesValue * valueLength;
-            result = arrayConstructor.apply(count);
-            int pos = 0;
-            for (int i = 0; i < timesValue; i++) {
-                for (int j = 0; j < valueLength; j++) {
-                    arrayUpdate.update(result, pos++, value, j);
-                }
-            }
-        } else if (timesLength == valueLength) {
-            int count = 0;
-            for (int i = 0; i < timesLength; i++) {
-                int data = times.getDataAt(i);
-                if (data < 0) {
+            RVector<?> result;
+            if (timesOneProfile.profile(timesLength == 1)) {
+                timesAccess.next(timesIter);
+                int timesValue = timesAccess.getInt(timesIter);
+                if (timesValue < 0) {
                     throw error(RError.Message.INVALID_VALUE, "times");
                 }
-                count += data;
-            }
-            result = arrayConstructor.apply(count);
-            int pos = 0;
-            for (int i = 0; i < valueLength; i++) {
-                int num = times.getDataAt(i);
-                for (int j = 0; j < num; j++) {
-                    arrayUpdate.update(result, pos++, value, i);
+                result = factory.createVector(valueAccess.getType(), timesValue * valueLength, false);
+                try (SequentialIterator resultIter = resultAccess.access(result)) {
+                    for (int i = 0; i < timesValue; i++) {
+                        while (valueAccess.next(valueIter)) {
+                            resultAccess.next(resultIter);
+                            resultAccess.setFromSameType(resultIter, valueAccess, valueIter);
+                        }
+                        valueAccess.reset(valueIter);
+                    }
                 }
-            }
-        } else {
-            throw error(RError.Message.INVALID_VALUE, "times");
-        }
-        return createResult.create(result, value.isComplete());
-    }
+            } else if (timesLength == valueLength) {
+                int count = 0;
+                while (timesAccess.next(timesIter)) {
+                    int num = timesAccess.getInt(timesIter);
+                    if (num < 0) {
+                        throw error(RError.Message.INVALID_VALUE, "times");
+                    }
+                    count += num;
+                }
+                result = factory.createVector(valueAccess.getType(), count, false);
 
-    @Specialization
-    protected RDoubleVector repInt(RAbstractDoubleVector value, RAbstractIntVector times) {
-        return repInt(value, times, double[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createDoubleVector);
-    }
-
-    @Specialization
-    protected RIntVector repInt(RAbstractIntVector value, RAbstractIntVector times) {
-        return repInt(value, times, int[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createIntVector);
-    }
-
-    @Specialization
-    protected RLogicalVector repInt(RAbstractLogicalVector value, RAbstractIntVector times) {
-        return repInt(value, times, byte[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createLogicalVector);
-    }
-
-    @Specialization
-    protected RStringVector repInt(RAbstractStringVector value, RAbstractIntVector times) {
-        return repInt(value, times, String[]::new, (array, pos, val, index) -> array[pos] = val.getDataAt(index), RDataFactory::createStringVector);
-    }
-
-    @Specialization
-    protected RRawVector repInt(RAbstractRawVector value, RAbstractIntVector times) {
-        return repInt(value, times, byte[]::new, (array, pos, val, index) -> array[pos] = val.getRawDataAt(index), (array, complete) -> RDataFactory.createRawVector(array));
-    }
-
-    @Specialization
-    protected RComplexVector repComplex(RAbstractComplexVector value, RAbstractIntVector times) {
-        int timesLength = times.getLength();
-        int valueLength = value.getLength();
-        double[] resultArray;
-        if (timesOneProfile.profile(timesLength == 1)) {
-            int timesValue = times.getDataAt(0);
-            if (timesValue < 0) {
+                timesAccess.reset(timesIter);
+                try (SequentialIterator resultIter = resultAccess.access(result)) {
+                    while (timesAccess.next(timesIter) && valueAccess.next(valueIter)) {
+                        int num = timesAccess.getInt(timesIter);
+                        for (int i = 0; i < num; i++) {
+                            resultAccess.next(resultIter);
+                            resultAccess.setFromSameType(resultIter, valueAccess, valueIter);
+                        }
+                    }
+                }
+            } else {
                 throw error(RError.Message.INVALID_VALUE, "times");
             }
-            resultArray = new double[(timesValue * valueLength) << 1];
-            int pos = 0;
-            for (int i = 0; i < timesValue; i++) {
-                for (int j = 0; j < valueLength; j++) {
-                    RComplex complex = value.getDataAt(j);
-                    resultArray[pos++] = complex.getRealPart();
-                    resultArray[pos++] = complex.getImaginaryPart();
-                }
-            }
-        } else if (timesLength == valueLength) {
-            int count = 0;
-            for (int i = 0; i < timesLength; i++) {
-                int data = times.getDataAt(i);
-                if (data < 0) {
-                    throw error(RError.Message.INVALID_VALUE, "times");
-                }
-                count += data;
-            }
-            resultArray = new double[count << 1];
-            int pos = 0;
-            for (int i = 0; i < valueLength; i++) {
-                int num = times.getDataAt(i);
-                RComplex complex = value.getDataAt(i);
-                for (int j = 0; j < num; j++) {
-                    resultArray[pos++] = complex.getRealPart();
-                    resultArray[pos++] = complex.getImaginaryPart();
-                }
-            }
-        } else {
-            throw error(RError.Message.INVALID_VALUE, "times");
+            result.setComplete(!valueAccess.na.isEnabled());
+            return result;
         }
-        return RDataFactory.createComplexVector(resultArray, value.isComplete());
     }
 
-    @Specialization
-    protected RList repList(RList value, int times) {
-        int oldLength = value.getLength();
-        int length = value.getLength() * times;
-        Object[] array = new Object[length];
-        for (int i = 0; i < times; i++) {
-            for (int j = 0; j < oldLength; j++) {
-                array[i * oldLength + j] = value.getDataAt(j);
-            }
-        }
-        return RDataFactory.createList(array);
+    @Specialization(guards = {"valueAccess.supports(value)", "timesAccess.supports(times)"})
+    protected RAbstractVector repCached(RAbstractVector value, RAbstractIntVector times,
+                    @Cached("create()") VectorFactory factory,
+                    @Cached("value.access()") VectorAccess valueAccess,
+                    @Cached("times.access()") VectorAccess timesAccess,
+                    @Cached("createNew(value.getRType())") VectorAccess resultAccess) {
+        return performRep(value, times, factory, valueAccess, timesAccess, resultAccess);
+    }
+
+    @Specialization(replaces = "repCached")
+    @TruffleBoundary
+    protected RAbstractVector repGeneric(RAbstractVector value, RAbstractIntVector times,
+                    @Cached("create()") VectorFactory factory) {
+        return performRep(value, times, factory, value.slowPathAccess(), times.slowPathAccess(), VectorAccess.createSlowPathNew(value.getRType()));
     }
 }
