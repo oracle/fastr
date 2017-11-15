@@ -214,7 +214,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         return new DoubleVectorMetrics(w, d, e);
     }
 
-    private static final int DBL_DIG = 15;
+    @SuppressWarnings("unused") private static final int DBL_DIG = 15;
 
     private static final double[] tbl = {
                     1e-1,
@@ -282,13 +282,14 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                 r = x;
             }
 
-            if (digits >= DBL_DIG + 1) {
-                // TODO:
-                // format_via_sprintf(r, pp.getDigits(), kpower, nsig);
-                roundingwidens = false;
-                // return;
-                throw new UnsupportedOperationException();
-            }
+            // we ignore this special case for the time being:
+            // if (digits >= DBL_DIG + 1) {
+            // // TODO:
+            // // format_via_sprintf(r, pp.getDigits(), kpower, nsig);
+            // roundingwidens = false;
+            // // return;
+            // throw new UnsupportedOperationException();
+            // }
 
             kp = (int) Math.floor(Math.log10(r)) - digits + 1; // r = |x|;
                                                                // 10^(kp + digits - 1) <= r
@@ -434,9 +435,12 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
                 if (x == 0) {
                     log10 = 0;
                 } else {
-                    if (x < 1e-300) {
+                    if (x < 1e-200) {
+                        // if we're close to the smallest double numbers, the loop that calculates
+                        // digits will produce errors
                         shifted = true;
                         x *= 1e100;
+                        assert Math.abs(Math.log10(x)) >= 100 : "should not shift into 2-digit exponents";
                     }
                     log10 = (int) Math.log10(x);
                     if (DECIMAL_WEIGHTS[log10 + DECIMAL_SHIFT] > x) {
@@ -553,7 +557,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
     private static double appendDigit(double x, int digit, StringBuilder str) {
         int c = (int) (x / DECIMAL_WEIGHTS[digit + DECIMAL_SHIFT]);
-        assert c >= 0 && c <= 9;
+        assert c >= 0 && c <= 9 : c;
         str.append((char) ('0' + c));
         return x - DECIMAL_VALUES[digit + DECIMAL_SHIFT][c];
     }

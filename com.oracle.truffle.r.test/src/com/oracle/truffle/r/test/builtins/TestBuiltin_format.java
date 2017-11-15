@@ -309,5 +309,8 @@ public class TestBuiltin_format extends TestBase {
         assertEval("format(4.135e-04, digits=3)");
         assertEval("format(9.999999999995, digits=13); format(9.999999999995, digits=11)");
         assertEval("format(9.999999995, digits=10)");
+        assertEval("format(2147483647 / 1.7976931348623157E308, digits =15)");
+        // only the first 16 decimal digits (53 bits) contain useful information (+ decimal point)
+        assertEval("substr(format(2147483647 / 1.7976931348623157E308, digits =22), 1,16+1)");
     }
 }
