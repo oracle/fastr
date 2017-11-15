@@ -41,7 +41,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -692,20 +691,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
      */
     public static RCallNode createCall(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        return RCallNodeGen.create(src, arguments, signature, tagFunctionNode(function));
-    }
-
-    private static RNode tagFunctionNode(RNode function) {
-        // TODO Auto-generated method stub
-        return function;
-    }
-
-    /**
-     * The standard way to create a call to {@code function} with given arguments. If
-     * {@code src == RSyntaxNode.EAGER_DEPARSE} we force a deparse.
-     */
-    public static RCallNode createCallDeferred(SourceSection src, RNode function, ArgumentsSignature signature, RSyntaxNode... arguments) {
-        return RCallNodeGen.create(src, arguments, signature, new DeferredFunctionNode(function));
+        return RCallNodeGen.create(src, arguments, signature, function);
     }
 
     /**
@@ -1145,55 +1131,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         public TruffleObject getLHSReceiver() {
             return lhsReceiver;
-        }
-
-    }
-
-    private static class DeferredFunctionNode extends RNode {
-
-        @Child private RNode function;
-        @Child private RNode lhsReceiver;
-        @Child private RNode lhsMember;
-        @Child private Node keyInfoNode;
-
-        private final ValueProfile receiverClassProfile = ValueProfile.createClassProfile();
-        private final ValueProfile memberClassProfile = ValueProfile.createClassProfile();
-
-        public RNode getLHSMember(RNode n) {
-            return (RNode) ((RSyntaxCall) n).getSyntaxArguments()[1];
-        }
-
-        public RNode getLHSReceiver(RNode n) {
-            return (RNode) ((RSyntaxCall) n).getSyntaxArguments()[0];
-        }
-
-        protected DeferredFunctionNode(RNode function) {
-            this.lhsReceiver = (RNode) getLHSReceiver(function).deepCopy();
-            this.lhsMember = (RNode) getLHSMember(function).deepCopy();
-            this.function = function;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            Object lhsReceiverObj = lhsReceiver.execute(frame);
-            if (isForeignObject(receiverClassProfile.profile(lhsReceiverObj))) {
-                Object lhsMemberObj = memberClassProfile.profile(lhsMember.execute(frame));
-                if (lhsMemberObj instanceof String) {
-                    if (keyInfoNode == null) {
-                        keyInfoNode = insert(Message.KEY_INFO.createNode());
-                    }
-                    int keyInfo = ForeignAccess.sendKeyInfo(keyInfoNode, (TruffleObject) lhsReceiverObj, (String) lhsMemberObj);
-                    if (KeyInfo.isInvocable(keyInfo)) {
-                        return new DeferredFunctionValue((TruffleObject) lhsReceiverObj, (String) lhsMemberObj);
-                    }
-                }
-            }
-            return function.execute(frame);
-        }
-
-        @Override
-        protected RSyntaxNode getRSyntaxNode() {
-            return function.asRSyntaxNode();
         }
 
     }

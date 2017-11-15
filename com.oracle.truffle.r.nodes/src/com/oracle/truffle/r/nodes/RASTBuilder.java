@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.nodes.function.PostProcessArgumentsNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
@@ -63,8 +62,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -98,7 +95,12 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 switch (symbol) {
                     case "$":
                     case "@":
-                        convertSymbol(args);
+                        if (args.get(1).value instanceof RSyntaxLookup) {
+                            RSyntaxLookup lookup = (RSyntaxLookup) args.get(1).value;
+                            // FastR differs from GNUR: we only use string constants to represent
+                            // field and slot lookups, while GNUR uses symbols
+                            args.set(1, RCodeBuilder.argument(args.get(1).source, args.get(1).name, constant(lookup.getLazySourceSection(), lookup.getIdentifier())));
+                        }
                         break;
                     case "while":
                         return new WhileNode(source, lhsLookup, args.get(0).value, args.get(1).value);
@@ -145,37 +147,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             }
         }
 
-        if (canBeForeignInvoke(lhs)) {
-            return RCallNode.createCallDeferred(source, lhs.asRNode(), createSignature(args), createArguments(args));
-        }
         return RCallSpecialNode.createCall(source, lhs.asRNode(), createSignature(args), createArguments(args));
-    }
-
-    /**
-     * Tests if some syntax expression can be a call in form of {@code lhsReceiver$lhsMember(args)}.
-     */
-    private static boolean canBeForeignInvoke(RSyntaxNode expr) {
-
-        if (expr instanceof RSyntaxCall) {
-            RSyntaxCall call = (RSyntaxCall) expr;
-            RSyntaxElement lhs = call.getSyntaxLHS();
-
-            if (lhs instanceof RSyntaxLookup && "$".equals(((RSyntaxLookup) lhs).getIdentifier())) {
-                RSyntaxElement[] syntaxArguments = call.getSyntaxArguments();
-                return syntaxArguments.length == 2 && isAllowedElement(syntaxArguments[0]) && isAllowedElement(syntaxArguments[1]);
-            }
-        }
-
-        return false;
-    }
-
-    private void convertSymbol(List<Argument<RSyntaxNode>> args) {
-        if (args.get(1).value instanceof RSyntaxLookup) {
-            RSyntaxLookup lookup = (RSyntaxLookup) args.get(1).value;
-            // FastR differs from GNUR: we only use string constants to represent
-            // field and slot lookups, while GNUR uses symbols
-            args.set(1, RCodeBuilder.argument(args.get(1).source, args.get(1).name, constant(lookup.getLazySourceSection(), lookup.getIdentifier())));
-        }
     }
 
     private static ArgumentsSignature createSignature(List<Argument<RSyntaxNode>> args) {
@@ -307,9 +279,5 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             }
         }
         return ReadVariableNode.wrap(source, functionLookup ? ReadVariableNode.createForcedFunctionLookup(symbol) : ReadVariableNode.create(symbol));
-    }
-
-    private static boolean isAllowedElement(RSyntaxElement e) {
-        return e instanceof RSyntaxLookup || e instanceof RSyntaxConstant;
     }
 }
