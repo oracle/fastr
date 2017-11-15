@@ -47,11 +47,11 @@ public class RandomFunctions {
         }
     }
 
-    public abstract static class RandFunction1_Double extends RandFunction2_Double {
+    public abstract static class RandFunction1_Double extends RandFunction3_Double {
         public abstract double execute(double a, RandomNumberProvider rand);
 
         @Override
-        public final double execute(double a, double b, RandomNumberProvider rand) {
+        public final double execute(double a, double b, double c, RandomNumberProvider rand) {
             return execute(a, rand);
         }
     }

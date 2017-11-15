@@ -18,7 +18,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 
 public final class RMultinom {
@@ -32,7 +33,7 @@ public final class RMultinom {
      * prob[j]) , sum_j rN[j] == n, sum_j prob[j] == 1.
      */
     @TruffleBoundary
-    public static boolean rmultinom(int nIn, ReadAccessor.Double prob, int maxK, int[] rN, int rnStartIdx, RandomNumberProvider rand, Rbinom rbinom) {
+    public static boolean rmultinom(int nIn, SequentialIterator probsIter, VectorAccess probsAccess, double sum, int[] rN, int rnStartIdx, RandomNumberProvider rand, Rbinom rbinom) {
         /*
          * This calculation is sensitive to exact values, so we try to ensure that the calculations
          * are as accurate as possible so different platforms are more likely to give the same
@@ -40,6 +41,7 @@ public final class RMultinom {
          */
 
         int n = nIn;
+        int maxK = probsAccess.getLength(probsIter);
         if (RRuntime.isNA(maxK) || maxK < 1 || RRuntime.isNA(n) || n < 0) {
             if (rN.length > rnStartIdx) {
                 rN[rnStartIdx] = RRuntime.INT_NA;
@@ -52,8 +54,9 @@ public final class RMultinom {
          * shorter and drop that check !
          */
         /* LDOUBLE */double pTot = 0.;
-        for (int k = 0; k < maxK; k++) {
-            double pp = prob.getDataAt(k);
+        probsAccess.reset(probsIter);
+        for (int k = 0; probsAccess.next(probsIter); k++) {
+            double pp = probsAccess.getDouble(probsIter) / sum;
             if (!Double.isFinite(pp) || pp < 0. || pp > 1.) {
                 rN[rnStartIdx + k] = RRuntime.INT_NA;
                 return false;
@@ -74,9 +77,10 @@ public final class RMultinom {
         }
 
         /* Generate the first K-1 obs. via binomials */
-        for (int k = 0; k < maxK - 1; k++) {
+        probsAccess.reset(probsIter);
+        for (int k = 0; probsAccess.next(probsIter) && k < maxK - 1; k++) {
             /* (p_tot, n) are for "remaining binomial" */
-            /* LDOUBLE */double probK = prob.getDataAt(k);
+            /* LDOUBLE */double probK = probsAccess.getDouble(probsIter) / sum;
             if (probK != 0.) {
                 double pp = probK / pTot;
                 // System.out.printf("[%d] %.17f\n", k + 1, pp);
