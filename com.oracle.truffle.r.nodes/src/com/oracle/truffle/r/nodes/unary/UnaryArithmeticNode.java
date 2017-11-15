@@ -52,42 +52,45 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
     public abstract Object execute(Object value);
 
     @Specialization(guards = {"cachedNode != null", "cachedNode.isSupported(operand)"})
-    protected Object doCached(Object operand,
+    protected Object doCached(RAbstractVector operand,
                     @Cached("createCachedFast(operand)") UnaryMapNode cachedNode) {
         return cachedNode.apply(operand);
     }
 
-    protected UnaryMapNode createCachedFast(Object operand) {
+    protected UnaryMapNode createCachedFast(RAbstractVector operand) {
         if (isNumericVector(operand)) {
-            return createCached(unary.createOperation(), operand);
+            return createCached(unary.createOperation(), operand, false);
         }
         return null;
     }
 
-    protected static UnaryMapNode createCached(UnaryArithmetic arithmetic, Object operand) {
+    protected static UnaryMapNode createCached(UnaryArithmetic arithmetic, Object operand, boolean isGeneric) {
         if (operand instanceof RAbstractVector) {
             RAbstractVector castOperand = (RAbstractVector) operand;
             RType operandType = castOperand.getRType();
             if (operandType.isNumeric()) {
                 RType type = RType.maxPrecedence(operandType, arithmetic.getMinPrecedence());
                 RType resultType = arithmetic.calculateResultType(type);
-                return UnaryMapNode.create(new ScalarUnaryArithmeticNode(arithmetic), castOperand, type, resultType);
+                return UnaryMapNode.create(new ScalarUnaryArithmeticNode(arithmetic), castOperand, type, resultType, isGeneric);
             }
         }
         return null;
     }
 
-    protected static boolean isNumericVector(Object value) {
+    protected static boolean isNumericVector(RAbstractVector value) {
         return value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector;
     }
 
     @Specialization(replaces = "doCached", guards = {"isNumericVector(operand)"})
     @TruffleBoundary
-    protected Object doGeneric(Object operand,
+    protected Object doGeneric(RAbstractVector operand,
                     @Cached("unary.createOperation()") UnaryArithmetic arithmetic,
-                    @Cached("new(createCached(arithmetic, operand))") GenericNumericVectorNode generic) {
-        RAbstractVector operandVector = (RAbstractVector) operand;
-        return generic.get(arithmetic, operandVector).apply(operandVector);
+                    @Cached("createGeneric()") GenericNumericVectorNode generic) {
+        return generic.get(arithmetic, operand).apply(operand);
+    }
+
+    protected static GenericNumericVectorNode createGeneric() {
+        return new GenericNumericVectorNode();
     }
 
     @Override
@@ -110,16 +113,12 @@ public abstract class UnaryArithmeticNode extends UnaryNode {
 
         @Child private UnaryMapNode cached;
 
-        public GenericNumericVectorNode(UnaryMapNode cachedOperation) {
-            this.cached = cachedOperation;
-        }
-
         public UnaryMapNode get(UnaryArithmetic arithmetic, RAbstractVector operand) {
-            UnaryMapNode next = cached;
-            if (!next.isSupported(operand)) {
-                next = cached.replace(createCached(arithmetic, operand));
+            UnaryMapNode map = cached;
+            if (map == null || !map.isSupported(operand)) {
+                cached = map = insert(createCached(arithmetic, operand, true));
             }
-            return next;
+            return map;
         }
     }
 }
