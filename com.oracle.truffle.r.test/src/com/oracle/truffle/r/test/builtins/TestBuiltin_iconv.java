@@ -24,10 +24,7 @@ public class TestBuiltin_iconv extends TestBase {
 
     @Test
     public void testiconv2() {
-        // FIXME ç is not an ASCII char (although it's an extended ASCII char wit code==135)
-        // and NA_character_ replacement leads to whole output to become NA
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list('façile'   , 'latin1', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval("argv <- list('façile'   , 'latin1', 'ASCII', NA_character_, TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -55,9 +52,7 @@ public class TestBuiltin_iconv extends TestBase {
 
     @Test
     public void testiconv7() {
-        // FIXME ç is not an ASCII char (although it's an extended ASCII char wit code==135)
-        // so GnuR elimination of ç character is correct.
-        assertEval(Ignored.ImplementationError, "argv <- list('façile'   , 'latin1', 'ASCII', '', TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval("argv <- list('façile'   , 'latin1', 'ASCII', '', TRUE, FALSE); .Internal(iconv(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test

@@ -53,5 +53,6 @@ public class TestBuiltin_attributesassign extends TestBase {
     public void testArgsCasts() {
         assertEval("x <- 42;  attributes(x) <- 44");
         assertEval("x <- 42;  attributes(x) <- NULL");
+        assertEval("x <- 42;  attributes(x) <- list()");
     }
 }

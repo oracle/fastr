@@ -41,8 +41,7 @@ public class TestUtils extends TestBase {
 
     @Test
     public void testMethods() {
-        // The vector of methods is not sorted alphabetically
-        assertEval(Ignored.ImplementationError, "methods(plot)");
+        assertEval("methods(plot)");
     }
 
     private static final String[] TEST_OCTSIZE_PARAMS = {"1L", "1.0", Integer.toString(Integer.MAX_VALUE), "NA", "NULL"};

@@ -39,8 +39,7 @@ public class TestBuiltin_encodeString extends TestBase {
 
     @Test
     public void testencodeString7() {
-        // FIXME No \b and \n encoding done in FastR
-        assertEval(Ignored.ImplementationError, "argv <- list('ab\\bc\\ndef', 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('ab\\bc\\ndef', 0L, '', 0L, TRUE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -55,9 +54,7 @@ public class TestBuiltin_encodeString extends TestBase {
 
     @Test
     public void testencodeString10() {
-        // FIXME No \ to \\ encoding done
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list('\\\'class\\\' is a reserved slot name and cannot be redefined', 0L, '\\\'', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval("argv <- list('\\\'class\\\' is a reserved slot name and cannot be redefined', 0L, '\\\'', 0L, FALSE); .Internal(encodeString(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
