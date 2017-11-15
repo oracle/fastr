@@ -39,10 +39,8 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -52,8 +50,6 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -61,7 +57,6 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class CachedExtractVectorNode extends CachedVectorNode {
@@ -69,7 +64,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private static final boolean DEFAULT_EXACT = true;
     private static final boolean DEFAULT_DROP_DIMENSION = true;
 
-    private final Class<? extends RTypedValue> targetClass;
+    private final Class<? extends RAbstractContainer> targetClass;
     private final Class<? extends RTypedValue> exactClass;
     private final Class<? extends RTypedValue> dropDimensionsClass;
     private final boolean exact;
@@ -90,10 +85,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @Child private ExtractDimNamesNode extractDimNames;
 
-    @Child private ExtractS4ObjectNode extractS4ObjectNode;
-
     private final ConditionProfile resultHasDimensions = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile promiseInEnvironment = ConditionProfile.createBinaryProfile();
 
     /**
      * Profile if any metadata was applied at any point in time. This is useful extract primitive
@@ -101,8 +93,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
      */
     private final AlwaysOnBranchProfile metadataApplied = AlwaysOnBranchProfile.create();
 
-    CachedExtractVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
+    CachedExtractVectorNode(ElementAccessMode mode, RAbstractContainer vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
         super(mode, vector, positions, recursive);
+        assert vectorType != RType.Null && vectorType != RType.Environment;
         this.targetClass = vector.getClass();
         this.exactClass = exact.getClass();
         this.dropDimensionsClass = dropDimensions.getClass();
@@ -112,9 +105,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.exact = logicalAsBoolean(exact, DEFAULT_EXACT);
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
-        if (error == null && vectorType != RType.Null && vectorType != RType.Environment && vectorType != RType.S4Object) {
-            this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false, false);
-        }
+        this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false);
     }
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
@@ -130,36 +121,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     private final ConditionProfile extractedLengthGTZeroProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile oneDimensionProfile = ConditionProfile.createBinaryProfile();
 
-    public Object apply(Object originalVector, Object[] originalPositions, PositionProfile[] originalProfiles, Object originalExact, Object originalDropDimensions) {
-        if (error != null) {
-            CompilerDirectives.transferToInterpreter();
-            error.run();
-        }
+    public Object apply(RAbstractContainer originalVector, Object[] originalPositions, PositionProfile[] originalProfiles, Object originalExact, Object originalDropDimensions) {
         final Object[] positions = filterPositions(originalPositions);
-
         assert isSupported(originalVector, positions, originalExact, originalDropDimensions);
-
-        final RTypedValue castVector = targetClass.cast(originalVector);
-        final RAbstractContainer vector;
-        switch (vectorType) {
-            case Null:
-                return RNull.instance;
-            case Environment:
-                /*
-                 * TODO (chumer) the environment case cannot be applied to the default extract
-                 * method as it does not implement RAbstractContainer. This should be harmonized
-                 * later.
-                 */
-                return doEnvironment((REnvironment) castVector, positions);
-            case S4Object:
-                return doS4Object((RS4Object) castVector, positions);
-            case Integer:
-                vector = (RAbstractContainer) castVector;
-                break;
-            default:
-                vector = (RAbstractContainer) castVector;
-                break;
-        }
+        RAbstractContainer vector = targetClass.cast(originalVector);
 
         int vectorLength = vectorLengthProfile.profile(vector.getLength());
 
@@ -178,11 +143,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
-        final RVector<?> extractedVector;
+        RVector<?> extractedVector;
         switch (vectorType) {
-            case Expression:
-                extractedVector = RType.Expression.create(extractedVectorLength, false);
-                break;
             case Language:
             case PairList:
                 extractedVector = RType.List.create(extractedVectorLength, false);
@@ -194,9 +156,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         if (mode.isSubset()) {
             if (extractedLengthGTZeroProfile.profile(extractedVectorLength > 0)) {
-                writeVectorNode.enableValueNACheck(vector);
-                writeVectorNode.apply(extractedVector, extractedVectorLength, positions, vector, vectorLength, dimensions);
-                extractedVector.setComplete(writeVectorNode.neverSeenNAInValue());
+                writeVectorNode.execute(extractedVector, positions, vector, dimensions);
                 RBaseNode.reportWork(this, extractedVectorLength);
             }
             if (oneDimensionProfile.profile(numberOfDimensions == 1)) {
@@ -216,15 +176,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             }
 
             switch (vectorType) {
-                case Expression:
-                    return extractedVector;
                 case Language:
                     return materializeLanguage(extractedVector);
                 default:
                     return trySubsetPrimitive(extractedVector);
             }
         } else {
-            writeVectorNode.apply(extractedVector, extractedVectorLength, positions, vector, vectorLength, dimensions);
+            writeVectorNode.execute(extractedVector, positions, vector, dimensions);
             RBaseNode.reportWork(this, 1);
             assert extractedVectorLength == 1;
             return extractedVector.getDataAtAsObject(0);
@@ -242,7 +200,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     private Object trySubsetPrimitive(RAbstractVector extractedVector) {
-        if (!metadataApplied.isVisited() && positionsCheckNode.getCachedSelectedPositionsCount() == 1 && !isList()) {
+        if (!metadataApplied.isVisited() && positionsCheckNode.getCachedSelectedPositionsCount() == 1 && vectorType != RType.List && vectorType != RType.Expression) {
             /*
              * If the selected count was always 1 and no metadata was ever set we can just extract
              * the primitive value from the vector. This branch has to fold to a constant because we
@@ -254,31 +212,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             return extractedVector.getDataAtAsObject(0);
         }
         return extractedVector;
-    }
-
-    @TruffleBoundary
-    private Object doEnvironment(REnvironment env, Object[] positions) {
-        if (mode.isSubset()) {
-            throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
-        }
-
-        String positionString = tryCastSingleString(positionsCheckNode, positions);
-        if (positionString != null) {
-            Object obj = env.get(positionString);
-            if (promiseInEnvironment.profile(obj instanceof RPromise)) {
-                obj = PromiseHelperNode.evaluateSlowPath((RPromise) obj);
-            }
-            return obj == null ? RNull.instance : obj;
-        }
-        throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);
-    }
-
-    private Object doS4Object(RS4Object object, Object[] positions) {
-        if (extractS4ObjectNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            extractS4ObjectNode = insert(new ExtractS4ObjectNode(mode, exact, dropDimensions));
-        }
-        return extractS4ObjectNode.execute(object, positions);
     }
 
     private boolean isMissingSingleDimension() {
@@ -296,10 +229,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             extractDimNames = insert(ExtractDimNamesNodeGen.create(numberOfDimensions));
         }
         return extractDimNames.extract(dimensionIndex, vector, pos, profile);
-    }
-
-    private boolean isList() {
-        return vectorType == RType.List;
     }
 
     private final ConditionProfile dimNamesNull = ConditionProfile.createBinaryProfile();

@@ -68,6 +68,10 @@ public class RRuntime {
 
     //@formatter:on
 
+    // used in DSL expressions:
+    public static final boolean True = true;
+    public static final boolean False = false;
+
     public static final String R_APP_MIME = "application/x-r";
     public static final String R_TEXT_MIME = "text/x-r";
 

@@ -13,7 +13,6 @@
 package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -32,9 +31,7 @@ import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 // transcribed from src/main/attrib.c
-public abstract class GetS4DataSlot extends Node {
-
-    public abstract RTypedValue executeObject(RAttributable attObj);
+public final class GetS4DataSlot extends Node {
 
     @Child private GetFixedAttributeNode s3ClassAttrAccess;
     @Child private RemoveFixedAttributeNode s3ClassAttrRemove;
@@ -48,12 +45,19 @@ public abstract class GetS4DataSlot extends Node {
 
     private final RType type;
 
-    protected GetS4DataSlot(RType type) {
+    private GetS4DataSlot(RType type) {
         this.type = type;
     }
 
-    @Specialization
-    protected RTypedValue doNewObject(RAttributable attrObj) {
+    public static GetS4DataSlot create(RType type) {
+        return new GetS4DataSlot(type);
+    }
+
+    public static GetS4DataSlot createEnvironment() {
+        return new GetS4DataSlot(RType.Environment);
+    }
+
+    public RTypedValue executeObject(RAttributable attrObj) {
         RAttributable obj = attrObj;
         Object value = null;
         if (!(obj instanceof RS4Object) || type == RType.S4Object) {

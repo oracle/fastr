@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -34,20 +36,31 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen.ExtractSingleNameNodeGen;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R.ForeignArrayData;
@@ -58,7 +71,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     protected static final int CACHE_LIMIT = 5;
 
-    private final ElementAccessMode mode;
+    protected final ElementAccessMode mode;
     private final boolean recursive;
     private final boolean ignoreRecursive;
 
@@ -124,21 +137,90 @@ public abstract class ExtractVectorNode extends RBaseNode {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
-    protected Object doExtractDefaultCached(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractDefaultCached(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createDefaultCache(getThis(), vector, positions, exact, dropDimensions)") CachedExtractVectorNode cached) {
         assert !isRecursiveSubscript(vector, positions);
         return cached.apply(vector, positions, null, exact, dropDimensions);
     }
 
-    protected static CachedExtractVectorNode createDefaultCache(ExtractVectorNode node, Object vector, Object[] positions, Object exact, Object dropDimensions) {
-        return new CachedExtractVectorNode(node.getMode(), (RTypedValue) vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
+    protected static CachedExtractVectorNode createDefaultCache(ExtractVectorNode node, RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions) {
+        assert !(vector instanceof REnvironment);
+        return new CachedExtractVectorNode(node.getMode(), vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
     }
 
-    @Specialization(replaces = "doExtractDefaultCached", guards = "!isForeignObject(vector)")
+    @Specialization(replaces = "doExtractDefaultCached", guards = {"!isForeignObject(vector)"})
     @TruffleBoundary
-    protected Object doExtractDefaultGeneric(Object vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doExtractDefaultGeneric(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("new(createDefaultCache(getThis(), vector, positions, exact, dropDimensions))") GenericVectorExtractNode generic) {
         return generic.get(this, vector, positions, exact, dropDimensions).apply(vector, positions, null, exact, dropDimensions);
+    }
+
+    @Specialization
+    protected Object doExtractEnvironment(REnvironment env, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
+                    @Cached("createExtractName()") ExtractSingleName extractName,
+                    @Cached("new()") PromiseCheckHelperNode promiseHelper) {
+        if (mode.isSubset()) {
+            throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
+        }
+        String name = positions.length == 1 ? extractName.execute(positions[0]) : null;
+        if (name != null) {
+            Object obj = env.get(name);
+            return obj == null ? RNull.instance : promiseHelper.checkEvaluate(null, obj);
+        }
+        throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);
+    }
+
+    @Specialization
+    protected Object doExtractS4Object(RS4Object obj, Object[] positions, Object exact, Object dropDimensions,
+                    @Cached("createEnvironment()") GetS4DataSlot getS4DataSlotNode,
+                    @Cached("create(mode, True)") ExtractVectorNode recursiveExtract) {
+        RTypedValue dataSlot = getS4DataSlotNode.executeObject(obj);
+        if (dataSlot == RNull.instance) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.OP_NOT_DEFINED_FOR_S4_CLASS, "$");
+        }
+        return recursiveExtract.execute(dataSlot, positions, exact, dropDimensions);
+    }
+
+    abstract static class ExtractSingleName extends Node {
+
+        public abstract String execute(Object value);
+
+        public static ExtractSingleName createExtractName() {
+            return ExtractSingleNameNodeGen.create();
+        }
+
+        @Specialization
+        protected static String extract(String value) {
+            return value;
+        }
+
+        @Specialization(guards = "access.supports(value)")
+        protected static String extractCached(RAbstractStringVector value,
+                        @Cached("value.access()") VectorAccess access) {
+            try (RandomIterator iter = access.randomAccess(value)) {
+                if (access.getLength(iter) == 1) {
+                    return access.getString(iter, 0);
+                }
+            }
+            return null;
+        }
+
+        @Specialization(replaces = "extractCached")
+        @TruffleBoundary
+        protected static String extractGeneric(RAbstractStringVector value) {
+            return extractCached(value, value.slowPathAccess());
+        }
+
+        @Fallback
+        protected static String extractFallback(@SuppressWarnings("unused") Object value) {
+            return null;
+        }
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected Object doExtractRNull(RNull vector, Object[] positions, Object exact, Object dropDimensions) {
+        return RNull.instance;
     }
 
     // TODO hack until Truffle-DSL supports this.
@@ -154,7 +236,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
             this.cached = insert(cachedOperation);
         }
 
-        public CachedExtractVectorNode get(ExtractVectorNode node, Object vector, Object[] positions, Object exact, Object dropDimensions) {
+        public CachedExtractVectorNode get(ExtractVectorNode node, RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions) {
             CompilerAsserts.neverPartOfCompilation();
             if (!cached.isSupported(vector, positions, exact, dropDimensions)) {
                 cached = cached.replace(createDefaultCache(node, vector, positions, exact, dropDimensions));
@@ -250,5 +332,12 @@ public abstract class ExtractVectorNode extends RBaseNode {
     @TruffleBoundary
     private static TruffleObject toJavaClass(TruffleObject obj) {
         return JavaInterop.toJavaClass(obj);
+    }
+
+    @SuppressWarnings("unused")
+    @Fallback
+    protected Object access(Object object, Object[] positions, Object exact, Object dropDimensions) {
+        CompilerDirectives.transferToInterpreter();
+        throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, Predef.typeName().apply(object));
     }
 }
