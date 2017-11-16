@@ -12,40 +12,44 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notIntNA;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte0;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 @RBuiltin(name = "rep_len", kind = INTERNAL, parameterNames = {"x", "length.out"}, behavior = PURE)
 public abstract class RepeatLength extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(RepeatLength.class);
-        casts.arg("x").allowNull().mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE_NO_VECTOR);
-        // with default error message, SHOW_CALLER does not work
-        casts.arg("length.out").defaultError(RError.Message.INVALID_VALUE, "length.out").mustNotBeNull().asIntegerVector().mustBe(size(1)).findFirst().mustBe(notIntNA());
+        casts.arg("x").allowNull().mustBe(abstractVectorValue().or(instanceOf(RExpression.class)), RError.Message.ATTEMPT_TO_REPLICATE_NO_VECTOR);
+        casts.arg("length.out").defaultError(RError.Message.INVALID_VALUE, "length.out").mustNotBeNull().asIntegerVector().mustBe(singleElement()).findFirst().mustNotBeNA().mustBe(gte0());
     }
 
     @Specialization
@@ -106,72 +110,33 @@ public abstract class RepeatLength extends RBuiltinNode.Arg2 {
         return RDataFactory.createLogicalVector(array, value != RRuntime.LOGICAL_NA);
     }
 
-    //
-    // Specialization for vector values
-    //
-    @Specialization
-    protected RIntVector repLen(RAbstractIntVector value, int length) {
-        int[] array = new int[length];
-        for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
+    @Specialization(guards = "xAccess.supports(x)")
+    protected RAbstractVector repLenCached(RAbstractVector x, int length,
+                    @Cached("x.access()") VectorAccess xAccess,
+                    @Cached("createNew(xAccess.getType())") VectorAccess resultAccess,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
+                    @Cached("create()") VectorFactory factory) {
+        try (SequentialIterator xIter = xAccess.access(x)) {
+            if (emptyProfile.profile(xAccess.getLength(xIter) == 0)) {
+                return factory.createVector(xAccess.getType(), length, true);
+            }
+            RAbstractVector result = factory.createVector(xAccess.getType(), length, false);
+            try (SequentialIterator resultIter = resultAccess.access(result)) {
+                while (resultAccess.next(resultIter)) {
+                    xAccess.nextWithWrap(xIter);
+                    resultAccess.setFromSameType(resultIter, xAccess, xIter);
+                }
+            }
+            result.setComplete(x.isComplete());
+            return result;
         }
-        return RDataFactory.createIntVector(array, value.isComplete());
     }
 
-    @Specialization
-    protected RDoubleVector repLen(RDoubleVector value, int length) {
-        double[] array = new double[length];
-        for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        return RDataFactory.createDoubleVector(array, value.isComplete());
+    @Specialization(replaces = "repLenCached")
+    protected RAbstractVector repLenGeneric(RAbstractVector x, int length,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
+                    @Cached("create()") VectorFactory factory) {
+        return repLenCached(x, length, x.slowPathAccess(), VectorAccess.createSlowPathNew(x.getRType()), emptyProfile, factory);
     }
 
-    @Specialization
-    protected RStringVector repLen(RStringVector vectorToRepeat, int length) {
-        String[] result = new String[length];
-        int vectorToRepeatLength = vectorToRepeat.getLength();
-        for (int i = 0; i < length; i++) {
-            result[i] = vectorToRepeat.getDataAt(i % vectorToRepeatLength);
-        }
-        return RDataFactory.createStringVector(result, vectorToRepeat.isComplete());
-    }
-
-    @Specialization
-    protected RRawVector repLen(RRawVector value, int length) {
-        byte[] array = new byte[length];
-        for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getRawDataAt(j);
-        }
-        return RDataFactory.createRawVector(array);
-    }
-
-    @Specialization
-    protected RComplexVector repLen(RComplexVector value, int length) {
-        final int resultLength = length * 2;
-        double[] array = new double[resultLength];
-        for (int i = 0, j = 0; i < resultLength; i += 2, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j).getRealPart();
-            array[i + 1] = value.getDataAt(j).getImaginaryPart();
-        }
-        return RDataFactory.createComplexVector(array, value.isComplete());
-    }
-
-    @Specialization
-    protected RLogicalVector repLen(RLogicalVector value, int length) {
-        byte[] array = new byte[length];
-        for (int i = 0, j = 0; i < length; i++, j = Utils.incMod(j, value.getLength())) {
-            array[i] = value.getDataAt(j);
-        }
-        return RDataFactory.createLogicalVector(array, value.isComplete());
-    }
-
-    @Specialization
-    protected RList repLen(RList list, int length) {
-        Object[] data = new Object[length];
-        for (int i = 0; i < length; i++) {
-            data[i] = list.getDataAt(i % list.getLength());
-        }
-        return RDataFactory.createList(data);
-    }
 }
