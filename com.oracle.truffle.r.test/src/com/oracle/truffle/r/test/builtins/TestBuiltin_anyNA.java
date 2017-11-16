@@ -38,7 +38,18 @@ public class TestBuiltin_anyNA extends TestBase {
         assertEval("anyNA(c(1, NA, 3), recursive = TRUE)");
         assertEval("anyNA(list(a = c(1, 2, 3), b = 'a'))");
         assertEval("anyNA(list(a = c(1, NA, 3), b = 'a'))");
+        assertEval("anyNA(list(a = c('asdf', NA), b = 'a'))");
+        assertEval("anyNA(list(a = c(NA, 3), b = 'a'))");
+        assertEval("anyNA(list(a = NA, b = 'a'))");
+        assertEval("anyNA(list(a = NA))");
+        assertEval("anyNA(list(1, NA))");
+        assertEval("anyNA(list(a = c('asdf', NA), b = 'a'), recursive = TRUE)");
+        assertEval("anyNA(list(a = c(NA, 3), b = 'a'), recursive = TRUE)");
+        assertEval("anyNA(list(a = NA, b = 'a'), recursive = TRUE)");
+        assertEval("anyNA(list(a = NA), recursive = TRUE)");
+        assertEval("anyNA(list(1, NA), recursive = TRUE)");
         assertEval("anyNA(list(a = c(1, 2, 3), b = 'a'), recursive = TRUE)");
         assertEval("anyNA(list(a = c(1, NA, 3), b = 'a'), recursive = TRUE)");
+        assertEval("anyNA(list(a = c(1, 2, 3), b = list(NA, 'a')), recursive = TRUE)");
     }
 }
