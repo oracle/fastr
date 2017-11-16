@@ -146,6 +146,7 @@ abstract class CachedVectorNode extends RBaseNode {
             case PairList:
             case Environment:
             case Expression:
+            case S4Object:
                 return true;
             default:
                 return false;

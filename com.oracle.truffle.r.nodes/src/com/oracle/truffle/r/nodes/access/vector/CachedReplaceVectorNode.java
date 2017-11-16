@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -102,7 +103,8 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private DeleteElementsNode deleteElementsNode;
     @Child private SetNamesAttributeNode setNamesNode;
 
-    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive, boolean isValueGt1) {
+    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive,
+                    boolean ignoreRecursive, boolean isValueGt1) {
         super(mode, vector, positions, recursive);
 
         if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
@@ -122,7 +124,9 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         Object[] convertedPositions = filterPositions(positions);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, true, true, recursive);
-        if (castType != null && !castType.isNull()) {
+        if (vectorType == RType.S4Object) {
+            replaceS4ObjectNode = new ReplaceS4ObjectNode(mode, ignoreRecursive);
+        } else if (castType != null && !castType.isNull()) {
             this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements(), true);
         }
     }
@@ -148,6 +152,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         Object castVector = vectorClass.cast(originalVector);
         Object castValue = valueClass.cast(originalValues);
+
+        if (vectorType == RType.Environment) {
+            return doEnvironment((REnvironment) castVector, positions, castValue);
+        } else if (vectorType == RType.S4Object) {
+            return doS4Object((RS4Object) castVector, positions, castValue);
+        }
 
         Object value;
         if (valueType == RType.Null) {
@@ -197,8 +207,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             case PairList:
                 vector = ((RPairList) castVector).toRList();
                 break;
-            case Environment:
-                return doEnvironment((REnvironment) castVector, positions, castValue);
             case Language:
                 repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
                 vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
@@ -481,6 +489,12 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             throw error(ex);
         }
         return env;
+    }
+
+    @Child private ReplaceS4ObjectNode replaceS4ObjectNode;
+
+    private Object doS4Object(RS4Object obj, Object[] positions, Object originalValues) {
+        return replaceS4ObjectNode.execute(obj, positions, originalValues);
     }
 
     @NodeInfo(cost = NONE)

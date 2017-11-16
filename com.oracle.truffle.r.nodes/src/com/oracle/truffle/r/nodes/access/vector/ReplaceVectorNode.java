@@ -189,7 +189,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
 
     protected static CachedReplaceVectorNode createDefaultCached(ReplaceVectorNode node, Object vector, Object[] positions, Object value) {
         return new CachedReplaceVectorNode(node.mode, (RTypedValue) vector, positions, value.getClass(), RRuntime.isForeignObject(value) ? RType.TruffleObject : ((RTypedValue) value).getRType(), true,
-                        node.recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value));
+                        node.recursive, node.ignoreRecursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value));
     }
 
     public ElementAccessMode getMode() {

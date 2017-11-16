@@ -66,6 +66,7 @@ import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.nodes.helpers.AccessListField;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Arguments;
@@ -151,6 +152,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
+    @Child private AccessListField accessListField;
 
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
         if (explicitArgs == null) {
@@ -296,11 +298,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
             if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
                 RList list = (RList) promiseHelper.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-                // TODO create a node that looks up the name in the names attribute
-                int index = list.getElementIndexByName(builtin.getName());
-                if (index != -1) {
-                    RFunction basicFun = (RFunction) list.getDataAt(index);
-                    Object result = internalDispatchCall.execute(frame, basicFun, lookupVarArgs(frame), null, null);
+                if (accessListField == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    accessListField = insert(AccessListField.create());
+                }
+                Object basicFun = accessListField.execute(list, builtin.getName());
+                if (basicFun != null) {
+                    Object result = internalDispatchCall.execute(frame, (RFunction) basicFun, lookupVarArgs(frame), null, null);
                     if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
                         return result;
                     }
