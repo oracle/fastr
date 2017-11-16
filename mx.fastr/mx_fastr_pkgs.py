@@ -33,9 +33,11 @@ In either case all the output is placed in the fastr suite dir. Separate directo
 and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (sh syntax).
 '''
 from os.path import join, relpath
+from os import walk
 from datetime import datetime
 import shutil, os, re
 import subprocess
+import hashlib
 import mx
 import mx_fastr
 
@@ -53,6 +55,12 @@ def _gnur_rscript():
     returns path to Rscript in sibling gnur directory
     '''
     return _mx_gnur().extensions._gnur_rscript_path()
+
+def _gnur_include_path():
+    return _mx_gnur().extensions._gnur_include_path()
+
+def _fastr_include_path():
+    return join(_fastr_suite_dir(), 'include')
 
 def _graalvm_rscript():
     assert graalvm is not None
@@ -248,6 +256,9 @@ def pkgtest(args):
         if not '--print-install-status' in install_args:
             install_args += ['--print-install-status']
 
+    # If '--cache-pkgs' is set, then also set the native API version value
+    _set_pkg_cache_api_version(install_args, _fastr_include_path())
+
     _log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.packages.R)
     rc = _installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
@@ -267,7 +278,12 @@ def pkgtest(args):
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR
         ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
-        _gnur_install_test(_args_to_forward_to_gnur(args), ok_pkgs, gnur_libinstall, gnur_install_tmp)
+        gnur_args = _args_to_forward_to_gnur(args)
+
+        # If '--cache-pkgs' is set, then also set the native API version value
+        _set_pkg_cache_api_version(gnur_args, _gnur_include_path())
+
+        _gnur_install_test(gnur_args, ok_pkgs, gnur_libinstall, gnur_install_tmp)
         _set_test_status(out.test_info)
         print 'Test Status'
         for pkg, test_status in out.test_info.iteritems():
@@ -282,6 +298,15 @@ def pkgtest(args):
 
     shutil.rmtree(fastr_install_tmp, ignore_errors=True)
     return rc
+
+def _set_pkg_cache_api_version(arg_list, include_dir):
+    '''
+    Looks for argument '--cache-pkgs' and appends the native API version to the value list of this argument.
+    '''
+    if "--cache-pkgs" in arg_list:
+        pkg_cache_values_idx = arg_list.index("--cache-pkgs") + 1
+        if pkg_cache_values_idx < len(arg_list):
+            arg_list[pkg_cache_values_idx] = arg_list[pkg_cache_values_idx] + ",version={0}".format(computeApiChecksum(include_dir))
 
 class TestFileStatus:
     '''
@@ -330,7 +355,7 @@ def _get_test_outputs(rvm, pkg_name, test_info):
             test_info[pkg_name].testfile_outputs[relfile] = TestFileStatus(status, absfile)
 
 def _args_to_forward_to_gnur(args):
-    forwarded_args = ['--repos', '--run-mode']
+    forwarded_args = ['--repos', '--run-mode', '--cache-pkgs']
     result = []
     i = 0
     while i < len(args):
@@ -616,3 +641,29 @@ def remove_dup_pkgs(args):
     for p in x.iterkeys():
         result += p
     return result
+
+def computeApiChecksum(includeDir):
+    '''
+    Computes a checksum of the header files found in the provided directory (recursively).
+    The result is a SHA256 checksum (as string with hex digits) of all header files.
+    '''
+    m = hashlib.sha256()
+    rootDir = includeDir
+    for root, dirs, files in os.walk(rootDir):
+        mx.log("Visiting directory {0}".format(root))
+        for f in files:
+            fileName = join(root, f)
+            if fileName.endswith('.h'):
+                try:
+                    mx.log("Including file {0}".format(fileName))
+                    with open(fileName) as f:
+                        m.update(f.read())
+                except IOError as e:
+                    # Ignore errors on broken symlinks
+                    if not os.path.islink(fileName) or os.path.exists(fileName):
+                        raise e
+
+
+    hxdigest = m.hexdigest()
+    mx.log("Computed API version checksum {0}".format(hxdigest))
+    return hxdigest

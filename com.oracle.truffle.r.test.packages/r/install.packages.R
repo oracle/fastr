@@ -106,6 +106,7 @@ args <- commandArgs(TRUE)
 usage <- function() {
 	cat(paste("usage: Rscript ",
 					  "[--repos name=value,...]",
+					  "[--cache-pkgs name=value,...]",
                       "[--verbose | -v] [-V] [--dryrun]",
                       "[--no-install | -n] ",
 				      "[--create-blacklist] [--blacklist-file file] [--ignore-blacklist]",
@@ -126,6 +127,7 @@ usage <- function() {
 					  "[--count-daily count]",
 					  "[--ok-only]",
                       "[--pkg-pattern package-pattern] \n"))
+    print(sys.calls())
 	quit(status=100)
 }
 
@@ -720,12 +722,13 @@ fastr_error_log_size <- function() {
 	}
 }
 
+# installs a single package or retrieves it from the cache
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr_error_log_size()
 	if (run.mode == "system") {
-		system.install(pkgname)
+        pkg.cache.install(pkgname, function() system.install(pkgname))
 	} else if (run.mode == "internal") {
-		install.packages(pkgname, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+        pkg.cache.install(pkgname, function() install.packages(pkgname, type="source", lib=lib.install, INSTALL_opts="--install-tests"))
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
@@ -733,6 +736,187 @@ install.pkg <- function(pkgname) {
 	names(rc) <- pkgname
 	install.status <<- append(install.status, rc)
 	return(rc)
+}
+
+pkg.cache.install <- function(pkgname, install.cmd) {
+    is.cached <- pkg.cache.get(pkgname, lib=lib.install)
+    if (!is.cached) {
+        install.cmd()
+        pkg.cache.insert(pkgname, lib.install)
+    }
+}
+
+pkg.cache.get <- function(pkgname, lib) {
+    # check if caching is enabled
+    if (!pkg.cache$enabled) {
+        return (FALSE)
+    }
+
+    # check if package cache directory can be accessed
+    if (dir.exists(pkg.cache$dir) && any(file.access(pkg.cache$dir, mode = 6) == -1)) {
+        # TODO: log
+        cat(" ######## PKG CACHE ERROR : cannot access package cache dir ", pkg.cache$dir , "\n")
+        return (FALSE)
+    }
+
+    # check cache directory has valid structure
+    if (!is.valid.cache.dir(pkg.cache$dir)) {
+        pkg.cache.init(pkg.cache$dir, pkg.cache$version)
+    }
+
+    # get version sub-directory
+    version.dir <- pkg.cache.get.version(pkg.cache$dir, pkg.cache$version)
+    if (is.null(version.dir)) {
+        # TODO: log error
+        cat(" ######## PKG CACHE ERROR : cannot access or create version subdir for ", pkg.cache$version , "\n")
+        return (FALSE)
+    }
+
+    cat(" ######## PKG CACHE : using version dir ", version.dir, "\n")
+
+    # lookup package dir
+    pkg.dirs <- list.dirs(version.dir, full.names=FALSE, recursive=FALSE)
+    if (!is.na(match(pkgname, pkg.dirs))) {
+        # cache hit
+        fromPath <- file.path(version.dir, pkgname)
+        toPath <- lib
+
+        # copy from cache to package library
+        if(!file.copy(fromPath, toPath, recursive=TRUE)) {
+            # TODO: log error copying dir
+            cat(" ######## PKG CACHE ERROR : could not copy package dir from ", fromPath , " to ", toPath, "\n")
+            return (FALSE)
+        }
+        cat(" ######## PKG CACHE : cache hit, using package from ", fromPath, "\n")
+        return (TRUE)
+    } 
+    # TODO: log cache miss
+    cat(" ######## PKG CACHE : cache miss for package ", pkgname , "\n")
+    
+    FALSE
+}
+
+pkg.cache.insert <- function(pkgname, lib) {
+    # check if caching is enabled
+    if (!pkg.cache$enabled) {
+        return (FALSE)
+    }
+
+    # check if package cache directory can be accessed
+    if (dir.exists(pkg.cache$dir) && any(file.access(pkg.cache$dir, mode = 6) == -1)) {
+        # TODO: log
+        cat(" ######## PKG CACHE ERROR : cannot access package cache dir ", pkg.cache$dir , "\n")
+        return (FALSE)
+    }
+
+    # check cache directory has valid structure
+    if (!is.valid.cache.dir(pkg.cache$dir)) {
+        pkg.cache.init(pkg.cache$dir, as.character(pkg.cache$version))
+    }
+
+    # get version sub-directory
+    version.dir <- pkg.cache.get.version(pkg.cache$dir, as.character(pkg.cache$version))
+    if (is.null(version.dir)) {
+        # TODO: log error
+        cat(" ######## PKG CACHE ERROR : cannot access or create version subdir for ", as.character(pkg.cache$version) , "\n")
+        return (FALSE)
+    }
+
+    fromPath <- file.path(lib, pkgname)
+    toPath <- version.dir
+
+    # copy from cache to package library
+    if(!file.copy(fromPath, toPath, recursive=TRUE)) {
+        # TODO: log error copying dir
+        cat(" ######## PKG CACHE ERROR : could not copy package dir from ", fromPath , " to ", toPath, "\n")
+        return (FALSE)
+    }
+    cat(" ######## PKG CACHE : successfully inserted package ", pkgname , " to cache (", toPath, ")\n")
+    return (TRUE)
+}
+
+is.valid.cache.dir <- function(cache.dir) {
+    if (!dir.exists(cache.dir)) {
+        return (FALSE)
+    }
+
+    # look for 'version.table'
+    version.table.name <- file.path(cache.dir, "version.table")
+    if (any(file.access(version.table.name, mode = 6) == -1)) {
+        return (FALSE)
+    }
+
+    f <- file(version.table.name, "r")
+    tryCatch({
+        version.table <- read.csv(f)
+        # TODO: check if versions have appropriate subdirs
+        TRUE
+    }, error = function(e) FALSE, finally = function() close(f))
+}
+
+pkg.cache.gen.version.dir.name <- function(version) {
+    paste0("library", substr(version, 1, max(20,length(version))))
+}
+
+pkg.cache.init <- function(cache.dir, version) {
+    if (is.null(version)) {
+        return (NULL)
+    }
+
+    if (!dir.exists(cache.dir)) {
+        cat("Creating cache directory ", cache.dir, "\n")
+        dir.create(cache.dir)
+    }
+
+    version.table.name <- file.path(cache.dir, "version.table")
+
+    # create package lib dir for this version (if not existing)
+    version.table <- pkg.cache.create.version(cache.dir, version, data.frame())
+    write.csv(version.table, version.table.name)
+    NULL
+}
+
+# creates package lib dir for this version (if not existing)
+pkg.cache.create.version <- function(cache.dir, version, version.table) {
+    version.table.name <- file.path(cache.dir, "version.table")
+    version.subdir <- pkg.cache.gen.version.dir.name(version)
+    version.dir <- file.path(cache.dir, version.subdir)
+
+    if (!dir.exists(version.dir)) {
+        cat("Creating version directory ", version.dir, "\n")
+        dir.create(version.dir)
+    }
+
+    rbind(version.table, data.frame(version=version,dir=version.subdir))
+}
+
+pkg.cache.get.version <- function(cache.dir, cache.version) {
+    if (is.null(cache.version)) {
+        return (NULL)
+    }
+
+    # look for 'version.table'
+    version.table.name <- file.path(cache.dir, "version.table")
+    if (any(file.access(version.table.name, mode = 6) == -1)) {
+        return (NULL)
+    }
+
+    tryCatch({
+        version.table <- read.csv(version.table.name)
+        version.subdir <- as.character(version.table[version.table$version == cache.version, "dir"])
+        print(paste0("------------ QUERY: ", version.subdir))
+        if (length(version.subdir) == 0) {
+            updated.version.table <- pkg.cache.create.version(cache.dir, cache.version, version.table)
+        }
+        if (version.table != updated.version.table) {
+            version.subdir <- as.character(updated.version.table[updated.version.table$version == cache.version, "dir"])
+            write.csv(updated.version.table, version.table.name)
+        }
+        print(paste0("------------ QUERY: ", version.subdir))
+
+        # return the version directory
+        file.path(cache.dir, version.subdir)
+    }, error = function(e) NULL)
 }
 
 # when testing under graalvm, fastr is not built so we must use the (assumed) sibling gnur repo
@@ -855,6 +1039,14 @@ parse.args <- function() {
 			initial.blacklist.file <<- get.argvalue()
 		} else if (a == "--repos") {
 			repo.list <<- strsplit(get.argvalue(), ",")[[1]]
+		} else if (a == "--cache-pkgs") {
+            cache.opts <- list(enabled=TRUE)
+            svalue <- strsplit(get.argvalue(), ",")[[1]]
+	        for (s in svalue) {
+                arg <- strsplit(s, "=", fixed=T)[[1]]
+                cache.opts[arg[[1]]] <- arg[[2]]
+            }
+            pkg.cache <<- cache.opts
 		} else if (a == "--random") {
 			random.count <<- as.integer(get.argvalue())
 			if (is.na(random.count)) {
@@ -945,6 +1137,7 @@ cat.args <- function() {
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
 		cat("testdir.path", testdir, "\n")
+		cat("pkg.cache:", pkg.cache$enabled, "\n")
 	}
 }
 
@@ -1017,6 +1210,7 @@ run <- function() {
 
 quiet <- F
 repo.list <- c("CRAN")
+pkg.cache <- list(enabled=FALSE)
 cran.mirror <- NA
 blacklist.file <- NA
 initial.blacklist.file <- NA
