@@ -22,10 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.MemoryCopyTracer;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 /**
  * When implementing, make sure to invoke related {@link MemoryCopyTracer} methods.
@@ -62,8 +65,6 @@ public interface RAbstractVector extends RAbstractContainer {
 
     boolean isArray();
 
-    boolean checkCompleteness();
-
     /**
      * Casts a vector to another {@link RType}. If a safe cast to the target {@link RType} is not
      * supported <code>null</code> is returned. Instead of materializing the cast for each index the
@@ -99,4 +100,31 @@ public interface RAbstractVector extends RAbstractContainer {
     }
 
     void setComplete(boolean complete);
+
+    /**
+     * Verifies the integrity of the vector, mainly whether a vector that claims to be
+     * {@link #isComplete()} contains NA values.
+     */
+    static boolean verify(RAbstractVector vector) {
+        CompilerAsserts.neverPartOfCompilation();
+        VectorAccess access = vector.slowPathAccess();
+        assert access.getType().isVector();
+        if (!access.getType().isAtomic()) {
+            // check non-atomic vectors for nullness
+            try (SequentialIterator iter = access.access(vector)) {
+                while (access.next(iter)) {
+                    assert access.getListElement(iter) != null : "element " + iter.getIndex() + " of vector " + vector + " is null";
+                }
+            }
+        }
+        if (vector.isComplete()) {
+            // check all vectors for completeness
+            try (SequentialIterator iter = access.access(vector)) {
+                while (access.next(iter)) {
+                    assert !access.isNA(iter) : "element " + iter.getIndex() + " of vector " + vector + " is NA";
+                }
+            }
+        }
+        return true;
+    }
 }

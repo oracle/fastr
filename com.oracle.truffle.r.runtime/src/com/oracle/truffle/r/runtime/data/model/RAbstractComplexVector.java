@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -42,16 +41,6 @@ public interface RAbstractComplexVector extends RAbstractAtomicVector {
     @SuppressWarnings("unused")
     default void setDataAt(Object store, int index, RComplex value) {
         throw new UnsupportedOperationException();
-    }
-
-    @Override
-    default boolean checkCompleteness() {
-        for (int i = 0; i < getLength(); i++) {
-            if (RRuntime.isNA(getDataAt(i))) {
-                return false;
-            }
-        }
-        return true;
     }
 
     @Override

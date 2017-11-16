@@ -35,9 +35,4 @@ public interface RAbstractListBaseVector extends RAbstractVector {
     default void setDataAt(Object store, int index, Object value) {
         throw new UnsupportedOperationException();
     }
-
-    @Override
-    default boolean checkCompleteness() {
-        return true;
-    }
 }

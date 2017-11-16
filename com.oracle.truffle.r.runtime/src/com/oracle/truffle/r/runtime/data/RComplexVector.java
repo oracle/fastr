@@ -45,7 +45,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         super(complete);
         assert data.length % 2 == 0;
         this.data = data;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     RComplexVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -115,18 +115,6 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     @Override
     public RComplex getDataAt(int index) {
         return NativeDataAccess.getData(this, data, index);
-    }
-
-    @Override
-    public boolean verify() {
-        if (isComplete()) {
-            for (int i = 0; i < getLength(); i++) {
-                if (getDataAt(i).isNA()) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override

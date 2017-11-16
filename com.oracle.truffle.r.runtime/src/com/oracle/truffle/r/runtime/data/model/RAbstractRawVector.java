@@ -44,11 +44,6 @@ public interface RAbstractRawVector extends RAbstractAtomicVector {
     RRawVector materialize();
 
     @Override
-    default boolean checkCompleteness() {
-        return true;
-    }
-
-    @Override
     default RType getRType() {
         return RType.Raw;
     }

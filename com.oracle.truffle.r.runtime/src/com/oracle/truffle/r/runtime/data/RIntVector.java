@@ -44,7 +44,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     RIntVector(int[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -132,18 +132,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(this, data);
-    }
-
-    @Override
-    public boolean verify() {
-        if (isComplete()) {
-            for (int i = 0; i < getLength(); i++) {
-                if (RRuntime.isNA(getDataAt(i))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override

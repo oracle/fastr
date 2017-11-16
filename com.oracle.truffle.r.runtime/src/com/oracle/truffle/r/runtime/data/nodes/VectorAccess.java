@@ -436,33 +436,38 @@ public abstract class VectorAccess extends Node {
         return isNA(iter.store, index);
     }
 
-    private static final RStringVector TEMPLATE_CHARACTER = RDataFactory.getPermanent().createStringVector(4);
-    private static final RComplexVector TEMPLATE_COMPLEX = RDataFactory.getPermanent().createComplexVector(4);
-    private static final RDoubleVector TEMPLATE_DOUBLE = RDataFactory.getPermanent().createDoubleVector(4);
-    private static final RIntVector TEMPLATE_INTEGER = RDataFactory.getPermanent().createIntVector(4);
-    private static final RList TEMPLATE_LIST = RDataFactory.getPermanent().createList(4);
-    private static final RExpression TEMPLATE_EXPRESSION = RDataFactory.createExpression(4);
-    private static final RLogicalVector TEMPLATE_LOGICAL = RDataFactory.getPermanent().createLogicalVector(4);
-    private static final RRawVector TEMPLATE_RAW = RDataFactory.getPermanent().createRawVector(4);
+    /**
+     * Placed in a separate class to avoid circular dependencies during class initialization.
+     */
+    private static final class Lazy {
+        private static final RStringVector TEMPLATE_CHARACTER = RDataFactory.getPermanent().createStringVector(4);
+        private static final RComplexVector TEMPLATE_COMPLEX = RDataFactory.getPermanent().createComplexVector(4);
+        private static final RDoubleVector TEMPLATE_DOUBLE = RDataFactory.getPermanent().createDoubleVector(4);
+        private static final RIntVector TEMPLATE_INTEGER = RDataFactory.getPermanent().createIntVector(4);
+        private static final RList TEMPLATE_LIST = RDataFactory.getPermanent().createList(4);
+        private static final RExpression TEMPLATE_EXPRESSION = RDataFactory.createExpression(4);
+        private static final RLogicalVector TEMPLATE_LOGICAL = RDataFactory.getPermanent().createLogicalVector(4);
+        private static final RRawVector TEMPLATE_RAW = RDataFactory.getPermanent().createRawVector(4);
+    }
 
     public static VectorAccess createNew(RType type) {
         switch (type) {
             case Character:
-                return TEMPLATE_CHARACTER.access();
+                return Lazy.TEMPLATE_CHARACTER.access();
             case Complex:
-                return TEMPLATE_COMPLEX.access();
+                return Lazy.TEMPLATE_COMPLEX.access();
             case Double:
-                return TEMPLATE_DOUBLE.access();
+                return Lazy.TEMPLATE_DOUBLE.access();
             case Integer:
-                return TEMPLATE_INTEGER.access();
+                return Lazy.TEMPLATE_INTEGER.access();
             case List:
-                return TEMPLATE_LIST.access();
+                return Lazy.TEMPLATE_LIST.access();
             case Expression:
-                return TEMPLATE_EXPRESSION.access();
+                return Lazy.TEMPLATE_EXPRESSION.access();
             case Logical:
-                return TEMPLATE_LOGICAL.access();
+                return Lazy.TEMPLATE_LOGICAL.access();
             case Raw:
-                return TEMPLATE_RAW.access();
+                return Lazy.TEMPLATE_RAW.access();
             case RInteropChar:
             case RInteropFloat:
             case RInteropLong:
@@ -475,21 +480,21 @@ public abstract class VectorAccess extends Node {
     public static VectorAccess createSlowPathNew(RType type) {
         switch (type) {
             case Character:
-                return TEMPLATE_CHARACTER.slowPathAccess();
+                return Lazy.TEMPLATE_CHARACTER.slowPathAccess();
             case Complex:
-                return TEMPLATE_COMPLEX.slowPathAccess();
+                return Lazy.TEMPLATE_COMPLEX.slowPathAccess();
             case Double:
-                return TEMPLATE_DOUBLE.slowPathAccess();
+                return Lazy.TEMPLATE_DOUBLE.slowPathAccess();
             case Integer:
-                return TEMPLATE_INTEGER.slowPathAccess();
+                return Lazy.TEMPLATE_INTEGER.slowPathAccess();
             case List:
-                return TEMPLATE_LIST.slowPathAccess();
+                return Lazy.TEMPLATE_LIST.slowPathAccess();
             case Expression:
-                return TEMPLATE_EXPRESSION.slowPathAccess();
+                return Lazy.TEMPLATE_EXPRESSION.slowPathAccess();
             case Logical:
-                return TEMPLATE_LOGICAL.slowPathAccess();
+                return Lazy.TEMPLATE_LOGICAL.slowPathAccess();
             case Raw:
-                return TEMPLATE_RAW.slowPathAccess();
+                return Lazy.TEMPLATE_RAW.slowPathAccess();
             case RInteropChar:
             case RInteropFloat:
             case RInteropLong:

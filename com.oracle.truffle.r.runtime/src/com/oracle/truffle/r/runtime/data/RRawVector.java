@@ -43,7 +43,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     RRawVector(byte[] data) {
         super(true);
         this.data = data;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     RRawVector(byte[] data, int[] dims, RStringVector names, RList dimNames) {
@@ -117,11 +117,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(this, data);
-    }
-
-    @Override
-    public boolean verify() {
-        return true;
     }
 
     @Override

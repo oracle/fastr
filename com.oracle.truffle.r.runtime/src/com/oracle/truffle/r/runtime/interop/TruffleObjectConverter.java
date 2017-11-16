@@ -335,11 +335,6 @@ public final class TruffleObjectConverter {
         }
 
         @Override
-        public boolean checkCompleteness() {
-            throw RInternalError.shouldNotReachHere();
-        }
-
-        @Override
         public void setComplete(boolean complete) {
             throw RInternalError.shouldNotReachHere();
         }

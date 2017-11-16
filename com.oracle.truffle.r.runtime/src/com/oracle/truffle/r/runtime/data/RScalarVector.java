@@ -175,9 +175,4 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     public boolean isArray() {
         return false;
     }
-
-    @Override
-    public final boolean checkCompleteness() {
-        return isComplete();
-    }
 }

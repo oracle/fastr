@@ -45,7 +45,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     RStringVector(String[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     RStringVector(String[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -125,18 +125,6 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     @Override
     public String[] getReadonlyData() {
         return data;
-    }
-
-    @Override
-    public boolean verify() {
-        if (isComplete()) {
-            for (String b : data) {
-                if (b == RRuntime.STRING_NA) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override

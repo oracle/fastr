@@ -31,7 +31,6 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -58,9 +57,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * </pre>
  */
 public abstract class RVector<ArrayT> extends RSharingAttributeStorage implements RAbstractVector, RFFIAccess {
-
-    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName()}, true);
-    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName()}, true);
 
     protected boolean complete; // "complete" means: does not contain NAs
 
@@ -140,7 +136,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     @Override
     public final void setComplete(boolean complete) {
         this.complete = complete;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     private void removeAttributeMapping(String key) {
@@ -537,8 +533,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     protected abstract RVector<ArrayT> internalCopy();
 
-    public abstract boolean verify();
-
     /**
      * Update a data item in the vector. Possibly not as efficient as type-specific methods, but in
      * some cases it likely does not matter (e.g. if used alongside I/O operations).
@@ -749,18 +743,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 RAttributesLayout.clear(this.attributes);
             }
         }
-    }
-
-    // As shape of the vector may change at run-time we need to compute
-    // class hierarchy on the fly.
-    protected final RStringVector getClassHierarchyHelper(RStringVector implicitClassHeader) {
-        if (isMatrix()) {
-            return implicitClassHeaderMatrix;
-        }
-        if (isArray()) {
-            return implicitClassHeaderArray;
-        }
-        return implicitClassHeader;
     }
 
     public static void verifyDimensions(int vectorLength, int[] newDimensions, RBaseNode invokingNode) {

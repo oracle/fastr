@@ -172,6 +172,7 @@ public final class NACheck {
     }
 
     public boolean checkListElement(Object value) {
+        assert value != null;
         if (state != NO_CHECK && value == RNull.instance) {
             if (state == CHECK_DEOPT) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
