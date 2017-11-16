@@ -39,6 +39,8 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 public abstract class AbstractMRTest {
 
@@ -141,7 +143,7 @@ public abstract class AbstractMRTest {
     public void testSize() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
             boolean hasSize = ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj);
-            assertEquals("" + obj.getClass() + " " + obj, hasSize(obj), hasSize);
+            assertEquals("" + obj.getClass().getSimpleName() + " " + obj + " hasSize", hasSize(obj), hasSize);
             if (hasSize) {
                 assertEquals(getSize(obj), ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj));
             } else {
@@ -154,7 +156,7 @@ public abstract class AbstractMRTest {
     public void testBoxed() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
             boolean isBoxed = ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj);
-            assertEquals(isBoxed(obj), isBoxed);
+            assertEquals("" + obj.getClass().getSimpleName() + " " + obj + " isBoxed", isBoxed(obj), isBoxed);
             if (isBoxed) {
                 assertEquals(getUnboxed(obj), ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj));
             } else {
