@@ -24,8 +24,15 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RDouble;
+import org.junit.Test;
 
 public class RDoubleMRTest extends AbstractMRTest {
+
+    @Test
+    @Override
+    public void testIsNull() throws Exception {
+        super.testIsNull(); // force inherited tests from AbstractMRTest
+    }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
@@ -35,6 +42,11 @@ public class RDoubleMRTest extends AbstractMRTest {
     @Override
     protected boolean isBoxed(TruffleObject obj) {
         return true;
+    }
+
+    @Override
+    protected boolean isPointer(TruffleObject obj) {
+        return false;
     }
 
     @Override

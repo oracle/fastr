@@ -28,8 +28,15 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import org.junit.Test;
 
 public class ActiveBindingMRTest extends AbstractMRTest {
+
+    @Test
+    @Override
+    public void testIsNull() throws Exception {
+        super.testIsNull(); // force inherited tests from AbstractMRTest
+    }
 
     @Override
     protected boolean isBoxed(TruffleObject obj) {
@@ -39,6 +46,11 @@ public class ActiveBindingMRTest extends AbstractMRTest {
     @Override
     protected Object getUnboxed(TruffleObject obj) {
         return ((ActiveBinding) obj).readValue();
+    }
+
+    @Override
+    protected boolean isPointer(TruffleObject obj) {
+        return false;
     }
 
     @Override

@@ -133,7 +133,11 @@ public abstract class AbstractMRTest {
                 continue;
             }
             try {
-                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+                if (obj == RNull.instance) {
+                    assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == NativePointer.NULL_NATIVEPOINTER);
+                } else {
+                    assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+                }
             } catch (UnsupportedMessageException unsupportedMessageException) {
             }
         }
