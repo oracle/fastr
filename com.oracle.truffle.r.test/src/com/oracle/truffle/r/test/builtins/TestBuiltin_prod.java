@@ -72,36 +72,13 @@ public class TestBuiltin_prod extends TestBase {
         assertEval("argv <- list(numeric(0));prod(argv[[1]]);");
     }
 
-    @Test
-    public void testProd() {
-        assertEval("{prod(c(2,4))}");
-        assertEval("{prod(c(2,4,3))}");
-        assertEval("{prod(c(1,2,3,4,5))}");
-        assertEval("{prod(c(1+2i))}");
-        assertEval("{prod(c(1+2i, 2+3i))}");
-        assertEval("{prod(c(1+2i,1+3i,1+45i))}");
-        assertEval("{prod(c(TRUE, TRUE))}");
-        assertEval("{prod(c(TRUE, FALSE))}");
-        assertEval("{prod()}");
-        assertEval("{prod(NULL)}");
-        assertEval("{prod(c())}");
-        assertEval("{prod(c(),c())}");
-        assertEval("{prod(2+3i,c())}");
-        assertEval("{prod(2+3i,42+5i)}");
-        assertEval("{prod(2+3i,42)}");
-        assertEval("{prod(42,2+3i)}");
-        assertEval("{prod('a')}");
-        assertEval("{prod(list())}");
-        assertEval("prod()");
-        assertEval("prod(numeric())");
-        assertEval("prod(complex())");
-        assertEval("{ foo <- function(...) prod(...); foo(); }");
-    }
+    private static final String[] VALUES = {"FALSE", "TRUE", "1,FALSE", "2,TRUE", "c(2,4)", "c(2,4,3)", "c(2,4,NA)", "c(NA,2L,4L)", "1", "4L", "NA_integer_", "NA,c(1,2,3)", "c(1,2,NA),NA", "1,2,3,4",
+                    "1L,NA,5+3i", "4+0i,6,NA", "numeric(),numeric()", "numeric()", "complex(),numeric()"};
+    private static final String[] OPTIONS = {"", ",na.rm=TRUE", ",na.rm=FALSE"};
 
     @Test
-    public void testProdNa() {
-        assertEval("{prod(c(2,4,NA))}");
-        assertEval("{prod(c(2,4,3,NA),TRUE)}");
-        assertEval("{prod(c(1,2,3,4,5,NA),FALSE)}");
+    public void testProd() {
+        assertEval(template("prod(%0%1)", VALUES, OPTIONS));
+        assertEval("{ foo <- function(...) prod(...); foo(); }");
     }
 }
