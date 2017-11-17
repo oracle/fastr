@@ -59,7 +59,7 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
             case Complex:
                 return RComplex.valueOf(value, 0.0);
             case Character:
-                return RString.valueOf(RRuntime.rawToString(value));
+                return RString.valueOf(RRuntime.rawToHexString(value));
             default:
                 return null;
         }
