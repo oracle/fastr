@@ -356,11 +356,6 @@ public class RRuntime {
         return rawStringCache[raw2int(operand)];
     }
 
-    @TruffleBoundary
-    public static String rawToString(byte operand) {
-        return intToString(raw2int(operand));
-    }
-
     // conversions from string
 
     @TruffleBoundary
