@@ -57,7 +57,12 @@ def _gnur_rscript():
     return _mx_gnur().extensions._gnur_rscript_path()
 
 def _gnur_include_path():
-    return _mx_gnur().extensions._gnur_include_path()
+    if _graalvm():
+        return _mx_gnur().extensions._gnur_include_path()
+    else:
+        gnur_include_p = join(mx_fastr._gnur_path(), "include")
+        print("Using GNUR include path: {0}".format(gnur_include_p))
+        return gnur_include_p
 
 def _fastr_include_path():
     return join(_fastr_suite_dir(), 'include')
@@ -650,12 +655,12 @@ def computeApiChecksum(includeDir):
     m = hashlib.sha256()
     rootDir = includeDir
     for root, dirs, files in os.walk(rootDir):
-        mx.log("Visiting directory {0}".format(root))
+        mx.logvv("Visiting directory {0}".format(root))
         for f in files:
             fileName = join(root, f)
             if fileName.endswith('.h'):
                 try:
-                    mx.log("Including file {0}".format(fileName))
+                    mx.logvv("Including file {0}".format(fileName))
                     with open(fileName) as f:
                         m.update(f.read())
                 except IOError as e:
@@ -665,5 +670,5 @@ def computeApiChecksum(includeDir):
 
 
     hxdigest = m.hexdigest()
-    mx.log("Computed API version checksum {0}".format(hxdigest))
+    mx.logv("Computed API version checksum {0}".format(hxdigest))
     return hxdigest
