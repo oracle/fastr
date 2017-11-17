@@ -43,8 +43,8 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
     protected boolean naReported; // TODO: move this into the iterator
 
     protected SlowPathVectorAccess() {
-        // VectorAccess.supports has an assertion that relies on this being RAbstractContainer.class
-        super(RAbstractContainer.class, true);
+        // VectorAccess.supports has an assertion that relies on this being Object.class
+        super(Object.class, true);
     }
 
     @Override

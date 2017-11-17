@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -69,10 +70,10 @@ public abstract class VectorAccess extends Node {
 
     public final NACheck na = NACheck.create();
 
-    protected final Class<? extends RAbstractContainer> clazz;
+    protected final Class<?> clazz;
     protected final boolean hasStore;
 
-    public VectorAccess(Class<? extends RAbstractContainer> clazz, boolean hasStore) {
+    public VectorAccess(Class<?> clazz, boolean hasStore) {
         CompilerAsserts.neverPartOfCompilation();
         this.clazz = clazz;
         this.hasStore = hasStore;
@@ -204,13 +205,17 @@ public abstract class VectorAccess extends Node {
 
     protected abstract boolean isNA(Object store, int index);
 
-    public final RAbstractContainer cast(Object value) {
+    public final Object cast(Object value) {
         return clazz.cast(value);
     }
 
     public final boolean supports(Object value) {
-        assert clazz != RAbstractContainer.class : "cannot call 'supports' on slow path vector access";
-        return value.getClass() == clazz && (cast(value).getInternalStore() != null) == hasStore;
+        assert clazz != Object.class : "cannot call 'supports' on slow path vector access";
+        if (value.getClass() != clazz) {
+            return false;
+        }
+        Object castVector = cast(value);
+        return !(castVector instanceof RAbstractContainer) || (((RAbstractContainer) castVector).getInternalStore() != null) == hasStore;
     }
 
     protected abstract Object getStore(RAbstractContainer vector);
@@ -219,16 +224,26 @@ public abstract class VectorAccess extends Node {
         return vector.getLength();
     }
 
+    protected int getLength(@SuppressWarnings("unused") Object vector) {
+        return 1;
+    }
+
     /**
      * Creates a new iterator that will point to before the beginning of the vector, so that
      * {@link #next(SequentialIterator)} will move it to the first element.
      */
-    public final SequentialIterator access(RAbstractContainer vector) {
-        RAbstractContainer castVector = cast(vector);
-        int length = getLength(castVector);
-        RBaseNode.reportWork(this, length);
-        na.enable(castVector);
-        return new SequentialIterator(getStore(castVector), length);
+    public final SequentialIterator access(Object vector) {
+        Object castVector = cast(vector);
+        if (castVector instanceof RAbstractContainer) {
+            RAbstractContainer container = (RAbstractContainer) castVector;
+            int length = getLength(container);
+            RBaseNode.reportWork(this, length);
+            na.enable(container);
+            return new SequentialIterator(getStore(container), length);
+        } else {
+            na.enable(true);
+            return new SequentialIterator(castVector, getLength(castVector));
+        }
     }
 
     @SuppressWarnings("static-method")
@@ -344,11 +359,17 @@ public abstract class VectorAccess extends Node {
      * Creates a new random access on the given vector.
      */
     public final RandomIterator randomAccess(RAbstractContainer vector) {
-        RAbstractContainer castVector = cast(vector);
-        int length = getLength(castVector);
-        RBaseNode.reportWork(this, length);
-        na.enable(castVector);
-        return new RandomIterator(getStore(castVector), length);
+        Object castVector = cast(vector);
+        if (castVector instanceof RAbstractContainer) {
+            RAbstractContainer container = (RAbstractContainer) castVector;
+            int length = getLength(container);
+            RBaseNode.reportWork(this, length);
+            na.enable(container);
+            return new RandomIterator(getStore(container), length);
+        } else {
+            na.enable(true);
+            return new RandomIterator(castVector, getLength(castVector));
+        }
     }
 
     @SuppressWarnings("static-method")
@@ -451,6 +472,7 @@ public abstract class VectorAccess extends Node {
     }
 
     public static VectorAccess createNew(RType type) {
+        CompilerAsserts.neverPartOfCompilation();
         switch (type) {
             case Character:
                 return Lazy.TEMPLATE_CHARACTER.access();
@@ -477,6 +499,7 @@ public abstract class VectorAccess extends Node {
         }
     }
 
+    @TruffleBoundary
     public static VectorAccess createSlowPathNew(RType type) {
         switch (type) {
             case Character:
@@ -501,6 +524,24 @@ public abstract class VectorAccess extends Node {
             case RInteropShort:
             default:
                 throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    public static VectorAccess create(Object value) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (value instanceof RAbstractContainer) {
+            return ((RAbstractContainer) value).access();
+        } else {
+            return PrimitiveVectorAccess.create(value);
+        }
+    }
+
+    @TruffleBoundary
+    public static VectorAccess createSlowPath(Object value) {
+        if (value instanceof RAbstractContainer) {
+            return ((RAbstractContainer) value).slowPathAccess();
+        } else {
+            return PrimitiveVectorAccess.createSlowPath(value);
         }
     }
 }

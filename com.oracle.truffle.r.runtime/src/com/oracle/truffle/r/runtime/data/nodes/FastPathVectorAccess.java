@@ -44,8 +44,8 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     protected boolean naReported; // TODO: move this into the iterator
 
-    protected FastPathVectorAccess(RAbstractContainer value) {
-        super(value.getClass(), value.getInternalStore() != null);
+    protected FastPathVectorAccess(Object value) {
+        super(value.getClass(), value instanceof RAbstractContainer ? ((RAbstractContainer) value).getInternalStore() != null : true);
     }
 
     @Override
@@ -63,7 +63,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromIntAccess extends FastPathVectorAccess {
 
-        public FastPathFromIntAccess(RAbstractContainer value) {
+        public FastPathFromIntAccess(Object value) {
             super(value);
         }
 
@@ -147,7 +147,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromDoubleAccess extends FastPathVectorAccess {
 
-        public FastPathFromDoubleAccess(RAbstractContainer value) {
+        public FastPathFromDoubleAccess(Object value) {
             super(value);
         }
 
@@ -240,7 +240,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromLogicalAccess extends FastPathVectorAccess {
 
-        public FastPathFromLogicalAccess(RAbstractContainer value) {
+        public FastPathFromLogicalAccess(Object value) {
             super(value);
         }
 
@@ -323,7 +323,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromRawAccess extends FastPathVectorAccess {
 
-        public FastPathFromRawAccess(RAbstractContainer value) {
+        public FastPathFromRawAccess(Object value) {
             super(value);
         }
 
@@ -398,7 +398,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromComplexAccess extends FastPathVectorAccess {
 
-        public FastPathFromComplexAccess(RAbstractContainer value) {
+        public FastPathFromComplexAccess(Object value) {
             super(value);
         }
 
@@ -491,7 +491,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromStringAccess extends FastPathVectorAccess {
 
-        public FastPathFromStringAccess(RAbstractContainer value) {
+        public FastPathFromStringAccess(Object value) {
             super(value);
         }
 
@@ -564,7 +564,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromListAccess extends FastPathVectorAccess {
 
-        public FastPathFromListAccess(RAbstractContainer value) {
+        public FastPathFromListAccess(Object value) {
             super(value);
         }
 
