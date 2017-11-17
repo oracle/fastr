@@ -178,6 +178,12 @@ public abstract class Order extends RPrecedenceBuiltinNode {
         return RNull.instance;
     }
 
+    @SuppressWarnings("unused")
+    @Specialization(guards = {"oneVec(args)", "isNull(args)"})
+    Object orderNull(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
+        throw error(RError.Message.NOT_A_VECTOR, 1);
+    }
+
     @Specialization(guards = {"oneVec(args)", "isFirstIntegerPrecedence(args)"})
     Object orderInt(byte naLast, boolean decreasing, RArgsValuesAndNames args) {
         RAbstractIntVector v = (RAbstractIntVector) castVector(args.getArgument(0));
@@ -692,6 +698,10 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     protected boolean isFirstListPrecedence(RArgsValuesAndNames args) {
         return isListPrecedence(args.getArgument(0));
+    }
+
+    protected boolean isNull(RArgsValuesAndNames args) {
+        return args.getArgument(0) == RNull.instance;
     }
 
     protected boolean noVec(RArgsValuesAndNames args) {
