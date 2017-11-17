@@ -780,16 +780,24 @@ pkg.cache.get <- function(pkgname, lib) {
         toPath <- lib
 
         # copy from cache to package library
-        if(!file.copy(fromPath, toPath, recursive=TRUE)) {
-            log.message("could not copy package dir from ", fromPath , " to ", toPath, level=1)
+        if(!pkg.cache.import.dir(fromPath, toPath)) {
+            log.message("could not copy/link package dir from ", fromPath , " to ", toPath, level=1)
             return (FALSE)
         }
-        log.message("pacakge cache hit, using package from ", fromPath)
+        log.message("package cache hit, using package from ", fromPath)
         return (TRUE)
     } 
     log.message("cache miss for package ", pkgname, level=1)
     
     FALSE
+}
+
+pkg.cache.import.dir <- function(fromPath, toPath) {
+    if (any(as.logical(pkg.cache$link), na.rm=T)) {
+        file.symlink(fromPath, toPath)
+    } else {
+        file.copy(fromPath, toPath, recursive=TRUE)
+    }
 }
 
 pkg.cache.insert <- function(pkgname, lib) {
@@ -884,7 +892,7 @@ pkg.cache.init <- function(cache.dir, version) {
     version.table.name <- file.path(cache.dir, pkg.cache$table.file.name)
 
     # create package lib dir for this version (if not existing)
-    version.table <- pkg.cache.create.version(cache.dir, version, data.frame(row.names=c("version","dir","ctime")))
+    version.table <- pkg.cache.create.version(cache.dir, version, data.frame(version=character(0),dir=character(0),ctime=double(0)))
     tryCatch({
         write.csv(version.table, version.table.name, row.names=FALSE)
     }, error = function(e) {
@@ -1256,7 +1264,7 @@ run <- function() {
 
 quiet <- F
 repo.list <- c("CRAN")
-pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L))
+pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L,link=FALSE))
 cran.mirror <- NA
 blacklist.file <- NA
 initial.blacklist.file <- NA
