@@ -71,14 +71,14 @@ public class AnyVectorToStringVectorWriter extends Writer implements PrettyWrite
     }
 
     @Override
-    public void beginElement(@SuppressWarnings("hiding") RAbstractVector vector, int index, FormatMetrics fm) {
+    public void beginElement(int index, FormatMetrics fm) {
         if (levelCounter == 1) {
             sb = new StringBuilder();
         }
     }
 
     @Override
-    public void endElement(@SuppressWarnings("hiding") RAbstractVector vector, int index, FormatMetrics fm) {
+    public void endElement(int index, FormatMetrics fm) {
         if (levelCounter == 1) {
             String s = sb.toString().trim();
 

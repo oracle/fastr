@@ -15,6 +15,8 @@ import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
@@ -44,12 +46,12 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
 
         @Override
         protected FormatMetrics formatVector(int offs, int len) {
-            return new FormatMetrics(formatLogicalVectorInternal(vector, offs, len, printCtx.parameters().getNaWidth()));
+            return new FormatMetrics(formatLogicalVectorInternal(iterator, access, offs, len, printCtx.parameters().getNaWidth()));
         }
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            out.print(encodeLogical(vector.getDataAt(i), fm.maxWidth, printCtx.parameters()));
+            out.print(encodeLogical(access.getLogical(iterator, i), fm.maxWidth, printCtx.parameters()));
         }
 
         @Override
@@ -63,10 +65,10 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
         }
     }
 
-    static int formatLogicalVectorInternal(RAbstractLogicalVector x, int offs, int n, int naWidth) {
+    static int formatLogicalVectorInternal(RandomIterator iter, VectorAccess access, int offs, int n, int naWidth) {
         int fieldwidth = 1;
         for (int i = 0; i < n; i++) {
-            byte xi = x.getDataAt(offs + i);
+            byte xi = access.getLogical(iter, offs + i);
             if (xi == RRuntime.LOGICAL_NA) {
                 if (fieldwidth < naWidth) {
                     fieldwidth = naWidth;
@@ -105,18 +107,22 @@ public final class LogicalVectorPrinter extends VectorPrinter<RAbstractLogicalVe
     }
 
     public static String[] format(RAbstractLogicalVector value, boolean trim, int width, PrintParameters pp) {
-        int w;
-        if (trim) {
-            w = 1;
-        } else {
-            w = formatLogicalVectorInternal(value, 0, value.getLength(), pp.getNaWidth());
-        }
-        w = Math.max(w, width);
+        VectorAccess access = value.slowPathAccess();
+        try (RandomIterator iter = access.randomAccess(value)) {
+            int length = access.getLength(iter);
+            int w;
+            if (trim) {
+                w = 1;
+            } else {
+                w = formatLogicalVectorInternal(iter, access, 0, length, pp.getNaWidth());
+            }
+            w = Math.max(w, width);
 
-        String[] result = new String[value.getLength()];
-        for (int i = 0; i < value.getLength(); i++) {
-            result[i] = encodeLogical(value.getDataAt(i), w, pp);
+            String[] result = new String[value.getLength()];
+            for (int i = 0; i < length; i++) {
+                result[i] = encodeLogical(access.getLogical(iter, i), w, pp);
+            }
+            return result;
         }
-        return result;
     }
 }

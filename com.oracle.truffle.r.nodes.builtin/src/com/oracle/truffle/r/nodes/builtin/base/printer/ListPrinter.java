@@ -24,7 +24,6 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -36,6 +35,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/print.c
 
@@ -77,8 +78,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
             } else if (tmp instanceof RAbstractLogicalVector) {
                 RAbstractLogicalVector lv = (RAbstractLogicalVector) tmp;
                 if (lv.getLength() == 1) {
-                    int width = LogicalVectorPrinter.formatLogicalVectorInternal(lv, 0, 1, pp.getNaWidth());
-                    pbuf = LogicalVectorPrinter.encodeLogical(lv.getDataAt(0), width, pp);
+                    pbuf = LogicalVectorPrinter.format(lv, false, 0, pp)[0];
                 } else {
                     pbuf = "Logical," + lv.getLength();
                 }
@@ -89,8 +89,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                     pbuf = "factor," + iv.getLength();
                 } else {
                     if (iv.getLength() == 1) {
-                        int width = IntegerVectorPrinter.formatIntVectorInternal(iv, 0, 1, pp.getNaWidth());
-                        pbuf = IntegerVectorPrinter.encodeInteger(iv.getDataAt(0), width, pp);
+                        pbuf = IntegerVectorPrinter.format(iv, false, 0, pp)[0];
                     } else {
                         pbuf = "Integer," + iv.getLength();
                     }
@@ -98,31 +97,26 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
             } else if (tmp instanceof RAbstractDoubleVector) {
                 RAbstractDoubleVector dv = (RAbstractDoubleVector) tmp;
                 if (dv.getLength() == 1) {
-                    DoubleVectorMetrics fm = DoubleVectorPrinter.formatDoubleVector(dv, 0, 1, 0, pp);
-                    pbuf = DoubleVectorPrinter.encodeReal(dv.getDataAt(0), fm, pp);
+                    pbuf = DoubleVectorPrinter.format(dv, false, 0, 0, '.', pp)[0];
                 } else {
                     pbuf = "Numeric," + dv.getLength();
                 }
             } else if (tmp instanceof RAbstractComplexVector) {
                 RAbstractComplexVector cv = (RAbstractComplexVector) tmp;
                 if (cv.getLength() == 1) {
-                    RComplex x = cv.getDataAt(0);
-                    if (RRuntime.isNA(x.getRealPart()) || RRuntime.isNA(x.getImaginaryPart())) {
-                        /* formatReal(NA) --> w=R_print.na_width, d=0, e=0 */
-                        pbuf = DoubleVectorPrinter.encodeReal(RRuntime.DOUBLE_NA, pp.getNaWidth(), 0, 0, '.', pp);
-                    } else {
-                        ComplexVectorMetrics cvm = ComplexVectorPrinter.formatComplexVector(x, 0, 1, 0, pp);
-                        pbuf = ComplexVectorPrinter.encodeComplex(x, cvm, '.', pp);
-                    }
+                    pbuf = ComplexVectorPrinter.format(cv, false, 0, 0, '.', pp)[0];
                 } else {
                     pbuf = "Complex," + cv.getLength();
                 }
             } else if (tmp instanceof RAbstractStringVector) {
                 RAbstractStringVector sv = (RAbstractStringVector) tmp;
                 if (sv.getLength() == 1) {
-                    String ctmp = RRuntime.escapeString(sv.getDataAt(0), true, true);
-                    int len = ctmp.length();
-                    if (len < 100) {
+                    String ctmp;
+                    VectorAccess access = sv.slowPathAccess();
+                    try (RandomIterator iter = access.randomAccess(sv)) {
+                        ctmp = RRuntime.escapeString(access.getString(iter, 0), true, true);
+                    }
+                    if (ctmp.length() < 100) {
                         pbuf = ctmp;
                     } else {
                         pbuf = Utils.trimSize(101, ctmp) + "\" [truncated]";

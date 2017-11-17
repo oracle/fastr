@@ -17,6 +17,8 @@ import java.io.IOException;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/printutils.c, src/main/format.c
 
@@ -46,12 +48,12 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
 
         @Override
         protected FormatMetrics formatVector(int offs, int len) {
-            return new FormatMetrics(formatIntVectorInternal(vector, offs, len, printCtx.parameters().getNaWidth()));
+            return new FormatMetrics(formatIntVectorInternal(iterator, access, offs, len, printCtx.parameters().getNaWidth()));
         }
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            String v = encodeInteger(vector.getDataAt(i), fm.maxWidth, printCtx.parameters());
+            String v = encodeInteger(access.getInt(iterator, i), fm.maxWidth, printCtx.parameters());
             out.print(v);
         }
 
@@ -66,7 +68,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         }
     }
 
-    static int formatIntVectorInternal(RAbstractIntVector x, int offs, int n, int naWidth) {
+    static int formatIntVectorInternal(RandomIterator iter, VectorAccess access, int offs, int n, int naWidth) {
         int xmin = RRuntime.INT_MAX_VALUE;
         int xmax = RRuntime.INT_MIN_VALUE;
         boolean naflag = false;
@@ -74,7 +76,7 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
         int fieldwidth;
 
         for (int i = 0; i < n; i++) {
-            int xi = x.getDataAt(offs + i);
+            int xi = access.getInt(iter, offs + i);
             if (xi == RRuntime.INT_NA) {
                 naflag = true;
             } else {
@@ -164,18 +166,22 @@ public final class IntegerVectorPrinter extends VectorPrinter<RAbstractIntVector
     }
 
     public static String[] format(RAbstractIntVector value, boolean trim, int width, PrintParameters pp) {
-        int w;
-        if (trim) {
-            w = 1;
-        } else {
-            w = formatIntVectorInternal(value, 0, value.getLength(), pp.getNaWidth());
-        }
-        w = Math.max(w, width);
+        VectorAccess access = value.slowPathAccess();
+        try (RandomIterator iter = access.randomAccess(value)) {
+            int w;
+            int length = access.getLength(iter);
+            if (trim) {
+                w = 1;
+            } else {
+                w = formatIntVectorInternal(iter, access, 0, length, pp.getNaWidth());
+            }
+            w = Math.max(w, width);
 
-        String[] result = new String[value.getLength()];
-        for (int i = 0; i < value.getLength(); i++) {
-            result[i] = encodeInteger(value.getDataAt(i), w, pp);
+            String[] result = new String[length];
+            for (int i = 0; i < length; i++) {
+                result[i] = encodeInteger(access.getInt(iter, i), w, pp);
+            }
+            return result;
         }
-        return result;
     }
 }

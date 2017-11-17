@@ -24,6 +24,8 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/print.c, src/main/printarray.c, src/main/printvector.c
 
@@ -35,7 +37,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
     }
 
     public void printVector(T vector, int indx, PrintContext printCtx) throws IOException {
-        createJob(vector, indx, printCtx).print();
+        createJob(vector, indx, printCtx).print(vector);
     }
 
     protected abstract VectorPrintJob createJob(T vector, int indx, PrintContext printCtx);
@@ -53,7 +55,8 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
     protected abstract class VectorPrintJob {
 
-        protected final T vector;
+        protected VectorAccess access;
+        protected RandomIterator iterator;
         protected final int n;
         protected final int nPr;
         protected final int indx;
@@ -69,13 +72,13 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected final boolean supressIndexLabels;
 
         protected VectorPrintJob(T vector, int indx, PrintContext printCtx) {
-            this.vector = vector;
             this.indx = indx;
             this.quote = printCtx.parameters().getQuote();
 
             MatrixDimNames mdn = null;
 
             Object dimAttr = getDims(vector);
+            int length = vector.getLength();
             if (dimAttr instanceof RAbstractIntVector) {
                 dims = (RAbstractIntVector) dimAttr;
                 if (dims.getLength() == 1) {
@@ -89,12 +92,12 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                             title = null;
                         }
 
-                        jobMode = vector.getLength() == 0 ? JobMode.namedEmpty : JobMode.named;
+                        jobMode = length == 0 ? JobMode.namedEmpty : JobMode.named;
                         names = Utils.castTo(RRuntime.convertScalarVectors(t.getDataAt(0)));
                     } else {
                         title = null;
                         names = null;
-                        jobMode = vector.getLength() == 0 ? JobMode.empty : JobMode.nonEmpty;
+                        jobMode = length == 0 ? JobMode.empty : JobMode.nonEmpty;
                     }
                 } else if (dims.getLength() == 2) {
                     mdn = new MatrixDimNames(vector);
@@ -111,14 +114,14 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 dims = null;
                 Object namesAttr = Utils.castTo(getNames(vector));
                 if (namesAttr != null) {
-                    if (vector.getLength() > 0) {
+                    if (length > 0) {
                         names = Utils.castTo(RRuntime.convertScalarVectors(namesAttr));
                         jobMode = JobMode.named;
                     } else {
                         names = null;
                         jobMode = JobMode.namedEmpty;
                     }
-                } else if (vector.getLength() > 0) {
+                } else if (length > 0) {
                     jobMode = JobMode.nonEmpty;
                     names = null;
                 } else {
@@ -134,32 +137,36 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
                 this.printCtx.parameters().setRight(true);
             }
             this.out = this.printCtx.output();
-            this.n = vector.getLength();
+            this.n = length;
             int max = printCtx.parameters().getMax();
             this.nPr = (n <= max + 1) ? n : max;
             this.labwidth = indexWidth(n) + 2;
             this.matrixDimNames = mdn;
         }
 
-        public void print() throws IOException {
-            switch (jobMode) {
-                case empty:
-                    printEmptyVector();
-                    break;
-                case nonEmpty:
-                    printNonEmptyVector();
-                    break;
-                case named:
-                    printNamedVector();
-                    break;
-                case namedEmpty:
-                    printNamedEmptyVector();
-                    break;
-                case matrix:
-                    printMatrix();
-                    break;
-                case array:
-                    printArray();
+        public final void print(T vector) throws IOException {
+            access = vector.access();
+            try (RandomIterator iter = access.randomAccess(vector)) {
+                this.iterator = iter;
+                switch (jobMode) {
+                    case empty:
+                        printEmptyVector();
+                        break;
+                    case nonEmpty:
+                        printNonEmptyVector();
+                        break;
+                    case named:
+                        printNamedVector();
+                        break;
+                    case namedEmpty:
+                        printNamedEmptyVector();
+                        break;
+                    case matrix:
+                        printMatrix();
+                        break;
+                    case array:
+                        printArray();
+                }
             }
         }
 
@@ -209,7 +216,10 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
 
             PrintParameters pp = printCtx.parameters();
 
-            wn = StringVectorPrinter.formatString(names, 0, n, false, pp);
+            VectorAccess namesAccess = names.slowPathAccess();
+            try (RandomIterator namesIter = namesAccess.randomAccess(names)) {
+                wn = StringVectorPrinter.formatString(namesIter, namesAccess, 0, n, false, pp);
+            }
             if (fm.maxWidth < wn) {
                 fm.maxWidth = wn;
             }
@@ -302,7 +312,10 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
             int lbloff = 0;
 
             if (rl != null) {
-                rlabw = StringVectorPrinter.formatString(rl, 0, r, false, pp);
+                VectorAccess rlAccess = rl.slowPathAccess();
+                try (RandomIterator rlIter = rlAccess.randomAccess(rl)) {
+                    rlabw = StringVectorPrinter.formatString(rlIter, rlAccess, 0, r, false, pp);
+                }
             } else {
                 rlabw = indexWidth(r + 1) + 3;
             }
@@ -609,9 +622,9 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected abstract void printElement(int i, FormatMetrics fm) throws IOException;
 
         private void printElementAndNotify(int i, FormatMetrics fm) throws IOException {
-            out.beginElement(vector, i, fm);
+            out.beginElement(i, fm);
             printElement(i, fm);
-            out.endElement(vector, i, fm);
+            out.endElement(i, fm);
         }
 
         /**
@@ -625,9 +638,9 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         protected abstract void printCell(int i, FormatMetrics fm) throws IOException;
 
         private void printCellAndNotify(int i, FormatMetrics fm) throws IOException {
-            out.beginElement(vector, i, fm);
+            out.beginElement(i, fm);
             printCell(i, fm);
-            out.endElement(vector, i, fm);
+            out.endElement(i, fm);
         }
 
         protected int matrixIndividualCellColumnWidthCorrection() {
@@ -713,7 +726,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
     }
 
     @TruffleBoundary
-    private static Object getNames(RAbstractVector vector) {
-        return vector.getAttr(RRuntime.NAMES_ATTR_KEY);
+    private static Object getNames(RAbstractVector x) {
+        return x.getAttr(RRuntime.NAMES_ATTR_KEY);
     }
 }

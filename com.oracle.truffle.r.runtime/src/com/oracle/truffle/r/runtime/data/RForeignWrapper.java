@@ -46,7 +46,7 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     @Override
     @TruffleBoundary
-    public final int getLength() {
+    public int getLength() {
         try {
             return (int) ForeignAccess.sendGetSize(GET_SIZE, delegate);
         } catch (UnsupportedMessageException e) {
@@ -100,7 +100,7 @@ public abstract class RForeignWrapper implements RAbstractVector {
     }
 
     @Override
-    public final RStringVector getNames() {
+    public RStringVector getNames() {
         return null;
     }
 
@@ -183,7 +183,7 @@ public abstract class RForeignWrapper implements RAbstractVector {
     }
 
     @Override
-    public final Object getInternalStore() {
+    public Object getInternalStore() {
         return delegate;
     }
 

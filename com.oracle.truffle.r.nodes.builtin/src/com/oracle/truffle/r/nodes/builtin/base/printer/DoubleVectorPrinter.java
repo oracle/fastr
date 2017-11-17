@@ -15,8 +15,10 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/format.c
 
@@ -41,13 +43,13 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
         @Override
         protected DoubleVectorMetrics formatVector(int offs, int len) {
-            return formatDoubleVector(vector, offs, len, 0, printCtx.parameters());
+            return formatDoubleVector(iterator, access, offs, len, 0, printCtx.parameters());
         }
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
             DoubleVectorMetrics dfm = (DoubleVectorMetrics) fm;
-            String v = encodeReal(vector.getDataAt(i), dfm.maxWidth, dfm.d, dfm.e, '.', printCtx.parameters());
+            String v = encodeReal(access.getDouble(iterator, i), dfm.maxWidth, dfm.d, dfm.e, '.', printCtx.parameters());
             out.print(v);
         }
 
@@ -68,12 +70,12 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
     }
 
     @TruffleBoundary
-    static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, PrintParameters pp) {
-        return formatDoubleVector(x, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
+    static DoubleVectorMetrics formatDoubleVector(RandomIterator iter, VectorAccess access, int offs, int n, int nsmall, PrintParameters pp) {
+        return formatDoubleVector(iter, access, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
     }
 
     @TruffleBoundary
-    public static DoubleVectorMetrics formatDoubleVector(RAbstractDoubleVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
+    public static DoubleVectorMetrics formatDoubleVector(RandomIterator iter, VectorAccess access, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
         int left;
         int right;
         int sleft;
@@ -107,7 +109,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
         mnl = RRuntime.INT_MAX_VALUE;
 
         for (int i = 0; i < n; i++) {
-            double xi = x.getDataAt(i + offs);
+            double xi = access.getDouble(iter, offs + i);
             if (!RRuntime.isFinite(xi)) {
                 if (RRuntime.isNA(xi)) {
                     naflag = true;
@@ -368,8 +370,12 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
 
     @TruffleBoundary
     public static String encodeReal(double x, int digits, char cdec, int sciPen, String naString) {
-        DoubleVectorMetrics dm = formatDoubleVector(RDataFactory.createDoubleVectorFromScalar(x), 0, 1, 0, digits, sciPen, naString.length());
-        return encodeReal(x, dm.maxWidth, dm.d, dm.e, cdec, naString);
+        RDouble value = RDouble.valueOf(x);
+        VectorAccess access = value.slowPathAccess();
+        try (RandomIterator iter = access.randomAccess(value)) {
+            DoubleVectorMetrics dm = formatDoubleVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());
+            return encodeReal(x, dm.maxWidth, dm.d, dm.e, cdec, naString);
+        }
     }
 
     @TruffleBoundary
@@ -563,13 +569,17 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
     }
 
     public static String[] format(RAbstractDoubleVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
-        DoubleVectorMetrics dfm = formatDoubleVector(value, 0, value.getLength(), nsmall, pp);
-        int w = Math.max(trim ? 1 : dfm.maxWidth, width);
+        VectorAccess access = value.slowPathAccess();
+        try (RandomIterator iter = access.randomAccess(value)) {
+            int length = access.getLength(iter);
+            DoubleVectorMetrics dfm = formatDoubleVector(iter, access, 0, length, nsmall, pp);
+            int w = Math.max(trim ? 1 : dfm.maxWidth, width);
 
-        String[] result = new String[value.getLength()];
-        for (int i = 0; i < value.getLength(); i++) {
-            result[i] = encodeReal(value.getDataAt(i), w, dfm.d, dfm.e, decimalMark, pp);
+            String[] result = new String[length];
+            for (int i = 0; i < length; i++) {
+                result[i] = encodeReal(access.getDouble(iter, i), w, dfm.d, dfm.e, decimalMark, pp);
+            }
+            return result;
         }
-        return result;
     }
 }

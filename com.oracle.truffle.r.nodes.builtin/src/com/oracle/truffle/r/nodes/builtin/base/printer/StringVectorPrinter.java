@@ -18,6 +18,8 @@ import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/format.c
 
@@ -42,19 +44,19 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
 
         @Override
         protected FormatMetrics formatVector(int offs, int len) {
-            int w = formatString(vector, offs, len, quote, printCtx.parameters());
+            int w = formatString(iterator, access, offs, len, quote, printCtx.parameters());
             return new FormatMetrics(w);
         }
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            String s = vector.getDataAt(i);
+            String s = access.getString(iterator, i);
             StringVectorPrinter.printString(s, fm.maxWidth, printCtx);
         }
 
         @Override
         protected void printCell(int i, FormatMetrics fm) throws IOException {
-            String s = vector.getDataAt(i);
+            String s = access.getString(iterator, i);
             String outS = StringVectorPrinter.encode(s, fm.maxWidth, printCtx.parameters());
             int g = printCtx.parameters().getGap();
             String fmt = "%" + asBlankArg(g) + "s%s";
@@ -95,7 +97,7 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
         }
     }
 
-    static int formatString(RAbstractStringVector x, int offs, int n, boolean quote, PrintParameters pp) {
+    static int formatString(RandomIterator iter, VectorAccess access, int offs, int n, boolean quote, PrintParameters pp) {
         int xmax = 0;
         int l;
 
@@ -103,7 +105,7 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
         int fieldwidth;
 
         for (int i = 0; i < n; i++) {
-            String s = x.getDataAt(offs + i);
+            String s = access.getString(iter, offs + i);
             String xi = RRuntime.escapeString(s, false, quote);
 
             if (xi == RRuntime.STRING_NA) {

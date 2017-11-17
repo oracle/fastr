@@ -60,7 +60,7 @@ final class RawVectorPrinter extends VectorPrinter<RAbstractRawVector> {
         @Override
         @TruffleBoundary
         protected void printElement(int i, FormatMetrics fm) throws IOException {
-            String rs = RRuntime.rawToHexString(vector.getRawDataAt(i));
+            String rs = RRuntime.rawToHexString(access.getRaw(iterator, i));
             if (fm.maxWidth > 2) {
                 StringBuilder str = new StringBuilder(fm.maxWidth);
                 for (int j = 2; j < fm.maxWidth; j++) {

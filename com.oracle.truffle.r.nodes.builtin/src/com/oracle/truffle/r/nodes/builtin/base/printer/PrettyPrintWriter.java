@@ -26,7 +26,6 @@ import java.io.PrintWriter;
 import java.io.Writer;
 
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
 
@@ -81,16 +80,16 @@ public class PrettyPrintWriter extends PrintWriter implements PrettyWriter {
     }
 
     @Override
-    public void beginElement(RAbstractVector vector, int index, FormatMetrics fm) {
+    public void beginElement(int index, FormatMetrics fm) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter) out).beginElement(vector, index, fm);
+            ((PrettyWriter) out).beginElement(index, fm);
         }
     }
 
     @Override
-    public void endElement(RAbstractVector vector, int index, FormatMetrics fm) {
+    public void endElement(int index, FormatMetrics fm) {
         if (out instanceof PrettyWriter) {
-            ((PrettyWriter) out).endElement(vector, index, fm);
+            ((PrettyWriter) out).endElement(index, fm);
         }
     }
 
