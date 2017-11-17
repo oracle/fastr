@@ -127,7 +127,6 @@ usage <- function() {
 					  "[--count-daily count]",
 					  "[--ok-only]",
                       "[--pkg-pattern package-pattern] \n"))
-    print(sys.calls())
 	quit(status=100)
 }
 
