@@ -32,7 +32,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.ForeignAccess.Factory26;
+import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -71,7 +71,7 @@ abstract class InteropRootNode extends RootNode {
     }
 }
 
-public final class RAbstractVectorAccessFactory implements Factory26 {
+public final class RAbstractVectorAccessFactory implements StandardFactory {
 
     abstract static class VectorReadImplNode extends InteropRootNode {
 

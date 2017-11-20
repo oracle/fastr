@@ -25,11 +25,11 @@ package com.oracle.truffle.r.ffi.impl.upcalls;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.interop.ForeignAccess.Factory;
-import com.oracle.truffle.api.interop.ForeignAccess.Factory26;
+import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.nodes.RootNode;
 
-public abstract class AbstractDowncallForeign implements Factory26, Factory {
+public abstract class AbstractDowncallForeign implements StandardFactory, Factory {
     @Override
     public CallTarget accessIsNull() {
         return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(false));
