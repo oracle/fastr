@@ -23,15 +23,14 @@ The API checksum must be provided because we do not want to rely on some R packa
 
 ### Usage
 
-Run `mx pkgtest --cache-pkgs version=<checksum>,dir=<pkg-cache-dir>,size=<cache-size>,link=<TRUE|FALSE>`, e.g.
+Run `mx pkgtest --cache-pkgs version=<checksum>,dir=<pkg-cache-dir>,size=<cache-size>`, e.g.
 ```
 mx pkgtest --cache-pkgs version=730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525,dir=/tmp/cache_dir
 ```
 
 The `version` key specifies the API version to use, i.e., a checksum of the header files of the native API (mandatory, no default).  
 The `pkg-cache-dir` key specifies the directory of the cache (mandatory, no default).  
-The `size` key specifies the number of API version for which to cache packages (optional, default=`2L`).  
-The `link` key specifies is the number of API version for which to cache packages (optional, default=`FALSE`).  
+The `size` key specifies the number of different API versions for which to cache packages (optional, default=`2L`).  
 
 ### Details
 

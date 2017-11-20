@@ -746,26 +746,8 @@ pkg.cache.install <- function(pkgname, install.cmd) {
 }
 
 pkg.cache.get <- function(pkgname, lib) {
-    # check if caching is enabled
-    if (!pkg.cache$enabled) {
-        return (FALSE)
-    }
-
-    # check if package cache directory can be accessed
-    if (dir.exists(pkg.cache$dir) && any(file.access(pkg.cache$dir, mode = 6) == -1)) {
-        log.message("package cache error: cannot access package cache dir ", pkg.cache$dir, level=1)
-        return (FALSE)
-    }
-
-    # check cache directory has valid structure
-    if (!is.valid.cache.dir(pkg.cache$dir)) {
-        pkg.cache.init(pkg.cache$dir, pkg.cache$version)
-    }
-
-    # get version sub-directory
-    version.dir <- pkg.cache.get.version(pkg.cache$dir, pkg.cache$version)
-    if (is.null(version.dir)) {
-        log.message("package cache error: cannot access or create version subdir for ", pkg.cache$version, level=1)
+    version.dir <- pkg.cache.check()
+    if(is.null(version.dir)) {
         return (FALSE)
     }
 
@@ -778,11 +760,12 @@ pkg.cache.get <- function(pkgname, lib) {
         fromPath <- file.path(version.dir, pkgname)
         toPath <- lib
 
-        # copy from cache to package library
-        if(!pkg.cache.import.dir(fromPath, toPath)) {
-            log.message("could not copy/link package dir from ", fromPath , " to ", toPath, level=1)
+        # extract cached package to library directory
+        if (untar(fromPath, exdir=toPath) != 0L) {
+            log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
             return (FALSE)
         }
+
         log.message("package cache hit, using package from ", fromPath)
         return (TRUE)
     } 
@@ -791,35 +774,9 @@ pkg.cache.get <- function(pkgname, lib) {
     FALSE
 }
 
-pkg.cache.import.dir <- function(fromPath, toPath) {
-    if (any(as.logical(pkg.cache$link), na.rm=T)) {
-        file.symlink(fromPath, toPath)
-    } else {
-        file.copy(fromPath, toPath, recursive=TRUE)
-    }
-}
-
 pkg.cache.insert <- function(pkgname, lib) {
-    # check if caching is enabled
-    if (!pkg.cache$enabled) {
-        return (FALSE)
-    }
-
-    # check if package cache directory can be accessed
-    if (dir.exists(pkg.cache$dir) && any(file.access(pkg.cache$dir, mode = 6) == -1)) {
-        log.message("cannot access package cache dir ", pkg.cache$dir, level=1)
-        return (FALSE)
-    }
-
-    # check cache directory has valid structure
-    if (!is.valid.cache.dir(pkg.cache$dir)) {
-        pkg.cache.init(pkg.cache$dir, as.character(pkg.cache$version))
-    }
-
-    # get version sub-directory
-    version.dir <- pkg.cache.get.version(pkg.cache$dir, as.character(pkg.cache$version))
-    if (is.null(version.dir)) {
-        log.message("cannot access or create version subdir for ", as.character(pkg.cache$version), level=1)
+    version.dir <- pkg.cache.check()
+    if(is.null(version.dir)) {
         return (FALSE)
     }
 
@@ -831,19 +788,49 @@ pkg.cache.insert <- function(pkgname, lib) {
         }
 
         fromPath <- file.path(lib, pkgname)
-        toPath <- version.dir
+        toPath <- file.path(version.dir, paste0(pkgname, ".tar.gz"))
 
-        # copy from cache to package library
-        if(!file.copy(fromPath, toPath, recursive=TRUE)) {
-            log.message("could not copy dir ", fromPath , " from package cache to ", toPath, level=1)
+        # to produce a TAR with relative paths, we need to change the working dir
+        prev.wd <- getwd()
+        setwd(lib)
+        if(tar(toPath, pkgname, compression="gzip") != 0L) {
+            log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)
             return (FALSE)
         }
+        setwd(prev.wd)
+
         log.message("successfully inserted package ", pkgname , " to package cache (", toPath, ")")
         return (TRUE)
     }, error = function(e) {
         log.message("could not insert package '", pkgname, "' because: ", e$message)
     })
     FALSE
+}
+
+pkg.cache.check <- function() {
+    # check if caching is enabled
+    if (!pkg.cache$enabled) {
+        return (NULL)
+    }
+
+    # check if package cache directory can be accessed
+    if (dir.exists(pkg.cache$dir) && any(file.access(pkg.cache$dir, mode = 6) == -1)) {
+        log.message("cannot access package cache dir ", pkg.cache$dir, level=1)
+        return (NULL)
+    }
+
+    # check cache directory has valid structure
+    if (!is.valid.cache.dir(pkg.cache$dir)) {
+        pkg.cache.init(pkg.cache$dir, as.character(pkg.cache$version))
+    }
+
+    # get version sub-directory
+    version.dir <- pkg.cache.get.version(pkg.cache$dir, as.character(pkg.cache$version))
+    if (is.null(version.dir)) {
+        log.message("cannot access or create version subdir for ", as.character(pkg.cache$version), level=1)
+    }
+
+    version.dir
 }
 
 is.valid.cache.dir <- function(cache.dir) {
@@ -859,7 +846,6 @@ is.valid.cache.dir <- function(cache.dir) {
 
     tryCatch({
         version.table <- read.csv(version.table.name)
-        # TODO: check if versions have appropriate subdirs
         TRUE
     }, error = function(e) {
         log.message("could not read package cache's version table: ", e$message, level=1)
