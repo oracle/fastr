@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitBaseEnvCallDispatcher;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
@@ -164,7 +165,18 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         if (emptyCnt == length) {
             return ONE_EMPTY_STRING;
         } else if (length == 1) {
-            return converted[0];
+            if (values.isComplete()) {
+                return converted[0];
+            } else {
+                // Clone array since it might be physical data array of a string vector
+                String[] result = converted[0].clone();
+                for (int j = result.length - 1; j >= 0; j--) {
+                    if (result[j] == RRuntime.STRING_NA) {
+                        result[j] = "NA";
+                    }
+                }
+                return result;
+            }
         } else {
             return prepareResult(sep, length, converted, maxLength);
         }
