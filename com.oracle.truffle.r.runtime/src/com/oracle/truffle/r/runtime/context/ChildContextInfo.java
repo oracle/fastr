@@ -119,7 +119,7 @@ public final class ChildContextInfo {
         return this.truffleContext;
     }
 
-    public TruffleContext createVM(ChildContextInfo childContextInfo) {
+    public TruffleContext createVM(@SuppressWarnings("unused") ChildContextInfo childContextInfo) {
         this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config("parentContext", parent.getVM()).config(CONFIG_KEY, this).build();
         return this.truffleContext;
     }

@@ -897,7 +897,6 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class InitDimsNamesDimNamesNode extends RBaseNode {
 
-        private final ConditionProfile oldAttrsNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile doAnythingProfile = ConditionProfile.createBinaryProfile();
 
         @Child private GetDimAttributeNode getDimNode;

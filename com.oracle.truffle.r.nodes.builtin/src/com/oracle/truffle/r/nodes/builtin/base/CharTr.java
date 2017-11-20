@@ -94,9 +94,10 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
         if (newEnd - newStart < oldEnd - oldStart) {
             throw error(X_LONGER_THAN_Y, "old", "new");
         }
+        String replacedValue = value;
         for (int rangeIdx = 0; rangeIdx <= oldEnd - oldStart; rangeIdx++) {
-            value = value.replace((char) (oldStart + rangeIdx), (char) (newStart + rangeIdx));
+            replacedValue = value.replace((char) (oldStart + rangeIdx), (char) (newStart + rangeIdx));
         }
-        return value;
+        return replacedValue;
     }
 }

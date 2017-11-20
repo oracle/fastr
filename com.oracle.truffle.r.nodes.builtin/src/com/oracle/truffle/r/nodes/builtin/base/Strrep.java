@@ -91,12 +91,14 @@ public abstract class Strrep extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected Object strrep(RNull xVec, RAbstractIntVector timesVec) {
         return RDataFactory.createEmptyStringVector(); // GnuR fails with segfault; return value
                                                        // adheres to non-internal strrep() result
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected Object strrep(RAbstractStringVector xVec, RNull timesVec) {
         return RDataFactory.createEmptyStringVector(); // GnuR - infinite loop; return value adheres
                                                        // to non-internal strrep() result

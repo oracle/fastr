@@ -83,7 +83,7 @@ public abstract class GetDataCopy {
         }
 
         @Specialization(guards = "vec.hasNativeMemoryData()")
-        protected java.lang.String[] doManagedRVector(RStringVector vec) {
+        protected java.lang.String[] doManagedRVector(@SuppressWarnings("unused") RStringVector vec) {
             throw RInternalError.unimplemented("string vectors backed by native memory");
         }
 

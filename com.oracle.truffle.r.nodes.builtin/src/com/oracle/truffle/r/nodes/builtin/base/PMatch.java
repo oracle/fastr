@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "pmatch", kind = INTERNAL, parameterNames = {"x", "table", "nomatch", "duplicates.ok"}, behavior = PURE)
+@SuppressWarnings("unused")
 public abstract class PMatch extends RBuiltinNode.Arg4 {
 
     private final ConditionProfile nomatchNA = ConditionProfile.createBinaryProfile();

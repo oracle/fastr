@@ -69,6 +69,7 @@ public class CompileFunctions {
     }
 
     @RBuiltin(name = "mkCode", kind = INTERNAL, parameterNames = {"bytes", "consts"}, behavior = PURE)
+    @SuppressWarnings("unused")
     public abstract static class MkCode extends RBuiltinNode.Arg2 {
 
         static {
@@ -96,7 +97,8 @@ public class CompileFunctions {
         }
 
         @Specialization
-        protected Object bcClose(@SuppressWarnings("unused") Object forms, Object body, @SuppressWarnings("unused") Object env) {
+        @SuppressWarnings("unused")
+        protected Object bcClose(Object forms, Object body, Object env) {
             return RNull.instance; // Body
         }
     }
@@ -130,6 +132,7 @@ public class CompileFunctions {
     }
 
     @RBuiltin(name = "bcVersion", kind = INTERNAL, parameterNames = {}, behavior = PURE)
+    @SuppressWarnings("unused")
     public abstract static class BcVersion extends RBuiltinNode.Arg0 {
 
         static {

@@ -111,6 +111,7 @@ public final class SNorm {
         // only static members
     }
 
+    @SuppressWarnings("unused")
     public static double normRand(RandomNumberGenerator rand, NormKind normKind) {
         double s;
         double u1;
