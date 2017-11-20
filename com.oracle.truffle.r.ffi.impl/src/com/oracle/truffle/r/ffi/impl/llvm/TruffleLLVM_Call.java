@@ -98,7 +98,7 @@ final class TruffleLLVM_Call implements CallRFFI {
             initVarFun.symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + initVarFun.funName));
         }
         Node executeNode = Message.createExecute(2).createNode();
-        RFFIVariables[] variables = RFFIVariables.initialize();
+        RFFIVariables[] variables = RFFIVariables.initialize(context);
         boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
         try {
             for (int i = 0; i < variables.length; i++) {

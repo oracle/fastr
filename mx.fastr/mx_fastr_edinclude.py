@@ -105,19 +105,16 @@ def ed_r_internals(gnu_dir):
                     rewrite_var(f, var, line)
                 else:
                     f.write(line)
-            elif 'R_RestartToken' in line:
-                f.write('#ifdef FASTR\n')
-                f.write('SEXP FASTR_R_RestartToken();\n')
-                f.write('#else\n')
-                f.write(line)
-                f.write('#endif\n')
             else:
                 f.write(line)
 
 def rewrite_var(f, var, line):
     f.write('#ifdef FASTR\n')
     f.write('LibExtern SEXP FASTR_{0}();\n'.format(var))
+    f.write('LibExtern SEXP {0};\n'.format(var))
+    f.write('#ifndef NO_FASTR_REDEFINE\n')
     f.write('#define {0} FASTR_{0}()\n'.format(var))
+    f.write('#endif\n')
     f.write('#else\n')
     f.write(line)
     f.write('#endif\n')
@@ -150,7 +147,10 @@ interactive_rewrite = '''
 #include <R_ext/RStartup.h>
 #ifdef FASTR
 extern Rboolean FASTR_R_Interactive();
+extern Rboolean R_Interactive;
+#ifndef NO_FASTR_REDEFINE
 #define R_Interactive FASTR_R_Interactive()
+#endif
 #else
 '''
 

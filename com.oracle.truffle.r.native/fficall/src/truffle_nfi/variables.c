@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+#define NO_FASTR_REDEFINE
 #include <string.h>
 #include <Rinterface.h>
 #include <trufflenfi.h>
@@ -56,6 +57,11 @@ char *copystring(char *value) {
 
 char* R_Home;
 char* R_TempDir;
+SEXP R_GlobalEnv;
+SEXP R_BaseEnv;
+SEXP R_BaseNamespace;
+SEXP R_NamespaceRegistry;
+Rboolean R_Interactive;
 SEXP R_NilValue;
 SEXP R_UnboundValue;
 SEXP R_MissingArg;
@@ -102,7 +108,7 @@ SEXP R_BlankString;
 SEXP R_BlankScalarString;
 SEXP R_BaseSymbol; /* "base" */
 SEXP R_NamespaceEnvSymbol; /* ".__NAMESPACE__." */
-SEXP R_RestartToken;
+SEXP R_RestartToken; /* "" */
 SEXP R_SortListSymbol; /* "sort.list" */
 SEXP R_SpecSymbol; /* "spec" */
 SEXP R_TripleColonSymbol; /* ":::" */
@@ -122,6 +128,7 @@ void Call_initvar_double(int index, double value) {
 
 void Call_initvar_int(int index, int value) {
     switch (index) {
+        case R_Interactive_x: R_Interactive = value; break;
         case R_NaInt_x: R_NaInt = value; break;
         default:
             printf("Call_initvar_int: unimplemented index %d\n", index);
@@ -142,6 +149,10 @@ void Call_initvar_string(int index, char* value) {
 void Call_initvar_obj(TruffleEnv* env, int index, void* value) {
     init_utils(env);
     switch (index) {
+        case R_GlobalEnv_x: R_GlobalEnv = value; break;
+        case R_BaseEnv_x: R_BaseEnv = value; break;
+        case R_BaseNamespace_x: R_BaseNamespace = value; break;
+        case R_NamespaceRegistry_x: R_NamespaceRegistry = value; break;
         case R_NilValue_x: R_NilValue = value; break;
         case R_UnboundValue_x: R_UnboundValue = value; break;
         case R_MissingArg_x: R_MissingArg = value; break;

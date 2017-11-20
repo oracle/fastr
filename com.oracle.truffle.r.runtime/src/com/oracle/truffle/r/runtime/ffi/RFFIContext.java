@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RObject;
 
 /**
@@ -92,6 +93,12 @@ public abstract class RFFIContext extends RFFI {
         if (canRunGc) {
             cooperativeGc();
         }
+    }
+
+    /**
+     * Invoked during RContext initialization, but after the global environment is set up.
+     */
+    public void initializeVariables(RContext context) {
     }
 
     public long beforeDowncall() {
