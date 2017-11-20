@@ -125,7 +125,7 @@ public class RS4ObjectMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected String[] getKeys() {
+    protected String[] getKeys(TruffleObject obj) {
         return new String[]{"s", "d", "i", "b", "fn", "class"};
     }
 

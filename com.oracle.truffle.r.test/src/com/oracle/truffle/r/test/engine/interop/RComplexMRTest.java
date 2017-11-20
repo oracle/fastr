@@ -40,21 +40,6 @@ public class RComplexMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected boolean isBoxed(TruffleObject obj) {
-        return false;
-    }
-
-    @Override
-    protected boolean isPointer(TruffleObject obj) {
-        return false;
-    }
-
-    @Override
-    protected boolean hasSize(TruffleObject obj) {
-        return false;
-    }
-
-    @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
         return null;
     }

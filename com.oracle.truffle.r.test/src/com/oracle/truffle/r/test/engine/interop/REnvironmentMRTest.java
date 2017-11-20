@@ -36,6 +36,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public class REnvironmentMRTest extends AbstractMRTest {
@@ -138,13 +139,16 @@ public class REnvironmentMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected String[] getKeys() {
-        return new String[]{"s", "i", "d", "b", "fn", "n", "l"};
+    protected String[] getKeys(TruffleObject obj) {
+        if (((REnvironment) obj).getName().equals("R_EmptyEnv")) {
+            return new String[]{};
+        } else {
+            return new String[]{"s", "i", "d", "b", "fn", "n", "l"};
+        }
     }
 
     @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
-        Source src = Source.newBuilder("new.env()").mimeType("text/x-r").name("test.R").build();
-        return engine.eval(src).as(REnvironment.class);
+        return REnvironment.emptyEnv();
     }
 }

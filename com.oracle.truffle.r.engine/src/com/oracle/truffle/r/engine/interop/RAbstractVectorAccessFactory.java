@@ -246,6 +246,16 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
     }
 
     @Override
+    public CallTarget accessIsInstantiable() {
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return false;
+            }
+        });
+    }
+
+    @Override
     public CallTarget accessIsBoxed() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
@@ -262,6 +272,16 @@ public final class RAbstractVectorAccessFactory implements Factory26 {
             @Override
             public Object execute(VirtualFrame frame) {
                 return true;
+            }
+        });
+    }
+
+    @Override
+    public CallTarget accessHasKeys() {
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return false;
             }
         });
     }

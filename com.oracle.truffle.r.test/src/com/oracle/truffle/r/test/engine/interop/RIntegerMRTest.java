@@ -40,18 +40,8 @@ public class RIntegerMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected boolean isBoxed(TruffleObject obj) {
-        return true;
-    }
-
-    @Override
     protected Object getUnboxed(TruffleObject obj) {
         return ((RInteger) obj).getValue();
-    }
-
-    @Override
-    protected boolean isPointer(TruffleObject obj) {
-        return false;
     }
 
     @Override

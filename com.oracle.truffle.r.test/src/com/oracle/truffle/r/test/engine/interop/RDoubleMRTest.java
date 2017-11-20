@@ -40,16 +40,6 @@ public class RDoubleMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected boolean isBoxed(TruffleObject obj) {
-        return true;
-    }
-
-    @Override
-    protected boolean isPointer(TruffleObject obj) {
-        return false;
-    }
-
-    @Override
     protected Object getUnboxed(TruffleObject obj) {
         return ((RDouble) obj).getValue();
     }

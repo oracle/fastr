@@ -39,18 +39,8 @@ public class ActiveBindingMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected boolean isBoxed(TruffleObject obj) {
-        return true;
-    }
-
-    @Override
     protected Object getUnboxed(TruffleObject obj) {
         return ((ActiveBinding) obj).readValue();
-    }
-
-    @Override
-    protected boolean isPointer(TruffleObject obj) {
-        return false;
     }
 
     @Override

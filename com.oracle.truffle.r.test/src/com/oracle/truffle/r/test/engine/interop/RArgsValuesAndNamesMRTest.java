@@ -140,18 +140,17 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected String[] getKeys() {
-        return names;
+    protected String[] getKeys(TruffleObject obj) {
+        if (obj == RArgsValuesAndNames.EMPTY) {
+            return new String[]{};
+        } else {
+            return names;
+        }
     }
 
     @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
         return RArgsValuesAndNames.EMPTY;
-    }
-
-    @Override
-    protected boolean hasSize(TruffleObject obj) {
-        return true;
     }
 
     @Override

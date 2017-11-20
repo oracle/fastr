@@ -79,11 +79,6 @@ public class RFunctionMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected boolean isExecutable(TruffleObject obj) {
-        return true;
-    }
-
-    @Override
     protected TruffleObject createEmptyTruffleObject() throws Exception {
         return null;
     }
