@@ -43,7 +43,7 @@ public abstract class SizeToOctalRawNode extends UnaryNode {
     public abstract RRawVector execute(Object size);
 
     @Specialization
-    protected RRawVector octSize(int s) {
+    protected RRawVector doInt(int s) {
         return RDataFactory.createRawVector(toOctalAsciiString(s));
     }
 
@@ -65,7 +65,7 @@ public abstract class SizeToOctalRawNode extends UnaryNode {
 
     // Transcribed from ".../utils/src/stubs.c"
     @Specialization
-    protected RRawVector octSize(double size,
+    protected RRawVector doDouble(double size,
                     @Cached("create()") SetDataAt.Raw setDataNode) {
 
         double s = size;
@@ -86,7 +86,7 @@ public abstract class SizeToOctalRawNode extends UnaryNode {
     }
 
     @Specialization
-    protected RRawVector octSize(@SuppressWarnings("unused") RNull n) {
+    protected RRawVector doNull(@SuppressWarnings("unused") RNull n) {
         return RDataFactory.createRawVector(11);
     }
 
