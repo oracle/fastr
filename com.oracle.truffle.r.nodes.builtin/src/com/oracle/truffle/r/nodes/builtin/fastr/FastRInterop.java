@@ -43,6 +43,7 @@ import java.net.MalformedURLException;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -909,6 +910,7 @@ public class FastRInterop {
             } catch (UnsupportedMessageException e) {
                 throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
             } catch (RuntimeException e) {
+                CompilerDirectives.transferToInterpreter();
                 throw error(RError.Message.GENERIC, e.getMessage());
             }
         }

@@ -150,12 +150,13 @@ final class TruffleNFI_Context extends RFFIContext {
 
     public TruffleObject defaultLibrary;
 
-    private void initVariables() {
+    @Override
+    public void initializeVariables(RContext context) {
         synchronized (TruffleNFI_Context.class) {
             if (!variablesInitialized) {
                 variablesInitialized = true;
                 Node executeNode = Message.createExecute(2).createNode();
-                RFFIVariables[] variables = RFFIVariables.initialize();
+                RFFIVariables[] variables = RFFIVariables.initialize(context);
                 boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
                 try {
                     for (int i = 0; i < variables.length; i++) {
@@ -275,7 +276,6 @@ final class TruffleNFI_Context extends RFFIContext {
                     assert defaultLibrary != null && rlibDLLInfo != null;
                     break;
             }
-            initVariables();
             return this;
         } finally {
             if (traceEnabled()) {

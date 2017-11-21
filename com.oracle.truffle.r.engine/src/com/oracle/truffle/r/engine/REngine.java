@@ -166,6 +166,7 @@ final class REngine implements Engine, Engine.Timings {
         suppressWarnings = true;
         MaterializedFrame baseFrame = RRuntime.createNonFunctionFrame("base");
         REnvironment.baseInitialize(baseFrame, globalFrame);
+        context.getStateRFFI().initializeVariables(context);
         RBuiltinPackages.loadBase(context.getLanguage(), baseFrame);
         RGraphics.initialize();
         if (FastROptions.LoadProfiles.getBooleanValue()) {
