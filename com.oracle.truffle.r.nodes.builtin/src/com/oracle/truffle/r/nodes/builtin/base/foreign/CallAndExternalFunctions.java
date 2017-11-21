@@ -633,9 +633,9 @@ public class CallAndExternalFunctions {
                     return new UnimplementedExternal(name);
                 case "objectSize":
                     return ObjectSizeNodeGen.create();
-                case "processevents":
                 case "octsize":
                     return OctSizeNode.create();
+                case "processevents":
                 case "sockconnect":
                 case "sockread":
                 case "sockclose":
