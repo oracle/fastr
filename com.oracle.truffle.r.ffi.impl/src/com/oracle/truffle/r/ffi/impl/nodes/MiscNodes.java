@@ -22,13 +22,17 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import java.nio.charset.Charset;
+
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionEnvironmentNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.OctSizeNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
@@ -43,14 +47,22 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.S
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleBaseNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetDataAt;
+import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
@@ -249,6 +261,61 @@ public final class MiscNodes {
 
         public static GetFunctionEnvironment create() {
             return GetFunctionEnvironmentNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class OctSizeNode extends FFIUpCallNode.Arg1 {
+
+        private Charset asciiCharset;
+
+        protected CastDoubleBaseNode createCast() {
+            return CastDoubleBaseNodeGen.create(false, false, false);
+        }
+
+        @Specialization(guards = "size.getLength() == 1")
+        protected RRawVector octSize(RAbstractIntVector size,
+                        @Cached("create()") GetDataAt.Int getDataNode) {
+
+            int s = getDataNode.execute(size, size.getInternalStore(), 0);
+            byte[] buf = toOctalAsciiString(s);
+            return RDataFactory.createRawVector(buf);
+        }
+
+        @TruffleBoundary
+        private byte[] toOctalAsciiString(int s) {
+            if (asciiCharset == null) {
+                asciiCharset = Charset.forName("US-ASCII");
+            }
+            return asciiCharset.encode(Integer.toOctalString(s)).array();
+        }
+
+        // Transcribed from ".../utils/src/stubs.c"
+        @Specialization
+        protected RRawVector octSize(Object size,
+                        @Cached("create()") SetDataAt.Raw setDataNode,
+                        @Cached("createCast()") CastDoubleBaseNode castToDoubleNode) {
+
+            double s = (double) castToDoubleNode.executeDouble(size);
+
+            if (!RRuntime.isFinite(s) && s >= 0) {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "size must be finite and >= 0");
+            }
+
+            RRawVector ans = RDataFactory.createRawVector(11);
+            byte[] store = ans.getInternalStore();
+
+            for (int i = 0; i < 11; i++) {
+                double s2 = Math.floor(s / 8.0);
+                double t = s - 8.0 * s2;
+                s = s2;
+                setDataNode.setDataAtAsObject(ans, store, 10 - i, (byte) 48 + t);
+            }
+            return ans;
+        }
+
+        public static OctSizeNode create() {
+            return OctSizeNodeGen.create();
         }
     }
 

@@ -281,6 +281,7 @@ typedef SEXP (*call_getvar)();
 typedef SEXP (*call_R_ParseVector)(SEXP text, int n, SEXP srcFile);
 typedef SEXPTYPE (*call_Rf_str2type)(const char *s);
 typedef SEXP (*call_CLOENV)(SEXP closure);
+typedef SEXP (*call_octsize)(SEXP size);
 
 // connections
 

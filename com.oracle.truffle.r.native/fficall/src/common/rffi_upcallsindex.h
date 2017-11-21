@@ -170,12 +170,13 @@
 #define getOpenModeString_x 165
 #define getSummaryDescription_x 166
 #define isSeekable_x 167
-#define registerCCallable_x 168
-#define registerRoutines_x 169
-#define setDotSymbolValues_x 170
-#define unif_rand_x 171
-#define useDynamicSymbols_x 172
+#define octsize_x 168
+#define registerCCallable_x 169
+#define registerRoutines_x 170
+#define setDotSymbolValues_x 171
+#define unif_rand_x 172
+#define useDynamicSymbols_x 173
 
-#define UPCALLS_TABLE_SIZE 173
+#define UPCALLS_TABLE_SIZE 174
 
 #endif // RFFI_UPCALLSINDEX_H

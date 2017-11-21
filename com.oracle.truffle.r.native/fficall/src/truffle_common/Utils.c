@@ -22,6 +22,7 @@
  */
 
 #include <rffiutils.h>
+#include "rffi_upcalls.h"
 
 void R_CheckStack(void) {
     // TODO: check for stack overflow
@@ -47,4 +48,10 @@ Rboolean isOrdered(SEXP s)
     return (TYPEOF(s) == INTSXP
 	    && inherits(s, "factor")
 	    && inherits(s, "ordered"));
+}
+
+
+SEXP octsize(SEXP s)
+{
+	return ((call_octsize) callbacks[octsize_x])(s);
 }
