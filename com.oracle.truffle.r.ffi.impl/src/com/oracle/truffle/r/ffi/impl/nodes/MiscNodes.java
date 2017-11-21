@@ -279,7 +279,7 @@ public final class MiscNodes {
         }
 
         protected CastNode createCast() {
-            HeadPhaseBuilder<Double> findFirst = CastNodeBuilder.newCastBuilder().mustNotBeMissing().mustNotBeNull().asDoubleVector().findFirst();
+            HeadPhaseBuilder<Double> findFirst = CastNodeBuilder.newCastBuilder().mustNotBeMissing().allowNull().asDoubleVector().findFirst();
             return findFirst.buildCastNode();
         }
 

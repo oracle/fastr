@@ -44,4 +44,11 @@ public class TestUtils extends TestBase {
         // The vector of methods is not sorted alphabetically
         assertEval(Ignored.ImplementationError, "methods(plot)");
     }
+
+    private static final String[] TEST_OCTSIZE_PARAMS = {"1L", "1.0", Integer.toString(Integer.MAX_VALUE), "NA", "NULL"};
+
+    @Test
+    public void testOctSize() {
+        assertEval(template(".Call(utils:::C_octsize, %0)", TEST_OCTSIZE_PARAMS));
+    }
 }

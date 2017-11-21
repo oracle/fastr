@@ -13,7 +13,7 @@ public abstract class OctSizeNode extends RExternalBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(OctSizeNode.class);
-        casts.arg(0).mustNotBeMissing().mustNotBeNull().returnIf(Predef.integerValue()).asDoubleVector().findFirst();
+        casts.arg(0).mustNotBeMissing().allowNull().returnIf(Predef.integerValue()).asDoubleVector().findFirst();
     }
 
     @Child private SizeToOctalRawNode sizeToOctal = SizeToOctalRawNode.create();

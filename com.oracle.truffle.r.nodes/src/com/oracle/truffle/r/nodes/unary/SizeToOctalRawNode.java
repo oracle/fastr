@@ -10,6 +10,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
 
@@ -31,9 +32,12 @@ public abstract class SizeToOctalRawNode extends UnaryNode {
         }
 
         ByteBuffer encode = asciiCharset.encode(Integer.toOctalString(s));
+        // reverse
         byte[] result = new byte[11];
-        Arrays.fill(result, (byte) 48);
-        encode.get(result);
+        Arrays.fill(result, (byte) '0');
+        for (int i = result.length - 1; i >= 0 && encode.hasRemaining(); i--) {
+            result[i] = encode.get();
+        }
         return result;
     }
 
@@ -57,6 +61,11 @@ public abstract class SizeToOctalRawNode extends UnaryNode {
             setDataNode.setDataAtAsObject(ans, store, 10 - i, (byte) (48.0 + t));
         }
         return ans;
+    }
+
+    @Specialization
+    protected RRawVector octSize(@SuppressWarnings("unused") RNull n) {
+        return RDataFactory.createRawVector(11);
     }
 
     public static SizeToOctalRawNode create() {
