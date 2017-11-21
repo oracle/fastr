@@ -10,12 +10,12 @@ Directory structure:
 - pkg-cache-dir
 --+- version.table
 --+- libraryVERSION0
-----+- pkgdir0
-----+- pkgdir1
+----+- packageArchive0.gz
+----+- packageArchive1.gz
 ----+- ...
 --+- libraryVERSION1
-----+- pkgdir0
-----+- pkgdir1
+----+- packageArchive0.gz
+----+- packageArchive1.gz
 ----+- ...
 --+- ...
 
