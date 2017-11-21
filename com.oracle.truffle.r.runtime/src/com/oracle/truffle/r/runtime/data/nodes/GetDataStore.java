@@ -45,12 +45,18 @@ public abstract class GetDataStore extends Node {
     }
 
     @Specialization(guards = {"noNativeMemoryData(vector)", "vector.getClass() == vectorClass"}, limit = "CACHE_LIMIT")
-    protected Object doGeneric(RAbstractVector vector,
+    protected Object doCached(RAbstractVector vector,
                     @Cached("vector.getClass()") Class<? extends RAbstractVector> vectorClass,
                     @Cached("getStoreClass(vector)") Class<?> storeClass) {
         Object store = vectorClass.cast(vector).getInternalStore();
         assert store.getClass() == storeClass : "every concrete implementation of RAbstractVector#getInternalStore() must always return a store object of the same type.";
         return storeClass.cast(store);
+    }
+
+    @Specialization(replaces = "doCached", guards = {"noNativeMemoryData(vector)"})
+    protected Object doGeneric(RAbstractVector vector) {
+        Object store = vector.getInternalStore();
+        return store;
     }
 
     @Fallback

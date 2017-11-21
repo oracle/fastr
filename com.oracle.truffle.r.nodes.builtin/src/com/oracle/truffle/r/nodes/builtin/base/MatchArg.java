@@ -206,7 +206,7 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
         return MatchArgInternalNodeGen.create();
     }
 
-    @Specialization(limit = "3", guards = "choicesValue.isSupported(frame, arg)")
+    @Specialization(limit = "2", guards = "choicesValue.isSupported(frame, arg)")
     protected Object matchArg(VirtualFrame frame, RPromise arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
                     @Cached("new(frame, arg)") MatchArgChoices choicesValue,
                     @Cached("createInternal()") MatchArgInternal internal,

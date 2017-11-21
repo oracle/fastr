@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.function.call;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -180,7 +179,7 @@ public abstract class PrepareArguments extends Node {
             return ArgumentMatcher.matchArgumentsEvaluated(permutation, explicitArgs.getArguments(), s3DefaultArguments, formals);
         }
 
-        @Fallback
+        @Specialization
         @TruffleBoundary
         public RArgsValuesAndNames prepareGeneric(RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, @SuppressWarnings("unused") RCallNode call) {
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/

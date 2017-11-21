@@ -797,11 +797,10 @@ public class FastRInterop {
             Casts.noCasts(InteropNew.class);
         }
 
-        @Specialization(limit = "99", guards = {"isForeignObject(clazz)", "length == args.getLength()"})
+        @Specialization(guards = {"isForeignObject(clazz)"})
         @TruffleBoundary
         public Object interopNew(TruffleObject clazz, RArgsValuesAndNames args,
-                        @SuppressWarnings("unused") @Cached("args.getLength()") int length,
-                        @Cached("createNew(length).createNode()") Node sendNew,
+                        @Cached("createNew(0).createNode()") Node sendNew,
                         @Cached("create()") R2Foreign r2Foreign,
                         @Cached("create()") Foreign2R foreign2R) {
             try {
