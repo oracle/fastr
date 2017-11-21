@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -36,6 +37,7 @@ public class DevCairo extends RExternalBuiltinNode {
     }
 
     @Override
+    @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
         if (args.getLength() < 4) {
             throw error(Message.ARGUMENTS_REQUIRED_COUNT, args.getLength(), "devCairo", 4);
