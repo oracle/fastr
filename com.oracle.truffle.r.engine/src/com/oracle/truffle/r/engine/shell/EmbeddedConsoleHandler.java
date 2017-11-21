@@ -59,7 +59,7 @@ public class EmbeddedConsoleHandler extends ConsoleHandler {
             rEmbedRFFI = RFFIFactory.getREmbedRFFI();
             if (!(RInterfaceCallbacks.R_WriteConsole.isOverridden() || RInterfaceCallbacks.R_ReadConsole.isOverridden())) {
                 if (startParams.noReadline()) {
-                    delegate = new DefaultConsoleHandler(System.in, System.out);
+                    delegate = new DefaultConsoleHandler(System.in, System.out, false);
                 } else {
                     delegate = new JLineConsoleHandler(System.in, System.out, startParams.isSlave());
                 }

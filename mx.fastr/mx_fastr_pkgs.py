@@ -33,7 +33,6 @@ In either case all the output is placed in the fastr suite dir. Separate directo
 and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (sh syntax).
 '''
 from os.path import join, relpath
-from os import walk
 from datetime import datetime
 import shutil, os, re
 import subprocess
@@ -61,7 +60,6 @@ def _gnur_include_path():
         return _mx_gnur().extensions._gnur_include_path()
     else:
         gnur_include_p = join(mx_fastr._gnur_path(), "include")
-        print("Using GNUR include path: {0}".format(gnur_include_p))
         return gnur_include_p
 
 def _fastr_include_path():
@@ -654,7 +652,7 @@ def computeApiChecksum(includeDir):
     '''
     m = hashlib.sha256()
     rootDir = includeDir
-    for root, dirs, files in os.walk(rootDir):
+    for root, _, files in os.walk(rootDir):
         mx.logvv("Visiting directory {0}".format(root))
         for f in files:
             fileName = join(root, f)
