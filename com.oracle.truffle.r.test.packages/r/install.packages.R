@@ -752,22 +752,24 @@ pkg.cache.get <- function(pkgname, lib) {
     }
 
     log.message("using package cache directory ", version.dir, level=1)
+    cache.entry.name <- paste0(pkgname, ".gz")
 
     # lookup package dir
-    pkg.dirs <- list.dirs(version.dir, full.names=FALSE, recursive=FALSE)
-    if (!is.na(match(pkgname, pkg.dirs))) {
+    pkg.dirs <- list.files(version.dir, full.names=FALSE, recursive=FALSE)
+    if (!is.na(match(cache.entry.name, pkg.dirs))) {
         # cache hit
-        fromPath <- file.path(version.dir, pkgname)
+        fromPath <- file.path(version.dir, cache.entry.name)
         toPath <- lib
 
         # extract cached package to library directory
-        if (untar(fromPath, exdir=toPath) != 0L) {
+        tryCatch({
+            unzip(fromPath, exdir=toPath, unzip = getOption("unzip"))
+            log.message("package cache hit, using package from ", fromPath)
+            return (TRUE)
+        }, error = function(e) {
             log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
             return (FALSE)
-        }
-
-        log.message("package cache hit, using package from ", fromPath)
-        return (TRUE)
+        })
     } 
     log.message("cache miss for package ", pkgname, level=1)
     
@@ -788,12 +790,12 @@ pkg.cache.insert <- function(pkgname, lib) {
         }
 
         fromPath <- file.path(lib, pkgname)
-        toPath <- file.path(version.dir, paste0(pkgname, ".tar.gz"))
+        toPath <- file.path(version.dir, paste0(pkgname, ".gz"))
 
         # to produce a TAR with relative paths, we need to change the working dir
         prev.wd <- getwd()
         setwd(lib)
-        if(tar(toPath, pkgname, compression="gzip") != 0L) {
+        if(zip(toPath, pkgname) != 0L) {
             log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)
             return (FALSE)
         }
