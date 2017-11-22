@@ -176,7 +176,7 @@ public final class CoerceNodes {
         }
 
         // Note: caches should cover all valid possibilities
-        @Specialization(guards = {"!isS4Object(value)", "cachedMode == mode", "isValidMode(cachedMode)", "isNotList(value)",}, limit = "99")
+        @Specialization(guards = {"!isS4Object(value)", "cachedMode == mode", "isValidMode(cachedMode)", "isNotList(value)"}, limit = "99")
         Object doCachedNotList(Object value, @SuppressWarnings("unused") int mode,
                         @Cached("mode") @SuppressWarnings("unused") int cachedMode,
                         @Cached("createCastNode(cachedMode)") CastNode castNode) {
@@ -192,7 +192,7 @@ public final class CoerceNodes {
         }
 
         @Specialization(replaces = {"doCachedNotList", "doCached"}, guards = {"!isS4Object(value)", "isValidMode(mode)"})
-        Object doCached(Object value, @SuppressWarnings("unused") int mode) {
+        Object doCached(Object value, int mode) {
             String type = value != null ? value.getClass().getSimpleName() : "null";
             throw RInternalError.unimplemented(String.format("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode));
         }
