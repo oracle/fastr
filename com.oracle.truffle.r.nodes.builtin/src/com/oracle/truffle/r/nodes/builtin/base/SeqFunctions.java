@@ -840,7 +840,7 @@ public final class SeqFunctions {
         }
 
         // "by" missing
-        @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, toObj)"}, limit = "1")
+        @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, toObj)"})
         protected RAbstractVector seqWithLength(Object fromObj, Object toObj, RMissing byObj, Object lengthOut, Object alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealTo,
@@ -893,7 +893,7 @@ public final class SeqFunctions {
         }
 
         // "to" missing
-        @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, byObj)"}, limit = "1")
+        @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, byObj)"})
         protected RAbstractVector seqWithLength(Object fromObj, RMissing toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealby,
