@@ -98,13 +98,12 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testInvoke() {
-        assertEvalFastR("cl <- new.java.class('java.util.Date'); fo <- new.external(cl, as.external.long(123L)); fo@toString()", "print('Thu Jan 01 01:00:00 CET 1970')");
-        assertEvalFastR("cl <- new.java.class('java.util.Date'); fo <- 1:100; try(fo@toString(), silent=TRUE); fo <- new.external(cl, as.external.long(123L)); fo@toString()",
-                        "print('Thu Jan 01 01:00:00 CET 1970')");
-        assertEvalFastR("cl <- new.java.class('java.util.Date'); fo <- new.external(cl, as.external.long(123L)); fo@toString",
-                        "cat('Error in fo@toString :\n  cannot get a slot (\"toString\") from an object of type \"external object\"\n')");
-        assertEvalFastR("cl <- new.java.class('java.util.Date'); fo <- 1:100; fo@toString(); fo <- new.external(cl, as.external.long(123L)); fo@toString",
-                        "cat('Error in fo@toString :\n  trying to get slot \"toString\" from an object of a basic class (\"integer\") with no slots\n')");
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength(), silent=TRUE); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
+                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength, silent=TRUE); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
+                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
     }
 
     /**
