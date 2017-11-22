@@ -81,7 +81,9 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -733,7 +735,7 @@ public class CallAndExternalFunctions {
      * The interpretation of the {@code .NAME} and {code .PACKAGE} arguments as are for
      * {@link DotCall}.
      */
-    @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
+    @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = RBehavior.COMPLEX)
     public abstract static class DotExternal extends LookupAdapter {
 
         @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
