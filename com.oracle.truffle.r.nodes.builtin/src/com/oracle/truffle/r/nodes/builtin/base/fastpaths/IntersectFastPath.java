@@ -27,6 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -37,8 +38,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class IntersectFastPath extends RFastPathNode {
-
-    protected static final int TYPE_LIMIT = 2;
 
     private static final int[] EMPTY_INT_ARRAY = new int[0];
 
@@ -139,7 +138,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
         return new IntersectSortedNode(false);
     }
 
-    @Specialization(limit = "TYPE_LIMIT", guards = {"x.getClass() == xClass", "y.getClass() == yClass", "length(x, xClass) > 0", "length(y, yClass) > 0"}, rewriteOn = IllegalArgumentException.class)
+    @Specialization(limit = "1", guards = {"x.getClass() == xClass", "y.getClass() == yClass", "length(x, xClass) > 0", "length(y, yClass) > 0"}, rewriteOn = IllegalArgumentException.class)
     protected RAbstractIntVector intersectMaybeSorted(RAbstractIntVector x, RAbstractIntVector y,
                     @Cached("x.getClass()") Class<? extends RAbstractIntVector> xClass,
                     @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass,
@@ -160,7 +159,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
         return new IntersectSortedNode(true);
     }
 
-    @Specialization(limit = "TYPE_LIMIT", guards = {"x.getClass() == xClass", "y.getClass() == yClass", "length(x, xClass) > 0", "length(y, yClass) > 0"})
+    @Specialization(limit = "1", guards = {"x.getClass() == xClass", "y.getClass() == yClass", "length(x, xClass) > 0", "length(y, yClass) > 0"})
     protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y,
                     @Cached("x.getClass()") Class<? extends RAbstractIntVector> xClass,
                     @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass,
@@ -233,6 +232,11 @@ public abstract class IntersectFastPath extends RFastPathNode {
     @TruffleBoundary
     private static void sort(int[] temp) {
         Arrays.sort(temp);
+    }
+
+    @Fallback
+    protected Object fallback(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
+        return null;
     }
 
 }
