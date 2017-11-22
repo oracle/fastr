@@ -598,6 +598,8 @@ public final class RContext implements RTruffleObject {
             }
             state = EnumSet.of(State.DISPOSED);
 
+            assert !initial || EvalThread.threadCnt.get() == 0 : "Did not close all children contexts";
+
             this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
         }
     }
