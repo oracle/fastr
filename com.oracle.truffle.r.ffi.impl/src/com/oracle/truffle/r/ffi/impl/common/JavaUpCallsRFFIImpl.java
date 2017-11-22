@@ -1764,4 +1764,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
+    @Override
+    public Object octsize(Object size) {
+        throw implementedAsNode();
+    }
+
 }

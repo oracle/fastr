@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionEnvironmentNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.OctSizeNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
@@ -41,16 +42,23 @@ import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
+import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.SizeToOctalRawNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetDataAt;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
@@ -249,6 +257,34 @@ public final class MiscNodes {
 
         public static GetFunctionEnvironment create() {
             return GetFunctionEnvironmentNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class OctSizeNode extends FFIUpCallNode.Arg1 {
+
+        @Specialization
+        protected RRawVector octSize(Object size,
+                        @Cached("create()") SizeToOctalRawNode sizeToOctal,
+                        @Cached("createCast()") CastNode castToDoubleNode,
+                        @Cached("create()") GetDataAt.Double getDataNode) {
+
+            Object val = castToDoubleNode.doCast(size);
+            if (val instanceof RAbstractDoubleVector) {
+                RAbstractDoubleVector vec = (RAbstractDoubleVector) val;
+                return sizeToOctal.execute(getDataNode.get(vec, vec.getInternalStore(), 0));
+            }
+            return sizeToOctal.execute(val);
+
+        }
+
+        protected CastNode createCast() {
+            HeadPhaseBuilder<Double> findFirst = CastNodeBuilder.newCastBuilder().mustNotBeMissing().allowNull().asDoubleVector().findFirst();
+            return findFirst.buildCastNode();
+        }
+
+        public static OctSizeNode create() {
+            return OctSizeNodeGen.create();
         }
     }
 

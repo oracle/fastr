@@ -400,4 +400,8 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(MiscNodes.GetFunctionEnvironment.class)
     Object CLOENV(Object x);
+
+    @RFFIUpCallNode(MiscNodes.OctSizeNode.class)
+    Object octsize(Object size);
+
 }

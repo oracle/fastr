@@ -31,13 +31,15 @@ import java.io.PrintStream;
 
 public class DefaultConsoleHandler extends ConsoleHandler {
 
+    private final boolean interactive;
     private final BufferedReader in;
     private final PrintStream out;
     private String prompt;
 
-    public DefaultConsoleHandler(InputStream in, OutputStream out) {
+    public DefaultConsoleHandler(InputStream in, OutputStream out, boolean interactive) {
         this.in = new BufferedReader(new InputStreamReader(in));
         this.out = new PrintStream(out);
+        this.interactive = interactive;
     }
 
     @Override
@@ -46,7 +48,11 @@ public class DefaultConsoleHandler extends ConsoleHandler {
             if (prompt != null) {
                 out.print(prompt);
             }
-            return in.readLine();
+            String line = in.readLine();
+            if ((line == null || "".equals(line.trim())) && prompt != null && !interactive) {
+                out.println();
+            }
+            return line;
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

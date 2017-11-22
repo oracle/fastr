@@ -66,6 +66,7 @@ import com.oracle.truffle.r.library.utils.Crc64NodeGen;
 import com.oracle.truffle.r.library.utils.DownloadNodeGen;
 import com.oracle.truffle.r.library.utils.MenuNodeGen;
 import com.oracle.truffle.r.library.utils.ObjectSizeNodeGen;
+import com.oracle.truffle.r.library.utils.OctSizeNode;
 import com.oracle.truffle.r.library.utils.RprofNodeGen;
 import com.oracle.truffle.r.library.utils.RprofmemNodeGen;
 import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
@@ -632,8 +633,9 @@ public class CallAndExternalFunctions {
                     return new UnimplementedExternal(name);
                 case "objectSize":
                     return ObjectSizeNodeGen.create();
-                case "processevents":
                 case "octsize":
+                    return OctSizeNode.create();
+                case "processevents":
                 case "sockconnect":
                 case "sockread":
                 case "sockclose":

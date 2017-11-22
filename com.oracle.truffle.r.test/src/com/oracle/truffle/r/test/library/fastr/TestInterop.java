@@ -96,6 +96,16 @@ public class TestInterop extends TestBase {
         assertEvalFastR("eval.external(,'abc',)", "cat('Error in eval.external(, \"abc\", ) : invalid mimeType argument\\n')");
     }
 
+    @Test
+    public void testInvoke() {
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength(), silent=TRUE); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
+                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
+        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength, silent=TRUE); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
+                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
+    }
+
     /**
      * Used for testing interop functionality.
      */

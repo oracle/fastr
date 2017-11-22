@@ -166,5 +166,8 @@ public class TestBuiltin_order extends TestBase {
         assertEval("order(c(1,2,0), decreasing=NA)");
 
         assertEval("invisible(Sys.setlocale('LC_COLLATE', 'EN_us')); str(as.data.frame(list(a=c('A wo','Far ','abc ')))); invisible(Sys.setlocale('LC_COLLATE', 'C')); str(as.data.frame(list(a=c('A wo','Far ','abc '))));");
+
+        assertEval("order(NULL)");
+        assertEval("order(c(NULL, c(1,2,0)))");
     }
 }

@@ -218,7 +218,7 @@ public class RCommand {
                 if (useReadLine) {
                     return new JLineConsoleHandler(inStream, outStream, rsp.isSlave());
                 } else {
-                    return new DefaultConsoleHandler(inStream, outStream);
+                    return new DefaultConsoleHandler(inStream, outStream, isInteractive);
                 }
             }
         }
