@@ -206,12 +206,22 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
         return MatchArgInternalNodeGen.create();
     }
 
-    @Specialization(limit = "2", guards = "choicesValue.isSupported(frame, arg)")
+    @Specialization(limit = "1", guards = "cache.choicesValue.isSupported(frame, arg)")
     protected Object matchArg(VirtualFrame frame, RPromise arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
-                    @Cached("new(frame, arg)") MatchArgChoices choicesValue,
-                    @Cached("createInternal()") MatchArgInternal internal,
-                    @Cached("new()") PromiseHelperNode promiseHelper) {
-        return internal.castAndExecute(promiseHelper.evaluate(frame, arg), choicesValue.execute(frame), severalOK);
+                    @Cached("new(frame, arg)") MatchArgNode cache) {
+        return cache.internal.castAndExecute(cache.promiseHelper.evaluate(frame, arg), cache.choicesValue.execute(frame), severalOK);
+    }
+
+    public static final class MatchArgNode extends Node {
+        @Child public MatchArgChoices choicesValue;
+        @Child public MatchArgInternal internal;
+        @Child public PromiseHelperNode promiseHelper;
+
+        public MatchArgNode(VirtualFrame frame, RPromise arg) {
+            this.choicesValue = new MatchArgChoices(frame, arg);
+            this.internal = MatchArgInternalNodeGen.create();
+            this.promiseHelper = new PromiseHelperNode();
+        }
     }
 
     protected static boolean isRMissing(Object value) {
