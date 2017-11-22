@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitBaseEnvCallDispatcher;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
@@ -54,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import java.util.Arrays;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode.Arg3 {
@@ -74,6 +76,8 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     private final BranchProfile onlyNullElementsProfile = BranchProfile.create();
     private final ConditionProfile isNotStringProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile hasNoClassProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile convertedEmptyProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile lengthOneAndCompleteProfile = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(Paste.class);
@@ -161,10 +165,19 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
                 converted[i] = array;
             }
         }
-        if (emptyCnt == length) {
+        if (convertedEmptyProfile.profile(emptyCnt == length)) {
             return ONE_EMPTY_STRING;
-        } else if (length == 1) {
+        } else if (lengthOneAndCompleteProfile.profile(length == 1 && values.isComplete())) {
             return converted[0];
+        } else if (length == 1) { // Incomplete values vector
+            // Clone array since it might be physical data array of a string vector
+            String[] result = Arrays.copyOf(converted[0], converted[0].length);
+            for (int j = result.length - 1; j >= 0; j--) {
+                if (result[j] == RRuntime.STRING_NA) {
+                    result[j] = "NA";
+                }
+            }
+            return result;
         } else {
             return prepareResult(sep, length, converted, maxLength);
         }

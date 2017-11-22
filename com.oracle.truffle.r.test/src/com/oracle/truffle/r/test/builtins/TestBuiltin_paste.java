@@ -81,6 +81,9 @@ public class TestBuiltin_paste extends TestBase {
         assertEval("{ paste(sep=\"\") }");
         assertEval("{ paste(1:2, 1:3, FALSE, collapse=\"-\", sep=\"+\") }");
         assertEval("{ paste(NULL, list(), sep = \"=\") }");
+        assertEval("{ paste(NA) }");
+        assertEval("{ paste(c(1,NA)) }");
+        assertEval("{ s<-c('1',NA); paste(s); s; }");
     }
 
     @Test
