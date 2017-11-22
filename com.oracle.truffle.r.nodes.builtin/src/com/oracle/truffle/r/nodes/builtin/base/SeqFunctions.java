@@ -920,7 +920,7 @@ public final class SeqFunctions {
         }
 
         // "from" missing
-        @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(toObj, byObj)"}, limit = "1")
+        @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(toObj, byObj)"})
         protected RAbstractVector seqWithLength(RMissing fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("create()") AsRealNode asRealby,
