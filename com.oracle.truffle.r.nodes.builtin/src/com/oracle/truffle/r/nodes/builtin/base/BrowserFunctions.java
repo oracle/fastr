@@ -79,12 +79,12 @@ public class BrowserFunctions {
         @Specialization
         protected RNull browser(VirtualFrame frame, Object text, RNull condition, boolean expr, int skipCalls) {
             if (expr) {
-                RContext instance = RContext.getInstance();
-                if (instance.getKind() == ContextKind.SHARE_NOTHING) {
+                RContext curContext = RContext.getInstance();
+                if (!curContext.isInitial() && curContext.getKind() == ContextKind.SHARE_ALL && curContext.getParent().getKind() == ContextKind.SHARE_NOTHING) {
                     return RNull.instance;
                 }
 
-                BrowserState browserState = instance.stateInstrumentation.getBrowserState();
+                BrowserState browserState = curContext.stateInstrumentation.getBrowserState();
                 try {
                     browserState.push(new HelperState(text, condition));
                     MaterializedFrame mFrame = frame.materialize();
