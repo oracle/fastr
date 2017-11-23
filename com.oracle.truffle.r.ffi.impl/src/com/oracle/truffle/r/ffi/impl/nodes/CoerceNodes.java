@@ -176,19 +176,25 @@ public final class CoerceNodes {
         }
 
         // Note: caches should cover all valid possibilities
-        @Specialization(guards = {"!isS4Object(value)", "isNotList(value)", "isValidMode(mode)", "cachedMode == mode"}, limit = "99")
-        Object doCached(Object value, @SuppressWarnings("unused") int mode,
+        @Specialization(guards = {"!isS4Object(value)", "cachedMode == mode", "isValidMode(cachedMode)", "isNotList(value)"}, limit = "99")
+        Object doCachedNotList(Object value, @SuppressWarnings("unused") int mode,
                         @Cached("mode") @SuppressWarnings("unused") int cachedMode,
                         @Cached("createCastNode(cachedMode)") CastNode castNode) {
             return castNode.doCast(value);
         }
 
         // Lists are coerced with only preserved names unlike other types
-        @Specialization(guards = {"!isS4Object(value)", "isValidMode(mode)", "cachedMode == mode"}, limit = "99")
+        @Specialization(guards = {"!isS4Object(value)", "cachedMode == mode", "isValidMode(cachedMode)"}, limit = "99")
         Object doCached(RList value, @SuppressWarnings("unused") int mode,
                         @Cached("mode") @SuppressWarnings("unused") int cachedMode,
                         @Cached("createCastNodeForList(cachedMode)") CastNode castNode) {
             return castNode.doCast(value);
+        }
+
+        @Specialization(replaces = {"doCachedNotList", "doCached"}, guards = {"!isS4Object(value)", "isValidMode(mode)"})
+        Object doCached(Object value, int mode) {
+            String type = value != null ? value.getClass().getSimpleName() : "null";
+            throw RInternalError.unimplemented(String.format("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode));
         }
 
         @Fallback

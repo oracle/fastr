@@ -184,40 +184,59 @@ public final class SeqFunctions {
     @TypeSystemReference(RTypes.class)
     @ImportStatic(SeqFunctions.class)
     public abstract static class SeqFastPath extends FastPathAdapter {
-        @Specialization(guards = {"!hasClass(args, getClassAttributeNode)", "lengthSpecials(args)"})
-        @SuppressWarnings("unused")
+
+        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "lengthSpecials(args)"}, limit = "1")
         protected Object seqNoClassFromAndLength(RArgsValuesAndNames args, //
-                        @Cached("createSeqIntForFastPath()") SeqInt seqInt,
-                        @Cached("lookupSeqInt()") RFunction seqIntFunction,
-                        @Cached("createBinaryProfile()") ConditionProfile isNumericProfile,
-                        @Cached("createGetClassAttributeNode()") GetClassAttributeNode getClassAttributeNode,
-                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck) {
-            if (isNumericProfile.profile(fromCheck.execute(args.getArgument(0)))) {
+                        @Cached("new()") SeqNoClassFromAndLengthNode cache) {
+            if (cache.isNumericProfile.profile(cache.fromCheck.execute(args.getArgument(0)))) {
                 if (args.getLength() == 1) {
-                    return seqInt.execute(RMissing.instance, RMissing.instance, RMissing.instance, args.getArgument(0), RMissing.instance, RMissing.instance);
+                    return cache.seqInt.execute(RMissing.instance, RMissing.instance, RMissing.instance, args.getArgument(0), RMissing.instance, RMissing.instance);
                 } else {
-                    return seqInt.execute(args.getArgument(0), RMissing.instance, RMissing.instance, args.getArgument(1), RMissing.instance, RMissing.instance);
+                    return cache.seqInt.execute(args.getArgument(0), RMissing.instance, RMissing.instance, args.getArgument(1), RMissing.instance, RMissing.instance);
                 }
             } else {
                 return null;
             }
         }
 
-        @Specialization(guards = {"!hasClass(args, getClassAttributeNode)"})
+        public static class SeqNoClassFromAndLengthNode {
+
+            final SeqInt seqInt;
+            final RFunction seqIntFunction;
+            final ConditionProfile isNumericProfile;
+            @Child public GetClassAttributeNode getClassAttributeNode;
+            @Child IsMissingOrNumericNode fromCheck;
+
+            public SeqNoClassFromAndLengthNode() {
+                this.seqInt = SeqInt.createSeqIntForFastPath();
+                this.seqIntFunction = lookupSeqInt();
+                this.isNumericProfile = ConditionProfile.createBinaryProfile();
+                this.getClassAttributeNode = createGetClassAttributeNode();
+                this.fromCheck = createIsMissingOrNumericNode();
+            }
+
+        }
+
+        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)"}, limit = "1")
         protected Object seqNoClassAndNumeric(RArgsValuesAndNames args,
-                        @Cached("createSeqIntForFastPath()") SeqInt seqInt,
-                        @Cached("lookupSeqInt()") RFunction seqIntFunction,
-                        @Cached("createBinaryProfile()") ConditionProfile isNumericProfile,
-                        @Cached("createGetClassAttributeNode()") @SuppressWarnings("unused") GetClassAttributeNode getClassAttributeNode,
-                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck,
-                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode toCheck,
-                        @Cached("createIsMissingOrNumericNode()") @SuppressWarnings("unused") IsMissingOrNumericNode byCheck) {
-            Object[] rargs = reorderedArguments(args, seqIntFunction);
-            if (isNumericProfile.profile(fromCheck.execute(rargs[0]) && toCheck.execute(rargs[1]) && toCheck.execute(rargs[2]))) {
-                return seqInt.execute(rargs[0], rargs[1], rargs[2], rargs[3], rargs[4], RMissing.instance);
+                        @Cached("new()") SeqNoClassAndNumericNode cache) {
+            Object[] rargs = reorderedArguments(args, cache.seqIntFunction);
+            if (cache.isNumericProfile.profile(cache.fromCheck.execute(rargs[0]) && cache.toCheck.execute(rargs[1]) && cache.toCheck.execute(rargs[2]))) {
+                return cache.seqInt.execute(rargs[0], rargs[1], rargs[2], rargs[3], rargs[4], RMissing.instance);
             } else {
                 return null;
             }
+        }
+
+        public static class SeqNoClassAndNumericNode extends SeqNoClassFromAndLengthNode {
+            @Child IsMissingOrNumericNode toCheck;
+            @Child IsMissingOrNumericNode byCheck;
+
+            public SeqNoClassAndNumericNode() {
+                this.toCheck = createIsMissingOrNumericNode();
+                this.byCheck = createIsMissingOrNumericNode();
+            }
+
         }
 
         @Fallback
@@ -299,14 +318,24 @@ public final class SeqFunctions {
      */
     @TypeSystemReference(RTypes.class)
     public abstract static class SeqDefaultFastPath extends FastPathAdapter {
-        @SuppressWarnings("unused")
-        @Specialization(guards = {"fromCheck.execute(fromObj)", "toCheck.execute(toObj)", "byCheck.execute(byObj)"})
+        @Specialization(guards = {"cache.fromCheck.execute(fromObj)", "cache.toCheck.execute(toObj)", "cache.byCheck.execute(byObj)"}, limit = "1")
         protected Object seqDefaultNumeric(Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith,
-                        @Cached("createSeqIntForFastPath()") SeqInt seqInt,
-                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode fromCheck,
-                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode toCheck,
-                        @Cached("createIsMissingOrNumericNode()") IsMissingOrNumericNode byCheck) {
-            return seqInt.execute(fromObj, toObj, byObj, lengthOut, alongWith, RMissing.instance);
+                        @Cached("new()") SeqDefaultNumericNode cache) {
+            return cache.seqInt.execute(fromObj, toObj, byObj, lengthOut, alongWith, RMissing.instance);
+        }
+
+        public class SeqDefaultNumericNode extends Node {
+            @Child SeqInt seqInt;
+            @Child public IsMissingOrNumericNode fromCheck;
+            @Child public IsMissingOrNumericNode toCheck;
+            @Child public IsMissingOrNumericNode byCheck;
+
+            public SeqDefaultNumericNode() {
+                seqInt = SeqInt.createSeqIntForFastPath();
+                fromCheck = createIsMissingOrNumericNode();
+                toCheck = createIsMissingOrNumericNode();
+                byCheck = createIsMissingOrNumericNode();
+            }
         }
 
         /**
@@ -787,18 +816,27 @@ public final class SeqFunctions {
         }
 
         // common idiom
-        @Specialization(guards = {"fromCheck.execute(fromObj)", "lengthCheck.execute(lengthOut)"})
+        @Specialization(guards = {"cached.fromCheck.execute(fromObj)", "cached.lengthCheck.execute(lengthOut)"}, limit = "1")
         protected RAbstractVector seqWithFromLengthIntegralNumeric(Object fromObj, RMissing toObj, RMissing byObj, Object lengthOut, RMissing alongWith, Object dotdotdot,
-                        @Cached("createGetIntegralNumericNode()") GetIntegralNumericNode getIntegralNumericNode,
-                        @Cached("createIsIntegralNumericNodeNoLengthCheck()") IsIntegralNumericNode fromCheck,
-                        @Cached("createIsIntegralNumericNodeLengthCheck()") IsIntegralNumericNode lengthCheck) {
-            int from = getIntegralNumericNode.execute(fromObj);
-            int lout = getIntegralNumericNode.execute(lengthOut);
+                        @Cached("new()") SeqWithFromLengthIntegralNumericNode cached) {
+            int from = cached.getIntegralNumericNode.execute(fromObj);
+            int lout = cached.getIntegralNumericNode.execute(lengthOut);
             if (lout == 0) {
                 return RDataFactory.createEmptyIntVector();
             }
             return RDataFactory.createDoubleSequence(from, 1, lout);
+        }
 
+        public class SeqWithFromLengthIntegralNumericNode extends Node {
+            @Child GetIntegralNumericNode getIntegralNumericNode;
+            @Child public IsIntegralNumericNode fromCheck;
+            @Child public IsIntegralNumericNode lengthCheck;
+
+            public SeqWithFromLengthIntegralNumericNode() {
+                getIntegralNumericNode = createGetIntegralNumericNode();
+                fromCheck = createIsIntegralNumericNodeNoLengthCheck();
+                lengthCheck = createIsIntegralNumericNodeLengthCheck();
+            }
         }
 
         // "by" missing

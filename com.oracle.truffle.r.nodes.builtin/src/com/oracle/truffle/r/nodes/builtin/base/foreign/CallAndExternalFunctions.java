@@ -22,6 +22,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
@@ -73,6 +74,7 @@ import com.oracle.truffle.r.library.utils.TypeConvertNodeGen;
 import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctions.DotExternal.CallNamedFunctionNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
@@ -80,7 +82,9 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -733,7 +737,7 @@ public class CallAndExternalFunctions {
      * The interpretation of the {@code .NAME} and {code .PACKAGE} arguments as are for
      * {@link DotCall}.
      */
-    @RBuiltin(name = ".External", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
+    @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = RBehavior.COMPLEX)
     public abstract static class DotExternal extends LookupAdapter {
 
         @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
@@ -802,13 +806,22 @@ public class CallAndExternalFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "2", guards = {"cached == symbol"})// limit="2" because of DSL bug
+        @Specialization(limit = "1", guards = {"cached.symbol == symbol"})
         protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("symbol") RList cached,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
-            Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.dispatch(nativeCallInfo, new Object[]{list});
+                        @Cached("new(symbol)") CallNamedFunctionNode cached) {
+            Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
+            return callRFFINode.dispatch(cached.nativeCallInfo, new Object[]{list});
+        }
+
+        public static class CallNamedFunctionNode extends Node {
+            public final RList symbol;
+            final NativeCallInfo nativeCallInfo;
+
+            public CallNamedFunctionNode(RList symbol) {
+                this.symbol = symbol;
+                this.nativeCallInfo = new ExtractNativeCallInfoNode().execute(symbol);
+            }
+
         }
 
         @Specialization
@@ -899,13 +912,11 @@ public class CallAndExternalFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "2", guards = {"cached == symbol"}) // limit="2" because of DSL bug
+        @Specialization(limit = "1", guards = {"cached.symbol == symbol"})
         protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("symbol") RList cached,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
-            Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.dispatch(nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
+                        @Cached("new(symbol)") CallNamedFunctionNode cached) {
+            Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
+            return callRFFINode.dispatch(cached.nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
         }
 
         @Specialization

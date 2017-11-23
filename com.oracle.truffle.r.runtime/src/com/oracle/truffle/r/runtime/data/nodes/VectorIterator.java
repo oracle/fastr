@@ -68,18 +68,25 @@ abstract class GetIteratorNode extends VectorIteratorNodeAdapter {
     }
 
     @Specialization(guards = {"vectorClass == vector.getClass()", "hasNoNativeMemoryData(vector, vectorClass)"}, limit = "10")
-    protected IteratorData<?> generic(RAbstractVector vector,
+    protected IteratorData<?> cached(RAbstractVector vector,
                     @Cached("vector.getClass()") Class<? extends RAbstractVector> vectorClass) {
         RAbstractVector profiledVec = vectorClass.cast(vector);
         return new IteratorData<>(profiledVec.getInternalStore(), profiledVec.getLength());
     }
 
-    @Fallback
+    @Specialization(replaces = "cached", guards = {"hasNoNativeMemoryData(vector, vector.getClass())"})
     protected IteratorData<?> generic(RAbstractVector vector) {
+        RAbstractVector profiledVec = vector;
+        return new IteratorData<>(profiledVec.getInternalStore(), profiledVec.getLength());
+    }
+
+    @Fallback
+    protected IteratorData<?> fallback(RAbstractVector vector) {
         return new IteratorData<>(vector.getInternalStore(), vector.getLength());
     }
 }
 
+@SuppressWarnings("unused")
 abstract class HasNextNode extends VectorIteratorNodeAdapter {
     public abstract boolean execute(RAbstractVector vector, IteratorData<?> iterator);
 
@@ -115,12 +122,13 @@ abstract class HasNextNode extends VectorIteratorNodeAdapter {
         return iter.index < profiledVec.getLength();
     }
 
-    @Fallback
+    @Specialization
     protected boolean generic(RAbstractVector vector, IteratorData<?> iter) {
         return iter.index < vector.getLength();
     }
 }
 
+@SuppressWarnings("unused")
 abstract class GetNextNode extends VectorIteratorNodeAdapter {
     public abstract Object execute(RAbstractVector vector, IteratorData<?> iterator);
 
@@ -254,10 +262,10 @@ abstract class GetNextNode extends VectorIteratorNodeAdapter {
  * This node wraps 3 nodes needed to sequentially iterate a given vector and provides convenience
  * methods to invoke those nodes: {@link #init(RAbstractVector)},
  * {@link #next(RAbstractVector, Object)} and {@link #hasNext(RAbstractVector, Object)}.
- * 
+ *
  * To construct use factory methods from type specialized inner classes, e.g. {@link Int#create()},
  * or generic version if the iterated vector could be of any type {@link Generic#create()}.
- * 
+ *
  * Iterator can wrap around, i.e. once the iteration ends, it starts again from the first element.
  */
 public abstract class VectorIterator<T> extends Node {
@@ -277,9 +285,8 @@ public abstract class VectorIterator<T> extends Node {
         }
     }
 
-    @SuppressWarnings("unchecked")
     public Object init(RAbstractVector vector) {
-        return (IteratorData<T>) getIteratorNode.execute(vector);
+        return getIteratorNode.execute(vector);
     }
 
     public boolean hasNext(RAbstractVector vector, Object iterator) {

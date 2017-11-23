@@ -81,7 +81,8 @@ public abstract class Switch extends RBuiltinNode.Arg2 {
     // could be interpreted as integer
 
     @Specialization
-    protected Object doSwitchList(VirtualFrame frame, RList list, @SuppressWarnings("unused") RArgsValuesAndNames optionalArgs) {
+    @SuppressWarnings("unused")
+    protected Object doSwitchList(VirtualFrame frame, RList list, RArgsValuesAndNames optionalArgs) {
         return prepareResult(frame, null);
     }
 

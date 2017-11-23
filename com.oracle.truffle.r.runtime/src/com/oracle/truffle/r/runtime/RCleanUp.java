@@ -82,7 +82,6 @@ public class RCleanUp {
                  * we save always
                  */
                 RContext.getEngine().checkAndRunStartupShutdownFunction("sys.save.image", new String[]{"\".RData\""});
-                String history = RContext.getInstance().getConsole().getHistory();
                 // TODO: write out history
                 break;
             case NOSAVE:

@@ -41,6 +41,7 @@ public abstract class SetDataAt extends Node {
     public abstract void setDataAtAsObject(RVector<?> vector, Object store, int index, Object value);
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Double extends SetDataAt {
 
         @Override
@@ -70,6 +71,7 @@ public abstract class SetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Int extends SetDataAt {
 
         @Override
@@ -99,6 +101,7 @@ public abstract class SetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Logical extends SetDataAt {
 
         @Override
@@ -128,6 +131,7 @@ public abstract class SetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Raw extends SetDataAt {
 
         @Override
@@ -157,6 +161,7 @@ public abstract class SetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Complex extends SetDataAt {
 
         @Override
@@ -188,6 +193,7 @@ public abstract class SetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class String extends SetDataAt {
 
         @Override

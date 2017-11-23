@@ -26,7 +26,6 @@ import java.util.Objects;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
@@ -66,8 +65,8 @@ public abstract class PrepareMatchInternalArguments extends Node {
         return ArgumentMatcher.matchArgumentsEvaluated(permutation, explicitArgs.getArguments(), s3DefaultArguments, formals);
     }
 
-    @Fallback
     @TruffleBoundary
+    @Specialization
     public RArgsValuesAndNames prepareGeneric(RArgsValuesAndNames evaluatedArgs, S3DefaultArguments s3DefaultArguments) {
         return ArgumentMatcher.matchArgumentsEvaluated(formals, evaluatedArgs, s3DefaultArguments, callingNode);
     }

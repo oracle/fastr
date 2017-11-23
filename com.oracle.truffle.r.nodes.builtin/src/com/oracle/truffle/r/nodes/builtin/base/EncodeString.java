@@ -24,7 +24,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -47,7 +46,6 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
     }
 
     private final NACheck na = NACheck.create();
-    private final BranchProfile everSeenNA = BranchProfile.create();
 
     static {
         Casts casts = new Casts(EncodeString.class);

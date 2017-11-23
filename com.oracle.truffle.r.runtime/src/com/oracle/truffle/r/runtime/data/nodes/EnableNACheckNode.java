@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -42,8 +41,8 @@ public abstract class EnableNACheckNode extends Node {
         check.enable(clazz.cast(vector));
     }
 
-    @Fallback
-    public void doEnable(NACheck check, RAbstractVector vector) {
+    @Specialization(replaces = "doEnable")
+    public void doEnableGeneric(NACheck check, RAbstractVector vector) {
         check.enable(vector);
     }
 }

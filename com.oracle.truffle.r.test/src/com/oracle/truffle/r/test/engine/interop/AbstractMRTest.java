@@ -91,7 +91,7 @@ public abstract class AbstractMRTest {
         return false;
     }
 
-    protected boolean testToNative(TruffleObject obj) {
+    protected boolean testToNative(@SuppressWarnings("unused") TruffleObject obj) {
         return true;
     }
 

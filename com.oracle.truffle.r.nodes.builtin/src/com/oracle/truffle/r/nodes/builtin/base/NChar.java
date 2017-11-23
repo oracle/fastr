@@ -53,9 +53,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 @RBuiltin(name = "nchar", kind = INTERNAL, parameterNames = {"x", "type", "allowNA", "keepNA"}, behavior = PURE)
 public abstract class NChar extends RBuiltinNode.Arg4 {
     private static final String[] TYPES = new String[]{"bytes", "chars", "width"};
-    private static final int TYPE_BYTES = 0;
-    private static final int TYPE_CHARS = 1;
-    private static final int TYPE_WIDTH = 2;
 
     static {
         Casts casts = new Casts(NChar.class);

@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.function.opt;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -73,7 +72,7 @@ public abstract class ReuseNonSharedNode extends Node {
         }
     }
 
-    @Fallback
+    @Specialization
     @TruffleBoundary
     public static RVector<?> reuseSlow(RAbstractVector value) {
         RSharingAttributeStorage.verify(value);

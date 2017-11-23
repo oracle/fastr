@@ -94,14 +94,8 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     protected abstract Object execute(Object vector, Object[] positions, Object exact, Object dropDimensions);
 
-    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
+    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"}, limit = "3")
     protected Object doExtractSameDimensions(RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
-        return cached.apply(vector, positions, exact, dropDimensions);
-    }
-
-    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"})
-    protected Object doExtractRecursive(RAbstractListVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
         return cached.apply(vector, positions, exact, dropDimensions);
     }

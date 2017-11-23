@@ -913,7 +913,7 @@ public class TestJavaInterop extends TestBase {
         }
     }
 
-    private String getRLikeCoordinates(final List<Integer> dims) {
+    private static String getRLikeCoordinates(final List<Integer> dims) {
         StringBuilder cor = new StringBuilder();
         cor.append("[");
         for (int i = 0; i < dims.size(); i++) {
@@ -926,7 +926,7 @@ public class TestJavaInterop extends TestBase {
         return cor.toString();
     }
 
-    private String getJavaLikeCoordinates(final List<Integer> dims) {
+    private static String getJavaLikeCoordinates(final List<Integer> dims) {
         StringBuilder cor = new StringBuilder();
         for (int i = 0; i < dims.size(); i++) {
             cor.append("[");
@@ -1565,7 +1565,7 @@ public class TestJavaInterop extends TestBase {
         return sb.toString();
     }
 
-    private String errorIn(String left, String right) {
+    private static String errorIn(String left, String right) {
         String errorIn = "Error in ";
         String delim = " :";
 

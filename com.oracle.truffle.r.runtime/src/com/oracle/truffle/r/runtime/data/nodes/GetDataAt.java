@@ -60,6 +60,7 @@ public abstract class GetDataAt extends Node {
     public abstract Object getAsObject(RAbstractVector vector, Object store, int index);
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Int extends GetDataAt {
 
         public static Int create() {
@@ -92,14 +93,19 @@ public abstract class GetDataAt extends Node {
         }
 
         // This accounts for other vector types, like closures
-        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"})
-        protected int doDoubleClosure(RAbstractIntVector vector, Object store, int index,
+        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"}, limit = "3")
+        protected int doGenericCached(RAbstractIntVector vector, Object store, int index,
                         @Cached("vector.getClass()") Class<? extends RAbstractIntVector> cachedClass) {
             return cachedClass.cast(vector).getDataAt(store, index);
         }
 
+        @Specialization(guards = {"isGenericVector(vector)"}, replaces = "doGenericCached")
+        protected int doGeneric(RAbstractIntVector vector, Object store, int index) {
+            return vector.getDataAt(store, index);
+        }
+
         @Fallback
-        protected int doDoubleClosure(RAbstractIntVector vector, Object store, int index) {
+        protected int doFallback(RAbstractIntVector vector, Object store, int index) {
             return vector.getDataAt(store, index);
         }
 
@@ -109,6 +115,7 @@ public abstract class GetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Double extends GetDataAt {
 
         public static Double create() {
@@ -142,13 +149,18 @@ public abstract class GetDataAt extends Node {
         }
 
         @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"}, limit = "3")
-        protected double doDoubleClosure(RAbstractDoubleVector vector, Object store, int index,
+        protected double doGenericCached(RAbstractDoubleVector vector, Object store, int index,
                         @Cached("vector.getClass()") Class<?> cachedClass) {
             return ((RAbstractDoubleVector) cachedClass.cast(vector)).getDataAt(store, index);
         }
 
+        @Specialization(guards = "isGenericVector(vector)", replaces = "doGenericCached")
+        protected double doGeneric(RAbstractDoubleVector vector, Object store, int index) {
+            return vector.getDataAt(store, index);
+        }
+
         @Fallback
-        protected double doDoubleClosure(RAbstractDoubleVector vector, Object store, int index) {
+        protected double doFallback(RAbstractDoubleVector vector, Object store, int index) {
             return vector.getDataAt(store, index);
         }
 
@@ -158,6 +170,7 @@ public abstract class GetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Logical extends GetDataAt {
 
         public static Logical create() {
@@ -185,14 +198,19 @@ public abstract class GetDataAt extends Node {
         }
 
         // This accounts for other vector types, like closures
-        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"})
-        protected byte doDoubleClosure(RAbstractLogicalVector vector, Object store, int index,
+        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"}, limit = "3")
+        protected byte doGenericCached(RAbstractLogicalVector vector, Object store, int index,
                         @Cached("vector.getClass()") Class<? extends RAbstractLogicalVector> cachedClass) {
             return cachedClass.cast(vector).getDataAt(store, index);
         }
 
+        @Specialization(guards = {"isGenericVector(vector)"}, replaces = "doGenericCached")
+        protected byte doGeneric(RAbstractLogicalVector vector, Object store, int index) {
+            return vector.getDataAt(store, index);
+        }
+
         @Fallback
-        protected byte doDoubleClosure(RAbstractLogicalVector vector, Object store, int index) {
+        protected byte doFallback(RAbstractLogicalVector vector, Object store, int index) {
             return vector.getDataAt(store, index);
         }
 
@@ -202,6 +220,7 @@ public abstract class GetDataAt extends Node {
     }
 
     @ImportStatic(NativeDataAccess.class)
+    @SuppressWarnings("unused")
     public abstract static class Raw extends GetDataAt {
 
         public static Raw create() {
@@ -229,14 +248,19 @@ public abstract class GetDataAt extends Node {
         }
 
         // This accounts for other vector types, like closures
-        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"})
-        protected byte doDoubleClosure(RAbstractRawVector vector, Object store, int index,
+        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"}, limit = "3")
+        protected byte doGenericCached(RAbstractRawVector vector, Object store, int index,
                         @Cached("vector.getClass()") Class<? extends RAbstractRawVector> cachedClass) {
             return cachedClass.cast(vector).getRawDataAt(store, index);
         }
 
+        @Specialization(guards = {"isGenericVector(vector)"}, replaces = "doGenericCached")
+        protected byte doGeneric(RAbstractRawVector vector, Object store, int index) {
+            return vector.getRawDataAt(store, index);
+        }
+
         @Fallback
-        protected byte doDoubleClosure(RAbstractRawVector vector, Object store, int index) {
+        protected byte doFallback(RAbstractRawVector vector, Object store, int index) {
             return vector.getRawDataAt(store, index);
         }
 
@@ -263,7 +287,7 @@ public abstract class GetDataAt extends Node {
 
         public abstract RComplex execute(RAbstractComplexVector vector, Object store, int index);
 
-        protected RComplex doRVector(RComplexVector vector, double[] store, int index) {
+        protected RComplex doRVector(@SuppressWarnings("unused") RComplexVector vector, double[] store, int index) {
             return RComplex.valueOf(store[index * 2], store[index * 2 + 1]);
         }
 
@@ -273,14 +297,19 @@ public abstract class GetDataAt extends Node {
             throw RInternalError.unimplemented();
         }
 
-        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"})
-        protected RComplex doDoubleClosure(RAbstractComplexVector vector, Object store, int index,
+        @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"}, limit = "3")
+        protected RComplex doGenericCached(RAbstractComplexVector vector, Object store, int index,
                         @Cached("vector.getClass()") Class<? extends RAbstractComplexVector> cachedClass) {
             return cachedClass.cast(vector).getDataAt(store, index);
         }
 
+        @Specialization(guards = {"isGenericVector(vector)"}, replaces = "doGenericCached")
+        protected RComplex doGeneric(RAbstractComplexVector vector, Object store, int index) {
+            return vector.getDataAt(store, index);
+        }
+
         @Fallback
-        protected RComplex doDoubleClosure(RAbstractComplexVector vector, Object store, int index) {
+        protected RComplex doFallback(RAbstractComplexVector vector, Object store, int index) {
             return vector.getDataAt(store, index);
         }
 
@@ -307,7 +336,7 @@ public abstract class GetDataAt extends Node {
 
         public abstract java.lang.String execute(RAbstractStringVector vector, Object store, int index);
 
-        protected java.lang.String doRVector(RStringVector vector, java.lang.String[] store, int index) {
+        protected java.lang.String doRVector(@SuppressWarnings("unused") RStringVector vector, java.lang.String[] store, int index) {
             return store[index];
         }
 
@@ -318,13 +347,18 @@ public abstract class GetDataAt extends Node {
         }
 
         @Specialization(guards = {"isGenericVector(vector)", "cachedClass == vector.getClass()"})
-        protected java.lang.String doDoubleClosure(RAbstractStringVector vector, Object store, int index,
+        protected java.lang.String doGenericCached(RAbstractStringVector vector, Object store, int index,
                         @Cached("vector.getClass()") Class<? extends RAbstractStringVector> cachedClass) {
             return cachedClass.cast(vector).getDataAt(store, index);
         }
 
+        @Specialization(guards = {"isGenericVector(vector)"}, replaces = "doGenericCached")
+        protected java.lang.String doGeneric(RAbstractStringVector vector, Object store, int index) {
+            return vector.getDataAt(store, index);
+        }
+
         @Fallback
-        protected java.lang.String doDoubleClosure(RAbstractStringVector vector, Object store, int index) {
+        protected java.lang.String doFallback(RAbstractStringVector vector, Object store, int index) {
             return vector.getDataAt(store, index);
         }
 

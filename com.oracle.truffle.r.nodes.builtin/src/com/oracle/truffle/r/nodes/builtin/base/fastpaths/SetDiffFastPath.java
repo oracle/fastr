@@ -32,8 +32,8 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 public abstract class SetDiffFastPath extends RFastPathNode {
 
-    @Specialization(guards = {"x.getStride() == 1", "y.getClass() == yClass"})
-    protected Object setdiff(RIntSequence x, RAbstractIntVector y,
+    @Specialization(guards = {"x.getStride() == 1", "y.getClass() == yClass"}, limit = "3")
+    protected static Object cached(RIntSequence x, RAbstractIntVector y,
                     @Cached("y.getClass()") Class<? extends RAbstractIntVector> yClass) {
         RAbstractIntVector profiledY = yClass.cast(y);
         int xLength = x.getLength();
@@ -64,9 +64,14 @@ public abstract class SetDiffFastPath extends RFastPathNode {
         return RDataFactory.createIntVector(result, true);
     }
 
+    @Specialization(guards = {"x.getStride() == 1"}, replaces = "cached")
+    protected static Object generic(RIntSequence x, RAbstractIntVector y) {
+        return cached(x, y, y.getClass());
+    }
+
     @Fallback
     @SuppressWarnings("unused")
-    protected Object fallback(Object x, Object y) {
+    protected static Object fallback(Object x, Object y) {
         return null;
     }
 }
