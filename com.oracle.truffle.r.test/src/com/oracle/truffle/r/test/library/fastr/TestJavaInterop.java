@@ -754,15 +754,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", expected);
         expected = fieldPrefix.contains("List") ? "'" + clazz + "'" : "'matrix'";
         assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", expected);
-        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)", "list(" + result + ", " + result + "))");
-
-        field = fieldPrefix + "3";
-        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ")", "c(" + result + ", " + result + ", " + result + ", " + result + "))");
-        expected = fieldPrefix.contains("List") ? "'" + clazz + "'" : "'array'";
-        assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(ta$" + field + "))", expected);
-        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)",
-                        "cat('[[1]]','\n','[external object]','\n\n','[[2]]','\n','[external object]','\n\n','[[3]]','\n','[external object]','\n\n','[[4]]','\n','[external object]','\n\n', sep='')");
-
+        assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(ta$" + field + ", recursive=FALSE)", "c(" + result + ", " + result + ")");
     }
 
     private void testForeingObjectInListUnlist(String field, String[] toMixWith, String clazz) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
