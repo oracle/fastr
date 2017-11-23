@@ -39,10 +39,20 @@ parse.args <- function() {
 }
 
 run <- function() {
-	parse.args()
-	install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+    parse.args()
+    tryCatch({
+        res <- install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+        if (res == NULL) 0L else 1L
+    }, error = function(e) {
+        cat(e$message, "\n")
+        return (1L)
+    }, warning = function(e) {
+        cat(e$message, "\n")
+        return (1L)
+    })
 }
 
 if (!interactive()) {
-	run()
+	status.code <- run()
+    quit(status = status.code)
 }
