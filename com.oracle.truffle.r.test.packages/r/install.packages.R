@@ -725,9 +725,29 @@ fastr_error_log_size <- function() {
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr_error_log_size()
 	if (run.mode == "system") {
-        pkg.cache.install(pkgname, function() system.install(pkgname))
+        system.install.wrapper <- function() {
+            tryCatch(
+                     system.install(pkgname)
+            , error = function(e) {
+                log.message(e$message)
+                return (1)
+            }, warning = function(e) {
+                log.message(e$message)
+                # According to the documentation of 'system2', a warning will provide a status field.
+                return (e$status)
+            })
+        }
+        pkg.cache.install(pkgname, system.install.wrapper)
 	} else if (run.mode == "internal") {
-        pkg.cache.install(pkgname, function() install.packages(pkgname, type="source", lib=lib.install, INSTALL_opts="--install-tests"))
+        internal.install.wrapper <- function() {
+            tryCatch(
+                     install.packages(pkgname, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+            , error = function(e) {
+                log.message(e$message)
+                return (1)
+            })
+        }
+        pkg.cache.install(pkgname, internal.install.wrapper)
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
@@ -740,8 +760,12 @@ install.pkg <- function(pkgname) {
 pkg.cache.install <- function(pkgname, install.cmd) {
     is.cached <- pkg.cache.get(pkgname, lib=lib.install)
     if (!is.cached) {
-        install.cmd()
-        pkg.cache.insert(pkgname, lib.install)
+        res <- install.cmd()
+
+        # 0L stands for success
+        if (res == 0L) {
+            pkg.cache.insert(pkgname, lib.install)
+        }
     }
 }
 
