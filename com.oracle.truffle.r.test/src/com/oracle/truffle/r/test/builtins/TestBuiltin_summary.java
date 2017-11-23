@@ -20,10 +20,8 @@ public class TestBuiltin_summary extends TestBase {
 
     @Test
     public void testsummary1() {
-        // Little rounding difference 1.4189 vs. 1.419 in FastR
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- structure(list(object = structure(c(4L, 4L, 4L, 4L, 4L,     3L, 4L, 4L, 4L, 4L, 3L, 4L, 3L, 4L, 4L, 4L, 4L, 2L, 4L, 3L,     4L, 4L, 4L, 2L), .Dim = c(6L, 4L), .Dimnames = structure(list(c('25-34',     '35-44', '45-54', '55-64', '65-74', '75+'), c('0-39g/day',     '40-79', '80-119', '120+')), .Names = c('', '')), class = 'table')),     .Names = 'object');" +
-                                        "do.call('summary', argv)");
+        assertEval("argv <- structure(list(object = structure(c(4L, 4L, 4L, 4L, 4L,     3L, 4L, 4L, 4L, 4L, 3L, 4L, 3L, 4L, 4L, 4L, 4L, 2L, 4L, 3L,     4L, 4L, 4L, 2L), .Dim = c(6L, 4L), .Dimnames = structure(list(c('25-34',     '35-44', '45-54', '55-64', '65-74', '75+'), c('0-39g/day',     '40-79', '80-119', '120+')), .Names = c('', '')), class = 'table')),     .Names = 'object');" +
+                        "do.call('summary', argv)");
     }
 
     @Test

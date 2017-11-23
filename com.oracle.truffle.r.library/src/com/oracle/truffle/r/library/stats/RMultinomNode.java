@@ -27,18 +27,15 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
-import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
-import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.distr.RMultinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
@@ -49,7 +46,14 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * Implements the vectorization of {@link RMultinom}.
  */
 public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
+
     private final Rbinom rbinom = new Rbinom();
+
+    private final ValueProfile randGeneratorClassProfile = ValueProfile.createClassProfile();
+    private final ConditionProfile hasAttributesProfile = ConditionProfile.createBinaryProfile();
+    @Child private UpdateShareableChildValueNode updateSharedAttributeNode = UpdateShareableChildValueNode.create();
+    @Child private GetFixedAttributeNode getNamesNode = GetFixedAttributeNode.createNames();
+    @Child private SetFixedAttributeNode setDimNamesNode = SetFixedAttributeNode.createDimNames();
 
     public static RMultinomNode create() {
         return RMultinomNodeGen.create();
@@ -68,63 +72,69 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probsVec,
-                    @Cached("create()") VectorReadAccess.Double probsAccess,
-                    @Cached("create()") SetDataAt.Double probsSetter,
-                    @Cached("create()") ReuseNonSharedNode reuseNonSharedNode,
-                    @Cached("createClassProfile()") ValueProfile randGeneratorClassProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile,
-                    @Cached("create()") UpdateShareableChildValueNode updateSharedAttributeNode,
-                    @Cached("createNames()") GetFixedAttributeNode getNamesNode,
-                    @Cached("createDimNames()") SetFixedAttributeNode setDimNamesNode) {
-        RDoubleVector nonSharedProbs = ((RAbstractDoubleVector) reuseNonSharedNode.execute(probsVec)).materialize();
-        ReadAccessor.Double probs = new ReadAccessor.Double(nonSharedProbs, probsAccess);
-        fixupProb(nonSharedProbs, probs, probsSetter);
-
-        RRNG.getRNGState();
-        RandomNumberProvider rand = new RandomNumberProvider(randGeneratorClassProfile.profile(RRNG.currentGenerator()), RRNG.currentNormKind());
-        int k = nonSharedProbs.getLength();
-        int[] result = new int[k * n];
-        boolean isComplete = true;
-        for (int i = 0, ik = 0; i < n; i++, ik += k) {
-            isComplete &= RMultinom.rmultinom(size, probs, k, result, ik, rand, rbinom);
-        }
-        RRNG.putRNGState();
-
-        // take names from probVec (if any) as row names in the result
-        RIntVector resultVec = RDataFactory.createIntVector(result, isComplete, new int[]{k, n});
-        if (hasAttributesProfile.profile(probsVec.getAttributes() != null)) {
-            Object probsNames = getNamesNode.execute(probsVec.getAttributes());
-            updateSharedAttributeNode.execute(probsVec, probsNames);
-            Object[] dimnamesData = new Object[]{probsNames, RNull.instance};
-            setDimNamesNode.execute(resultVec.getAttributes(), RDataFactory.createList(dimnamesData));
-        }
-        return resultVec;
-    }
-
-    private void fixupProb(RDoubleVector p, ReadAccessor.Double pAccess, SetDataAt.Double pSetter) {
-        double sum = 0.0;
-        int npos = 0;
-        int pLength = p.getLength();
-        for (int i = 0; i < pLength; i++) {
-            double prob = pAccess.getDataAt(i);
-            if (!Double.isFinite(prob)) {
-                throw error(NA_IN_PROB_VECTOR);
-            }
-            if (prob < 0.0) {
-                throw error(NEGATIVE_PROBABILITY);
-            }
-            if (prob > 0.0) {
-                npos++;
+    protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probs,
+                    @Cached("probs.access()") VectorAccess probsAccess) {
+        try (SequentialIterator probsIter = probsAccess.access(probs)) {
+            double sum = 0.0;
+            while (probsAccess.next(probsIter)) {
+                double prob = probsAccess.getDouble(probsIter);
+                if (!Double.isFinite(prob)) {
+                    throw error(NA_IN_PROB_VECTOR);
+                }
+                if (prob < 0.0) {
+                    throw error(NEGATIVE_PROBABILITY);
+                }
                 sum += prob;
             }
-        }
-        if (npos == 0) {
-            throw error(NO_POSITIVE_PROBABILITIES);
-        }
-        for (int i = 0; i < pLength; i++) {
-            double prob = pAccess.getDataAt(i);
-            pSetter.setDataAt(p, pAccess.getStore(), i, prob / sum);
+            if (sum == 0) {
+                throw error(NO_POSITIVE_PROBABILITIES);
+            }
+
+            RRNG.getRNGState();
+            RandomNumberProvider rand = new RandomNumberProvider(randGeneratorClassProfile.profile(RRNG.currentGenerator()), RRNG.currentNormKind());
+            int[] result = new int[probsAccess.getLength(probsIter) * n];
+            if (size > 0) {
+                for (int i = 0, ik = 0; i < n; i++, ik += probsAccess.getLength(probsIter)) {
+                    double currentSum = sum;
+                    int currentSize = size;
+                    /* Generate the first K-1 obs. via binomials */
+                    probsAccess.reset(probsIter);
+                    for (int k = 0; probsAccess.next(probsIter) && k < probsAccess.getLength(probsIter) - 1; k++) {
+                        /* (p_tot, n) are for "remaining binomial" */
+                        /* LDOUBLE */double probK = probsAccess.getDouble(probsIter);
+                        if (probK != 0.) {
+                            double pp = probK / currentSum;
+                            int value = (pp < 1.) ? (int) rbinom.execute(currentSize, pp, rand) : currentSize;
+                            /*
+                             * >= 1; > 1 happens because of rounding
+                             */
+                            result[ik + k] = value;
+                            currentSize -= value;
+                        } else {
+                            result[ik + k] = 0;
+                        }
+                        if (n <= 0) {
+                            /* we have all */
+                            break;
+                        }
+                        /* i.e. = sum(prob[(k+1):K]) */
+                        currentSum -= probK;
+                    }
+
+                    result[ik + probsAccess.getLength(probsIter) - 1] = currentSize;
+                }
+            }
+            RRNG.putRNGState();
+
+            // take names from probVec (if any) as row names in the result
+            RIntVector resultVec = RDataFactory.createIntVector(result, true, new int[]{probsAccess.getLength(probsIter), n});
+            if (hasAttributesProfile.profile(probs.getAttributes() != null)) {
+                Object probsNames = getNamesNode.execute(probs.getAttributes());
+                updateSharedAttributeNode.execute(probs, probsNames);
+                Object[] dimnamesData = new Object[]{probsNames, RNull.instance};
+                setDimNamesNode.execute(resultVec.getAttributes(), RDataFactory.createList(dimnamesData));
+            }
+            return resultVec;
         }
     }
 }

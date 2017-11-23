@@ -30,7 +30,11 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromComplexAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 public final class RComplex extends RScalarVector implements RAbstractComplexVector {
@@ -142,5 +146,60 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
         } else {
             return Math.sqrt(re * re + im * im);
         }
+    }
+
+    private static final class FastPathAccess extends FastPathFromComplexAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected RComplex getComplex(Object store, int index) {
+            assert index == 0;
+            return (RComplex) store;
+        }
+
+        @Override
+        protected double getComplexR(Object store, int index) {
+            assert index == 0;
+            return ((RComplex) store).realPart;
+        }
+
+        @Override
+        protected double getComplexI(Object store, int index) {
+            assert index == 0;
+            return ((RComplex) store).imaginaryPart;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromComplexAccess SLOW_PATH_ACCESS = new SlowPathFromComplexAccess() {
+        @Override
+        protected RComplex getComplex(Object store, int index) {
+            assert index == 0;
+            return (RComplex) store;
+        }
+
+        @Override
+        protected double getComplexR(Object store, int index) {
+            assert index == 0;
+            return ((RComplex) store).realPart;
+        }
+
+        @Override
+        protected double getComplexI(Object store, int index) {
+            assert index == 0;
+            return ((RComplex) store).imaginaryPart;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

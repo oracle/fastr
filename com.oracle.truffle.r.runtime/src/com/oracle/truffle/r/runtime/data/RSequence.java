@@ -42,6 +42,11 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
+    public Object getInternalStore() {
+        return this;
+    }
+
+    @Override
     public final int getLength() {
         return length;
     }
@@ -57,11 +62,6 @@ public abstract class RSequence implements RAbstractVector {
 
     @Override
     public final boolean isComplete() {
-        return true;
-    }
-
-    @Override
-    public boolean checkCompleteness() {
         return true;
     }
 

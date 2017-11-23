@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 /**
  * The rarely seen {@code externalptr} type used in native code.
  */
-public class RExternalPtr extends RAttributeStorage implements RTypedValue {
+public final class RExternalPtr extends RAttributeStorage implements RTypedValue {
     /**
      * In GNU R, typically the address of some C structure, so a {@code void*}. Represented here as
      * our abstraction of a "native symbol" (even though there may not actually be a symbol

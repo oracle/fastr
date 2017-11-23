@@ -110,18 +110,8 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RRaw value) {
-        return RDataFactory.createRawVectorFromScalar(value);
-    }
-
-    @ImplicitCast
     public static RAbstractContainer toAbstractContainer(byte value) {
         return RDataFactory.createLogicalVectorFromScalar(value);
-    }
-
-    @ImplicitCast
-    public static RAbstractContainer toAbstractContainer(RComplex value) {
-        return RDataFactory.createComplexVectorFromScalar(value);
     }
 
     @ImplicitCast
@@ -140,18 +130,8 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractVector toAbstractVector(RRaw value) {
-        return RDataFactory.createRawVectorFromScalar(value);
-    }
-
-    @ImplicitCast
     public static RAbstractVector toAbstractVector(byte value) {
         return RDataFactory.createLogicalVectorFromScalar(value);
-    }
-
-    @ImplicitCast
-    public static RAbstractVector toAbstractVector(RComplex value) {
-        return RDataFactory.createComplexVectorFromScalar(value);
     }
 
     @ImplicitCast
@@ -170,18 +150,8 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractComplexVector toAbstractComplexVector(RComplex vector) {
-        return RDataFactory.createComplexVectorFromScalar(vector);
-    }
-
-    @ImplicitCast
     public static RAbstractLogicalVector toAbstractLogicalVector(byte vector) {
         return RDataFactory.createLogicalVectorFromScalar(vector);
-    }
-
-    @ImplicitCast
-    public static RAbstractRawVector toAbstractRawVector(RRaw vector) {
-        return RDataFactory.createRawVectorFromScalar(vector);
     }
 
     @ImplicitCast
@@ -200,18 +170,8 @@ public class RTypes {
     }
 
     @ImplicitCast
-    public static RAbstractAtomicVector toAbstractAtomicVector(RRaw value) {
-        return RDataFactory.createRawVectorFromScalar(value);
-    }
-
-    @ImplicitCast
     public static RAbstractAtomicVector toAbstractAtomicVector(byte value) {
         return RDataFactory.createLogicalVectorFromScalar(value);
-    }
-
-    @ImplicitCast
-    public static RAbstractAtomicVector toAbstractAtomicVector(RComplex value) {
-        return RDataFactory.createComplexVectorFromScalar(value);
     }
 
     @ImplicitCast

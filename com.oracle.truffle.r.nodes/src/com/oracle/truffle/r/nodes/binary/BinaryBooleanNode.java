@@ -104,24 +104,22 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
-    protected Object doNumericVectorCached(Object left, Object right,
+    protected Object doNumericVectorCached(RAbstractVector left, RAbstractVector right,
                     @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);
     }
 
     @Specialization(replaces = "doNumericVectorCached", guards = "isSupported(left, right)")
     @TruffleBoundary
-    protected Object doNumericVectorGeneric(Object left, Object right,
+    protected Object doNumericVectorGeneric(RAbstractVector left, RAbstractVector right,
                     @Cached("factory.createOperation()") BooleanOperation operation,
-                    @Cached("new(createCached(operation, left, right))") GenericNumericVectorNode generic) {
-        RAbstractVector leftVector = (RAbstractVector) left;
-        RAbstractVector rightVector = (RAbstractVector) right;
-        return generic.get(operation, leftVector, rightVector).apply(leftVector, rightVector);
+                    @Cached("createGeneric()") GenericNumericVectorNode generic) {
+        return generic.get(operation, left, right).apply(left, right);
     }
 
     protected BinaryMapNode createFastCached(Object left, Object right) {
         if (isSupported(left, right)) {
-            return createCached(factory.createOperation(), left, right);
+            return createCached(factory.createOperation(), left, right, false);
         }
         return null;
     }
@@ -243,7 +241,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         throw error(Message.OPERATIONS_NUMERIC_LOGICAL_COMPLEX);
     }
 
-    protected static BinaryMapNode createCached(BooleanOperation operation, Object left, Object right) {
+    protected static BinaryMapNode createCached(BooleanOperation operation, Object left, Object right, boolean isGeneric) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
 
@@ -255,23 +253,24 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
             resultType = RType.Logical;
         }
 
-        return BinaryMapNode.create(new BinaryMapBooleanFunctionNode(operation), leftVector, rightVector, argumentType, resultType, false);
+        return BinaryMapNode.create(new BinaryMapBooleanFunctionNode(operation), leftVector, rightVector, argumentType, resultType, false, isGeneric);
+    }
+
+    protected static GenericNumericVectorNode createGeneric() {
+        return new GenericNumericVectorNode();
     }
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
 
         @Child private BinaryMapNode cached;
 
-        public GenericNumericVectorNode(BinaryMapNode cachedOperation) {
-            this.cached = insert(cachedOperation);
-        }
-
         private BinaryMapNode get(BooleanOperation arithmetic, RAbstractVector left, RAbstractVector right) {
             CompilerAsserts.neverPartOfCompilation();
-            if (!cached.isSupported(left, right)) {
-                cached = cached.replace(createCached(arithmetic, left, right));
+            BinaryMapNode map = cached;
+            if (map == null || !map.isSupported(left, right)) {
+                cached = map = insert(createCached(arithmetic, left, right, true));
             }
-            return cached;
+            return map;
         }
     }
 }

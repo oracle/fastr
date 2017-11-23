@@ -65,7 +65,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.GetDataCopy;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -751,7 +750,6 @@ public class LaFunctions {
 
         @Specialization
         protected Object doSvd(String ju, RAbstractDoubleVector x, RAbstractDoubleVector s, RAbstractDoubleVector u, RAbstractDoubleVector vt,
-                        @Cached("create()") GetDataCopy.Double getDataCopyNode,
                         @Cached("createCopyAllAttributes()") CopyAttributesNode copyAttrNode,
                         @Cached("create()") GetDimAttributeNode getDimsNode) {
 
@@ -767,10 +765,10 @@ public class LaFunctions {
 
             int[] iwork = new int[8 * Math.min(n, p)];
 
-            double[] xvals = getDataCopyNode.execute(x);
-            double[] sdata = getDataCopyNode.execute(s);
-            double[] udata = getDataCopyNode.execute(u);
-            double[] vtdata = getDataCopyNode.execute(vt);
+            double[] xvals = x.materialize().getDataTemp();
+            double[] sdata = s.materialize().getDataTemp();
+            double[] udata = u.materialize().getDataTemp();
+            double[] vtdata = vt.materialize().getDataTemp();
             double[] tmp = new double[1];
 
             int info = dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, tmp, -1, iwork);

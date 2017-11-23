@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.builtin.base.printer;
 import java.io.StringWriter;
 
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class StringPrettyWriter extends StringWriter implements PrettyWriter {
 
@@ -54,11 +53,11 @@ public class StringPrettyWriter extends StringWriter implements PrettyWriter {
     }
 
     @Override
-    public void beginElement(RAbstractVector vector, int index, FormatMetrics fm) {
+    public void beginElement(int index, FormatMetrics fm) {
     }
 
     @Override
-    public void endElement(RAbstractVector vector, int index, FormatMetrics fm) {
+    public void endElement(int index, FormatMetrics fm) {
     }
 
     @Override

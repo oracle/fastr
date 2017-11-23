@@ -200,11 +200,11 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         return createLoopNode(new ForIndexRepeatingNode(this, var.getIdentifier(), RASTUtils.cloneNode(body), indexName, lengthName, rangeName));
     }
 
-    private LoopNode createLoopNode(AbstractRepeatingNode n) {
+    private static LoopNode createLoopNode(AbstractRepeatingNode n) {
         return Truffle.getRuntime().createLoopNode(n);
     }
 
-    private TruffleObject getIterator(TruffleObject obj, Node readNode, Node executeNode) {
+    private static TruffleObject getIterator(TruffleObject obj, Node readNode, Node executeNode) {
         assert ForeignArray2R.isJavaIterable(obj);
         try {
             TruffleObject itFun = (TruffleObject) ForeignAccess.sendRead(readNode, obj, "iterator");
@@ -214,7 +214,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         }
     }
 
-    private int getKeysLength(TruffleObject keys, Node sizeNode) {
+    private static int getKeysLength(TruffleObject keys, Node sizeNode) {
         try {
             return (int) ForeignAccess.sendGetSize(sizeNode, keys);
         } catch (UnsupportedMessageException ex) {

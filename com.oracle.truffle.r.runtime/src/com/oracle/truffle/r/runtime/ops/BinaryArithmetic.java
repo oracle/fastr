@@ -124,6 +124,7 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static final class Add extends BinaryArithmetic {
 
+        @CompilationFinal private boolean introducesOverflow = false;
         @CompilationFinal private boolean introducesNA = false;
 
         public Add() {
@@ -137,17 +138,22 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public boolean introducesNA() {
-            return introducesNA;
+            return introducesNA || introducesOverflow;
         }
 
         @Override
         public int op(int left, int right) {
-            if (!introducesNA) {
+            if (!introducesOverflow) {
                 try {
-                    return Math.addExact(left, right);
+                    int result = Math.addExact(left, right);
+                    // NAs can also be introduced without a 32-bit overflow
+                    if (!introducesNA && result == RRuntime.INT_NA) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        introducesNA = true;
+                    }
                 } catch (ArithmeticException e) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    introducesNA = true;
+                    introducesOverflow = true;
                 }
             }
             // Borrowed from ExactMath
@@ -176,6 +182,7 @@ public abstract class BinaryArithmetic extends Operation {
 
     public static final class Subtract extends BinaryArithmetic {
 
+        @CompilationFinal private boolean introducesOverflow = false;
         @CompilationFinal private boolean introducesNA = false;
 
         public Subtract() {
@@ -189,17 +196,23 @@ public abstract class BinaryArithmetic extends Operation {
 
         @Override
         public boolean introducesNA() {
-            return introducesNA;
+            return introducesNA || introducesOverflow;
         }
 
         @Override
         public int op(int left, int right) {
-            if (!introducesNA) {
+            if (!introducesOverflow) {
                 try {
-                    return Math.subtractExact(left, right);
+                    int result = Math.subtractExact(left, right);
+                    // NAs can also be introduced without a 32-bit overflow
+                    if (!introducesNA && result == RRuntime.INT_NA) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        introducesNA = true;
+                    }
+                    return result;
                 } catch (ArithmeticException e) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    introducesNA = true;
+                    introducesOverflow = true;
                 }
             }
             // Borrowed from ExactMath

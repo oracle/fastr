@@ -68,6 +68,10 @@ public class RRuntime {
 
     //@formatter:on
 
+    // used in DSL expressions:
+    public static final boolean True = true;
+    public static final boolean False = false;
+
     public static final String R_APP_MIME = "application/x-r";
     public static final String R_TEXT_MIME = "text/x-r";
 
@@ -350,11 +354,6 @@ public class RRuntime {
 
     public static String rawToHexString(byte operand) {
         return rawStringCache[raw2int(operand)];
-    }
-
-    @TruffleBoundary
-    public static String rawToString(byte operand) {
-        return intToString(raw2int(operand));
     }
 
     // conversions from string
@@ -760,6 +759,10 @@ public class RRuntime {
 
     public static boolean isNA(RComplex value) {
         return isNA(value.getRealPart()) || isNA(value.getImaginaryPart());
+    }
+
+    public static boolean isNA(double real, double imag) {
+        return isNA(real) || isNA(imag);
     }
 
     @TruffleBoundary

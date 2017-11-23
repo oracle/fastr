@@ -86,12 +86,8 @@ public class TestBuiltin_c extends TestBase {
 
     @Test
     public void testc14() {
-        // FIXME FastR does not honor setting options(digits=ndecimaldigits)
-        // First test is a simplified problem on which the second test would fail too (besides that
-        // it should work fine)
         assertEval("options(digits=4);c(0.12345678912345,0.123)");
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(`Grand mean` = structure(103.87323943662, class = 'mtable'), structure(list(N = structure(c(78.7365206866197, 98.5088731171753, 113.842206450509, 123.008873117175), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N'), class = 'mtable'), `V:N` = structure(c(79.5323303457107, 86.1989970123773, 69.7732394366197, 98.0323303457106, 108.032330345711, 89.1989970123773, 114.198997012377, 116.698997012377, 110.365663679044, 124.365663679044, 126.365663679044, 118.032330345711), .Dim = 3:4, .Dimnames = structure(list(V = c('Golden.rain', 'Marvellous', 'Victory'), N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = c('V', 'N')), class = 'mtable')), .Names = c('N', 'V:N')));c(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(`Grand mean` = structure(103.87323943662, class = 'mtable'), structure(list(N = structure(c(78.7365206866197, 98.5088731171753, 113.842206450509, 123.008873117175), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N'), class = 'mtable'), `V:N` = structure(c(79.5323303457107, 86.1989970123773, 69.7732394366197, 98.0323303457106, 108.032330345711, 89.1989970123773, 114.198997012377, 116.698997012377, 110.365663679044, 124.365663679044, 126.365663679044, 118.032330345711), .Dim = 3:4, .Dimnames = structure(list(V = c('Golden.rain', 'Marvellous', 'Victory'), N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = c('V', 'N')), class = 'mtable')), .Names = c('N', 'V:N')));c(argv[[1]],argv[[2]]);");
     }
 
     @Test

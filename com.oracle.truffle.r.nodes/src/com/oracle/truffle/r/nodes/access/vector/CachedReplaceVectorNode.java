@@ -34,7 +34,6 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -49,15 +48,11 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -66,27 +61,22 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private static final Object DELETE_MARKER = new Object();
 
-    private final Class<?> vectorClass;
+    private final Class<? extends RAbstractVector> vectorClass;
     private final Class<?> valueClass;
 
     private final VectorLengthProfile targetLengthProfile = VectorLengthProfile.create();
     private final VectorLengthProfile valueLengthProfile = VectorLengthProfile.create();
     private final BranchProfile warningBranch = BranchProfile.create();
-    private final ConditionProfile valueIsNA = ConditionProfile.createBinaryProfile();
     private final BranchProfile resizeProfile = BranchProfile.create();
-    private final ConditionProfile rlanguageAttributesProfile = ConditionProfile.createBinaryProfile();
 
     private final ConditionProfile valueLengthOneProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile emptyReplacementProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile completeVectorProfile = ConditionProfile.createBinaryProfile();
 
     private final ValueProfile vectorTypeProfile = ValueProfile.createClassProfile();
 
@@ -103,9 +93,13 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @Child private DeleteElementsNode deleteElementsNode;
     @Child private SetNamesAttributeNode setNamesNode;
 
-    CachedReplaceVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive,
-                    boolean ignoreRecursive, boolean isValueGt1) {
+    // if this is non-null, the node needs to throw the error whenever it is executed
+    @CompilationFinal protected Runnable error;
+
+    CachedReplaceVectorNode(ElementAccessMode mode, RAbstractVector vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive,
+                    boolean isValueGt1) {
         super(mode, vector, positions, recursive);
+        assert vectorType.isVector();
 
         if (numberOfDimensions == 1 && positions[0] instanceof String || positions[0] instanceof RAbstractStringVector) {
             this.updatePositionNames = updatePositionNames;
@@ -117,17 +111,48 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         this.valueClass = valueClass;
         this.valueType = valueType;
         this.isValueGt1 = isValueGt1;
-        this.castType = resolveCastVectorType();
-        verifyCastType(this.castType);
-        this.castVectorNode = createCastVectorNode();
+
+        // determine the target cast type
+        if (vectorType == RType.List && mode.isSubscript()) {
+            if (valueType.isNull() && numberOfDimensions > 1) {
+                this.castType = null;
+            } else {
+                this.castType = vectorType;
+            }
+        } else if (valueType.isVector()) {
+            if (vectorType.isAtomic() && valueType.isAtomic() && (vectorType == RType.Raw ^ valueType == RType.Raw)) {
+                // mixing with raw with other atomic types is not allowed
+                this.castType = null;
+            } else {
+                this.castType = RType.maxPrecedence(valueType, vectorType);
+            }
+        } else if (valueType.isNull()) {
+            if (mode.isSubscript() && numberOfDimensions > 1) {
+                this.castType = null;
+            } else {
+                this.castType = vectorType;
+            }
+        } else {
+            this.castType = null;
+        }
+
+        if (castType == null) {
+            Message message = (mode.isSubset() || vectorType != RType.List) ? RError.Message.SUBASSIGN_TYPE_FIX : RError.Message.SUBSCRIPT_TYPES;
+            error = () -> {
+                throw error(message, valueType.getName(), vectorType.getName(), false);
+            };
+        }
+
+        if (castType != vectorType && castType != null) {
+            // All casts except list casts preserve dimension names.
+            this.castVectorNode = castType == RType.List ? CastListNodeGen.create(true, false, true) : CastTypeNode.createCast(castType, true, true, true, false);
+        }
         this.deleteElementsNode = isDeleteElements() ? new DeleteElementsNode() : null;
 
         Object[] convertedPositions = filterPositions(positions);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, true, true, recursive);
-        if (vectorType == RType.S4Object) {
-            replaceS4ObjectNode = new ReplaceS4ObjectNode(mode, ignoreRecursive);
-        } else if (castType != null && !castType.isNull()) {
-            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, mode.isSubscript() && !isDeleteElements(), true);
+        if (castType != null && !castType.isNull()) {
+            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, true);
         }
     }
 
@@ -135,89 +160,47 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         return (values instanceof RAbstractContainer) && ((RAbstractContainer) values).getLength() > 1;
     }
 
-    public boolean isSupported(Object target, Object[] positions, Object values) {
+    public boolean isSupported(RAbstractVector target, Object[] positions, Object values) {
         if (vectorClass == target.getClass() && values.getClass() == valueClass) {
             return positionsCheckNode.isSupported(positions) && isValueLengthGreaterThanOne(values) == isValueGt1;
         }
         return false;
     }
 
-    public Object apply(Object originalVector, Object[] originalPositions, Object originalValues) {
+    public Object apply(RAbstractVector originalVector, Object[] originalPositions, Object originalValues) {
         if (error != null) {
             CompilerDirectives.transferToInterpreter();
             error.run();
         }
-        final Object[] positions = filterPositions(originalPositions);
+        Object[] positions = filterPositions(originalPositions);
         assert isSupported(originalVector, positions, originalValues);
 
-        Object castVector = vectorClass.cast(originalVector);
+        RAbstractVector vector = vectorClass.cast(originalVector);
         Object castValue = valueClass.cast(originalValues);
 
-        if (vectorType == RType.Environment) {
-            return doEnvironment((REnvironment) castVector, positions, castValue);
-        } else if (vectorType == RType.S4Object) {
-            return doS4Object((RS4Object) castVector, positions, castValue);
-        }
-
-        Object value;
+        RAbstractContainer value;
         if (valueType == RType.Null) {
-            if (vectorType == RType.Null) {
-                // we cast Null to Logical, but in the end it will fold and return Null
-                value = RType.Logical.getEmpty();
-            } else if (castType == RType.List) {
+            if (castType == RType.List) {
                 value = RDataFactory.createList(new Object[]{DELETE_MARKER});
             } else {
                 value = castType.getEmpty();
             }
         } else {
-            value = castValue;
+            if ((castType == RType.List || castType == RType.Expression) && mode.isSubscript() && !isDeleteElements() && !(castValue instanceof RScalarVector)) {
+                // wrap into a list when
+                value = RScalarList.valueOf(castValue);
+            } else {
+                value = (RAbstractContainer) castValue;
+            }
         }
 
-        int appliedValueLength;
-        if (value instanceof RAbstractContainer) {
-            appliedValueLength = valueLengthProfile.profile(((RAbstractContainer) value).getLength());
-        } else {
-            appliedValueLength = 1;
-        }
+        int appliedValueLength = valueLengthProfile.profile(value.getLength());
 
         int valueLength;
         if (this.numberOfDimensions > 1 && isDeleteElements()) {
             valueLength = 0;
         } else {
             valueLength = appliedValueLength;
-        }
-
-        if (vectorType == RType.Null) {
-            if (valueLength == 0) {
-                return RNull.instance;
-            }
-        }
-
-        /*
-         * Unfortunately special behavior for some RTypes are necessary. We should aim for getting
-         * rid of them as much as possible in the future. N.B.: because of this 'unwrapping' any
-         * return should call wrapResult(vector, repType) to do the reverse where necessary.
-         */
-        RAbstractVector vector;
-        RLanguage.RepType repType = RLanguage.RepType.UNKNOWN;
-        switch (vectorType) {
-            case Null:
-                vector = castType.getEmpty();
-                break;
-            case PairList:
-                vector = ((RPairList) castVector).toRList();
-                break;
-            case Language:
-                repType = RContext.getRRuntimeASTAccess().getRepType((RLanguage) castVector);
-                vector = RContext.getRRuntimeASTAccess().asList((RLanguage) castVector);
-                DynamicObject attrs = ((RLanguage) castVector).getAttributes();
-                if (rlanguageAttributesProfile.profile(attrs != null && !attrs.isEmpty())) {
-                    vector.initAttributes(RAttributesLayout.copy(attrs));
-                }
-                break;
-            default:
-                vector = (RAbstractVector) castVector;
-                break;
         }
 
         int vectorLength = targetLengthProfile.profile(vector.getLength());
@@ -238,29 +221,30 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
         int replacementLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
         if (emptyReplacementProfile.profile(replacementLength == 0)) {
-            /* Nothing to modify */
-            if (vectorType == RType.Language || vectorType == RType.Expression) {
-                return originalVector;
-            } else {
-                return vector.materialize();
-            }
+            // Nothing to modify
+            return vector;
         }
 
         if (valueLengthOneProfile.profile(valueLength != 1)) {
             verifyValueLength(positionProfiles, valueLength);
         }
-
-        if (!isList() && value instanceof RAbstractVector) {
-            value = ((RAbstractVector) value).castSafe(castType, valueIsNA, false);
+        if (vector instanceof RShareable) {
+            RShareable shareable = (RShareable) vector;
+            // TODO find out if we need to copy always in the recursive case
+            if (recursive || sharedConditionProfile.execute(shareable.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {
+                shareable = (RShareable) vector.copy();
+                vector = (RAbstractVector) shareable;
+                assert shareable.isTemporary();
+            }
         }
-
-        vector = share(vector, value);
+        vector = sharedClassProfile.profile(vector);
+        CompilerAsserts.partialEvaluationConstant(vector.getClass());
 
         int maxOutOfBounds = positionsCheckNode.getMaxOutOfBounds(positionProfiles);
         if (maxOutOfBounds > vectorLength) {
             resizeProfile.enter();
             if (isDeleteElements() && mode.isSubscript()) {
-                return wrapResult(vector, repType);
+                return vector;
             }
             vector = resizeVector(vector, maxOutOfBounds);
         } else {
@@ -297,17 +281,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             }
         }
 
-        if (value instanceof RAbstractContainer) {
-            writeVectorNode.enableValueNACheck((RAbstractContainer) value);
-        }
-
-        writeVectorNode.apply(vector, vectorLength, positions, value, appliedValueLength, vectorDimensions);
-        boolean complete = vector.isComplete();
-        if (completeVectorProfile.profile(complete)) {
-            if (!writeVectorNode.neverSeenNAInValue()) {
-                vector.setComplete(false);
-            }
-        }
+        writeVectorNode.execute(vector, positions, value, vectorDimensions);
 
         RBaseNode.reportWork(this, replacementLength);
 
@@ -320,48 +294,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
             updateVectorWithPositionNames(vector, positions);
         }
 
-        return wrapResult(vector, repType);
-    }
-
-    private Object wrapResult(RAbstractVector vector, RLanguage.RepType repType) {
-        switch (vectorType) {
-            case Language:
-                return RContext.getRRuntimeASTAccess().createLanguageFromList((RList) vector, repType);
-            default:
-                return vector;
-        }
-    }
-
-    private void verifyCastType(RType compatibleType) {
-        if (error == null && compatibleType == null && (vectorType.isNull() || vectorType.isVector())) {
-            Message message;
-            if (mode.isSubset()) {
-                message = RError.Message.SUBASSIGN_TYPE_FIX;
-            } else {
-                if (vectorType == RType.List) {
-                    message = RError.Message.SUBSCRIPT_TYPES;
-                } else {
-                    message = RError.Message.SUBASSIGN_TYPE_FIX;
-                }
-            }
-            error = () -> {
-                throw error(message, valueType.getName(), vectorType.getName(), false);
-            };
-        }
-    }
-
-    private CastNode createCastVectorNode() {
-        if (castType == vectorType || castType == null || castType == RType.Null) {
-            return null;
-        }
-        /*
-         * All casts except list casts preserve dimension names.
-         */
-        if (castType == RType.List) {
-            return CastListNodeGen.create(true, false, true);
-        } else {
-            return CastTypeNode.createCast(castType, true, true, true, false);
-        }
+        return vector;
     }
 
     private boolean isDeleteElements() {
@@ -370,54 +303,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
 
     private boolean isList() {
         return castType == RType.List;
-    }
-
-    private RType resolveCastVectorType() {
-        final RType vector;
-        // convert type for list like values
-        switch (this.vectorType) {
-            case Language:
-            case Expression:
-            case PairList:
-                vector = RType.List;
-                break;
-            case Environment:
-                vector = RType.List;
-                break;
-            default:
-                vector = this.vectorType;
-                break;
-        }
-
-        RType value = this.valueType;
-
-        if (vector == RType.List && mode.isSubscript()) {
-            if (value.isNull() && numberOfDimensions > 1) {
-                return null;
-            } else {
-                return vector;
-            }
-        } else if (vector.isVector() && value.isVector()) {
-            if (vector != value) {
-                if (vector == RType.List || value == RType.List) {
-                    return RType.List;
-                }
-                if (vector == RType.Raw || value == RType.Raw) {
-                    return null;
-                }
-            }
-            return RType.maxPrecedence(value, vector);
-        } else if (vector.isNull() || value.isNull()) {
-            if (!value.isNull()) {
-                return (mode == ElementAccessMode.FIELD_SUBSCRIPT || (mode == ElementAccessMode.SUBSCRIPT && isValueGt1)) ? RType.List : value;
-            }
-            if (mode.isSubscript() && numberOfDimensions > 1) {
-                return null;
-            }
-            return vector;
-        } else {
-            return null;
-        }
     }
 
     private void verifyValueLength(PositionProfile[] positionProfiles, int valueLength) {
@@ -469,34 +354,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
     }
 
-    private Object doEnvironment(REnvironment env, Object[] positions, Object originalValues) {
-        if (mode.isSubset()) {
-            throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, RType.Environment.getName());
-        }
-
-        String positionString = tryCastSingleString(positionsCheckNode, positions);
-        if (positionString == null) {
-            throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);
-        }
-
-        try {
-            Object value = originalValues;
-            if (value instanceof RScalarVector) {
-                value = ((RScalarVector) value).getDataAtAsObject(0);
-            }
-            env.put(positionString, value);
-        } catch (PutException ex) {
-            throw error(ex);
-        }
-        return env;
-    }
-
-    @Child private ReplaceS4ObjectNode replaceS4ObjectNode;
-
-    private Object doS4Object(RS4Object obj, Object[] positions, Object originalValues) {
-        return replaceS4ObjectNode.execute(obj, positions, originalValues);
-    }
-
     @NodeInfo(cost = NONE)
     public abstract static class ValueProfileNode extends Node {
 
@@ -519,28 +376,6 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final ValueProfile sharedClassProfile = ValueProfile.createClassProfile();
 
     private final ConditionProfile valueEqualsVectorProfile = ConditionProfile.createBinaryProfile();
-
-    /*
-     * TODO (chumer) share code between {@link #share(RAbstractVector)} and {@link
-     * #copyValueOnAssignment(RAbstractContainer)}
-     */
-    private RAbstractVector share(RAbstractVector vector, Object value) {
-        RAbstractVector returnVector = vector;
-        if (returnVector instanceof RShareable) {
-            RShareable shareable = (RShareable) returnVector;
-            // TODO find out if we need to copy always in the recursive case
-            if (recursive || sharedConditionProfile.execute(shareable.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {
-                shareable = (RShareable) returnVector.copy();
-                returnVector = (RAbstractVector) shareable;
-                assert shareable.isTemporary();
-            }
-        }
-        returnVector = sharedClassProfile.profile(returnVector);
-
-        CompilerAsserts.partialEvaluationConstant(returnVector.getClass());
-
-        return returnVector;
-    }
 
     // TODO (chumer) this is way to complicated at the moment
     // not yet worth compiling. we should introduce some nodes for this

@@ -56,6 +56,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 import sun.misc.Unsafe;
@@ -390,12 +392,15 @@ final class RawWrapper extends TemporaryWrapper {
     @TruffleBoundary
     public long allocate() {
         RAbstractRawVector v = (RAbstractRawVector) vector;
-        int length = v.getLength();
-        long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_BYTE_INDEX_SCALE);
-        for (int i = 0; i < length; i++) {
-            UnsafeAdapter.UNSAFE.putByte(memory + (i * Unsafe.ARRAY_BYTE_INDEX_SCALE), v.getRawDataAt(i));
+        VectorAccess access = v.slowPathAccess();
+        try (SequentialIterator iter = access.access(v)) {
+            int length = access.getLength(iter);
+            long memory = UnsafeAdapter.UNSAFE.allocateMemory(length * Unsafe.ARRAY_BYTE_INDEX_SCALE);
+            while (access.next(iter)) {
+                UnsafeAdapter.UNSAFE.putByte(memory + (iter.getIndex() * Unsafe.ARRAY_BYTE_INDEX_SCALE), access.getRaw(iter));
+            }
+            return memory;
         }
-        return memory;
     }
 
     @Override

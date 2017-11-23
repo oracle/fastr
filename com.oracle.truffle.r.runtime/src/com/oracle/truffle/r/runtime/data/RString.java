@@ -27,8 +27,12 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 public final class RString extends RScalarVector implements RAbstractStringVector {
@@ -94,5 +98,36 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
         } else {
             throw new AssertionError();
         }
+    }
+
+    private static final class FastPathAccess extends FastPathFromStringAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected String getString(Object store, int index) {
+            assert index == 0;
+            return ((RString) store).value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
+        @Override
+        protected String getString(Object store, int index) {
+            assert index == 0;
+            return ((RString) store).value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

@@ -175,7 +175,10 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testNaRmAndFiniteWithLogical() {
-        assertEval(template("range(c(T, F, NA, NA, T)%0)", OPTIONAL_ARGS));
+        assertEval("range(c(T, F, NA, NA, T))");
+        assertEval("range(c(T, F, NA, NA, T), na.rm=T)");
+        // GNU R doesn't honor "finite implies na.rm" for logical
+        assertEval(Ignored.ReferenceError, "range(c(T, F, NA, NA, T), finite=T)");
     }
 
     @Test

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -35,25 +36,76 @@ import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.IntValueProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RScalarVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+abstract class WriteIndexedVectorNode extends Node {
+
+    private final RType vectorType;
+    private final int totalDimensions;
+    private final int dimensionIndex;
+    private final boolean positionAppliesToRight;
+    private final boolean skipNA;
+    private final boolean isReplace;
+
+    private final ConditionProfile completeVectorProfile = ConditionProfile.createBinaryProfile();
+
+    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean isReplace) {
+        this.vectorType = vectorType;
+        this.totalDimensions = totalDimensions;
+        this.dimensionIndex = dimensionIndex;
+        this.positionAppliesToRight = positionAppliesToRight;
+        this.skipNA = skipNA;
+        this.isReplace = isReplace;
+    }
+
+    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean positionAppliesToValue, boolean skipNA, boolean isReplace) {
+        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, positionAppliesToValue, skipNA, isReplace);
+    }
+
+    protected abstract void execute(RAbstractVector left, Object[] positions, RAbstractContainer right, int[] positionTargetDimensions);
+
+    protected WriteIndexedVectorAccessNode createWrite() {
+        return WriteIndexedVectorAccessNodeGen.create(vectorType, totalDimensions, dimensionIndex, positionAppliesToRight, skipNA, isReplace);
+    }
+
+    @Specialization(guards = {"leftAccess.supports(left)", "rightAccess.supports(right)"})
+    protected void write(RAbstractVector left, Object[] positions, RAbstractContainer right, int[] positionTargetDimensions,
+                    @Cached("left.access()") VectorAccess leftAccess,
+                    @Cached("right.access()") VectorAccess rightAccess,
+                    @Cached("createWrite()") WriteIndexedVectorAccessNode write) {
+        try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
+            write.apply(leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
+
+            if (completeVectorProfile.profile(left.isComplete())) {
+                if (!(leftAccess.na.neverSeenNA() && rightAccess.na.neverSeenNA())) {
+                    left.setComplete(false);
+                }
+            }
+        }
+    }
+
+    @Specialization(replaces = "write")
+    @TruffleBoundary
+    protected void writeGeneric(RAbstractVector left, Object[] positions, RAbstractContainer right, int[] positionTargetDimensions,
+                    @Cached("createWrite()") WriteIndexedVectorAccessNode write) {
+        VectorAccess leftAccess = left.slowPathAccess();
+        VectorAccess rightAccess = right.slowPathAccess();
+        try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
+            write.apply(leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
+        }
+    }
+}
 
 /**
  * Primitive indexed N-dimensional vector write node. It can be used for vector replaces and
@@ -61,7 +113,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * right vector. The index direction is indicated with the boolean flag
  * {@link #positionsApplyToRight}.
  */
-abstract class WriteIndexedVectorNode extends Node {
+abstract class WriteIndexedVectorAccessNode extends Node {
 
     private final int dimensionIndex;
     private final int totalDimensions;
@@ -84,57 +136,39 @@ abstract class WriteIndexedVectorNode extends Node {
     private final NACheck positionNACheck = NACheck.create();
     private final ConditionProfile resetIndexProfile = ConditionProfile.createBinaryProfile();
 
-    @Child private WriteIndexedScalarNode<RAbstractVector, Object> scalarNode;
-    @Child private WriteIndexedVectorNode innerVectorNode;
+    @Child private WriteIndexedVectorAccessNode innerVectorNode;
 
-    @SuppressWarnings("unchecked")
-    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean setListElementAsObject, boolean isReplace) {
-        this.scalarNode = (WriteIndexedScalarNode<RAbstractVector, Object>) createIndexedAction(vectorType, setListElementAsObject, isReplace);
+    @Child private UpdateShareableChildValueNode updateStateOfListElement;
+    @Child private ShareObjectNode shareObjectNode;
+
+    private final boolean isReplace;
+    private final RType vectorType;
+
+    protected WriteIndexedVectorAccessNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean isReplace) {
+        this.vectorType = vectorType;
         this.dimensionIndex = dimensionIndex;
         this.totalDimensions = totalDimensions;
         this.positionsApplyToRight = positionAppliesToRight;
         this.skipNA = skipNA;
+        this.isReplace = isReplace;
         if (dimensionIndex > 0) {
-            innerVectorNode = WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, dimensionIndex - 1, positionAppliesToRight, skipNA, setListElementAsObject, isReplace);
+            innerVectorNode = WriteIndexedVectorAccessNodeGen.create(vectorType, totalDimensions, dimensionIndex - 1, positionAppliesToRight, skipNA, isReplace);
         }
-    }
-
-    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean positionAppliesToValue, boolean skipNA, boolean setListElementAsObject, boolean isReplace) {
-        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, positionAppliesToValue, skipNA, setListElementAsObject, isReplace);
-    }
-
-    public NACheck getValueNACheck() {
-        return scalarNode.valueNACheck;
-    }
-
-    public void enableValueNACheck(RAbstractContainer vector) {
-        getValueNACheck().enable(vector);
-        if (innerVectorNode != null) {
-            innerVectorNode.enableValueNACheck(vector);
-        }
-    }
-
-    public boolean neverSeenNAInValue() {
-        if (getValueNACheck().neverSeenNA()) {
-            if (innerVectorNode == null || innerVectorNode.neverSeenNAInValue()) {
-                return true;
+        if (vectorType == RType.List || vectorType == RType.Expression) {
+            if (!isReplace) {
+                updateStateOfListElement = UpdateShareableChildValueNode.create();
+            } else {
+                shareObjectNode = ShareObjectNode.create();
             }
         }
-        return false;
     }
 
-    public final void apply(RAbstractVector left, int leftLength,
-                    Object[] positions, Object right, int rightLength, int[] positionTargetDimensions) {
-        assert left.getLength() == leftLength;
+    public void apply(RandomIterator leftIter, VectorAccess leftAccess, Object[] positions, RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right,
+                    int[] positionTargetDimensions) {
         assert totalDimensions == positions.length : "totalDimensions must be constant per vector write node";
 
-        Object leftStore = left.getInternalStore();
-        Object rightStore = null;
-        if (right instanceof RAbstractContainer) {
-            RAbstractContainer rightContainer = (RAbstractContainer) right;
-            assert rightContainer.getLength() == rightLength;
-            rightStore = rightContainer.getInternalStore();
-        }
+        int leftLength = leftAccess.getLength(leftIter);
+        int rightLength = rightAccess.getLength(rightIter);
 
         int initialPositionOffset;
         if (positionsApplyToRight) {
@@ -151,17 +185,17 @@ abstract class WriteIndexedVectorNode extends Node {
             firstTargetDimension = dimensionValueProfile.profile(positionTargetDimensions[dimensionIndex]);
         }
 
-        applyImpl(left, leftStore, 0, leftLength, positionTargetDimensions, firstTargetDimension,
+        applyImpl(leftIter, leftAccess, 0, leftLength, positionTargetDimensions, firstTargetDimension,
                         positions, initialPositionOffset,
-                        right, rightStore, 0, rightLength, false);
+                        rightIter, rightAccess, right, 0, rightLength, false);
     }
 
     private final ConditionProfile positionMatchesTargetDimensionsProfile = ConditionProfile.createBinaryProfile();
 
     private int applyImpl(//
-                    RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
+                    RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, int positionOffset,
-                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA) {
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA) {
 
         Object position = positionClassProfile.profile(positions[dimensionIndex]);
 
@@ -172,9 +206,9 @@ abstract class WriteIndexedVectorNode extends Node {
         } else {
             newPositionOffset = positionOffsetProfile.profile(positionOffset / targetDimension);
         }
-        return execute(left, leftStore, leftBase, leftLength, targetDimensions, targetDimension,
+        return execute(leftIter, leftAccess, leftBase, leftLength, targetDimensions, targetDimension,
                         positions, position, newPositionOffset, positionLength,
-                        right, rightStore, rightBase, rightLength, parentNA);
+                        rightIter, rightAccess, right, rightBase, rightLength, parentNA);
     }
 
     private int getPositionLength(Object position) {
@@ -185,30 +219,30 @@ abstract class WriteIndexedVectorNode extends Node {
         }
     }
 
-    protected abstract int execute(RAbstractVector left, Object leftStore, int storeBase, int storeLength, Object targetDimensions, int targetDimension,
+    protected abstract int execute(RandomIterator leftIter, VectorAccess leftAccess, int storeBase, int storeLength, Object targetDimensions, int targetDimension,
                     Object[] positions, Object position, int positionOffset, int positionLength,
-                    Object right, Object rightStore, int valueBase, int valueLength, boolean parentNA);
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int valueBase, int valueLength, boolean parentNA);
 
     @Specialization
-    protected int doMissing(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
+    protected int doMissing(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, @SuppressWarnings("unused") RMissing position, int positionOffset, @SuppressWarnings("unused") int positionLength,
-                    RAbstractContainer right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile profile) {
         int rightIndex = rightBase;
         profile.profileCounted(targetDimension);
         for (int positionValue = 0; profile.inject(positionValue < targetDimension); positionValue += 1) {
             rightIndex = applyInner(//
-                            left, leftStore, leftBase, leftLength, targetDimensions,
+                            leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                             positions, positionOffset, positionValue,
-                            right, rightStore, rightLength, rightIndex, parentNA);
+                            rightIter, rightAccess, right, rightLength, rightIndex, parentNA);
         }
         return rightIndex;
     }
 
     @Specialization
-    protected int doLogicalPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
+    protected int doLogicalPosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
                     Object[] positions, RAbstractLogicalVector position, int positionOffset, int positionLength,
-                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") BranchProfile wasTrue,
                     @Cached("create()") AlwaysOnBranchProfile outOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile profile,
@@ -235,9 +269,9 @@ abstract class WriteIndexedVectorNode extends Node {
                         isNA = true;
                     }
                     rightIndex = applyInner(//
-                                    left, leftStore, leftBase, leftLength, targetDimensions,
+                                    leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                                     positions, positionOffset, i,
-                                    right, rightStore, rightLength, rightIndex, isNA || parentNA);
+                                    rightIter, rightAccess, right, rightLength, rightIndex, isNA || parentNA);
                 }
                 positionIndex = Utils.incMod(positionIndex, positionLength, incModProfile);
             }
@@ -251,9 +285,9 @@ abstract class WriteIndexedVectorNode extends Node {
      * @throws SlowPathException
      */
     @Specialization(rewriteOn = SlowPathException.class)
-    protected int doIntegerSequencePosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
+    protected int doIntegerSequencePosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
                     Object[] positions, RIntSequence position, int positionOffset, int positionLength,
-                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("create()") IntValueProfile startProfile,
                     @Cached("create()") IntValueProfile strideProfile,
                     @Cached("createBinaryProfile()") ConditionProfile conditionProfile,
@@ -272,27 +306,22 @@ abstract class WriteIndexedVectorNode extends Node {
         profile.profileCounted(positionLength);
         for (int positionValue = start; profile.inject(ascending ? positionValue < end : positionValue > end); positionValue += stride) {
             rightIndex = applyInner(//
-                            left, leftStore, leftBase, leftLength, targetDimensions,
+                            leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                             positions, positionOffset, positionValue,
-                            right, rightStore, rightLength, rightIndex, parentNA);
+                            rightIter, rightAccess, right, rightLength, rightIndex, parentNA);
         }
         return rightIndex;
     }
 
     /**
      * Integer vectors iterate over the number of positions because we assume that the number of
-     * positions in an integer vector is significantly lower than the number of elements in the
-     * store. This might not be always true and could benefit from more investigation.
-     */
-    /**
-     * Integer vectors iterate over the number of positions because we assume that the number of
-     * positions in an integer vector is significantly lower than the number of elements in the
-     * store. This might not be always true and could benefit from more investigation.
+     * positions in an integer vector is significantly lower than the number of elements. This might
+     * not be always true and could benefit from more investigation.
      */
     @Specialization(replaces = "doIntegerSequencePosition")
-    protected int doIntegerPosition(RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
+    protected int doIntegerPosition(RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, @SuppressWarnings("unused") int targetDimension,
                     Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength,
-                    Object right, Object rightStore, int rightBase, int rightLength, boolean parentNA,
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
         positionNACheck.enable(position);
         int rightIndex = rightBase;
@@ -307,17 +336,17 @@ abstract class WriteIndexedVectorNode extends Node {
                 }
             }
             rightIndex = applyInner(//
-                            left, leftStore, leftBase, leftLength, targetDimensions,
+                            leftIter, leftAccess, leftBase, leftLength, targetDimensions,
                             positions, positionOffset, positionValue - 1,
-                            right, rightStore, rightLength, rightIndex, isNA || parentNA);
+                            rightIter, rightAccess, right, rightLength, rightIndex, isNA || parentNA);
         }
         return rightIndex;
     }
 
     private int applyInner(//
-                    RAbstractVector left, Object leftStore, int leftBase, int leftLength, Object targetDimensions,
+                    RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions,
                     Object[] positions, int positionOffset, int positionValue,
-                    Object right, Object rightStore, int rightLength, int actionIndex, boolean isNA) {
+                    RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightLength, int actionIndex, boolean isNA) {
         int newTargetIndex = leftBase + positionValue * positionOffset;
         if (dimensionIndex == 0) {
             // for-loops leaf for innermost dimension
@@ -334,9 +363,15 @@ abstract class WriteIndexedVectorNode extends Node {
             }
 
             if (isNA) {
-                scalarNode.applyNA(left, leftStore, actionLeftIndex);
+                leftAccess.setNA(leftIter, actionLeftIndex);
+                leftAccess.na.seenNA();
             } else {
-                scalarNode.apply(left, leftStore, actionLeftIndex, right, rightStore, actionRightIndex);
+                if (vectorType == RType.List || vectorType == RType.Expression) {
+                    setListElement(leftIter, leftAccess, rightIter, rightAccess, right, actionLeftIndex, actionRightIndex);
+                } else {
+                    leftAccess.setFromSameType(leftIter, actionLeftIndex, rightAccess, rightIter, actionRightIndex);
+                }
+                rightAccess.isNA(rightIter, actionRightIndex);
             }
 
             if (resetIndexProfile.profile((actionIndex + 1) == (positionsApplyToRight ? leftLength : rightLength))) {
@@ -347,189 +382,24 @@ abstract class WriteIndexedVectorNode extends Node {
             // generate another for-loop for other dimensions
             int nextTargetDimension = innerVectorNode.dimensionValueProfile.profile(((int[]) targetDimensions)[innerVectorNode.dimensionIndex]);
             return innerVectorNode.applyImpl(//
-                            left, leftStore, newTargetIndex, leftLength, targetDimensions, nextTargetDimension,
+                            leftIter, leftAccess, newTargetIndex, leftLength, targetDimensions, nextTargetDimension,
                             positions, positionOffset,
-                            right, rightStore, actionIndex, rightLength, isNA);
+                            rightIter, rightAccess, right, actionIndex, rightLength, isNA);
         }
     }
 
-    private static WriteIndexedScalarNode<? extends RAbstractVector, ? extends Object> createIndexedAction(RType type, boolean setListElementAsObject, boolean isReplace) {
-        switch (type) {
-            case Logical:
-                return new WriteLogicalAction();
-            case Integer:
-                return new WriteIntegerAction();
-            case Double:
-                return new WriteDoubleAction();
-            case Complex:
-                return new WriteComplexAction();
-            case Character:
-                return new WriteCharacterAction();
-            case Raw:
-                return new WriteRawAction();
-            case Language:
-            case Expression:
-            case PairList:
-            case List:
-                return new WriteListAction(setListElementAsObject, isReplace);
-            default:
-                throw RInternalError.shouldNotReachHere("WriteIndexedScalarNode for " + type);
-        }
-    }
-
-    private abstract static class WriteIndexedScalarNode<A extends RAbstractVector, V extends Object> extends Node {
-
-        final NACheck valueNACheck = NACheck.create();
-
-        abstract void apply(A leftAccess, Object leftStore, int leftIndex, V rightAccess, Object rightStore, int rightIndex);
-
-        abstract void applyNA(A leftAccess, Object leftStore, int leftIndex);
-
-    }
-
-    private static final class WriteLogicalAction extends WriteIndexedScalarNode<RAbstractLogicalVector, RAbstractLogicalVector> {
-
-        @Override
-        void apply(RAbstractLogicalVector leftAccess, Object leftStore, int leftIndex, RAbstractLogicalVector rightAccess, Object rightStore, int rightIndex) {
-            byte value = rightAccess.getDataAt(rightStore, rightIndex);
-            leftAccess.setDataAt(leftStore, leftIndex, value);
-            valueNACheck.check(value);
-        }
-
-        @Override
-        void applyNA(RAbstractLogicalVector leftAccess, Object leftStore, int leftIndex) {
-            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.LOGICAL_NA);
-            valueNACheck.seenNA();
-        }
-    }
-
-    private static final class WriteIntegerAction extends WriteIndexedScalarNode<RAbstractIntVector, RAbstractIntVector> {
-
-        @Override
-        void apply(RAbstractIntVector leftAccess, Object leftStore, int leftIndex, RAbstractIntVector rightAccess, Object rightStore, int rightIndex) {
-            int value = rightAccess.getDataAt(rightStore, rightIndex);
-            leftAccess.setDataAt(leftStore, leftIndex, value);
-            valueNACheck.check(value);
-        }
-
-        @Override
-        void applyNA(RAbstractIntVector leftAccess, Object leftStore, int leftIndex) {
-            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.INT_NA);
-            valueNACheck.seenNA();
-        }
-    }
-
-    private static final class WriteDoubleAction extends WriteIndexedScalarNode<RAbstractDoubleVector, RAbstractDoubleVector> {
-
-        @Override
-        void apply(RAbstractDoubleVector leftAccess, Object leftStore, int leftIndex, RAbstractDoubleVector rightAccess, Object rightStore, int rightIndex) {
-            double value = rightAccess.getDataAt(rightStore, rightIndex);
-            leftAccess.setDataAt(leftStore, leftIndex, value);
-            valueNACheck.check(value);
-        }
-
-        @Override
-        void applyNA(RAbstractDoubleVector leftAccess, Object leftStore, int leftIndex) {
-            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.DOUBLE_NA);
-            valueNACheck.seenNA();
-        }
-    }
-
-    private static final class WriteComplexAction extends WriteIndexedScalarNode<RAbstractComplexVector, RAbstractComplexVector> {
-
-        @Override
-        void apply(RAbstractComplexVector leftAccess, Object leftStore, int leftIndex, RAbstractComplexVector rightAccess, Object rightStore, int rightIndex) {
-            RComplex value = rightAccess.getDataAt(rightStore, rightIndex);
-            leftAccess.setDataAt(leftStore, leftIndex, value);
-            valueNACheck.check(value);
-        }
-
-        @Override
-        void applyNA(RAbstractComplexVector leftAccess, Object leftStore, int leftIndex) {
-            leftAccess.setDataAt(leftStore, leftIndex, RComplex.createNA());
-            valueNACheck.seenNA();
-        }
-    }
-
-    private static final class WriteCharacterAction extends WriteIndexedScalarNode<RAbstractStringVector, RAbstractStringVector> {
-
-        @Override
-        void apply(RAbstractStringVector leftAccess, Object leftStore, int leftIndex, RAbstractStringVector rightAccess, Object rightStore, int rightIndex) {
-            String value = rightAccess.getDataAt(rightStore, rightIndex);
-            leftAccess.setDataAt(leftStore, leftIndex, value);
-            valueNACheck.check(value);
-        }
-
-        @Override
-        void applyNA(RAbstractStringVector leftAccess, Object leftStore, int leftIndex) {
-            leftAccess.setDataAt(leftStore, leftIndex, RRuntime.STRING_NA);
-            valueNACheck.seenNA();
-        }
-    }
-
-    private static final class WriteRawAction extends WriteIndexedScalarNode<RAbstractRawVector, RAbstractRawVector> {
-
-        @Override
-        void apply(RAbstractRawVector leftAccess, Object leftStore, int leftIndex, RAbstractRawVector rightAccess, Object rightStore, int rightIndex) {
-            byte value = rightAccess.getRawDataAt(rightStore, rightIndex);
-            leftAccess.setRawDataAt(leftStore, leftIndex, value);
-            valueNACheck.check(value);
-        }
-
-        @Override
-        void applyNA(RAbstractRawVector leftAccess, Object leftStore, int leftIndex) {
-            // nothing to do
-        }
-    }
-
-    private static final class WriteListAction extends WriteIndexedScalarNode<RAbstractListBaseVector, Object> {
-
-        private final boolean setListElementAsObject;
-        private final boolean isReplace;
-        @Child private UpdateShareableChildValueNode updateStateOfListElement;
-        @Child private ShareObjectNode shareObjectNode;
-
-        WriteListAction(boolean setListElementAsObject, boolean isReplace) {
-            this.setListElementAsObject = setListElementAsObject;
-            this.isReplace = isReplace;
-            if (!isReplace) {
-                updateStateOfListElement = UpdateShareableChildValueNode.create();
-            } else {
-                shareObjectNode = ShareObjectNode.create();
+    private void setListElement(RandomIterator leftIter, VectorAccess leftAccess, RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int leftIndex, int rightIndex) {
+        Object rightValue = rightAccess.getListElement(rightIter, rightIndex);
+        if (isReplace) {
+            // we are replacing within the same list
+            if (leftAccess.getListElement(leftIter, leftIndex) != rightValue) {
+                shareObjectNode.execute(rightValue);
             }
+        } else {
+            // we are writing into a list data that are being read from possibly another list
+            updateStateOfListElement.execute(right, rightValue);
         }
 
-        @Override
-        void apply(RAbstractListBaseVector leftAccess, Object leftStore, int leftIndex, Object rightAccess, Object rightStore, int rightIndex) {
-            Object rightValue;
-            if (setListElementAsObject) {
-                rightValue = rightAccess;
-                // unbox scalar vectors
-                if (rightValue instanceof RScalarVector) {
-                    rightValue = ((RScalarVector) rightValue).getDataAtAsObject(rightStore, 0);
-                }
-            } else {
-                rightValue = ((RAbstractContainer) rightAccess).getDataAtAsObject(rightStore, rightIndex);
-            }
-
-            if (isReplace) {
-                // we are replacing within the same list
-                if (leftAccess.getDataAtAsObject(leftStore, leftIndex) != rightValue) {
-                    shareObjectNode.execute(rightValue);
-                }
-            } else {
-                // we are writing into a list data that are being read from possibly another list
-                updateStateOfListElement.execute(rightAccess, rightValue);
-            }
-
-            leftAccess.setDataAt(leftStore, leftIndex, rightValue);
-            valueNACheck.checkListElement(rightValue);
-        }
-
-        @Override
-        void applyNA(RAbstractListBaseVector leftAccess, Object leftStore, int leftIndex) {
-            leftAccess.setDataAt(leftStore, leftIndex, RNull.instance);
-            valueNACheck.seenNA();
-        }
+        leftAccess.setListElement(leftIter, leftIndex, rightValue);
     }
 }

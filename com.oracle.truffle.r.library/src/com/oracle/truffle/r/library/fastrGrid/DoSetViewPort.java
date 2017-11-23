@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 final class DoSetViewPort {
@@ -74,7 +75,7 @@ final class DoSetViewPort {
         pushedViewPort.setDataAt(ViewPort.PVP_DEVWIDTHCM, scalar(Unit.inchesToCm(currentDevice.getWidth())));
         pushedViewPort.setDataAt(ViewPort.PVP_DEVHEIGHTCM, scalar(Unit.inchesToCm(currentDevice.getHeight())));
 
-        assert pushedViewPort.verify();
+        assert RAbstractVector.verify(pushedViewPort);
         return pushedViewPort;
     }
 

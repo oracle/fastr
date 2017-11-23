@@ -120,6 +120,17 @@ public final class NACheck {
         return false;
     }
 
+    public boolean check(double real, double imag) {
+        if (state != NO_CHECK && RRuntime.isNA(real, imag)) {
+            if (state == CHECK_DEOPT) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                state = CHECK;
+            }
+            return true;
+        }
+        return false;
+    }
+
     public void seenNA() {
         if (state != CHECK) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -161,6 +172,7 @@ public final class NACheck {
     }
 
     public boolean checkListElement(Object value) {
+        assert value != null;
         if (state != NO_CHECK && value == RNull.instance) {
             if (state == CHECK_DEOPT) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

@@ -27,45 +27,40 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 @ImportStatic(RRuntime.class)
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class IsNA extends RBuiltinNode.Arg1 {
 
     @Child private IsNA recursiveIsNA;
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-    @Child private GetDimAttributeNode getDimsNode = GetDimAttributeNode.create();
-    @Child private SetDimNamesAttributeNode setDimNamesNode = SetDimNamesAttributeNode.create();
-    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
-    private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
+    @Child private VectorFactory factory = VectorFactory.create();
+    @Child private GetDimAttributeNode getDimsNode = GetDimAttributeNode.create();
+    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
     static {
         Casts.noCasts(IsNA.class);
@@ -87,36 +82,8 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RAbstractIntVector vector) {
-        byte[] resultVector = new byte[vector.getLength()];
-        for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
-        }
-        return createResult(resultVector, vector);
-    }
-
-    @Specialization
     protected byte isNA(double value) {
         return RRuntime.asLogical(RRuntime.isNAorNaN(value));
-    }
-
-    @Specialization
-    protected RLogicalVector isNA(RAbstractDoubleVector vector) {
-        byte[] resultVector = new byte[vector.getLength()];
-        for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = RRuntime.asLogical(RRuntime.isNAorNaN(vector.getDataAt(i)));
-        }
-        return createResult(resultVector, vector);
-    }
-
-    @Specialization
-    protected RLogicalVector isNA(RComplexVector vector) {
-        byte[] resultVector = new byte[vector.getLength()];
-        for (int i = 0; i < vector.getLength(); i++) {
-            RComplex complex = vector.getDataAt(i);
-            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(complex));
-        }
-        return createResult(resultVector, vector);
     }
 
     @Specialization
@@ -125,52 +92,8 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RStringVector vector) {
-        byte[] resultVector = new byte[vector.getLength()];
-        for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = RRuntime.asLogical(RRuntime.isNA(vector.getDataAt(i)));
-        }
-        return createResult(resultVector, vector);
-    }
-
-    @Specialization
-    protected RLogicalVector isNA(RList list) {
-        byte[] resultVector = new byte[list.getLength()];
-        for (int i = 0; i < list.getLength(); i++) {
-            Object result = isNARecursive(list.getDataAt(i));
-            byte isNAResult;
-            if (result instanceof Byte) {
-                isNAResult = (Byte) result;
-            } else if (result instanceof RLogicalVector) {
-                RLogicalVector vector = (RLogicalVector) result;
-                // result is false unless that element is a length-one atomic vector
-                // and the single element of that vector is regarded as NA
-                isNAResult = (vector.getLength() == 1) ? vector.getDataAt(0) : RRuntime.LOGICAL_FALSE;
-            } else {
-                throw fail("unhandled return type in isNA(list)");
-            }
-            resultVector[i] = isNAResult;
-        }
-        return RDataFactory.createLogicalVector(resultVector, RDataFactory.COMPLETE_VECTOR);
-    }
-
-    @TruffleBoundary
-    private static UnsupportedOperationException fail(String message) {
-        throw new UnsupportedOperationException(message);
-    }
-
-    @Specialization
     protected byte isNA(byte value) {
         return RRuntime.asLogical(RRuntime.isNA(value));
-    }
-
-    @Specialization
-    protected RLogicalVector isNA(RLogicalVector vector) {
-        byte[] resultVector = new byte[vector.getLength()];
-        for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = (RRuntime.isNA(vector.getDataAt(i)) ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE);
-        }
-        return createResult(resultVector, vector);
     }
 
     @Specialization
@@ -183,19 +106,62 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization
-    protected RLogicalVector isNA(RRawVector vector) {
-        byte[] resultVector = new byte[vector.getLength()];
-        for (int i = 0; i < vector.getLength(); i++) {
-            resultVector[i] = RRuntime.LOGICAL_FALSE;
+    private RLogicalVector isNAVector(RAbstractVector vector, VectorAccess access) {
+        try (SequentialIterator iter = access.access(vector)) {
+            byte[] data = new byte[access.getLength(iter)];
+            while (access.next(iter)) {
+                boolean isNA;
+                switch (access.getType()) {
+                    case Double:
+                        isNA = access.na.checkNAorNaN(access.getDouble(iter));
+                        break;
+                    case Character:
+                    case Complex:
+                    case Integer:
+                    case Logical:
+                        isNA = access.isNA(iter);
+                        break;
+                    case Raw:
+                        isNA = false;
+                        break;
+                    case List:
+                        Object result = isNARecursive(access.getListElement(iter));
+                        if (result instanceof Byte) {
+                            isNA = ((byte) result) == RRuntime.LOGICAL_TRUE;
+                        } else if (result instanceof RLogicalVector) {
+                            RLogicalVector recVector = (RLogicalVector) result;
+                            // result is false unless that element is a length-one atomic vector
+                            // and the single element of that vector is regarded as NA
+                            isNA = (recVector.getLength() == 1) ? recVector.getDataAt(0) == RRuntime.LOGICAL_TRUE : false;
+                        } else {
+                            throw RInternalError.shouldNotReachHere("unhandled return type in isNA(list)");
+                        }
+                        break;
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+
+                }
+                data[iter.getIndex()] = RRuntime.asLogical(isNA);
+            }
+            return factory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(vector), getNamesNode.getNames(vector), getDimNamesNode.getDimNames(vector));
         }
-        return createResult(resultVector, vector);
+    }
+
+    @Specialization(guards = "access.supports(vector)")
+    protected RLogicalVector isNACached(RAbstractVector vector,
+                    @Cached("vector.access()") VectorAccess access) {
+        return isNAVector(vector, access);
+    }
+
+    @Specialization(replaces = "isNACached")
+    protected RLogicalVector isNAGeneric(RAbstractVector vector) {
+        return isNAVector(vector, vector.slowPathAccess());
     }
 
     @Specialization
     protected RLogicalVector isNA(RNull value) {
         warning(RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
-        return RDataFactory.createEmptyLogicalVector();
+        return factory.createEmptyLogicalVector();
     }
 
     @Specialization(guards = "isForeignObject(obj)")
@@ -203,20 +169,9 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    // Note: all the primitive values have specialization, so we can only get RTypedValue in
-    // fallback
     @Fallback
     protected byte isNA(Object value) {
-        warning(RError.Message.IS_NA_TO_NON_VECTOR, value instanceof RTypedValue ? ((RTypedValue) value).getRType().getName() : value);
+        warning(RError.Message.IS_NA_TO_NON_VECTOR, Predef.typeName().apply(value));
         return RRuntime.LOGICAL_FALSE;
-    }
-
-    private RLogicalVector createResult(byte[] data, RAbstractVector originalVector) {
-        RLogicalVector result = RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(originalVector), getNamesNode.getNames(originalVector));
-        RList dimNames = getDimNamesNode.getDimNames(originalVector);
-        if (nullDimNamesProfile.profile(dimNames != null)) {
-            setDimNamesNode.setDimNames(result, dimNames);
-        }
-        return result;
     }
 }

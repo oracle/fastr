@@ -12,7 +12,6 @@ package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.ArithmeticWhiteList;
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
@@ -55,15 +54,13 @@ public class TestBuiltin_rowMeans extends TestBase {
         assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = TRUE)}");
         assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NaN),nrow=2,ncol=2), na.rm = FALSE)}");
         assertEval("{rowMeans(matrix(c(TRUE,FALSE,FALSE,NA),nrow=2,ncol=2), na.rm = FALSE)}");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = TRUE)}");
+
         // Whichever value(NA or NaN) is first in the row will be returned for that row.
         assertEval("{rowMeans(matrix(c(NA,NaN,NaN,NA),ncol=2,nrow=2))}");
 
         assertEval("{x<-matrix(c(\"1\",\"2\",\"3\",\"4\"),ncol=2);rowMeans(x)}");
-        assertEval(ArithmeticWhiteList.WHITELIST, "{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
-        // FIXME GnuR error description slightly better for matrix()
-        // Expected output: Error in matrix(NA, NA, NA) : invalid 'nrow' value (too large or NA)
-        // FastR output: Error: the dims contain missing values
-        assertEval(Ignored.OutputFormatting, "{rowMeans(matrix(NA,NA,NA),TRUE)}");
+        assertEval("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}");
+        assertEval("{rowMeans(matrix(NA,NA,NA),TRUE)}");
     }
 }

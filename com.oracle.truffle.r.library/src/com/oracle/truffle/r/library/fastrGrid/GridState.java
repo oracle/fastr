@@ -18,6 +18,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.FileDevUtils;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public final class GridState {
@@ -104,7 +105,7 @@ public final class GridState {
 
     public void initGPar(GridDevice currentDevice) {
         devState.gpar = GPar.createNew(currentDevice);
-        assert devState.gpar.verify();
+        assert RAbstractVector.verify(devState.gpar);
     }
 
     /**
@@ -143,7 +144,7 @@ public final class GridState {
     }
 
     public void setViewPort(RList viewPort) {
-        assert viewPort.verify();
+        assert RAbstractVector.verify(viewPort);
         devState.viewPort = viewPort;
     }
 

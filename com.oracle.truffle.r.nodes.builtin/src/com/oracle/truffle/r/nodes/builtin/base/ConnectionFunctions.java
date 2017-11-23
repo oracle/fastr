@@ -59,6 +59,7 @@ import java.nio.ShortBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -90,7 +91,6 @@ import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
 import com.oracle.truffle.r.runtime.conn.URLConnections.URLRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -106,13 +106,12 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -1066,90 +1065,83 @@ public abstract class ConnectionFunctions {
             return WriteDataNodeGen.create();
         }
 
+        @TruffleBoundary
         private static ByteBuffer allocate(int capacity, boolean swap) {
             ByteBuffer buffer = ByteBuffer.allocate(capacity);
             checkOrder(buffer, swap);
             return buffer;
         }
 
-        @Specialization
-        protected ByteBuffer writeInteger(RAbstractIntVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
-            int length = object.getLength();
-            ByteBuffer buffer = allocate(4 * length, swap);
-            for (int i = 0; i < length; i++) {
-                int value = object.getDataAt(i);
-                buffer.putInt(value);
-            }
-            return buffer;
-        }
-
-        @Specialization
-        protected ByteBuffer writeDouble(RAbstractDoubleVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
-            int length = object.getLength();
-            ByteBuffer buffer = allocate(8 * length, swap);
-            for (int i = 0; i < length; i++) {
-                double value = object.getDataAt(i);
-                buffer.putDouble(value);
-            }
-            return buffer;
-        }
-
-        @Specialization
-        protected ByteBuffer writeComplex(RAbstractComplexVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
-            int length = object.getLength();
-            ByteBuffer buffer = allocate(16 * length, swap);
-            for (int i = 0; i < length; i++) {
-                RComplex complex = object.getDataAt(i);
-                double re = complex.getRealPart();
-                double im = complex.getImaginaryPart();
-                buffer.putDouble(re);
-                buffer.putDouble(im);
-            }
-            return buffer;
-        }
-
-        @Specialization
         @TruffleBoundary
-        protected ByteBuffer writeString(RAbstractStringVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
-            int length = object.getLength();
-            byte[][] data = new byte[length][];
-            int totalLength = 0;
-            for (int i = 0; i < length; i++) {
-                String s = object.getDataAt(i);
-                // There is no special encoding for NA_character_
-                data[i] = s.getBytes();
-                totalLength = totalLength + data[i].length + 1; // zero pad
-            }
-
-            ByteBuffer buffer = allocate(totalLength, swap);
-            for (int i = 0; i < length; i++) {
-                buffer.put(data[i]);
-                buffer.put((byte) 0);
-            }
-            return buffer;
+        private static byte[] encodeString(String s) {
+            return s.getBytes(StandardCharsets.UTF_8);
         }
 
-        @Specialization
-        protected ByteBuffer writeLogical(RAbstractLogicalVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
-            // encoded as ints, with FALSE=0, TRUE=1, NA=Integer_NA_
-            int length = object.getLength();
-            ByteBuffer buffer = allocate(4 * length, swap);
-            for (int i = 0; i < length; i++) {
-                byte value = object.getDataAt(i);
-                int encoded = RRuntime.isNA(value) ? RRuntime.INT_NA : value == RRuntime.LOGICAL_FALSE ? 0 : 1;
-                buffer.putInt(encoded);
+        @Specialization(guards = "objectAccess.supports(object)")
+        protected ByteBuffer write(RAbstractVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes,
+                        @Cached("object.access()") VectorAccess objectAccess) {
+            try (SequentialIterator iter = objectAccess.access(object)) {
+                int length = objectAccess.getLength(iter);
+
+                ByteBuffer buffer;
+                switch (objectAccess.getType()) {
+                    case Integer:
+                        buffer = allocate(4 * length, swap);
+                        while (objectAccess.next(iter)) {
+                            buffer.putInt(objectAccess.getInt(iter));
+                        }
+                        return buffer;
+                    case Double:
+                        buffer = allocate(8 * length, swap);
+                        while (objectAccess.next(iter)) {
+                            buffer.putDouble(objectAccess.getDouble(iter));
+                        }
+                        return buffer;
+                    case Complex:
+                        buffer = allocate(16 * length, swap);
+                        while (objectAccess.next(iter)) {
+                            buffer.putDouble(objectAccess.getComplexR(iter));
+                            buffer.putDouble(objectAccess.getComplexI(iter));
+                        }
+                        return buffer;
+                    case Character:
+                        byte[][] data = new byte[length][];
+                        int totalLength = 0;
+                        while (objectAccess.next(iter)) {
+                            // There is no special encoding for NA_character_
+                            data[iter.getIndex()] = encodeString(objectAccess.getString(iter));
+                            // zero pad
+                            totalLength = totalLength + data[iter.getIndex()].length + 1;
+                        }
+
+                        buffer = allocate(totalLength, swap);
+                        for (int i = 0; i < length; i++) {
+                            buffer.put(data[i]);
+                            buffer.put((byte) 0);
+                        }
+                        return buffer;
+                    case Logical:
+                        buffer = allocate(4 * length, swap);
+                        while (objectAccess.next(iter)) {
+                            buffer.putInt(objectAccess.getInt(iter)); // converted to int
+                        }
+                        return buffer;
+                    case Raw:
+                        buffer = allocate(length, swap);
+                        while (objectAccess.next(iter)) {
+                            buffer.put(objectAccess.getRaw(iter));
+                        }
+                        return buffer;
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
             }
-            return buffer;
         }
 
-        @Specialization
-        protected ByteBuffer writeRaw(RAbstractRawVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes) {
-            int length = object.getLength();
-            ByteBuffer buffer = allocate(length, swap);
-            for (int i = 0; i < length; i++) {
-                buffer.put(object.getRawDataAt(i));
-            }
-            return buffer;
+        @Specialization(replaces = "write")
+        @TruffleBoundary
+        protected ByteBuffer writeGeneric(RAbstractVector object, int size, boolean swap, boolean useBytes) {
+            return write(object, size, swap, useBytes, object.slowPathAccess());
         }
     }
 

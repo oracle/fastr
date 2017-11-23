@@ -26,8 +26,12 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromRawAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromRawAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 public final class RRaw extends RScalarVector implements RAbstractRawVector {
@@ -55,7 +59,7 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
             case Complex:
                 return RComplex.valueOf(value, 0.0);
             case Character:
-                return RString.valueOf(RRuntime.rawToString(value));
+                return RString.valueOf(RRuntime.rawToHexString(value));
             default:
                 return null;
         }
@@ -98,5 +102,36 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
 
     public static RRaw valueOf(byte value) {
         return new RRaw(value);
+    }
+
+    private static final class FastPathAccess extends FastPathFromRawAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected byte getRaw(Object store, int index) {
+            assert index == 0;
+            return ((RRaw) store).value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromRawAccess SLOW_PATH_ACCESS = new SlowPathFromRawAccess() {
+        @Override
+        protected byte getRaw(Object store, int index) {
+            assert index == 0;
+            return ((RRaw) store).value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

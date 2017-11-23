@@ -87,29 +87,27 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
-    protected Object doNumericVectorCached(Object left, Object right,
+    protected Object doNumericVectorCached(RAbstractVector left, RAbstractVector right,
                     @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);
     }
 
     @Specialization(replaces = "doNumericVectorCached", guards = {"isNumericVector(left)", "isNumericVector(right)"})
     @TruffleBoundary
-    protected Object doNumericVectorGeneric(Object left, Object right,
+    protected Object doNumericVectorGeneric(RAbstractVector left, RAbstractVector right,
                     @Cached("binary.createOperation()") BinaryArithmetic arithmetic,
-                    @Cached("new(createCached(arithmetic, left, right))") GenericNumericVectorNode generic) {
-        RAbstractVector leftVector = (RAbstractVector) left;
-        RAbstractVector rightVector = (RAbstractVector) right;
-        return generic.get(arithmetic, leftVector, rightVector).apply(leftVector, rightVector);
+                    @Cached("createGeneric()") GenericNumericVectorNode generic) {
+        return generic.get(arithmetic, left, right).apply(left, right);
     }
 
-    protected BinaryMapNode createFastCached(Object left, Object right) {
+    protected BinaryMapNode createFastCached(RAbstractVector left, RAbstractVector right) {
         if (isNumericVector(left) && isNumericVector(right)) {
-            return createCached(binary.createOperation(), left, right);
+            return createCached(binary.createOperation(), left, right, false);
         }
         return null;
     }
 
-    protected static boolean isNumericVector(Object value) {
+    protected static boolean isNumericVector(RAbstractVector value) {
         return value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector || value instanceof RAbstractComplexVector || value instanceof RAbstractLogicalVector;
     }
 
@@ -133,19 +131,19 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"isNumericVector(right)"})
-    protected Object doLeftNull(@SuppressWarnings("unused") RNull left, Object right,
+    protected Object doLeftNull(@SuppressWarnings("unused") RNull left, RAbstractVector right,
                     @Cached("createClassProfile()") ValueProfile classProfile) {
-        RType rType = ((RAbstractVector) classProfile.profile(right)).getRType();
-        if (rType == RType.Complex) {
+        RType type = classProfile.profile(right).getRType();
+        if (type == RType.Complex) {
             return RDataFactory.createEmptyComplexVector();
         } else {
-            if (rType == RType.Integer || rType == RType.Logical) {
+            if (type == RType.Integer || type == RType.Logical) {
                 if (operation instanceof BinaryArithmetic.Div || operation instanceof BinaryArithmetic.Pow) {
                     return RType.Double.getEmpty();
                 } else {
                     return RType.Integer.getEmpty();
                 }
-            } else if (rType == RType.Double) {
+            } else if (type == RType.Double) {
                 return RType.Double.getEmpty();
             } else {
                 throw error(Message.NON_NUMERIC_BINARY);
@@ -154,7 +152,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"isNumericVector(left)"})
-    protected Object doRightNull(Object left, RNull right,
+    protected Object doRightNull(RAbstractVector left, RNull right,
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         return doLeftNull(right, left, classProfile);
     }
@@ -164,7 +162,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
         throw error(Message.NON_NUMERIC_BINARY);
     }
 
-    protected static BinaryMapNode createCached(BinaryArithmetic innerArithmetic, Object left, Object right) {
+    protected static BinaryMapNode createCached(BinaryArithmetic innerArithmetic, Object left, Object right, boolean isGeneric) {
         RAbstractVector leftVector = (RAbstractVector) left;
         RAbstractVector rightVector = (RAbstractVector) right;
 
@@ -174,22 +172,22 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
             resultType = RType.Double;
         }
 
-        return BinaryMapNode.create(new BinaryMapArithmeticFunctionNode(innerArithmetic), leftVector, rightVector, argumentType, resultType, true);
+        return BinaryMapNode.create(new BinaryMapArithmeticFunctionNode(innerArithmetic), leftVector, rightVector, argumentType, resultType, true, isGeneric);
+    }
+
+    protected static GenericNumericVectorNode createGeneric() {
+        return new GenericNumericVectorNode();
     }
 
     protected static final class GenericNumericVectorNode extends TruffleBoundaryNode {
 
         @Child private BinaryMapNode cached;
 
-        public GenericNumericVectorNode(BinaryMapNode cachedOperation) {
-            this.cached = insert(cachedOperation);
-        }
-
         public BinaryMapNode get(BinaryArithmetic arithmetic, RAbstractVector left, RAbstractVector right) {
             CompilerAsserts.neverPartOfCompilation();
             BinaryMapNode map = cached;
-            if (!map.isSupported(left, right)) {
-                cached = map = map.replace(createCached(arithmetic, left, right));
+            if (map == null || !map.isSupported(left, right)) {
+                cached = map = insert(createCached(arithmetic, left, right, true));
             }
             return map;
         }

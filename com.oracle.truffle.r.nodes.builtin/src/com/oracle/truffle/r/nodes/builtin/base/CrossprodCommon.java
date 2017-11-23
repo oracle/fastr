@@ -80,7 +80,7 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         return CrossprodCommonNodeGen.create(false);
     }
 
-    @Specialization(guards = {"x.isMatrix()", "y.isMatrix()"})
+    @Specialization(guards = {"getXDimsNode.isMatrix(x)", "getYDimsNode.isMatrix(y)"})
     protected RDoubleVector crossprod(RAbstractDoubleVector x, RAbstractDoubleVector y,
                     @Cached("create()") GetDimAttributeNode getXDimsNode,
                     @Cached("create()") GetDimAttributeNode getYDimsNode) {
@@ -100,7 +100,7 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
         return copyDimNames(x, y, (RAbstractVector) matMult.executeObject(transposeX(x), transposeY(y)));
     }
 
-    @Specialization(guards = "x.isMatrix()")
+    @Specialization(guards = "getDimsNode.isMatrix(x)")
     protected RDoubleVector crossprodDoubleMatrix(RAbstractDoubleVector x, @SuppressWarnings("unused") RNull y,
                     @Cached("create()") GetReadonlyData.Double getReadonlyData,
                     @Cached("create()") GetDimAttributeNode getDimsNode,

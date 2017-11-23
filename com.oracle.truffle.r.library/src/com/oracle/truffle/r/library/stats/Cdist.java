@@ -12,9 +12,9 @@
  */
 package com.oracle.truffle.r.library.stats;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
 
 import com.oracle.truffle.api.dsl.Cached;
@@ -25,8 +25,6 @@ import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
-import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -34,9 +32,12 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
+
     private static final NACheck naCheck = NACheck.create();
 
     @Child private GetFixedAttributeNode getNamesAttrNode = GetFixedAttributeNode.createNames();
@@ -49,9 +50,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         casts.arg(3).asDoubleVector().findFirst();
     }
 
-    @Specialization(guards = "method == cachedMethod")
-    protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p, @SuppressWarnings("unused") @Cached("method") int cachedMethod,
-                    @Cached("create()") VectorReadAccess.Double xAccess,
+    @Specialization(guards = {"method == cachedMethod", "xAccess.supports(x)"})
+    protected RDoubleVector cdist(RAbstractDoubleVector x, @SuppressWarnings("unused") int method, RList list, double p,
+                    @Cached("method") @SuppressWarnings("unused") int cachedMethod,
+                    @Cached("x.access()") VectorAccess xAccess,
                     @Cached("getMethod(method)") Method methodObj,
                     @Cached("create()") SetAttributeNode setAttrNode,
                     @Cached("create()") SetClassAttributeNode setClassAttrNode,
@@ -60,8 +62,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         int nc = getDimNode.ncols(x);
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
         double[] ans = new double[n];
-        RDoubleVector xm = x.materialize();
-        rdistance(new ReadAccessor.Double(x, xAccess), nr, nc, ans, false, methodObj, p);
+
+        try (RandomIterator xIter = xAccess.randomAccess(x)) {
+            rdistance(xAccess, xIter, nr, nc, ans, false, methodObj, p);
+        }
         RDoubleVector result = RDataFactory.createDoubleVector(ans, naCheck.neverSeenNA());
         DynamicObject resultAttrs = result.initAttributes();
 
@@ -81,6 +85,14 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         return result;
     }
 
+    @Specialization(replaces = "cdist")
+    protected RDoubleVector cdistGeneric(RAbstractDoubleVector x, int method, RList list, double p,
+                    @Cached("create()") SetAttributeNode setAttrNode,
+                    @Cached("create()") SetClassAttributeNode setClassAttrNode,
+                    @Cached("create()") GetDimAttributeNode getDimNode) {
+        return cdist(x, method, list, p, method, x.slowPathAccess(), getMethod(method), setAttrNode, setClassAttrNode, getDimNode);
+    }
+
     private static boolean bothNonNAN(double a, double b) {
         return !RRuntime.isNAorNaN(a) && !RRuntime.isNAorNaN(b);
     }
@@ -96,7 +108,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         return Method.values()[method - 1];
     }
 
-    private void rdistance(ReadAccessor.Double xAccess, int nr, int nc, double[] d, boolean diag, Method method, double p) {
+    private void rdistance(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, double[] d, boolean diag, Method method, double p) {
         int ij; /* can exceed 2^31 - 1, but Java can't handle that */
         //
         if (method == Method.MINKOWSKI) {
@@ -109,7 +121,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         naCheck.enable(true);
         for (int j = 0; j <= nr; j++) {
             for (int i = j + dc; i < nr; i++) {
-                double r = method.dist(xAccess, nr, nc, i, j, p);
+                double r = method.dist(xAccess, xIter, nr, nc, i, j, p);
                 naCheck.check(r);
                 d[ij++] = r;
             }
@@ -119,7 +131,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
     public enum Method {
         EUCLIDEAN {
             @Override
-            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -130,8 +142,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 count = 0;
                 dist = 0;
                 for (j = 0; j < nc; j++) {
-                    if (bothNonNAN(xAccess.getDataAt(i1), xAccess.getDataAt(i2))) {
-                        dev = (xAccess.getDataAt(i1) - xAccess.getDataAt(i2));
+                    if (bothNonNAN(xAccess.getDouble(xIter, i1), xAccess.getDouble(xIter, i2))) {
+                        dev = (xAccess.getDouble(xIter, i1) - xAccess.getDouble(xIter, i2));
                         if (!RRuntime.isNAorNaN(dev)) {
                             dist += dev * dev;
                             count++;
@@ -152,7 +164,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MAXIMUM {
             @Override
-            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -163,8 +175,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 count = 0;
                 dist = -Double.MAX_VALUE;
                 for (j = 0; j < nc; j++) {
-                    if (bothNonNAN(xAccess.getDataAt(i1), xAccess.getDataAt(i2))) {
-                        dev = Math.abs(xAccess.getDataAt(i1) - xAccess.getDataAt(i2));
+                    if (bothNonNAN(xAccess.getDouble(xIter, i1), xAccess.getDouble(xIter, i2))) {
+                        dev = Math.abs(xAccess.getDouble(xIter, i1) - xAccess.getDouble(xIter, i2));
                         if (!RRuntime.isNAorNaN(dev)) {
                             if (dev > dist) {
                                 dist = dev;
@@ -184,7 +196,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MANHATTAN {
             @Override
-            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -195,8 +207,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 count = 0;
                 dist = 0;
                 for (j = 0; j < nc; j++) {
-                    if (bothNonNAN(xAccess.getDataAt(i1), xAccess.getDataAt(i2))) {
-                        dev = Math.abs(xAccess.getDataAt(i1) - xAccess.getDataAt(i2));
+                    if (bothNonNAN(xAccess.getDouble(xIter, i1), xAccess.getDouble(xIter, i2))) {
+                        dev = Math.abs(xAccess.getDouble(xIter, i1) - xAccess.getDouble(xIter, i2));
                         if (!RRuntime.isNAorNaN(dev)) {
                             dist += dev;
                             count++;
@@ -217,7 +229,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         CANBERRA {
             @Override
-            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -230,9 +242,9 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 count = 0;
                 dist = 0;
                 for (j = 0; j < nc; j++) {
-                    if (bothNonNAN(xAccess.getDataAt(i1), xAccess.getDataAt(i2))) {
-                        sum = Math.abs(xAccess.getDataAt(i1) + xAccess.getDataAt(i2));
-                        diff = Math.abs(xAccess.getDataAt(i1) - xAccess.getDataAt(i2));
+                    if (bothNonNAN(xAccess.getDouble(xIter, i1), xAccess.getDouble(xIter, i2))) {
+                        sum = Math.abs(xAccess.getDouble(xIter, i1) + xAccess.getDouble(xIter, i2));
+                        diff = Math.abs(xAccess.getDouble(xIter, i1) - xAccess.getDouble(xIter, i2));
                         if (sum > DBL_MIN || diff > DBL_MIN) {
                             dev = diff / sum;
                             if (!RRuntime.isNAorNaN(dev) ||
@@ -258,7 +270,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         BINARY {
             @Override
-            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 int total;
@@ -271,13 +283,13 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 dist = 0;
 
                 for (j = 0; j < nc; j++) {
-                    if (bothNonNAN(xAccess.getDataAt(i1), xAccess.getDataAt(i2))) {
-                        if (!bothFinite(xAccess.getDataAt(i1), xAccess.getDataAt(i2))) {
+                    if (bothNonNAN(xAccess.getDouble(xIter, i1), xAccess.getDouble(xIter, i2))) {
+                        if (!bothFinite(xAccess.getDouble(xIter, i1), xAccess.getDouble(xIter, i2))) {
                             RError.warning(RError.SHOW_CALLER2, RError.Message.GENERIC, "treating non-finite values as NA");
                         } else {
-                            if (xAccess.getDataAt(i1) != 0. || xAccess.getDataAt(i2) != 0.) {
+                            if (xAccess.getDouble(xIter, i1) != 0. || xAccess.getDouble(xIter, i2) != 0.) {
                                 count++;
-                                if (!(xAccess.getDataAt(i1) != 0. && xAccess.getDataAt(i2) != 0.)) {
+                                if (!(xAccess.getDouble(xIter, i1) != 0. && xAccess.getDouble(xIter, i2) != 0.)) {
                                     dist++;
                                 }
                             }
@@ -300,7 +312,7 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
         },
         MINKOWSKI {
             @Override
-            public double dist(ReadAccessor.Double xAccess, int nr, int nc, final int i1in, final int i2in, double p) {
+            public double dist(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, final int i1in, final int i2in, double p) {
                 int i1 = i1in;
                 int i2 = i2in;
                 double dev;
@@ -311,8 +323,8 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                 count = 0;
                 dist = 0;
                 for (j = 0; j < nc; j++) {
-                    if (bothNonNAN(xAccess.getDataAt(i1), xAccess.getDataAt(i2))) {
-                        dev = (xAccess.getDataAt(i1) - xAccess.getDataAt(i2));
+                    if (bothNonNAN(xAccess.getDouble(xIter, i1), xAccess.getDouble(xIter, i2))) {
+                        dev = (xAccess.getDouble(xIter, i1) - xAccess.getDouble(xIter, i2));
                         if (!RRuntime.isNAorNaN(dev)) {
                             dist += Math.pow(Math.abs(dev), p);
                             count++;
@@ -331,6 +343,6 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
             }
         };
 
-        public abstract double dist(ReadAccessor.Double xAccess, int nr, int nc, int i1, int i2, double p);
+        public abstract double dist(VectorAccess xAccess, RandomIterator xIter, int nr, int nc, int i1, int i2, double p);
     }
 }

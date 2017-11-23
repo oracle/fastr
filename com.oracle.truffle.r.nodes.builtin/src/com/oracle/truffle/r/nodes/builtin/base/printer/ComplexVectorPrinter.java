@@ -23,6 +23,8 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter.Scien
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 //Transcribed from GnuR, src/main/printutils.c
 
@@ -52,13 +54,13 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
 
         @Override
         protected FormatMetrics formatVector(int offs, int len) {
-            return formatComplexVector(vector, offs, len, 0, printCtx.parameters());
+            return formatComplexVector(iterator, access, offs, len, 0, printCtx.parameters());
         }
 
         @Override
         protected void printElement(int i, FormatMetrics fm) throws IOException {
             ComplexVectorMetrics cfm = (ComplexVectorMetrics) fm;
-            String v = encodeComplex(vector.getDataAt(i), cfm, '.', printCtx.parameters());
+            String v = encodeComplex(access.getComplex(iterator, i), cfm, '.', printCtx.parameters());
             out.print(v);
         }
 
@@ -74,69 +76,47 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
     }
 
     @TruffleBoundary
-    static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, PrintParameters pp) {
-        return formatComplexVector(x, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
+    static ComplexVectorMetrics formatComplexVector(RandomIterator iter, VectorAccess access, int offs, int n, int nsmall, PrintParameters pp) {
+        return formatComplexVector(iter, access, offs, n, nsmall, pp.getDigits(), pp.getScipen(), pp.getNaWidth());
     }
 
     @TruffleBoundary
-    static ComplexVectorMetrics formatComplexVector(RAbstractComplexVector x, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
-
-        int wr;
-        int dr;
-        int er;
-        int wi;
-        int di;
-        int ei;
+    static ComplexVectorMetrics formatComplexVector(RandomIterator iter, VectorAccess access, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
 
         /* format.info() or x[1..l] for both Re & Im */
-        int left;
-        int right;
-        int sleft;
         int rt;
         int mnl;
         int mxl;
         int mxsl;
         int mxns;
-        int wF;
-        int iwF;
         int irt;
         int imnl;
         int imxl;
         int imxsl;
         int imxns;
-        int neg;
-        boolean naflag;
-        boolean rnanflag;
-        boolean rposinf;
-        boolean rneginf;
-        boolean inanflag;
-        boolean iposinf;
-        RComplex tmp;
         boolean allReZero = true;
         boolean allImZero = true;
+        boolean naflag = false;
+        boolean rnanflag = false;
+        boolean rposinf = false;
+        boolean rneginf = false;
+        boolean inanflag = false;
+        boolean iposinf = false;
 
-        naflag = false;
-        rnanflag = false;
-        rposinf = false;
-        rneginf = false;
-        inanflag = false;
-        iposinf = false;
-        neg = 0;
-
+        int neg = 0;
         rt = mxl = mxsl = mxns = RRuntime.INT_MIN_VALUE;
         irt = imxl = imxsl = imxns = RRuntime.INT_MIN_VALUE;
         imnl = mnl = RRuntime.INT_MAX_VALUE;
 
         for (int i = 0; i < n; i++) {
             /* Now round */
-            RComplex xi = x.getDataAt(offs + i);
+            RComplex xi = access.getComplex(iter, offs + i);
             if (RRuntime.isNA(xi.getRealPart()) || RRuntime.isNA(xi.getImaginaryPart())) {
                 naflag = true;
             } else {
                 /* real part */
 
-                tmp = zprecr(xi, digits);
-
+                RComplex tmp = zprecr(xi, digits);
                 if (!RRuntime.isFinite(tmp.getRealPart())) {
                     if (RRuntime.isNAorNaN(tmp.getRealPart())) {
                         rnanflag = true;
@@ -151,12 +131,12 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
                     }
                     ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getRealPart(), digits);
 
-                    left = sd.kpower + 1;
+                    int left = sd.kpower + 1;
                     if (sd.roundingwidens) {
                         left--;
                     }
-                    sleft = sd.sgn + ((left <= 0) ? 1 : left); /* >= 1 */
-                    right = sd.nsig - left; /* #{digits} right of '.' ( > 0 often) */
+                    int sleft = sd.sgn + ((left <= 0) ? 1 : left); /* >= 1 */
+                    int right = sd.nsig - left; /* #{digits} right of '.' ( > 0 often) */
                     if (sd.sgn != 0) {
                         neg = 1; /* if any < 0, need extra space for sign */
                     }
@@ -194,12 +174,12 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
                     }
                     ScientificDouble sd = DoubleVectorPrinter.scientific(tmp.getImaginaryPart(), digits);
 
-                    left = sd.kpower + 1;
+                    int left = sd.kpower + 1;
                     if (sd.roundingwidens) {
                         left--;
                     }
-                    sleft = (left <= 0) ? 1 : left;
-                    right = sd.nsig - left;
+                    int sleft = (left <= 0) ? 1 : left;
+                    int right = sd.nsig - left;
 
                     if (right > irt) {
                         irt = right;
@@ -229,6 +209,11 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         if (digits == 0) {
             rt = 0;
         }
+        int wr;
+        int dr;
+        int er;
+        int wi;
+        int wF;
         if (mxl != RRuntime.INT_MIN_VALUE) {
             if (mxl < 0) {
                 mxsl = 1 + neg;
@@ -253,6 +238,9 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
         if (digits == 0) {
             irt = 0;
         }
+        int di;
+        int ei;
+        int iwF;
         if (imxl != RRuntime.INT_MIN_VALUE) {
             if (imxl < 0) {
                 imxsl = 1;
@@ -400,8 +388,11 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
 
     @TruffleBoundary
     public static String encodeComplex(RComplex x, int digits, int sciPen, String naString) {
-        ComplexVectorMetrics cvm = formatComplexVector(x, 0, 1, 0, digits, sciPen, naString.length());
-        return encodeComplex(x, cvm, '.', digits, naString);
+        VectorAccess access = x.slowPathAccess();
+        try (RandomIterator iter = access.randomAccess(x)) {
+            ComplexVectorMetrics cvm = formatComplexVector(iter, access, 0, 1, 0, digits, sciPen, naString.length());
+            return encodeComplex(x, cvm, '.', digits, naString);
+        }
     }
 
     @TruffleBoundary
@@ -465,13 +456,19 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
     }
 
     public static String[] format(RAbstractComplexVector value, boolean trim, int nsmall, int width, char decimalMark, PrintParameters pp) {
-        ComplexVectorMetrics dfm = formatComplexVector(value, 0, value.getLength(), nsmall, pp);
-        ComplexVectorMetrics adjusted = new ComplexVectorMetrics(Math.max(trim ? 1 : dfm.wr, width), dfm.dr, dfm.er, Math.max(trim ? 1 : dfm.wi, width), dfm.di, dfm.ei);
+        VectorAccess access = value.slowPathAccess();
+        try (RandomIterator iter = access.randomAccess(value)) {
+            int length = access.getLength(iter);
+            ComplexVectorMetrics dfm = formatComplexVector(iter, access, 0, length, nsmall, pp);
+            int wr = Math.max(trim ? 1 : dfm.wr, width);
+            int wi = Math.max(trim ? 1 : dfm.wi, width);
+            ComplexVectorMetrics adjusted = new ComplexVectorMetrics(wr, dfm.dr, dfm.er, wi, dfm.di, dfm.ei);
 
-        String[] result = new String[value.getLength()];
-        for (int i = 0; i < value.getLength(); i++) {
-            result[i] = encodeComplex(value.getDataAt(i), adjusted, decimalMark, pp);
+            String[] result = new String[length];
+            for (int i = 0; i < length; i++) {
+                result[i] = encodeComplex(access.getComplex(iter, i), adjusted, decimalMark, pp);
+            }
+            return result;
         }
-        return result;
     }
 }

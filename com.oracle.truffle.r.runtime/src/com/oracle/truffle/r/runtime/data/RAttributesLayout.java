@@ -23,10 +23,8 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
@@ -59,71 +57,15 @@ public final class RAttributesLayout {
     private static final AttrsLayout NAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY);
     private static final AttrsLayout DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY);
     private static final AttrsLayout DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIMNAMES_ATTR_KEY);
+    private static final AttrsLayout NAMES_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
     private static final AttrsLayout ROWNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.ROWNAMES_ATTR_KEY);
     private static final AttrsLayout NAMES_AND_DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY);
     private static final AttrsLayout DIM_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
+    private static final AttrsLayout NAMES_AND_DIM_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
     private static final AttrsLayout CLASS_AND_CONNID_ATTRS_LAYOUT = new AttrsLayout(RRuntime.CLASS_ATTR_KEY, RRuntime.CONN_ID_ATTR_KEY);
 
     public static final AttrsLayout[] LAYOUTS = {EMPTY_ATTRS_LAYOUT, CLASS_ATTRS_LAYOUT, NAMES_ATTRS_LAYOUT, DIM_ATTRS_LAYOUT, DIMNAMES_ATTRS_LAYOUT, ROWNAMES_ATTRS_LAYOUT,
                     NAMES_AND_DIM_ATTRS_LAYOUT, DIM_AND_DIMNAMES_ATTRS_LAYOUT};
-
-    private static final Map<String, ConstantShapesAndProperties> constantShapesAndLocationsForAttribute = new HashMap<>();
-
-    static {
-        constantShapesAndLocationsForAttribute.put(RRuntime.CLASS_ATTR_KEY, new ConstantShapesAndProperties(
-                        new Shape[]{
-                                        CLASS_ATTRS_LAYOUT.shape,
-                                        CLASS_AND_CONNID_ATTRS_LAYOUT.shape
-                        },
-                        new Property[]{
-                                        CLASS_ATTRS_LAYOUT.properties[0],
-                                        CLASS_AND_CONNID_ATTRS_LAYOUT.properties[0]
-                        }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.NAMES_ATTR_KEY, new ConstantShapesAndProperties(
-                        new Shape[]{
-                                        NAMES_ATTRS_LAYOUT.shape,
-                                        NAMES_AND_DIM_ATTRS_LAYOUT.shape
-                        },
-                        new Property[]{
-                                        NAMES_ATTRS_LAYOUT.properties[0],
-                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[0]
-                        }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.DIM_ATTR_KEY, new ConstantShapesAndProperties(
-                        new Shape[]{
-                                        DIM_ATTRS_LAYOUT.shape,
-                                        NAMES_AND_DIM_ATTRS_LAYOUT.shape,
-                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.shape
-                        },
-                        new Property[]{
-                                        DIM_ATTRS_LAYOUT.properties[0],
-                                        NAMES_AND_DIM_ATTRS_LAYOUT.properties[1],
-                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[0]
-                        }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.DIMNAMES_ATTR_KEY, new ConstantShapesAndProperties(
-                        new Shape[]{
-                                        DIMNAMES_ATTRS_LAYOUT.shape,
-                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.shape
-                        },
-                        new Property[]{
-                                        DIMNAMES_ATTRS_LAYOUT.properties[0],
-                                        DIM_AND_DIMNAMES_ATTRS_LAYOUT.properties[1]
-                        }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.CONN_ID_ATTR_KEY, new ConstantShapesAndProperties(
-                        new Shape[]{
-                                        CLASS_AND_CONNID_ATTRS_LAYOUT.shape
-                        },
-                        new Property[]{
-                                        CLASS_AND_CONNID_ATTRS_LAYOUT.properties[0]
-                        }));
-        constantShapesAndLocationsForAttribute.put(RRuntime.ROWNAMES_ATTR_KEY, new ConstantShapesAndProperties(
-                        new Shape[]{
-                                        ROWNAMES_ATTRS_LAYOUT.shape
-                        },
-                        new Property[]{
-                                        ROWNAMES_ATTRS_LAYOUT.properties[0]
-                        }));
-
-    }
 
     private RAttributesLayout() {
     }
@@ -155,6 +97,10 @@ public final class RAttributesLayout {
         return DIMNAMES_ATTRS_LAYOUT.factory.newInstance(dimNames);
     }
 
+    public static DynamicObject createNamesAndDimNames(Object names, Object dimNames) {
+        return NAMES_AND_DIMNAMES_ATTRS_LAYOUT.factory.newInstance(names, dimNames);
+    }
+
     public static DynamicObject createRowNames(Object rowNames) {
         return ROWNAMES_ATTRS_LAYOUT.factory.newInstance(rowNames);
     }
@@ -167,12 +113,12 @@ public final class RAttributesLayout {
         return DIM_AND_DIMNAMES_ATTRS_LAYOUT.factory.newInstance(dim, dimNames);
     }
 
-    public static DynamicObject createClassWithConnId(Object cls, Object connId) {
-        return CLASS_AND_CONNID_ATTRS_LAYOUT.factory.newInstance(cls, connId);
+    public static DynamicObject createNamesAndDimAndDimNames(Object names, Object dim, Object dimNames) {
+        return NAMES_AND_DIM_AND_DIMNAMES_ATTRS_LAYOUT.factory.newInstance(names, dim, dimNames);
     }
 
-    public static ConstantShapesAndProperties getConstantShapesAndProperties(String attrName) {
-        return constantShapesAndLocationsForAttribute.getOrDefault(attrName, ConstantShapesAndProperties.EMPTY);
+    public static DynamicObject createClassWithConnId(Object cls, Object connId) {
+        return CLASS_AND_CONNID_ATTRS_LAYOUT.factory.newInstance(cls, connId);
     }
 
     public static boolean isRAttributes(Object attrs) {

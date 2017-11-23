@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -31,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 abstract class RToVectorClosure implements RAbstractVector {
 
@@ -49,8 +51,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public EmptyInternalStore getInternalStore() {
-        return EmptyInternalStore.INSTANCE;
+    public Object getInternalStore() {
+        return this;
     }
 
     @Override
@@ -183,5 +185,15 @@ abstract class RToVectorClosure implements RAbstractVector {
         // Closures are trimmed to use a concrete type in order to avoid polymorphism. Therefore,
         // first materialize and then cast and do not create a closure over a closure.
         return materialize().castSafe(type, isNAProfile, keepAttrs);
+    }
+
+    @Override
+    public final VectorAccess access() {
+        throw RInternalError.shouldNotReachHere("access() for " + getClass().getSimpleName());
+    }
+
+    @Override
+    public final VectorAccess slowPathAccess() {
+        throw RInternalError.shouldNotReachHere("slowPathAccess() for " + getClass().getSimpleName());
     }
 }

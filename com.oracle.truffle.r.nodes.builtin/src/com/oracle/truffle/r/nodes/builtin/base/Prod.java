@@ -14,33 +14,30 @@ import static com.oracle.truffle.r.runtime.RDispatch.SUMMARY_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUMMARY;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ImportStatic(RType.class)
 @RBuiltin(name = "prod", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
 public abstract class Prod extends RBuiltinNode.Arg2 {
 
-    // TODO: handle multiple arguments, handle na.rm
-
     static {
-        Casts.noCasts(Prod.class);
+        Casts casts = new Casts(Prod.class);
+        casts.arg("na.rm").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(Predef.toBoolean());
     }
 
     @Override
@@ -48,139 +45,154 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE};
     }
 
-    @Child private Prod prodRecursive;
-
-    public abstract Object executeObject(Object x);
-
     @Child private BinaryArithmetic prod = BinaryArithmetic.MULTIPLY.createOperation();
 
-    @Specialization
-    protected Object prod(RArgsValuesAndNames args) {
-        int argsLen = args.getLength();
-        if (argsLen == 0) {
-            return 1d;
+    @ExplodeLoop
+    protected static boolean supports(RArgsValuesAndNames args, VectorAccess[] argAccess) {
+        if (args.getLength() != argAccess.length) {
+            return false;
         }
-        if (prodRecursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            prodRecursive = insert(ProdNodeGen.create());
-        }
-        Object ret = 1d;
-        if (argsLen > 0) {
-            double prodReal;
-            double prodImg;
-            boolean complex;
-            if (ret instanceof RComplex) {
-                RComplex c = (RComplex) ret;
-                prodReal = c.getRealPart();
-                prodImg = c.getImaginaryPart();
-                complex = true;
-            } else {
-                prodReal = (Double) ret;
-                prodImg = 0d;
-                complex = false;
+        for (int i = 0; i < argAccess.length; i++) {
+            if (!argAccess[i].supports(args.getArgument(i))) {
+                return false;
             }
-            for (int i = 0; i < argsLen; i++) {
-                Object aProd = prodRecursive.executeObject(args.getArgument(i));
-                double aProdReal;
-                double aProdImg;
-                if (aProd instanceof RComplex) {
-                    RComplex c = (RComplex) aProd;
-                    if (RRuntime.isNA(c)) {
-                        return c;
+        }
+        return true;
+    }
+
+    protected static VectorAccess[] createAccess(RArgsValuesAndNames args, RType topmostType) {
+        VectorAccess[] result = new VectorAccess[args.getLength()];
+        for (int i = 0; i < result.length; i++) {
+            VectorAccess access = VectorAccess.create(args.getArgument(i));
+            if (access == null) {
+                return null;
+            }
+            RType type = access.getType();
+            if (type != RType.Null && type != RType.Logical && type != RType.Integer && type != RType.Double && type != topmostType) {
+                return null;
+            }
+            result[i] = access;
+        }
+        return result;
+    }
+
+    @Specialization(guards = {"argAccess != null", "supports(args, argAccess)", "naRm == cachedNaRm"})
+    @ExplodeLoop
+    protected double prodDoubleCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean naRm,
+                    @Cached("naRm") boolean cachedNaRm,
+                    @Cached("createAccess(args, Double)") VectorAccess[] argAccess) {
+        double value = 1;
+        for (int i = 0; i < argAccess.length; i++) {
+            VectorAccess access = argAccess[i];
+            double element = prodDouble(args.getArgument(i), access, cachedNaRm);
+            if (!cachedNaRm && access.na.check(element)) {
+                return element;
+            }
+            value *= element;
+        }
+        return value;
+    }
+
+    @Specialization(guards = {"argAccess != null", "supports(args, argAccess)", "naRm == cachedNaRm"})
+    @ExplodeLoop
+    protected RComplex prodComplexCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean naRm,
+                    @Cached("naRm") boolean cachedNaRm,
+                    @Cached("createAccess(args, Complex)") VectorAccess[] argAccess) {
+        RComplex value = RComplex.valueOf(1, 0);
+        for (int i = 0; i < argAccess.length; i++) {
+            VectorAccess access = argAccess[i];
+            RComplex element = prodComplex(args.getArgument(i), access, cachedNaRm);
+            if (!cachedNaRm && access.na.check(element)) {
+                return element;
+            }
+            value = prod.op(value.getRealPart(), value.getImaginaryPart(), element.getRealPart(), element.getImaginaryPart());
+        }
+        return value;
+    }
+
+    @Specialization(replaces = {"prodDoubleCached", "prodComplexCached"})
+    protected Object prodGeneric(RArgsValuesAndNames args, boolean naRm) {
+        int length = args.getLength();
+        double value = 1;
+        int i = 0;
+        for (; i < length; i++) {
+            Object arg = args.getArgument(i);
+            VectorAccess access = VectorAccess.createSlowPath(arg);
+            if (access == null) {
+                break;
+            }
+            RType type = access.getType();
+            if (type != RType.Null && type != RType.Logical && type != RType.Integer && type != RType.Double) {
+                break;
+            }
+            double element = prodDouble(arg, access, naRm);
+            if (!naRm && access.na.check(element)) {
+                return element;
+            }
+            value *= element;
+        }
+        if (i == length) {
+            return value;
+        }
+        RComplex complexValue = RComplex.valueOf(1, 0);
+        for (; i < length; i++) {
+            Object arg = args.getArgument(i);
+            VectorAccess access = VectorAccess.createSlowPath(arg);
+            if (access == null) {
+                break;
+            }
+            RType type = access.getType();
+            if (!type.isNumeric() && type != RType.Null) {
+                break;
+            }
+            RComplex element = prodComplex(arg, access, naRm);
+            if (!naRm && access.na.check(element)) {
+                return element;
+            }
+            complexValue = prod.op(complexValue.getRealPart(), complexValue.getImaginaryPart(), element.getRealPart(), element.getImaginaryPart());
+        }
+        if (i == length) {
+            return complexValue;
+        }
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(args.getArgument(i)));
+    }
+
+    protected static double prodDouble(Object v, VectorAccess access, boolean naRm) {
+        try (SequentialIterator iter = access.access(v)) {
+            double value = 1;
+            while (access.next(iter)) {
+                double element = access.getDouble(iter);
+                if (access.na.check(element)) {
+                    if (!naRm) {
+                        return RRuntime.DOUBLE_NA;
                     }
-                    aProdReal = c.getRealPart();
-                    aProdImg = c.getImaginaryPart();
-                    complex = true;
                 } else {
-                    aProdReal = (Double) aProd;
-                    aProdImg = 0d;
-                    if (RRuntime.isNA(aProdReal)) {
-                        return aProd;
+                    value *= element;
+                }
+            }
+            return value;
+        }
+    }
+
+    protected RComplex prodComplex(Object v, VectorAccess access, boolean naRm) {
+        try (SequentialIterator iter = access.access(v)) {
+            RComplex value = RComplex.valueOf(1, 0);
+            while (access.next(iter)) {
+                RComplex element = access.getComplex(iter);
+                if (access.na.check(element)) {
+                    if (!naRm) {
+                        return element;
                     }
-                }
-                if (complex) {
-                    RComplex c = prod.op(prodReal, prodImg, aProdReal, aProdImg);
-                    prodReal = c.getRealPart();
-                    prodImg = c.getImaginaryPart();
                 } else {
-                    prodReal = prod.op(prodReal, aProdReal);
+                    value = prod.op(value.getRealPart(), value.getImaginaryPart(), element.getRealPart(), element.getImaginaryPart());
                 }
             }
-            ret = complex ? RComplex.valueOf(prodReal, prodImg) : prodReal;
+            return value;
         }
-        return ret;
-    }
-
-    private final ValueProfile intVecProfile = ValueProfile.createClassProfile();
-    private final NACheck naCheck = NACheck.create();
-
-    @Specialization
-    protected double prod(RAbstractDoubleVector x) {
-        RAbstractDoubleVector profiledVec = intVecProfile.profile(x);
-        double product = 1;
-        naCheck.enable(x);
-        for (int k = 0; k < profiledVec.getLength(); k++) {
-            double value = profiledVec.getDataAt(k);
-            if (naCheck.check(value)) {
-                return RRuntime.DOUBLE_NA;
-            }
-            product = prod.op(product, value);
-        }
-        return product;
-    }
-
-    @Specialization
-    protected double prod(RAbstractIntVector x) {
-        RAbstractIntVector profiledVec = intVecProfile.profile(x);
-        double product = 1;
-        naCheck.enable(x);
-        for (int k = 0; k < profiledVec.getLength(); k++) {
-            int data = profiledVec.getDataAt(k);
-            if (naCheck.check(data)) {
-                return RRuntime.DOUBLE_NA;
-            }
-            product = prod.op(product, data);
-        }
-        return product;
-    }
-
-    @Specialization
-    protected double prod(RAbstractLogicalVector x) {
-        RAbstractLogicalVector profiledVec = intVecProfile.profile(x);
-        double product = 1;
-        naCheck.enable(x);
-        for (int k = 0; k < profiledVec.getLength(); k++) {
-            byte value = profiledVec.getDataAt(k);
-            if (naCheck.check(value)) {
-                return RRuntime.DOUBLE_NA;
-            }
-            product = prod.op(product, value);
-        }
-        return product;
-    }
-
-    @Specialization
-    protected RComplex prod(RAbstractComplexVector x) {
-        RAbstractComplexVector profiledVec = intVecProfile.profile(x);
-        RComplex product = RDataFactory.createComplexRealOne();
-        naCheck.enable(x);
-        for (int k = 0; k < profiledVec.getLength(); k++) {
-            RComplex a = profiledVec.getDataAt(k);
-            if (naCheck.check(a)) {
-                return a;
-            }
-            product = prod.op(product.getRealPart(), product.getImaginaryPart(), a.getRealPart(), a.getImaginaryPart());
-        }
-        return product;
-    }
-
-    @Specialization
-    protected double prod(@SuppressWarnings("unused") RNull n) {
-        return 1d;
     }
 
     @Fallback
-    protected Object prod(Object o) {
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(o));
+    protected Object prod(Object v, @SuppressWarnings("unused") Object naRm) {
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(v));
     }
 }

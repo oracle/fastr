@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data.model;
 
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
@@ -46,16 +45,6 @@ public interface RAbstractStringVector extends RAbstractAtomicVector {
 
     @Override
     RStringVector materialize();
-
-    @Override
-    default boolean checkCompleteness() {
-        for (int i = 0; i < getLength(); i++) {
-            if (RRuntime.isNA(getDataAt(i))) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     @Override
     default RType getRType() {

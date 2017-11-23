@@ -26,12 +26,20 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public final class RExpression extends RListBase implements RAbstractVector {
 
-    RExpression(Object[] data, int[] dims, RStringVector names) {
-        super(data, dims, names, null);
+    RExpression(Object[] data) {
+        super(data);
+    }
+
+    RExpression(Object[] data, int[] dims, RStringVector names, RList dimNames) {
+        super(data, dims, names, dimNames);
     }
 
     @Override
@@ -47,7 +55,7 @@ public final class RExpression extends RListBase implements RAbstractVector {
     @Override
     @TruffleBoundary
     protected RExpression internalCopy() {
-        return new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null);
+        return new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null, null);
     }
 
     @Override
@@ -55,7 +63,7 @@ public final class RExpression extends RListBase implements RAbstractVector {
     protected RExpression internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
-        RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null);
+        RExpression listCopy = new RExpression(Arrays.copyOf(data, data.length), getDimensions(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
             if (el instanceof RVector) {
@@ -79,5 +87,54 @@ public final class RExpression extends RListBase implements RAbstractVector {
     @Override
     protected RExpression internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         return RDataFactory.createExpression(copyResizedData(size, fillNA), dimensions);
+    }
+
+    private static final class FastPathAccess extends FastPathFromListAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        public RType getType() {
+            return RType.Expression;
+        }
+
+        @Override
+        protected Object getListElement(Object store, int index) {
+            return ((Object[]) store)[index];
+        }
+
+        @Override
+        protected void setListElement(Object store, int index, Object value) {
+            ((Object[]) store)[index] = value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromListAccess SLOW_PATH_ACCESS = new SlowPathFromListAccess() {
+        @Override
+        public RType getType() {
+            return RType.Expression;
+        }
+
+        @Override
+        protected Object getListElement(Object store, int index) {
+            return ((RExpression) store).data[index];
+        }
+
+        @Override
+        protected void setListElement(Object store, int index, Object value) {
+            ((RExpression) store).data[index] = value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

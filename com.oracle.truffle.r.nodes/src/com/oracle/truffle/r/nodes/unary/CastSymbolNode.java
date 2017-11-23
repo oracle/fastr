@@ -58,7 +58,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
     public abstract Object executeSymbol(Object o);
 
     private String toString(Object value) {
-        return toString.executeString(value, true, ToStringNode.DEFAULT_SEPARATOR);
+        return toString.executeString(value, ToStringNode.DEFAULT_SEPARATOR);
     }
 
     @Specialization

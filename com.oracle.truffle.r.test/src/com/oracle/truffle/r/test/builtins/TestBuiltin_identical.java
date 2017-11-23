@@ -256,11 +256,8 @@ public class TestBuiltin_identical extends TestBase {
 
         // functions
 
-        // GnuR adds a srcref attribute, FastR does not, so we really can't do any comparative
-        // tests.
-        assertEval(Ignored.ImplementationError, "{ f1 <- function() {}; f2 <- function() {}; identical(f1, f2) }");
-        assertEval(Ignored.ImplementationError, "{ identical(function() 42, function() 42) }");
-
+        assertEval("{ f1 <- function() {}; f2 <- function() {}; identical(f1, f2) }");
+        assertEval("{ identical(function() 42, function() 42) }");
     }
 
     @Test

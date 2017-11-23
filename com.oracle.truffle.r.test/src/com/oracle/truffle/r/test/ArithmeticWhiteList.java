@@ -37,7 +37,6 @@ public class ArithmeticWhiteList {
     static {
         WHITELIST.add("{ abs((-0-1i)/(0+0i)) }", "[1] NaN\n", "[1] Inf\n");
         WHITELIST.add("{ abs((-1-0i)/(0+0i)) }", "[1] NaN\n", "[1] Inf\n");
-        WHITELIST.add("{rowMeans(matrix(c(NaN,4+5i,2+0i,5+10i),nrow=2,ncol=2), na.rm = FALSE)}", "[1] NaN+NaNi 4.5+7.5i\n", "[1] NaN+0.0i 4.5+7.5i\n");
         WHITELIST.add("{ ((0+1i)/0) * ((0+1i)/0) }", "[1] NaN+NaNi\n", "[1] -Inf+NaNi\n");
         WHITELIST.add("{ ((0-1i)/0) * ((-1-1i)/0) }", "[1] NaN+NaNi\n", "[1] -Inf+Infi\n");
         WHITELIST.add("{ ((0-1i)/0) * ((0+1i)/0) }", "[1] NaN+NaNi\n", "[1] Inf+NaNi\n");
@@ -55,7 +54,6 @@ public class ArithmeticWhiteList {
         WHITELIST.add("{ -((0+1i)/0)  }", "[1] NaN+NaNi\n", "[1] NaN-Infi\n");
         WHITELIST.add("{ -((1+0i)/0)  }", "[1] NaN+NaNi\n", "[1] -Inf+NaNi\n");
         WHITELIST.add("{ -c((1+0i)/0,2) }", "[1] NaN+NaNi  -2+  0i\n", "[1] -Inf+NaNi   -2+  0i\n");
-        WHITELIST.add("x <- c(NaN, 3+2i); xre <- Re(x); xim <- (0+1i) * Im(x); xre + xim", "[1] NaN+NaNi   3+  2i\n", "[1] NaN+0i   3+2i\n");
         WHITELIST.add("{ c(0/0+1i,2+1i) == c(1+1i,2+1i) }", "[1] FALSE  TRUE\n", "[1]   NA TRUE\n");
         WHITELIST.add("{ c(1+1i,2+1i) == c(0/0+1i,2+1i) }", "[1] FALSE  TRUE\n", "[1]   NA TRUE\n");
         WHITELIST.add("exp(-abs((0+1i)/(0+0i)))", "[1] NaN\n", "[1] 0\n");

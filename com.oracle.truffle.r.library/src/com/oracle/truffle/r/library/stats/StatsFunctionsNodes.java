@@ -46,8 +46,9 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.ReadAccessor;
-import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -374,10 +375,11 @@ public final class StatsFunctionsNodes {
             casts.arg(6).asDoubleVector().findFirst();
         }
 
-        @Specialization
+        @Specialization(guards = {"xAccess.supports(x)", "yAccess.supports(y)", "vAccess.supports(v)"})
         protected RDoubleVector approx(RAbstractDoubleVector x, RAbstractDoubleVector y, RAbstractDoubleVector v, int method, double yl, double yr, double f,
-                        @Cached("create()") VectorReadAccess.Double xAccess,
-                        @Cached("create()") VectorReadAccess.Double yAccess) {
+                        @Cached("x.access()") VectorAccess xAccess,
+                        @Cached("y.access()") VectorAccess yAccess,
+                        @Cached("v.access()") VectorAccess vAccess) {
             int nx = x.getLength();
             int nout = v.getLength();
             double[] yout = new double[nout];
@@ -390,14 +392,21 @@ public final class StatsFunctionsNodes {
             apprMeth.yhigh = yr;
             naCheck.enable(true);
 
-            ReadAccessor.Double xAccessor = new ReadAccessor.Double(x, xAccess);
-            ReadAccessor.Double yAccessor = new ReadAccessor.Double(y, yAccess);
-            for (int i = 0; i < nout; i++) {
-                double xouti = v.getDataAt(i);
-                yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, xAccessor, yAccessor, nx, apprMeth);
-                naCheck.check(yout[i]);
+            try (RandomIterator xIter = xAccess.randomAccess(x); RandomIterator yIter = yAccess.randomAccess(y); SequentialIterator vIter = vAccess.access(v)) {
+                int i = 0;
+                while (vAccess.next(vIter)) {
+                    double xouti = vAccess.getDouble(vIter);
+                    yout[i] = RRuntime.isNAorNaN(xouti) ? xouti : approx1(xouti, xAccess, xIter, yAccess, yIter, nx, apprMeth);
+                    naCheck.check(yout[i]);
+                    i++;
+                }
+                return RDataFactory.createDoubleVector(yout, naCheck.neverSeenNA());
             }
-            return RDataFactory.createDoubleVector(yout, naCheck.neverSeenNA());
+        }
+
+        @Specialization(replaces = "approx")
+        protected RDoubleVector approxGeneric(RAbstractDoubleVector x, RAbstractDoubleVector y, RAbstractDoubleVector v, int method, double yl, double yr, double f) {
+            return approx(x, y, v, method, yl, yr, f, x.slowPathAccess(), y.slowPathAccess(), v.slowPathAccess());
         }
 
         private static class ApprMeth {
@@ -408,32 +417,29 @@ public final class StatsFunctionsNodes {
             int kind;
         }
 
-        private static double approx1(double v, ReadAccessor.Double x, ReadAccessor.Double y, int n,
+        private static double approx1(double v, VectorAccess xAccess, RandomIterator xIter, VectorAccess yAccess, RandomIterator yIter, int n,
                         ApprMeth apprMeth) {
             /* Approximate y(v), given (x,y)[i], i = 0,..,n-1 */
-            int i;
-            int j;
-            int ij;
 
             if (n == 0) {
                 return RRuntime.DOUBLE_NA;
             }
 
-            i = 0;
-            j = n - 1;
-
+            int i = 0;
+            int j = n - 1;
             /* handle out-of-domain points */
-            if (v < x.getDataAt(i)) {
+            if (v < xAccess.getDouble(xIter, i)) {
                 return apprMeth.ylow;
             }
-            if (v > x.getDataAt(j)) {
+            if (v > xAccess.getDouble(xIter, j)) {
                 return apprMeth.yhigh;
             }
 
             /* find the correct interval by bisection */
             while (i < j - 1) { /* x.getDataAt(i) <= v <= x.getDataAt(j) */
-                ij = (i + j) / 2; /* i+1 <= ij <= j-1 */
-                if (v < x.getDataAt(ij)) {
+                int ij = (i + j) / 2;
+                /* i+1 <= ij <= j-1 */
+                if (v < xAccess.getDouble(xIter, ij)) {
                     j = ij;
                 } else {
                     i = ij;
@@ -444,18 +450,22 @@ public final class StatsFunctionsNodes {
 
             /* interpolation */
 
-            if (v == x.getDataAt(j)) {
-                return y.getDataAt(j);
+            double xJ = xAccess.getDouble(xIter, j);
+            double yJ = yAccess.getDouble(yIter, j);
+            if (v == xJ) {
+                return yJ;
             }
-            if (v == x.getDataAt(i)) {
-                return y.getDataAt(i);
+            double xI = xAccess.getDouble(xIter, i);
+            double yI = yAccess.getDouble(yIter, i);
+            if (v == xI) {
+                return yI;
             }
             /* impossible: if(x.getDataAt(j) == x.getDataAt(i)) return y.getDataAt(i); */
 
             if (apprMeth.kind == 1) { /* linear */
-                return y.getDataAt(i) + (y.getDataAt(j) - y.getDataAt(i)) * ((v - x.getDataAt(i)) / (x.getDataAt(j) - x.getDataAt(i)));
+                return yI + (yJ - yI) * ((v - xI) / (xJ - xI));
             } else { /* 2 : constant */
-                return (apprMeth.f1 != 0.0 ? y.getDataAt(i) * apprMeth.f1 : 0.0) + (apprMeth.f2 != 0.0 ? y.getDataAt(j) * apprMeth.f2 : 0.0);
+                return (apprMeth.f1 != 0.0 ? yI * apprMeth.f1 : 0.0) + (apprMeth.f2 != 0.0 ? yJ * apprMeth.f2 : 0.0);
             }
         }/* approx1() */
 

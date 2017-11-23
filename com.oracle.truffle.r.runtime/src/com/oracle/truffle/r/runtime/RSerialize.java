@@ -53,10 +53,8 @@ import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -66,7 +64,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -77,11 +74,14 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -1262,10 +1262,8 @@ public class RSerialize {
         }
     }
 
-    // Serialize support is currently very limited, essentially to saving the CRAN package format
-    // info,
-
     private abstract static class POutputStream {
+
         protected OutputStream os;
 
         POutputStream(OutputStream os) {
@@ -1278,7 +1276,7 @@ public class RSerialize {
 
         abstract void writeDouble(double value) throws IOException;
 
-        abstract void writeRaw(byte[] value) throws IOException;
+        abstract void writeRaw(byte value) throws IOException;
 
         abstract void flush() throws IOException;
 
@@ -1339,16 +1337,9 @@ public class RSerialize {
         }
 
         @Override
-        void writeRaw(byte[] value) throws IOException {
-            int valueLen = value.length;
-            if (valueLen > buf.length) {
-                flushBuffer();
-                os.write(value);
-            } else {
-                ensureSpace(valueLen);
-                System.arraycopy(value, 0, buf, offset, valueLen);
-                offset += valueLen;
-            }
+        void writeRaw(byte value) throws IOException {
+            ensureSpace(1);
+            buf[offset++] = value;
         }
 
         @Override
@@ -1480,6 +1471,9 @@ public class RSerialize {
             Object obj = objArg;
             boolean tailCall;
             do {
+                // convert primitive types into RAbstractVectors
+                obj = RRuntime.asAbstractVector(obj);
+
                 tailCall = false;
                 SEXPTYPE specialType;
                 Object psn;
@@ -1548,70 +1542,49 @@ public class RSerialize {
                         stream.writeInt(flags);
                         switch (type) {
                             case STRSXP: {
-                                if (obj instanceof String) {
-                                    // length 1 vector
-                                    stream.writeInt(1);
-                                    writeCHARSXP((String) obj);
-                                } else {
-                                    outStringVec((RAbstractStringVector) obj, true);
-                                }
+                                outStringVec((RAbstractStringVector) obj, true);
                                 break;
                             }
 
-                            case INTSXP: {
-                                if (obj instanceof Integer) {
-                                    stream.writeInt(1);
-                                    stream.writeInt((int) obj);
-                                } else {
-                                    RAbstractIntVector vec = (RAbstractIntVector) obj;
-                                    stream.writeInt(vec.getLength());
-                                    for (int i = 0; i < vec.getLength(); i++) {
-                                        stream.writeInt(vec.getDataAt(i));
+                            case INTSXP:
+                            case LGLSXP: {
+                                // logicals are written as ints
+                                RAbstractVector vector = (RAbstractVector) obj;
+                                VectorAccess access = vector.slowPathAccess();
+                                try (SequentialIterator iter = access.access(vector)) {
+                                    stream.writeInt(access.getLength(iter));
+                                    while (access.next(iter)) {
+                                        stream.writeInt(access.getInt(iter));
                                     }
                                 }
                                 break;
                             }
 
                             case REALSXP: {
-                                if (obj instanceof Double) {
-                                    stream.writeInt(1);
-                                    stream.writeDouble((double) obj);
-                                } else {
-                                    RAbstractDoubleVector vec = (RAbstractDoubleVector) obj;
-                                    stream.writeInt(vec.getLength());
-                                    for (int i = 0; i < vec.getLength(); i++) {
-                                        stream.writeDouble(vec.getDataAt(i));
-                                    }
-                                }
-                                break;
-                            }
-
-                            case LGLSXP: {
-                                // Output as ints
-                                if (obj instanceof Byte) {
-                                    stream.writeInt(1);
-                                    stream.writeInt(RRuntime.logical2int((byte) obj));
-                                } else {
-                                    RAbstractLogicalVector vec = (RAbstractLogicalVector) obj;
-                                    stream.writeInt(vec.getLength());
-                                    for (int i = 0; i < vec.getLength(); i++) {
-                                        stream.writeInt(RRuntime.logical2int(vec.getDataAt(i)));
+                                RAbstractDoubleVector vector = (RAbstractDoubleVector) obj;
+                                VectorAccess access = vector.slowPathAccess();
+                                try (SequentialIterator iter = access.access(vector)) {
+                                    stream.writeInt(access.getLength(iter));
+                                    while (access.next(iter)) {
+                                        stream.writeDouble(access.getDouble(iter));
                                     }
                                 }
                                 break;
                             }
 
                             case CPLXSXP: {
-                                RAbstractComplexVector vec = (RAbstractComplexVector) obj;
-                                stream.writeInt(vec.getLength());
-                                for (int i = 0; i < vec.getLength(); i++) {
-                                    RComplex val = vec.getDataAt(i);
-                                    if (RRuntime.isNA(val)) {
-                                        stream.writeDouble(RRuntime.DOUBLE_NA);
-                                        stream.writeDouble(RRuntime.DOUBLE_NA);
-                                    } else {
-                                        stream.writeDouble(val.getRealPart());
-                                        stream.writeDouble(val.getImaginaryPart());
+                                RAbstractComplexVector vector = (RAbstractComplexVector) obj;
+                                VectorAccess access = vector.slowPathAccess();
+                                try (SequentialIterator iter = access.access(vector)) {
+                                    stream.writeInt(access.getLength(iter));
+                                    while (access.next(iter)) {
+                                        if (access.isNA(iter)) {
+                                            stream.writeDouble(RRuntime.DOUBLE_NA);
+                                            stream.writeDouble(RRuntime.DOUBLE_NA);
+                                        } else {
+                                            stream.writeDouble(access.getComplexR(iter));
+                                            stream.writeDouble(access.getComplexI(iter));
+                                        }
                                     }
                                 }
                                 break;
@@ -1619,25 +1592,26 @@ public class RSerialize {
 
                             case EXPRSXP:
                             case VECSXP: {
-                                RAbstractVector list;
-                                if (type == SEXPTYPE.EXPRSXP) {
-                                    list = (RExpression) obj;
-                                } else {
-                                    list = (RList) obj;
-                                }
-                                stream.writeInt(list.getLength());
-                                for (int i = 0; i < list.getLength(); i++) {
-                                    Object listObj = list.getDataAtAsObject(i);
-                                    writeItem(listObj);
+                                RAbstractListBaseVector vector = (RAbstractListBaseVector) obj;
+                                VectorAccess access = vector.slowPathAccess();
+                                try (SequentialIterator iter = access.access(vector)) {
+                                    stream.writeInt(access.getLength(iter));
+                                    while (access.next(iter)) {
+                                        writeItem(access.getListElement(iter));
+                                    }
                                 }
                                 break;
                             }
 
                             case RAWSXP: {
-                                RRawVector raw = (RRawVector) obj;
-                                byte[] data = raw.getReadonlyData();
-                                stream.writeInt(data.length);
-                                stream.writeRaw(data);
+                                RAbstractRawVector vector = (RAbstractRawVector) obj;
+                                VectorAccess access = vector.slowPathAccess();
+                                try (SequentialIterator iter = access.access(vector)) {
+                                    stream.writeInt(access.getLength(iter));
+                                    while (access.next(iter)) {
+                                        stream.writeRaw(access.getRaw(iter));
+                                    }
+                                }
                                 break;
                             }
 

@@ -26,8 +26,12 @@ import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 @ValueType
 public final class RInteger extends RScalarVector implements RAbstractIntVector {
@@ -94,5 +98,36 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
     @Override
     public boolean isNA() {
         return RRuntime.isNA(value);
+    }
+
+    private static final class FastPathAccess extends FastPathFromIntAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected int getInt(Object store, int index) {
+            assert index == 0;
+            return ((RInteger) store).value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
+        @Override
+        protected int getInt(Object store, int index) {
+            assert index == 0;
+            return ((RInteger) store).value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

@@ -35,6 +35,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -68,8 +69,8 @@ public abstract class Matrix extends RBuiltinNode.Arg7 {
     static {
         Casts casts = new Casts(Matrix.class);
         casts.arg("data").asVector().mustBe(instanceOf(RAbstractVector.class));
-        casts.arg("nrow").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);
-        casts.arg("ncol").asIntegerVector().findFirst(RError.Message.NON_NUMERIC_MATRIX_EXTENT);
+        casts.arg("nrow").asIntegerVector().findFirst(Message.NON_NUMERIC_MATRIX_EXTENT).mustNotBeNA(Message.INVALID_LARGE_NA_VALUE, "nrow");
+        casts.arg("ncol").asIntegerVector().findFirst(Message.NON_NUMERIC_MATRIX_EXTENT).mustNotBeNA(Message.INVALID_LARGE_NA_VALUE, "ncol");
         casts.arg("byrow").asLogicalVector().findFirst().map(toBoolean());
         casts.arg("dimnames").allowNull().mustBe(instanceOf(RAbstractListVector.class));
         casts.arg("missingNr").asLogicalVector().findFirst().map(toBoolean());

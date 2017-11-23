@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
@@ -29,13 +30,10 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 public abstract class NonNANode extends CastNode {
 
@@ -155,72 +153,26 @@ public abstract class NonNANode extends CastNode {
         return x;
     }
 
-    protected boolean isComplete(RAbstractContainer x) {
-        return x.isComplete();
-    }
-
-    @Specialization(guards = "isComplete(x)")
+    @Specialization(guards = "x.isComplete()")
     protected Object onCompleteContainer(RAbstractContainer x) {
         return x;
     }
 
-    @Specialization(guards = "!isComplete(x)")
-    protected Object onPossiblyIncompleteContainer(RAbstractIntVector x) {
-        int len = x.getLength();
-        for (int i = 0; i < len; i++) {
-            if (RRuntime.isNA(x.getDataAt(i))) {
-                return handleNA(x);
+    @Specialization(guards = {"access.supports(x)", "!x.isComplete()"})
+    protected RAbstractAtomicVector onPossiblyIncompleteContainerCached(RAbstractAtomicVector x,
+                    @Cached("x.access()") VectorAccess access) {
+        try (SequentialIterator iter = access.access(x)) {
+            while (access.next(iter)) {
+                if (access.isNA(iter)) {
+                    handleNA(x);
+                }
             }
         }
         return x;
     }
 
-    @Specialization(guards = "!isComplete(x)")
-    protected Object onPossiblyIncompleteContainer(RAbstractLogicalVector x) {
-        int len = x.getLength();
-        for (int i = 0; i < len; i++) {
-            if (RRuntime.isNA(x.getDataAt(i))) {
-                return handleNA(x);
-            }
-        }
-        return x;
-    }
-
-    @Specialization(guards = "!isComplete(x)")
-    protected Object onPossiblyIncompleteContainer(RAbstractDoubleVector x) {
-        int len = x.getLength();
-        for (int i = 0; i < len; i++) {
-            if (RRuntime.isNA(x.getDataAt(i))) {
-                return handleNA(x);
-            }
-        }
-        return x;
-    }
-
-    @Specialization(guards = "!isComplete(x)")
-    protected Object onPossiblyIncompleteContainer(RAbstractComplexVector x) {
-        int len = x.getLength();
-        for (int i = 0; i < len; i++) {
-            if (RRuntime.isNA(x.getDataAt(i))) {
-                return handleNA(x);
-            }
-        }
-        return x;
-    }
-
-    @Specialization(guards = "!isComplete(x)")
-    protected Object onPossiblyIncompleteContainer(RAbstractStringVector x) {
-        int len = x.getLength();
-        for (int i = 0; i < len; i++) {
-            if (RRuntime.isNA(x.getDataAt(i))) {
-                return handleNA(x);
-            }
-        }
-        return x;
-    }
-
-    @Specialization(guards = "!isComplete(x)")
-    protected Object onPossiblyIncompleteContainer(RAbstractRawVector x) {
-        return x;
+    @Specialization(replaces = "onPossiblyIncompleteContainerCached", guards = "!x.isComplete()")
+    protected RAbstractAtomicVector onPossiblyIncompleteContainerGeneric(RAbstractAtomicVector x) {
+        return onPossiblyIncompleteContainerCached(x, x.slowPathAccess());
     }
 }

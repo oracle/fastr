@@ -30,8 +30,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RStringVector extends RVector<String[]> implements RAbstractStringVector {
@@ -41,7 +45,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     RStringVector(String[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     RStringVector(String[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -76,6 +80,10 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     public void setDataAt(Object store, int index, String value) {
         assert data == store;
         ((String[]) store)[index] = value;
+    }
+
+    public void setDataAt(int index, String value) {
+        data[index] = value;
     }
 
     @Override
@@ -117,23 +125,6 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     @Override
     public String[] getReadonlyData() {
         return data;
-    }
-
-    @Override
-    public String toString() {
-        return toString(i -> getDataAt(i));
-    }
-
-    @Override
-    public boolean verify() {
-        if (isComplete()) {
-            for (String b : data) {
-                if (b == RRuntime.STRING_NA) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override
@@ -218,5 +209,46 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     @Override
     public void setElement(int i, Object value) {
         data[i] = (String) value;
+    }
+
+    private static final class FastPathAccess extends FastPathFromStringAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected String getString(Object store, int index) {
+            assert hasStore;
+            return ((String[]) store)[index];
+        }
+
+        @Override
+        protected void setString(Object store, int index, String value) {
+            assert hasStore;
+            ((String[]) store)[index] = value;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
+        @Override
+        protected String getString(Object store, int index) {
+            return ((RStringVector) store).data[index];
+        }
+
+        @Override
+        protected void setString(Object store, int index, String value) {
+            ((RStringVector) store).data[index] = value;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

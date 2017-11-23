@@ -16,12 +16,13 @@ package com.oracle.truffle.r.library.stats;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
 import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENTS;
 
 import java.util.Arrays;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
@@ -31,19 +32,22 @@ import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.ConvertToLen
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction1NodeGen;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction2NodeGen;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunction3NodeGen;
+import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen;
+import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunctionExecutorBaseNodeGen;
+import com.oracle.truffle.r.library.stats.RandFunctionsNodesFactory.RandFunctionIntExecutorNodeGen;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_Double;
@@ -57,7 +61,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * {@link RandFunction3_Double}, {@link RandFunction2_Double} or {@link RandFunction1_Double}.
  */
 public final class RandFunctionsNodes {
-    @CompilationFinal private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
+    private static final RDouble DUMMY_VECTOR = RDouble.valueOf(1);
 
     private RandFunctionsNodes() {
         // static class
@@ -101,52 +105,64 @@ public final class RandFunctionsNodes {
      * {@link RandFunction3_Double}.
      */
     protected abstract static class RandFunctionExecutorBase extends RBaseNode {
-        static final class RandGenerationNodeData {
-            final BranchProfile nanResult = BranchProfile.create();
-            final BranchProfile nan = BranchProfile.create();
-            final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
-            final LoopConditionProfile loopConditionProfile = LoopConditionProfile.createCountingProfile();
 
-            public static RandGenerationNodeData create() {
-                return new RandGenerationNodeData();
-            }
+        protected final Function<Supplier<? extends RandFunction3_Double>, RandFunctionIterator> iteratorFactory;
+        protected final Supplier<? extends RandFunction3_Double> functionFactory;
+
+        protected RandFunctionExecutorBase(Function<Supplier<? extends RandFunction3_Double>, RandFunctionIterator> iteratorFactory, Supplier<? extends RandFunction3_Double> functionFactory) {
+            this.iteratorFactory = iteratorFactory;
+            this.functionFactory = functionFactory;
         }
 
+        public abstract RAbstractVector execute(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand);
+
+        @Child private ConvertToLength convertToLength = ConvertToLengthNodeGen.create();
+        private final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
+
         @Override
-        protected RBaseNode getErrorContext() {
+        protected final RBaseNode getErrorContext() {
             return RError.SHOW_CALLER;
         }
 
-        public abstract Object execute(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand);
-
-        @Child private ConvertToLength convertToLength = ConvertToLengthNodeGen.create();
+        protected final RandFunctionIterator createIterator() {
+            return iteratorFactory.apply(functionFactory);
+        }
 
         @Specialization(guards = {"randCached.isSame(rand)"})
-        protected final Object evaluateWithCached(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c,
+        protected final RAbstractVector evaluateWithCached(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c,
                         @SuppressWarnings("unused") RandomNumberProvider rand,
                         @Cached("rand") RandomNumberProvider randCached,
-                        @Cached("create()") RandGenerationNodeData nodeData) {
-            return evaluateWrapper(lengthVec, a, b, c, randCached, nodeData);
+                        @Cached("createIterator()") RandFunctionIterator iterator) {
+            int length = resultVectorLengthProfile.profile(convertToLength.execute(lengthVec));
+            RBaseNode.reportWork(this, length);
+            return iterator.execute(length, a, b, c, randCached);
         }
 
         @Specialization(replaces = "evaluateWithCached")
-        protected final Object evaluateFallback(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand,
-                        @Cached("create()") RandGenerationNodeData nodeData) {
-            return evaluateWrapper(lengthVec, a, b, c, rand, nodeData);
-        }
-
-        private Object evaluateWrapper(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand,
-                        RandGenerationNodeData nodeData) {
-            int length = nodeData.resultVectorLengthProfile.profile(convertToLength.execute(lengthVec));
+        protected final RAbstractVector evaluateFallback(RAbstractVector lengthVec, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand,
+                        @Cached("createIterator()") RandFunctionIterator iterator) {
+            int length = resultVectorLengthProfile.profile(convertToLength.execute(lengthVec));
             RBaseNode.reportWork(this, length);
-            return evaluate(length, a, b, c, nodeData, rand);
+            return iterator.execute(length, a, b, c, rand);
+        }
+    }
+
+    protected abstract static class RandFunctionIterator extends RBaseNode {
+
+        protected final Supplier<? extends RandFunction3_Double> functionFactory;
+        protected final BranchProfile nanResult = BranchProfile.create();
+        protected final BranchProfile nan = BranchProfile.create();
+        protected final LoopConditionProfile loopConditionProfile = LoopConditionProfile.createCountingProfile();
+
+        protected RandFunctionIterator(Supplier<? extends RandFunction3_Double> functionFactory) {
+            this.functionFactory = functionFactory;
         }
 
-        @SuppressWarnings("unused")
-        Object evaluate(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandGenerationNodeData nodeData, RandomNumberProvider randProvider) {
-            // DSL generates code for this class too, with abstract method it would not compile
-            throw RInternalError.shouldNotReachHere("must be overridden");
+        protected final RandFunction3_Double createFunction() {
+            return functionFactory.get();
         }
+
+        public abstract RAbstractVector execute(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider rand);
 
         static void putRNGState() {
             // Note: we call putRNGState only if we actually changed the state, i.e. called random
@@ -160,105 +176,107 @@ public final class RandFunctionsNodes {
         }
     }
 
-    protected abstract static class RandFunctionIntExecutorNode extends RandFunctionExecutorBase {
-        @Child private RandFunction3_Double function;
-        @Child private VectorIterator.Double aIterator = VectorIterator.Double.createWrapAround();
-        @Child private VectorIterator.Double bIterator = VectorIterator.Double.createWrapAround();
-        @Child private VectorIterator.Double cIterator = VectorIterator.Double.createWrapAround();
+    protected abstract static class RandFunctionIntExecutorNode extends RandFunctionIterator {
 
-        protected RandFunctionIntExecutorNode(RandFunction3_Double function) {
-            this.function = function;
+        protected RandFunctionIntExecutorNode(Supplier<? extends RandFunction3_Double> functionFactory) {
+            super(functionFactory);
         }
 
-        @Override
-        protected RAbstractIntVector evaluate(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandGenerationNodeData nodeData,
-                        RandomNumberProvider randProvider) {
-            int aLength = a.getLength();
-            int bLength = b.getLength();
-            int cLength = c.getLength();
-            if (aLength == 0 || bLength == 0 || cLength == 0) {
-                nodeData.nanResult.enter();
-                showNAWarning();
-                int[] nansResult = new int[length];
-                Arrays.fill(nansResult, RRuntime.INT_NA);
-                return RDataFactory.createIntVector(nansResult, false);
-            }
-
-            Object aIt = aIterator.init(a);
-            Object bIt = bIterator.init(b);
-            Object cIt = cIterator.init(c);
-            boolean nans = false;
-            int[] result = new int[length];
-            nodeData.loopConditionProfile.profileCounted(length);
-            for (int i = 0; nodeData.loopConditionProfile.inject(i < length); i++) {
-                double aValue = aIterator.next(a, aIt);
-                double bValue = bIterator.next(b, bIt);
-                double cValue = cIterator.next(c, cIt);
-                double value = function.execute(aValue, bValue, cValue, randProvider);
-                if (Double.isNaN(value) || value <= Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                    nodeData.nan.enter();
-                    nans = true;
-                    result[i] = RRuntime.INT_NA;
-                } else {
-                    result[i] = (int) value;
+        @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
+        protected RAbstractIntVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+                        @Cached("createFunction()") RandFunction3_Double function,
+                        @Cached("a.access()") VectorAccess aAccess,
+                        @Cached("b.access()") VectorAccess bAccess,
+                        @Cached("c.access()") VectorAccess cAccess) {
+            try (SequentialIterator aIter = aAccess.access(a); SequentialIterator bIter = bAccess.access(b); SequentialIterator cIter = cAccess.access(c)) {
+                if (aAccess.getLength(aIter) == 0 || bAccess.getLength(bIter) == 0 || cAccess.getLength(cIter) == 0) {
+                    nanResult.enter();
+                    showNAWarning();
+                    int[] nansResult = new int[length];
+                    Arrays.fill(nansResult, RRuntime.INT_NA);
+                    return RDataFactory.createIntVector(nansResult, false);
                 }
+
+                boolean nans = false;
+                int[] result = new int[length];
+                loopConditionProfile.profileCounted(length);
+                for (int i = 0; loopConditionProfile.inject(i < length); i++) {
+                    aAccess.nextWithWrap(aIter);
+                    bAccess.nextWithWrap(bIter);
+                    cAccess.nextWithWrap(cIter);
+                    double value = function.execute(aAccess.getDouble(aIter), bAccess.getDouble(bIter), cAccess.getDouble(cIter), randProvider);
+                    if (Double.isNaN(value) || value <= Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
+                        nan.enter();
+                        nans = true;
+                        result[i] = RRuntime.INT_NA;
+                    } else {
+                        result[i] = (int) value;
+                    }
+                }
+                putRNGState();
+                if (nans) {
+                    showNAWarning();
+                }
+                return RDataFactory.createIntVector(result, !nans);
             }
-            putRNGState();
-            if (nans) {
-                showNAWarning();
-            }
-            return RDataFactory.createIntVector(result, !nans);
+        }
+
+        @Specialization(replaces = "cached")
+        protected RAbstractIntVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+                        @Cached("createFunction()") RandFunction3_Double function) {
+            return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
         }
     }
 
-    protected abstract static class RandFunctionDoubleExecutorNode extends RandFunctionExecutorBase {
-        @Child private RandFunction3_Double function;
-        @Child private VectorIterator.Double aIterator = VectorIterator.Double.createWrapAround();
-        @Child private VectorIterator.Double bIterator = VectorIterator.Double.createWrapAround();
-        @Child private VectorIterator.Double cIterator = VectorIterator.Double.createWrapAround();
+    protected abstract static class RandFunctionDoubleExecutorNode extends RandFunctionIterator {
 
-        protected RandFunctionDoubleExecutorNode(RandFunction3_Double function) {
-            this.function = function;
+        protected RandFunctionDoubleExecutorNode(Supplier<? extends RandFunction3_Double> functionFactory) {
+            super(functionFactory);
         }
 
-        @Override
-        protected RAbstractDoubleVector evaluate(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandGenerationNodeData nodeData,
-                        RandomNumberProvider randProvider) {
-            int aLength = a.getLength();
-            int bLength = b.getLength();
-            int cLength = c.getLength();
-            if (aLength == 0 || bLength == 0 || cLength == 0) {
-                nodeData.nanResult.enter();
-                showNAWarning();
-                double[] nansResult = new double[length];
-                Arrays.fill(nansResult, RRuntime.DOUBLE_NA);
-                return RDataFactory.createDoubleVector(nansResult, false);
-            }
-
-            Object aIt = aIterator.init(a);
-            Object bIt = bIterator.init(b);
-            Object cIt = cIterator.init(c);
-            boolean nans = false;
-            double[] result;
-            result = new double[length];
-            nodeData.loopConditionProfile.profileCounted(length);
-            for (int i = 0; nodeData.loopConditionProfile.inject(i < length); i++) {
-                double aValue = aIterator.next(a, aIt);
-                double bValue = bIterator.next(b, bIt);
-                double cValue = cIterator.next(c, cIt);
-                double value = function.execute(aValue, bValue, cValue, randProvider);
-                if (Double.isNaN(value) || RRuntime.isNA(value)) {
-                    nodeData.nan.enter();
-                    nans = true;
+        @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)", "cAccess.supports(c)"})
+        protected RAbstractDoubleVector cached(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+                        @Cached("createFunction()") RandFunction3_Double function,
+                        @Cached("a.access()") VectorAccess aAccess,
+                        @Cached("b.access()") VectorAccess bAccess,
+                        @Cached("c.access()") VectorAccess cAccess) {
+            try (SequentialIterator aIter = aAccess.access(a); SequentialIterator bIter = bAccess.access(b); SequentialIterator cIter = cAccess.access(c)) {
+                if (aAccess.getLength(aIter) == 0 || bAccess.getLength(bIter) == 0 || cAccess.getLength(cIter) == 0) {
+                    nanResult.enter();
+                    showNAWarning();
+                    double[] nansResult = new double[length];
+                    Arrays.fill(nansResult, RRuntime.DOUBLE_NA);
+                    return RDataFactory.createDoubleVector(nansResult, false);
                 }
-                result[i] = value;
+
+                boolean nans = false;
+                double[] result = new double[length];
+                loopConditionProfile.profileCounted(length);
+                for (int i = 0; loopConditionProfile.inject(i < length); i++) {
+                    aAccess.nextWithWrap(aIter);
+                    bAccess.nextWithWrap(bIter);
+                    cAccess.nextWithWrap(cIter);
+                    double value = function.execute(aAccess.getDouble(aIter), bAccess.getDouble(bIter), cAccess.getDouble(cIter), randProvider);
+                    if (Double.isNaN(value) || RRuntime.isNA(value)) {
+                        nan.enter();
+                        nans = true;
+                    }
+                    result[i] = value;
+                }
+                putRNGState();
+                if (nans) {
+                    showNAWarning();
+                }
+                return RDataFactory.createDoubleVector(result, !nans);
             }
-            putRNGState();
-            if (nans) {
-                showNAWarning();
-            }
-            return RDataFactory.createDoubleVector(result, !nans);
         }
+
+        @Specialization(replaces = "cached")
+        protected RAbstractDoubleVector generic(int length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c, RandomNumberProvider randProvider,
+                        @Cached("createFunction()") RandFunction3_Double function) {
+            return cached(length, a, b, c, randProvider, function, a.slowPathAccess(), b.slowPathAccess(), c.slowPathAccess());
+        }
+
     }
 
     public abstract static class RandFunction3Node extends RExternalBuiltinNode.Arg4 {
@@ -268,13 +286,13 @@ public final class RandFunctionsNodes {
             this.inner = inner;
         }
 
-        public static RandFunction3Node createInt(RandFunction3_Double function) {
-            return RandFunction3NodeGen.create(RandFunctionsNodesFactory.RandFunctionIntExecutorNodeGen.create(function));
+        public static RandFunction3Node createInt(Supplier<RandFunction3_Double> function) {
+            return RandFunction3NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionIntExecutorNodeGen::create, function));
         }
 
         // Note: for completeness of the API
-        public static RandFunction3Node createDouble(RandFunction3_Double function) {
-            return RandFunction3NodeGen.create(RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen.create(function));
+        public static RandFunction3Node createDouble(Supplier<RandFunction3_Double> function) {
+            return RandFunction3NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionDoubleExecutorNodeGen::create, function));
         }
 
         static {
@@ -286,7 +304,7 @@ public final class RandFunctionsNodes {
         }
 
         @Specialization
-        protected Object evaluate(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c) {
+        protected RAbstractVector evaluate(RAbstractVector length, RAbstractDoubleVector a, RAbstractDoubleVector b, RAbstractDoubleVector c) {
             RRNG.getRNGState();
             return inner.execute(length, a, b, c, RandomNumberProvider.fromCurrentRNG());
         }
@@ -299,12 +317,12 @@ public final class RandFunctionsNodes {
             this.inner = inner;
         }
 
-        public static RandFunction2Node createInt(RandFunction2_Double function) {
-            return RandFunction2NodeGen.create(RandFunctionsNodesFactory.RandFunctionIntExecutorNodeGen.create(function));
+        public static RandFunction2Node createInt(Supplier<RandFunction2_Double> function) {
+            return RandFunction2NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionIntExecutorNodeGen::create, function));
         }
 
-        public static RandFunction2Node createDouble(RandFunction2_Double function) {
-            return RandFunction2NodeGen.create(RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen.create(function));
+        public static RandFunction2Node createDouble(Supplier<RandFunction2_Double> function) {
+            return RandFunction2NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionDoubleExecutorNodeGen::create, function));
         }
 
         static {
@@ -328,12 +346,12 @@ public final class RandFunctionsNodes {
             this.inner = inner;
         }
 
-        public static RandFunction1Node createInt(RandFunction1_Double function) {
-            return RandFunction1NodeGen.create(RandFunctionsNodesFactory.RandFunctionIntExecutorNodeGen.create(function));
+        public static RandFunction1Node createInt(Supplier<RandFunction1_Double> function) {
+            return RandFunction1NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionIntExecutorNodeGen::create, function));
         }
 
-        public static RandFunction1Node createDouble(RandFunction1_Double function) {
-            return RandFunction1NodeGen.create(RandFunctionsNodesFactory.RandFunctionDoubleExecutorNodeGen.create(function));
+        public static RandFunction1Node createDouble(Supplier<RandFunction1_Double> function) {
+            return RandFunction1NodeGen.create(RandFunctionExecutorBaseNodeGen.create(RandFunctionDoubleExecutorNodeGen::create, function));
         }
 
         static {

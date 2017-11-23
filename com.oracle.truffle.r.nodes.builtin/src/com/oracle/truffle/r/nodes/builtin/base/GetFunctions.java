@@ -51,7 +51,6 @@ import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
-import com.oracle.truffle.r.nodes.objects.GetS4DataSlotNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -146,7 +145,7 @@ public class GetFunctions {
 
     public static final class S4ToEnvNode extends CastNode {
 
-        @Child private GetS4DataSlot getS4Data = GetS4DataSlotNodeGen.create(RType.Environment);
+        @Child private GetS4DataSlot getS4Data = GetS4DataSlot.create(RType.Environment);
 
         @Override
         public Object execute(Object obj) {

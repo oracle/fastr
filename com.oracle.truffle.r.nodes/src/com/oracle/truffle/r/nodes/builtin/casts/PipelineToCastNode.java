@@ -299,48 +299,49 @@ public final class PipelineToCastNode {
 
         @Override
         public ArgumentFilter<?, ?> visit(RTypeFilter<?> filter, ArgumentFilter<?, ?> previous) {
-            if (filter.getType() == RType.Integer) {
-                return new ArgumentFilter<Object, Object>() {
-                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+            switch (filter.getType()) {
+                case Integer:
+                    return new ArgumentFilter<Object, Object>() {
+                        private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
-                    @Override
-                    public boolean test(Object x) {
-                        return profile.profile(x instanceof Integer) || x instanceof RAbstractIntVector;
-                    }
-                };
-            } else if (filter.getType() == RType.Double) {
-                return new ArgumentFilter<Object, Object>() {
-                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+                        @Override
+                        public boolean test(Object x) {
+                            return profile.profile(x instanceof Integer) || x instanceof RAbstractIntVector;
+                        }
+                    };
+                case Double:
+                    return new ArgumentFilter<Object, Object>() {
+                        private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
-                    @Override
-                    public boolean test(Object x) {
-                        return profile.profile(x instanceof Double) || x instanceof RAbstractDoubleVector;
-                    }
-                };
-            } else if (filter.getType() == RType.Logical) {
-                return new ArgumentFilter<Object, Object>() {
-                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+                        @Override
+                        public boolean test(Object x) {
+                            return profile.profile(x instanceof Double) || x instanceof RAbstractDoubleVector;
+                        }
+                    };
+                case Logical:
+                    return new ArgumentFilter<Object, Object>() {
+                        private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
-                    @Override
-                    public boolean test(Object x) {
-                        return profile.profile(x instanceof Byte) || x instanceof RAbstractLogicalVector;
-                    }
-                };
-            } else if (filter.getType() == RType.Complex) {
-                return x -> x instanceof RAbstractComplexVector;
-            } else if (filter.getType() == RType.Character) {
-                return new ArgumentFilter<Object, Object>() {
-                    private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+                        @Override
+                        public boolean test(Object x) {
+                            return profile.profile(x instanceof Byte) || x instanceof RAbstractLogicalVector;
+                        }
+                    };
+                case Complex:
+                    return x -> x instanceof RAbstractComplexVector;
+                case Character:
+                    return new ArgumentFilter<Object, Object>() {
+                        private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
 
-                    @Override
-                    public boolean test(Object x) {
-                        return profile.profile(x instanceof String) || x instanceof RAbstractStringVector;
-                    }
-                };
-            } else if (filter.getType() == RType.Raw) {
-                return x -> x instanceof RAbstractRawVector;
-            } else {
-                throw RInternalError.unimplemented("TODO: more types here");
+                        @Override
+                        public boolean test(Object x) {
+                            return profile.profile(x instanceof String) || x instanceof RAbstractStringVector;
+                        }
+                    };
+                case Raw:
+                    return x -> x instanceof RAbstractRawVector;
+                default:
+                    throw RInternalError.unimplemented("type " + filter.getType());
             }
         }
 

@@ -22,9 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -56,9 +54,6 @@ abstract class CachedVectorNode extends RBaseNode {
     protected final int numberOfDimensions;
     private final int filteredPositionsLength;
 
-    // if this is non-null, the node needs to throw the error whenever it is executed
-    @CompilationFinal protected Runnable error;
-
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
 
     CachedVectorNode(ElementAccessMode mode, RTypedValue vector, Object[] positions, boolean recursive) {
@@ -70,11 +65,6 @@ abstract class CachedVectorNode extends RBaseNode {
             this.numberOfDimensions = positions.length;
         } else {
             this.numberOfDimensions = filteredPositionsLength;
-        }
-        if (!isSubsetable(vectorType)) {
-            error = () -> {
-                throw error(RError.Message.OBJECT_NOT_SUBSETTABLE, vectorType.getName());
-            };
         }
     }
 
@@ -133,23 +123,6 @@ abstract class CachedVectorNode extends RBaseNode {
             } else {
                 return logical.getDataAt(0) == RRuntime.LOGICAL_TRUE;
             }
-        }
-    }
-
-    private static boolean isSubsetable(RType type) {
-        if (type.isVector()) {
-            return true;
-        }
-        switch (type) {
-            case Null:
-            case Language:
-            case PairList:
-            case Environment:
-            case Expression:
-            case S4Object:
-                return true;
-            default:
-                return false;
         }
     }
 

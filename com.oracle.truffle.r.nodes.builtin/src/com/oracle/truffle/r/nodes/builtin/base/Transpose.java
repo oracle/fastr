@@ -15,10 +15,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.util.function.BiFunction;
-import java.util.function.Function;
-
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -35,27 +31,18 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.SetDataAt;
-import com.oracle.truffle.r.runtime.data.nodes.VectorReadAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "t.default", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
@@ -72,7 +59,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
     @Child private GetNamesAttributeNode getAxisNamesNode = GetNamesAttributeNode.create();
-    @Child private GetDimAttributeNode getDimNode;
+    @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
     @Child private ReuseNonSharedNode reuseNonShared = ReuseNonSharedNode.create();
 
     static {
@@ -81,210 +68,157 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     public abstract Object execute(RAbstractVector o);
 
-    @FunctionalInterface
-    private interface WriteArray<T extends RAbstractVector, A> {
-        void apply(A array, T vector, int i, int j);
-    }
-
-    @FunctionalInterface
-    private interface Swap {
-        /** Swap element at (i, j) with element at (j, i). */
-        void swap(int i, int j);
-    }
-
-    protected <T extends RAbstractVector, A> RVector<?> transposeInternal(T vector, Function<Integer, A> createArray, WriteArray<T, A> writeArray, BiFunction<A, Boolean, RVector<?>> createResult) {
-        int length = lengthProfile.profile(vector.getLength());
-        int firstDim;
-        int secondDim;
-        assert vector.isMatrix();
-        int[] dims = getDimensions(vector);
-        firstDim = dims[0];
-        secondDim = dims[1];
-        RBaseNode.reportWork(this, length);
-
-        A array = createArray.apply(length);
-        int j = 0;
-        loopProfile.profileCounted(length);
-        for (int i = 0; loopProfile.inject(i < length); i++, j += firstDim) {
-            if (j > (length - 1)) {
-                j -= (length - 1);
-            }
-            writeArray.apply(array, vector, i, j);
-        }
-        RVector<?> r = createResult.apply(array, vector.isComplete());
-        // copy attributes
-        copyRegAttributes.execute(vector, r);
-        // set new dimensions
-        int[] newDim = new int[]{secondDim, firstDim};
-        putNewDimensions(vector, r, newDim);
-        return r;
-    }
-
-    protected RVector<?> transposeSquareMatrixInPlace(RVector<?> vector, Object store, VectorReadAccess readAccess, SetDataAt setter, Swap swap) {
-        int length = lengthProfile.profile(vector.getLength());
-        assert vector.isMatrix();
-        int[] dims = getDimensions(vector);
-        assert dims.length == 2;
-        assert dims[0] == dims[1];
-        int dim = dims[0];
-        RBaseNode.reportWork(this, length);
-
-        loopProfile.profileCounted(length);
-        for (int i = 0; loopProfile.inject(i < dim); i++) {
-            for (int j = 0; j < i; j++) {
-                int swapi = i * dim + j;
-                int swapj = j * dim + i;
-                if (swap != null) {
-                    swap.swap(swapi, swapj);
-                } else {
-                    Object tmp = readAccess.getDataAtAsObject(vector, store, swapi);
-                    Object jVal = readAccess.getDataAtAsObject(vector, store, swapj);
-                    setter.setDataAtAsObject(vector, store, swapi, jVal);
-                    setter.setDataAtAsObject(vector, store, swapj, tmp);
-                }
-            }
-        }
-        // don't need to set new dimensions; it is a square matrix
-        putNewDimNames(vector, vector);
-        return vector;
-    }
-
-    private int[] getDimensions(RAbstractVector vector) {
-        assert vector.isMatrix();
-        if (getDimNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            getDimNode = insert(GetDimAttributeNode.create());
-        }
-        return getDimNode.getDimensions(vector);
-    }
-
     protected boolean isSquare(RAbstractVector vector) {
-        if (vector.isMatrix()) {
-            int[] dims = getDimensions(vector);
+        int[] dims = getDimNode.getDimensions(vector);
+        if (GetDimAttributeNode.isMatrix(dims)) {
             assert dims.length >= 2;
             return dims[0] == dims[1];
         }
         return false;
     }
 
-    @Specialization(guards = "isSquare(x)")
-    protected RVector<?> transposeSquare(RAbstractIntVector x,
-                    @Cached("create()") VectorReadAccess.Int readAccess,
-                    @Cached("create()") SetDataAt.Int setter) {
-        RIntVector reused = (RIntVector) reuseNonShared.execute(x).materialize();
-        Object reusedStore = readAccess.getDataStore(reused);
-        return transposeSquareMatrixInPlace(reused, reusedStore, readAccess, setter, null);
+    protected boolean isMatrix(RAbstractVector vector) {
+        return GetDimAttributeNode.isMatrix(getDimNode.getDimensions(vector));
     }
 
-    @Specialization(guards = "isSquare(x)")
-    protected RVector<?> transposeSquare(RAbstractLogicalVector x,
-                    @Cached("create()") VectorReadAccess.Logical readAccess,
-                    @Cached("create()") SetDataAt.Logical setter) {
-        RLogicalVector reused = (RLogicalVector) reuseNonShared.execute(x).materialize();
-        Object reusedStore = readAccess.getDataStore(reused);
-        return transposeSquareMatrixInPlace(reused, reusedStore, readAccess, setter, null);
+    private void transposeSquareMatrixInPlace(RAbstractVector vector, RandomIterator iter, VectorAccess access) {
+        int length = lengthProfile.profile(vector.getLength());
+        assert isMatrix(vector);
+        int[] dims = getDimNode.getDimensions(vector);
+        assert dims.length == 2;
+        assert dims[0] == dims[1];
+        int dim = dims[0];
+        RBaseNode.reportWork(this, length);
+
+        RType type = access.getType();
+        loopProfile.profileCounted(length);
+        for (int i = 0; loopProfile.inject(i < dim); i++) {
+            for (int j = 0; j < i; j++) {
+                int swapi = i * dim + j;
+                int swapj = j * dim + i;
+                switch (type) {
+                    case Character: {
+                        String tmp = access.getString(iter, swapi);
+                        access.setString(iter, swapi, access.getString(iter, swapj));
+                        access.setString(iter, swapj, tmp);
+                        break;
+                    }
+                    case Complex: {
+                        double tmpReal = access.getComplexR(iter, swapi);
+                        double tmpImaginary = access.getComplexI(iter, swapi);
+                        access.setComplex(iter, swapi, access.getComplexR(iter, swapj), access.getComplexI(iter, swapj));
+                        access.setComplex(iter, swapj, tmpReal, tmpImaginary);
+                        break;
+                    }
+                    case Double: {
+                        double tmp = access.getDouble(iter, swapi);
+                        access.setDouble(iter, swapi, access.getDouble(iter, swapj));
+                        access.setDouble(iter, swapj, tmp);
+                        break;
+                    }
+                    case Integer: {
+                        int tmp = access.getInt(iter, swapi);
+                        access.setInt(iter, swapi, access.getInt(iter, swapj));
+                        access.setInt(iter, swapj, tmp);
+                        break;
+                    }
+                    case List: {
+                        Object tmp = access.getListElement(iter, swapi);
+                        access.setListElement(iter, swapi, access.getListElement(iter, swapj));
+                        access.setListElement(iter, swapj, tmp);
+                        break;
+                    }
+                    case Logical: {
+                        byte tmp = access.getLogical(iter, swapi);
+                        access.setLogical(iter, swapi, access.getLogical(iter, swapj));
+                        access.setLogical(iter, swapj, tmp);
+                        break;
+                    }
+                    case Raw: {
+                        byte tmp = access.getRaw(iter, swapi);
+                        access.setRaw(iter, swapi, access.getRaw(iter, swapj));
+                        access.setRaw(iter, swapj, tmp);
+                        break;
+                    }
+                    default:
+                        throw RInternalError.shouldNotReachHere();
+                }
+            }
+        }
+        // don't need to set new dimensions; it is a square matrix
+        putNewDimNames(vector, vector);
     }
 
-    @Specialization(guards = "isSquare(x)")
-    protected RVector<?> transposeSquare(RAbstractDoubleVector x,
-                    @Cached("create()") VectorReadAccess.Double readAccess,
-                    @Cached("create()") SetDataAt.Double setter) {
-        RDoubleVector reused = (RDoubleVector) reuseNonShared.execute(x).materialize();
-        Object reusedStore = readAccess.getDataStore(reused);
-        return transposeSquareMatrixInPlace(reused, reusedStore, readAccess, setter, null);
+    @Specialization(guards = {"isSquare(x)", "!isRExpression(x)", "xReuse.supports(x)"})
+    protected RAbstractVector transposeSquare(RAbstractVector x,
+                    @Cached("createNonShared(x)") VectorReuse xReuse) {
+        RAbstractVector result = xReuse.getResult(x);
+        VectorAccess resultAccess = xReuse.access(result);
+        try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
+            transposeSquareMatrixInPlace(result, resultIter, resultAccess);
+        }
+        return result;
     }
 
-    @Specialization(guards = "isSquare(x)")
-    protected RVector<?> transposeSquare(RAbstractComplexVector x,
-                    @Cached("create()") VectorReadAccess.Complex readAccess,
-                    @Cached("create()") SetDataAt.Complex setter) {
-        RComplexVector reused = (RComplexVector) reuseNonShared.execute(x).materialize();
-        Object reusedStore = readAccess.getDataStore(reused);
-        return transposeSquareMatrixInPlace(reused, reusedStore, readAccess, setter, null);
+    @Specialization(replaces = "transposeSquare", guards = {"isSquare(x)", "!isRExpression(x)"})
+    protected RAbstractVector transposeSquareGeneric(RAbstractVector x,
+                    @Cached("createNonSharedGeneric()") VectorReuse xReuse) {
+        return transposeSquare(x, xReuse);
     }
 
-    @Specialization(guards = "isSquare(x)")
-    protected RVector<?> transposeSquare(RAbstractStringVector x,
-                    @Cached("create()") VectorReadAccess.String readAccess,
-                    @Cached("create()") SetDataAt.String setter) {
-        RStringVector reused = (RStringVector) reuseNonShared.execute(x).materialize();
-        Object reusedStore = readAccess.getDataStore(reused);
-        return transposeSquareMatrixInPlace(reused, reusedStore, readAccess, setter, null);
+    @Specialization(guards = {"isMatrix(x)", "!isSquare(x)", "!isRExpression(x)", "xAccess.supports(x)"})
+    protected RAbstractVector transpose(RAbstractVector x,
+                    @Cached("create()") VectorFactory factory,
+                    @Cached("x.access()") VectorAccess xAccess,
+                    @Cached("createNew(xAccess.getType())") VectorAccess resultAccess) {
+        try (RandomIterator xIter = xAccess.randomAccess(x)) {
+            RAbstractVector result = factory.createVector(xAccess.getType(), xAccess.getLength(xIter), false);
+            try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
+                int length = lengthProfile.profile(xAccess.getLength(xIter));
+                assert isMatrix(x);
+                int[] dims = getDimNode.getDimensions(x);
+                int firstDim = dims[0];
+                int secondDim = dims[1];
+                RBaseNode.reportWork(this, length);
+
+                int j = 0;
+                loopProfile.profileCounted(length);
+                for (int i = 0; loopProfile.inject(i < length); i++, j += firstDim) {
+                    if (j > (length - 1)) {
+                        j -= (length - 1);
+                    }
+                    resultAccess.setFromSameType(resultIter, i, xAccess, xIter, j);
+                }
+                // copy attributes
+                copyRegAttributes.execute(x, result);
+                // set new dimensions
+                putNewDimensions(x, result, new int[]{secondDim, firstDim});
+            }
+            result.setComplete(x.isComplete());
+            return result;
+        }
     }
 
-    @Specialization(guards = "isSquare(x)")
-    protected RVector<?> transposeSquare(RAbstractListVector x) {
-        RList reused = (RList) reuseNonShared.execute(x).materialize();
-        Object[] store = reused.getDataWithoutCopying();
-        return transposeSquareMatrixInPlace(reused, store, null, null, (i, j) -> {
-            Object tmp = store[i];
-            store[i] = store[j];
-            store[j] = tmp;
-        });
+    @Specialization(replaces = "transpose", guards = {"isMatrix(x)", "!isSquare(x)", "!isRExpression(x)"})
+    protected RAbstractVector transposeGeneric(RAbstractVector x,
+                    @Cached("create()") VectorFactory factory) {
+        return transpose(x, factory, x.slowPathAccess(), VectorAccess.createSlowPathNew(x.getRType()));
     }
 
-    @Specialization(guards = "isSquare(x)")
-    protected RVector<?> transposeSquare(RAbstractRawVector x,
-                    @Cached("create()") VectorReadAccess.Raw readAccess,
-                    @Cached("create()") SetDataAt.Raw setter) {
-        RRawVector reused = (RRawVector) reuseNonShared.execute(x).materialize();
-        Object reusedStore = readAccess.getDataStore(reused);
-        return transposeSquareMatrixInPlace(reused, reusedStore, readAccess, setter, null);
-    }
-
-    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
-    protected RVector<?> transpose(RAbstractIntVector x) {
-        return transposeInternal(x, l -> new int[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createIntVector);
-    }
-
-    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
-    protected RVector<?> transpose(RAbstractLogicalVector x) {
-        return transposeInternal(x, l -> new byte[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createLogicalVector);
-    }
-
-    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
-    protected RVector<?> transpose(RAbstractDoubleVector x) {
-        return transposeInternal(x, l -> new double[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createDoubleVector);
-    }
-
-    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
-    protected RVector<?> transpose(RAbstractComplexVector x) {
-        return transposeInternal(x, l -> new double[l * 2], (a, v, i, j) -> {
-            RComplex d = v.getDataAt(j);
-            a[i * 2] = d.getRealPart();
-            a[i * 2 + 1] = d.getImaginaryPart();
-        }, RDataFactory::createComplexVector);
-    }
-
-    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
-    protected RVector<?> transpose(RAbstractStringVector x) {
-        return transposeInternal(x, l -> new String[l], (a, v, i, j) -> a[i] = v.getDataAt(j), RDataFactory::createStringVector);
-    }
-
-    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
-    protected RVector<?> transpose(RAbstractListVector x) {
-        return transposeInternal(x, l -> new Object[l], (a, v, i, j) -> a[i] = v.getDataAt(j), (a, c) -> RDataFactory.createList(a));
-    }
-
-    @Specialization(guards = {"x.isMatrix()", "!isSquare(x)"})
-    protected RVector<?> transpose(RAbstractRawVector x) {
-        return transposeInternal(x, l -> new byte[l], (a, v, i, j) -> a[i] = v.getRawDataAt(j), (a, c) -> RDataFactory.createRawVector(a));
-    }
-
-    @Specialization(guards = "!x.isMatrix()")
-    protected RVector<?> transpose(RAbstractVector x) {
+    @Specialization(guards = {"!isMatrix(x)", "!isRExpression(x)"})
+    protected RVector<?> transposeNonMatrix(RAbstractVector x) {
         RVector<?> reused = reuseNonShared.execute(x);
         putNewDimensions(reused, reused, new int[]{1, x.getLength()});
         return reused;
 
     }
 
-    private void putNewDimensions(RAbstractVector source, RVector<?> dest, int[] newDim) {
+    private void putNewDimensions(RAbstractVector source, RAbstractVector dest, int[] newDim) {
         putDimensions.execute(initAttributes.execute(dest), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         putNewDimNames(source, dest);
     }
 
-    private void putNewDimNames(RAbstractVector source, RVector<?> dest) {
+    private void putNewDimNames(RAbstractVector source, RAbstractVector dest) {
         // set new dim names
         RList dimNames = getDimNamesNode.getDimNames(source);
         if (dimNames != null) {
@@ -292,8 +226,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
             assert dimNames.getLength() == 2;
             RStringVector axisNames = getAxisNamesNode.getNames(dimNames);
             RStringVector transAxisNames = axisNames == null ? null : RDataFactory.createStringVector(new String[]{axisNames.getDataAt(1), axisNames.getDataAt(0)}, true);
-            RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1),
-                            dimNames.getDataAt(0)}, transAxisNames);
+            RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)}, transAxisNames);
             putDimNames.execute(dest.getAttributes(), newDimNames);
         }
     }

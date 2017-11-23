@@ -43,7 +43,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNames
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
-import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -57,8 +56,6 @@ import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.nodes.GetDataAt;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
@@ -266,26 +263,17 @@ public final class MiscNodes {
         @Specialization
         protected RRawVector octSize(Object size,
                         @Cached("create()") SizeToOctalRawNode sizeToOctal,
-                        @Cached("createCast()") CastNode castToDoubleNode,
-                        @Cached("create()") GetDataAt.Double getDataNode) {
-
-            Object val = castToDoubleNode.doCast(size);
-            if (val instanceof RAbstractDoubleVector) {
-                RAbstractDoubleVector vec = (RAbstractDoubleVector) val;
-                return sizeToOctal.execute(getDataNode.get(vec, vec.getInternalStore(), 0));
-            }
-            return sizeToOctal.execute(val);
+                        @Cached("createCast()") CastNode castToDoubleNode) {
+            return sizeToOctal.execute(castToDoubleNode.doCast(size));
 
         }
 
         protected CastNode createCast() {
-            HeadPhaseBuilder<Double> findFirst = CastNodeBuilder.newCastBuilder().mustNotBeMissing().allowNull().asDoubleVector().findFirst();
-            return findFirst.buildCastNode();
+            return CastNodeBuilder.newCastBuilder().mustNotBeMissing().allowNull().asDoubleVector().findFirst().buildCastNode();
         }
 
         public static OctSizeNode create() {
             return OctSizeNodeGen.create();
         }
     }
-
 }

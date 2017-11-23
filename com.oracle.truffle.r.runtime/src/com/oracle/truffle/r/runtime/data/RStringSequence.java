@@ -29,10 +29,14 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public class RStringSequence extends RSequence implements RAbstractStringVector {
+public final class RStringSequence extends RSequence implements RAbstractStringVector {
 
     private final int start;
     private final int stride;
@@ -167,5 +171,38 @@ public class RStringSequence extends RSequence implements RAbstractStringVector 
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
         return "[\"" + getStartObject() + "\" - \"" + prefix + getEnd() + suffix + "\"]";
+    }
+
+    private static final class FastPathAccess extends FastPathFromStringAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected String getString(Object store, int index) {
+            RStringSequence vector = (RStringSequence) store;
+            assert index >= 0 && index < vector.getLength();
+            return vector.prefix + (vector.start + vector.stride * index) + vector.suffix;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
+        @Override
+        protected String getString(Object store, int index) {
+            RStringSequence vector = (RStringSequence) store;
+            assert index >= 0 && index < vector.getLength();
+            return vector.prefix + (vector.start + vector.stride * index) + vector.suffix;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

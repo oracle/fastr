@@ -24,11 +24,7 @@ public class TestBuiltin_mean extends TestBase {
 
     @Test
     public void testmean2() {
-        // FIXME NA is returned by GnuR for NA input
-        // Expected output: [1] NA
-        // FastR output: [1] NaN
-
-        assertEval(Ignored.ImplementationError, "argv <- list(c(0.104166666666667, 0.285714285714286, 0.285714285714286, NA)); .Internal(mean(argv[[1]]))");
+        assertEval("argv <- list(c(0.104166666666667, 0.285714285714286, 0.285714285714286, NA)); .Internal(mean(argv[[1]]))");
     }
 
     @Test

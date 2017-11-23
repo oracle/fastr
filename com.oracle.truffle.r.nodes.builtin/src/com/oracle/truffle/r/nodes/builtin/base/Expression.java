@@ -70,6 +70,7 @@ public abstract class Expression extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
+    @TruffleBoundary
     protected Object doExpression(RPromise language) {
         return RDataFactory.createExpression(new Object[]{convert(language)});
     }

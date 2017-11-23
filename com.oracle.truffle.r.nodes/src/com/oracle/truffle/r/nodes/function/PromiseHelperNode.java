@@ -58,9 +58,9 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Holds {@link RPromise}-related functionality that cannot be implemented in
  * "com.oracle.truffle.r.runtime.data" due to package import restrictions.
  */
-public class PromiseHelperNode extends RBaseNode {
+public final class PromiseHelperNode extends RBaseNode {
 
-    public static class PromiseCheckHelperNode extends RBaseNode {
+    public static final class PromiseCheckHelperNode extends RBaseNode {
 
         @Child private PromiseHelperNode promiseHelper;
 
@@ -81,7 +81,7 @@ public class PromiseHelperNode extends RBaseNode {
         }
     }
 
-    public static class PromiseDeoptimizeFrameNode extends RBaseNode {
+    public static final class PromiseDeoptimizeFrameNode extends RBaseNode {
         private final BranchProfile deoptimizeProfile = BranchProfile.create();
 
         /**

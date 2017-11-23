@@ -258,15 +258,14 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     public RSyntaxNode constant(SourceSection source, Object value) {
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, Utils.intern((String) value));
-        } else {
-            if (value instanceof RShareable) {
-                RShareable shareable = (RShareable) value;
-                if (!shareable.isSharedPermanent()) {
-                    return ConstantNode.create(source, shareable.makeSharedPermanent());
-                }
-            }
-            return ConstantNode.create(source, value);
         }
+        if (value instanceof RShareable) {
+            RShareable shareable = (RShareable) value;
+            if (!shareable.isSharedPermanent()) {
+                return ConstantNode.create(source, shareable.makeSharedPermanent());
+            }
+        }
+        return ConstantNode.create(source, value);
     }
 
     @Override

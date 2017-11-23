@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.base.MatrixNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.FirstIntNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -64,6 +65,9 @@ public abstract class MatrixFastPath extends RFastPathNode {
         int row = rowMissing ? 1 : firstRow.executeInt(castRow.doCast(nrow));
         int col = colMissing ? 1 : firstCol.executeInt(castCol.doCast(ncol));
         Object dim = dimMissingProfile.profile(dimnames == RMissing.instance) ? RNull.instance : dimnames;
+        if (row == RRuntime.INT_NA || col == RRuntime.INT_NA) {
+            return null;
+        }
         return matrix.execute(classProfile.profile(data), row, col, false, dim, rowMissing, colMissing);
     }
 

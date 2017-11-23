@@ -302,7 +302,7 @@ public class NativeConnections {
         // converted to a pointer using RAW macro. This turns the raw vector into a native memory
         // backed vector and any consecutive (write) operations in the native code are actually not
         // done on the original vector that backs the byte buffer, so we need to copy back the date
-        // to the byte buffer. It would be more efficitent to use direct byte buffer, but then we'd
+        // to the byte buffer. It would be more efficient to use direct byte buffer, but then we'd
         // need to make the native call interface (CallRFFI.InvokeCallRootNode) more flexible so
         // that it can accept other argument types than SEXPs.
 

@@ -37,6 +37,11 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     }
 
     @Override
+    public Object getInternalStore() {
+        return this;
+    }
+
+    @Override
     public void setComplete(boolean complete) {
         // scalar vectors don't need this information.
         // it is always rechecked
@@ -169,10 +174,5 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     @Override
     public boolean isArray() {
         return false;
-    }
-
-    @Override
-    public final boolean checkCompleteness() {
-        return isComplete();
     }
 }

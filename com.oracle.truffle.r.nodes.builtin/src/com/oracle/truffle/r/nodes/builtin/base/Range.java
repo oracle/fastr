@@ -65,8 +65,8 @@ public abstract class Range extends RBuiltinNode.Arg3 {
 
     @Specialization(guards = "args.getLength() == 1")
     protected RVector<?> rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite) {
-        Object min = minReduce.executeReduce(args.getArgument(0), naRm, finite);
-        Object max = maxReduce.executeReduce(args.getArgument(0), naRm, finite);
+        Object min = minReduce.executeReduce(args.getArgument(0), naRm || finite, finite);
+        Object max = maxReduce.executeReduce(args.getArgument(0), naRm || finite, finite);
         return createResult(min, max);
     }
 
@@ -84,8 +84,8 @@ public abstract class Range extends RBuiltinNode.Arg3 {
     protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite,
                     @Cached("create()") Combine combine) {
         Object combined = combine.executeCombine(args, false);
-        Object min = minReduce.executeReduce(combined, naRm, finite);
-        Object max = maxReduce.executeReduce(combined, naRm, finite);
+        Object min = minReduce.executeReduce(combined, naRm || finite, finite);
+        Object max = maxReduce.executeReduce(combined, naRm || finite, finite);
         return createResult(min, max);
     }
 }

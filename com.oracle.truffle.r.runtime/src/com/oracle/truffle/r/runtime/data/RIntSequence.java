@@ -26,8 +26,12 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
 public final class RIntSequence extends RSequence implements RAbstractIntVector {
 
@@ -142,5 +146,38 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
     @Override
     public RIntVector createEmptySameType(int newLength, boolean newIsComplete) {
         return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    }
+
+    private static final class FastPathAccess extends FastPathFromIntAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected int getInt(Object store, int index) {
+            RIntSequence vector = (RIntSequence) store;
+            assert index >= 0 && index < vector.getLength();
+            return vector.start + vector.stride * index;
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
+        @Override
+        protected int getInt(Object store, int index) {
+            RIntSequence vector = (RIntSequence) store;
+            assert index >= 0 && index < vector.getLength();
+            return vector.start + vector.stride * index;
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

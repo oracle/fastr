@@ -29,8 +29,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RDoubleVector extends RVector<double[]> implements RAbstractDoubleVector {
@@ -40,7 +44,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     RDoubleVector(double[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     RDoubleVector(double[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -99,6 +103,10 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
         NativeDataAccess.setData(this, (double[]) store, index, value);
     }
 
+    public void setDataAt(int index, double value) {
+        NativeDataAccess.setData(this, data, index, value);
+    }
+
     @Override
     public double getDataAt(Object store, int index) {
         assert data == store;
@@ -121,23 +129,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(this, data);
-    }
-
-    @Override
-    public String toString() {
-        return toString(i -> Double.toString(getDataAt(i)));
-    }
-
-    @Override
-    public boolean verify() {
-        if (isComplete()) {
-            for (int i = 0; i < getLength(); i++) {
-                if (RRuntime.isNA(getDataAt(i))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override
@@ -237,5 +228,50 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
             data = null;
             complete = false;
         }
+    }
+
+    private static final class FastPathAccess extends FastPathFromDoubleAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected double getDouble(Object store, int index) {
+            return hasStore ? ((double[]) store)[index] : NativeDataAccess.getDoubleNativeMirrorData(store, index);
+        }
+
+        @Override
+        protected void setDouble(Object store, int index, double value) {
+            if (hasStore) {
+                ((double[]) store)[index] = value;
+            } else {
+                NativeDataAccess.setNativeMirrorDoubleData(store, index, value);
+            }
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
+        @Override
+        protected double getDouble(Object store, int index) {
+            RDoubleVector vector = (RDoubleVector) store;
+            return NativeDataAccess.getData(vector, vector.data, index);
+        }
+
+        @Override
+        protected void setDouble(Object store, int index, double value) {
+            RDoubleVector vector = (RDoubleVector) store;
+            NativeDataAccess.setData(vector, vector.data, index, value);
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

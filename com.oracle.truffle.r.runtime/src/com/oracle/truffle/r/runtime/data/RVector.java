@@ -24,8 +24,6 @@ package com.oracle.truffle.r.runtime.data;
 
 import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 
-import java.util.function.Function;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -33,13 +31,14 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -58,9 +57,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * </pre>
  */
 public abstract class RVector<ArrayT> extends RSharingAttributeStorage implements RAbstractVector, RFFIAccess {
-
-    private static final RStringVector implicitClassHeaderArray = RDataFactory.createStringVector(new String[]{RType.Array.getName()}, true);
-    private static final RStringVector implicitClassHeaderMatrix = RDataFactory.createStringVector(new String[]{RType.Matrix.getName()}, true);
 
     protected boolean complete; // "complete" means: does not contain NAs
 
@@ -140,7 +136,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     @Override
     public final void setComplete(boolean complete) {
         this.complete = complete;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     private void removeAttributeMapping(String key) {
@@ -537,8 +533,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     protected abstract RVector<ArrayT> internalCopy();
 
-    public abstract boolean verify();
-
     /**
      * Update a data item in the vector. Possibly not as efficient as type-specific methods, but in
      * some cases it likely does not matter (e.g. if used alongside I/O operations).
@@ -607,50 +601,52 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
      * Inits dims, names and dimnames attributes and it should only be invoked if no attributes were
      * initialized yet.
      */
-    @TruffleBoundary
-    protected final void initDimsNamesDimNames(int[] dimensions, RStringVector names, RList dimNames) {
+    final void initDimsNamesDimNames(int[] dimensions, RStringVector names, RList dimNames) {
         assert (this.attributes == null) : "Vector attributes must be null";
         assert names != this;
         assert dimNames != this;
+        assert names == null || names.getLength() == getLength() : "size mismatch: names.length=" + names.getLength() + " vs. length=" + getLength();
+        initAttributes(createAttributes(dimensions, names, dimNames));
+    }
+
+    @TruffleBoundary
+    static DynamicObject createAttributes(int[] dimensions, RStringVector names, RList dimNames) {
         if (dimNames != null) {
-            DynamicObject attrs;
             if (dimensions != null) {
                 RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
-                attrs = RAttributesLayout.createDimAndDimNames(dimensionsVector, dimNames);
                 // one-dimensional arrays do not have names, only dimnames with one value so do not
                 // init names in that case
                 if (names != null && dimensions.length != 1) {
-                    assert names.getLength() == getLength() : "size mismatch: names.length=" + names.getLength() + " vs. length=" + getLength();
-                    attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                    return RAttributesLayout.createNamesAndDimAndDimNames(names, dimensionsVector, dimNames);
+                } else {
+                    return RAttributesLayout.createDimAndDimNames(dimensionsVector, dimNames);
                 }
             } else {
-                attrs = RAttributesLayout.createDimNames(dimNames);
                 if (names != null) {
-                    assert names.getLength() == getLength() : "size mismatch: names.length=" + names.getLength() + " vs. length=" + getLength();
-                    attrs.define(RRuntime.NAMES_ATTR_KEY, names);
+                    return RAttributesLayout.createNamesAndDimNames(names, dimNames);
+                } else {
+                    return RAttributesLayout.createDimNames(dimNames);
                 }
             }
-            initAttributes(attrs);
         } else {
-            if (names != null) {
-                // since this constructor is for internal use only, the assertion shouldn't fail
-                assert names.getLength() == getLength() : "size mismatch: " + names.getLength() + " vs. " + getLength();
-                if (dimensions != null) {
-                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+            if (dimensions != null) {
+                RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
+                if (names != null) {
                     if (dimensions.length != 1) {
-                        initAttributes(RAttributesLayout.createNamesAndDim(names, dimensionsVector));
+                        return RAttributesLayout.createNamesAndDim(names, dimensionsVector);
                     } else {
                         // one-dimensional arrays do not have names, only dimnames with one value
                         RList newDimNames = RDataFactory.createList(new Object[]{names});
-                        initAttributes(RAttributesLayout.createDimAndDimNames(dimensionsVector, newDimNames));
+                        return RAttributesLayout.createDimAndDimNames(dimensionsVector, newDimNames);
                     }
                 } else {
-                    initAttributes(RAttributesLayout.createNames(names));
+                    return RAttributesLayout.createDim(dimensionsVector);
                 }
             } else {
-                if (dimensions != null) {
-                    RIntVector dimensionsVector = RDataFactory.createIntVector(dimensions, true);
-                    initAttributes(RAttributesLayout.createDim(dimensionsVector));
+                if (names != null) {
+                    return RAttributesLayout.createNames(names);
+                } else {
+                    return null;
                 }
             }
         }
@@ -749,18 +745,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
         }
     }
 
-    // As shape of the vector may change at run-time we need to compute
-    // class hierarchy on the fly.
-    protected final RStringVector getClassHierarchyHelper(RStringVector implicitClassHeader) {
-        if (isMatrix()) {
-            return implicitClassHeaderMatrix;
-        }
-        if (isArray()) {
-            return implicitClassHeaderArray;
-        }
-        return implicitClassHeader;
-    }
-
     public static void verifyDimensions(int vectorLength, int[] newDimensions, RBaseNode invokingNode) {
         int length = 1;
         for (int i = 0; i < newDimensions.length; i++) {
@@ -778,18 +762,25 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     private static final int MAX_TOSTRING_LENGTH = 100;
 
-    protected final String toString(Function<Integer, String> element) {
+    @Override
+    public final String toString() {
         CompilerAsserts.neverPartOfCompilation();
         StringBuilder str = new StringBuilder("[");
-        for (int i = 0; i < getLength(); i++) {
-            if (i > 0) {
-                str.append(", ");
-            }
-            str.append(element.apply(i));
-            if (str.length() > MAX_TOSTRING_LENGTH - 1) {
-                str.setLength(MAX_TOSTRING_LENGTH - 4);
-                str.append("...");
-                break;
+        VectorAccess access = slowPathAccess();
+        try (SequentialIterator iter = access.access(this)) {
+            if (access.next(iter)) {
+                while (true) {
+                    str.append(access.getType().isAtomic() ? access.getString(iter) : access.getListElement(iter).toString());
+                    if (!access.next(iter)) {
+                        break;
+                    }
+                    str.append(", ");
+                    if (str.length() > MAX_TOSTRING_LENGTH - 1) {
+                        str.setLength(MAX_TOSTRING_LENGTH - 4);
+                        str.append("...");
+                        break;
+                    }
+                }
             }
         }
         return str.append(']').toString();

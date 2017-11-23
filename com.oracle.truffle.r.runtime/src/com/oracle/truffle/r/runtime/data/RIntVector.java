@@ -29,8 +29,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RIntVector extends RVector<int[]> implements RAbstractIntVector {
@@ -40,7 +44,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     RIntVector(int[] data, boolean complete) {
         super(complete);
         this.data = data;
-        assert verify();
+        assert RAbstractVector.verify(this);
     }
 
     RIntVector(int[] data, boolean complete, int[] dims, RStringVector names, RList dimNames) {
@@ -99,6 +103,10 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         NativeDataAccess.setData(this, (int[]) store, index, value);
     }
 
+    public void setDataAt(int index, int value) {
+        NativeDataAccess.setData(this, data, index, value);
+    }
+
     @Override
     protected RIntVector internalCopy() {
         if (data != null) {
@@ -124,23 +132,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     @Override
     public int getLength() {
         return NativeDataAccess.getDataLength(this, data);
-    }
-
-    @Override
-    public String toString() {
-        return toString(i -> Double.toString(getDataAt(i)));
-    }
-
-    @Override
-    public boolean verify() {
-        if (isComplete()) {
-            for (int i = 0; i < getLength(); i++) {
-                if (RRuntime.isNA(getDataAt(i))) {
-                    return false;
-                }
-            }
-        }
-        return true;
     }
 
     @Override
@@ -245,5 +236,50 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
             data = null;
             complete = false;
         }
+    }
+
+    private static final class FastPathAccess extends FastPathFromIntAccess {
+
+        FastPathAccess(RAbstractContainer value) {
+            super(value);
+        }
+
+        @Override
+        protected int getInt(Object store, int index) {
+            return hasStore ? ((int[]) store)[index] : NativeDataAccess.getIntNativeMirrorData(store, index);
+        }
+
+        @Override
+        protected void setInt(Object store, int index, int value) {
+            if (hasStore) {
+                ((int[]) store)[index] = value;
+            } else {
+                NativeDataAccess.setNativeMirrorIntData(store, index, value);
+            }
+        }
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this);
+    }
+
+    private static final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
+        @Override
+        protected int getInt(Object store, int index) {
+            RIntVector vector = (RIntVector) store;
+            return NativeDataAccess.getData(vector, vector.data, index);
+        }
+
+        @Override
+        protected void setInt(Object store, int index, int value) {
+            RIntVector vector = (RIntVector) store;
+            NativeDataAccess.setData(vector, vector.data, index, value);
+        }
+    };
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
     }
 }

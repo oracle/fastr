@@ -223,11 +223,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators39() {
-        // FIXME number of digits in output:
-        // GnuR: 79.38889 98.88889 114.22222 123.38889
-        // FastR: 79.3889 98.8889 114.2222 123.3889
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(structure(c(-24.5833333333333, -5.08333333333333, 10.25, 19.4166666666667), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N'), strata = structure('Within', .Names = 'N'), class = 'mtable'), structure(103.972222222222, class = 'mtable'));`+`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(-24.5833333333333, -5.08333333333333, 10.25, 19.4166666666667), .Dim = 4L, .Dimnames = structure(list(N = c('0.0cwt', '0.2cwt', '0.4cwt', '0.6cwt')), .Names = 'N'), strata = structure('Within', .Names = 'N'), class = 'mtable'), structure(103.972222222222, class = 'mtable'));`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test

@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarList;
+import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 
 public abstract class FFIWrapNode extends Node {
@@ -92,7 +93,11 @@ public abstract class FFIWrapNode extends Node {
         return wrap(RDataFactory.createComplexVectorFromScalar(value));
     }
 
-    @Specialization
+    protected static boolean isRScalarVector(RObject value) {
+        return value instanceof RScalarVector;
+    }
+
+    @Specialization(guards = "!isRScalarVector(value)")
     protected static Object wrap(RObject value) {
         return value;
     }

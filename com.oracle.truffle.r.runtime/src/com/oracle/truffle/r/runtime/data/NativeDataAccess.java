@@ -314,21 +314,35 @@ public final class NativeDataAccess {
                         UnsafeAdapter.UNSAFE.getDouble(address + (index * 2 + 1) * Unsafe.ARRAY_DOUBLE_INDEX_SCALE));
     }
 
-    public static void setNativeMirrorData(Object nativeMirror, int index, double value) {
+    public static double getComplexNativeMirrorDataR(Object nativeMirror, int index) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        return UnsafeAdapter.UNSAFE.getDouble(address + index * 2 * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    }
+
+    public static double getComplexNativeMirrorDataI(Object nativeMirror, int index) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        return UnsafeAdapter.UNSAFE.getDouble(address + (index * 2 + 1) * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    }
+
+    public static void setNativeMirrorDoubleData(Object nativeMirror, int index, double value) {
         long address = ((NativeMirror) nativeMirror).dataAddress;
         assert address != 0;
         assert index < ((NativeMirror) nativeMirror).length;
         UnsafeAdapter.UNSAFE.putDouble(address + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
     }
 
-    public static void setNativeMirrorData(Object nativeMirror, int index, byte value) {
+    public static void setNativeMirrorRawData(Object nativeMirror, int index, byte value) {
         long address = ((NativeMirror) nativeMirror).dataAddress;
         assert address != 0;
         assert index < ((NativeMirror) nativeMirror).length;
         UnsafeAdapter.UNSAFE.putByte(address + index * Unsafe.ARRAY_BYTE_INDEX_SCALE, value);
     }
 
-    public static void setNativeMirrorData(Object nativeMirror, int index, int value) {
+    public static void setNativeMirrorIntData(Object nativeMirror, int index, int value) {
         long address = ((NativeMirror) nativeMirror).dataAddress;
         assert address != 0;
         assert index < ((NativeMirror) nativeMirror).length;
@@ -390,8 +404,12 @@ public final class NativeDataAccess {
         if (noIntNative.isValid() || data != null) {
             return data.length;
         } else {
-            return (int) ((NativeMirror) vector.getNativeMirror()).length;
+            return getDataLengthFromMirror(vector.getNativeMirror());
         }
+    }
+
+    static int getDataLengthFromMirror(Object mirror) {
+        return (int) ((NativeMirror) mirror).length;
     }
 
     static void setData(RIntVector vector, int[] data, int index, int value) {
@@ -478,7 +496,7 @@ public final class NativeDataAccess {
         if (noDoubleNative.isValid() || data != null) {
             data[index] = value;
         } else {
-            setNativeMirrorData(vector.getNativeMirror(), index, value);
+            setNativeMirrorDoubleData(vector.getNativeMirror(), index, value);
         }
     }
 
@@ -487,6 +505,22 @@ public final class NativeDataAccess {
             return RComplex.valueOf(data[index * 2], data[index * 2 + 1]);
         } else {
             return getComplexNativeMirrorData(vector.getNativeMirror(), index);
+        }
+    }
+
+    static double getDataR(RComplexVector vector, double[] data, int index) {
+        if (noComplexNative.isValid() || data != null) {
+            return data[index * 2];
+        } else {
+            return getComplexNativeMirrorDataR(vector.getNativeMirror(), index);
+        }
+    }
+
+    static double getDataI(RComplexVector vector, double[] data, int index) {
+        if (noComplexNative.isValid() || data != null) {
+            return data[index * 2 + 1];
+        } else {
+            return getComplexNativeMirrorDataI(vector.getNativeMirror(), index);
         }
     }
 
