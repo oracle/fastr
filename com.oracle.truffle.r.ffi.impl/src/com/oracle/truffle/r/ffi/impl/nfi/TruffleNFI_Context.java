@@ -186,13 +186,14 @@ final class TruffleNFI_Context extends RFFIContext {
         }
     }
 
-    private void initCallbacksAddress() {
+    @TruffleBoundary
+    private long initCallbacksAddress() {
         // get the address of the native thread local
         try {
             Node bind = Message.createInvoke(1).createNode();
             Node executeNode = Message.createExecute(1).createNode();
             TruffleObject getCallbacksAddressFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, DLL.findSymbol("Rinternals_getCallbacksAddress", null).asTruffleObject(), "bind", "(): sint64");
-            callbacksAddress = (long) ForeignAccess.sendExecute(executeNode, getCallbacksAddressFunction);
+            return (long) ForeignAccess.sendExecute(executeNode, getCallbacksAddressFunction);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -222,22 +223,47 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     private long callbacks;
+    @CompilationFinal private boolean singleThreadOnly = true;
+    @CompilationFinal private long callbacksAddressThread;
     @CompilationFinal private long callbacksAddress;
+    private long lastCallbacksAddressThread;
+    private long lastCallbacksAddress;
 
     private long pushCallbacks() {
         if (callbacksAddress == 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            initCallbacksAddress();
+            callbacksAddress = initCallbacksAddress();
+            callbacksAddressThread = Thread.currentThread().getId();
         }
-        long oldCallbacks = UnsafeAdapter.UNSAFE.getLong(callbacksAddress);
         assert callbacks != 0L;
-        assert callbacksAddress != 0L;
-        UnsafeAdapter.UNSAFE.putLong(callbacksAddress, callbacks);
+        if (singleThreadOnly && callbacksAddressThread == Thread.currentThread().getId()) {
+            // Fast path for contexts used only from a single thread
+            long oldCallbacks = UnsafeAdapter.UNSAFE.getLong(callbacksAddress);
+            assert callbacksAddress != 0L;
+            UnsafeAdapter.UNSAFE.putLong(callbacksAddress, callbacks);
+            return oldCallbacks;
+        }
+        // Slow path: cache the address, but reinitialize it if the thread has changed, without
+        // transfer to interpreter this time.
+        boolean reinitialize = singleThreadOnly || lastCallbacksAddressThread != Thread.currentThread().getId();
+        if (singleThreadOnly) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            singleThreadOnly = false;
+        }
+        if (reinitialize) {
+            lastCallbacksAddress = initCallbacksAddress();
+            lastCallbacksAddressThread = Thread.currentThread().getId();
+        }
+        long oldCallbacks = UnsafeAdapter.UNSAFE.getLong(lastCallbacksAddress);
+        assert lastCallbacksAddress != 0L;
+        assert lastCallbacksAddressThread == Thread.currentThread().getId();
+        UnsafeAdapter.UNSAFE.putLong(lastCallbacksAddress, callbacks);
         return oldCallbacks;
     }
 
     private void popCallbacks(long beforeValue) {
-        assert UnsafeAdapter.UNSAFE.getLong(callbacksAddress) == callbacks : "invalid nesting of native calling contexts";
+        assert !singleThreadOnly || UnsafeAdapter.UNSAFE.getLong(callbacksAddress) == callbacks : "invalid nesting of native calling contexts";
+        assert singleThreadOnly || UnsafeAdapter.UNSAFE.getLong(lastCallbacksAddress) == callbacks : "invalid nesting of native calling contexts";
         UnsafeAdapter.UNSAFE.putLong(callbacksAddress, beforeValue);
     }
 
