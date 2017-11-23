@@ -494,6 +494,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FileFunctions.ListFiles.class, FileFunctionsFactory.ListFilesNodeGen::create);
         add(FileFunctions.ListDirs.class, FileFunctionsFactory.ListDirsNodeGen::create);
         add(FileFunctions.Unlink.class, FileFunctionsFactory.UnlinkNodeGen::create);
+        add(FindInterval.class, FindIntervalNodeGen::create);
         add(ForceAndCall.class, ForceAndCallNodeGen::create);
         add(Formals.class, FormalsNodeGen::create);
         add(Format.class, FormatNodeGen::create);
