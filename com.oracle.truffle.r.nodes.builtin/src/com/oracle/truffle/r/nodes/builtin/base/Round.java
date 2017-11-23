@@ -31,6 +31,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -51,6 +52,8 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class Round extends RBuiltinNode.Arg2 {
 
     @Child private RoundArithmetic roundOp = new RoundArithmetic();
+
+    private final ConditionProfile zeroDigitProfile = ConditionProfile.createBinaryProfile();
 
     private final NACheck check = NACheck.create();
 
@@ -84,6 +87,13 @@ public abstract class Round extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
+    protected double roundDigits(double x, double digits) {
+        check.enable(x);
+        int digitsInt = (int) Math.round(digits);
+        return check.check(x) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digitsInt == 0) ? roundOp.op(x) : roundOp.opd(x, digitsInt);
+    }
+
+    @Specialization
     protected RDoubleVector round(RAbstractLogicalVector x, @SuppressWarnings("unused") double digits) {
         double[] data = new double[x.getLength()];
         check.enable(x);
@@ -105,43 +115,18 @@ public abstract class Round extends RBuiltinNode.Arg2 {
         return RDataFactory.createDoubleVector(data, check.neverSeenNA());
     }
 
-    @Specialization(guards = "isZero(digits)")
-    protected double round(double x, @SuppressWarnings("unused") double digits) {
-        check.enable(x);
-        return check.check(x) ? RRuntime.DOUBLE_NA : roundOp.op(x);
-    }
-
     protected double roundDigits(double x, int digits) {
-        check.enable(x);
-        return check.check(x) ? RRuntime.DOUBLE_NA : roundOp.opd(x, digits);
+        return check.check(x) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digits == 0) ? roundOp.op(x) : roundOp.opd(x, digits);
     }
 
-    @Specialization(guards = "!isZero(digits)")
-    protected double roundDigits(double x, double digits) {
-        return roundDigits(x, (int) Math.round(digits));
-    }
-
-    @Specialization(guards = "isZero(digits)")
+    @Specialization
     protected RDoubleVector round(RAbstractDoubleVector x, double digits) {
         double[] result = new double[x.getLength()];
         check.enable(x);
+        int digitsInt = (int) Math.round(digits);
         for (int i = 0; i < x.getLength(); i++) {
             double value = x.getDataAt(i);
-            result[i] = check.check(value) ? RRuntime.DOUBLE_NA : round(value, digits);
-        }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
-        ret.copyAttributesFrom(x);
-        return ret;
-    }
-
-    @Specialization(guards = "!isZero(dDigits)")
-    protected RDoubleVector roundDigits(RAbstractDoubleVector x, double dDigits) {
-        double[] result = new double[x.getLength()];
-        int digits = (int) Math.round(dDigits);
-        check.enable(x);
-        for (int i = 0; i < x.getLength(); i++) {
-            double value = x.getDataAt(i);
-            result[i] = check.check(value) ? RRuntime.DOUBLE_NA : roundDigits(value, digits);
+            result[i] = check.check(value) ? RRuntime.DOUBLE_NA : zeroDigitProfile.profile(digitsInt == 0) ? roundOp.op(value) : roundOp.opd(value, digitsInt);
         }
         RDoubleVector ret = RDataFactory.createDoubleVector(result, check.neverSeenNA());
         ret.copyAttributesFrom(x);

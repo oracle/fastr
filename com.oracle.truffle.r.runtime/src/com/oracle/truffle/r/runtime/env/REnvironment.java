@@ -1147,6 +1147,7 @@ public abstract class REnvironment extends RAttributeStorage {
         }
 
         @Override
+        @TruffleBoundary
         public void put(String key, Object value) throws PutException {
             throw new PutException(RError.Message.ENV_ASSIGN_EMPTY);
         }
