@@ -243,3 +243,119 @@ pkg.cache.get.version <- function(cache.dir, cache.version, table.file.name, cac
     })
 }
 
+log.message <- function(..., level=0) {
+    cat(..., "\n")
+}
+
+# list of recommended and base packages
+recommended.base.packages <- c("boot", "class", "cluster", "codetools", "foreign", "KernSmooth", "lattice", "MASS", "Matrix", "mgcv", "nlme", "nnet", "rpart", "spatial", "survival", "base", "compiler", "datasets", "grDevices", "graphics", "grid", "methods", "parallel", "splines", "stats", "stats4", "tools", "utils")
+
+# list of base packages
+base.packages <- c("base", "compiler", "datasets", "grDevices", "graphics", "grid", "methods", "parallel", "splines", "stats", "stats4", "tools", "utils")
+
+# the list of packages that will be excluded in the transitive dependecies
+ignored.packages <- base.packages
+
+package.dependencies <- function(pkg, lib, dependencies = c("Depends", "Imports", "LinkingTo"), pl = available.packages()) {
+    if (!(pkg %in% rownames(pl))) {
+        # TODO: logging
+        cat("Package", pkg, "not on CRAN\n")
+        return (NULL)
+    }
+    fields <- pl[pkg, dependencies]
+    fields <- fields[!is.na(fields)]
+
+    # remove newline artefacts '\n' and split by ','
+    deps <- unlist(strsplit(gsub("\\n", " ", fields), ","))
+
+    # remove version
+    deps <- trimws(sub("\\(.*\\)", "", deps))
+
+    # ignore dependency to "R" and ignore already installed packages
+    installed.packages <- tryCatch({
+        # query base and recommended packages
+        ip <- available.packages(lib.loc=lib)
+        ip[as.logical(match(ip[,"Priority"], c("base", "recommended"), nomatch=0L)),"Package"]
+        installed.pacakges(lib.loc=lib)
+    }, error = function(e) {
+        character(0)
+    }, warning = function(e) {
+        character(0)
+    })
+    setdiff(deps, c("R", installed.packages, ignored.packages))
+}
+
+transitive.dependencies <- function(pkg, lib, pl = available.packages(), deptype=c("Depends", "Imports", "LinkingTo"), suggests=FALSE) {
+    deps <- c()
+    more <- pkg
+
+    # Also add "Suggests" to dependencies but do not recurse
+    if (suggests) {
+        this.suggests <- package.dependencies(pkg, dependencies = "Suggests", pl = pl)
+        if (!is.null(this.suggests)) {
+            more <- c(more, this.suggests)
+        }
+    }
+
+    #  TODO: improve list operations for better performance
+    processed <- character(0)
+
+    # the loop can't have more iterations then available packages
+    max.iterations <- nrow(pl)
+    iteration <- 0L
+    while (length(more) > 0) {
+        if (iteration >= max.iterations) {
+            stop("Maximum number of iterations exceeded")
+        }
+        this <- head(more, 1)
+        more <- tail(more, -1)
+
+        if (!(this %in% processed)) {
+            processed <- unique(c(processed, this))
+            this.deps <- package.dependencies(this, lib, dependencies = deptype, pl = pl)
+            if (!is.null(this.deps)) {
+                deps <- c(deps, this.deps)
+                more <- c(more, this.deps[!(this.deps %in% processed)])
+            }
+        }
+
+        iteration <- iteration + 1L
+    }
+    unique(deps)
+}
+
+pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.install) {
+    tryCatch({
+        # determine available packages
+        pkg.list <- available.packages(contriburl=contriburl)
+
+        # compute transitive dependencies of the package to install
+        log.message("Computing transitive package dependencies for ", pkgname, level=1)
+        transitive.pkg.list <- c(transitive.dependencies(pkgname, lib=lib.install, pl=pkg.list), pkgname)
+        log.message("transitive deps: ", transitive.pkg.list, level=1)
+
+        # apply pkg cache to fetch cached packages first
+        cached.pkgs <- sapply(transitive.pkg.list, function(pkgname) pkg.cache.get(pkg.cache.env, pkgname, lib.install))
+
+        # if there was at least one non-cached package
+        if (any(!cached.pkgs) || length(cached.pkgs) == 0L) {
+            # install the package (and the transitive dependencies implicitly)
+            res <- install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+            if (res == NULL) {
+                # cache packages that were not in the cache before
+                lapply(transitive.pkg.list[!cached.pkgs], function(pkgname) pkg.cache.insert(pkg.cache.env, pkgname, lib.install))
+            } else {
+                return (1L)
+            }
+        }
+
+        # if we reach here, installation was a success
+        0L
+    }, error = function(e) {
+        log.message(e$message)
+        return (1L)
+    }, warning = function(e) {
+        log.message(e$message)
+        return (1L)
+    })
+}
