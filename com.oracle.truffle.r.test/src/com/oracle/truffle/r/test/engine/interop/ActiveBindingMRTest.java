@@ -28,12 +28,14 @@ import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import org.junit.Test;
 
 public class ActiveBindingMRTest extends AbstractMRTest {
 
+    @Test
     @Override
-    protected boolean isBoxed(TruffleObject obj) {
-        return true;
+    public void testIsNull() throws Exception {
+        super.testIsNull(); // force inherited tests from AbstractMRTest
     }
 
     @Override

@@ -23,10 +23,15 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import org.junit.Test;
 
-public class REmptyMRTest extends AbstractMRTest {
+public class RRawMRTest extends AbstractMRTest {
+
+    @Override
+    protected TruffleObject[] createTruffleObjects() throws Exception {
+        return new TruffleObject[]{RRaw.valueOf((byte) 1)};
+    }
 
     @Test
     @Override
@@ -35,8 +40,8 @@ public class REmptyMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{REmpty.instance};
+    protected Object getUnboxed(TruffleObject obj) {
+        return ((RRaw) obj).getValue();
     }
 
     @Override

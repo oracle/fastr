@@ -27,36 +27,37 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RComplex;
 
-@MessageResolution(receiverType = RInteger.class)
-public class RIntegerMR {
+@MessageResolution(receiverType = RComplex.class)
+public class RComplexMR {
+
     @Resolve(message = "IS_BOXED")
-    public abstract static class RIntegerIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteger receiver) {
-            return true;
+    public abstract static class RComplexIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RComplex receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "HAS_SIZE")
+    public abstract static class RComplexHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RComplex receiver) {
+            return false;
         }
     }
 
     @Resolve(message = "KEY_INFO")
-    public abstract static class RIntegerKeyInfoNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteger receiver, @SuppressWarnings("unused") Object identifier) {
+    public abstract static class RComplexKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RComplex receiver, @SuppressWarnings("unused") Object identifier) {
             return 0;
         }
     }
 
-    @Resolve(message = "UNBOX")
-    public abstract static class RIntegerUnboxNode extends Node {
-        protected int access(RInteger receiver) {
-            return receiver.getValue();
-        }
-    }
-
     @CanResolve
-    public abstract static class RIntegerCheck extends Node {
+    public abstract static class RComplexCheck extends Node {
 
         protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof RInteger;
+            return receiver instanceof RComplex;
         }
     }
 }

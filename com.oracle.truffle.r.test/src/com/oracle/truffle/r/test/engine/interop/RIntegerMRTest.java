@@ -24,17 +24,19 @@ package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import org.junit.Test;
 
 public class RIntegerMRTest extends AbstractMRTest {
+
+    @Test
+    @Override
+    public void testIsNull() throws Exception {
+        super.testIsNull(); // force inherited tests from AbstractMRTest
+    }
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
         return new TruffleObject[]{RInteger.valueOf(123)};
-    }
-
-    @Override
-    protected boolean isBoxed(TruffleObject obj) {
-        return true;
     }
 
     @Override

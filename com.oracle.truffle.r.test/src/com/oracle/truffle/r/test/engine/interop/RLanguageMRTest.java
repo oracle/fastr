@@ -106,11 +106,6 @@ public class RLanguageMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected boolean hasSize(TruffleObject obj) {
-        return true;
-    }
-
-    @Override
     protected int getSize(TruffleObject obj) {
         return ((RLanguage) obj).getLength();
     }

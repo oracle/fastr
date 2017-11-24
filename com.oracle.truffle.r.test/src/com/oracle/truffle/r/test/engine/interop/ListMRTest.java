@@ -159,8 +159,11 @@ public class ListMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected String[] getKeys() {
-        return new String[]{"i", "d", "b", "fn", "n", ""};
+    protected String[] getKeys(TruffleObject obj) {
+        if (((RAbstractContainer) obj).getLength() > 0) {
+            return new String[]{"i", "d", "b", "fn", "n", ""};
+        }
+        return new String[]{};
     }
 
     @Override
@@ -172,11 +175,6 @@ public class ListMRTest extends AbstractMRTest {
     protected TruffleObject createEmptyTruffleObject() throws Exception {
         // cant have an emtpy pair list
         return create("list", "");
-    }
-
-    @Override
-    protected boolean hasSize(TruffleObject arg0) {
-        return true;
     }
 
     @Override

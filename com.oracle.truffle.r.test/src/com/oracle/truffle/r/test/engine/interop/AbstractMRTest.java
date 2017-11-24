@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import static org.junit.Assert.assertEquals;
+import com.oracle.truffle.api.interop.ArityException;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
@@ -37,8 +37,14 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.vm.PolyglotEngine;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
+import com.oracle.truffle.r.runtime.data.RNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public abstract class AbstractMRTest {
 
@@ -67,27 +73,16 @@ public abstract class AbstractMRTest {
      */
     protected abstract TruffleObject createEmptyTruffleObject() throws Exception;
 
-    protected String[] getKeys() {
-        return null;
+    /**
+     * 
+     * @param obj
+     * @return array of keys or <code>null</code> if KEYS message not supported
+     */
+    protected String[] getKeys(TruffleObject obj) {
+        throw new UnsupportedOperationException("override if HAS_KEYS returns true");
     }
 
     protected boolean isNull(@SuppressWarnings("unused") TruffleObject obj) {
-        return false;
-    }
-
-    protected boolean isExecutable(@SuppressWarnings("unused") TruffleObject obj) {
-        return false;
-    }
-
-    protected boolean isPointer(@SuppressWarnings("unused") TruffleObject obj) {
-        return true;
-    }
-
-    protected boolean isBoxed(@SuppressWarnings("unused") TruffleObject obj) {
-        return false;
-    }
-
-    protected boolean hasSize(@SuppressWarnings("unused") TruffleObject obj) {
         return false;
     }
 
@@ -96,11 +91,11 @@ public abstract class AbstractMRTest {
     }
 
     protected int getSize(@SuppressWarnings("unused") TruffleObject obj) {
-        throw new UnsupportedOperationException("override if hasSize returns true");
+        throw new UnsupportedOperationException("override if HAS_SIZE returns true");
     }
 
     protected Object getUnboxed(@SuppressWarnings("unused") TruffleObject obj) {
-        throw new UnsupportedOperationException("override if isBoxed returns true");
+        throw new UnsupportedOperationException("override if IS_BOXED returns true");
     }
 
     @Test
@@ -111,16 +106,44 @@ public abstract class AbstractMRTest {
     }
 
     @Test
-    public void testIsExecutable() throws Exception {
+    public void testExecutable() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
-            assertEquals(isExecutable(obj), ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+            try {
+                // TODO if the need appears, also provide for args for execute
+                ForeignAccess.sendExecute(Message.createExecute(0).createNode(), obj);
+                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", true, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+            } catch (UnsupportedTypeException | ArityException e) {
+                throw e;
+            } catch (UnsupportedMessageException e) {
+                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", false, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+            }
         }
     }
 
     @Test
-    public void testIsPointer() throws Exception {
+    public void testInstantiable() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
-            assertEquals(obj.getClass().getSimpleName(), isPointer(obj), ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+            try {
+                // TODO if the need appears, also provide for args for new
+                ForeignAccess.sendNew(Message.createNew(0).createNode(), obj);
+                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", true, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
+            } catch (UnsupportedTypeException | ArityException e) {
+                throw e;
+            } catch (UnsupportedMessageException e) {
+                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", false, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
+            }
+        }
+    }
+
+    @Test
+    public void testAsNativePointer() throws Exception {
+        for (TruffleObject obj : createTruffleObjects()) {
+            try {
+                assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.AS_POINTER.createNode(), obj));
+                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", true, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+            } catch (UnsupportedMessageException e) {
+                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", false, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+            }
         }
     }
 
@@ -131,8 +154,12 @@ public abstract class AbstractMRTest {
                 continue;
             }
             try {
-                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
-            } catch (UnsupportedMessageException unsupportedMessageException) {
+                if (obj == RNull.instance) {
+                    assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == NativePointer.NULL_NATIVEPOINTER);
+                } else {
+                    assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+                }
+            } catch (UnsupportedMessageException e) {
             }
         }
     }
@@ -140,38 +167,62 @@ public abstract class AbstractMRTest {
     @Test
     public void testSize() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
-            boolean hasSize = ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj);
-            assertEquals("" + obj.getClass() + " " + obj, hasSize(obj), hasSize);
-            if (hasSize) {
-                assertEquals(getSize(obj), ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj));
-            } else {
-                assertInteropException(() -> ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj), UnsupportedMessageException.class);
-            }
+            testSize(obj);
+        }
+        TruffleObject empty = createEmptyTruffleObject();
+        if (empty != null) {
+            testSize(empty);
+        }
+    }
+
+    private void testSize(TruffleObject obj) {
+        try {
+            Object size = ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj);
+            assertEquals(getSize(obj), size);
+            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_SIZE", true, ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
+        } catch (UnsupportedMessageException e) {
+            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_SIZE", false, ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj));
         }
     }
 
     @Test
     public void testBoxed() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
-            boolean isBoxed = ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj);
-            assertEquals(isBoxed(obj), isBoxed);
-            if (isBoxed) {
-                assertEquals(getUnboxed(obj), ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj));
-            } else {
-                assertInteropException(() -> ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj), UnsupportedMessageException.class);
-            }
+            testUnboxed(obj);
+        }
+        TruffleObject empty = createEmptyTruffleObject();
+        if (empty != null) {
+            testUnboxed(empty);
+        }
+    }
+
+    private void testUnboxed(TruffleObject obj) {
+        try {
+            Object unboxed = ForeignAccess.sendUnbox(Message.UNBOX.createNode(), obj);
+            assertEquals(getUnboxed(obj), unboxed);
+            assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_BOXED", true, ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
+        } catch (UnsupportedMessageException e) {
+            assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_BOXED", false, ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
         }
     }
 
     @Test
     public void testKeys() throws Exception {
-        String[] keys = getKeys();
-        if (keys == null) {
-            return;
-        }
         for (TruffleObject obj : createTruffleObjects()) {
+            testKeys(obj);
+        }
+        TruffleObject empty = createEmptyTruffleObject();
+        if (empty != null) {
+            testKeys(empty);
+        }
+    }
+
+    private void testKeys(TruffleObject obj) throws UnknownIdentifierException, UnsupportedMessageException {
+        try {
             TruffleObject keysObj = ForeignAccess.sendKeys(Message.KEYS.createNode(), obj);
+
             int size = (int) ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), keysObj);
+            String[] keys = getKeys(obj);
             assertEquals(keys.length, size);
 
             Set<Object> set = new HashSet<>();
@@ -181,31 +232,9 @@ public abstract class AbstractMRTest {
             for (String key : keys) {
                 assertTrue(set.contains(key));
             }
-        }
-    }
-
-    @Test
-    public void testEmpty() throws Exception {
-
-        TruffleObject obj = createEmptyTruffleObject();
-        if (obj != null) {
-            if (hasSize(obj)) {
-                int size = (int) ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj);
-                assertEquals(0, size);
-            }
-
-            TruffleObject keys = null;
-            try {
-                keys = ForeignAccess.sendKeys(Message.KEYS.createNode(), obj);
-            } catch (UnsupportedMessageException ex) {
-            }
-            if (keys != null) {
-                boolean keysHasSize = ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), keys);
-                if (keysHasSize) {
-                    int keysSize = (int) ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), keys);
-                    assertEquals(0, keysSize);
-                }
-            }
+            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_KEYS", true, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
+        } catch (UnsupportedMessageException e) {
+            assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_KEYS", false, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
         }
     }
 

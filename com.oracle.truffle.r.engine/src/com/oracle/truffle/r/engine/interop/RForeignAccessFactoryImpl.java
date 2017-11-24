@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RForeignAccessFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -44,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
@@ -92,6 +94,10 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RIntegerMRForeign.ACCESS;
         } else if (obj instanceof RDouble) {
             return RDoubleMRForeign.ACCESS;
+        } else if (obj instanceof RComplex) {
+            return RComplexMRForeign.ACCESS;
+        } else if (obj instanceof RRaw) {
+            return RRawMRForeign.ACCESS;
         } else if (obj instanceof RConnection) {
             return RConnectionMRForeign.ACCESS;
         } else if (obj instanceof RContext) {

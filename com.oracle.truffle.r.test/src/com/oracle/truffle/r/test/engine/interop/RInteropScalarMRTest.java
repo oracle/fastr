@@ -63,16 +63,6 @@ public class RInteropScalarMRTest extends AbstractMRTest {
     }
 
     @Override
-    protected boolean isBoxed(TruffleObject arg0) {
-        return true;
-    }
-
-    @Override
-    protected boolean isPointer(TruffleObject obj) {
-        return false;
-    }
-
-    @Override
     protected Object getUnboxed(TruffleObject obj) {
         RInteropScalar is = (RInteropScalar) obj;
         try {

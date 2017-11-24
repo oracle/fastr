@@ -27,36 +27,44 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RRaw;
 
-@MessageResolution(receiverType = RInteger.class)
-public class RIntegerMR {
+@MessageResolution(receiverType = RRaw.class)
+public class RRawMR {
+
     @Resolve(message = "IS_BOXED")
-    public abstract static class RIntegerIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteger receiver) {
+    public abstract static class RRawIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RRaw receiver) {
             return true;
         }
     }
 
-    @Resolve(message = "KEY_INFO")
-    public abstract static class RIntegerKeyInfoNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RInteger receiver, @SuppressWarnings("unused") Object identifier) {
-            return 0;
-        }
-    }
-
     @Resolve(message = "UNBOX")
-    public abstract static class RIntegerUnboxNode extends Node {
-        protected int access(RInteger receiver) {
+    public abstract static class RRawUnboxNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RRaw receiver) {
             return receiver.getValue();
         }
     }
 
+    @Resolve(message = "HAS_SIZE")
+    public abstract static class RRawHasSizeNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RRaw receiver) {
+            return false;
+        }
+    }
+
+    @Resolve(message = "KEY_INFO")
+    public abstract static class RRawKeyInfoNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RRaw receiver, @SuppressWarnings("unused") Object identifier) {
+            return 0;
+        }
+    }
+
     @CanResolve
-    public abstract static class RIntegerCheck extends Node {
+    public abstract static class RComplexCheck extends Node {
 
         protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof RInteger;
+            return receiver instanceof RRaw;
         }
     }
 }
