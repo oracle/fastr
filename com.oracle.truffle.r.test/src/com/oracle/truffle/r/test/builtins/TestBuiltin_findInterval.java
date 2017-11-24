@@ -19,27 +19,25 @@ public class TestBuiltin_findInterval extends TestBase {
 
     @Test
     public void testfindInterval1() {
-        // FIXME RInternalError: not implemented: .Internal findInterval
-        assertEval(Ignored.Unimplemented,
-                        "argv <- list(c(1, 2, 3, 4, 5, 6, 7, 8, 9), c(3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 5.75, 6), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(c(1, 2, 3, 4, 5, 6, 7, 8, 9), c(3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 5.75, 6), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], T))");
+        assertEval("argv <- list(c(1, 2, 3, 4, 5, 6, 7, 8, 9), c(3, 3.25, 3.5, 3.75, 4, 4.25, 4.5, 4.75, 5, 5.25, 5.5, 5.75, 6), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], F))");
     }
 
     @Test
     public void testfindInterval2() {
-        // FIXME RInternalError: not implemented: .Internal findInterval
-        assertEval(Ignored.Unimplemented, "argv <- list(NA_real_, NA_real_, FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(NA_real_, NA_real_, FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], T))");
+        assertEval("argv <- list(NA_real_, NA_real_, FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], F))");
     }
 
     @Test
     public void testfindInterval3() {
-        // FIXME RInternalError: not implemented: .Internal findInterval
-        assertEval(Ignored.Unimplemented, "argv <- list(numeric(0), numeric(0), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(numeric(0), numeric(0), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], T))");
+        assertEval("argv <- list(numeric(0), numeric(0), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], F))");
     }
 
     @Test
     public void testfindInterval4() {
-        // FIXME RInternalError: not implemented: .Internal findInterval
-        assertEval(Ignored.Unimplemented,
-                        "argv <- list(c(5, 10, 15), c(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]]))");
+        assertEval("argv <- list(c(5, 10, 15), c(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], T))");
+        assertEval("argv <- list(c(5, 10, 15), c(2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18), FALSE, FALSE); .Internal(findInterval(argv[[1]], argv[[2]], argv[[3]], argv[[4]], F))");
     }
 }

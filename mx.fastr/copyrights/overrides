@@ -102,6 +102,7 @@ com.oracle.truffle.r.native/run/Rclasspath.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript_exec.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript.sh,oracle_bash.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Abbrev.java,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/FindInterval.java,gnu_r.core.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/APerm.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/BaseGammaFunctions.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/BaseVariables.java,gnu_r.copyright
