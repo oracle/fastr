@@ -725,19 +725,30 @@ fastr_error_log_size <- function() {
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr_error_log_size()
 	if (run.mode == "system") {
-        system.install.wrapper <- function() {
-            tryCatch(
-                     system.install(pkgname)
-            , error = function(e) {
-                log.message(e$message)
-                return (1)
-            }, warning = function(e) {
-                log.message(e$message)
-                # According to the documentation of 'system2', a warning will provide a status field.
-                return (e$status)
-            })
-        }
-        pkg.cache.install(pkg.cache, pkgname, lib.install, system.install.wrapper)
+        #system.install.wrapper <- function() {
+            #tryCatch(
+                     #system.install(pkgname)
+            #, error = function(e) {
+                #log.message(e$message)
+                #return (1L)
+            #}, warning = function(e) {
+                #log.message(e$message)
+                ## According to the documentation of 'system2', a warning will provide a status field.
+                #return (e$status)
+            #})
+        #}
+        #pkg.cache.install(pkg.cache, pkgname, lib.install, system.install.wrapper)
+
+        tryCatch(
+                 system.install(pkgname)
+        , error = function(e) {
+            log.message(e$message)
+            1L
+        }, warning = function(e) {
+            log.message(e$message)
+            # According to the documentation of 'system2', a warning will provide a status field.
+            e$status
+        })
 	} else if (run.mode == "internal") {
         internal.install.wrapper <- function() {
             tryCatch(
@@ -788,8 +799,11 @@ system.install <- function(pkgname) {
 	} else {
 		rscript = gnu_rscript()
 	}
-	args <- c(script, pkgname, paste0(contrib.url(getOption("repos"), "source"), collapse=","), lib.install)
-	rc <- system2(rscript, args)
+    args <- c(script, pkgname, paste0(contrib.url(getOption("repos"), "source"), collapse=","), lib.install, as.character(pkg.cache$enabled))
+    if (pkg.cache$enabled) {
+         args <- c(args, pkg.cache$version, pkg.cache$dir)
+    } 	
+    rc <- system2(rscript, args)
 	rc
 }
 
@@ -1055,16 +1069,6 @@ getCurrentScriptDir <- function() {
 
 run <- function() {
     parse.args()
-
-    if (pkg.cache$enabled) {
-        curScriptDir <- getCurrentScriptDir()
-        if (!is.null(curScriptDir)) {
-            source(file.path(curScriptDir, "install.cache.R"))
-        } else {
-            log.message("Cannot use package cache since script directory cannot be determined")
-        }
-    }
-
     if (find.top100) {
         set.repos()
         do.find.top100()
@@ -1072,6 +1076,19 @@ run <- function() {
         run.setup()
         do.it()
     }
+}
+
+# load package cache code
+curScriptDir <- getCurrentScriptDir()
+if (!is.null(curScriptDir)) {
+    source(file.path(curScriptDir, "install.cache.R"))
+} else {
+    log.message("Cannot use package cache since script directory cannot be determined")
+
+    # avoid errors
+    pkg.cache.install <<- function(...) FALSE
+    pkg.cache.get <<- function(...) FALSE
+    pkg.cache.insert <<- function(...) FALSE
 }
 
 quiet <- F
