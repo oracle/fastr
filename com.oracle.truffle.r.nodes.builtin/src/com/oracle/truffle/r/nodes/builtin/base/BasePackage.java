@@ -510,7 +510,9 @@ public class BasePackage extends RBuiltinPackage {
         add(FrameFunctions.SysNFrame.class, FrameFunctionsFactory.SysNFrameNodeGen::create);
         add(FrameFunctions.SysParent.class, FrameFunctionsFactory.SysParentNodeGen::create);
         add(FrameFunctions.SysParents.class, FrameFunctionsFactory.SysParentsNodeGen::create);
-        add(Gc.class, GcNodeGen::create);
+        add(GcFunctions.Gc.class, GcFunctionsFactory.GcNodeGen::create);
+        add(GcFunctions.Gctorture.class, GcFunctionsFactory.GctortureNodeGen::create);
+        add(GcFunctions.Gctorture2.class, GcFunctionsFactory.Gctorture2NodeGen::create);
         add(GetClass.class, GetClassNodeGen::create);
         add(GetFunctions.Get.class, GetFunctionsFactory.GetNodeGen::create);
         add(GetFunctions.Get0.class, GetFunctionsFactory.Get0NodeGen::create);
