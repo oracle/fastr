@@ -60,6 +60,6 @@ public abstract class ObjectSize extends RExternalBuiltinNode.Arg1 {
     @Fallback
     @TruffleBoundary
     protected int objectSize(Object o) {
-        return (int) (RObjectSize.getRecursiveObjectSize(o) / 8L);
+        return (int) (RObjectSize.getRecursiveObjectSize(o));
     }
 }
