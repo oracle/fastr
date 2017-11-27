@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,15 @@
 # entire installation process for multiple package installation tests.
 
 # args:
-# pkgname, contriburl, lib
+# pkgname, contriburl, lib, pkg.cache.enabled [, api.version, cache.dir ]
+
+
+log.message <- function(..., level=0L) {
+    # TODO: verbosity
+    if (level == 0L) {
+        cat(..., "\n")
+    }
+}
 
 args <- commandArgs(TRUE)
 
@@ -35,14 +43,47 @@ parse.args <- function() {
 		pkgname <<- args[[1]]
 		contriburl <<- strsplit(args[[2]], ",")[[1]]
 		lib.install <<- args[[3]]
+
+        pkg.cache <<- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L))
+        pkg.cache$enabled <- as.logical(args[[4]])
+        cat("system.install, cache enabled: ", pkg.cache$enabled, "\n")
+        if (pkg.cache$enabled) {
+		    pkg.cache$version <- args[[5]]
+		    pkg.cache$dir <- args[[6]]
+        }
 	}
 }
 
+# return code: sucess == 0L, error == 1L
 run <- function() {
-	parse.args()
-	install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+    parse.args()
+    pkg.cache.internal.install(pkg.cache, pkgname, contriburl, lib.install)
+}
+
+# Determines the directory of the script assuming that there is a "--file=" argument on the command line.
+getCurrentScriptDir <- function() {
+     cmdArgs <- commandArgs()
+     res <- startsWith(cmdArgs, '--file=')
+     fileArg <- cmdArgs[res]
+     if (length(fileArg) > 0L) {
+         p <- strsplit(fileArg, "=")[[1]][[2]]
+         dirname(p)
+     } else {
+        NULL
+     }
+}
+
+# load package cache code
+curScriptDir <- getCurrentScriptDir()
+if (!is.null(curScriptDir)) {
+    source(file.path(curScriptDir, "install.cache.R"))
+} else {
+    log.message("Cannot use package cache since script directory cannot be determined")
+    pkg.cache.get <<- function(...) FALSE
+    pkg.cache.insert <<- function(...) FALSE
 }
 
 if (!interactive()) {
-	run()
+	status.code <- run()
+    quit(status = status.code)
 }

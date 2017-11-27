@@ -56,11 +56,12 @@ def _gnur_rscript():
     return _mx_gnur().extensions._gnur_rscript_path()
 
 def _gnur_include_path():
+    gnur_include_p = None
     if _graalvm():
-        return _mx_gnur().extensions._gnur_include_path()
+        gnur_include_p = join(_mx_gnur().dir, 'gnur', _mx_gnur().extensions.r_version(), 'include')
     else:
         gnur_include_p = join(mx_fastr._gnur_path(), "include")
-        return gnur_include_p
+    return gnur_include_p
 
 def _fastr_include_path():
     return join(_fastr_suite_dir(), 'include')
