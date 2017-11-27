@@ -37,9 +37,12 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.nmath.Choose;
 import com.oracle.truffle.r.runtime.nmath.GammaFunctions;
 import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -137,6 +140,37 @@ public class BaseGammaFunctions {
         protected double scalarFunction(double xv) {
             return -dpsiFnCalc.executeDouble(xv, 0, 1, 0);
         }
+    }
+
+    @RBuiltin(name = "lchoose", kind = INTERNAL, parameterNames = {"n", "k"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
+    public abstract static class LChoose extends RBuiltinNode.Arg2 {
+
+        static {
+            Casts casts = new Casts(LChoose.class);
+            casts.arg("n").mustNotBeNull().asDoubleVector();
+            casts.arg("k").mustNotBeNull().asIntegerVector();
+        }
+
+        @Specialization
+        protected double lchoose(double n, int k) {
+            if (n == RRuntime.DOUBLE_NA || k == RRuntime.INT_NA) {
+                return RRuntime.DOUBLE_NA;
+            }
+            return Choose.lchoose(n, k);
+        }
+
+        @Specialization
+        protected RDoubleVector lchoose(RAbstractDoubleVector n, RAbstractIntVector k) {
+            int nLength = n.getLength();
+            int kLength = k.getLength();
+            int resultLength = Math.max(nLength, kLength);
+            double[] result = new double[resultLength];
+            for (int i = 0; i < resultLength; i++) {
+                result[i] = lchoose(n.getDataAt(i % nLength), k.getDataAt(i % kLength));
+            }
+            return RDataFactory.createDoubleVector(result, n.isComplete() && k.isComplete());
+        }
+
     }
 
     protected abstract static class DpsiFnCalc extends Node {
