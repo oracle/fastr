@@ -483,7 +483,7 @@ basic_expr returns [T v]
     ;
 
 simple_expr returns [T v]
-    @init { Token start = input.LT(1); }
+    @init { Token start = input.LT(1); List<Argument<T>> args = new ArrayList<>(); Token compToken = null; }
     : i=id                                      { $v = builder.lookup(src($i.v), $i.text, false); }
     | b=bool                                    { $v = builder.constant(src(start, last()), $b.v); }
     | d=DD                                      { $v = builder.lookup(src($d), $d.text, false); }
@@ -496,14 +496,21 @@ simple_expr returns [T v]
     | t=NACOMPL                                 { $v = builder.constant(src($t), RComplex.createNA()); }
     | num=number                                { $v = $num.v; }
     | cstr=conststring                          { $v = $cstr.v; }
-    | pkg=id op=(NS_GET|NS_GET_INT) n_ comp=id {
-        List<Argument<T>> args = new ArrayList<>();
+    | pkg=id op=(NS_GET|NS_GET_INT) n_          {
         SourceSection pkgSource = src($pkg.v);
-        SourceSection compSource = src($comp.v);
         args.add(RCodeBuilder.argument(pkgSource, "pkg", builder.lookup(pkgSource, $pkg.text, false)));
-        args.add(RCodeBuilder.argument(compSource, "name", builder.lookup(compSource, $comp.text, false)));
-        $v = builder.call(src($pkg.v, $comp.v), operator($op), args);
-    }
+        }
+      ( compId=id                               {
+        SourceSection compSource = src($compId.v);
+        compToken = $compId.v;
+        args.add(RCodeBuilder.argument(compSource, "name", builder.lookup(compSource, $compId.text, false)));
+        }
+      | compString=STRING                       { 
+        SourceSection compSource = src($compString);
+        compToken = $compString;
+        args.add(RCodeBuilder.argument(compSource, "name", builder.constant(compSource, $compString.text)));
+        }
+        )                                       { $v = builder.call(src($pkg.v, compToken), operator($op), args); }
     | op=LPAR n_ ea=expr_or_assign n_ y=RPAR    { $v = builder.call(src($op, $y), operator($op), $ea.v); }
     | s=sequence                                { $v = $s.v; }
     | e=expr_wo_assign                          { $v = $e.v; }
