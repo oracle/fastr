@@ -327,26 +327,30 @@ transitive.dependencies <- function(pkg, lib, pl = available.packages(), deptype
 # Fetches the package from the cache or installs it. This is also done for all transitive dependencies.
 pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.install) {
     tryCatch({
-        # determine available packages
-        pkg.list <- available.packages(contriburl=contriburl)
+        if (pkg.cache.env$enabled) {
+            # determine available packages
+            pkg.list <- available.packages(contriburl=contriburl)
 
-        # compute transitive dependencies of the package to install
-        log.message("Computing transitive package dependencies for ", pkgname, level=1)
-        transitive.pkg.list <- c(transitive.dependencies(pkgname, lib=lib.install, pl=pkg.list), pkgname)
-        log.message("transitive deps: ", transitive.pkg.list, level=1)
+            # compute transitive dependencies of the package to install
+            log.message("Computing transitive package dependencies for ", pkgname, level=1)
+            transitive.pkg.list <- c(transitive.dependencies(pkgname, lib=lib.install, pl=pkg.list), pkgname)
+            log.message("transitive deps: ", transitive.pkg.list, level=1)
 
-        # apply pkg cache to fetch cached packages first
-        cached.pkgs <- sapply(transitive.pkg.list, function(pkgname) pkg.cache.get(pkg.cache.env, pkgname, lib.install))
-        log.message("Number of uncached pacakges:", length(transitive.pkg.list[!cached.pkgs]), level=1)
+            # apply pkg cache to fetch cached packages first
+            cached.pkgs <- sapply(transitive.pkg.list, function(pkgname) pkg.cache.get(pkg.cache.env, pkgname, lib.install))
+            log.message("Number of uncached packages:", length(transitive.pkg.list[!cached.pkgs]), level=1)
 
-        # if there was at least one non-cached package
-        if (any(!cached.pkgs) || length(cached.pkgs) == 0L) {
-            # install the package (and the transitive dependencies implicitly)
+            # if there was at least one non-cached package
+            if (any(!cached.pkgs) || length(cached.pkgs) == 0L) {
+                # install the package (and the transitive dependencies implicitly)
+                install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+
+                # cache packages that were not in the cache before
+                log.message("Caching uncached dependencies:", transitive.pkg.list[!cached.pkgs], level=1)
+                lapply(transitive.pkg.list[!cached.pkgs], function(pkgname) pkg.cache.insert(pkg.cache.env, pkgname, lib.install))
+            }
+        } else {
             install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
-
-            # cache packages that were not in the cache before
-            log.message("Caching uncached dependencies:", transitive.pkg.list[!cached.pkgs], level=1)
-            lapply(transitive.pkg.list[!cached.pkgs], function(pkgname) pkg.cache.insert(pkg.cache.env, pkgname, lib.install))
         }
 
         # if we reach here, installation was a success
