@@ -44,6 +44,7 @@ import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
+import com.oracle.truffle.r.library.stats.Influence;
 import com.oracle.truffle.r.library.stats.PPSum;
 import com.oracle.truffle.r.library.stats.RMultinomNode;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
@@ -521,6 +522,8 @@ public class CallAndExternalFunctions {
                     return CutreeNodeGen.create();
                 case "BinDist":
                     return BinDist.create();
+                case "influence":
+                    return Influence.create();
                 case "isoreg":
                 case "monoFC_m":
                 case "numeric_deriv":
@@ -566,7 +569,6 @@ public class CallAndExternalFunctions {
                 case "Rsm":
                 case "tukeyline":
                 case "runmed":
-                case "influence":
                 case "pSmirnov2x":
                 case "pKolmogorov2x":
                 case "pKS2":

@@ -46,8 +46,17 @@ public interface StatsRFFI {
         }
     }
 
+    interface LminflNode extends NodeInterface {
+        void execute(double[] x, int ldx, int n, int k, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol);
+
+        static LminflNode create() {
+            return RFFIFactory.getStatsRFFI().createLminflNode();
+        }
+    }
+
     FactorNode createFactorNode();
 
     WorkNode createWorkNode();
 
+    LminflNode createLminflNode();
 }

@@ -51,6 +51,18 @@ public class TruffleNFI_Stats implements StatsRFFI {
         }
     }
 
+    private static class TruffleNFI_LminflNode extends TruffleNFI_DownCallNode implements LminflNode {
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.lminfl;
+        }
+
+        @Override
+        public void execute(double[] x, int ldx, int n, int k, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol) {
+            call(x, ldx, n, k, docoef, qraux, resid, hat, coef, sigma, tol);
+        }
+    }
+
     @Override
     public FactorNode createFactorNode() {
         return new TruffleNFI_FactorNode();
@@ -59,5 +71,10 @@ public class TruffleNFI_Stats implements StatsRFFI {
     @Override
     public WorkNode createWorkNode() {
         return new TruffleNFI_WorkNode();
+    }
+
+    @Override
+    public LminflNode createLminflNode() {
+        return new TruffleNFI_LminflNode();
     }
 }

@@ -125,6 +125,11 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                                 public WorkNode createWorkNode() {
                                     throw unsupported("work");
                                 }
+
+                                @Override
+                                public LminflNode createLminflNode() {
+                                    throw unsupported("lminfl");
+                                }
                             }, new ToolsRFFI() {
                                 @Override
                                 public ParseRdNode createParseRdNode() {

@@ -36,10 +36,10 @@ import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_StatsFactory.ExecuteWorkNo
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
 public class TruffleLLVM_Stats implements StatsRFFI {
@@ -161,6 +161,13 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
     }
 
+    private static class TruffleLLVM_LminflNode extends Node implements LminflNode {
+        @Override
+        public void execute(double[] x, int ldx, int n, int k, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol) {
+            throw RInternalError.unimplemented("lfmin for LLVM backend, lfmin is used in influence external.");
+        }
+    }
+
     @Override
     public FactorNode createFactorNode() {
         return new Truffle_FactorNode();
@@ -169,5 +176,10 @@ public class TruffleLLVM_Stats implements StatsRFFI {
     @Override
     public WorkNode createWorkNode() {
         return new Truffle_WorkNode();
+    }
+
+    @Override
+    public LminflNode createLminflNode() {
+        return new TruffleLLVM_LminflNode();
     }
 }
