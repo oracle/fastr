@@ -18,14 +18,19 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_gctorture2 extends TestBase {
 
     @Test
+    public void testgctorture() {
+        assertEval("argv <- list(FALSE); .Internal(gctorture(argv[[1]]))");
+        assertEval("argv <- list(NULL); .Internal(gctorture(argv[[1]]))");
+    }
+
+    @Test
     public void testgctorture21() {
-        // FIXME not implemented: .Internal gctorture2
-        assertEval(Ignored.Unimplemented, "argv <- list(NULL, NULL, FALSE); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(NULL, NULL, FALSE); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(NULL, NULL, NULL); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
     public void testgctorture22() {
-        // FIXME not implemented: .Internal gctorture2
-        assertEval(Ignored.Unimplemented, "argv <- list(FALSE, FALSE, FALSE); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval("argv <- list(FALSE, FALSE, FALSE); .Internal(gctorture2(argv[[1]], argv[[2]], argv[[3]]))");
     }
 }
