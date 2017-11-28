@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -36,6 +37,7 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -49,15 +51,25 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
@@ -65,7 +77,6 @@ import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray
 import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isJavaIterable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@SuppressWarnings("unused")
 @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class, Foreign2R.class})
 public abstract class PrecedenceNode extends RBaseNode {
 
@@ -84,93 +95,76 @@ public abstract class PrecedenceNode extends RBaseNode {
     public abstract int executeInteger(Object object, boolean recursive);
 
     @Specialization
+    @SuppressWarnings("unused")
     protected int doNull(RNull val, boolean recursive) {
         return NO_PRECEDENCE;
     }
 
     @Specialization
-    protected int doRaw(RRaw val, boolean recursive) {
-        return RAW_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doRawVector(RRawVector val, boolean recursive) {
-        return RAW_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doLogical(byte val, boolean recursive) {
-        return LOGICAL_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doLogical(RLogicalVector val, boolean recursive) {
-        return LOGICAL_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doInt(int val, boolean recursive) {
-        return INT_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doComplex(RComplex val, boolean recursive) {
-        return COMPLEX_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doInt(RIntVector val, boolean recursive) {
-        return INT_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doInt(RIntSequence val, boolean recursive) {
-        return INT_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doDouble(double val, boolean recursive) {
-        return DOUBLE_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doDouble(RDoubleVector val, boolean recursive) {
-        return DOUBLE_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doDouble(RDoubleSequence val, boolean recursive) {
-        return DOUBLE_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doComplex(RComplexVector val, boolean recursive) {
-        return COMPLEX_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doString(String val, boolean recursive) {
-        return STRING_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doString(RStringVector val, boolean recursive) {
-        return STRING_PRECEDENCE;
-    }
-
-    @Specialization
-    protected int doString(RStringSequence val, boolean recursive) {
-        return STRING_PRECEDENCE;
-    }
-
-    @Specialization
+    @SuppressWarnings("unused")
     protected int doFunction(RFunction func, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected int doEnvironment(REnvironment env, boolean recursive) {
         return LIST_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doDoubleScalar(double d, boolean recursive) {
+        return DOUBLE_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doIntScalar(int i, boolean recursive) {
+        return INT_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doStringScalar(String s, boolean recursive) {
+        return STRING_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doLogicalScalar(byte s, boolean recursive) {
+        return LOGICAL_PRECEDENCE;
+    }
+
+    @Specialization(guards = "vector.getClass() == clazz", limit = "16")
+    protected int doVector(@SuppressWarnings("unused") RAbstractAtomicVector vector, @SuppressWarnings("unused") boolean recursive,
+                    @SuppressWarnings("unused") @Cached("vector.getClass()") Class<?> clazz,
+                    @Cached("getVectorPrecedence(vector)") int precedence) {
+        return precedence;
+    }
+
+    @Specialization(replaces = "doVector")
+    protected int doVectorGeneric(RAbstractAtomicVector vector, @SuppressWarnings("unused") boolean recursive) {
+        return getVectorPrecedence(vector);
+    }
+
+    protected static int getVectorPrecedence(RAbstractVector vector) {
+        if (vector instanceof RAbstractDoubleVector) {
+            return DOUBLE_PRECEDENCE;
+        } else if (vector instanceof RAbstractIntVector) {
+            return INT_PRECEDENCE;
+        } else if (vector instanceof RAbstractRawVector) {
+            return RAW_PRECEDENCE;
+        } else if (vector instanceof RAbstractStringVector) {
+            return STRING_PRECEDENCE;
+        } else if (vector instanceof RAbstractLogicalVector) {
+            return LOGICAL_PRECEDENCE;
+        } else if (vector instanceof RAbstractComplexVector) {
+            return COMPLEX_PRECEDENCE;
+        } else {
+            CompilerDirectives.transferToInterpreter();
+            throw RInternalError.shouldNotReachHere("unexpected vector type in PrecedenceNode " + vector.getClass().getSimpleName());
+        }
     }
 
     @Specialization(guards = "recursive")
@@ -198,36 +192,43 @@ public abstract class PrecedenceNode extends RBaseNode {
     }
 
     @Specialization(guards = "!recursive")
+    @SuppressWarnings("unused")
     protected int doList(RList val, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization(guards = "!recursive")
+    @SuppressWarnings("unused")
     protected int doPairList(RPairList val, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected int doExpression(RExpression val, boolean recursive) {
         return EXPRESSION_PRECEDENCE;
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected int doExpression(RLanguage val, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected int doS4Object(RS4Object o, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected int doS4Object(RSymbol o, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     protected int doRInterop(RInteropScalar ri, boolean recursive) {
         return LIST_PRECEDENCE;
     }
@@ -239,6 +240,7 @@ public abstract class PrecedenceNode extends RBaseNode {
     }
 
     @Specialization(guards = {"isForeignObject(to)", "!isJavaIterable(to)", "!isForeignArray(to, hasSize)"})
+    @SuppressWarnings("unused")
     protected int doForeignObject(TruffleObject to, boolean recursive,
                     @Cached("HAS_SIZE.createNode()") Node hasSize) {
         return LIST_PRECEDENCE;
@@ -309,7 +311,7 @@ public abstract class PrecedenceNode extends RBaseNode {
     @TruffleBoundary
     private int getPrecedence(Class<?> ct, boolean recursive) {
         if (recursive && ct.isArray()) {
-            return getPrecedence(ct.getComponentType(), recursive);
+            return getPrecedence(ct.getComponentType(), true);
         }
         return getPrecedence(ct);
     }

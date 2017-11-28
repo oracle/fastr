@@ -49,7 +49,7 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
     RAbstractIntVector doFindInterval(RAbstractDoubleVector xt, RAbstractDoubleVector x, boolean right, boolean inside, boolean leftOpen,
                     @Cached("createEqualityProfile()") ValueProfile leftOpenProfile,
                     @Cached("create(xt)") VectorAccess xtAccess,
-                    @Cached("create(xt)") VectorAccess xAccess,
+                    @Cached("create(x)") VectorAccess xAccess,
                     @Cached("create()") VectorFactory vectorFactory) {
         boolean leftOpenProfiled = leftOpenProfile.profile(leftOpen);
         try (SequentialIterator xIter = xAccess.access(x)) {

@@ -15,6 +15,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -33,7 +34,10 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
                     @Cached("createNonShared(a)") VectorReuse reuse,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         int n = getDimNode.nrows(a);
-
+        if (!getDimNode.isMatrix(a) || n != a.getLength() / n) {
+            // Note: otherwise array index out of bounds
+            throw error(Message.MUST_BE_SQUARE_MATRIX, "x");
+        }
         try (RandomIterator aIter = aAccess.randomAccess(a)) {
             RAbstractDoubleVector result = reuse.getResult(a);
             VectorAccess resultAccess = reuse.access(result);
