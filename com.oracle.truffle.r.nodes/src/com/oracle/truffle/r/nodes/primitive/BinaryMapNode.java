@@ -496,7 +496,7 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
                     @Cached("createCountingProfile()") LoopConditionProfile leftProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile rightProfile,
                     @Cached("createBinaryProfile()") ConditionProfile smallRemainderProfile) {
-        assert result != right;
+        assert result != right || rightLength == leftLength;
         leftProfile.profileCounted(leftLength);
         rightProfile.profileCounted(rightLength);
         while (leftProfile.inject(leftIter.getIndex() + 1 < leftLength)) {
@@ -527,7 +527,7 @@ abstract class VectorMapBinaryInternalNode extends RBaseNode {
                     @Cached("createCountingProfile()") LoopConditionProfile leftProfile,
                     @Cached("createCountingProfile()") LoopConditionProfile rightProfile,
                     @Cached("createBinaryProfile()") ConditionProfile smallRemainderProfile) {
-        assert result != left;
+        assert result != left || rightLength == leftLength;
         leftProfile.profileCounted(leftLength);
         rightProfile.profileCounted(rightLength);
         while (rightProfile.inject(rightIter.getIndex() + 1 < rightLength)) {
