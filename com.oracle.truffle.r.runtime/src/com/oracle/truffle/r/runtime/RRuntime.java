@@ -361,6 +361,9 @@ public class RRuntime {
     @TruffleBoundary
     public static int parseInt(String s) {
         int length = s.length();
+        if (length == 0) {
+            throw new NumberFormatException();
+        }
         long value = 0;
         if (s.charAt(0) == '-') {
             if (length == 1) {
@@ -379,9 +382,6 @@ public class RRuntime {
             }
             return (int) -value;
         } else {
-            if (length == 0) {
-                throw new NumberFormatException();
-            }
             int pos = 0;
             while (pos < length) {
                 char ch = s.charAt(pos++);
@@ -400,6 +400,9 @@ public class RRuntime {
     @TruffleBoundary
     public static int parseIntWithNA(String s) {
         int length = s.length();
+        if (length == 0) {
+            return INT_NA;
+        }
         long value = 0;
         if (s.charAt(0) == '-') {
             if (length == 1) {
@@ -418,9 +421,6 @@ public class RRuntime {
             }
             return (int) -value;
         } else {
-            if (length == 0) {
-                return INT_NA;
-            }
             int pos = 0;
             while (pos < length) {
                 char ch = s.charAt(pos++);
