@@ -36,30 +36,31 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+import sun.misc.Unsafe;
+
 /**
  * Support for the sizing of the objects that flow through the interpreter, i.e., mostly
  * {@link RTypedValue}, but also including scalar types like {@code String}.
- *
  */
 public class RObjectSize {
-    public static final int INT_SIZE = 32;
-    public static final int DOUBLE_SIZE = 64;
-    public static final int BYTE_SIZE = 8;
+    public static final int INT_SIZE = 4;
+    public static final int DOUBLE_SIZE = 8;
+    public static final int BYTE_SIZE = 1;
 
-    private static final int CHAR_SIZE = 16;
-    private static final int OBJECT_SIZE = 64;
+    private static final int CHAR_SIZE = 2;
+    private static final int OBJECT_SIZE = Unsafe.ARRAY_OBJECT_INDEX_SCALE;
+    private static final int OBJECT_HEADER_SIZE = Unsafe.ARRAY_BOOLEAN_BASE_OFFSET + OBJECT_SIZE * 2;
 
     /**
-     * Returns an estimate of the size of the this object in bits, excluding the size of any
-     * object-valued fields. Evidently this is a snapshot and the size can change as, e.g.,
-     * attributes are added/removed.
+     * Returns an estimate of the size of the this object in bytes. This is a snapshot and the size
+     * can change as, e.g., attributes are added/removed.
      *
      * If called immediately after creation by {@link RDataFactory} provides an approximation of the
      * incremental memory usage of the system.
@@ -70,9 +71,9 @@ public class RObjectSize {
     }
 
     /**
-     * Returns an estimate of the size of the this object in bits, including the size of any
-     * object-valued fields, recursively. Evidently this is a snapshot and the size can change as,
-     * e.g., attributes are added/removed.
+     * Returns an estimate of the size of the this object in bytes, including the recursive size of
+     * any attributes and elements, recursively. Evidently this is a snapshot and the size can
+     * change as, e.g., attributes are added/removed.
      */
     @TruffleBoundary
     public static long getRecursiveObjectSize(Object target) {
@@ -103,8 +104,8 @@ public class RObjectSize {
                 }
             }
         }
-        if (obj instanceof RAbstractListVector) {
-            RAbstractListVector list = (RAbstractListVector) obj;
+        if (obj instanceof RAbstractListBaseVector) {
+            RAbstractListBaseVector list = (RAbstractListBaseVector) obj;
             for (int i = 0; i < list.getLength(); i++) {
                 pushIfNotPresent(stack, visited, list.getDataAt(i));
             }
@@ -154,33 +155,35 @@ public class RObjectSize {
         if (obj instanceof RAttributable) {
             DynamicObject attrs = ((RAttributable) obj).getAttributes();
             if (attrs != null) {
-                attributesSize = attrs.size() * OBJECT_SIZE;
+                attributesSize = OBJECT_HEADER_SIZE + attrs.size() * OBJECT_SIZE;
             }
         }
         // Individual RTypedValues:
-        if (obj instanceof RPromise || obj instanceof RAbstractListVector || obj instanceof REnvironment || obj instanceof RExternalPtr || obj instanceof RFunction) {
+        if (obj instanceof RPromise || obj instanceof REnvironment || obj instanceof RExternalPtr || obj instanceof RFunction || obj instanceof RSymbol || obj instanceof RPairList ||
+                        obj instanceof RLanguage || obj instanceof RS4Object) {
             // promise: there is no value allocated yet, we may use the size of the closure
-            return OBJECT_SIZE + attributesSize;
+            return OBJECT_HEADER_SIZE + attributesSize;
         } else if (obj instanceof RStringSequence) {
             RStringSequence seq = (RStringSequence) obj;
             if (seq.getLength() == 0) {
-                return OBJECT_SIZE + INT_SIZE * 2;  // we cannot get prefix/suffix...
+                return OBJECT_HEADER_SIZE + INT_SIZE * 2;  // we cannot get prefix/suffix...
             } else {
-                return OBJECT_SIZE + seq.getDataAt(0).length() * CHAR_SIZE;
+                return OBJECT_HEADER_SIZE + seq.getDataAt(0).length() * CHAR_SIZE;
             }
         } else if (obj instanceof RSequence) {
             // count: start, stride, length
-            return OBJECT_SIZE + 2 * getElementSize((RAbstractVector) obj) + INT_SIZE + attributesSize;
+            return OBJECT_HEADER_SIZE + 2 * getElementSize((RAbstractVector) obj) + INT_SIZE + attributesSize;
         } else if (obj instanceof RAbstractStringVector) {
             RAbstractStringVector strVec = (RAbstractStringVector) obj;
-            long result = OBJECT_SIZE;
+            long result = OBJECT_HEADER_SIZE;
             for (int i = 0; i < strVec.getLength(); i++) {
-                result += strVec.getDataAt(i).length() * CHAR_SIZE;
+                String data = strVec.getDataAt(i);
+                result += data == null ? 0 : data.length() * CHAR_SIZE;
             }
             return result + attributesSize;
         } else if (obj instanceof RAbstractVector) {
             RAbstractVector vec = (RAbstractVector) obj;
-            return OBJECT_SIZE + getElementSize(vec) * vec.getLength() + attributesSize;
+            return OBJECT_HEADER_SIZE + getElementSize(vec) * vec.getLength() + attributesSize;
         } else if (obj instanceof RScalar) {
             // E.g. singletons RNull or REmpty. RInteger, RLogical etc. already caught by
             // RAbstractVector branch
@@ -189,7 +192,7 @@ public class RObjectSize {
             return getArgsAndValuesSize((RArgsValuesAndNames) obj);
         } else {
             reportWarning(obj);
-            return OBJECT_SIZE;
+            return OBJECT_HEADER_SIZE;
         }
     }
 
@@ -202,13 +205,15 @@ public class RObjectSize {
             return BYTE_SIZE;
         } else if (vector instanceof RAbstractComplexVector) {
             return DOUBLE_SIZE * 2;
+        } else if (vector instanceof RAbstractListBaseVector) {
+            return OBJECT_SIZE;
         }
         reportWarning(vector);
         return INT_SIZE;
     }
 
     private static long getArgsAndValuesSize(RArgsValuesAndNames args) {
-        long result = OBJECT_SIZE + args.getLength() * OBJECT_SIZE;
+        long result = OBJECT_HEADER_SIZE + args.getLength() * OBJECT_SIZE;
         ArgumentsSignature signature = args.getSignature();
         for (int i = 0; i < signature.getLength(); i++) {
             String name = signature.getName(i);
