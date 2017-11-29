@@ -97,7 +97,6 @@ import com.oracle.truffle.r.runtime.data.LanguageClosureCache;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
@@ -124,7 +123,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts can be destroyed
  */
-public final class RContext implements RTruffleObject {
+public final class RContext {
 
     public static final int CONSOLE_WIDTH = 80;
 
