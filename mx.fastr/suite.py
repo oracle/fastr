@@ -368,7 +368,7 @@ suite = {
         "com.oracle.truffle.r.test",
         "com.oracle.truffle.r.nodes.test"
        ],
-      "exclude": ["mx:HAMCREST", "mx:JUNIT", "mx:JMH"],
+      "exclude": ["mx:HAMCREST", "mx:JUNIT"],
       "distDependencies" : [
         "FASTR",
         "truffle:TRUFFLE_API",
