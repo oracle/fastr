@@ -33,12 +33,15 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
@@ -57,19 +60,47 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    protected Object rm(RAbstractStringVector list, REnvironment envir, @SuppressWarnings("unused") boolean inherits) {
-        for (int i = 0; i < list.getLength(); i++) {
-            String key = list.getDataAt(i);
-            try {
-                envir.rm(key);
-            } catch (PutException ex) {
-                if (envir == REnvironment.globalEnv()) {
+    protected Object rm(RAbstractStringVector list, REnvironment envir, boolean inherits,
+                    @Cached("createSlowPath(list)") VectorAccess access) {
+        try (SequentialIterator access2 = access.access(list)) {
+            while (access.next(access2)) {
+                String key = access.getString(access2);
+                if (!removeFromEnv(envir, key, inherits)) {
                     warning(RError.Message.UNKNOWN_OBJECT, key);
+                }
+            }
+
+        } catch (PutException ex) {
+            error(ex);
+        }
+
+        return RNull.instance;
+    }
+
+    private static boolean removeFromEnv(REnvironment envir, String key, boolean inherits) throws PutException {
+        REnvironment curEnv = envir;
+        while (curEnv != REnvironment.emptyEnv()) {
+            try {
+                curEnv.rm(key);
+                // found and successfully removed
+                return true;
+            } catch (PutException ex) {
+                // 'key' is not in the 'curEnv'
+
+                // Special treatment for base env and base namespace env
+                if (curEnv == REnvironment.baseEnv() || curEnv == REnvironment.baseNamespaceEnv() || curEnv.isLocked()) {
+                    throw ex;
+                }
+
+                if (inherits) {
+                    curEnv = curEnv.getParent();
+                    continue;
                 } else {
-                    throw error(ex);
+                    return false;
                 }
             }
         }
-        return RNull.instance;
+        // not found in any environment
+        return false;
     }
 }
