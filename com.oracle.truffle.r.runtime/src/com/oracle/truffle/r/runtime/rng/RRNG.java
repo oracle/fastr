@@ -197,11 +197,9 @@ public class RRNG {
         }
 
         public void setCurrentSeeds(Object seeds) {
-            if (this.currentSeeds == null) {
-                ActiveBinding activeBinding = dotRandomSeedBinding.get();
-                if (activeBinding != null) {
-                    activeBinding.setInitialized();
-                }
+            ActiveBinding activeBinding = dotRandomSeedBinding.get();
+            if (activeBinding != null) {
+                activeBinding.setInitialized(true);
             }
             this.currentSeeds = seeds;
         }

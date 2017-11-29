@@ -48,4 +48,11 @@ public class TestRRNG extends TestBase {
         assertEval("invisible(runif(1)); length(.Random.seed)");
         assertEval("set.seed(42); .Random.seed");
     }
+
+    @Test
+    public void testRemoveSeed() {
+        assertEval("{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(1); .Random.seed }");
+        assertEval(Output.IgnoreErrorContext, "{ rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); .Random.seed }");
+        assertEval("{ set.seed(1); rm(list = ls(envir = .GlobalEnv, all.names = TRUE)); set.seed(2); .Random.seed }");
+    }
 }

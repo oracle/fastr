@@ -41,7 +41,7 @@ public class ActiveBinding implements RTruffleObject {
     private final RType expectedType;
     private final RFunction function;
     private boolean initialized = false;
-    private boolean hidden = false;
+    private final boolean hidden;
 
     public ActiveBinding(RType expectedType, RFunction fun, boolean hidden) {
         this.expectedType = Objects.requireNonNull(expectedType);
@@ -91,8 +91,8 @@ public class ActiveBinding implements RTruffleObject {
         return RContext.getEngine().evalFunction(function, REnvironment.baseEnv().getFrame(), RCaller.createInvalid(null), true, null);
     }
 
-    public void setInitialized() {
-        initialized = true;
+    public void setInitialized(boolean value) {
+        initialized = value;
     }
 
     public static boolean isListed(Object value) {
