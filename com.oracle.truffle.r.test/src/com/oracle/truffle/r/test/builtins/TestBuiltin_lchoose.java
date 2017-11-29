@@ -34,13 +34,20 @@ public class TestBuiltin_lchoose extends TestBase {
 
     @Test
     public void testlchoose4() {
-        assertEval("{ .Internal(lchoose(NA, 1) }");
-        assertEval("{ .Internal(lchoose(1, NA) }");
-        assertEval("{ .Internal(lchoose(NULL, 1) }");
-        assertEval("{ .Internal(lchoose(1, NULL) }");
-        assertEval("{ .Internal(lchoose(2, 2.2) }");
-        assertEval("{ .Internal(lchoose(c(2.2, 3.3), 2) }");
-        assertEval("{ .Internal(lchoose(c(2.2, 3.3), c(2,3,4) }");
-        assertEval("{ .Internal(lchoose(c(2.2, 3.3, 4.4), c(2,3) }");
+        assertEval("{ .Internal(lchoose(NA, 1)) }");
+        assertEval("{ .Internal(lchoose(1, NA)) }");
+        assertEval("{ .Internal(lchoose(NULL, 1)) }");
+        assertEval("{ .Internal(lchoose(1, NULL)) }");
+        assertEval("{ .Internal(lchoose(logical(0), logical(0))) }");
+        // Minor diff in warning msg: extra newline; number formatting
+        assertEval(Output.IgnoreWarningMessage, "{ .Internal(lchoose(2, 2.2)) }");
+        assertEval(Output.IgnoreWarningMessage, "{ .Internal(lchoose(0:2, 2.2)) }");
+
+        assertEval("{ .Internal(lchoose(c(2.2, 3.3), 2)) }");
+        assertEval("{ .Internal(lchoose(c(2.2, 3.3), c(2,3,4))) }");
+        assertEval("{ .Internal(lchoose(c(2.2, 3.3, 4.4), c(2,3))) }");
+        assertEval(".Internal(lchoose(structure(array(21:24, dim=c(2,2)), dimnames=list(a=c('a1','a2'),b=c('b1','b2'))), 2))");
+        assertEval(".Internal(lchoose(47, structure(array(21:24, dim=c(2,2)), dimnames=list(a=c('a1','a2'),b=c('b1','b2')))))");
+        assertEval(".Internal(lchoose(structure(47, myattr='hello'), 2))");
     }
 }

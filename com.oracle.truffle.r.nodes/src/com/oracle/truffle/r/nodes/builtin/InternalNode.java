@@ -341,7 +341,7 @@ public abstract class InternalNode extends OperatorNode {
      */
     private static final List<String> NOT_IMPLEMENTED = Arrays.asList(
                     ".addTryHandlers", "interruptsSuspended", "restart", "backsolve", "max.col", "comment", "`comment<-`", "list2env", "tcrossprod",
-                    "lbeta", "beta", "dchisq", "pchisq", "qchisq", "dexp", "pexp", "qexp", "dgeom", "pgeom", "qgeom", "dpois", "ppois", "qpois", "dt", "pt", "qt", "dsignrank", "psignrank",
+                    "beta", "dchisq", "pchisq", "qchisq", "dexp", "pexp", "qexp", "dgeom", "pgeom", "qgeom", "dpois", "ppois", "qpois", "dt", "pt", "qt", "dsignrank", "psignrank",
                     "qsignrank", "besselJ", "besselY", "psigamma", "dbeta", "pbeta", "qbeta", "dbinom", "pbinom", "qbinom", "dcauchy", "pcauchy", "qcauchy", "df", "pf", "qf", "dgamma", "pgamma",
                     "qgamma", "dlnorm", "plnorm", "qlnorm", "dlogis", "plogis", "qlogis", "dnbinom", "pnbinom", "qnbinom", "dnorm", "pnorm", "qnorm", "dunif", "punif", "qunif", "dweibull", "pweibull",
                     "qweibull", "dnchisq", "pnchisq", "qnchisq", "dnt", "pnt", "qnt", "dwilcox", "pwilcox", "qwilcox", "besselI", "besselK", "dnbinom_mu", "pnbinom_mu", "qnbinom_mu", "dhyper",
