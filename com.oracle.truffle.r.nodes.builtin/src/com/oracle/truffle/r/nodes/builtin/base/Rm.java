@@ -61,10 +61,10 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
     @Specialization
     @TruffleBoundary
     protected Object rm(RAbstractStringVector list, REnvironment envir, boolean inherits,
-                    @Cached("createSlowPath(list)") VectorAccess access) {
-        try (SequentialIterator access2 = access.access(list)) {
-            while (access.next(access2)) {
-                String key = access.getString(access2);
+                    @Cached("createSlowPath(list)") VectorAccess listAccess) {
+        try (SequentialIterator listIter = listAccess.access(list)) {
+            while (listAccess.next(listIter)) {
+                String key = listAccess.getString(listIter);
                 if (!removeFromEnv(envir, key, inherits)) {
                     warning(RError.Message.UNKNOWN_OBJECT, key);
                 }
