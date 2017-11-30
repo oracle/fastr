@@ -45,6 +45,8 @@
  */
 
 #include <math.h>
+#define R_xlen_t int
+#define XLENGTH LENGTH
 
 static void
 swap(int l, int r, double *window, int *outlist, int *nrlist, int print_level)

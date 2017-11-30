@@ -20,7 +20,8 @@
  */
 
 #include "modreg.h"
-
+#define R_xlen_t int
+#define XLENGTH LENGTH
 #include "Trunmed.c"
 
 static void Srunmed(double* y, double* smo, R_xlen_t n, int bw,

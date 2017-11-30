@@ -41,11 +41,14 @@ See also [building](building.md), [release](../../com.oracle.truffle.r.release/R
  In contrast to the previous build architecture, which extracted the necessary original
  sources needed by FastR from the GNUR distribution during the build, the current build 
  architecture maintains the required original sources as part of the project in the `com.oracle.truffle.r.native/gnur/patch`
- directory. The `patch` directory contains both the original and FastR specific native sources.
+ directory. The `patch` directory contains both the original and FastR specific native sources
+ that are necessary to build the GNU R parts required by FastR, especially the libraries.
  Some of the original sources are patched, but the original ones are still available via the GIT history.
  
- Note: All the original (non-patched) files were added to GIT in a single commit (`a2d8b606a8f7a61c65ec96545644f28dd4af7a71`).
- Their modifications are made in subsequent commits.
+ Note: All the original (non-patched) GNU R files were added to GIT in branch named `gnur`. When pulling
+ additional files from GNU R sources or upgrading GNU R version, one should work on this branch only and
+ then merge the result back to the master branch. Any patches to those sources should be done on as usual
+ (i.e. based off current master branch and merged back to master branch).
  
  Thera are many original GNUR files that are just taken without any modification from GNUR
  and copied to their respective location in the FastR directory layout (See the section *Building `run`* for details).
@@ -88,7 +91,7 @@ See also [building](building.md), [release](../../com.oracle.truffle.r.release/R
   2. the solaris studio compilers must be used, assumed to be on the `PATH`
   3. Solaris runs on x64 and Sparc and the configure options are different
  * makes `com.oracle.truffle.r.native/gnur/patch-build/src/include` creating `com.oracle.truffle.r.native/gnur/patch-build/include`. 
- Some headers are already patched to conform the FastR needs (in the previous system, the patching was done by `mx.fastr/mx_fastr_edinclude.py`).
+ TBD: Some headers are already patched to conform the FastR needs (in the previous system, the patching was done by `mx.fastr/mx_fastr_edinclude.py`).
  The header files in the resulting `include` directory are later linked from `com.oracle.truffle.r.native/include`. See *Building `include`*.
 
 _Patched files_:

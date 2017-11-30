@@ -524,75 +524,35 @@ public class CallAndExternalFunctions {
                     return BinDist.create();
                 case "influence":
                     return Influence.create();
-                case "isoreg":
-                case "monoFC_m":
-                case "numeric_deriv":
-                case "nls_iter":
-                case "setup_starma":
-                case "free_starma":
-                case "set_trans":
-                case "arma0fa":
-                case "get_s2":
-                case "get_resid":
-                case "Dotrans":
-                case "arma0_kfore":
-                case "Starma_method":
-                case "Invtrans":
-                case "Gradtrans":
-                case "ARMAtoMA":
-                case "KalmanLike":
-                case "KalmanFore":
-                case "KalmanSmooth":
-                case "ARIMA_undoPars":
-                case "ARIMA_transPars":
-                case "ARIMA_Invtrans":
-                case "ARIMA_Gradtrans":
-                case "ARIMA_Like":
-                case "ARIMA_CSS":
-                case "TSconv":
-                case "getQ0":
-                case "getQ0bis":
-                case "port_ivset":
-                case "port_nlminb":
-                case "port_nlsb":
-                case "logit_link":
-                case "logit_linkinv":
-                case "logit_mu_eta":
-                case "binomial_dev_resids":
-                case "rWishart":
                 case "mvfft":
+                    // TODO: only transforms arguments and then calls already ported fft
+                    return new UnimplementedExternal(name);
                 case "nextn":
+                    // TODO: do not want to pull in fourier.c, should be simple to port
+                    return new UnimplementedExternal(name);
                 case "r2dtable":
-                case "cfilter":
-                case "rfilter":
-                case "lowess":
-                case "Rsm":
-                case "tukeyline":
-                case "runmed":
-                case "pSmirnov2x":
-                case "pKolmogorov2x":
-                case "pKS2":
-                case "ksmooth":
-                case "LogLin":
-                case "pAnsari":
-                case "qAnsari":
-                case "pKendall":
-                case "pRho":
-                case "SWilk":
-                case "bw_den":
-                case "bw_ucv":
-                case "bw_bcv":
-                case "bw_phi4":
-                case "bw_phi6":
-                case "acf":
-                case "pacf1":
-                case "ar2ma":
-                case "Burg":
-                case "pp_sum":
-                case "Fexact":
+                    // TODO: do not want to pull in random.c + uses PutRNG(), we can pull in rcont.c
+                    // and then this
+                    // becomes simple wrapper around it.
+                    return new UnimplementedExternal(name);
                 case "Fisher_sim":
                 case "chisq_sim":
-                case "d2x2xk":
+                    // TODO: uses PutRNG(), with rcont.c may become moderately difficult to port
+                    return new UnimplementedExternal(name);
+                case "Rsm":
+                    return new UnimplementedExternal(name);
+                case "optim":
+                case "optimhess":
+                case "zeroin2":
+                case "dqagi":
+                case "dqags":
+                case "nlm":
+                    // TODO: file optim.c uses Defn.h with non public RFFI API
+                    // It seems that Defn.h can be replaced with Rinternals.h
+                    // From GNUR R core it pulls few aux macros like F77_CALL, we can pull those
+                    // individually
+                    // Furthermore it requires to pull lbfgsb.c and linkpack (Appl/Linpack.h)
+                    // routines from core
                     return new UnimplementedExternal(name);
 
                 case "intgrt_vec":
@@ -656,6 +616,8 @@ public class CallAndExternalFunctions {
                 default:
                     return null;
             }
+            // Note: some externals that may be ported with reasonable effort
+            // tukeyline, rfilter, SWilk, acf, Burg, d2x2xk, pRho
         }
 
         /**
