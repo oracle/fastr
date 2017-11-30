@@ -46,6 +46,7 @@ import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
 import com.oracle.truffle.r.library.stats.Influence;
 import com.oracle.truffle.r.library.stats.PPSum;
+import com.oracle.truffle.r.library.stats.PPSum.PPSumExternal;
 import com.oracle.truffle.r.library.stats.RMultinomNode;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes;
 import com.oracle.truffle.r.library.stats.RandFunctionsNodes.RandFunction1Node;
@@ -555,6 +556,8 @@ public class CallAndExternalFunctions {
                     // routines from core
                     return new UnimplementedExternal(name);
 
+                case "pp_sum":
+                    return PPSumExternal.create();
                 case "intgrt_vec":
                     return PPSum.IntgrtVecNode.create();
 
