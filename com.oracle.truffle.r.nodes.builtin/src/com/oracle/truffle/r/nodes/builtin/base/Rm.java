@@ -33,27 +33,23 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
  * Note: remove is invoked from builtin wrappers 'rm' and 'remove' that are identical.
  */
 @RBuiltin(name = "remove", visibility = OFF, kind = INTERNAL, parameterNames = {"list", "envir", "inherits"}, behavior = COMPLEX)
 public abstract class Rm extends RBuiltinNode.Arg3 {
-
-    private final BranchProfile invalidateProfile = BranchProfile.create();
 
     static {
         Casts casts = new Casts(Rm.class);
@@ -64,36 +60,47 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
-    protected Object rm(RAbstractStringVector list, REnvironment envir, @SuppressWarnings("unused") boolean inherits) {
-        try {
-            for (int i = 0; i < list.getLength(); i++) {
-                if (envir == REnvironment.globalEnv()) {
-                    removeFromFrame(envir.getFrame(), list.getDataAt(i));
-                } else {
-                    envir.rm(list.getDataAt(i));
+    protected Object rm(RAbstractStringVector list, REnvironment envir, boolean inherits,
+                    @Cached("createSlowPath(list)") VectorAccess listAccess) {
+        try (SequentialIterator listIter = listAccess.access(list)) {
+            while (listAccess.next(listIter)) {
+                String key = listAccess.getString(listIter);
+                if (!removeFromEnv(envir, key, inherits)) {
+                    warning(RError.Message.UNKNOWN_OBJECT, key);
                 }
             }
+
         } catch (PutException ex) {
-            throw error(ex);
+            error(ex);
         }
+
         return RNull.instance;
     }
 
-    private void removeFromFrame(Frame frame, String x) {
-        // standard case for lookup in current frame
-        Frame frm = frame;
-        FrameSlot fs = frame.getFrameDescriptor().findFrameSlot(x);
-        while (fs == null && frm != null) {
-            frm = RArguments.getEnclosingFrame(frm);
-            if (frm != null) {
-                fs = frm.getFrameDescriptor().findFrameSlot(x);
+    private static boolean removeFromEnv(REnvironment envir, String key, boolean inherits) throws PutException {
+        REnvironment curEnv = envir;
+        while (curEnv != REnvironment.emptyEnv()) {
+            try {
+                curEnv.rm(key);
+                // found and successfully removed
+                return true;
+            } catch (PutException ex) {
+                // 'key' is not in the 'curEnv'
+
+                // Special treatment for base env and base namespace env
+                if (curEnv == REnvironment.baseEnv() || curEnv == REnvironment.baseNamespaceEnv() || curEnv.isLocked()) {
+                    throw ex;
+                }
+
+                if (inherits) {
+                    curEnv = curEnv.getParent();
+                    continue;
+                } else {
+                    return false;
+                }
             }
         }
-        if (fs == null) {
-            warning(RError.Message.UNKNOWN_OBJECT, x);
-        } else {
-            // use null (not an R value) to represent "undefined"
-            FrameSlotChangeMonitor.setObjectAndInvalidate(frm, fs, null, false, invalidateProfile);
-        }
+        // not found in any environment
+        return false;
     }
 }

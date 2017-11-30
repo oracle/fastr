@@ -192,7 +192,7 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
             try {
                 return writeActiveBinding.execute(execFrame, binding.getFunction(), new RArgsValuesAndNames(new Object[]{value}, ArgumentsSignature.empty(1)));
             } finally {
-                binding.setInitialized();
+                binding.setInitialized(true);
             }
         } else {
             Object newValue = shareObjectValue(lookupFrame, frameSlot, storedObjectProfile.profile(value), mode, false);

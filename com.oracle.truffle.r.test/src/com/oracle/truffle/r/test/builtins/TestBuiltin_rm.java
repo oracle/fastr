@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,18 @@ public class TestBuiltin_rm extends TestBase {
         assertEval("tmp <- 42; rm(tmp); tmp");
         assertEval("tmp <- 42; rm(list='tmp'); tmp");
         assertEval(" e <- new.env(); e$a <- 42; rm(list='a', envir=e); e$a");
-        assertEval(Output.IgnoreErrorContext, "tmp <- 42; f <- function() rm(list='tmp',inherits=T); f(); tmp");
+        assertEval("tmp <- 42; f <- function() rm(list='tmp',inherits=T); f(); tmp");
+        assertEval("{ env0 <- new.env(); env0$a <- 123L; env1 <- new.env(parent=env0); env1$b <- 456L; rm('a', envir=env1, inherits=T); lapply(c(env0, env1), function(x) ls(x)) }");
+        assertEval("{ env0 <- new.env(); env0$a <- 123L; env1 <- new.env(parent=env0); env1$b <- 456L; rm('a', envir=env1, inherits=F); lapply(c(env0, env1), function(x) ls(x)) }");
+        assertEval("{ env0 <- new.env(); env0$b <- 123L; env1 <- new.env(parent=env0); env1$b <- 456L; rm('b', envir=env1, inherits=F); lapply(c(env0, env1), function(x) ls(x)) }");
+        assertEval("{ rm(list=ls(baseenv(), all.names=TRUE), envir=baseenv()) }");
+        assertEval("{ e <- new.env(parent=baseenv()); rm('c', envir=e, inherits=T) }");
+        assertEval("{ e <- new.env(parent=baseenv()); e$a <- 1234L; rm(c('c', 'a'), envir=e, inherits=T); ls(e) }");
+        assertEval("{ e <- new.env(); e$a <- 1234L; rm(list=c('c', 'a'), envir=e); ls(e) }");
+        assertEval("{ e <- new.env(); e$a <- 1234L; lockEnvironment(e); rm(list='a', envir=e); ls(e) }");
+        assertEval("{ e <- new.env(); e$a <- 1234L; lockBinding('a', e); rm(list='a', envir=e); ls(e) }");
+        assertEval("{ rm(list='a', envir=emptyenv()) }");
+        assertEval("{ rm(list=ls(emptyenv()), envir=emptyenv()) }");
     }
 
     @Test

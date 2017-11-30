@@ -28,6 +28,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Pattern;
 
+import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -152,6 +153,22 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
             if (slot.getKind() != FrameSlotKind.Object) {
                 slot.setKind(FrameSlotKind.Object);
             }
+
+            Assumption containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(fd);
+            Object result = null;
+            // special treatment for active binding: call bound function
+            try {
+                if (!containsNoActiveBindingAssumption.isValid() && ActiveBinding.isActiveBinding(result = FrameSlotChangeMonitor.getObject(slot, frame))) {
+                    ActiveBinding binding = (ActiveBinding) result;
+                    if (binding.isHidden()) {
+                        binding.setInitialized(false);
+                        return;
+                    }
+                }
+            } catch (FrameSlotTypeException e) {
+                // ignore
+            }
+
             FrameSlotChangeMonitor.setObjectAndInvalidate(frame, slot, null, false, null);
         }
     }
