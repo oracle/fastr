@@ -67,7 +67,10 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object setClass(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") Object className) {
-        throw error(RError.Message.SET_ATTRIBUTES_ON_NULL);
+        if (className != RNull.instance) {
+            throw error(RError.Message.SET_ATTRIBUTES_ON_NULL);
+        }
+        return RNull.instance;
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
