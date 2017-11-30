@@ -42,7 +42,6 @@ import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
@@ -53,6 +52,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
+import org.graalvm.polyglot.Engine;
 
 /**
  * Base class for all unit tests. The unit tests are actually arranged as a collection of
@@ -1070,10 +1070,10 @@ public class TestBase {
     }
 
     /**
-     * Tests that require additional {@link PolyglotEngine} global symbols should override this,
-     * which will be called just prior to the evaluation.
+     * Tests that require additional {@link Engine} global symbols should override this, which will
+     * be called just prior to the evaluation.
      */
-    public void addPolyglotSymbols(@SuppressWarnings("unused") PolyglotEngine.Builder builder) {
+    public void addPolyglotSymbols(@SuppressWarnings("unused") org.graalvm.polyglot.Context context) {
     }
 
     private static final LocalDiagnosticHandler localDiagnosticHandler = new LocalDiagnosticHandler();

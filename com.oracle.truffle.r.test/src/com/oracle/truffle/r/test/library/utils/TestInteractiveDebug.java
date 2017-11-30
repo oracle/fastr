@@ -22,23 +22,45 @@
  */
 package com.oracle.truffle.r.test.library.utils;
 
+import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
-import org.junit.After;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
-import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
+import org.junit.After;
+import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
 
 // Checkstyle: stop line length check
 public class TestInteractiveDebug extends TestBase {
+    private static Path debugFile;
+
+    @BeforeClass
+    public static void setup() throws IOException {
+        Path testDir = TestBase.createTestDir("com.oracle.truffle.r.test.library.utils.rsrc");
+        String content = "bar <- function(x) print(x)\n\nfun <- function(x) {\nprint('Hello')\nfor(i in seq(3)) print(i)\nbar('World')\nprint(x)\n}";
+        debugFile = testDir.resolve("debug.r");
+        Files.write(debugFile, content.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+    }
+
     @After
     public void cleanupDebugListeners() {
-        DebugHandling.dispose();
+
+        try (org.graalvm.polyglot.Context context = org.graalvm.polyglot.Context.newBuilder("R").build()) {
+            // a context has to be around when calling DebugHandling.dispose();
+            execInContext(context, () -> {
+                DebugHandling.dispose();
+                return null;
+
+            });
+        }
     }
 
     @Test
@@ -111,16 +133,6 @@ public class TestInteractiveDebug extends TestBase {
         assertEval("do.call('browser', list())\nc\n");
         assertEval("browser()\nwhere\nc\n");
         assertEval("options(error=browser); prod('a')\nwhere\nc\n");
-    }
-
-    private static Path debugFile;
-
-    @BeforeClass
-    public static void setup() throws IOException {
-        Path testDir = TestBase.createTestDir("com.oracle.truffle.r.test.library.utils.rsrc");
-        String content = "bar <- function(x) print(x)\n\nfun <- function(x) {\nprint('Hello')\nfor(i in seq(3)) print(i)\nbar('World')\nprint(x)\n}";
-        debugFile = testDir.resolve("debug.r");
-        Files.write(debugFile, content.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
     }
 
     @Test

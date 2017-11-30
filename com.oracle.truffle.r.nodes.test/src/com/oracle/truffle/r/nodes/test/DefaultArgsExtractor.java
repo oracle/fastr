@@ -28,9 +28,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.function.Consumer;
 
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSource;
@@ -41,6 +38,9 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 
 /**
  * This helper class extracts default argument values from an R function.
@@ -56,17 +56,17 @@ class DefaultArgsExtractor {
     }
 
     Map<String, Samples<?>> extractDefaultArgs(String functionName) {
-        final PolyglotEngine vm = fastRSession.checkContext(null).createVM();
+        final Context context = fastRSession.createContext();
 
         HashMap<String, Samples<?>> samplesMap = new HashMap<>();
         try {
 
-            Source source = RSource.fromTextInternal("formals(" + functionName + ")", RSource.Internal.UNIT_TEST);
+            Source source = FastRSession.createSource("formals(" + functionName + ")", RSource.Internal.UNIT_TEST.string);
 
-            Value defArgVal = vm.eval(source);
+            Value defArgVal = context.eval(source);
 
             try {
-                RPairList formals = defArgVal.as(RPairList.class);
+                RPairList formals = (RPairList) FastRSession.getReceiver(defArgVal);
                 RStringVector names = formals.getNames();
 
                 for (int i = 0; i < names.getLength(); i++) {
@@ -76,8 +76,8 @@ class DefaultArgsExtractor {
                     if (defVal instanceof RLanguage) {
                         String deparsedDefVal = RDeparse.deparse(defVal);
                         try {
-                            Value eval = vm.eval(RSource.fromTextInternal(deparsedDefVal, RSource.Internal.UNIT_TEST));
-                            defVal = eval.get();
+                            Value eval = context.eval(FastRSession.createSource(deparsedDefVal, RSource.Internal.UNIT_TEST.string));
+                            defVal = FastRSession.getReceiver(eval);
                         } catch (Throwable t) {
                             printer.accept("Warning: Unable to evaluate the default value of argument " + name + ". Expression: " + deparsedDefVal);
                             continue;
@@ -111,7 +111,7 @@ class DefaultArgsExtractor {
         } catch (Throwable t) {
             printer.accept("Warning: Unable to evaluate formal arguments of function " + functionName);
         } finally {
-            vm.dispose();
+            context.close();
         }
 
         return samplesMap;

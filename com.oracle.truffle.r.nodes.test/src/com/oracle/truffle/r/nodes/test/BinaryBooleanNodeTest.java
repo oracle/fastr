@@ -92,67 +92,76 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testScalarUnboxing(BooleanOperationFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        // unboxing cannot work if length is 1
-        assumeThat(b.getLength(), is(1));
+        execInContext(() -> {
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            // unboxing cannot work if length is 1
+            assumeThat(b.getLength(), is(1));
 
-        // if the right side is shareable these should be prioritized
-        assumeThat(b, is(not(instanceOf(RShareable.class))));
+            // if the right side is shareable these should be prioritized
+            assumeThat(b, is(not(instanceOf(RShareable.class))));
 
-        assumeArithmeticCompatible(factory, a, b);
-        Object result = executeArithmetic(factory, a, b);
-        Assert.assertTrue(isPrimitive(result));
+            assumeArithmeticCompatible(factory, a, b);
+            Object result = executeArithmetic(factory, a, b);
+            Assert.assertTrue(isPrimitive(result));
+            return null;
+        });
     }
 
     @Theory
     public void testVectorResult(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        assumeThat(a, is(not(instanceOf(RScalarVector.class))));
-        assumeThat(b, is(not(instanceOf(RScalarVector.class))));
-        assumeArithmeticCompatible(factory, a, b);
+        execInContext(() -> {
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            assumeThat(a, is(not(instanceOf(RScalarVector.class))));
+            assumeThat(b, is(not(instanceOf(RScalarVector.class))));
+            assumeArithmeticCompatible(factory, a, b);
 
-        Object result = executeArithmetic(factory, a, b);
-        Assert.assertFalse(isPrimitive(result));
-        assertLengthAndType(factory, a, b, (RAbstractVector) result);
+            Object result = executeArithmetic(factory, a, b);
+            Assert.assertFalse(isPrimitive(result));
+            assertLengthAndType(factory, a, b, (RAbstractVector) result);
 
-        assumeThat(b, is(not(instanceOf(RScalarVector.class))));
-        result = executeArithmetic(factory, b, a);
-        assertLengthAndType(factory, a, b, (RAbstractVector) result);
+            assumeThat(b, is(not(instanceOf(RScalarVector.class))));
+            result = executeArithmetic(factory, b, a);
+            assertLengthAndType(factory, a, b, (RAbstractVector) result);
+            return null;
+        });
     }
 
     @Theory
     public void testSharing(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        assumeArithmeticCompatible(factory, aOrig, bOrig);
+        execInContext(() -> {
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            assumeArithmeticCompatible(factory, aOrig, bOrig);
 
-        // not part of this test, see #testEmptyArrays
-        assumeThat(a.getLength(), is(not(0)));
-        assumeThat(b.getLength(), is(not(0)));
+            // not part of this test, see #testEmptyArrays
+            assumeThat(a.getLength(), is(not(0)));
+            assumeThat(b.getLength(), is(not(0)));
 
-        // sharing does not work if a is a scalar vector
-        assumeThat(a, is(not(instanceOf(RScalarVector.class))));
+            // sharing does not work if a is a scalar vector
+            assumeThat(a, is(not(instanceOf(RScalarVector.class))));
 
-        RType resultType = getResultType(factory, a, b);
-        int maxLength = Integer.max(a.getLength(), b.getLength());
-        RAbstractVector sharedResult = null;
-        if (a.getLength() == maxLength && isShareable(a, resultType)) {
-            sharedResult = a;
-        }
-        if (sharedResult == null && b.getLength() == maxLength && isShareable(b, resultType)) {
-            sharedResult = b;
-        }
+            RType resultType = getResultType(factory, a, b);
+            int maxLength = Integer.max(a.getLength(), b.getLength());
+            RAbstractVector sharedResult = null;
+            if (a.getLength() == maxLength && isShareable(a, resultType)) {
+                sharedResult = a;
+            }
+            if (sharedResult == null && b.getLength() == maxLength && isShareable(b, resultType)) {
+                sharedResult = b;
+            }
 
-        Object result = executeArithmetic(factory, a, b);
+            Object result = executeArithmetic(factory, a, b);
 
-        if (sharedResult == null) {
-            Assert.assertNotSame(a, result);
-            Assert.assertNotSame(b, result);
-        } else {
-            Assert.assertSame(sharedResult, result);
-        }
+            if (sharedResult == null) {
+                Assert.assertNotSame(a, result);
+                Assert.assertNotSame(b, result);
+            } else {
+                Assert.assertSame(sharedResult, result);
+            }
+            return null;
+        });
     }
 
     private static boolean isShareable(RAbstractVector a, RType resultType) {
@@ -195,63 +204,77 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testEmptyArrays(BooleanOperationFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = copy(originalVector);
-        assumeArithmeticCompatible(factory, vector, createEmptyLogicalVector());
-        assumeArithmeticCompatible(factory, vector, createEmptyIntVector());
-        assumeArithmeticCompatible(factory, vector, createEmptyDoubleVector());
-        assumeArithmeticCompatible(factory, vector, createEmptyComplexVector());
+        execInContext(() -> {
+            RAbstractVector vector = copy(originalVector);
+            assumeArithmeticCompatible(factory, vector, createEmptyLogicalVector());
+            assumeArithmeticCompatible(factory, vector, createEmptyIntVector());
+            assumeArithmeticCompatible(factory, vector, createEmptyDoubleVector());
+            assumeArithmeticCompatible(factory, vector, createEmptyComplexVector());
 
-        testEmptyArray(factory, vector, createEmptyLogicalVector());
-        testEmptyArray(factory, vector, createEmptyIntVector());
-        testEmptyArray(factory, vector, createEmptyDoubleVector());
-        testEmptyArray(factory, vector, createEmptyComplexVector());
-
+            testEmptyArray(factory, vector, createEmptyLogicalVector());
+            testEmptyArray(factory, vector, createEmptyIntVector());
+            testEmptyArray(factory, vector, createEmptyDoubleVector());
+            testEmptyArray(factory, vector, createEmptyComplexVector());
+            return null;
+        });
     }
 
     @Theory
     public void testRNullConstantResult(BooleanOperationFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = copy(originalVector);
-        assumeFalse(isLogicOp(factory));
-        assumeFalse(vector.getRType() == RType.Raw);
-        assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(RType.Logical));
-        assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(RType.Logical));
+        execInContext(() -> {
+            RAbstractVector vector = copy(originalVector);
+            assumeFalse(isLogicOp(factory));
+            assumeFalse(vector.getRType() == RType.Raw);
+            assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(RType.Logical));
+            assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(RType.Logical));
+            return null;
+        });
     }
 
     @Theory
     public void testBothNull(BooleanOperationFactory factory) {
-        assumeFalse(isLogicOp(factory));
-        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(RType.Logical));
+        execInContext(() -> {
+            assumeFalse(isLogicOp(factory));
+            assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(RType.Logical));
+            return null;
+        });
     }
 
     @Theory
     public void testCompleteness(BooleanOperationFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        assumeArithmeticCompatible(factory, a, b);
+        execInContext(() -> {
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            assumeArithmeticCompatible(factory, a, b);
 
-        Object result = executeArithmetic(factory, a, b);
+            Object result = executeArithmetic(factory, a, b);
 
-        boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
+            boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
 
-        if (a.getLength() == 0 || b.getLength() == 0) {
-            Assert.assertTrue(resultComplete);
-        } else {
-            boolean expectedComplete = a.isComplete() && b.isComplete();
-            Assert.assertEquals(expectedComplete, resultComplete);
-        }
+            if (a.getLength() == 0 || b.getLength() == 0) {
+                Assert.assertTrue(resultComplete);
+            } else {
+                boolean expectedComplete = a.isComplete() && b.isComplete();
+                Assert.assertEquals(expectedComplete, resultComplete);
+            }
+            return null;
+        });
     }
 
     @Theory
     public void testGeneric(BooleanOperationFactory factory) {
-        // this should trigger the generic case
-        for (RAbstractVector vector : ALL_VECTORS) {
-            try {
-                assumeArithmeticCompatible(factory, vector, vector);
-            } catch (AssumptionViolatedException e) {
-                continue;
+        execInContext(() -> {
+            // this should trigger the generic case
+            for (RAbstractVector vector : ALL_VECTORS) {
+                try {
+                    assumeArithmeticCompatible(factory, vector, vector);
+                } catch (AssumptionViolatedException e) {
+                    continue;
+                }
+                executeArithmetic(factory, copy(vector), copy(vector));
             }
-            executeArithmetic(factory, copy(vector), copy(vector));
-        }
+            return null;
+        });
     }
 
     private static void assumeArithmeticCompatible(BooleanOperationFactory factory, RAbstractVector a, RAbstractVector b) {

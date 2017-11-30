@@ -126,6 +126,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 public final class RContext {
 
     public static final int CONSOLE_WIDTH = 80;
+    public static ChildContextInfo childInfo;
 
     public enum ContextKind {
         /**
@@ -394,6 +395,9 @@ public final class RContext {
         }
 
         Object initialInfo = env.getConfig().get(ChildContextInfo.CONFIG_KEY);
+        if (initialInfo == null) {
+            initialInfo = childInfo;
+        }
         Map<String, String> initialEnvVars;
         if (initialInfo == null) {
             /*

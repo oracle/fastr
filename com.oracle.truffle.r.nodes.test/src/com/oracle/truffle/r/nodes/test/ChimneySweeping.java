@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
-import static org.junit.Assert.fail;
-
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
@@ -42,8 +40,6 @@ import java.util.stream.Collectors;
 import org.junit.Assert;
 
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.api.vm.PolyglotEngine.Value;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineBuilder;
 import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.nodes.casts.SamplesCollector;
@@ -65,6 +61,11 @@ import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
 import com.oracle.truffle.r.test.generate.TestOutputManager.TestInfo;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
+import static org.junit.Assert.fail;
+import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
 
 /**
  * Use the following command to sweep all builtins
@@ -224,14 +225,16 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     @Override
     SingleBuiltinDiagnostics init() throws Throwable {
         super.init();
+        try (Context context = diagSuite.fastRSession.createContext()) {
+            execInContext(context, () -> {
+                this.castNodes = builtinFactory.getCastNodes();
+                print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinMetaClass().getName() + ") ***");
 
-        this.castNodes = builtinFactory.getCastNodes();
-
-        print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinMetaClass().getName() + ") ***");
-
-        this.validArgsList = extractValidArgsForBuiltin();
-        this.argSamples = createSamples();
-
+                this.validArgsList = extractValidArgsForBuiltin(context);
+                this.argSamples = createSamples();
+                return null;
+            });
+        }
         return this;
     }
 
@@ -358,41 +361,34 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }
     }
 
-    private Set<RList> extractValidArgsForBuiltin() {
-        final PolyglotEngine vm = diagSuite.fastRSession.checkContext(null).createVM();
-
-        try {
-            String snippetAnchor;
-            switch (kind) {
-                case INTERNAL:
-                    snippetAnchor = ".Internal(" + builtinName + "(";
-                    break;
-                default:
-                    snippetAnchor = builtinName + "(";
-                    break;
-            }
-
-            String builtinNameSimple = builtinName.replace(".", "");
-            Map<String, SortedMap<String, TestInfo>> snippets = diagSuite.outputManager.getTestMaps().entrySet().stream().filter(
-                            e -> e.getKey().startsWith(TEST_PREFIX + builtinName) || e.getKey().startsWith(TEST_PREFIX + builtinNameSimple)).collect(
-                                            Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
-            Set<String> flatSnippets = snippets.entrySet().stream().flatMap(
-                            e -> e.getValue().keySet().stream()).collect(Collectors.toSet());
-            Set<String> filteredSnippets = flatSnippets.stream().filter(a -> a.contains(snippetAnchor)).collect(Collectors.toSet());
-            Set<String> validArgs = filteredSnippets.stream().map(a -> cutOffInvocation(a, snippetAnchor)).filter(
-                            a -> a != null && !"".equals(a)).collect(Collectors.toSet());
-            Set<RList> args = validArgs.stream().map(a -> evalValidArgs(a, vm)).filter(a -> a != null).collect(Collectors.toSet());
-
-            return args;
-        } finally {
-            vm.dispose();
+    private Set<RList> extractValidArgsForBuiltin(Context context) {
+        String snippetAnchor;
+        switch (kind) {
+            case INTERNAL:
+                snippetAnchor = ".Internal(" + builtinName + "(";
+                break;
+            default:
+                snippetAnchor = builtinName + "(";
+                break;
         }
+
+        String builtinNameSimple = builtinName.replace(".", "");
+        Map<String, SortedMap<String, TestInfo>> snippets = diagSuite.outputManager.getTestMaps().entrySet().stream().filter(
+                        e -> e.getKey().startsWith(TEST_PREFIX + builtinName) || e.getKey().startsWith(TEST_PREFIX + builtinNameSimple)).collect(
+                                        Collectors.toMap(e -> e.getKey(), e -> e.getValue()));
+        Set<String> flatSnippets = snippets.entrySet().stream().flatMap(
+                        e -> e.getValue().keySet().stream()).collect(Collectors.toSet());
+        Set<String> filteredSnippets = flatSnippets.stream().filter(a -> a.contains(snippetAnchor)).collect(Collectors.toSet());
+        Set<String> validArgs = filteredSnippets.stream().map(a -> cutOffInvocation(a, snippetAnchor)).filter(
+                        a -> a != null && !"".equals(a)).collect(Collectors.toSet());
+        Set<RList> args = validArgs.stream().map(a -> evalValidArgs(a, context)).filter(a -> a != null).collect(Collectors.toSet());
+        return args;
     }
 
-    private RList evalValidArgs(String argsExpr, PolyglotEngine vm) {
+    private RList evalValidArgs(String argsExpr, Context context) {
         try {
-            Value eval = vm.eval(RSource.fromTextInternal(argsExpr, RSource.Internal.UNIT_TEST));
-            Object res = eval.get();
+            Value eval = context.eval(FastRSession.createSource(argsExpr, RSource.Internal.UNIT_TEST.string));
+            Object res = FastRSession.getReceiver(eval);
             // TODO: do not use reflection here
             Method getter = res.getClass().getDeclaredMethod("getDelegate");
             getter.setAccessible(true);

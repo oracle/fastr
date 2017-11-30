@@ -36,12 +36,12 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Value;
 
 public class ListMRTest extends AbstractMRTest {
 
@@ -62,39 +62,41 @@ public class ListMRTest extends AbstractMRTest {
     }
 
     private void testKeysReadWrite(String createFun) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+        execInContext(() -> {
+            RAbstractContainer l = create(createFun, testValues);
 
-        RAbstractContainer l = create(createFun, testValues);
+            assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), l, "i"));
+            assertEquals(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, "d"));
+            assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), l, "b"));
+            assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, "n") instanceof RNull);
 
-        assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), l, "i"));
-        assertEquals(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, "d"));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), l, "b"));
-        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, "n") instanceof RNull);
+            assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0));
+            assertEquals(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
+            assertEquals(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 5d));
+            assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
+            assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, 4) instanceof RNull);
 
-        assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0));
-        assertEquals(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
-        assertEquals(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 5d));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
-        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, 4) instanceof RNull);
+            assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, -1), UnknownIdentifierException.class);
+            assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 0f), UnknownIdentifierException.class);
 
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, -1), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 0f), UnknownIdentifierException.class);
+            assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, "nnnoooonnne"), UnknownIdentifierException.class);
+            assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 100), UnknownIdentifierException.class);
 
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, "nnnoooonnne"), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 100), UnknownIdentifierException.class);
+            TruffleObject obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "d", 123.1);
+            assertEquals(123.1, ForeignAccess.sendRead(Message.READ.createNode(), obj, "d"));
 
-        TruffleObject obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "d", 123.1);
-        assertEquals(123.1, ForeignAccess.sendRead(Message.READ.createNode(), obj, "d"));
+            obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 2, false);
+            RAbstractContainer returnedList = JavaInterop.asJavaObject(RAbstractContainer.class, obj);
+            assertEquals((byte) 0, returnedList.getDataAtAsObject(2));
+            assertEquals(false, ForeignAccess.sendRead(Message.READ.createNode(), obj, "b"));
 
-        obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 2, false);
-        RAbstractContainer returnedList = JavaInterop.asJavaObject(RAbstractContainer.class, obj);
-        assertEquals((byte) 0, returnedList.getDataAtAsObject(2));
-        assertEquals(false, ForeignAccess.sendRead(Message.READ.createNode(), obj, "b"));
+            obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "newnew", "nneeww");
+            assertEquals("nneeww", ForeignAccess.sendRead(Message.READ.createNode(), obj, "newnew"));
 
-        obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "newnew", "nneeww");
-        assertEquals("nneeww", ForeignAccess.sendRead(Message.READ.createNode(), obj, "newnew"));
-
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0f, false), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0d, false), UnknownIdentifierException.class);
+            assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0f, false), UnknownIdentifierException.class);
+            assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0d, false), UnknownIdentifierException.class);
+            return null;
+        });
     }
 
     @Test
@@ -104,58 +106,60 @@ public class ListMRTest extends AbstractMRTest {
     }
 
     public void testKeysInfo(String createFun) {
+        execInContext(() -> {
+            RAbstractContainer l = create(createFun, testValues);
 
-        RAbstractContainer l = create(createFun, testValues);
+            int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "nnoonnee");
+            assertFalse(KeyInfo.isExisting(info));
+            assertFalse(KeyInfo.isReadable(info));
+            assertFalse(KeyInfo.isWritable(info));
+            assertFalse(KeyInfo.isInvocable(info));
+            assertFalse(KeyInfo.isInternal(info));
 
-        int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "nnoonnee");
-        assertFalse(KeyInfo.isExisting(info));
-        assertFalse(KeyInfo.isReadable(info));
-        assertFalse(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
+            info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "d");
+            assertTrue(KeyInfo.isExisting(info));
+            assertTrue(KeyInfo.isReadable(info));
+            assertTrue(KeyInfo.isWritable(info));
+            assertFalse(KeyInfo.isInvocable(info));
+            assertFalse(KeyInfo.isInternal(info));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "d");
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
+            info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "fn");
+            assertTrue(KeyInfo.isExisting(info));
+            assertTrue(KeyInfo.isReadable(info));
+            assertTrue(KeyInfo.isWritable(info));
+            assertTrue(KeyInfo.isInvocable(info));
+            assertFalse(KeyInfo.isInternal(info));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "fn");
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertTrue(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
+            info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, -1);
+            assertFalse(KeyInfo.isExisting(info));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, -1);
-        assertFalse(KeyInfo.isExisting(info));
+            info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, l.getLength());
+            assertFalse(KeyInfo.isExisting(info));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, l.getLength());
-        assertFalse(KeyInfo.isExisting(info));
+            info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 1f);
+            assertFalse(KeyInfo.isExisting(info));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 1f);
-        assertFalse(KeyInfo.isExisting(info));
+            info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 0);
+            assertTrue(KeyInfo.isExisting(info));
+            assertTrue(KeyInfo.isReadable(info));
+            assertTrue(KeyInfo.isWritable(info));
+            assertFalse(KeyInfo.isInvocable(info));
+            assertFalse(KeyInfo.isInternal(info));
 
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 0);
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
-
-        info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 1d);
-        assertTrue(KeyInfo.isExisting(info));
-        assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
-        assertFalse(KeyInfo.isInvocable(info));
-        assertFalse(KeyInfo.isInternal(info));
+            info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 1d);
+            assertTrue(KeyInfo.isExisting(info));
+            assertTrue(KeyInfo.isReadable(info));
+            assertTrue(KeyInfo.isWritable(info));
+            assertFalse(KeyInfo.isInvocable(info));
+            assertFalse(KeyInfo.isInternal(info));
+            return null;
+        });
     }
 
     private static RAbstractContainer create(String createFun, String values) {
-        Source src = Source.newBuilder(createFun + "(" + values + ")").mimeType("text/x-r").name("test.R").build();
-        PolyglotEngine.Value result = engine.eval(src);
-        return result.as(RAbstractContainer.class);
+        org.graalvm.polyglot.Source src = org.graalvm.polyglot.Source.newBuilder("R", createFun + "(" + values + ")", "<testrlist>").internal(true).buildLiteral();
+        Value result = context.eval(src);
+        return (RAbstractContainer) FastRSession.getReceiver(result);
     }
 
     @Override

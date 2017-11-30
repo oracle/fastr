@@ -29,7 +29,6 @@ import org.junit.Assert;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.test.TestBase;
 import java.io.File;
@@ -132,11 +131,11 @@ public class TestInterop extends TestBase {
                     new TestJavaObject("testStringArray", new String[]{"a", "", "foo"})};
 
     @Override
-    public void addPolyglotSymbols(PolyglotEngine.Builder builder) {
+    public void addPolyglotSymbols(org.graalvm.polyglot.Context context) {
         for (TestJavaObject t : TestInterop.testJavaObjects) {
-            builder.globalSymbol(t.name, JavaInterop.asTruffleObject(t.object));
+            context.exportSymbol(t.name, JavaInterop.asTruffleObject(t.object));
         }
-        builder.globalSymbol(CHANNEL_NAME, JavaInterop.asTruffleObject(CHANNEL));
+        context.exportSymbol(CHANNEL_NAME, JavaInterop.asTruffleObject(CHANNEL));
     }
 
     @Test

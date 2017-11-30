@@ -67,7 +67,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 /*
  *
  * example command line:
- * mx --J @'-Dgraal.Dump=HighTier:1 -Dgraal.MethodFilter=*TestCasts* -Dgraal.TraceTruffleCompilation=true -Dgraal.PrintBackendCFG=false'  junits --tests TestCasts
+ * mx --J @'-Dgraal.Dump=HighTier:1 -Dgraal.MethodFilter=*TestCasts* -Dgraal.TraceTruffleCompilation=true -Dgraal.PrintBackendCFG=false'  unittest TestCasts
  *
  * of course, Graal needs to be imported for this to work:
  * DEFAULT_DYNAMIC_IMPORTS=compiler (or graal-enterprise)
@@ -159,9 +159,12 @@ public class TestCasts extends TestBase {
                 return new Integer((int) node.doCast(value));
             }
         }
-        testCompilation(new Object[]{1, 2, 3}, new Root("FirstInteger"));
-        testCompilation(new Object[]{1, 2, RDataFactory.createIntVectorFromScalar(55)}, new Root("FirstIntegerWithVectors"));
-        testCompilation(new Object[]{1.2, 2, (byte) 1}, new Root("FirstIntegerWithCoerce"));
+        execInContext(() -> {
+            testCompilation(new Object[]{1, 2, 3}, new Root("FirstInteger"));
+            testCompilation(new Object[]{1, 2, RDataFactory.createIntVectorFromScalar(55)}, new Root("FirstIntegerWithVectors"));
+            testCompilation(new Object[]{1.2, 2, (byte) 1}, new Root("FirstIntegerWithCoerce"));
+            return null;
+        });
     }
 
     @Test
@@ -182,9 +185,12 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{1}, new Root("FirstIntegerWithConstant", 1));
-        testCompilation(new Object[]{1}, new Root("FirstIntegerWithConstant", 44.5));
-        testCompilation(new Object[]{1}, new Root("FirstIntegerWithConstant", (byte) 1));
+        execInContext(() -> {
+            testCompilation(new Object[]{1}, new Root("FirstIntegerWithConstant", 1));
+            testCompilation(new Object[]{1}, new Root("FirstIntegerWithConstant", 44.5));
+            testCompilation(new Object[]{1}, new Root("FirstIntegerWithConstant", (byte) 1));
+            return null;
+        });
     }
 
     @Test
@@ -201,8 +207,11 @@ public class TestCasts extends TestBase {
                 return res;
             }
         }
-        testCompilation(new Object[]{1, 2, 3}, new Root("MustBeInteger"));
-        testCompilation(new Object[]{1, 2, RDataFactory.createIntVectorFromScalar(55)}, new Root("MustBeIntegerWithVectors"));
+        execInContext(() -> {
+            testCompilation(new Object[]{1, 2, 3}, new Root("MustBeInteger"));
+            testCompilation(new Object[]{1, 2, RDataFactory.createIntVectorFromScalar(55)}, new Root("MustBeIntegerWithVectors"));
+            return null;
+        });
     }
 
     @Test
@@ -219,8 +228,11 @@ public class TestCasts extends TestBase {
                 return res;
             }
         }
-        testCompilation(new Object[]{RNull.instance}, new Root("MapDefaultValueNull"));
-        testCompilation(new Object[]{1}, new Root("MapDefaultValueNonNull"));
+        execInContext(() -> {
+            testCompilation(new Object[]{RNull.instance}, new Root("MapDefaultValueNull"));
+            testCompilation(new Object[]{1}, new Root("MapDefaultValueNonNull"));
+            return null;
+        });
     }
 
     @Test
@@ -237,8 +249,11 @@ public class TestCasts extends TestBase {
                 return res;
             }
         }
-        testCompilation(new Object[]{"abc"}, new Root("MapCharAt0NonEmptyString"));
-        testCompilation(new Object[]{""}, new Root("MapCharAt0EmptyString"));
+        execInContext(() -> {
+            testCompilation(new Object[]{"abc"}, new Root("MapCharAt0NonEmptyString"));
+            testCompilation(new Object[]{""}, new Root("MapCharAt0EmptyString"));
+            return null;
+        });
     }
 
     @Test
@@ -261,8 +276,11 @@ public class TestCasts extends TestBase {
                 return res;
             }
         }
-        testCompilation(new Object[]{1, 2, 3}, new Root("MapConstantInt", true));
-        testCompilation(new Object[]{"abc"}, new Root("MapConstantNoInt", false));
+        execInContext(() -> {
+            testCompilation(new Object[]{1, 2, 3}, new Root("MapConstantInt", true));
+            testCompilation(new Object[]{"abc"}, new Root("MapConstantNoInt", false));
+            return null;
+        });
     }
 
     @Test
@@ -283,7 +301,10 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{1}, new Root("MustBeWithConstant", 1));
+        execInContext(() -> {
+            testCompilation(new Object[]{1}, new Root("MustBeWithConstant", 1));
+            return null;
+        });
     }
 
     @Test
@@ -304,7 +325,10 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{1}, new Root("optimizeBypass1", 1));
+        execInContext(() -> {
+            testCompilation(new Object[]{1}, new Root("optimizeBypass1", 1));
+            return null;
+        });
     }
 
     @Test
@@ -327,11 +351,14 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithIntegerConstant", 1));
-        testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithStringConstant", "aaa"));
-        testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithLogicalConstant", RRuntime.LOGICAL_TRUE));
-        testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithDoubleConstant1", 1.2));
-        testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithDoubleConstant2", Math.PI));
+        execInContext(() -> {
+            testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithIntegerConstant", 1));
+            testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithStringConstant", "aaa"));
+            testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithLogicalConstant", RRuntime.LOGICAL_TRUE));
+            testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithDoubleConstant1", 1.2));
+            testCompilation(new Object[]{1}, new Root("ConditionalMapChainWithDoubleConstant2", Math.PI));
+            return null;
+        });
     }
 
     @Test
@@ -350,24 +377,27 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{1, 2, 3}, new Root("ConditionalMapChainFedByInteger1"), 1.1, "abc", RRuntime.LOGICAL_FALSE);
-        testCompilation(new Object[]{1, RDataFactory.createIntVector(new int[]{55, 66}, true),
-                        RDataFactory.createIntVectorFromScalar(77)}, new Root(
-                                        "ConditionalMapChainFedByInteger2"),
-                        1.1, "abc", RRuntime.LOGICAL_FALSE);
-        testCompilation(new Object[]{1.1, 2.2, 3.3}, new Root("ConditionalMapChainFedByDouble1"), 1, "abc", RRuntime.LOGICAL_FALSE);
-        testCompilation(new Object[]{1.1, RDataFactory.createDoubleVector(new double[]{55.55, 66.66},
-                        true), RDataFactory.createDoubleVectorFromScalar(77.77)}, new Root(
-                                        "ConditionalMapChainFedByDouble2"),
-                        1, "abc", RRuntime.LOGICAL_FALSE);
-        testCompilation(new Object[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE,
-                        RRuntime.LOGICAL_TRUE}, new Root("ConditionalMapChainFedByLogical1"), 1, "abc", 1.1);
-        testCompilation(new Object[]{RRuntime.LOGICAL_FALSE, RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_TRUE}, true),
-                        RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE)}, new Root("ConditionalMapChainFedByLogical2"), 1, "abc", 1.1);
-        testCompilation(new Object[]{"", "abc", "xyz"}, new Root("ConditionalMapChainFedByString1"), 1.1, 1, RRuntime.LOGICAL_FALSE);
-        testCompilation(new Object[]{"abc", RDataFactory.createStringVector(new String[]{"", "xyz"},
-                        true),
-                        RDataFactory.createStringVectorFromScalar("abc")}, new Root("ConditionalMapChainFedByString2"), 1.1, 1, RRuntime.LOGICAL_FALSE);
+        execInContext(() -> {
+            testCompilation(new Object[]{1, 2, 3}, new Root("ConditionalMapChainFedByInteger1"), 1.1, "abc", RRuntime.LOGICAL_FALSE);
+            testCompilation(new Object[]{1, RDataFactory.createIntVector(new int[]{55, 66}, true),
+                            RDataFactory.createIntVectorFromScalar(77)}, new Root(
+                                            "ConditionalMapChainFedByInteger2"),
+                            1.1, "abc", RRuntime.LOGICAL_FALSE);
+            testCompilation(new Object[]{1.1, 2.2, 3.3}, new Root("ConditionalMapChainFedByDouble1"), 1, "abc", RRuntime.LOGICAL_FALSE);
+            testCompilation(new Object[]{1.1, RDataFactory.createDoubleVector(new double[]{55.55, 66.66},
+                            true), RDataFactory.createDoubleVectorFromScalar(77.77)}, new Root(
+                                            "ConditionalMapChainFedByDouble2"),
+                            1, "abc", RRuntime.LOGICAL_FALSE);
+            testCompilation(new Object[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE,
+                            RRuntime.LOGICAL_TRUE}, new Root("ConditionalMapChainFedByLogical1"), 1, "abc", 1.1);
+            testCompilation(new Object[]{RRuntime.LOGICAL_FALSE, RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_TRUE}, true),
+                            RDataFactory.createLogicalVectorFromScalar(RRuntime.LOGICAL_FALSE)}, new Root("ConditionalMapChainFedByLogical2"), 1, "abc", 1.1);
+            testCompilation(new Object[]{"", "abc", "xyz"}, new Root("ConditionalMapChainFedByString1"), 1.1, 1, RRuntime.LOGICAL_FALSE);
+            testCompilation(new Object[]{"abc", RDataFactory.createStringVector(new String[]{"", "xyz"},
+                            true),
+                            RDataFactory.createStringVectorFromScalar("abc")}, new Root("ConditionalMapChainFedByString2"), 1.1, 1, RRuntime.LOGICAL_FALSE);
+            return null;
+        });
     }
 
     @Test
@@ -386,8 +416,11 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{RDataFactory.createStringVectorFromScalar("")}, new Root("ComplexPipeline2EmptyString"));
-        testCompilation(new Object[]{RDataFactory.createStringVectorFromScalar("a")}, new Root("ComplexPipeline2OneCharString"));
+        execInContext(() -> {
+            testCompilation(new Object[]{RDataFactory.createStringVectorFromScalar("")}, new Root("ComplexPipeline2EmptyString"));
+            testCompilation(new Object[]{RDataFactory.createStringVectorFromScalar("a")}, new Root("ComplexPipeline2OneCharString"));
+            return null;
+        });
     }
 
     @Test
@@ -405,8 +438,11 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{1, 2, 3}, new Root("FilterOrExpressionInt"));
-        testCompilation(new Object[]{"aaa", "bbb", "ccc"}, new Root("FilterOrString"));
+        execInContext(() -> {
+            testCompilation(new Object[]{1, 2, 3}, new Root("FilterOrExpressionInt"));
+            testCompilation(new Object[]{"aaa", "bbb", "ccc"}, new Root("FilterOrString"));
+            return null;
+        });
     }
 
     @Test
@@ -424,7 +460,10 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{-1, 20, -3}, new Root("FilterAndExpressionOutOfRange"));
+        execInContext(() -> {
+            testCompilation(new Object[]{-1, 20, -3}, new Root("FilterAndExpressionOutOfRange"));
+            return null;
+        });
     }
 
     @Test
@@ -442,7 +481,10 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{1, 2, 3}, new Root("FilterNotAndExpressionOutOfRange"));
+        execInContext(() -> {
+            testCompilation(new Object[]{1, 2, 3}, new Root("FilterNotAndExpressionOutOfRange"));
+            return null;
+        });
     }
 
     @Test
@@ -462,6 +504,9 @@ public class TestCasts extends TestBase {
                 return null;
             }
         }
-        testCompilation(new Object[]{RDataFactory.createIntVectorFromScalar(1)}, new Root("ComplexPipeline3SingleInt"));
+        execInContext(() -> {
+            testCompilation(new Object[]{RDataFactory.createIntVectorFromScalar(1)}, new Root("ComplexPipeline3SingleInt"));
+            return null;
+        });
     }
 }

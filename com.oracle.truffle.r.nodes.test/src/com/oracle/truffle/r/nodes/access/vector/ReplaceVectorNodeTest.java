@@ -78,35 +78,38 @@ public class ReplaceVectorNodeTest extends TestBase {
 
     @Test
     public void testSubsetMultiDimension() {
-        RAbstractIntVector vector;
+        execInContext(() -> {
+            RAbstractIntVector vector;
 
-        // replace rectangle with rectangle indices
-        vector = generateInteger(20, true);
-        vector.setDimensions(new int[]{5, 4});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
-                        RDataFactory.createIntVector(new int[]{2, 3, 4}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
-        assertIndicies(vector, 0, 1, 2, 3, 4, 5, -1, -1, -1, 9, 10, -1, -1, -1, 14, 15, 16, 17, 18, 19);
+            // replace rectangle with rectangle indices
+            vector = generateInteger(20, true);
+            vector.setDimensions(new int[]{5, 4});
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+                            RDataFactory.createIntVector(new int[]{2, 3, 4}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
+            assertIndicies(vector, 0, 1, 2, 3, 4, 5, -1, -1, -1, 9, 10, -1, -1, -1, 14, 15, 16, 17, 18, 19);
 
-        // replace box with box indices
-        vector = generateInteger(9, true);
-        vector.setDimensions(new int[]{3, 3});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
-                        RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
-        assertIndicies(vector, 0, 1, 2, 3, -1, -1, 6, -1, -1);
+            // replace box with box indices
+            vector = generateInteger(9, true);
+            vector.setDimensions(new int[]{3, 3});
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+                            RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
+            assertIndicies(vector, 0, 1, 2, 3, -1, -1, 6, -1, -1);
 
-        // replace three dimensions
-        vector = generateInteger(24, true);
-        vector.setDimensions(new int[]{2, 3, 4});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
-                        RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true));
-        assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
+            // replace three dimensions
+            vector = generateInteger(24, true);
+            vector.setDimensions(new int[]{2, 3, 4});
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+                            RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true));
+            assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23);
 
-        // replace three dimensions
-        vector = generateInteger(24, true);
-        vector.setDimensions(new int[]{2, 3, 4});
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
-                        RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3, 4}, true));
-        assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, -1, 12, 13, 14, -1, 16, -1, 18, 19, 20, -1, 22, -1);
+            // replace three dimensions
+            vector = generateInteger(24, true);
+            vector.setDimensions(new int[]{2, 3, 4});
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+                            RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3, 4}, true));
+            assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, 8, -1, 10, -1, 12, 13, 14, -1, 16, -1, 18, 19, 20, -1, 22, -1);
+            return null;
+        });
     }
 
     private static void assertIndicies(RAbstractIntVector vector, int... expectedValues) {
@@ -120,154 +123,180 @@ public class ReplaceVectorNodeTest extends TestBase {
 
     @Test
     public void testSubsetSingleDimension() {
-        RAbstractIntVector vector;
+        execInContext(() -> {
+            RAbstractIntVector vector;
 
-        // replace scalar with sequence stride=1
-        vector = generateInteger(9, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntSequence(5, 1, 3)});
-        assertIndicies(vector, 0, 1, 2, 3, -1, -1, -1, 7, 8);
+            // replace scalar with sequence stride=1
+            vector = generateInteger(9, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntSequence(5, 1, 3)});
+            assertIndicies(vector, 0, 1, 2, 3, -1, -1, -1, 7, 8);
 
-        // replace scalar with sequence stride>1
-        vector = generateInteger(9, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntSequence(5, 2, 2)});
-        assertIndicies(vector, 0, 1, 2, 3, -1, 5, -1, 7, 8);
+            // replace scalar with sequence stride>1
+            vector = generateInteger(9, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntSequence(5, 2, 2)});
+            assertIndicies(vector, 0, 1, 2, 3, -1, 5, -1, 7, 8);
 
-        // replace scalar with negative integer vector
-        vector = generateInteger(4, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{-2}, true)});
-        assertIndicies(vector, -1, 1, -1, -1);
+            // replace scalar with negative integer vector
+            vector = generateInteger(4, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{-2}, true)});
+            assertIndicies(vector, -1, 1, -1, -1);
 
-        // replace scalar with logical scalar
-        vector = generateInteger(3, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
-                        new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)});
-        assertIndicies(vector, -1, -1, -1);
+            // replace scalar with logical scalar
+            vector = generateInteger(3, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+                            new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)});
+            assertIndicies(vector, -1, -1, -1);
 
-        // replace scalar with logical vector
-        vector = generateInteger(4, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
-                        new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
-        assertIndicies(vector, -1, 1, -1, 3);
+            // replace scalar with logical vector
+            vector = generateInteger(4, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1),
+                            new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
+            assertIndicies(vector, -1, 1, -1, 3);
 
-        // replace vector indexed by logical vector
-        vector = generateInteger(4, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVector(new int[]{-1, -2}, true),
-                        new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
-        assertIndicies(vector, -1, 1, -2, 3);
+            // replace vector indexed by logical vector
+            vector = generateInteger(4, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVector(new int[]{-1, -2}, true),
+                            new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
+            assertIndicies(vector, -1, 1, -2, 3);
 
-        // replace scalar with integer vector
-        vector = generateInteger(9, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{9, 8}, true)});
-        assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, -1, -1);
+            // replace scalar with integer vector
+            vector = generateInteger(9, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{9, 8}, true)});
+            assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, -1, -1);
 
-        // replace scalar with integer scalar
-        vector = generateInteger(9, true);
-        executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{9}, true)});
-        assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, -1);
+            // replace scalar with integer scalar
+            vector = generateInteger(9, true);
+            executeReplace(ElementAccessMode.SUBSET, vector, RInteger.valueOf(-1), new Object[]{RDataFactory.createIntVector(new int[]{9}, true)});
+            assertIndicies(vector, 0, 1, 2, 3, 4, 5, 6, 7, -1);
+            return null;
+        });
     }
 
     @Theory
     public void testNames(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, true);
-        RStringVector names = (RStringVector) generateVector(RType.Character, 4, true);
-        vector.setNames(names);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, true);
+            RStringVector names = (RStringVector) generateVector(RType.Character, 4, true);
+            vector.setNames(names);
 
-        RAbstractVector value = generateVector(targetType, 4, true);
-        RStringVector valueNames = (RStringVector) generateVector(RType.Character, 4, true);
-        value.setNames(valueNames);
+            RAbstractVector value = generateVector(targetType, 4, true);
+            RStringVector valueNames = (RStringVector) generateVector(RType.Character, 4, true);
+            value.setNames(valueNames);
 
-        RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, RLogical.TRUE);
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, RLogical.TRUE);
 
-        RStringVector newNames = result.getNames();
-        assertThat(newNames.getLength(), is(names.getLength()));
-        assertThat(newNames.getDataAt(0), is(names.getDataAt(0)));
-        assertThat(newNames.getDataAt(1), is(names.getDataAt(1)));
-        assertThat(newNames.getDataAt(2), is(names.getDataAt(2)));
-        assertThat(newNames.getDataAt(3), is(names.getDataAt(3)));
+            RStringVector newNames = result.getNames();
+            assertThat(newNames.getLength(), is(names.getLength()));
+            assertThat(newNames.getDataAt(0), is(names.getDataAt(0)));
+            assertThat(newNames.getDataAt(1), is(names.getDataAt(1)));
+            assertThat(newNames.getDataAt(2), is(names.getDataAt(2)));
+            assertThat(newNames.getDataAt(3), is(names.getDataAt(3)));
+            return null;
+        });
     }
 
     @Theory
     public void testCompletenessAfterReplace(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, false);
-        RAbstractVector replaceWith = generateVector(targetType, 1, true);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, false);
+            RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
-        assumeThat(vector.isComplete(), is(false));
-        RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RInteger.valueOf(1));
-        assertThat(result.isComplete(), is(false));
+            assumeThat(vector.isComplete(), is(false));
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RInteger.valueOf(1));
+            assertThat(result.isComplete(), is(false));
+            return null;
+        });
     }
 
     @Theory
     public void testCompletenessAfterReplaceAll(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, false);
-        RAbstractVector replaceWith = generateVector(targetType, 1, true);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, false);
+            RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
-        assumeThat(vector.isComplete(), is(false));
-        executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RLogical.valueOf(true));
+            assumeThat(vector.isComplete(), is(false));
+            executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RLogical.valueOf(true));
 
-        // TODO we would need to find out if we replace all elements. we should support this.
-        // assertThat(result.isComplete(), is(true));
+            // TODO we would need to find out if we replace all elements. we should support this.
+            // assertThat(result.isComplete(), is(true));
+            return null;
+        });
     }
 
     @Theory
     public void testCompletenessPositionNA(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, true);
-        RAbstractVector replaceWith = generateVector(targetType, 1, true);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, true);
+            RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
-        RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RLogical.NA);
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RLogical.NA);
 
-        assertThat(result.isComplete(), is(true));
+            assertThat(result.isComplete(), is(true));
+            return null;
+        });
     }
 
     @Theory
     public void testCompletenessOutOfBounds(RType targetType) {
-        assumeTrue(targetType != RType.Raw);
-        RAbstractVector vector = generateVector(targetType, 4, true);
-        RAbstractVector replaceWith = generateVector(targetType, 1, true);
+        execInContext(() -> {
+            assumeTrue(targetType != RType.Raw);
+            RAbstractVector vector = generateVector(targetType, 4, true);
+            RAbstractVector replaceWith = generateVector(targetType, 1, true);
 
-        RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RInteger.valueOf(10));
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, replaceWith, RInteger.valueOf(10));
 
-        assertThat(result.isComplete(), is(false));
+            assertThat(result.isComplete(), is(false));
+            return null;
+        });
     }
 
     @Theory
     public void testCasts(RType targetType, RType valueType) {
-        if (targetType != valueType) {
-            assumeTrue(targetType != RType.Raw && valueType != RType.Raw);
-        }
-        RType resultType = RType.maxPrecedence(targetType, valueType);
+        execInContext(() -> {
+            if (targetType != valueType) {
+                assumeTrue(targetType != RType.Raw && valueType != RType.Raw);
+            }
+            RType resultType = RType.maxPrecedence(targetType, valueType);
 
-        RAbstractVector vector = generateVector(targetType, 4, true);
-        RAbstractVector value = generateVector(valueType, 4, true);
+            RAbstractVector vector = generateVector(targetType, 4, true);
+            RAbstractVector value = generateVector(valueType, 4, true);
 
-        RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, accessFirst);
-        assertThat(result.getRType(), is(resultType));
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, accessFirst);
+            assertThat(result.getRType(), is(resultType));
+            return null;
+        });
     }
 
     @Theory
     public void testSubsetSingleDimensionTheory(RType targetType, RAbstractVector position) {
-        assumeTrue(position.getLength() <= 4);
-        assumeTrue(position.getLength() >= 1);
-        assumeTrue(position.isComplete());
+        execInContext(() -> {
+            assumeTrue(position.getLength() <= 4);
+            assumeTrue(position.getLength() >= 1);
+            assumeTrue(position.isComplete());
 
-        RAbstractVector vector = generateVector(targetType, 4, true);
-        RAbstractVector value = generateVector(targetType, 4, true);
+            RAbstractVector vector = generateVector(targetType, 4, true);
+            RAbstractVector value = generateVector(targetType, 4, true);
 
-        RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, position);
-        assertThat(result, is(sameInstance(vector)));
+            RAbstractVector result = executeReplace(ElementAccessMode.SUBSET, vector, value, position);
+            assertThat(result, is(sameInstance(vector)));
+            return null;
+        });
     }
 
     @Theory
     public void testSubscriptSingleDimensionTheory(RType targetType, RAbstractVector position) {
-        assumeTrue(position.getLength() == 1);
-        if (position instanceof RAbstractIntVector) {
-            assumeTrue(((RAbstractIntVector) position).getDataAt(0) > 0);
-        }
+        execInContext(() -> {
+            assumeTrue(position.getLength() == 1);
+            if (position instanceof RAbstractIntVector) {
+                assumeTrue(((RAbstractIntVector) position).getDataAt(0) > 0);
+            }
 
-        RAbstractVector vector = generateVector(targetType, 4, true);
-        RAbstractVector value = generateVector(targetType, 1, true);
+            RAbstractVector vector = generateVector(targetType, 4, true);
+            RAbstractVector value = generateVector(targetType, 1, true);
 
-        executeReplace(ElementAccessMode.SUBSCRIPT, vector, value, position);
-
+            executeReplace(ElementAccessMode.SUBSCRIPT, vector, value, position);
+            return null;
+        });
     }
 
     private NodeHandle<ReplaceVectorNode> handle;

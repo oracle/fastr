@@ -84,35 +84,41 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testVectorResult(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = copy(originalOperand);
-        assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
+        execInContext(() -> {
+            RAbstractVector operand = copy(originalOperand);
+            assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
 
-        Object result = executeArithmetic(factory, operand);
-        Assert.assertFalse(isPrimitive(result));
-        assumeThat(result, is(instanceOf(RAbstractVector.class)));
-        RAbstractVector resultCast = (RAbstractVector) result;
+            Object result = executeArithmetic(factory, operand);
+            Assert.assertFalse(isPrimitive(result));
+            assumeThat(result, is(instanceOf(RAbstractVector.class)));
+            RAbstractVector resultCast = (RAbstractVector) result;
 
-        assertThat(resultCast.getLength(), is(equalTo(operand.getLength())));
+            assertThat(resultCast.getLength(), is(equalTo(operand.getLength())));
+            return null;
+        });
     }
 
     @Theory
     public void testSharing(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = copy(originalOperand);
-        // sharing does not work if a is a scalar vector
-        assumeThat(true, is(isShareable(operand, operand.getRType())));
+        execInContext(() -> {
+            RAbstractVector operand = copy(originalOperand);
+            // sharing does not work if a is a scalar vector
+            assumeThat(true, is(isShareable(operand, operand.getRType())));
 
-        RType resultType = getArgumentType(factory, operand);
-        Object sharedResult = null;
-        if (isShareable(operand, resultType)) {
-            sharedResult = operand;
-        }
+            RType resultType = getArgumentType(factory, operand);
+            Object sharedResult = null;
+            if (isShareable(operand, resultType)) {
+                sharedResult = operand;
+            }
 
-        Object result = executeArithmetic(factory, operand);
-        if (sharedResult == null) {
-            Assert.assertNotSame(operand, result);
-        } else {
-            Assert.assertSame(sharedResult, result);
-        }
+            Object result = executeArithmetic(factory, operand);
+            if (sharedResult == null) {
+                Assert.assertNotSame(operand, result);
+            } else {
+                Assert.assertSame(sharedResult, result);
+            }
+            return null;
+        });
     }
 
     private static boolean isShareable(RAbstractVector a, RType resultType) {
@@ -131,58 +137,73 @@ public class UnaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testCompleteness(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = copy(originalOperand);
-        Object result = executeArithmetic(factory, operand);
+        execInContext(() -> {
+            RAbstractVector operand = copy(originalOperand);
+            Object result = executeArithmetic(factory, operand);
 
-        boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
+            boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
 
-        if (operand.getLength() == 0) {
-            Assert.assertTrue(resultComplete);
-        } else {
-            boolean expectedComplete = operand.isComplete();
-            Assert.assertEquals(expectedComplete, resultComplete);
-        }
+            if (operand.getLength() == 0) {
+                Assert.assertTrue(resultComplete);
+            } else {
+                boolean expectedComplete = operand.isComplete();
+                Assert.assertEquals(expectedComplete, resultComplete);
+            }
+            return null;
+        });
     }
 
     @Theory
     public void testCopyAttributes(UnaryArithmeticFactory factory, RAbstractVector originalOperand) {
-        RAbstractVector operand = copy(originalOperand);
-        // we have to e careful not to change mutable vectors
-        RAbstractVector a = copy(operand);
-        if (a instanceof RShareable) {
-            ((RShareable) a).incRefCount();
-        }
+        execInContext(() -> {
+            RAbstractVector operand = copy(originalOperand);
+            // we have to e careful not to change mutable vectors
+            RAbstractVector a = copy(operand);
+            if (a instanceof RShareable) {
+                ((RShareable) a).incRefCount();
+            }
 
-        RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
-        aMaterialized.setAttr("a", "a");
-        assertAttributes(executeArithmetic(factory, copy(aMaterialized)), "a");
+            RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
+            aMaterialized.setAttr("a", "a");
+            assertAttributes(executeArithmetic(factory, copy(aMaterialized)), "a");
+            return null;
+        });
     }
 
     @Theory
     public void testPlusFolding(RAbstractVector originalOperand) {
-        RAbstractVector operand = copy(originalOperand);
-        assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
-        if (operand.getRType() == getArgumentType(PLUS, operand)) {
-            assertFold(true, operand, PLUS);
-        } else {
-            assertFold(false, operand, PLUS);
-        }
+        execInContext(() -> {
+            RAbstractVector operand = copy(originalOperand);
+            assumeThat(operand, is(not(instanceOf(RScalarVector.class))));
+            if (operand.getRType() == getArgumentType(PLUS, operand)) {
+                assertFold(true, operand, PLUS);
+            } else {
+                assertFold(false, operand, PLUS);
+            }
+            return null;
+        });
     }
 
     @Test
     public void testSequenceFolding() {
-        assertFold(true, createIntSequence(1, 3, 10), NEGATE);
-        assertFold(true, createDoubleSequence(1, 3, 10), NEGATE);
-        assertFold(false, createIntSequence(1, 3, 10), Floor.FLOOR, Ceiling.CEILING);
-        assertFold(false, createDoubleSequence(1, 3, 10), Floor.FLOOR, Ceiling.CEILING);
+        execInContext(() -> {
+            assertFold(true, createIntSequence(1, 3, 10), NEGATE);
+            assertFold(true, createDoubleSequence(1, 3, 10), NEGATE);
+            assertFold(false, createIntSequence(1, 3, 10), Floor.FLOOR, Ceiling.CEILING);
+            assertFold(false, createDoubleSequence(1, 3, 10), Floor.FLOOR, Ceiling.CEILING);
+            return null;
+        });
     }
 
     @Theory
     public void testGeneric(UnaryArithmeticFactory factory) {
-        // this should trigger the generic case
-        for (RAbstractVector vector : ALL_VECTORS) {
-            executeArithmetic(factory, copy(vector));
-        }
+        execInContext(() -> {
+            // this should trigger the generic case
+            for (RAbstractVector vector : ALL_VECTORS) {
+                executeArithmetic(factory, copy(vector));
+            }
+            return null;
+        });
     }
 
     private static void assertAttributes(Object value, String... keys) {

@@ -77,36 +77,38 @@ public class ExtractVectorNodeTest extends TestBase {
 
     @Test
     public void testSubsetMultiDimension() {
-        RAbstractIntVector vector;
+        execInContext(() -> {
+            RAbstractIntVector vector;
 
-        // replace rectangle with rectangle indices
-        vector = generateInteger(20, true);
-        vector.setDimensions(new int[]{5, 4});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        RDataFactory.createIntVector(new int[]{2, 3, 4}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
-        assertIndicies(vector, 6, 7, 8, 11, 12, 13);
+            // replace rectangle with rectangle indices
+            vector = generateInteger(20, true);
+            vector.setDimensions(new int[]{5, 4});
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            RDataFactory.createIntVector(new int[]{2, 3, 4}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
+            assertIndicies(vector, 6, 7, 8, 11, 12, 13);
 
-        // replace box with box indices
-        vector = generateInteger(9, true);
-        vector.setDimensions(new int[]{3, 3});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
-        assertIndicies(vector, 4, 5, 7, 8);
+            // replace box with box indices
+            vector = generateInteger(9, true);
+            vector.setDimensions(new int[]{3, 3});
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3}, true));
+            assertIndicies(vector, 4, 5, 7, 8);
 
-        // replace three dimensions
-        vector = generateInteger(24, true);
-        vector.setDimensions(new int[]{2, 3, 4});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true));
-        assertIndicies(vector, 9);
+            // replace three dimensions
+            vector = generateInteger(24, true);
+            vector.setDimensions(new int[]{2, 3, 4});
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2}, true));
+            assertIndicies(vector, 9);
 
-        // replace three dimensions
-        vector = generateInteger(24, true);
-        vector.setDimensions(new int[]{2, 3, 4});
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3, 4}, true));
-        assertIndicies(vector, 9, 11, 15, 17, 21, 23);
-
+            // replace three dimensions
+            vector = generateInteger(24, true);
+            vector.setDimensions(new int[]{2, 3, 4});
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            RDataFactory.createIntVector(new int[]{2}, true), RDataFactory.createIntVector(new int[]{2, 3}, true), RDataFactory.createIntVector(new int[]{2, 3, 4}, true));
+            assertIndicies(vector, 9, 11, 15, 17, 21, 23);
+            return null;
+        });
     }
 
     private static void assertIndicies(RAbstractIntVector vector, int... expectedValues) {
@@ -121,110 +123,125 @@ public class ExtractVectorNodeTest extends TestBase {
 
     @Test
     public void testSubsetSingleDimension() {
-        RAbstractIntVector vector;
+        execInContext(() -> {
+            RAbstractIntVector vector;
 
-        // extract scalar with logical vector with NA
-        vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_NA}, false)});
-        assertIndicies(vector, 0, RRuntime.INT_NA, 2, RRuntime.INT_NA);
+            // extract scalar with logical vector with NA
+            vector = generateInteger(4, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_NA}, false)});
+            assertIndicies(vector, 0, RRuntime.INT_NA, 2, RRuntime.INT_NA);
 
-        // extract scalar with sequence stride=1
-        vector = generateInteger(9, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntSequence(5, 1, 3)});
-        assertIndicies(vector, 4, 5, 6);
+            // extract scalar with sequence stride=1
+            vector = generateInteger(9, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntSequence(5, 1, 3)});
+            assertIndicies(vector, 4, 5, 6);
 
-        // extract scalar with sequence stride>1
-        vector = generateInteger(9, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntSequence(5, 2, 2)});
-        assertIndicies(vector, 4, 6);
+            // extract scalar with sequence stride>1
+            vector = generateInteger(9, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntSequence(5, 2, 2)});
+            assertIndicies(vector, 4, 6);
 
-        // extract scalar with negative integer vector
-        vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntVector(new int[]{-2}, true)});
-        assertIndicies(vector, 0, 2, 3);
+            // extract scalar with negative integer vector
+            vector = generateInteger(4, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntVector(new int[]{-2}, true)});
+            assertIndicies(vector, 0, 2, 3);
 
-        // extract scalar with logical scalar
-        vector = generateInteger(3, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)});
-        assertIndicies(vector, 0, 1, 2);
+            // extract scalar with logical scalar
+            vector = generateInteger(3, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, true)});
+            assertIndicies(vector, 0, 1, 2);
 
-        // extract scalar with integer vector with NA
-        vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        new Object[]{RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, false)});
-        assertIndicies(vector, 0, RRuntime.INT_NA);
+            // extract scalar with integer vector with NA
+            vector = generateInteger(4, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            new Object[]{RDataFactory.createIntVector(new int[]{1, RRuntime.INT_NA}, false)});
+            assertIndicies(vector, 0, RRuntime.INT_NA);
 
-        // extract scalar with logical vector
-        vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
-        assertIndicies(vector, 0, 2);
+            // extract scalar with logical vector
+            vector = generateInteger(4, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
+            assertIndicies(vector, 0, 2);
 
-        // extract vector indexed by logical vector
-        vector = generateInteger(4, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector,
-                        new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
-        assertIndicies(vector, 0, 2);
+            // extract vector indexed by logical vector
+            vector = generateInteger(4, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector,
+                            new Object[]{RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_FALSE}, true)});
+            assertIndicies(vector, 0, 2);
 
-        // extract scalar with integer vector
-        vector = generateInteger(9, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntVector(new int[]{9, 8}, true)});
-        assertIndicies(vector, 8, 7);
+            // extract scalar with integer vector
+            vector = generateInteger(9, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntVector(new int[]{9, 8}, true)});
+            assertIndicies(vector, 8, 7);
 
-        // extract scalar with integer scalar
-        vector = generateInteger(9, true);
-        vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntVector(new int[]{9}, true)});
-        assertIndicies(vector, 8);
-
+            // extract scalar with integer scalar
+            vector = generateInteger(9, true);
+            vector = executeExtract(ElementAccessMode.SUBSET, vector, new Object[]{RDataFactory.createIntVector(new int[]{9}, true)});
+            assertIndicies(vector, 8);
+            return null;
+        });
     }
 
     @Theory
     public void testNames(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, true);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, true);
 
-        RStringVector names = (RStringVector) generateVector(RType.Character, 4, true);
-        vector.setNames(names);
-        RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(2));
+            RStringVector names = (RStringVector) generateVector(RType.Character, 4, true);
+            vector.setNames(names);
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(2));
 
-        RStringVector newNames = result.getNames();
-        assertThat(newNames.getLength(), is(1));
-        assertThat(newNames.getDataAt(0), is(names.getDataAt(1)));
+            RStringVector newNames = result.getNames();
+            assertThat(newNames.getLength(), is(1));
+            assertThat(newNames.getDataAt(0), is(names.getDataAt(1)));
+            return null;
+        });
     }
 
     @Theory
     public void testOutOfBoundsAccess(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, true);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, true);
 
-        RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(5));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(5));
 
-        assertThat(vector.getRType(), is(result.getRType()));
-        assertThat(result.getLength(), is(1));
-        Object expectedValue = targetType.create(1, true).getDataAtAsObject(0);
-        assertThat(result.getDataAtAsObject(0), is(expectedValue));
+            assertThat(vector.getRType(), is(result.getRType()));
+            assertThat(result.getLength(), is(1));
+            Object expectedValue = targetType.create(1, true).getDataAtAsObject(0);
+            assertThat(result.getDataAtAsObject(0), is(expectedValue));
+            return null;
+        });
     }
 
     @Theory
     public void testCompletenessOutOfBounds(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, true);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, true);
 
-        assumeTrue(targetType != RType.Raw);
+            assumeTrue(targetType != RType.Raw);
 
-        RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(10));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(10));
 
-        assertThat(result.isComplete(), is(false));
+            assertThat(result.isComplete(), is(false));
+            return null;
+        });
     }
 
     @Theory
     public void testCompletenessAfterScalarExtraction(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, false);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, false);
 
-        assumeTrue(targetType != RType.List);
-        assumeThat(vector.isComplete(), is(false));
-        RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(1));
+            assumeTrue(targetType != RType.List);
+            assumeThat(vector.isComplete(), is(false));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RInteger.valueOf(1));
 
-        assertThat(result.isComplete(), is(true));
+            // TODO failing - how comes?
+            assertThat(result.isComplete(), is(true));
+            return null;
+        });
     }
 
     @Theory
@@ -242,43 +259,55 @@ public class ExtractVectorNodeTest extends TestBase {
 
     @Theory
     public void testCompletenessAfterSelectAll(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, false);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, false);
 
-        assumeThat(vector.isComplete(), is(false));
-        RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RLogical.valueOf(true));
+            assumeThat(vector.isComplete(), is(false));
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RLogical.valueOf(true));
 
-        assertThat(result.isComplete(), is(false));
+            assertThat(result.isComplete(), is(false));
+            return null;
+        });
     }
 
     @Theory
     public void testCompletenessPositionNA(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, true);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, true);
 
-        RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RLogical.NA);
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RLogical.NA);
 
-        assertThat(result.isComplete(), is(false));
+            assertThat(result.isComplete(), is(false));
+            return null;
+        });
     }
 
     @Theory
     public void testSubsetSingleDimensionTheory(RType targetType, RAbstractVector position) {
-        assumeTrue(position.getLength() <= 4);
-        assumeTrue(position.getLength() >= 1);
+        execInContext(() -> {
+            assumeTrue(position.getLength() <= 4);
+            assumeTrue(position.getLength() >= 1);
 
-        RAbstractVector vector = generateVector(targetType, 4, true);
+            RAbstractVector vector = generateVector(targetType, 4, true);
 
-        executeExtract(ElementAccessMode.SUBSET, vector, position);
+            executeExtract(ElementAccessMode.SUBSET, vector, position);
+            return null;
+        });
     }
 
     @Theory
     public void testSubscriptSingleDimensionTheory(RType targetType, RAbstractVector position) {
-        assumeTrue(position.getLength() == 1);
-        if (position instanceof RAbstractIntVector) {
-            assumeTrue(((RAbstractIntVector) position).getDataAt(0) > 0);
-        }
+        execInContext(() -> {
+            assumeTrue(position.getLength() == 1);
+            if (position instanceof RAbstractIntVector) {
+                assumeTrue(((RAbstractIntVector) position).getDataAt(0) > 0);
+            }
 
-        RAbstractVector vector = generateVector(targetType, 4, true);
+            RAbstractVector vector = generateVector(targetType, 4, true);
 
-        executeExtract(ElementAccessMode.SUBSCRIPT, vector, position);
+            executeExtract(ElementAccessMode.SUBSCRIPT, vector, position);
+            return null;
+        });
     }
 
     private NodeHandle<ExtractVectorNode> handle;

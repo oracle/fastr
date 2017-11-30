@@ -34,9 +34,10 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 
 public class RS4ObjectMRTest extends AbstractMRTest {
 
@@ -118,9 +119,9 @@ public class RS4ObjectMRTest extends AbstractMRTest {
     protected TruffleObject[] createTruffleObjects() {
         String srcTxt = "setClass('test', representation(s = 'character', d = 'numeric', i = 'integer', b = 'logical', fn = 'function'));" +
                         "new('test', s = 'aaa', d = 1.1, i=123L, b = TRUE, fn = function() {})";
-        Source src = Source.newBuilder(srcTxt).mimeType("text/x-r").name("test.R").build();
-        PolyglotEngine.Value result = engine.eval(src);
-        RS4Object s4 = result.as(RS4Object.class);
+        Source src = Source.newBuilder("R", srcTxt, "<testS4object>").internal(true).buildLiteral();
+        Value result = context.eval(src);
+        RS4Object s4 = (RS4Object) FastRSession.getReceiver(result);
         return new TruffleObject[]{s4};
     }
 

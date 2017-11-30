@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,32 +22,39 @@
  */
 package com.oracle.truffle.r.nodes.test;
 
+import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.context.RContext;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
+import java.util.concurrent.Callable;
+import org.junit.internal.AssumptionViolatedException;
 
 public class TestBase {
 
-    private static PolyglotEngine testVM;
     static RContext testVMContext;
+
+    // clear out warnings (which are stored in shared base env)
+    private static final Source CLEAR_WARNINGS = FastRSession.createSource("assign('last.warning', NULL, envir = baseenv())", RSource.Internal.CLEAR_WARNINGS.string);
+    private static Context context;
 
     @BeforeClass
     public static void setupClass() {
-        testVM = FastRSession.create().checkContext(null).createVM();
-        testVMContext = testVM.eval(FastRSession.GET_CONTEXT).as(RContext.class);
+        FastRSession session = FastRSession.create();
+        testVMContext = session.getContext();
+        context = session.createContext();
     }
-
-    // clear out warnings (which are stored in shared base env)
-    private static final Source CLEAR_WARNINGS = RSource.fromTextInternal("assign('last.warning', NULL, envir = baseenv())", RSource.Internal.CLEAR_WARNINGS);
 
     @AfterClass
     public static void finishClass() {
-        testVM.eval(CLEAR_WARNINGS);
-        testVM.dispose();
+        context.eval(CLEAR_WARNINGS);
+        context.close();
+    }
+
+    protected void execInContext(Callable<Object> c) {
+        FastRSession.execInContext(context, c, AssumptionViolatedException.class);
     }
 }

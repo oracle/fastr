@@ -38,10 +38,13 @@ public class RInteropScalarMRTest extends AbstractMRTest {
 
     @Test
     public void testRInteroptScalar() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            RInteropScalar is = (RInteropScalar) obj;
-            testRIS(obj, is.getJavaType());
-        }
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                RInteropScalar is = (RInteropScalar) obj;
+                testRIS(obj, is.getJavaType());
+            }
+            return null;
+        });
     }
 
     private static void testRIS(TruffleObject obj, Class<?> unboxedType) throws Exception {

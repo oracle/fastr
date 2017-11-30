@@ -28,13 +28,14 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
@@ -132,9 +133,9 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        Source src = Source.newBuilder("f=function() {}").mimeType("text/x-r").name("test.R").build();
-        PolyglotEngine.Value result = engine.eval(src);
-        RFunction fn = result.as(RFunction.class);
+        Source src = Source.newBuilder("R", "f=function() {}", "<testfunction>").internal(true).buildLiteral();
+        Value result = context.eval(src);
+        RFunction fn = (RFunction) FastRSession.getReceiver(result);
         Object[] values = {"abc", 123, 1.1, RRuntime.asLogical(true), fn, RNull.instance};
         return new TruffleObject[]{new RArgsValuesAndNames(values, ArgumentsSignature.get(names))};
     }

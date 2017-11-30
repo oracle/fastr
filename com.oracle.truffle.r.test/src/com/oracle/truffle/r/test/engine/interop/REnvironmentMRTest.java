@@ -35,9 +35,9 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Source;
 
 public class REnvironmentMRTest extends AbstractMRTest {
 
@@ -133,9 +133,9 @@ public class REnvironmentMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        Source src = Source.newBuilder("e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e").mimeType(
-                        "text/x-r").name("test.R").build();
-        return new TruffleObject[]{engine.eval(src).as(REnvironment.class)};
+        Source src = Source.newBuilder("R", "e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e",
+                        "<testenv>").internal(true).buildLiteral();
+        return new TruffleObject[]{(TruffleObject) FastRSession.getReceiver(context.eval(src))};
     }
 
     @Override

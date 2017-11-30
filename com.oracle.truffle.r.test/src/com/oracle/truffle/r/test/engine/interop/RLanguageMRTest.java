@@ -34,9 +34,10 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 
 public class RLanguageMRTest extends AbstractMRTest {
 
@@ -95,9 +96,9 @@ public class RLanguageMRTest extends AbstractMRTest {
     protected TruffleObject[] createTruffleObjects() {
         // TODO any simpler way to create a RLanguage ?
         String srcTxt = "ne <- new.env(); delayedAssign('x', 1 + 2, assign.env = ne); substitute(x, ne)";
-        Source src = Source.newBuilder(srcTxt).mimeType("text/x-r").name("test.R").build();
-        PolyglotEngine.Value result = engine.eval(src);
-        return new TruffleObject[]{result.as(RLanguage.class)};
+        Source src = Source.newBuilder("R", srcTxt, "<testrlanguage>").internal(true).buildLiteral();
+        Value result = context.eval(src);
+        return new TruffleObject[]{(TruffleObject) FastRSession.getReceiver(result)};
     }
 
     @Override
