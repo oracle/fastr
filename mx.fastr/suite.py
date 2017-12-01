@@ -86,10 +86,10 @@ suite = {
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
 
-    "XZ-1.5" : {
-      "path" : "libdownloads/xz-1.5.jar",
-      "urls" : ["http://central.maven.org/maven2/org/tukaani/xz/1.5/xz-1.5.jar"],
-      "sha1" : "9c64274b7dbb65288237216e3fae7877fd3f2bee",
+    "XZ-1.6" : {
+      "path" : "libdownloads/xz-1.6.jar",
+      "urls" : ["http://central.maven.org/maven2/org/tukaani/xz/1.6/xz-1.6.jar"],
+      "sha1" : "05b6f921f1810bdf90e25471968f741f87168b64",
     },
 
   },
@@ -227,7 +227,7 @@ suite = {
         "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_DEBUG",
-        "XZ-1.5",
+        "XZ-1.6",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -352,7 +352,7 @@ suite = {
         "ANTLR-3.5",
         "GNUR",
         "GNU_ICONV",
-        "XZ-1.5",
+        "XZ-1.6",
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",
