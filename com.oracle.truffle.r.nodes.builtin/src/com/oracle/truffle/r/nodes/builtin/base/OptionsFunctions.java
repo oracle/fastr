@@ -119,7 +119,7 @@ public class OptionsFunctions {
             for (int i = 0; i < values.length; i++) {
                 String argName = signature.getName(i);
                 Object value = values[i];
-                if (argNameNull.profile(argName == null)) {
+                if (argNameNull.profile(argName == null || value instanceof RList)) {
                     // getting
                     String optionName = null;
                     if (value instanceof RStringVector) {
@@ -146,6 +146,8 @@ public class OptionsFunctions {
                             listNames[j] = name;
                             options.setValue(name, list.getDataAtAsObject(j));
                         }
+                        // any settings means result is invisible
+                        visible = false;
                         // if this is the only argument, no need to copy, can just return
                         if (values.length == 1) {
                             data = listData;

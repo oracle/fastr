@@ -54,6 +54,7 @@ public class TestBuiltin_options extends TestBase {
         assertEval("{ getOption(NULL) }");
         assertEval("{ getOption(character()) }");
         assertEval("{ options(\"timeout\", \"width\") }");
+        assertEval("{ options(options(digits = 5)) }");
     }
 
     @Test
