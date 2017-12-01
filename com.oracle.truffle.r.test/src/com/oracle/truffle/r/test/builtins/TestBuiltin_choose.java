@@ -31,11 +31,20 @@ public class TestBuiltin_choose extends TestBase {
     @Test
     public void testchooseWithLogical() {
         assertEval(".Internal(choose(logical(0), logical(0)))");
+        assertEval(".Internal(choose(FALSE, FALSE))");
+        assertEval(".Internal(choose(NA, 1))");
+        assertEval(".Internal(choose(1, NA))");
     }
 
     @Test
     public void testchoose4() {
         assertEval(".Internal(choose(0.5, 0:10))");
+        // Minor diff in warning msg: extra newline; number formatting
+        assertEval(Output.IgnoreWarningMessage, ".Internal(choose(2, 1.2))");
+        assertEval(Output.IgnoreWarningMessage, ".Internal(choose(0:2, 1.2))");
+        assertEval(".Internal(choose(structure(array(21:24, dim=c(2,2)), dimnames=list(a=c('a1','a2'),b=c('b1','b2'))), 2))");
+        assertEval(".Internal(choose(47, structure(array(21:24, dim=c(2,2)), dimnames=list(a=c('a1','a2'),b=c('b1','b2')))))");
+        assertEval(".Internal(choose(structure(47, myattr='hello'), 2))");
     }
 
     @Test
