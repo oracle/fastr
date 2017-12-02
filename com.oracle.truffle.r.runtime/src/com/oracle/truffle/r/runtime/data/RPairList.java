@@ -31,6 +31,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RDataFactory.BaseVectorFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
@@ -270,16 +271,22 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
-    public RSharingAttributeStorage copy() {
-        RPairList result = new RPairList();
+    public RPairList copy() {
+        BaseVectorFactory dataFactory = RDataFactory.getInstance();
+        RPairList curr = dataFactory.createPairList();
+        RPairList result = curr;
         Object original = this;
-        while (!isNull(original)) {
+        while (true) {
             RPairList origList = (RPairList) original;
-            result.car = origList.car;
-            result.tag = origList.tag;
-            result.cdr = new RPairList();
-            result = (RPairList) result.cdr;
+            curr.car = origList.car;
+            curr.tag = origList.tag;
             original = origList.cdr;
+            if (isNull(original)) {
+                curr.cdr = RNull.instance;
+                break;
+            }
+            curr.cdr = dataFactory.createPairList();
+            curr = (RPairList) curr.cdr;
         }
         if (getAttributes() != null) {
             result.initAttributes(RAttributesLayout.copy(getAttributes()));
