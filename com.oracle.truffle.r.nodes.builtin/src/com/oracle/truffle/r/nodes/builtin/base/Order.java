@@ -20,8 +20,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.text.CollationKey;
 import java.text.Collator;
-import java.text.ParseException;
-import java.text.RuleBasedCollator;
 import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -40,7 +38,6 @@ import com.oracle.truffle.r.nodes.builtin.base.SortFunctions.RadixSort;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -566,14 +563,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
                 }
             } else {
                 int length = dv.getLength();
-                Collator baseCollator = Collator.getInstance(locale);
-                String rules = ((RuleBasedCollator) baseCollator).getRules();
-                Collator collator;
-                try {
-                    collator = new RuleBasedCollator(rules.replaceAll("<'\u005f'", "<' '<'\u005f'"));
-                } catch (ParseException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
+                Collator collator = RLocale.getOrderCollator(locale);
                 CollationKey[] entries = new CollationKey[length];
                 for (int i = 0; i < length; i++) {
                     entries[i] = collator.getCollationKey(dv.getDataAt(i));

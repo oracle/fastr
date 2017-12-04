@@ -26,6 +26,9 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.StandardCharsets;
 import java.nio.charset.UnsupportedCharsetException;
+import java.text.Collator;
+import java.text.ParseException;
+import java.text.RuleBasedCollator;
 import java.util.EnumMap;
 import java.util.Locale;
 
@@ -53,6 +56,22 @@ public enum RLocale {
         this.initializedAtStartup = initializedAtStartup;
         this.listed = listed;
         this.name = "LC_" + name();
+    }
+
+    /**
+     * Returns the collator that should be used in order builtin or any place that should sort
+     * elements like order. The {@code Locale} should be retrieved from {@link RContext}.
+     */
+    public static Collator getOrderCollator(Locale locale) {
+        Collator baseCollator = Collator.getInstance(locale);
+        String rules = ((RuleBasedCollator) baseCollator).getRules();
+        Collator collator;
+        try {
+            collator = new RuleBasedCollator(rules.replaceAll("<'\u005f'", "<' '<'\u005f'"));
+        } catch (ParseException e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
+        return collator;
     }
 
     public static final class ContextStateImpl implements RContext.ContextState {
