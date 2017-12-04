@@ -967,7 +967,7 @@ public final class RDataFactory {
         if (fillNA) {
             Arrays.fill(data, RRuntime.LOGICAL_NA);
         }
-        return createLogicalVector(data, false);
+        return createLogicalVector(data, !fillNA);
     }
 
     public static RLogicalVector createLogicalVector(byte[] data, boolean complete) {

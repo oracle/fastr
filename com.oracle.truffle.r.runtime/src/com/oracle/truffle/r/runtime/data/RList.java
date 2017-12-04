@@ -28,10 +28,16 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
+/**
+ * A note on the RList complete flag {@link RAbstractVector#isComplete() } - it is always
+ * initialized with <code>false</code> in {@link RListBase#RListBase(java.lang.Object[])} and never
+ * expected to change.
+ */
 public final class RList extends RListBase implements RAbstractListVector {
 
     public String elementNamePrefix;

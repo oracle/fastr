@@ -120,11 +120,12 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
         }
 
         private byte castImpl(RAbstractVector vector) {
-            this.check.enable(!vector.isComplete());
             if (vector.getLength() == 0) {
                 seenEmpty.enter();
+                this.check.enable(true);
                 return RRuntime.LOGICAL_NA;
             }
+            this.check.enable(!vector.isComplete());
             RType type = vector.getRType();
             CompilerAsserts.compilationConstant(type);
             switch (type) {
