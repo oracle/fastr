@@ -31,6 +31,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -50,6 +51,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
@@ -66,6 +68,7 @@ import com.oracle.truffle.api.source.Source.Builder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
@@ -104,7 +107,7 @@ public class FastRInterop {
         isTesting = true;
     }
 
-    @RBuiltin(name = "eval.external", visibility = OFF, kind = PRIMITIVE, parameterNames = {"mimeType", "source", "path"}, behavior = COMPLEX)
+    @RBuiltin(name = "eval.external", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"mimeType", "source", "path"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg3 {
 
         static {
@@ -114,22 +117,37 @@ public class FastRInterop {
             casts.arg("path").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
 
+        @Child private SetVisibilityNode setVisibilityNode = SetVisibilityNode.create();
+        @Child private Foreign2R foreign2rNode = Foreign2R.create();
+
         protected DirectCallNode createCall(String mimeType, String source) {
             return Truffle.getRuntime().createDirectCallNode(parse(mimeType, source));
         }
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
-        protected Object evalCached(String mimeType, String source, RMissing path,
+        protected Object evalCached(VirtualFrame frame, String mimeType, String source, RMissing path,
                         @Cached("mimeType") String cachedMimeType,
                         @Cached("source") String cachedSource,
                         @Cached("createCall(mimeType, source)") DirectCallNode call) {
-            return call.call(EMPTY_OBJECT_ARRAY);
+            try {
+                return foreign2rNode.execute(call.call(EMPTY_OBJECT_ARRAY));
+            } finally {
+                setVisibilityNode.execute(frame, true);
+            }
         }
 
         @Specialization(replaces = "evalCached")
+        protected Object eval(VirtualFrame frame, String mimeType, String source, @SuppressWarnings("unused") RMissing path) {
+            try {
+                return foreign2rNode.execute(parseAndCall(source, mimeType));
+            } finally {
+                setVisibilityNode.execute(frame, true);
+            }
+        }
+
         @TruffleBoundary
-        protected Object eval(String mimeType, String source, @SuppressWarnings("unused") RMissing path) {
+        private Object parseAndCall(String source, String mimeType) {
             return parse(mimeType, source).call();
         }
 
@@ -151,21 +169,35 @@ public class FastRInterop {
         }
 
         @Specialization
-        @TruffleBoundary
-        protected Object eval(String mimeType, @SuppressWarnings("unused") String source, String path) {
-            return parseFile(path, mimeType).call();
+        protected Object eval(VirtualFrame frame, String mimeType, @SuppressWarnings("unused") String source, String path) {
+            try {
+                return foreign2rNode.execute(parseFileAndCall(path, mimeType));
+            } finally {
+                setVisibilityNode.execute(frame, false);
+            }
         }
 
         @Specialization
-        @TruffleBoundary
-        protected Object eval(String mimeType, @SuppressWarnings("unused") RMissing source, String path) {
-            return parseFile(path, mimeType).call();
+        protected Object eval(VirtualFrame frame, String mimeType, @SuppressWarnings("unused") RMissing source, String path) {
+            try {
+                return foreign2rNode.execute(parseFileAndCall(path, mimeType));
+            } finally {
+                setVisibilityNode.execute(frame, false);
+            }
         }
 
         @Specialization
+        protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") RMissing source, String path) {
+            try {
+                return foreign2rNode.execute(parseFileAndCall(path, null));
+            } finally {
+                setVisibilityNode.execute(frame, false);
+            }
+        }
+
         @TruffleBoundary
-        protected Object eval(@SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") RMissing source, String path) {
-            return parseFile(path, null).call();
+        private Object parseFileAndCall(String path, String mimeType) {
+            return parseFile(path, mimeType).call();
         }
 
         protected CallTarget parseFile(String path, String mimeType) {
