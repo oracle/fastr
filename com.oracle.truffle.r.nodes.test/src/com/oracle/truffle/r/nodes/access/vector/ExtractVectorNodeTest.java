@@ -246,15 +246,18 @@ public class ExtractVectorNodeTest extends TestBase {
 
     @Theory
     public void testCompletenessAfterExtraction(RType targetType) {
-        RAbstractVector vector = generateVector(targetType, 4, false);
+        execInContext(() -> {
+            RAbstractVector vector = generateVector(targetType, 4, false);
 
-        assumeTrue(targetType != RType.List);
-        assumeThat(vector.isComplete(), is(false));
-        // extract some non NA elements
-        int[] positions = targetType == RType.Complex ? new int[]{1, 3} : new int[]{1, 2};
-        RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVector(positions, true));
+            assumeTrue(targetType != RType.List);
+            assumeThat(vector.isComplete(), is(false));
+            // extract some non NA elements
+            int[] positions = targetType == RType.Complex ? new int[]{1, 3} : new int[]{1, 2};
+            RAbstractVector result = executeExtract(ElementAccessMode.SUBSET, vector, RDataFactory.createIntVector(positions, true));
 
-        assertThat(result.isComplete(), is(true));
+            assertThat(result.isComplete(), is(true));
+            return null;
+        });
     }
 
     @Theory

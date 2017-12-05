@@ -29,7 +29,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "e3ce4c4abc668fd637e64a467a8d5b999c2fbdae",
+               "version" : "05b61f9fa9dceebec447f3ec3656c8cc5be215dd",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -324,6 +324,16 @@ suite = {
       "workingSets" : "FastR",
     },
 
+    "com.oracle.truffle.r.test.tck" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "mx:JUNIT",
+        "sdk:POLYGLOT_TCK",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "FastR,Test",
+    },
   },
 
   "distributions" : {
@@ -387,6 +397,20 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.test.native",
      ],
+    },
+
+    "TRUFFLE_R_TCK" : {
+      "description" : "TCK tests provider",
+      "dependencies" : [
+        "com.oracle.truffle.r.test.tck"
+      ],
+      "exclude" : [
+        "mx:JUNIT",
+      ],
+      "distDependencies" : [
+        "sdk:POLYGLOT_TCK",
+      ],
+      "maven" : False
     },
 
     "FASTR_RELEASE<rffi>": {
