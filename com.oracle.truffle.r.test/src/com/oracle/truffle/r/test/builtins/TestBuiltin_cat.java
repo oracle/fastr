@@ -78,6 +78,7 @@ public class TestBuiltin_cat extends TestBase {
 
         assertEval("{ cat(c(\"a\", \"b\", \"c\"), \"d\", sep=c(\"-\", \"+\")) }");
         assertEval("{ cat(paste(letters, 100* 1:26), fill = TRUE, labels = paste0(\"{\", 1:10, \"}:\"))}");
+        assertEval(Output.IgnoreErrorMessage, "{ foo <- function(a,b) cat(a,b); foo(42,); }");
     }
 
     @Test
