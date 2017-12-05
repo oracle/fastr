@@ -142,7 +142,7 @@ public class FastRInterop {
         protected CallTarget parse(String mimeType, String source) {
             CompilerAsserts.neverPartOfCompilation();
 
-            Source sourceObject = RSource.fromTextInternal(source, RSource.Internal.EVAL_WRAPPER, mimeType);
+            Source sourceObject = RSource.fromTextInternalInvisible(source, RSource.Internal.EVAL_WRAPPER, mimeType);
             try {
                 return RContext.getInstance().getEnv().parse(sourceObject);
             } catch (Throwable t) {
