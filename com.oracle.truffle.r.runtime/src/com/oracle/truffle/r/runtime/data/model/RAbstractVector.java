@@ -116,6 +116,8 @@ public interface RAbstractVector extends RAbstractContainer {
                     assert access.getListElement(iter) != null : "element " + iter.getIndex() + " of vector " + vector + " is null";
                 }
             }
+        } else if (access.getType() == RType.List) {
+            assert !vector.isComplete();
         }
         if (vector.isComplete()) {
             // check all vectors for completeness

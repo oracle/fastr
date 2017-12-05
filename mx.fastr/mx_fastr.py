@@ -319,7 +319,7 @@ def _simple_unit_tests():
     return _simple_generated_unit_tests() + [_test_subpackage('tck')]
 
 def _nodes_unit_tests():
-    return ['com.oracle.truffle.r.nodes.test']
+    return ['com.oracle.truffle.r.nodes.test', 'com.oracle.truffle.r.nodes.access.vector']
 
 def _apps_unit_tests():
     return [_test_subpackage('apps')]
