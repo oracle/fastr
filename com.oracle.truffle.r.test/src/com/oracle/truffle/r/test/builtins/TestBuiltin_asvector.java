@@ -444,6 +444,7 @@ public class TestBuiltin_asvector extends TestBase {
 
         assertEval("as.vector(NULL, mode='pairlist')");
         assertEval("{ as.vector.cls <- function(x, mode) 42; as.vector(structure(c(1,2), class='cls')); }");
+        assertEval("as.pairlist(as.pairlist(c(1,2,3)))");
     }
 
     @Test

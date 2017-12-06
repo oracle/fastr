@@ -28,7 +28,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.text.Collator;
+import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Locale;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -41,6 +46,7 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.ROptions;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -72,8 +78,22 @@ public class OptionsFunctions {
             Set<Map.Entry<String, Object>> optionSettings = RContext.getInstance().stateROptions.getValues();
             Object[] data = new Object[optionSettings.size()];
             String[] names = new String[data.length];
+
+            @SuppressWarnings({"unchecked", "rawtypes"})
+            Map.Entry<String, Object>[] entries = optionSettings.toArray(new Map.Entry[optionSettings.size()]);
+            Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
+            Collator collator = locale == Locale.ROOT || locale == null ? null : RLocale.getOrderCollator(locale);
+            Arrays.sort(entries, new Comparator<Map.Entry<String, Object>>() {
+                @Override
+                public int compare(Map.Entry<String, Object> o1, Map.Entry<String, Object> o2) {
+                    String k1 = o1.getKey();
+                    String k2 = o2.getKey();
+                    return collator == null ? k1.compareTo(k2) : collator.compare(k1, k2);
+                }
+            });
+
             int i = 0;
-            for (Map.Entry<String, Object> entry : optionSettings) {
+            for (Map.Entry<String, Object> entry : entries) {
                 names[i] = entry.getKey();
                 data[i] = entry.getValue();
                 i++;
@@ -119,7 +139,7 @@ public class OptionsFunctions {
             for (int i = 0; i < values.length; i++) {
                 String argName = signature.getName(i);
                 Object value = values[i];
-                if (argNameNull.profile(argName == null)) {
+                if (argNameNull.profile(argName == null || value instanceof RList)) {
                     // getting
                     String optionName = null;
                     if (value instanceof RStringVector) {
@@ -146,6 +166,8 @@ public class OptionsFunctions {
                             listNames[j] = name;
                             options.setValue(name, list.getDataAtAsObject(j));
                         }
+                        // any settings means result is invisible
+                        visible = false;
                         // if this is the only argument, no need to copy, can just return
                         if (values.length == 1) {
                             data = listData;

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.test.runtime.data;
 
 import static org.junit.Assert.assertArrayEquals;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertSame;
 
 import java.util.Iterator;
 
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 public class RPairListTests {
     @Test
@@ -51,5 +53,17 @@ public class RPairListTests {
         RList result = pairList.toRList();
         assertArrayEquals(new String[]{"name1", "name2"}, result.getNames().getReadonlyData());
         assertArrayEquals(new Object[]{1, 2}, result.getDataWithoutCopying());
+    }
+
+    @Test
+    public void testCopy() {
+        RPairList pairList = RDataFactory.createPairList(1, RDataFactory.createPairList(2, RNull.instance, "name2"), "name1");
+        RPairList copy = pairList.copy();
+        assertEquals(2, copy.getLength());
+        assertEquals("name1", copy.getTag());
+        assertEquals(1, copy.car());
+        assertEquals("name2", ((RPairList) copy.cdr()).getTag());
+        assertEquals(2, ((RPairList) copy.cdr()).car());
+        assertSame(RNull.instance, ((RPairList) copy.cdr()).cdr());
     }
 }

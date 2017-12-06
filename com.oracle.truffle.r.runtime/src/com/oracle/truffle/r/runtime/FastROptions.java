@@ -74,6 +74,7 @@ public enum FastROptions {
 
     // Miscellaneous
 
+    IgnoreGraphicsCalls("Silently ignore unimplemented functions from graphics package", false),
     StartupTiming("Records and prints various timestamps during initialization", false);
 
     private final String help;
@@ -90,6 +91,10 @@ public enum FastROptions {
         this.isBoolean = !isString;
         this.defaultValue = defaultValue;
         this.value = defaultValue;
+    }
+
+    public boolean isBoolean() {
+        return isBoolean;
     }
 
     public boolean getBooleanValue() {

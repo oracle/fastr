@@ -146,7 +146,21 @@ public final class RAttributesLayout {
     public static DynamicObject copy(DynamicObject attrs) {
         assert isRAttributes(attrs);
 
-        return attrs.copy(attrs.getShape());
+        DynamicObject result = attrs.copy(attrs.getShape());
+        Shape shape = result.getShape();
+        Property prop = shape.getLastProperty();
+        while (prop != null) {
+            Object value = result.get(prop.getKey());
+            if (value instanceof RSharingAttributeStorage) {
+                // There is no simple way to determine the correct reference count here and since
+                // the value will end up in two attributes collections, it will end up being shared
+                // most likely anyway.
+                ((RSharingAttributeStorage) value).makeSharedPermanent();
+            }
+            shape = shape.getParent();
+            prop = shape.getLastProperty();
+        }
+        return result;
     }
 
     @TruffleBoundary

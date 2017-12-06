@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -258,6 +259,12 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             @Specialization
             protected Object doRNull(@SuppressWarnings("unused") RNull value) {
                 return RNull.instance;
+            }
+
+            @Specialization
+            @TruffleBoundary
+            protected Object doPairList(RPairList list) {
+                return list.copy();
             }
 
             @Fallback

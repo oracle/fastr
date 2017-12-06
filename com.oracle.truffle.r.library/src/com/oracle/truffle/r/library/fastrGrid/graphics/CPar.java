@@ -31,6 +31,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.OpenDefaultDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -114,7 +115,11 @@ public final class CPar extends RExternalBuiltinNode {
                 // TODO:
                 return RDataFactory.createLogicalVectorFromScalar(false);
             default:
-                throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");
+                if (!FastROptions.IgnoreGraphicsCalls.getBooleanValue()) {
+                    throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");
+                } else {
+                    return RNull.instance;
+                }
         }
     }
 

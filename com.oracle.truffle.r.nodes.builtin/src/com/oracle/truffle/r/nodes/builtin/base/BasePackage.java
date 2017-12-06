@@ -109,6 +109,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPaths;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPathsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastROptionBuiltin;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSource;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSourceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
@@ -435,6 +436,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRSetBreakpoint.class, FastRSetBreakpointNodeGen::create);
         add(FastRHelp.class, FastRHelpNodeGen::create);
         add(FastRIdentity.class, FastRIdentityNodeGen::create);
+        add(FastROptionBuiltin.class, FastROptionBuiltin::create);
         add(FastRTry.class, FastRTryNodeGen::create);
         add(FastRInspect.class, FastRInspectNodeGen::create);
         add(FastRInterop.Eval.class, FastRInteropFactory.EvalNodeGen::create);

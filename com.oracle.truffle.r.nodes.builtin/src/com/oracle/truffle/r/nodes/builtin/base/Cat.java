@@ -50,9 +50,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -112,6 +114,15 @@ public abstract class Cat extends RBuiltinNode.Arg6 {
 
     @TruffleBoundary
     private RNull output(RList args, int file, RAbstractStringVector sepVec, int fillWidth, RAbstractStringVector labels, @SuppressWarnings("unused") boolean append) {
+        for (int i = 0; i < args.getLength(); i++) {
+            Object obj = args.getDataAt(i);
+            if (obj == REmpty.instance) {
+                // Note: we cannot easily get the name of the original argument, so we use a
+                // different error message than GNUR.
+                throw error(Message.MISSING_INVALID);
+            }
+        }
+
         RConnection conn = RConnection.fromIndex(file);
         boolean filling = fillWidth > 0;
         ensureToString();
@@ -128,7 +139,7 @@ public abstract class Cat extends RBuiltinNode.Arg6 {
                 for (int j = 0; j < stringVec.getLength(); j++) {
                     stringVecs.add(stringVec.getDataAt(j));
                 }
-            } else if (obj instanceof RNull) {
+            } else if (obj == RNull.instance || obj == RMissing.instance) {
                 continue;
             } else if (obj instanceof String) {
                 stringVecs.add((String) obj);
