@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -194,13 +195,26 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                 if (value instanceof RAbstractVector && ((RAbstractVector) value).getLength() == 1) {
                     value = ((RAbstractVector) value).getDataAtAsObject(0);
                 }
+
                 if (type == RType.Integer && value instanceof Integer) {
+                    if (RRuntime.isNA((int) value)) {
+                        result.setComplete(false);
+                    }
                     ((RIntVector) result).setDataAt(store, i, (int) value);
                 } else if (type == RType.Double && value instanceof Double) {
+                    if (RRuntime.isNA((double) value)) {
+                        result.setComplete(false);
+                    }
                     ((RDoubleVector) result).setDataAt(store, i, (double) value);
                 } else if (type == RType.Logical && value instanceof Byte) {
+                    if (RRuntime.isNA((byte) value)) {
+                        result.setComplete(false);
+                    }
                     ((RLogicalVector) result).setDataAt(store, i, (byte) value);
                 } else if (type == RType.Complex && value instanceof RComplex) {
+                    if (RRuntime.isNA((RComplex) value)) {
+                        result.setComplete(false);
+                    }
                     ((RComplexVector) result).setDataAt(store, i, (RComplex) value);
                 } else if (type == RType.Raw && value instanceof RRaw) {
                     ((RRawVector) result).setRawDataAt(store, i, ((RRaw) value).getValue());
