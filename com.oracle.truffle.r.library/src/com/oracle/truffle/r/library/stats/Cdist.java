@@ -26,6 +26,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -58,6 +59,10 @@ public abstract class Cdist extends RExternalBuiltinNode.Arg4 {
                     @Cached("create()") SetAttributeNode setAttrNode,
                     @Cached("create()") SetClassAttributeNode setClassAttrNode,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
+        if (!getDimNode.isMatrix(x)) {
+            // Note: otherwise array index out of bounds
+            throw error(Message.MUST_BE_SQUARE_MATRIX, "x");
+        }
         int nr = getDimNode.nrows(x);
         int nc = getDimNode.ncols(x);
         int n = nr * (nr - 1) / 2; /* avoid int overflow for N ~ 50,000 */
