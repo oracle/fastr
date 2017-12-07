@@ -235,7 +235,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         return new GenericVectorReplaceNode();
     }
 
-    @Specialization(replaces = "doReplaceCached", guards = "!isForeignObject(vector)")
+    @Specialization(replaces = {"doReplaceCached", "doRecursive"}, guards = "!isForeignObject(vector)")
     @TruffleBoundary
     protected Object doReplaceDefaultGeneric(RAbstractVector vector, Object[] positions, Object value,  //
                     @Cached("createGeneric()") GenericVectorReplaceNode generic) {
@@ -293,6 +293,18 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         } catch (InteropException e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
+    }
+
+    @Specialization(guards = {"isForeignObject(object)"}, replaces = "accessField")
+    protected Object accessFieldGeneric(TruffleObject object, Object[] positions, Object value,
+                    @Cached("WRITE.createNode()") Node foreignWrite,
+                    @Cached("READ.createNode()") Node foreignRead,
+                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
+                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
+                    @Cached("create()") CastStringNode castNode,
+                    @Cached("createFirstString()") FirstStringNode firstString,
+                    @Cached("create()") R2Foreign r2Foreign) {
+        return accessField(object, positions, value, foreignWrite, foreignRead, keyInfoNode, hasSizeNode, positions.length, castNode, firstString, r2Foreign);
     }
 
     private void write(Object position, Node foreignWrite, Node keyInfoNode, Node hasSizeNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode,
