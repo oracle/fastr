@@ -503,6 +503,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Formals.class, FormalsNodeGen::create);
         add(Format.class, FormatNodeGen::create);
         add(FormatC.class, FormatCNodeGen::create);
+        add(FormatInfo.class, FormatInfoNodeGen::create);
         add(FortranAndCFunctions.DotC.class, FortranAndCFunctionsFactory.DotCNodeGen::create);
         add(FortranAndCFunctions.Fortran.class, FortranAndCFunctionsFactory.FortranNodeGen::create);
         add(FrameFunctions.MatchCall.class, FrameFunctionsFactory.MatchCallNodeGen::create);

@@ -81,7 +81,7 @@ public final class ComplexVectorPrinter extends VectorPrinter<RAbstractComplexVe
     }
 
     @TruffleBoundary
-    static ComplexVectorMetrics formatComplexVector(RandomIterator iter, VectorAccess access, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
+    public static ComplexVectorMetrics formatComplexVector(RandomIterator iter, VectorAccess access, int offs, int n, int nsmall, int digits, int sciPen, int naWidth) {
 
         /* format.info() or x[1..l] for both Re & Im */
         int rt;
