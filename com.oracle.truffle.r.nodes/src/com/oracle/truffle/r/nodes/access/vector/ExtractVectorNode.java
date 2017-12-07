@@ -108,7 +108,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     protected abstract Object execute(Object vector, Object[] positions, Object exact, Object dropDimensions);
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"}, limit = "3")
-    protected Object doExtractSameDimensions(RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doRecursive(RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
         return cached.apply(vector, positions, exact, dropDimensions);
     }
@@ -148,11 +148,15 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return new CachedExtractVectorNode(node.getMode(), vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
     }
 
-    @Specialization(replaces = "doExtractDefaultCached", guards = {"!isForeignObject(vector)"})
+    @Specialization(replaces = {"doExtractDefaultCached", "doRecursive"}, guards = {"!isForeignObject(vector)"})
     @TruffleBoundary
     protected Object doExtractDefaultGeneric(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("new(createDefaultCache(getThis(), vector, positions, exact, dropDimensions))") GenericVectorExtractNode generic) {
-        return generic.get(this, vector, positions, exact, dropDimensions).apply(vector, positions, null, exact, dropDimensions);
+                    @Cached("create()") GenericVectorExtractNode generic) {
+        if (isRecursiveSubscript(vector, positions)) {
+            return generic.getRecursive(vector, positions).apply(vector, positions, exact, dropDimensions);
+        } else {
+            return generic.get(this, vector, positions, exact, dropDimensions).apply(vector, positions, null, exact, dropDimensions);
+        }
     }
 
     @Specialization
@@ -231,15 +235,24 @@ public abstract class ExtractVectorNode extends RBaseNode {
     protected static final class GenericVectorExtractNode extends TruffleBoundaryNode {
 
         @Child private CachedExtractVectorNode cached;
+        @Child private RecursiveExtractSubscriptNode cachedRecursive;
 
-        public GenericVectorExtractNode(CachedExtractVectorNode cachedOperation) {
-            this.cached = insert(cachedOperation);
+        public static GenericVectorExtractNode create() {
+            return new GenericVectorExtractNode();
+        }
+
+        public RecursiveExtractSubscriptNode getRecursive(RAbstractContainer vector, Object[] positions) {
+            CompilerAsserts.neverPartOfCompilation();
+            if (cachedRecursive == null || !cachedRecursive.isSupported(vector, positions)) {
+                cachedRecursive = insert(RecursiveExtractSubscriptNode.create((RAbstractListVector) vector, positions[0]));
+            }
+            return cachedRecursive;
         }
 
         public CachedExtractVectorNode get(ExtractVectorNode node, RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions) {
             CompilerAsserts.neverPartOfCompilation();
-            if (!cached.isSupported(vector, positions, exact, dropDimensions)) {
-                cached = cached.replace(createDefaultCache(node, vector, positions, exact, dropDimensions));
+            if (cached == null || !cached.isSupported(vector, positions, exact, dropDimensions)) {
+                cached = insert(createDefaultCache(node, vector, positions, exact, dropDimensions));
             }
             return cached;
         }
@@ -297,6 +310,18 @@ public abstract class ExtractVectorNode extends RBaseNode {
         } catch (InteropException | NoSuchFieldError e) {
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
+    }
+
+    @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)"}, replaces = "accessField")
+    protected Object accessFieldGeneric(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
+                    @Cached("READ.createNode()") Node foreignRead,
+                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
+                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
+                    @Cached("create()") CastStringNode castNode,
+                    @Cached("createFirstString()") FirstStringNode firstString,
+                    @Cached("createClassProfile()") ValueProfile positionProfile,
+                    @Cached("create()") Foreign2R foreign2RNode) {
+        return accessField(object, positions, exact, dropDimensions, foreignRead, keyInfoNode, hasSizeNode, positions.length, castNode, firstString, positionProfile, foreign2RNode);
     }
 
     public static Object read(RBaseNode caller, Object positions, Node foreignRead, Node keyInfoNode, Node hasSizeNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
