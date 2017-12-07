@@ -354,6 +354,7 @@ public final class RContext {
     // Context specific state required for libraries, the initialization is handled lazily by the
     // concrete library.
     public Object gridContext = null;
+    public boolean internalGraphicsInitialized = false;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
