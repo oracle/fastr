@@ -25,5 +25,20 @@ public class TestBuiltin_regexec extends TestBase {
         // docs do not mention that so ReferenceError for now.
         assertEval(Ignored.ReferenceError,
                         "argv <- list('^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)', 'http://stat.umn.edu:80/xyz', FALSE, FALSE, FALSE); .Internal(regexec(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+
+        assertEval("regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1A1', perl=T)");
+        assertEval("regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1 A1', perl=T)");
+        assertEval("regexpr(\"^(?<n1>:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexpr(\"^(?<n1>:(?:^\\\\[([^\\\\]]+)\\\\])?(?<n2>:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?<n2>:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexpr(\"^((.*))$\", 'A1', perl=T)");
+        assertEval("regexpr(\"^(?<n>(.*))$\", 'A1', perl=T)");
+        assertEval("regexpr(\"^(.*)$\", 'A1', perl=T)");
+        assertEval("regexpr(\"^(?<n>.*)$\", 'A1', perl=T)");
+
+        assertEval("regexpr(\"^(([A-Z)|([a-z]))$\", 'Aa', perl=T)");
+        assertEval("regexpr(\"^(([A-Z)|([a-z]))$\", c('A', 'Aa'), perl=T)");
+        assertEval("regexpr(\"^(([A-Z)|([a-z]))$\", c('Aa', 'A'), perl=T)");
     }
 }

@@ -74,7 +74,7 @@ int call_pcre_getcapturenames(void (*setcapturename)(int i, char *name), long co
     if (res < 0) {
         return res;
     }
-    // from GNU R's grep.c
+    // from GNU R's grep.c function do_regexpr()
 	for(int i = 0; i < nameCount; i++) {
 	    char* entry = nameTable + nameEntrySize * i;
 	    int captureNum = (entry[0] << 8) + entry[1] - 1;

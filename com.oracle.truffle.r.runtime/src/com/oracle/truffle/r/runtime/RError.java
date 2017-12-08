@@ -645,6 +645,7 @@ public final class RError extends RuntimeException implements TruffleException {
         FIRST_ARGUMENT_MUST_BE_CHARACTER("the first argument must be of mode character"),
         ALL_ATTRIBUTES_NAMES("all attributes must have names [%d does not]"),
         INVALID_REGEXP("invalid regular expression '%s'"),
+        PCRE_FULLINFO_RETURNED("'pcre_fullinfo' returned '%s'"),
         INVALID_REGEXP_REASON("invalid regular expression '%s': %s"),
         COERCING_ARGUMENT("coercing argument of type '%s' to %s"),
         MUST_BE_TRUE_FALSE_ENVIRONMENT("'%s' must be TRUE, FALSE or an environment"),
