@@ -24,19 +24,27 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 public abstract class CastSymbolNode extends CastBaseNode {
 
@@ -54,8 +62,6 @@ public abstract class CastSymbolNode extends CastBaseNode {
     protected final RType getTargetType() {
         return RType.Symbol;
     }
-
-    public abstract Object executeSymbol(Object o);
 
     private String toString(Object value) {
         return toString.executeString(value, ToStringNode.DEFAULT_SEPARATOR);
@@ -87,39 +93,60 @@ public abstract class CastSymbolNode extends CastBaseNode {
     }
 
     @Specialization
+    protected RSymbol doRaw(RRaw value) {
+        return asSymbol(toString(value));
+    }
+
+    @Specialization
+    protected RSymbol doComplex(RComplex value) {
+        return asSymbol(toString(value));
+    }
+
+    @Specialization
     @TruffleBoundary
     protected RSymbol doString(String value) {
         if (value.isEmpty()) {
             CompilerDirectives.transferToInterpreter();
             throw error(RError.Message.ZERO_LENGTH_VARIABLE);
         }
-        return RDataFactory.createSymbolInterned(value);
+        return asSymbol(value);
     }
 
-    @Specialization(guards = "value.getLength() > 0")
-    protected RSymbol doStringVector(RStringVector value) {
-        // Only element 0 interpreted
-        return doString(value.getDataAt(0));
+    @Specialization(guards = "access.supports(vector)")
+    protected RSymbol doVector(RAbstractAtomicVector vector,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
+                    @Cached("vector.access()") VectorAccess access) {
+        SequentialIterator it = access.access(vector);
+        if (emptyProfile.profile(!access.next(it))) {
+            throw doEmptyVector(vector);
+        }
+        switch (access.getType()) {
+            case Raw:
+                return asSymbol(toString(RRaw.valueOf(access.getRaw(it))));
+            case Logical:
+                return doLogical(access.getLogical(it));
+            case Integer:
+                return doInteger(access.getInt(it));
+            case Double:
+                return doDouble(access.getDouble(it));
+            case Complex:
+                return doComplex(access.getComplex(it));
+            case Character:
+                return doString(access.getString(it));
+            default:
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("unexpected atomic type " + access.getType());
+        }
     }
 
-    @Specialization(guards = "value.getLength() > 0")
-    protected RSymbol doIntegerVector(RIntVector value) {
-        return doInteger(value.getDataAt(0));
+    @Specialization(replaces = "doVector")
+    protected RSymbol doVectorGeneric(RAbstractAtomicVector vector,
+                    @Cached("createBinaryProfile()") ConditionProfile emptyProfile) {
+        return doVector(vector, emptyProfile, vector.slowPathAccess());
     }
 
-    @Specialization(guards = "value.getLength() > 0")
-    protected RSymbol doDoubleVector(RDoubleVector value) {
-        return doDouble(value.getDataAt(0));
-    }
-
-    @Specialization(guards = "value.getLength() > 0")
-    protected RSymbol doLogicalVector(RLogicalVector value) {
-        return doLogical(value.getDataAt(0));
-    }
-
-    @Specialization(guards = "vector.getLength() == 0")
     @TruffleBoundary
-    protected RSymbol doEmptyVector(RAbstractVector vector) {
+    protected RError doEmptyVector(RAbstractVector vector) {
         if (vector instanceof RList) {
             throw error(RError.Message.INVALID_TYPE_LENGTH, "symbol", 0);
         } else {
