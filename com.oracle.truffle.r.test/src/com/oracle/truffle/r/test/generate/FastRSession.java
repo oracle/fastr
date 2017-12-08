@@ -38,13 +38,10 @@ import java.util.TimerTask;
 import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.debug.SuspendedCallback;
 import com.oracle.truffle.api.debug.SuspendedEvent;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.ExitException;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -55,8 +52,27 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.engine.interop.AbstractMRTest;
+import com.oracle.truffle.r.test.engine.interop.VectorMRTest;
+import java.io.IOException;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.Instrument;
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
+import static org.junit.Assert.fail;
 
 public final class FastRSession implements RSession {
+
+    public static final Source GET_CONTEXT = createSource("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT.string);
 
     private static final String TEST_TIMEOUT_PROPERTY = "fastr.test.timeout";
     private static int timeoutValue = 10000;
@@ -65,6 +81,14 @@ public final class FastRSession implements RSession {
      * {@code Matrix} package.
      */
     private static int longTimeoutValue = 300000;
+
+    private static FastRSession singleton;
+
+    private final ByteArrayOutputStream output = new ByteArrayOutputStream();
+    private final TestByteArrayInputStream input = new TestByteArrayInputStream();
+
+    private Context mainContext;
+    private RContext mainRContext;
 
     private static final class TestByteArrayInputStream extends ByteArrayInputStream {
 
@@ -84,25 +108,24 @@ public final class FastRSession implements RSession {
         }
     }
 
-    private static FastRSession singleton;
-
-    private final ByteArrayOutputStream output = new ByteArrayOutputStream();
-    private final TestByteArrayInputStream input = new TestByteArrayInputStream();
-    private final PolyglotEngine main;
-    private final RContext mainContext;
-
     public static FastRSession create() {
         if (singleton == null) {
-            FastROptions.setValue("SpawnUsesPolyglot", true);
             singleton = new FastRSession();
         }
         return singleton;
     }
 
-    public static final Source GET_CONTEXT = RSource.fromTextInternal("invisible(.fastr.context.get())", RSource.Internal.GET_CONTEXT);
+    public static Source createSource(String txt, String name) {
+        try {
+            return Source.newBuilder("R", txt, name).internal(true).interactive(true).build();
+        } catch (IOException ex) {
+            Logger.getLogger(FastRSession.class.getName()).log(Level.SEVERE, null, ex);
+            assert false;
+        }
+        return null;
+    }
 
     public ChildContextInfo checkContext(ChildContextInfo contextInfoArg) {
-        create();
         ChildContextInfo contextInfo;
         if (contextInfoArg == null) {
             contextInfo = createContextInfo(ContextKind.SHARE_PARENT_RW);
@@ -116,7 +139,13 @@ public final class FastRSession implements RSession {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         Map<String, String> env = new HashMap<>();
         env.put("TZ", "GMT");
-        return ChildContextInfo.create(params, env, contextKind, mainContext, input, output, output);
+        ChildContextInfo ctx = ChildContextInfo.create(params, env, contextKind, mainRContext, input, output, output);
+        RContext.childInfo = ctx;
+        return ctx;
+    }
+
+    public Context createContext() {
+        return Context.newBuilder("R").in(input).out(output).err(output).build();
     }
 
     private FastRSession() {
@@ -134,8 +163,9 @@ public final class FastRSession implements RSession {
         try {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
             ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
-            main = info.createVM();
-            mainContext = main.eval(GET_CONTEXT).as(RContext.class);
+            RContext.childInfo = info;
+            mainContext = createContext();
+            mainRContext = mainContext.eval(GET_CONTEXT).asHostObject();
         } finally {
             try {
                 System.out.print(output.toString("UTF-8"));
@@ -153,7 +183,7 @@ public final class FastRSession implements RSession {
     }
 
     public RContext getContext() {
-        return mainContext;
+        return mainRContext;
     }
 
     private String readLine() {
@@ -195,28 +225,25 @@ public final class FastRSession implements RSession {
         output.reset();
         input.setContents(expression);
         try {
-            ChildContextInfo actualContextInfo = checkContext(contextInfo);
+            checkContext(contextInfo);
+            Context evalContext = createContext();
             // set up some interop objects used by fastr-specific tests:
-            PolyglotEngine.Builder builder = PolyglotEngine.newBuilder();
             if (testClass != null) {
-                testClass.addPolyglotSymbols(builder);
+                testClass.addPolyglotSymbols(evalContext);
             }
-            PolyglotEngine vm = actualContextInfo.createVM(builder);
-            timer = scheduleTimeBoxing(vm, longTimeout ? longTimeoutValue : timeoutValue);
+            timer = scheduleTimeBoxing(evalContext.getEngine(), longTimeout ? longTimeoutValue : timeoutValue);
             try {
                 String consoleInput = readLine();
                 while (consoleInput != null) {
-                    Source source = RSource.fromTextInternal(consoleInput, RSource.Internal.UNIT_TEST);
                     try {
                         try {
-                            vm.eval(source);
-                            // checked exceptions are wrapped in RuntimeExceptions
-                        } catch (RuntimeException e) {
-                            if (e.getCause() instanceof com.oracle.truffle.api.vm.IncompleteSourceException) {
-                                throw e.getCause().getCause();
-                            } else {
-                                throw e;
-                            }
+                            Source src = createSource(consoleInput, RSource.Internal.UNIT_TEST.string);
+                            evalContext.eval(src);
+                            // checked exceptions are wrapped in PolyglotException
+                        } catch (PolyglotException e) {
+                            // TODO need the wrapped exception for special handling of:
+                            // ParseException, RError, ... see bellow
+                            throw getWrappedThrowable(e);
                         }
                         consoleInput = readLine();
                     } catch (IncompleteSourceException e) {
@@ -228,7 +255,7 @@ public final class FastRSession implements RSession {
                     }
                 }
             } finally {
-                vm.dispose();
+                evalContext.close();
             }
         } catch (ParseException e) {
             e.report(output);
@@ -258,12 +285,19 @@ public final class FastRSession implements RSession {
         }
     }
 
-    private static Timer scheduleTimeBoxing(PolyglotEngine engine, long timeout) {
+    private Throwable getWrappedThrowable(PolyglotException e) {
+        Object f = getField(e, "impl");
+        return (Throwable) getField(f, "exception");
+    }
+
+    private static Timer scheduleTimeBoxing(Engine engine, long timeout) {
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
-                Debugger.find(engine).startSession(new SuspendedCallback() {
+                Instrument i = engine.getInstruments().get("debugger");
+                Debugger debugger = i.lookup(Debugger.class);
+                debugger.startSession(new SuspendedCallback() {
                     @Override
                     public void onSuspend(SuspendedEvent event) {
                         event.prepareKill();
@@ -278,4 +312,87 @@ public final class FastRSession implements RSession {
     public String name() {
         return "FastR";
     }
+
+    public static Object getReceiver(Value value) {
+        return getField(value, "receiver");
+    }
+
+    // Copied from ReflectionUtils.
+    // TODO we need better support to access the TruffleObject in Value
+    private static Object getField(Object value, String name) {
+        try {
+            Field f = value.getClass().getDeclaredField(name);
+            setAccessible(f, true);
+            return f.get(value);
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static final boolean Java8OrEarlier = System.getProperty("java.specification.version").compareTo("1.9") < 0;
+
+    private static void setAccessible(Field field, boolean flag) {
+        if (!Java8OrEarlier) {
+            openForReflectionTo(field.getDeclaringClass(), FastRSession.class);
+        }
+        field.setAccessible(flag);
+    }
+
+    /**
+     * Opens {@code declaringClass}'s package to allow a method declared in {@code accessor} to call
+     * {@link AccessibleObject#setAccessible(boolean)} on an {@link AccessibleObject} representing a
+     * field or method declared by {@code declaringClass}.
+     */
+    private static void openForReflectionTo(Class<?> declaringClass, Class<?> accessor) {
+        try {
+            Method getModule = Class.class.getMethod("getModule");
+            Class<?> moduleClass = getModule.getReturnType();
+            Class<?> modulesClass = Class.forName("jdk.internal.module.Modules");
+            Method addOpens = maybeGetAddOpensMethod(moduleClass, modulesClass);
+            if (addOpens != null) {
+                Object moduleToOpen = getModule.invoke(declaringClass);
+                Object accessorModule = getModule.invoke(accessor);
+                if (moduleToOpen != accessorModule) {
+                    addOpens.invoke(null, moduleToOpen, declaringClass.getPackage().getName(), accessorModule);
+                }
+            }
+        } catch (Exception e) {
+            throw new AssertionError(e);
+        }
+    }
+
+    private static Method maybeGetAddOpensMethod(Class<?> moduleClass, Class<?> modulesClass) {
+        try {
+            return modulesClass.getDeclaredMethod("addOpens", moduleClass, String.class, moduleClass);
+        } catch (NoSuchMethodException e) {
+            // This method was introduced by JDK-8169069
+            return null;
+        }
+    }
+
+    public static void execInContext(Context context, Callable<Object> c) {
+        execInContext(context, c, (Class<?>) null);
+    }
+
+    public static <E extends Exception> void execInContext(Context context, Callable<Object> c, Class<?>... acceptExceptions) {
+        context.eval(FastRSession.GET_CONTEXT); // ping creation of TruffleRLanguage
+        context.exportSymbol("testSymbol", (ProxyExecutable) (Value... args) -> {
+            try {
+                c.call();
+            } catch (Exception ex) {
+                if (acceptExceptions != null) {
+                    for (Class<?> cs : acceptExceptions) {
+                        if (cs.isAssignableFrom(ex.getClass())) {
+                            return null;
+                        }
+                    }
+                }
+                Logger.getLogger(VectorMRTest.class.getName()).log(Level.SEVERE, null, ex);
+                fail();
+            }
+            return null;
+        });
+        context.importSymbol("testSymbol").execute();
+    }
+
 }

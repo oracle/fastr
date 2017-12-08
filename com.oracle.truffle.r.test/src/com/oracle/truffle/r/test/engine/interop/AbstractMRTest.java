@@ -31,7 +31,6 @@ import java.util.Set;
 import org.junit.AfterClass;
 import org.junit.Assert;
 import org.junit.BeforeClass;
-import org.junit.Test;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -40,24 +39,32 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.test.generate.FastRSession;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import org.graalvm.polyglot.Context;
+import org.junit.Test;
+import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
+import java.util.concurrent.Callable;
 
 public abstract class AbstractMRTest {
 
-    protected static PolyglotEngine engine;
+    protected static Context context;
 
     @BeforeClass
     public static void before() {
-        engine = PolyglotEngine.newBuilder().build();
+        context = Context.newBuilder("R").build();
     }
 
     @AfterClass
     public static void after() {
-        engine.dispose();
+        context.close();
+    }
+
+    protected void execInContext(Callable<Object> c) {
+        FastRSession.execInContext(context, c);
     }
 
     /**
@@ -100,79 +107,97 @@ public abstract class AbstractMRTest {
 
     @Test
     public void testIsNull() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            assertEquals(isNull(obj), ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), obj));
-        }
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                assertEquals(isNull(obj), ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), obj));
+            }
+            return null;
+        });
     }
 
     @Test
     public void testExecutable() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            try {
-                // TODO if the need appears, also provide for args for execute
-                ForeignAccess.sendExecute(Message.createExecute(0).createNode(), obj);
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", true, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
-            } catch (UnsupportedTypeException | ArityException e) {
-                throw e;
-            } catch (UnsupportedMessageException e) {
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", false, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                try {
+                    // TODO if the need appears, also provide for args for execute
+                    ForeignAccess.sendExecute(Message.createExecute(0).createNode(), obj);
+                    assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", true, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+                } catch (UnsupportedTypeException | ArityException e) {
+                    throw e;
+                } catch (UnsupportedMessageException e) {
+                    assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", false, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
+                }
             }
-        }
+            return null;
+        });
     }
 
     @Test
     public void testInstantiable() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            try {
-                // TODO if the need appears, also provide for args for new
-                ForeignAccess.sendNew(Message.createNew(0).createNode(), obj);
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", true, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
-            } catch (UnsupportedTypeException | ArityException e) {
-                throw e;
-            } catch (UnsupportedMessageException e) {
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", false, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                try {
+                    // TODO if the need appears, also provide for args for new
+                    ForeignAccess.sendNew(Message.createNew(0).createNode(), obj);
+                    assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", true, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
+                } catch (UnsupportedTypeException | ArityException e) {
+                    throw e;
+                } catch (UnsupportedMessageException e) {
+                    assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", false, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
+                }
             }
-        }
+            return null;
+        });
     }
 
     @Test
     public void testAsNativePointer() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            try {
-                assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.AS_POINTER.createNode(), obj));
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", true, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
-            } catch (UnsupportedMessageException e) {
-                assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", false, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                try {
+                    assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.AS_POINTER.createNode(), obj));
+                    assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", true, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+                } catch (UnsupportedMessageException e) {
+                    assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", false, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
+                }
             }
-        }
+            return null;
+        });
     }
 
     @Test
     public void testNativePointer() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            if (!testToNative(obj)) {
-                continue;
-            }
-            try {
-                if (obj == RNull.instance) {
-                    assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == NativePointer.NULL_NATIVEPOINTER);
-                } else {
-                    assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                if (!testToNative(obj)) {
+                    continue;
                 }
-            } catch (UnsupportedMessageException e) {
+                try {
+                    if (obj == RNull.instance) {
+                        assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == NativePointer.NULL_NATIVEPOINTER);
+                    } else {
+                        assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+                    }
+                } catch (UnsupportedMessageException e) {
+                }
             }
-        }
+            return null;
+        });
     }
 
     @Test
     public void testSize() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            testSize(obj);
-        }
-        TruffleObject empty = createEmptyTruffleObject();
-        if (empty != null) {
-            testSize(empty);
-        }
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                testSize(obj);
+            }
+            TruffleObject empty = createEmptyTruffleObject();
+            if (empty != null) {
+                testSize(empty);
+            }
+            return null;
+        });
     }
 
     private void testSize(TruffleObject obj) {
@@ -187,13 +212,16 @@ public abstract class AbstractMRTest {
 
     @Test
     public void testBoxed() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            testUnboxed(obj);
-        }
-        TruffleObject empty = createEmptyTruffleObject();
-        if (empty != null) {
-            testUnboxed(empty);
-        }
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                testUnboxed(obj);
+            }
+            TruffleObject empty = createEmptyTruffleObject();
+            if (empty != null) {
+                testUnboxed(empty);
+            }
+            return null;
+        });
     }
 
     private void testUnboxed(TruffleObject obj) {
@@ -208,13 +236,16 @@ public abstract class AbstractMRTest {
 
     @Test
     public void testKeys() throws Exception {
-        for (TruffleObject obj : createTruffleObjects()) {
-            testKeys(obj);
-        }
-        TruffleObject empty = createEmptyTruffleObject();
-        if (empty != null) {
-            testKeys(empty);
-        }
+        execInContext(() -> {
+            for (TruffleObject obj : createTruffleObjects()) {
+                testKeys(obj);
+            }
+            TruffleObject empty = createEmptyTruffleObject();
+            if (empty != null) {
+                testKeys(empty);
+            }
+            return null;
+        });
     }
 
     private void testKeys(TruffleObject obj) throws UnknownIdentifierException, UnsupportedMessageException {
@@ -232,17 +263,14 @@ public abstract class AbstractMRTest {
             for (String key : keys) {
                 assertTrue(set.contains(key));
             }
+
             assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_KEYS", true, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
         } catch (UnsupportedMessageException e) {
             assertEquals(obj.getClass().getSimpleName() + " " + obj + " HAS_KEYS", false, ForeignAccess.sendHasKeys(Message.HAS_KEYS.createNode(), obj));
         }
     }
 
-    protected interface ForeignCall {
-        void call() throws Exception;
-    }
-
-    protected void assertInteropException(ForeignCall c, Class<? extends InteropException> expectedClazz) {
+    protected void assertInteropException(Callable<Object> c, Class<? extends InteropException> expectedClazz) {
         boolean ie = false;
         try {
             c.call();
@@ -266,5 +294,4 @@ public abstract class AbstractMRTest {
             }
         }
     }
-
 }

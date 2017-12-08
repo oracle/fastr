@@ -33,9 +33,10 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 
 public class RFunctionMRTest extends AbstractMRTest {
 
@@ -73,9 +74,9 @@ public class RFunctionMRTest extends AbstractMRTest {
     }
 
     private static RFunction create(String fun) {
-        Source src = Source.newBuilder(fun).mimeType("text/x-r").name("test.R").build();
-        PolyglotEngine.Value result = engine.eval(src);
-        return result.as(RFunction.class);
+        Source src = Source.newBuilder("R", fun, "<testrfunction>").internal(true).buildLiteral();
+        Value result = context.eval(src);
+        return (RFunction) FastRSession.getReceiver(result);
     }
 
     @Override

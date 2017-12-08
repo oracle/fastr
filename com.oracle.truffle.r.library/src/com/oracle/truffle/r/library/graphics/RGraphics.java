@@ -18,6 +18,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
@@ -30,16 +31,17 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 public class RGraphics {
     private static final AtomicBoolean initialized = new AtomicBoolean();
 
-    public static void initialize() {
-        if (initialized.compareAndSet(false, true)) {
-            if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
+    public static void initialize(RContext context) {
+        if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
+            if (!context.internalGraphicsInitialized) {
                 RGridGraphicsAdapter.initialize();
-            } else if (FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
-                DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol("InitGraphics");
-                DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
-                assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
-                CallRFFI.InvokeVoidCallRootNode.create().getCallTarget().call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), new Object[0]);
             }
+        } else if (initialized.compareAndSet(false, true) && FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
+            DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol("InitGraphics");
+            DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
+            assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
+            CallRFFI.InvokeVoidCallRootNode.create().getCallTarget().call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), new Object[0]);
         }
+        context.internalGraphicsInitialized = true;
     }
 }

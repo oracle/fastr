@@ -100,8 +100,6 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RRawMRForeign.ACCESS;
         } else if (obj instanceof RConnection) {
             return RConnectionMRForeign.ACCESS;
-        } else if (obj instanceof RContext) {
-            return RContextMRForeign.ACCESS;
         } else if (obj instanceof RS4Object) {
             return RS4ObjectMRForeign.ACCESS;
         } else if (obj instanceof RPromise) {

@@ -53,37 +53,49 @@ public class StringCompareNodeTest extends TestBase {
 
     @Theory
     public void testExactNA(String a, String b) {
-        assumeTrue(a == RRuntime.STRING_NA || b == RRuntime.STRING_NA);
-        try {
-            executeCompare(true, a, b);
-            Assert.fail();
-        } catch (AssertionError e) {
-        }
+        execInContext(() -> {
+            assumeTrue(a == RRuntime.STRING_NA || b == RRuntime.STRING_NA);
+            try {
+                executeCompare(true, a, b);
+                Assert.fail();
+            } catch (AssertionError e) {
+            }
+            return null;
+        });
     }
 
     @Theory
     public void testNonExactNA(String a, String b) {
-        assumeTrue(a == RRuntime.STRING_NA || b == RRuntime.STRING_NA);
-        try {
-            executeCompare(false, a, b);
-            Assert.fail();
-        } catch (AssertionError e) {
-        }
+        execInContext(() -> {
+            assumeTrue(a == RRuntime.STRING_NA || b == RRuntime.STRING_NA);
+            try {
+                executeCompare(false, a, b);
+                Assert.fail();
+            } catch (AssertionError e) {
+            }
+            return null;
+        });
     }
 
     @Theory
     public void testExact(String a, String b) {
-        assumeFalse(a == RRuntime.STRING_NA);
-        assumeFalse(b == RRuntime.STRING_NA);
-        assertThat(executeCompare(true, a, b), is(a.equals(b)));
-        assertThat(executeHashCompare(a, b), is(a.equals(b)));
+        execInContext(() -> {
+            assumeFalse(a == RRuntime.STRING_NA);
+            assumeFalse(b == RRuntime.STRING_NA);
+            assertThat(executeCompare(true, a, b), is(a.equals(b)));
+            assertThat(executeHashCompare(a, b), is(a.equals(b)));
+            return null;
+        });
     }
 
     @Theory
     public void testNonExact(String a, String b) {
-        assumeFalse(a == RRuntime.STRING_NA);
-        assumeFalse(b == RRuntime.STRING_NA);
-        assertThat(executeCompare(false, a, b), is(a.startsWith(b)));
+        execInContext(() -> {
+            assumeFalse(a == RRuntime.STRING_NA);
+            assumeFalse(b == RRuntime.STRING_NA);
+            assertThat(executeCompare(false, a, b), is(a.startsWith(b)));
+            return null;
+        });
     }
 
     private static boolean executeCompare(boolean exact, String a, String b) {

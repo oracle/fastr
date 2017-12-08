@@ -168,7 +168,7 @@ final class REngine implements Engine, Engine.Timings {
         REnvironment.baseInitialize(baseFrame, globalFrame);
         context.getStateRFFI().initializeVariables(context);
         RBuiltinPackages.loadBase(context.getLanguage(), baseFrame);
-        RGraphics.initialize();
+        RGraphics.initialize(context);
         if (FastROptions.LoadProfiles.getBooleanValue()) {
             StartupTiming.timestamp("Before Profiles Loaded");
             /*

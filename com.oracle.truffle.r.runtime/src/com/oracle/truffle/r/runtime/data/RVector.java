@@ -123,8 +123,8 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     /**
      * Return vector data (copying if necessary) that's guaranteed to be "fresh" (temporary in terms
-     * of vector sharing mode). As long as the vector is not retuned or put into a list/environment
-     * (i.e. if it is temporary, it will stay temporary), it is safe to reuse the array retuned by
+     * of vector sharing mode). As long as the vector is not returned or put into a list/environment
+     * (i.e. if it is temporary, it will stay temporary), it is safe to reuse the array returned by
      * this method to create a new vector.
      *
      * @return vector data

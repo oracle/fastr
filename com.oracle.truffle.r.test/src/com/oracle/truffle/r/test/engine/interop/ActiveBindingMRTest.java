@@ -23,11 +23,12 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
+import com.oracle.truffle.r.test.generate.FastRSession;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
 public class ActiveBindingMRTest extends AbstractMRTest {
@@ -45,9 +46,9 @@ public class ActiveBindingMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        Source src = Source.newBuilder("f=function() {}").mimeType("text/x-r").name("test.R").build();
-        PolyglotEngine.Value result = engine.eval(src);
-        RFunction fn = result.as(RFunction.class);
+        Source src = Source.newBuilder("R", "f=function() {}", "<testfunction>").internal(true).buildLiteral();
+        Value result = context.eval(src);
+        RFunction fn = (RFunction) FastRSession.getReceiver(result);
         return new TruffleObject[]{new ActiveBinding(RType.Any, fn)};
     }
 

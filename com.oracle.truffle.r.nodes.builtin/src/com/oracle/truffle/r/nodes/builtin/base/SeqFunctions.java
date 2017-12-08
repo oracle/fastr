@@ -199,11 +199,11 @@ public final class SeqFunctions {
             }
         }
 
-        public static class SeqNoClassFromAndLengthNode {
+        public static class SeqNoClassFromAndLengthNode extends Node {
 
-            final SeqInt seqInt;
             final RFunction seqIntFunction;
             final ConditionProfile isNumericProfile;
+            @Child SeqInt seqInt;
             @Child public GetClassAttributeNode getClassAttributeNode;
             @Child IsMissingOrNumericNode fromCheck;
 

@@ -155,104 +155,125 @@ public class SpecialCallTest extends TestBase {
 
     @Test
     public void testBasic() {
-        // check a case with no calls
-        assertCallCounts("library(stats)", 0, 1, 0, 1);
+        execInContext(() -> {
+            // check a case with no calls
+            assertCallCounts("library(stats)", 0, 1, 0, 1);
+            return null;
+        });
     }
 
     @Test
     public void testArithmetic() {
-        assertCallCounts("1 + 1", 1, 0, 1, 0);
-        assertCallCounts("1 + 1 * 2 + 4", 3, 0, 3, 0);
+        execInContext(() -> {
+            assertCallCounts("1 + 1", 1, 0, 1, 0);
+            assertCallCounts("1 + 1 * 2 + 4", 3, 0, 3, 0);
 
-        assertCallCounts("a <- 1; b <- 2", "a + b", 1, 0, 1, 0);
-        assertCallCounts("a <- 1; b <- 2; c <- 3", "a + b * 2 * c", 3, 0, 3, 0);
+            assertCallCounts("a <- 1; b <- 2", "a + b", 1, 0, 1, 0);
+            assertCallCounts("a <- 1; b <- 2; c <- 3", "a + b * 2 * c", 3, 0, 3, 0);
 
-        assertCallCounts("a <- data.frame(a=1); b <- 2; c <- 3", "a + b * 2 * c", 3, 0, 2, 1);
-        assertCallCounts("a <- 1; b <- data.frame(a=1); c <- 3", "a + b * 2 * c", 3, 0, 0, 3);
+            assertCallCounts("a <- data.frame(a=1); b <- 2; c <- 3", "a + b * 2 * c", 3, 0, 2, 1);
+            assertCallCounts("a <- 1; b <- data.frame(a=1); c <- 3", "a + b * 2 * c", 3, 0, 0, 3);
 
-        assertCallCounts("1 %*% 1", 0, 1, 0, 1);
+            assertCallCounts("1 %*% 1", 0, 1, 0, 1);
+            return null;
+        });
     }
 
     @Test
     public void testSubset() {
-        assertCallCounts("a <- 1:10", "a[1]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[2]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[4]", 1, 0, 1, 0);
-        assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[1]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[0.1]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[5]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[0]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[-1]", 2, 0, 2, 0);
+        execInContext(() -> {
+            assertCallCounts("a <- 1:10", "a[1]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[2]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[4]", 1, 0, 1, 0);
+            assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[1]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[0.1]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[5]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[0]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[-1]", 2, 0, 2, 0);
 
-        assertCallCounts("a <- c(1,2,3,4)", "a[drop=T, 1]", 0, 1, 0, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[drop=F, 1]", 0, 1, 0, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[1, drop=F]", 0, 1, 0, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[drop=T, 1]", 0, 1, 0, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[drop=F, 1]", 0, 1, 0, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[1, drop=F]", 0, 1, 0, 1);
+            return null;
+        });
     }
 
     @Test
     public void testSubscript() {
-        assertCallCounts("a <- 1:10", "a[[1]]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[2]]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[4]]", 1, 0, 1, 0);
-        assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[[1]]", 1, 0, 1, 0);
-        assertCallCounts("a <- list(a=c(1,2,3,4),2,3)", "a[[1]]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[5]]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[0]]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[[b]]", 1, 0, 1, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[NA_integer_]]", 1, 0, 1, 0);
+        execInContext(() -> {
+            assertCallCounts("a <- 1:10", "a[[1]]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[2]]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[4]]", 1, 0, 1, 0);
+            assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[[1]]", 1, 0, 1, 0);
+            assertCallCounts("a <- list(a=c(1,2,3,4),2,3)", "a[[1]]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[5]]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[0]]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[[b]]", 1, 0, 1, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[NA_integer_]]", 1, 0, 1, 0);
 
-        assertCallCounts("a <- c(1,2,3,4)", "a[[drop=T, 1]]", 0, 1, 0, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[drop=F, 1]]", 0, 1, 0, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[1, drop=F]]", 0, 1, 0, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[drop=T, 1]]", 0, 1, 0, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[drop=F, 1]]", 0, 1, 0, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[1, drop=F]]", 0, 1, 0, 1);
+            return null;
+        });
     }
 
     @Test
     public void testUpdateSubset() {
-        assertCallCounts("a <- 1:10", "a[1] <- 1", 1, 0, 1, 1); // sequence
-        assertCallCounts("a <- c(1,2,3,4)", "a[2] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[4] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[1] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[0.1] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[5] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[0] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_] <- 1", 1, 0, 1, 1);
+        execInContext(() -> {
+            assertCallCounts("a <- 1:10", "a[1] <- 1", 1, 0, 1, 1); // sequence
+            assertCallCounts("a <- c(1,2,3,4)", "a[2] <- 1", 1, 0, 2, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[4] <- 1", 1, 0, 2, 0);
+            assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[1] <- 1", 1, 0, 2, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[0.1] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[5] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[0] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[b] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[NA_integer_] <- 1", 1, 0, 1, 1);
 
-        assertCallCounts("a <- c(1,2,3,4)", "a[-1] <- 1", 2, 0, 2, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[drop=T, 1] <- 1", 0, 1, 0, 2);
-        assertCallCounts("a <- c(1,2,3,4)", "a[drop=F, 1] <- 1", 0, 1, 0, 2);
-        assertCallCounts("a <- c(1,2,3,4)", "a[1, drop=F] <- 1", 0, 1, 0, 2);
+            assertCallCounts("a <- c(1,2,3,4)", "a[-1] <- 1", 2, 0, 2, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[drop=T, 1] <- 1", 0, 1, 0, 2);
+            assertCallCounts("a <- c(1,2,3,4)", "a[drop=F, 1] <- 1", 0, 1, 0, 2);
+            assertCallCounts("a <- c(1,2,3,4)", "a[1, drop=F] <- 1", 0, 1, 0, 2);
+            return null;
+        });
     }
 
     @Test
     public void testUpdateSubscript() {
-        assertCallCounts("a <- 1:10", "a[[1]] <- 1", 1, 0, 1, 1); // sequence
-        assertCallCounts("a <- c(1,2,3,4)", "a[[2]] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[4]] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[[1]] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- list(a=c(1,2,3,4),2,3)", "a[[1]] <- 1", 1, 0, 2, 0);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[5]] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[0]] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[[b]] <- 1", 1, 0, 1, 1);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[NA_integer_]] <- 1", 1, 0, 1, 1);
+        execInContext(() -> {
+            assertCallCounts("a <- 1:10", "a[[1]] <- 1", 1, 0, 1, 1); // sequence
+            assertCallCounts("a <- c(1,2,3,4)", "a[[2]] <- 1", 1, 0, 2, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[4]] <- 1", 1, 0, 2, 0);
+            assertCallCounts("a <- list(c(1,2,3,4),2,3)", "a[[1]] <- 1", 1, 0, 2, 0);
+            assertCallCounts("a <- list(a=c(1,2,3,4),2,3)", "a[[1]] <- 1", 1, 0, 2, 0);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[0.1]] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[5]] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[0]] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4); b <- -1", "a[[b]] <- 1", 1, 0, 1, 1);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[NA_integer_]] <- 1", 1, 0, 1, 1);
 
-        assertCallCounts("a <- c(1,2,3,4)", "a[[drop=T, 1]] <- 1", 0, 1, 0, 2);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[drop=F, 1]] <- 1", 0, 1, 0, 2);
-        assertCallCounts("a <- c(1,2,3,4)", "a[[1, drop=F]] <- 1", 0, 1, 0, 2);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[drop=T, 1]] <- 1", 0, 1, 0, 2);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[drop=F, 1]] <- 1", 0, 1, 0, 2);
+            assertCallCounts("a <- c(1,2,3,4)", "a[[1, drop=F]] <- 1", 0, 1, 0, 2);
+            return null;
+        });
     }
 
     @Test
     public void testParens() {
-        assertCallCounts("a <- 1", "(a)", 1, 0, 1, 0);
-        assertCallCounts("a <- 1", "(55)", 1, 0, 1, 0);
-        assertCallCounts("a <- 1", "('asdf')", 1, 0, 1, 0);
-        assertCallCounts("a <- 1; b <- 2", "(a + b)", 2, 0, 2, 0);
-        assertCallCounts("a <- 1; b <- 2; c <- 3", "a + (b + c)", 3, 0, 3, 0);
-        assertCallCounts("a <- 1; b <- 2; c <- 1:5", "a + (b + c)", 3, 0, 3, 0);
+        execInContext(() -> {
+            assertCallCounts("a <- 1", "(a)", 1, 0, 1, 0);
+            assertCallCounts("a <- 1", "(55)", 1, 0, 1, 0);
+            assertCallCounts("a <- 1", "('asdf')", 1, 0, 1, 0);
+            assertCallCounts("a <- 1; b <- 2", "(a + b)", 2, 0, 2, 0);
+            assertCallCounts("a <- 1; b <- 2; c <- 3", "a + (b + c)", 3, 0, 3, 0);
+            assertCallCounts("a <- 1; b <- 2; c <- 1:5", "a + (b + c)", 3, 0, 3, 0);
+            return null;
+        });
     }
 
     private static void assertCallCounts(String test, int initialSpecialCount, int initialNormalCount, int finalSpecialCount, int finalNormalCount) {

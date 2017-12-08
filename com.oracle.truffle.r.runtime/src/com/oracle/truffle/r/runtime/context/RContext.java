@@ -97,7 +97,6 @@ import com.oracle.truffle.r.runtime.data.LanguageClosureCache;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
@@ -124,9 +123,10 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts can be destroyed
  */
-public final class RContext implements RTruffleObject {
+public final class RContext {
 
     public static final int CONSOLE_WIDTH = 80;
+    public static ChildContextInfo childInfo;
 
     public enum ContextKind {
         /**
@@ -354,6 +354,7 @@ public final class RContext implements RTruffleObject {
     // Context specific state required for libraries, the initialization is handled lazily by the
     // concrete library.
     public Object gridContext = null;
+    public boolean internalGraphicsInitialized = false;
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
@@ -395,6 +396,9 @@ public final class RContext implements RTruffleObject {
         }
 
         Object initialInfo = env.getConfig().get(ChildContextInfo.CONFIG_KEY);
+        if (initialInfo == null) {
+            initialInfo = childInfo;
+        }
         Map<String, String> initialEnvVars;
         if (initialInfo == null) {
             /*

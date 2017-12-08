@@ -51,26 +51,29 @@ public class StringSearchNodeTest extends TestBase {
 
     @Theory
     public void testTheory(String aString, String bString, String cString) {
-        create();
+        execInContext(() -> {
+            create();
 
-        RAbstractStringVector a;
-        RAbstractStringVector b;
+            RAbstractStringVector a;
+            RAbstractStringVector b;
 
-        a = createVector(aString);
-        b = createVector(bString);
-        assertResult(a, b, executeSearch(a, b));
+            a = createVector(aString);
+            b = createVector(bString);
+            assertResult(a, b, executeSearch(a, b));
 
-        a = createVector(aString, bString);
-        b = createVector(cString);
-        assertResult(a, b, executeSearch(a, b));
+            a = createVector(aString, bString);
+            b = createVector(cString);
+            assertResult(a, b, executeSearch(a, b));
 
-        a = createVector(aString);
-        b = createVector(bString, cString);
-        assertResult(a, b, executeSearch(a, b));
+            a = createVector(aString);
+            b = createVector(bString, cString);
+            assertResult(a, b, executeSearch(a, b));
 
-        a = createVector(aString, bString);
-        b = createVector(bString, cString);
-        assertResult(a, b, executeSearch(a, b));
+            a = createVector(aString, bString);
+            b = createVector(bString, cString);
+            assertResult(a, b, executeSearch(a, b));
+            return null;
+        });
     }
 
     private static RAbstractStringVector createVector(String... elements) {

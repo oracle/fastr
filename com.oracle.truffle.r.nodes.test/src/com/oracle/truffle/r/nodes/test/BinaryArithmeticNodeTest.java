@@ -94,67 +94,76 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testScalarUnboxing(BinaryArithmeticFactory factory, RScalarVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = withinTestContext(() -> aOrig.copy());
-        RAbstractVector b = copy(bOrig);
-        // unboxing cannot work if length is 1
-        assumeThat(b.getLength(), is(1));
+        execInContext(() -> {
+            RAbstractVector a = withinTestContext(() -> aOrig.copy());
+            RAbstractVector b = copy(bOrig);
+            // unboxing cannot work if length is 1
+            assumeThat(b.getLength(), is(1));
 
-        // if the right side is shareable these should be prioritized
-        assumeThat(b, is(not(instanceOf(RShareable.class))));
+            // if the right side is shareable these should be prioritized
+            assumeThat(b, is(not(instanceOf(RShareable.class))));
 
-        assumeArithmeticCompatible(factory, a, b);
-        Object result = executeArithmetic(factory, a, b);
-        Assert.assertTrue(isPrimitive(result));
+            assumeArithmeticCompatible(factory, a, b);
+            Object result = executeArithmetic(factory, a, b);
+            Assert.assertTrue(isPrimitive(result));
+            return null;
+        });
     }
 
     @Theory
     public void testVectorResult(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        assumeThat(a, is(not(instanceOf(RScalarVector.class))));
-        assumeThat(b, is(not(instanceOf(RScalarVector.class))));
-        assumeArithmeticCompatible(factory, a, b);
+        execInContext(() -> {
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            assumeThat(a, is(not(instanceOf(RScalarVector.class))));
+            assumeThat(b, is(not(instanceOf(RScalarVector.class))));
+            assumeArithmeticCompatible(factory, a, b);
 
-        Object result = executeArithmetic(factory, a, b);
-        Assert.assertFalse(isPrimitive(result));
-        assertLengthAndType(factory, a, b, (RAbstractVector) result);
+            Object result = executeArithmetic(factory, a, b);
+            Assert.assertFalse(isPrimitive(result));
+            assertLengthAndType(factory, a, b, (RAbstractVector) result);
 
-        assumeThat(b, is(not(instanceOf(RScalarVector.class))));
-        result = executeArithmetic(factory, b, a);
-        assertLengthAndType(factory, a, b, (RAbstractVector) result);
+            assumeThat(b, is(not(instanceOf(RScalarVector.class))));
+            result = executeArithmetic(factory, b, a);
+            assertLengthAndType(factory, a, b, (RAbstractVector) result);
+            return null;
+        });
     }
 
     @Theory
     public void testSharing(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        assumeArithmeticCompatible(factory, a, b);
+        execInContext(() -> {
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            assumeArithmeticCompatible(factory, a, b);
 
-        // not part of this test, see #testEmptyArrays
-        assumeThat(a.getLength(), is(not(0)));
-        assumeThat(b.getLength(), is(not(0)));
+            // not part of this test, see #testEmptyArrays
+            assumeThat(a.getLength(), is(not(0)));
+            assumeThat(b.getLength(), is(not(0)));
 
-        // sharing does not work if a is a scalar vector
-        assumeThat(a, is(not(instanceOf(RScalarVector.class))));
+            // sharing does not work if a is a scalar vector
+            assumeThat(a, is(not(instanceOf(RScalarVector.class))));
 
-        RType resultType = getResultType(factory, a, b);
-        int maxLength = Integer.max(a.getLength(), b.getLength());
-        RAbstractVector sharedResult = null;
-        if (a.getLength() == maxLength && isShareable(a, resultType)) {
-            sharedResult = a;
-        }
-        if (sharedResult == null && b.getLength() == maxLength && isShareable(b, resultType)) {
-            sharedResult = b;
-        }
+            RType resultType = getResultType(factory, a, b);
+            int maxLength = Integer.max(a.getLength(), b.getLength());
+            RAbstractVector sharedResult = null;
+            if (a.getLength() == maxLength && isShareable(a, resultType)) {
+                sharedResult = a;
+            }
+            if (sharedResult == null && b.getLength() == maxLength && isShareable(b, resultType)) {
+                sharedResult = b;
+            }
 
-        Object result = executeArithmetic(factory, a, b);
+            Object result = executeArithmetic(factory, a, b);
 
-        if (sharedResult == null) {
-            Assert.assertNotSame(a, result);
-            Assert.assertNotSame(b, result);
-        } else {
-            Assert.assertSame(sharedResult, result);
-        }
+            if (sharedResult == null) {
+                Assert.assertNotSame(a, result);
+                Assert.assertNotSame(b, result);
+            } else {
+                Assert.assertSame(sharedResult, result);
+            }
+            return null;
+        });
     }
 
     private static boolean isShareable(RAbstractVector a, RType resultType) {
@@ -191,136 +200,156 @@ public class BinaryArithmeticNodeTest extends BinaryVectorTest {
 
     @Theory
     public void testEmptyArrays(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = withinTestContext(() -> originalVector.copy());
-        testEmptyArray(factory, vector, createEmptyLogicalVector());
-        testEmptyArray(factory, vector, createEmptyIntVector());
-        testEmptyArray(factory, vector, createEmptyDoubleVector());
-        testEmptyArray(factory, vector, createEmptyComplexVector());
-
+        execInContext(() -> {
+            RAbstractVector vector = withinTestContext(() -> originalVector.copy());
+            testEmptyArray(factory, vector, createEmptyLogicalVector());
+            testEmptyArray(factory, vector, createEmptyIntVector());
+            testEmptyArray(factory, vector, createEmptyDoubleVector());
+            testEmptyArray(factory, vector, createEmptyComplexVector());
+            return null;
+        });
     }
 
     @Theory
     public void testRNullConstantResult(BinaryArithmeticFactory factory, RAbstractVector originalVector) {
-        RAbstractVector vector = withinTestContext(() -> originalVector.copy());
+        execInContext(() -> {
+            RAbstractVector vector = withinTestContext(() -> originalVector.copy());
 
-        RType type = null;
-        RType rType = vector.getRType();
-        if (rType == RType.Complex) {
-            type = RType.Complex;
-        } else {
-            if (rType == RType.Integer || rType == RType.Logical) {
-                if (factory == BinaryArithmetic.DIV || factory == BinaryArithmetic.POW) {
+            RType type = null;
+            RType rType = vector.getRType();
+            if (rType == RType.Complex) {
+                type = RType.Complex;
+            } else {
+                if (rType == RType.Integer || rType == RType.Logical) {
+                    if (factory == BinaryArithmetic.DIV || factory == BinaryArithmetic.POW) {
+                        type = RType.Double;
+                    } else {
+                        type = RType.Integer;
+                    }
+                } else if (rType == RType.Double) {
                     type = RType.Double;
                 } else {
-                    type = RType.Integer;
+                    Assert.fail();
                 }
-            } else if (rType == RType.Double) {
-                type = RType.Double;
-            } else {
-                Assert.fail();
             }
-        }
 
-        assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(type));
-        assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(type));
+            assertThat(executeArithmetic(factory, vector, RNull.instance), isEmptyVectorOf(type));
+            assertThat(executeArithmetic(factory, RNull.instance, vector), isEmptyVectorOf(type));
+            return null;
+        });
     }
 
     @Theory
     public void testBothNull(BinaryArithmeticFactory factory) {
-        assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(factory == BinaryArithmetic.DIV || factory == BinaryArithmetic.POW ? RType.Double : RType.Integer));
+        execInContext(() -> {
+            assertThat(executeArithmetic(factory, RNull.instance, RNull.instance), isEmptyVectorOf(factory == BinaryArithmetic.DIV || factory == BinaryArithmetic.POW ? RType.Double : RType.Integer));
+            return null;
+        });
     }
 
     @Theory
     public void testCompleteness(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        assumeArithmeticCompatible(factory, a, b);
+        execInContext(() -> {
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            assumeArithmeticCompatible(factory, a, b);
 
-        // disable division they might produce NA values by division with 0
-        assumeFalse(factory == BinaryArithmetic.DIV);
-        assumeFalse(factory == BinaryArithmetic.INTEGER_DIV);
-        assumeFalse(factory == BinaryArithmetic.MOD);
+            // disable division they might produce NA values by division with 0
+            assumeFalse(factory == BinaryArithmetic.DIV);
+            assumeFalse(factory == BinaryArithmetic.INTEGER_DIV);
+            assumeFalse(factory == BinaryArithmetic.MOD);
 
-        Object result = executeArithmetic(factory, a, b);
+            Object result = executeArithmetic(factory, a, b);
 
-        boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
+            boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
 
-        if (a.getLength() == 0 || b.getLength() == 0) {
-            Assert.assertTrue(resultComplete);
-        } else {
-            boolean expectedComplete = a.isComplete() && b.isComplete();
-            Assert.assertEquals(expectedComplete, resultComplete);
-        }
+            if (a.getLength() == 0 || b.getLength() == 0) {
+                Assert.assertTrue(resultComplete);
+            } else {
+                boolean expectedComplete = a.isComplete() && b.isComplete();
+                Assert.assertEquals(expectedComplete, resultComplete);
+            }
+            return null;
+        });
     }
 
     @Theory
     public void testCopyAttributes(BinaryArithmeticFactory factory, RAbstractVector aOrig, RAbstractVector bOrig) {
-        assumeArithmeticCompatible(factory, aOrig, bOrig);
+        execInContext(() -> {
+            assumeArithmeticCompatible(factory, aOrig, bOrig);
 
-        // we have to e careful not to change mutable vectors
-        RAbstractVector a = copy(aOrig);
-        RAbstractVector b = copy(bOrig);
-        if (a instanceof RShareable) {
-            assert ((RShareable) a).isTemporary();
-            ((RShareable) a).incRefCount();
-        }
-        if (b instanceof RShareable) {
-            assert ((RShareable) b).isTemporary();
-            ((RShareable) b).incRefCount();
-        }
+            // we have to e careful not to change mutable vectors
+            RAbstractVector a = copy(aOrig);
+            RAbstractVector b = copy(bOrig);
+            if (a instanceof RShareable) {
+                assert ((RShareable) a).isTemporary();
+                ((RShareable) a).incRefCount();
+            }
+            if (b instanceof RShareable) {
+                assert ((RShareable) b).isTemporary();
+                ((RShareable) b).incRefCount();
+            }
 
-        RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
-        RVector<?> bMaterialized = withinTestContext(() -> b.copy().materialize());
+            RVector<?> aMaterialized = withinTestContext(() -> a.copy().materialize());
+            RVector<?> bMaterialized = withinTestContext(() -> b.copy().materialize());
 
-        aMaterialized.setAttr("a", "a");
-        bMaterialized.setAttr("b", "b");
+            aMaterialized.setAttr("a", "a");
+            bMaterialized.setAttr("b", "b");
 
-        if (a.getLength() == 0 || b.getLength() == 0) {
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)));
-            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)));
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b));
-        } else if (a.getLength() == b.getLength()) {
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "a", "b");
-            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)), "b");
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b), "a");
-        } else if (a.getLength() > b.getLength()) {
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "a");
-            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)));
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b), "a");
-        } else {
-            assert a.getLength() < b.getLength();
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "b");
-            assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)), "b");
-            assertAttributes(executeArithmetic(factory, copy(aMaterialized), b));
-        }
+            if (a.getLength() == 0 || b.getLength() == 0) {
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)));
+                assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)));
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), b));
+            } else if (a.getLength() == b.getLength()) {
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "a", "b");
+                assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)), "b");
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), b), "a");
+            } else if (a.getLength() > b.getLength()) {
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "a");
+                assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)));
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), b), "a");
+            } else {
+                assert a.getLength() < b.getLength();
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), copy(bMaterialized)), "b");
+                assertAttributes(executeArithmetic(factory, a, copy(bMaterialized)), "b");
+                assertAttributes(executeArithmetic(factory, copy(aMaterialized), b));
+            }
+            return null;
+        });
     }
 
     @Test
     public void testSequenceFolding() {
-        assertFold(true, createIntSequence(1, 3, 10), createIntVectorFromScalar(5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
-        assertFold(true, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), ADD, MULTIPLY);
-        assertFold(true, createIntSequence(1, 3, 10), createIntSequence(2, 5, 10), ADD, SUBTRACT);
-        assertFold(false, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), SUBTRACT, INTEGER_DIV, MOD);
-        assertFold(false, createIntSequence(1, 3, 10), createIntSequence(2, 5, 5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
+        execInContext(() -> {
+            assertFold(true, createIntSequence(1, 3, 10), createIntVectorFromScalar(5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
+            assertFold(true, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), ADD, MULTIPLY);
+            assertFold(true, createIntSequence(1, 3, 10), createIntSequence(2, 5, 10), ADD, SUBTRACT);
+            assertFold(false, createIntVectorFromScalar(5), createIntSequence(1, 3, 10), SUBTRACT, INTEGER_DIV, MOD);
+            assertFold(false, createIntSequence(1, 3, 10), createIntSequence(2, 5, 5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
 
-        assertFold(true, createDoubleSequence(1, 3, 10), createDoubleVectorFromScalar(5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
-        assertFold(true, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), ADD, MULTIPLY);
-        assertFold(true, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 10), ADD, SUBTRACT);
-        assertFold(false, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), SUBTRACT, INTEGER_DIV, MOD);
-        assertFold(false, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
+            assertFold(true, createDoubleSequence(1, 3, 10), createDoubleVectorFromScalar(5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
+            assertFold(true, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), ADD, MULTIPLY);
+            assertFold(true, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 10), ADD, SUBTRACT);
+            assertFold(false, createDoubleVectorFromScalar(5), createDoubleSequence(1, 3, 10), SUBTRACT, INTEGER_DIV, MOD);
+            assertFold(false, createDoubleSequence(1, 3, 10), createDoubleSequence(2, 5, 5), ADD, SUBTRACT, MULTIPLY, INTEGER_DIV);
+            return null;
+        });
     }
 
     @Theory
     public void testGeneric(BinaryArithmeticFactory factory) {
-        // this should trigger the generic case
-        for (RAbstractVector vector : ALL_VECTORS) {
-            try {
-                assumeArithmeticCompatible(factory, vector, vector);
-            } catch (AssumptionViolatedException e) {
-                continue;
+        execInContext(() -> {
+            // this should trigger the generic case
+            for (RAbstractVector vector : ALL_VECTORS) {
+                try {
+                    assumeArithmeticCompatible(factory, vector, vector);
+                } catch (AssumptionViolatedException e) {
+                    continue;
+                }
+                executeArithmetic(factory, copy(vector), copy(vector));
             }
-            executeArithmetic(factory, copy(vector), copy(vector));
-        }
+            return null;
+        });
     }
 
     private static void assertAttributes(Object value, String... keys) {
