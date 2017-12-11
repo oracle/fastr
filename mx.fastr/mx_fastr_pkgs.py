@@ -486,6 +486,8 @@ def _set_test_status(fastr_test_info):
                     relpath = fastr_relpath
 
                 if os.path.exists(join(_pkg_testdir('fastr', pkg), relpath)):
+                    f.write('# <file path> <tests passed> <tests skipped> <tests failed>')
+                    # TODO
                     f.write(relpath)
                     f.write(' ')
                     f.write(fastr_testfile_status.status)
