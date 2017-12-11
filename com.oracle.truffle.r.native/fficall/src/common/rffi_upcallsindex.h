@@ -173,10 +173,11 @@
 #define octsize_x 168
 #define registerCCallable_x 169
 #define registerRoutines_x 170
-#define setDotSymbolValues_x 171
-#define unif_rand_x 172
-#define useDynamicSymbols_x 173
+#define restoreHandlerStacks_x 171
+#define setDotSymbolValues_x 172
+#define unif_rand_x 173
+#define useDynamicSymbols_x 174
 
-#define UPCALLS_TABLE_SIZE 174
+#define UPCALLS_TABLE_SIZE 175
 
 #endif // RFFI_UPCALLSINDEX_H
