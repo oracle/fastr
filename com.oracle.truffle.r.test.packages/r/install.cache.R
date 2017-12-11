@@ -21,6 +21,11 @@
 # questions.
 #
 
+# A simple log function; to be replaced by a used of this file.
+log.message <- function(..., level=0) {
+    cat(..., "\n")
+}
+
 pkg.cache.install <- function(pkg.cache.env, pkgname, lib.install, install.cmd) {
     is.cached <- pkg.cache.get(pkg.cache.env, pkgname, lib.install)
     if (!is.cached) {
@@ -243,10 +248,6 @@ pkg.cache.get.version <- function(cache.dir, cache.version, table.file.name, cac
     })
 }
 
-log.message <- function(..., level=0) {
-    cat(..., "\n")
-}
-
 # list of recommended and base packages
 recommended.base.packages <- c("boot", "class", "cluster", "codetools", "foreign", "KernSmooth", "lattice", "MASS", "Matrix", "mgcv", "nlme", "nnet", "rpart", "spatial", "survival", "base", "compiler", "datasets", "grDevices", "graphics", "grid", "methods", "parallel", "splines", "stats", "stats4", "tools", "utils")
 
@@ -254,12 +255,11 @@ recommended.base.packages <- c("boot", "class", "cluster", "codetools", "foreign
 base.packages <- c("base", "compiler", "datasets", "grDevices", "graphics", "grid", "methods", "parallel", "splines", "stats", "stats4", "tools", "utils")
 
 # the list of packages that will be excluded in the transitive dependecies
-ignored.packages <- base.packages
+ignored.packages <- recommended.base.packages
 
 package.dependencies <- function(pkg, lib, dependencies = c("Depends", "Imports", "LinkingTo"), pl = available.packages()) {
     if (!(pkg %in% rownames(pl))) {
-        # TODO: logging
-        cat("Package", pkg, "not on CRAN\n")
+        log.message("Package", pkg, "not on CRAN\n", level=1)
         return (NULL)
     }
     fields <- pl[pkg, dependencies]
