@@ -31,6 +31,7 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
@@ -677,7 +678,7 @@ public class FileFunctions {
                             files.add(fullNames ? FileSystems.getDefault().getPath(vecPathString, DOTDOT).toString() : DOTDOT);
                         }
                     }
-                } catch (IOException ex) {
+                } catch (IOException | UncheckedIOException ex) {
                     // ignored
                 }
             }

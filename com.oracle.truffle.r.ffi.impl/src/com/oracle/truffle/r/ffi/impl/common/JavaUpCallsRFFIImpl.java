@@ -42,6 +42,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -55,6 +57,7 @@ import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RErrorHandling.HandlerStacks;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
@@ -912,7 +915,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object R_ToplevelExec() {
-        return RErrorHandling.resetAndGetHandlerStacks();
+        return RErrorHandling.resetAndGetHandlerStacks().handlerStack;
+    }
+
+    @Override
+    public void restoreHandlerStacks(Object savedHandlerStack) {
+        RErrorHandling.restoreHandlerStack(savedHandlerStack);
     }
 
     @Override

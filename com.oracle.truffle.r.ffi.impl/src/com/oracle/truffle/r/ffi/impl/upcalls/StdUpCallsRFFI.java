@@ -275,6 +275,8 @@ public interface StdUpCallsRFFI {
 
     Object R_ToplevelExec();
 
+    void restoreHandlerStacks(Object savedHandlerStack);
+
     int RDEBUG(Object x);
 
     void SET_RDEBUG(Object x, int v);

@@ -1253,7 +1253,16 @@ void UNSET_S4_OBJECT(SEXP x) {
 
 Rboolean R_ToplevelExec(void (*fun)(void *), void *data) {
     TRACE0();
-    return (Rboolean) unimplemented("R_ToplevelExec");
+
+    // reset handler stack
+    SEXP saved_handler_stack = ((call_R_ToplevelExec) callbacks[R_ToplevelExec_x])();
+    checkExitCall();
+    fun(data);
+    ((call_restoreHandlerStack) callbacks[restoreHandlerStacks_x])(saved_handler_stack);
+    checkExitCall();
+
+    // TODO detect errors
+    return TRUE;
 }
 
 SEXP R_ExecWithCleanup(SEXP (*fun)(void *), void *data,
