@@ -320,6 +320,7 @@ class TestFileStatus:
     def __init__(self, status, abspath):
         self.status = status
         self.abspath = abspath
+        self.report = 0, 1, 0
 
 class TestStatus:
     '''Records the test status of a package. status ends up as either "OK" or "FAILED",
@@ -456,6 +457,8 @@ def _set_test_status(fastr_test_info):
             if fastr_testfile_status.status == "FAILED":
                 break
 
+            print "Comparing {0} to {1}\n".format(gnur_testfile_status.abspath, fastr_testfile_status.abspath)
+
             gnur_content = None
             with open(gnur_testfile_status.abspath) as f:
                 gnur_content = f.readlines()
@@ -463,37 +466,99 @@ def _set_test_status(fastr_test_info):
             with open(fastr_testfile_status.abspath) as f:
                 fastr_content = f.readlines()
 
-            result = _fuzzy_compare(gnur_content, fastr_content, gnur_testfile_status.abspath, fastr_testfile_status.abspath)
-            if result == -1:
-                print "{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath)
-                fastr_test_status.status = "INDETERMINATE"
-                break
-            if result != 0:
-                fastr_test_status.status = "FAILED"
-                fastr_testfile_status.status = "FAILED"
-                print "{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath)
-                break
+            # first, parse file and see if a known test framework has been used
+            ok, skipped, failed = handle_output_file(fastr_content)
+            if ok is not None:
+                fastr_testfile_status.report = ok, skipped, failed
+            else:
+                result, n_tests_passed, n_tests_failed = _fuzzy_compare(gnur_content, fastr_content, gnur_testfile_status.abspath, fastr_testfile_status.abspath)
+                print "result={0}, passed={1}, failed={2}\n".format(result, n_tests_passed, n_tests_failed)
+                if result == -1:
+                    print "{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath)
+                    fastr_test_status.status = "INDETERMINATE"
+                    # we don't know how many tests are in there, so consider the whole file to be one big skipped test
+                    fastr_testfile_status.report = 0, 1, 0
+                    #break
+                elif result != 0:
+                    fastr_test_status.status = "FAILED"
+                    fastr_testfile_status.status = "FAILED"
+                    fastr_testfile_status.report = n_tests_passed, 0, n_tests_failed
+                    print "{0}: FastR output mismatch: {1}".format(pkg, gnur_test_output_relpath)
+                    #break
+                else:
+                    fastr_testfile_status.status = "OK"
+                    fastr_testfile_status.report = n_tests_passed, 0, n_tests_failed
+
+
         # we started out as UNKNOWN
         if not (fastr_test_status.status == "INDETERMINATE" or fastr_test_status.status == "FAILED"):
             fastr_test_status.status = "OK"
 
         # write out a file with the test status for each output (that exists)
         with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
+            f.write('# <file path> <tests passed> <tests skipped> <tests failed>\n')
             for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
                 if fastr_testfile_status.status == "FAILED":
                     relpath = fastr_relpath + ".fail"
                 else:
                     relpath = fastr_relpath
 
-                if os.path.exists(join(_pkg_testdir('fastr', pkg), relpath)):
-                    f.write('# <file path> <tests passed> <tests skipped> <tests failed>')
-                    # TODO
-                    f.write(relpath)
-                    f.write(' ')
-                    f.write(fastr_testfile_status.status)
-                    f.write('\n')
+                test_output_file = join(_pkg_testdir('fastr', pkg), relpath)
+                if os.path.exists(test_output_file):
+                    print "Generating testfile_status for {0}".format(str(test_output_file))
+                    #ok, skipped, failed = handle_output_file(test_output_file, fastr_testfile_status)
+                    ok, skipped, failed = fastr_testfile_status.report
+                    f.write("{0} {1} {2} {3}\n".format(relpath, ok, skipped, failed))
 
         print 'END checking ' + pkg
+
+
+def handle_output_file(test_output_file_contents):
+    """
+    R package tests are usually distributed over several files. Each file can be interpreted as a test suite.
+    This function parses the output file of all test suites and tries to detect if it used the testthat or RUnit.
+    In this case, it parses the summary (number of passed, skipped, failed tests) of these test frameworks.
+    If none of the frameworks is used, it performs an output diff and tries to determine, how many statements
+    produces different output, i.e., every statement is considered to be a unit test.
+    :param test_output_file_contents: the lines of the output file
+    :return: A 3-tuple with the number of passed, skipped, and failed tests.
+    """
+    for i in range(0, len(test_output_file_contents)):
+        if test_output_file_contents[i].startswith("testthat results"):
+            return _parse_testthat_result(test_output_file_contents, i)
+
+        # TODO parse RUnit test protocol
+
+    # if this test did not use one of the known test frameworks, take the report from the fuzzy compare
+    return None, None, None
+
+
+def _parse_testthat_result(lines, i):
+    '''
+    OK: 2 SKIPPED: 0 FAILED: 0
+    '''
+    if i+1 < len(lines) and lines[i+1].startswith("OK"):
+        result_line = lines[i+1]
+        idx_ok = 0
+        idx_skipped = result_line.find("SKIPPED")
+        idx_failed = result_line.find("FAILED")
+        if idx_ok != -1 and idx_skipped != -1 and idx_failed != -1:
+            ok_part = result_line[idx_ok:idx_skipped]
+            skipped_part = result_line[idx_skipped:idx_failed]
+            failed_part = result_line[idx_failed:]
+            return (_testthat_parse_part(ok_part), _testthat_parse_part(skipped_part), _testthat_parse_part(failed_part))
+        raise Exception("Could not parse testthat status line {0}".format(result_line))
+
+def _testthat_parse_part(part):
+    '''
+    parses a part like "OK: 2"
+    '''
+    parts = part.split(":")
+    if len(parts) == 2:
+        assert parts[0] == "OK" or parts[0] == "SKIPPED" or parts[0] == "FAILED"
+        return int(parts[1])
+    raise Exception("could not parse testthat status part {0}".format(part))
+
 
 def _find_start(content):
     marker = "Type 'q()' to quit R."
@@ -509,14 +574,16 @@ def _find_start(content):
                 j = j + 1
     return None
 
+
 def _find_end(content):
     marker = "Time elapsed:"
     for i in range(len(content)):
         line = content[i]
         if marker in line:
-            return i - 1
+            return i
     # not all files have a Time elapsed:
-    return len(content) - 1
+    return len(content)
+
 
 def _find_line(gnur_line, fastr_content, fastr_i):
     '''
@@ -532,6 +599,7 @@ def _find_line(gnur_line, fastr_content, fastr_i):
         fastr_i = fastr_i + 1
     return -1
 
+
 def _replace_engine_references(output):
     for idx, val in enumerate(output):
         if "RUNIT TEST PROTOCOL -- " in val:
@@ -542,6 +610,14 @@ def _replace_engine_references(output):
             output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
 
 def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
+    '''
+    Compares the test output of GnuR and FastR by ignoring implementation-specific differences like header, error,
+    and warning messages.
+    It returns a 3-tuple (<status>, <statements passed>, <statements failed>), where status=0 if files are equal,
+    status=1 if the files are different, status=-1 if the files could not be compared. In case of status=1,
+    statements passed and statements failed give the numbers on how many statements produced the same or a different
+    output, respectively.
+    '''
     _replace_engine_references(gnur_content)
     _replace_engine_references(fastr_content)
     gnur_start = _find_start(gnur_content)
@@ -549,17 +625,40 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
     fastr_start = _find_start(fastr_content)
     fastr_len = len(fastr_content)
     if not gnur_start or not gnur_end or not fastr_start:
-        return -1
+        return -1, 0, 0
     gnur_i = gnur_start
     fastr_i = fastr_start
+    # the overall result for comparing the file
+    overall_result = 0
+    # the local result, i.e., for the current statement
     result = 0
+    statements_passed = set()
+    statements_failed = set()
+
+    # the first line must start with the prompt, so capture it
+    gnur_prompt = _capture_prompt(gnur_content, gnur_i)
+    fastr_prompt = _capture_prompt(fastr_content, fastr_i)
+
+    gnur_cur_statement_start = -1
+    fastr_cur_statement_start = -1
     while gnur_i < gnur_end:
         gnur_line = gnur_content[gnur_i]
         if fastr_i >= fastr_len:
-            result = 1
+            overall_result = 1
             break
 
         fastr_line = fastr_content[fastr_i]
+
+        # check if the current line starts a statement
+        if _is_statement_begin(gnur_prompt, gnur_line) and gnur_cur_statement_start != gnur_i:
+            gnur_cur_statement_start = gnur_i
+
+        # if we find a new statement begin
+        if _is_statement_begin(fastr_prompt, fastr_line) and fastr_cur_statement_start != fastr_i:
+            fastr_cur_statement_start = fastr_i
+
+        # flag indicating that we want to synchronize
+        sync = False
         if gnur_line != fastr_line:
             if fastr_line.startswith('Warning') and 'FastR does not support graphics package' in fastr_content[fastr_i + 1]:
                 # ignore warning about FastR not supporting the graphics package
@@ -578,7 +677,7 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
                 fastr_i = fastr_i + 1
                 continue
             # we are fuzzy on Error/Warning as FastR often differs
-            # in the context/format of the error/warniong message AND GnuR is sometimes
+            # in the context/format of the error/warning message AND GnuR is sometimes
             # inconsistent over which error message it uses. Unlike the unit test environment,
             # we cannot tag tests in any way, so we simply check that FastR does report
             # an error. We then scan forward to try to get the files back in sync, as the
@@ -587,42 +686,85 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
                 to_match = 'Error' if 'Error' in gnur_line else 'Warning'
                 if to_match not in fastr_line:
                     result = 1
-                    break
+                    # XXX do not break
+                    # break
                 else:
-                    # skip until lines match (or not)
-                    gnur_i = gnur_i + 1
-                    fastr_i = fastr_i + 1
-                    if gnur_i == gnur_end - 1:
-                        # at end (there is always a blank line)
-                        break
-                    ni = -1
-                    while gnur_i < gnur_end:
-                        ni = _find_line(gnur_content[gnur_i], fastr_content, fastr_i)
-                        if ni > 0:
-                            break
-                        gnur_i = gnur_i + 1
-                    if ni > 0:
-                        fastr_i = ni
-                        continue
-                    else:
-                        result = 1
-                        break
+                    # accept differences in the error/warning messages but we need to synchronize
+                    sync = True
+
             else:
                 # genuine difference (modulo whitespace)
                 if not _ignore_whitespace(gnur_line, fastr_line):
                     result = 1
-                    break
-        gnur_i = gnur_i + 1
-        fastr_i = fastr_i + 1
-    if result == 1:
+                    # XXX do not break, but we might need to synchronize indices
+                    # break
+
+
+        # report a mismatch or success
+        if result == 1:
+            # we need to synchronize the indices such that we can continue
+            sync = True
+            # report the last statement to produce different output
+            assert fastr_cur_statement_start != -1
+            if fastr_cur_statement_start in statements_passed:
+                statements_passed.remove(fastr_cur_statement_start)
+            statements_failed.add(fastr_cur_statement_start)
+        else:
+            assert result == 0
+            if fastr_cur_statement_start not in statements_failed:
+                statements_passed.add(fastr_cur_statement_start)
+
+        # synchronize: skip until lines match (or file end reached)
+        if sync:
+            gnur_i = gnur_i + 1
+            fastr_i = fastr_i + 1
+            if gnur_i == gnur_end - 1:
+                # at end (there is always a blank line)
+                break
+            ni = -1
+            # find next statement line (i.e. starting with a prompt)
+
+
+            while gnur_i < gnur_end:
+                if _is_statement_begin(gnur_prompt, gnur_content[gnur_i]):
+                    ni = _find_line(gnur_content[gnur_i], fastr_content, fastr_i)
+                    if ni > 0:
+                        break
+                gnur_i = gnur_i + 1
+            if ni > 0:
+                fastr_i = ni
+
+            overall_result = 1
+            result = 0
+        else:
+            # just advance by one line in FastR and GnuR
+            gnur_i = gnur_i + 1
+            fastr_i = fastr_i + 1
+
+    if overall_result == 1:
         print gnur_filename + ':%d' % gnur_i + ' vs. ' + fastr_filename + ':%d' % fastr_i
         print gnur_line.strip()
         print "vs."
         print fastr_line.strip()
-    return result
+    return overall_result, len(statements_passed), len(statements_failed)
+
 
 def _ignore_whitespace(gnur_line, fastr_line):
     return gnur_line.translate(None, ' \t') == fastr_line.translate(None, ' \t')
+
+
+def _capture_prompt(lines, idx):
+    # The prompt can be anything, so it is hard to determine it in general.
+    # We will therefore just consider the default prompt.
+    DEFAULT_PROMPT = "> "
+    if idx < len(lines) and lines[idx].startswith(DEFAULT_PROMPT):
+        return DEFAULT_PROMPT
+    return None
+
+
+def _is_statement_begin(captured_prompt, line):
+    return line.startswith(captured_prompt) and line.replace(captured_prompt, "").strip() is not ""
+
 
 def pkgtest_cmp(args):
     with open(args[0]) as f:
@@ -631,12 +773,14 @@ def pkgtest_cmp(args):
         fastr_content = f.readlines()
     return _fuzzy_compare(gnur_content, fastr_content, args[0], args[1])
 
+
 def find_top100(args):
     libinstall = join(_fastr_suite_dir(), "top100.tmp")
     if not os.path.exists(libinstall):
         os.mkdir(libinstall)
     os.environ['R_LIBS_USER'] = libinstall
     _installpkgs(['--find-top100', '--use-installed-pkgs'])
+
 
 def remove_dup_pkgs(args):
     pkgs = args[0].split(",")
@@ -647,6 +791,7 @@ def remove_dup_pkgs(args):
     for p in x.iterkeys():
         result += p
     return result
+
 
 def computeApiChecksum(includeDir):
     '''
