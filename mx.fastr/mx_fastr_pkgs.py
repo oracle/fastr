@@ -457,8 +457,6 @@ def _set_test_status(fastr_test_info):
             if fastr_testfile_status.status == "FAILED":
                 break
 
-            print "Comparing {0} to {1}\n".format(gnur_testfile_status.abspath, fastr_testfile_status.abspath)
-
             gnur_content = None
             with open(gnur_testfile_status.abspath) as f:
                 gnur_content = f.readlines()
@@ -472,7 +470,6 @@ def _set_test_status(fastr_test_info):
                 fastr_testfile_status.report = ok, skipped, failed
             else:
                 result, n_tests_passed, n_tests_failed = _fuzzy_compare(gnur_content, fastr_content, gnur_testfile_status.abspath, fastr_testfile_status.abspath)
-                print "result={0}, passed={1}, failed={2}\n".format(result, n_tests_passed, n_tests_failed)
                 if result == -1:
                     print "{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath)
                     fastr_test_status.status = "INDETERMINATE"
@@ -505,8 +502,6 @@ def _set_test_status(fastr_test_info):
 
                 test_output_file = join(_pkg_testdir('fastr', pkg), relpath)
                 if os.path.exists(test_output_file):
-                    print "Generating testfile_status for {0}".format(str(test_output_file))
-                    #ok, skipped, failed = handle_output_file(test_output_file, fastr_testfile_status)
                     ok, skipped, failed = fastr_testfile_status.report
                     f.write("{0} {1} {2} {3}\n".format(relpath, ok, skipped, failed))
 
