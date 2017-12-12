@@ -751,9 +751,9 @@ def _ignore_whitespace(gnur_line, fastr_line):
 def _capture_prompt(lines, idx):
     # The prompt can be anything, so it is hard to determine it in general.
     # We will therefore just consider the default prompt.
-    DEFAULT_PROMPT = "> "
-    if idx < len(lines) and lines[idx].startswith(DEFAULT_PROMPT):
-        return DEFAULT_PROMPT
+    default_prompt = "> "
+    if idx < len(lines) and lines[idx].startswith(default_prompt):
+        return default_prompt
     return None
 
 
