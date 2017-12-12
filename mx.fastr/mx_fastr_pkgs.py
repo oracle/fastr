@@ -763,7 +763,8 @@ def _capture_prompt(lines, idx):
 
 
 def _is_statement_begin(captured_prompt, line):
-    return line.startswith(captured_prompt) and line.replace(captured_prompt, "").strip() is not ""
+    line_wo_prompt = line.replace(captured_prompt, "").strip()
+    return line.startswith(captured_prompt) and line_wo_prompt is not "" and not line_wo_prompt.startswith("#")
 
 
 def pkgtest_cmp(args):
