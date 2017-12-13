@@ -289,7 +289,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                         if (boxNewDimName == null) {
                             boxNewDimName = insert(BoxPrimitiveNode.create());
                         }
-                        result = boxNewDimName.execute(extract(i, (RAbstractStringVector) boxOldDimNames.execute(dataAt), positions[i], positionProfile[i]));
+                        RAbstractStringVector originalDimName = (RAbstractStringVector) boxOldDimNames.execute(dataAt);
+                        RAbstractStringVector newDimName = (RAbstractStringVector) boxNewDimName.execute(extract(i, originalDimName, positions[i], positionProfile[i]));
+                        result = newDimName.materialize();
                     }
                     newDimNames[dimIndex] = result;
                     if (newDimNamesNames != null) {
