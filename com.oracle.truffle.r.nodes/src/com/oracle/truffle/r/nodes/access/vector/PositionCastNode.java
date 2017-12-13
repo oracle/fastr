@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
@@ -37,10 +38,13 @@ import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -170,23 +174,14 @@ abstract class PositionCastNode extends RBaseNode {
         return RDataFactory.createEmptyIntVector();
     }
 
-    @Specialization(guards = "getInvalidType(position) != null")
+    @Fallback
     protected RAbstractVector doInvalidType(Object position) {
-        throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, getInvalidType(position).getName());
+        RType type = getInvalidType(position);
+        String name = type == null ? "unknown" : type.getName();
+        throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, name);
     }
 
     protected static RType getInvalidType(Object positionValue) {
-        if (positionValue instanceof RAbstractRawVector) {
-            return RType.Raw;
-        } else if (positionValue instanceof RAbstractListVector) {
-            return RType.List;
-        } else if (positionValue instanceof RFunction) {
-            return RType.Closure;
-        } else if (positionValue instanceof REnvironment) {
-            return RType.Environment;
-        } else if (positionValue instanceof RAbstractComplexVector) {
-            return RType.Complex;
-        }
-        return null;
+        return positionValue instanceof RTypedValue ? ((RTypedValue) positionValue).getRType() : null;
     }
 }
