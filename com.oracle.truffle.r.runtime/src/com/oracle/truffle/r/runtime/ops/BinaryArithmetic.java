@@ -68,7 +68,7 @@ public abstract class BinaryArithmetic extends Operation {
     public static class MultiplyBuiltin {
     }
 
-    @RBuiltin(name = "^", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
+    @RBuiltin(name = "^", aliases = "**", kind = PRIMITIVE, parameterNames = {"", ""}, alwaysSplit = true, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
     public static class PowBuiltin {
     }
 
