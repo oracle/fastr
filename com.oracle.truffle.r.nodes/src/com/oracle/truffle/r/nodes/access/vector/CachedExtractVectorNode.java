@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -80,6 +81,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @Child private GetDimNamesAttributeNode getDimNamesNode;
     @Child private GetNamesAttributeNode getNamesNode;
     @Child private GetNamesAttributeNode getNamesFromDimNamesNode;
+    @Child private BoxPrimitiveNode boxOldDimNames;
+    @Child private BoxPrimitiveNode boxNewDimName;
     @Children private final CachedExtractVectorNode[] extractNames;
     @Children private final CachedExtractVectorNode[] extractNamesAlternative;
 
@@ -280,7 +283,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                     } else if (positionsCheckNode.isEmptyPosition(i, positions[i])) {
                         result = RNull.instance;
                     } else {
-                        result = extract(i, (RAbstractStringVector) RRuntime.asAbstractVector(dataAt), positions[i], positionProfile[i]);
+                        if (boxOldDimNames == null) {
+                            boxOldDimNames = insert(BoxPrimitiveNode.create());
+                        }
+                        if (boxNewDimName == null) {
+                            boxNewDimName = insert(BoxPrimitiveNode.create());
+                        }
+                        result = boxNewDimName.execute(extract(i, (RAbstractStringVector) boxOldDimNames.execute(dataAt), positions[i], positionProfile[i]));
                     }
                     newDimNames[dimIndex] = result;
                     if (newDimNamesNames != null) {
