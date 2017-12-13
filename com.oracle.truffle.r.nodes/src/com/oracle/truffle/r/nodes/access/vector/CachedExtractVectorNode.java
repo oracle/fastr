@@ -284,9 +284,11 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                         result = RNull.instance;
                     } else {
                         if (boxOldDimNames == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
                             boxOldDimNames = insert(BoxPrimitiveNode.create());
                         }
                         if (boxNewDimName == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
                             boxNewDimName = insert(BoxPrimitiveNode.create());
                         }
                         RAbstractStringVector originalDimName = (RAbstractStringVector) boxOldDimNames.execute(dataAt);
