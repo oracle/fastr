@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -193,15 +194,16 @@ public final class CoerceNodes {
 
         @Specialization(replaces = {"doCachedNotList", "doCached"}, guards = {"!isS4Object(value)", "isValidMode(mode)"})
         Object doCached(Object value, int mode) {
+            CompilerDirectives.transferToInterpreter();
             String type = value != null ? value.getClass().getSimpleName() : "null";
-            throw RInternalError.unimplemented(String.format("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode));
+            throw RInternalError.unimplemented("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode);
         }
 
         @Fallback
-        @TruffleBoundary
         Object doFallback(Object value, Object mode) {
+            CompilerDirectives.transferToInterpreter();
             String type = value != null ? value.getClass().getSimpleName() : "null";
-            throw RInternalError.unimplemented(String.format("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode));
+            throw RInternalError.unimplemented("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode);
         }
 
         static boolean isS4Object(Object obj) {
@@ -256,7 +258,7 @@ public final class CoerceNodes {
                 case RAWSXP:
                     return CastRawNode.createForRFFI(true, preserveDims, preserveAttrs);
                 default:
-                    throw RInternalError.unimplemented(String.format("Rf_coerceVector called with unimplemented mode %d (type %s).", mode, type));
+                    throw RInternalError.unimplemented("Rf_coerceVector called with unimplemented mode %d (type %s).", mode, type);
             }
         }
 

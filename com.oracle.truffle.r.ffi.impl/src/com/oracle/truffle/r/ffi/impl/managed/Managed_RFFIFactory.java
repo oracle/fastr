@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.managed;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
@@ -167,8 +168,8 @@ public final class Managed_RFFIFactory extends RFFIFactory {
         return new ManagedRFFIContext();
     }
 
-    @TruffleBoundary
     static RError unsupported(String name) {
+        CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.NO_CALLER, Message.GENERIC, String.format("Feature '%s' is not supported by managed FFI, i.e. it requires running native code.", name));
     }
 }

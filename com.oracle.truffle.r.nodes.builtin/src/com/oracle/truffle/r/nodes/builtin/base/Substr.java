@@ -55,7 +55,7 @@ public abstract class Substr extends RBuiltinNode.Arg3 {
 
     @SuppressWarnings("unused")
     @Specialization(guards = "emptyArg(arg)")
-    protected RStringVector substrEmptyArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
+    protected RStringVector substrEmptyArg(RAbstractStringVector arg, RAbstractIntVector start, RAbstractIntVector stop) {
         return RDataFactory.createEmptyStringVector();
     }
 

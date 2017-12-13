@@ -52,12 +52,12 @@ public final class RInternalError extends Error implements TruffleException {
     private final String verboseStackTrace;
 
     public RInternalError(String message, Object... args) {
-        super(String.format(message, args));
+        super(Utils.stringFormat(message, args));
         verboseStackTrace = createVerboseStackTrace();
     }
 
     public RInternalError(Throwable cause, String message, Object... args) {
-        super(String.format(message, args), cause);
+        super(Utils.stringFormat(message, args), cause);
         verboseStackTrace = createVerboseStackTrace();
     }
 
@@ -104,6 +104,11 @@ public final class RInternalError extends Error implements TruffleException {
     public static RuntimeException unimplemented(String message) {
         CompilerDirectives.transferToInterpreter();
         throw new RInternalError("not implemented: %s", message);
+    }
+
+    public static RuntimeException unimplemented(String format, Object... args) {
+        CompilerDirectives.transferToInterpreter();
+        throw new RInternalError("not implemented: %s", String.format(format, args));
     }
 
     public static RuntimeException shouldNotReachHere() {
