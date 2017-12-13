@@ -126,6 +126,7 @@ usage <- function() {
 					  "[--alpha-daily]",
 					  "[--count-daily count]",
 					  "[--ok-only]",
+					  "[--important-pkgs file]",
                       "[--pkg-pattern package-pattern] \n"))
 	quit(status=100)
 }
@@ -631,6 +632,17 @@ get.blacklist <- function() {
 	blacklist
 }
 
+is.important.package <- function(pkg.name, pkg.version) {
+    # lazy-load the important packages table
+    if (is.null(important.pkg.table) && !is.na(important.pkg.table.file)) {
+        important.pkg.table <<- read.csv(important.pkg.table.file, header = FALSE, sep = ",", quote = "\"", dec = ".", fill = TRUE, comment.char = "", col.names=c("name","version","url","important"))
+    }
+    if (!is.null(important.pkg.table)) {
+        return (any(important.pkg.table[important.pkg.table$name == pkg.name & important.pkg.table$version == pkg.version, "important"]))
+    }
+    return (FALSE)
+}
+
 show.install.status <- function(test.pkgnames) {
 	if (print.install.status) {
 		cat("BEGIN install status\n")
@@ -650,7 +662,10 @@ do.it <- function() {
 			pkg <- toinstall.pkgs[pkgname, ]
 			# pretend we are accessing CRAN if list.canonical
 			list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
-			cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep=",")
+            pkg.repo.name <- pkg["Package"]
+            pkg.version <- pkg["Version"]
+            important <- tolower(as.character(is.important.package(pkg.repo.name, pkg.version)))
+			cat(paste(pkg.repo.name, pkg.version, paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), important, sep=","), "\n")
 		}
 	}
 
@@ -943,6 +958,11 @@ parse.args <- function() {
 			invert.pkgset <<- TRUE
 		} else if (a == "--find-top100") {
 			find.top100 <<- TRUE
+		} else if (a == "--important-pkgs") {
+			important.pkg.table.file <<- get.argvalue()
+			if (is.na(important.pkg.table.file)) {
+				usage()
+			}
 		} else {
 			if (grepl("^-.*", a)) {
 				usage()
@@ -1126,6 +1146,8 @@ list.versions <- FALSE
 list.canonical <- FALSE
 invert.pkgset <- F
 find.top100 <- F
+important.pkg.table.file <- NA
+important.pkg.table <- NULL
 
 if (!interactive()) {
     run()

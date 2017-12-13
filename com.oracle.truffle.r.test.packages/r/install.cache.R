@@ -21,7 +21,7 @@
 # questions.
 #
 
-# A simple log function; to be replaced by a used of this file.
+# A simple log function; to be replaced by a user of this file.
 log.message <- function(..., level=0) {
     cat(..., "\n")
 }
