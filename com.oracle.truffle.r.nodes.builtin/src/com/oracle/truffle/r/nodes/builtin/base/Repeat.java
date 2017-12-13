@@ -115,7 +115,9 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
                         RError.Message.FIRST_ELEMENT_USED, "each").findFirst(1, RError.Message.FIRST_ELEMENT_USED,
                                         "each").replaceNA(1).mustBe(gte(0));
 
-        ArgumentsSignature signature = ArgumentsSignature.get("times", "length.out", "each");
+        // "..." in signature ensures that the matcher will not report additional arguments which
+        // are also ignored by GNUR
+        ArgumentsSignature signature = ArgumentsSignature.get("times", "length.out", "each", "...");
         ARG_IDX_TIMES = 0;
         ARG_IDX_LENGHT_OUT = 1;
         ARG_IDX_EACH = 2;

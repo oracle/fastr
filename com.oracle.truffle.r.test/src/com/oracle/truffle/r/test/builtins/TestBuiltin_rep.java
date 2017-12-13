@@ -239,5 +239,7 @@ public class TestBuiltin_rep extends TestBase {
 
         assertEval("{ rep(paste0('hello', 1:10), 10) }");
         assertEval("{ rep(paste0('hello', 1:10), 1:10) }");
+
+        assertEval("rep(' ', 20L, collapse = ' ')");
     }
 }
