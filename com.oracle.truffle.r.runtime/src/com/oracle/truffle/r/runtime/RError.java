@@ -914,7 +914,8 @@ public final class RError extends RuntimeException implements TruffleException {
         UNEXPECTED_OBJ_IN_SIZE("Unexpected object type %s while calculating estimated object size."),
         BAD_CONSTANT_COUNT("bad constant count"),
         MUST_BE_MULTIPLE("argument '%s' must be a multiple of %d long"),
-        MUSTNOT_CONTAIN_NAS("argument '%s' must not contain NAs");
+        MUSTNOT_CONTAIN_NAS("argument '%s' must not contain NAs"),
+        ATOMIC_VECTOR_ARGUMENTS_ONLY("atomic vector arguments only");
 
         public final String message;
         final boolean hasArgs;
