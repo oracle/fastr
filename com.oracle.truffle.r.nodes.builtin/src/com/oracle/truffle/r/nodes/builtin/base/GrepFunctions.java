@@ -765,6 +765,7 @@ public class GrepFunctions {
             protected final int[] captureLength;
             protected final String[] captureNames;
             protected final boolean hasCapture;
+            protected final boolean hasCaptureResult;
 
             public Info(int index, int size, int[] captureStart, int[] captureLength, String[] captureNames) {
                 this.index = index;
@@ -773,6 +774,7 @@ public class GrepFunctions {
                 this.captureLength = captureLength;
                 this.captureNames = captureNames;
                 this.hasCapture = captureStart != null && captureLength != null;
+                this.hasCaptureResult = captureNames != null && captureNames.length > 0;
             }
         }
 
@@ -799,7 +801,7 @@ public class GrepFunctions {
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
                 boolean useBytes = true;
-                boolean hasAnyCapture = false;
+                boolean hasCaptureResult = false;
                 int[] result = new int[vector.getLength()];
                 int[] matchLength = new int[vector.getLength()];
                 String[] captureNames = null;
@@ -810,30 +812,36 @@ public class GrepFunctions {
                     Arrays.fill(result, 1);
                 } else {
                     for (int i = 0; i < vector.getLength(); i++) {
-                        Info res = getInfo(common, pattern, vector.getDataAt(i), ignoreCase, perl, fixed).get(0);
+                        Info res = getInfo(common, pattern, vector.getDataAt(i), ignoreCase, perl, fixed, true).get(0);
                         result[i] = res.index;
                         matchLength[i] = res.size;
                         if (res.hasCapture) {
-                            hasAnyCapture = true;
+                            hasCaptureResult = true;
                             if (captureNames == null) {
                                 // first time we see captures
                                 captureNames = res.captureNames;
+                                // length of res.captureNames gives the max amount of captures
                                 captureStart = new int[captureNames.length * vector.getLength()];
                                 captureLength = new int[captureNames.length * vector.getLength()];
-                                // previous matches had no capture - fill in result with -1-s
-                                for (int k = 0; k < i; k++) {
-                                    setNoCaptureValues(captureStart, captureLength, captureNames.length, vector.getLength(), k);
-                                }
                             }
-                            assert captureNames.length == res.captureStart.length;
-                            assert captureNames.length == res.captureLength.length;
-                            for (int j = 0; j < captureNames.length; j++) {
+                            assert captureNames.length == res.captureStart.length || captureNames.length - 1 == res.captureStart.length : captureNames.length + ", " + res.captureStart.length;
+                            assert captureNames.length == res.captureLength.length || captureNames.length - 1 == res.captureLength.length : captureNames.length + ", " + res.captureLength.length;
+                            for (int j = 0; j < res.captureStart.length; j++) {
+                                // well, res.captureStart might be shorter then
+                                // res.captureNames (but never more then by 1?),
+                                // just ignore the remaining (zero) elements in captureStart
                                 captureStart[j * vector.getLength() + i] = res.captureStart[j];
                                 captureLength[j * vector.getLength() + i] = res.captureLength[j];
                             }
-                        } else if (hasAnyCapture) {
-                            // no capture for this part of the vector, but there are previous
-                            // captures
+                        } else if (res.hasCaptureResult) {
+                            // no capture for this part of the vector, but even then
+                            // we want to return a "no capture" result
+                            hasCaptureResult = true;
+                            captureNames = res.captureNames;
+                            if (captureStart == null) {
+                                captureStart = new int[captureNames.length * vector.getLength()];
+                                captureLength = new int[captureNames.length * vector.getLength()];
+                            }
                             setNoCaptureValues(captureStart, captureLength, captureNames.length, vector.getLength(), i);
                         }
                     }
@@ -843,7 +851,7 @@ public class GrepFunctions {
                 if (useBytes) {
                     setUseBytesAttrNode.execute(ret, RRuntime.LOGICAL_TRUE);
                 }
-                if (hasAnyCapture) {
+                if (hasCaptureResult) {
                     RStringVector captureNamesVec = RDataFactory.createStringVector(captureNames, RDataFactory.COMPLETE_VECTOR);
                     RIntVector captureStartVec = RDataFactory.createIntVector(captureStart, RDataFactory.COMPLETE_VECTOR, new int[]{vector.getLength(), captureNames.length});
                     setDimNamesAttrNode.execute(captureStartVec, RDataFactory.createList(new Object[]{RNull.instance, captureNamesVec.copy()}));
@@ -860,6 +868,10 @@ public class GrepFunctions {
         }
 
         protected List<Info> getInfo(CommonCodeNode common, String pattern, String text, boolean ignoreCase, boolean perl, boolean fixed) {
+            return getInfo(common, pattern, text, ignoreCase, perl, fixed, false);
+        }
+
+        protected List<Info> getInfo(CommonCodeNode common, String pattern, String text, boolean ignoreCase, boolean perl, boolean fixed, boolean onlyFirst) {
             List<Info> list = new ArrayList<>();
             if (fixed) {
                 int index = 0;
@@ -878,18 +890,25 @@ public class GrepFunctions {
             } else if (perl) {
                 PCRERFFI.Result pcre = common.compilePerlPattern(pattern, ignoreCase);
                 int maxCaptureCount = getCaptureCountNode.execute(pcre.result, 0);
+                if (maxCaptureCount < 0) {
+                    throw error(Message.PCRE_FULLINFO_RETURNED, maxCaptureCount);
+                }
+
+                String[] captureNames = getCaptureNamesNode.execute(pcre.result, 0, maxCaptureCount);
+                assert maxCaptureCount == captureNames.length;
+                for (int i = 0; i < captureNames.length; i++) {
+                    if (captureNames[i] == null) {
+                        captureNames[i] = "";
+                    }
+                }
+
                 int[] ovector = new int[(maxCaptureCount + 1) * 3];
                 int offset = 0;
                 while (true) {
                     int captureCount = execNode.execute(pcre.result, 0, text, offset, 0, ovector);
                     if (captureCount >= 0) {
-                        String[] captureNames = getCaptureNamesNode.execute(pcre.result, 0, maxCaptureCount);
-                        for (int i = 0; i < captureNames.length; i++) {
-                            if (captureNames[i] == null) {
-                                captureNames[i] = "";
-                            }
-                        }
-                        assert captureCount - 1 == captureNames.length;
+                        assert captureCount - 1 == captureNames.length || captureCount == captureNames.length : captureCount + ", " + captureNames.length;
+
                         int[] captureStart = null;
                         int[] captureLength = null;
                         if (captureCount > 1) {
@@ -904,10 +923,17 @@ public class GrepFunctions {
                         }
                         // R starts counting at index 1
                         list.add(new Info(ovector[0] + 1, ovector[1] - ovector[0], captureStart, captureLength, captureNames));
+                        if (onlyFirst) {
+                            break;
+                        }
                         offset = ovector[1];
                     } else {
                         break;
                     }
+                }
+                if (list.isEmpty() && maxCaptureCount > 0) {
+                    // at least a return array of emtpty string names, is necessary for output
+                    list.add(new Info(-1, -1, null, null, captureNames));
                 }
             } else {
                 Matcher m = getPatternMatcher(pattern, text, ignoreCase);
