@@ -123,7 +123,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             if (access != null) {
                 return access;
             } else {
-                throw RInternalError.unimplemented("missing foreign access factory for " + obj.getClass().getSimpleName());
+                throw RInternalError.unimplemented("missing foreign access factory for %s", obj.getClass().getSimpleName());
             }
         }
     }

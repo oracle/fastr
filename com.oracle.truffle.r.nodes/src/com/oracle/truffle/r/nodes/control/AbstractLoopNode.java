@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.control;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
@@ -43,6 +44,7 @@ public abstract class AbstractLoopNode extends OperatorNode {
 
     @Override
     public String toString() {
+        CompilerAsserts.neverPartOfCompilation();
         RootNode rootNode = getRootNode();
         String function = "?";
         if (rootNode instanceof RRootNode) {
