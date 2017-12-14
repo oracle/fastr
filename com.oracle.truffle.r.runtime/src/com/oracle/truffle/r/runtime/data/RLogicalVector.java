@@ -99,10 +99,6 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         NativeDataAccess.setData(this, (byte[]) store, index, value);
     }
 
-    public void setDataAt(int index, byte value) {
-        NativeDataAccess.setData(this, data, index, value);
-    }
-
     @Override
     public byte getDataAt(Object store, int index) {
         assert data == store;

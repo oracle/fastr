@@ -57,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -72,19 +73,43 @@ abstract class SubscriptSpecialBase extends SubscriptSpecialCommon {
 
     public abstract Object execute(VirtualFrame frame, Object vec, int index);
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected int access(RAbstractIntVector vector, int index) {
-        return vector.getDataAt(index - 1);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"})
+    protected int accessInt(RAbstractIntVector vector, int index,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            return access.getInt(iter, index - 1);
+        }
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected double access(RAbstractDoubleVector vector, int index) {
-        return vector.getDataAt(index - 1);
+    @Specialization(replaces = "accessInt", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
+    protected int accessIntGeneric(RAbstractIntVector vector, int index) {
+        return accessInt(vector, index, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
-    protected String access(RAbstractStringVector vector, int index) {
-        return vector.getDataAt(index - 1);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"})
+    protected double accessDouble(RAbstractDoubleVector vector, int index,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            return access.getDouble(iter, index - 1);
+        }
+    }
+
+    @Specialization(replaces = "accessDouble", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
+    protected double accessDoubleGeneric(RAbstractDoubleVector vector, int index) {
+        return accessDouble(vector, index, vector.slowPathAccess());
+    }
+
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index)"})
+    protected String accessString(RAbstractStringVector vector, int index,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            return access.getString(iter, index - 1);
+        }
+    }
+
+    @Specialization(replaces = "accessString", guards = {"simpleVector(vector)", "isValidIndex(vector, index)"})
+    protected String accessStringGeneric(RAbstractStringVector vector, int index) {
+        return accessString(vector, index, vector.slowPathAccess());
     }
 
     @SuppressWarnings("unused")
@@ -107,19 +132,43 @@ abstract class SubscriptSpecial2Base extends SubscriptSpecial2Common {
 
     public abstract Object execute(VirtualFrame frame, Object vec, int index1, int index2);
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected int access(RAbstractIntVector vector, int index1, int index2) {
-        return vector.getDataAt(matrixIndex(vector, index1, index2));
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    protected int accessInt(RAbstractIntVector vector, int index1, int index2,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            return access.getInt(iter, matrixIndex(vector, index1, index2));
+        }
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected double access(RAbstractDoubleVector vector, int index1, int index2) {
-        return vector.getDataAt(matrixIndex(vector, index1, index2));
+    @Specialization(replaces = "accessInt", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    protected int accessIntGeneric(RAbstractIntVector vector, int index1, int index2) {
+        return accessInt(vector, index1, index2, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
-    protected String access(RAbstractStringVector vector, int index1, int index2) {
-        return vector.getDataAt(matrixIndex(vector, index1, index2));
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    protected double accessDouble(RAbstractDoubleVector vector, int index1, int index2,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            return access.getDouble(iter, matrixIndex(vector, index1, index2));
+        }
+    }
+
+    @Specialization(replaces = "accessDouble", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    protected double accessDoubleGeneric(RAbstractDoubleVector vector, int index1, int index2) {
+        return accessDouble(vector, index1, index2, vector.slowPathAccess());
+    }
+
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    protected String accessString(RAbstractStringVector vector, int index1, int index2,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            return access.getString(iter, matrixIndex(vector, index1, index2));
+        }
+    }
+
+    @Specialization(replaces = "accessString", guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)"})
+    protected String accessStringGeneric(RAbstractStringVector vector, int index1, int index2) {
+        return accessString(vector, index1, index2, vector.slowPathAccess());
     }
 
     @SuppressWarnings("unused")

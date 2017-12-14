@@ -103,10 +103,6 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         NativeDataAccess.setData(this, (int[]) store, index, value);
     }
 
-    public void setDataAt(int index, int value) {
-        NativeDataAccess.setData(this, data, index, value);
-    }
-
     @Override
     protected RIntVector internalCopy() {
         if (data != null) {
@@ -162,7 +158,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         return RDataFactory.createIntVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
-    public RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
+    private RIntVector updateDataAt(int index, int value, NACheck valueNACheck) {
         assert !this.isShared();
 
         NativeDataAccess.setData(this, data, index, value);

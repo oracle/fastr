@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpec
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.SubscriptSpecialCommon;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -53,8 +55,8 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
 
@@ -62,34 +64,90 @@ abstract class UpdateSubscriptSpecial extends SubscriptSpecialCommon {
         super(inReplacement);
     }
 
-    private final NACheck naCheck = NACheck.create();
-
     protected abstract Object execute(VirtualFrame frame, Object vec, Object index, Object value);
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
-    protected RIntVector set(RIntVector vector, int index, int value) {
-        return vector.updateDataAt(index - 1, value, naCheck);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RIntVector setInt(RIntVector vector, int index, int value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            access.setInt(iter, index - 1, value);
+            if (RRuntime.isNA(value)) {
+                vector.setComplete(false);
+            }
+            return vector;
+        }
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
-    protected RDoubleVector set(RDoubleVector vector, int index, double value) {
-        return vector.updateDataAt(index - 1, value, naCheck);
+    @Specialization(replaces = "setInt", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RIntVector setIntGeneric(RIntVector vector, int index, int value) {
+        return setInt(vector, index, value, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
-    protected RStringVector set(RStringVector vector, int index, String value) {
-        return vector.updateDataAt(index - 1, value, naCheck);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RDoubleVector setDouble(RDoubleVector vector, int index, double value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            access.setDouble(iter, index - 1, value);
+            if (RRuntime.isNA(value)) {
+                vector.setComplete(false);
+            }
+            return vector;
+        }
     }
 
-    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
-    protected static Object set(RList list, int index, Object value) {
-        list.setDataAt(index - 1, value);
-        return list;
+    @Specialization(replaces = "setDouble", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RDoubleVector setDoubleGeneric(RDoubleVector vector, int index, double value) {
+        return setDouble(vector, index, value, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
-    protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index, int value) {
-        return vector.updateDataAt(index - 1, value, naCheck);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RStringVector setString(RStringVector vector, int index, String value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            access.setString(iter, index - 1, value);
+            if (RRuntime.isNA(value)) {
+                vector.setComplete(false);
+            }
+            return vector;
+        }
+    }
+
+    @Specialization(replaces = "setString", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RStringVector setStringGeneric(RStringVector vector, int index, String value) {
+        return setString(vector, index, value, vector.slowPathAccess());
+    }
+
+    @Specialization(guards = {"access.supports(list)", "simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
+    protected static Object setList(RList list, int index, Object value,
+                    @Cached("list.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(list)) {
+            access.setListElement(iter, index - 1, value);
+            return list;
+        }
+    }
+
+    @Specialization(replaces = "setList", guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index)", "isSingleElement(value)"})
+    protected static Object setListGeneric(RList list, int index, Object value) {
+        return setList(list, index, value, list.slowPathAccess());
+    }
+
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index, int value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            if (RRuntime.isNA(value)) {
+                access.setDouble(iter, index - 1, RRuntime.DOUBLE_NA);
+                vector.setComplete(false);
+            } else {
+                access.setDouble(iter, index - 1, value);
+            }
+            return vector;
+        }
+    }
+
+    @Specialization(replaces = "setDoubleIntIndexIntValue", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index)"})
+    protected RDoubleVector setDoubleIntIndexIntValueGeneric(RDoubleVector vector, int index, int value) {
+        return setDoubleIntIndexIntValue(vector, index, value, vector.slowPathAccess());
     }
 
     @SuppressWarnings("unused")
@@ -109,34 +167,90 @@ abstract class UpdateSubscriptSpecial2 extends SubscriptSpecial2Common {
         super(inReplacement);
     }
 
-    private final NACheck naCheck = NACheck.create();
-
     protected abstract Object execute(VirtualFrame frame, Object vec, Object index1, Object index2, Object value);
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
-    protected RIntVector set(RIntVector vector, int index1, int index2, int value) {
-        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RIntVector setInt(RIntVector vector, int index1, int index2, int value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            access.setInt(iter, matrixIndex(vector, index1, index2), value);
+            if (RRuntime.isNA(value)) {
+                vector.setComplete(false);
+            }
+            return vector;
+        }
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
-    protected RDoubleVector set(RDoubleVector vector, int index1, int index2, double value) {
-        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    @Specialization(replaces = "setInt", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RIntVector setIntGeneric(RIntVector vector, int index1, int index2, int value) {
+        return setInt(vector, index1, index2, value, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
-    protected RStringVector set(RStringVector vector, int index1, int index2, String value) {
-        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RDoubleVector setDouble(RDoubleVector vector, int index1, int index2, double value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            access.setDouble(iter, matrixIndex(vector, index1, index2), value);
+            if (RRuntime.isNA(value)) {
+                vector.setComplete(false);
+            }
+            return vector;
+        }
     }
 
-    @Specialization(guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "isSingleElement(value)"})
-    protected Object set(RList list, int index1, int index2, Object value) {
-        list.setDataAt(matrixIndex(list, index1, index2), value);
-        return list;
+    @Specialization(replaces = "setDouble", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RDoubleVector setDoubleGeneric(RDoubleVector vector, int index1, int index2, double value) {
+        return setDouble(vector, index1, index2, value, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
-    protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index1, int index2, int value) {
-        return vector.updateDataAt(matrixIndex(vector, index1, index2), value, naCheck);
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RStringVector setString(RStringVector vector, int index1, int index2, String value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            access.setString(iter, matrixIndex(vector, index1, index2), value);
+            if (RRuntime.isNA(value)) {
+                vector.setComplete(false);
+            }
+            return vector;
+        }
+    }
+
+    @Specialization(replaces = "setString", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RStringVector setStringGeneric(RStringVector vector, int index1, int index2, String value) {
+        return setString(vector, index1, index2, value, vector.slowPathAccess());
+    }
+
+    @Specialization(guards = {"access.supports(list)", "simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "isSingleElement(value)"})
+    protected Object setList(RList list, int index1, int index2, Object value,
+                    @Cached("list.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(list)) {
+            access.setListElement(iter, matrixIndex(list, index1, index2), value);
+            return list;
+        }
+    }
+
+    @Specialization(replaces = "setList", guards = {"simpleVector(list)", "!list.isShared()", "isValidIndex(list, index1, index2)", "isSingleElement(value)"})
+    protected Object setListGeneric(RList list, int index1, int index2, Object value) {
+        return setList(list, index1, index2, value, list.slowPathAccess());
+    }
+
+    @Specialization(guards = {"access.supports(vector)", "simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RDoubleVector setDoubleIntIndexIntValue(RDoubleVector vector, int index1, int index2, int value,
+                    @Cached("vector.access()") VectorAccess access) {
+        try (VectorAccess.RandomIterator iter = access.randomAccess(vector)) {
+            if (RRuntime.isNA(value)) {
+                access.setDouble(iter, matrixIndex(vector, index1, index2), RRuntime.DOUBLE_NA);
+                vector.setComplete(false);
+            } else {
+                access.setDouble(iter, matrixIndex(vector, index1, index2), value);
+            }
+            return vector;
+        }
+    }
+
+    @Specialization(replaces = "setDoubleIntIndexIntValue", guards = {"simpleVector(vector)", "!vector.isShared()", "isValidIndex(vector, index1, index2)"})
+    protected RDoubleVector setDoubleIntIndexIntValueGeneric(RDoubleVector vector, int index1, int index2, int value) {
+        return setDoubleIntIndexIntValue(vector, index1, index2, value, vector.slowPathAccess());
     }
 
     @SuppressWarnings("unused")
