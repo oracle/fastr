@@ -533,7 +533,7 @@ final class REngine implements Engine, Engine.Timings {
      */
     @TruffleBoundary
     private RootCallTarget doMakeCallTarget(RNode body, String description, boolean printResult, boolean topLevel) {
-        return Truffle.getRuntime().createCallTarget(new AnonymousRootNode(body, description, printResult, topLevel));
+        return Truffle.getRuntime().createCallTarget(new AnonymousRootNode(this, body, description, printResult, topLevel));
     }
 
     /**
@@ -544,7 +544,7 @@ final class REngine implements Engine, Engine.Timings {
      * context of that frame. Note that passing only this one frame argument, strictly spoken,
      * violates the frame layout as set forth in {@link RArguments}. This is for internal use only.
      */
-    private final class AnonymousRootNode extends RootNode implements RootWithBody {
+    private static final class AnonymousRootNode extends RootNode implements RootWithBody {
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
@@ -552,13 +552,15 @@ final class REngine implements Engine, Engine.Timings {
         private final String description;
         private final boolean printResult;
         private final boolean topLevel;
+        private final boolean suppressWarnings;
 
         @Child private RNode body;
         @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
         @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
-        protected AnonymousRootNode(RNode body, String description, boolean printResult, boolean topLevel) {
-            super(context.getLanguage());
+        protected AnonymousRootNode(REngine engine, RNode body, String description, boolean printResult, boolean topLevel) {
+            super(engine.context.getLanguage());
+            this.suppressWarnings = engine.suppressWarnings;
             this.body = body;
             this.description = description;
             this.printResult = printResult;
@@ -597,7 +599,7 @@ final class REngine implements Engine, Engine.Timings {
                 if (printResult && result != null) {
                     assert topLevel;
                     if (visibility.execute(vf)) {
-                        printResult(result);
+                        printResultImpl(result);
                     }
                 }
                 if (topLevel) {
@@ -665,8 +667,12 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    @TruffleBoundary
     public void printResult(Object originalResult) {
+        printResultImpl(originalResult);
+    }
+
+    @TruffleBoundary
+    static void printResultImpl(Object originalResult) {
         Object result = evaluatePromise(originalResult);
         result = RRuntime.asAbstractVector(result);
         if (result instanceof RTypedValue || result instanceof TruffleObject) {
