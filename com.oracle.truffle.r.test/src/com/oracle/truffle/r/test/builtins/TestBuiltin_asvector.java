@@ -452,5 +452,7 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ as.symbol(\"name\") }");
         assertEval("{ as.symbol(123) }");
         assertEval("{ as.symbol(as.symbol(123)) }");
+        assertEval("{ as.symbol(as.raw(16)) }");
+        assertEval("{ as.symbol(3+2i) }");
     }
 }
