@@ -189,13 +189,13 @@ public class LogFileParser {
                     // cases)
                     Optional<Path> findFirst = null;
                     findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
-                    try (BufferedReader in = Files.newBufferedReader(findFirst.get())) {
-                        if (findFirst.isPresent()) {
+                    if (findFirst.isPresent()) {
+                        try (BufferedReader in = Files.newBufferedReader(findFirst.get())) {
                             ignoreFiles.add(findFirst.get());
                             checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, findFirst.get(), 0, new FileLineStreamReader(in)));
+                        } catch (IOException e) {
+                            // silently ignore
                         }
-                    } catch (IOException e) {
-                        // silently ignore
                     }
                     if (findFirst == null || !findFirst.isPresent()) {
                         LOGGER.warning("Cannot read output file " + outputFile);
