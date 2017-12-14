@@ -22,31 +22,61 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer;
 
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.NoSuchElementException;
 
-public class FileLineStreamReader extends FileLineReader {
+public class FileLineIterator extends LineIterator {
 
-    private final Path p;
+    /** Maximum number of lines that will be analyzed. */
+    public static final int MAX_LINES = 500000;
 
-    public FileLineStreamReader(Path p) {
-        this.p = p;
+    private int cnt = 0;
+    private BufferedReader reader;
+    private String lookahead = null;
 
-    }
-
-    @Override
-    public boolean isEmpty() {
+    public FileLineIterator(Path p) {
         try {
-            return Files.size(p) == 0;
+            this.reader = Files.newBufferedReader(p);
+            nextLine();
         } catch (IOException e) {
+            // ignore
         }
-        return true;
     }
 
     @Override
-    public LineIterator iterator() {
-        return new FileLineIterator(p);
+    public void close() throws IOException {
+        if (reader != null) {
+            reader.close();
+        }
     }
 
+    private String nextLine() {
+
+        if (cnt++ >= MAX_LINES) {
+            return null;
+        }
+        String line = lookahead;
+        try {
+            lookahead = reader.readLine();
+        } catch (IOException e) {
+
+        }
+        return line;
+    }
+
+    @Override
+    public boolean hasNext() {
+        return cnt < MAX_LINES && lookahead != null;
+    }
+
+    @Override
+    public String next() {
+        if (hasNext()) {
+            return nextLine();
+        }
+        throw new NoSuchElementException();
+    }
 }

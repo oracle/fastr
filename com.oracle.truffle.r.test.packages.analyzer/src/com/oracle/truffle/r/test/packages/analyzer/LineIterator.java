@@ -22,44 +22,9 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer;
 
-import java.io.IOException;
+import java.io.Closeable;
 import java.util.Iterator;
-import java.util.List;
 
-public class FileLineListReader extends FileLineReader {
-
-    private final List<String> l;
-
-    public FileLineListReader(List<String> lines) {
-        this.l = lines;
-    }
-
-    @Override
-    public boolean isEmpty() {
-        return l.isEmpty();
-    }
-
-    @Override
-    public LineIterator iterator() {
-        return new LineIterator() {
-
-            private final Iterator<String> it = l.iterator();
-
-            @Override
-            public void close() throws IOException {
-                // nothing to do
-            }
-
-            @Override
-            public String next() {
-                return it.next();
-            }
-
-            @Override
-            public boolean hasNext() {
-                return it.hasNext();
-            }
-        };
-    }
+public abstract class LineIterator implements Iterator<String>, Closeable {
 
 }

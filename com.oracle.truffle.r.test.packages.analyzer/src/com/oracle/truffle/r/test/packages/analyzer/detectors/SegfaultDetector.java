@@ -22,9 +22,11 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.Collections;
 
+import com.oracle.truffle.r.test.packages.analyzer.LineIterator;
 import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
@@ -50,22 +52,27 @@ public class SegfaultDetector extends LineDetector {
         assert body.isEmpty() || startLocation != null;
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
         boolean takeNextLine = false;
-        for (String line : body) {
-            if (line.contains(SIGSEGV_START)) {
-                collect = true;
-            }
-            if (collect) {
-                if (takeNextLine) {
-                    segfaultMessage.append(line);
-                    takeNextLine = false;
+        try (LineIterator it = body.iterator()) {
+            while (it.hasNext()) {
+                String line = it.next();
+                if (line.contains(SIGSEGV_START)) {
+                    collect = true;
                 }
-                if (line.contains("Problematic frame")) {
-                    takeNextLine = true;
-                } else if (!line.contains("#")) {
-                    break;
+                if (collect) {
+                    if (takeNextLine) {
+                        segfaultMessage.append(line);
+                        takeNextLine = false;
+                    }
+                    if (line.contains("Problematic frame")) {
+                        takeNextLine = true;
+                    } else if (!line.contains("#")) {
+                        break;
+                    }
                 }
+                ++lineNr;
             }
-            ++lineNr;
+        } catch (IOException e) {
+            // ignore
         }
         if (collect) {
             return Collections.singleton(new SegfaultProblem(pkg, this, new Location(startLocation.file, lineNr), segfaultMessage.toString()));

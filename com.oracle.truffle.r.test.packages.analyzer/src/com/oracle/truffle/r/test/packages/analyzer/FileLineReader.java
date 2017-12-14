@@ -22,12 +22,11 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer;
 
-import java.io.IOException;
-
 public abstract class FileLineReader implements Iterable<String> {
 
-    public abstract String readLine() throws IOException;
-
     public abstract boolean isEmpty();
+
+    @Override
+    public abstract LineIterator iterator();
 
 }
