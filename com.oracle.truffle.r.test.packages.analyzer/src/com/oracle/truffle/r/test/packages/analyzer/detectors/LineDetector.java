@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
-import java.util.List;
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 
-public abstract class LineDetector extends Detector<List<String>> {
+public abstract class LineDetector extends Detector<FileLineReader> {
 
     protected LineDetector() {
         super(null);

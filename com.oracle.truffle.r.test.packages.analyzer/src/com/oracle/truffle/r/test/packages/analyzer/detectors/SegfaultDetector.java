@@ -24,8 +24,8 @@ package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -44,7 +44,7 @@ public class SegfaultDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, FileLineReader body) {
         StringBuilder segfaultMessage = new StringBuilder();
         boolean collect = false;
         assert body.isEmpty() || startLocation != null;

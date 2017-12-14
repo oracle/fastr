@@ -24,8 +24,8 @@ package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -45,7 +45,7 @@ public class ConfigureErrorDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, FileLineReader body) {
         Collection<Problem> problems = new LinkedList<>();
         assert body.isEmpty() || startLocation != null;
         int lineNr = startLocation != null ? startLocation.lineNr : 0;

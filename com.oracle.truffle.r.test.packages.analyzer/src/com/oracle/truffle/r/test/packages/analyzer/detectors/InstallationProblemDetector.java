@@ -24,10 +24,10 @@ package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -47,7 +47,7 @@ public class InstallationProblemDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, FileLineReader body) {
         int lineNr = startLocation.lineNr;
         for (String line : body) {
             Matcher matcher = pattern.matcher(line);

@@ -24,10 +24,10 @@ package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -47,7 +47,7 @@ public final class SymbolLookupErrorDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, FileLineReader body) {
         Collection<Problem> problems = new LinkedList<>();
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
         for (String line : body) {

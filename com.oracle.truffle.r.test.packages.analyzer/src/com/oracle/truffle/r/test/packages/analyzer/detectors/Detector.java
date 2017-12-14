@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 
@@ -60,6 +61,6 @@ public abstract class Detector<T> {
      * @param body The content to analyze (e.g. a list of lines in a file).
      * @return A list of detected problems (must not be {@code null}).
      */
-    public abstract Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLineLocation, T body);
+    public abstract Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLineLocation, T body) throws IOException;
 
 }

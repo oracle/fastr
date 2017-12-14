@@ -22,10 +22,11 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -46,11 +47,11 @@ public class RInternalErrorDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, FileLineReader body) throws IOException {
         Collection<Problem> problems = new LinkedList<>();
-        assert body.isEmpty() || startLocation != null;
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
-        for (String line : body) {
+        String line = null;
+        while ((line = body.readLine()) != null) {
             int indexOf = line.indexOf(P);
             if (indexOf != -1) {
                 String message = line.substring(indexOf + P.length());
