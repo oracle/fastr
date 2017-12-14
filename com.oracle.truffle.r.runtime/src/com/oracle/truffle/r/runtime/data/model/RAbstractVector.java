@@ -121,6 +121,7 @@ public interface RAbstractVector extends RAbstractContainer {
         }
         if (vector.isComplete()) {
             // check all vectors for completeness
+            access.na.enable(true);
             try (SequentialIterator iter = access.access(vector)) {
                 while (access.next(iter)) {
                     assert !access.isNA(iter) : "element " + iter.getIndex() + " of vector " + vector + " is NA";
