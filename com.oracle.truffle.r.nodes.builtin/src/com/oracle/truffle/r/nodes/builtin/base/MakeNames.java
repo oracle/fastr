@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -35,15 +36,14 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "make.names", kind = INTERNAL, parameterNames = {"names", "allow_"}, behavior = PURE)
 public abstract class MakeNames extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile namesLengthZero = ConditionProfile.createBinaryProfile();
-    private final NACheck dummyCheck = NACheck.create(); // never triggered (used for vector update)
 
     static {
         Casts casts = new Casts(MakeNames.class);
@@ -101,15 +101,28 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
         }
     }
 
-    private static RStringVector getNewNames(RAbstractStringVector names, RStringVector newNames) {
-        RStringVector ret = newNames;
-        if (ret == null) {
-            ret = names.materialize();
-            if (ret.isShared()) {
-                ret = (RStringVector) ret.copy();
-            }
+    private static class NewNames {
+        final RAbstractStringVector vector;
+        final VectorAccess access;
+        final VectorAccess.RandomIterator iter;
+
+        NewNames(RAbstractStringVector vector, VectorAccess access, VectorAccess.RandomIterator iter) {
+            this.vector = vector;
+            this.access = access;
+            this.iter = iter;
         }
-        return ret;
+    }
+
+    private static NewNames updateNewNames(RAbstractStringVector names, VectorReuse reuse, int index, String newName, NewNames newNames) {
+        NewNames nn = newNames;
+        if (nn == null) {
+            RAbstractStringVector res = reuse.getResult(names);
+            VectorAccess access = reuse.access(res);
+            VectorAccess.RandomIterator iter = access.randomAccess(res);
+            nn = new NewNames(res, access, iter);
+        }
+        nn.access.setString(nn.iter, index, newName);
+        return nn;
     }
 
     private static char[] getNameArray(String name, char[] nameArray) {
@@ -145,29 +158,43 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
         return newName;
     }
 
-    @Specialization
-    protected RAbstractStringVector makeNames(RAbstractStringVector names, byte allowUnderScoreArg) {
-        if (namesLengthZero.profile(names.getLength() == 0)) {
-            return names;
-        } else {
-            boolean allowUnderscore = allowUnderScoreArg == RRuntime.LOGICAL_TRUE;
-            RStringVector newNames = null;
-            for (int i = 0; i < names.getLength(); i++) {
-                String name = names.getDataAt(i);
-                String newName = getKeyword(name, allowUnderscore);
-                if (newName != null) {
-                    newNames = getNewNames(names, newNames);
-                    newNames.updateDataAt(i, newName, dummyCheck);
-                } else {
-                    newName = getName(name, allowUnderscore);
-                    if (newName != name) {
-                        // getName returns "name" in case nothing's changed
-                        newNames = getNewNames(names, newNames);
-                        newNames.updateDataAt(i, newName, dummyCheck);
+    @Specialization(guards = {"namesAccess.supports(names)", "reuse.supports(names)"})
+    protected RAbstractStringVector makeNames(RAbstractStringVector names, byte allowUnderScoreArg,
+                    @Cached("names.access()") VectorAccess namesAccess,
+                    @Cached("createNonShared(names)") VectorReuse reuse) {
+        try (VectorAccess.SequentialIterator namesIter = namesAccess.access(names)) {
+            if (namesLengthZero.profile(namesAccess.getLength(namesIter) == 0)) {
+                return names;
+            } else {
+                boolean allowUnderscore = allowUnderScoreArg == RRuntime.LOGICAL_TRUE;
+                NewNames newNames = null;
+                try {
+                    while (namesAccess.next(namesIter)) {
+                        String name = namesAccess.getString(namesIter);
+                        String newName = getKeyword(name, allowUnderscore);
+                        if (newName != null) {
+                            newNames = updateNewNames(names, reuse, namesIter.getIndex(), newName, newNames);
+                        } else {
+                            newName = getName(name, allowUnderscore);
+                            if (newName != name) {
+                                // getName returns "name" in case nothing's changed
+                                newNames = updateNewNames(names, reuse, namesIter.getIndex(), newName, newNames);
+                            }
+                        }
+                    }
+                } finally {
+                    if (newNames != null) {
+                        newNames.iter.close();
                     }
                 }
+                return newNames != null ? newNames.vector : names;
             }
-            return newNames != null ? newNames : names;
         }
+    }
+
+    @Specialization(replaces = "makeNames")
+    protected RAbstractStringVector makeNamesGeneric(RAbstractStringVector names, byte allowUnderScoreArg,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuse) {
+        return makeNames(names, allowUnderScoreArg, names.slowPathAccess(), reuse);
     }
 }

@@ -36,9 +36,10 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtilsFactory.Conver
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -170,18 +171,38 @@ class SpecialsUtils {
             return value;
         }
 
-        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static int convertIntVector(RIntVector value,
+        @Specialization(guards = {"access.supports(value)", "value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
+        protected static int convertIntVector(RAbstractIntVector value,
                         @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
-                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode) {
-            return value.getDataAt(0);
+                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
+                        @Cached("value.access()") VectorAccess access) {
+            try (VectorAccess.RandomIterator iter = access.randomAccess(value)) {
+                return access.getInt(iter, 0);
+            }
         }
 
-        @Specialization(guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
-        protected static double convertDoubleVector(RDoubleVector value,
+        @Specialization(replaces = "convertIntVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
+        protected static int convertIntVectorGeneric(RAbstractIntVector value,
                         @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
                         @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode) {
-            return value.getDataAt(0);
+            return convertIntVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());
+        }
+
+        @Specialization(guards = {"access.supports(value)", "value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
+        protected static double convertDoubleVector(RAbstractDoubleVector value,
+                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode,
+                        @Cached("value.access()") VectorAccess access) {
+            try (VectorAccess.RandomIterator iter = access.randomAccess(value)) {
+                return access.getDouble(iter, 0);
+            }
+        }
+
+        @Specialization(replaces = "convertDoubleVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
+        protected static double convertDoubleVectorGeneric(RAbstractDoubleVector value,
+                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode) {
+            return convertDoubleVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());
         }
 
         @Specialization(replaces = {"convertIntVector", "convertDoubleVector"})

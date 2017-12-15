@@ -103,10 +103,6 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
         NativeDataAccess.setData(this, (double[]) store, index, value);
     }
 
-    public void setDataAt(int index, double value) {
-        NativeDataAccess.setData(this, data, index, value);
-    }
-
     @Override
     public double getDataAt(Object store, int index) {
         assert data == store;
@@ -159,7 +155,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
         return RDataFactory.createDoubleVector(getReadonlyData(), isComplete(), newDimensions);
     }
 
-    public RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
+    private RDoubleVector updateDataAt(int index, double value, NACheck valueNACheck) {
         assert !this.isShared();
         NativeDataAccess.setData(this, data, index, value);
         if (valueNACheck.check(value)) {

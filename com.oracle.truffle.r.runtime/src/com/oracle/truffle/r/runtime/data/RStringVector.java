@@ -82,10 +82,6 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
         ((String[]) store)[index] = value;
     }
 
-    public void setDataAt(int index, String value) {
-        data[index] = value;
-    }
-
     @Override
     public String getDataAt(Object store, int index) {
         assert data == store;
@@ -132,7 +128,7 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
         return data[i];
     }
 
-    public RStringVector updateDataAt(int i, String right, NACheck rightNACheck) {
+    private RStringVector updateDataAt(int i, String right, NACheck rightNACheck) {
         if (this.isShared()) {
             throw RInternalError.shouldNotReachHere("update shared vector");
         }
@@ -147,7 +143,6 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     @Override
     public RStringVector updateDataAtAsObject(int i, Object o, NACheck naCheck) {
         return updateDataAt(i, (String) o, naCheck);
-
     }
 
     private String[] copyResizedData(int size, String fill) {

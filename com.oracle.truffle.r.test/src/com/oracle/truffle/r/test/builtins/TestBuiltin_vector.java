@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2017, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -76,5 +76,18 @@ public class TestBuiltin_vector extends TestBase {
     public void testVectorWithPairlist() {
         assertEval("vector('pairlist', 0)");
         assertEval("vector('pairlist', 3)");
+    }
+
+    @Test
+    public void testVectorNASubscript() {
+        assertEval("v <- as.integer(c(1, 2)); v[1]<-NA_integer_; v");
+        assertEval("v <- c(1, 2); v[1]<-NA_real_; v");
+        assertEval("v <- c('a', 'b'); v[1]<-NA_character_; v");
+        assertEval("v <- c(1, 2); v[1]<-NA_integer_; v");
+
+        assertEval("v <- as.integer(c(1, 2, 3, 4)); dim(v)<-c(2,2); v[1, 1]<-NA_integer_; v");
+        assertEval("v <- c(1, 2, 3, 4); dim(v)<-c(2,2); v[1, 1]<-NA_real_; v");
+        assertEval("v <- c('a', 'b', 'c', 'd'); dim(v)<-c(2,2); v[1, 1]<-NA_character_; v");
+        assertEval("v <- c(1, 2, 3, 4); dim(v)<-c(2,2); v[1, 1]<-NA_integer_; v");
     }
 }

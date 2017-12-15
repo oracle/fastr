@@ -28,13 +28,11 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.stats.PPSumFactory.IntgrtVecNodeGen;
 import com.oracle.truffle.r.library.stats.PPSumFactory.PPSumExternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 public abstract class PPSum {
 
@@ -50,18 +48,19 @@ public abstract class PPSum {
                         @Cached("create()") VectorFactory factory,
                         @Cached("u.access()") VectorAccess uAccess) {
 
-            RandomIterator uIter = uAccess.randomAccess(u);
-            int n = uAccess.getLength(uIter);
-            double tmp1 = 0.0;
-            for (int i = 1; i <= sl; i++) {
-                double tmp2 = 0.0;
-                for (int j = i; j < n; j++) {
-                    tmp2 += uAccess.getDouble(uIter, j) * uAccess.getDouble(uIter, j - i);
+            try (RandomIterator uIter = uAccess.randomAccess(u)) {
+                int n = uAccess.getLength(uIter);
+                double tmp1 = 0.0;
+                for (int i = 1; i <= sl; i++) {
+                    double tmp2 = 0.0;
+                    for (int j = i; j < n; j++) {
+                        tmp2 += uAccess.getDouble(uIter, j) * uAccess.getDouble(uIter, j - i);
+                    }
+                    tmp2 *= 1.0 - i / (sl + 1.0);
+                    tmp1 += tmp2;
                 }
-                tmp2 *= 1.0 - i / (sl + 1.0);
-                tmp1 += tmp2;
+                return factory.createDoubleVectorFromScalar(2.0 * tmp1 / n);
             }
-            return factory.createDoubleVectorFromScalar(2.0 * tmp1 / n);
         }
 
         @Specialization(replaces = "doPPSum")

@@ -101,10 +101,6 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
         NativeDataAccess.setData(this, (byte[]) store, index, value);
     }
 
-    public void setRawDataAt(int index, byte value) {
-        NativeDataAccess.setData(this, data, index, value);
-    }
-
     @Override
     protected RRawVector internalCopy() {
         if (data != null) {
@@ -147,7 +143,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
         return this;
     }
 
-    public RRawVector updateDataAt(int index, RRaw value) {
+    private RRawVector updateDataAt(int index, RRaw value) {
         assert !this.isShared();
         NativeDataAccess.setData(this, data, index, value.getValue());
         return this;
