@@ -915,6 +915,7 @@ public final class RError extends RuntimeException implements TruffleException {
         BAD_CONSTANT_COUNT("bad constant count"),
         MUST_BE_MULTIPLE("argument '%s' must be a multiple of %d long"),
         MUSTNOT_CONTAIN_NAS("argument '%s' must not contain NAs"),
+        VERSION_N_NOT_SUPPORTED("version %d not supported"),
         ATOMIC_VECTOR_ARGUMENTS_ONLY("atomic vector arguments only");
 
         public final String message;

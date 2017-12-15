@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.eq;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.findFirst;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
@@ -32,6 +33,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -69,8 +71,7 @@ public class SerializeFunctions {
     }
 
     @TruffleBoundary
-    protected static Object doSerializeToConnBase(RBaseNode node, Object object, int connIndex, int type, @SuppressWarnings("unused") byte xdrLogical, @SuppressWarnings("unused") RNull version,
-                    @SuppressWarnings("unused") RNull refhook) {
+    protected static Object doSerializeToConnBase(RBaseNode node, Object object, int connIndex, int type) {
         // xdr is only relevant if ascii is false
         try (RConnection openConn = RConnection.fromIndex(connIndex).forceOpen(type != RSerialize.XDR ? "wt" : "wb")) {
             if (!openConn.canWrite()) {
@@ -88,6 +89,12 @@ public class SerializeFunctions {
 
     protected static void connection(Casts casts) {
         casts.arg("con").mustBe(integerValue()).asIntegerVector().findFirst();
+    }
+
+    private static void version(Casts casts) {
+        // This just validates the value. It must be either default NULL or 2. Specializations
+        // should use 'Object'
+        casts.arg("version").allowNull().asIntegerVector().findFirst().mustBe(eq(2), Message.VERSION_N_NOT_SUPPORTED, (Function<Object, Object>) n -> n);
     }
 
     @RBuiltin(name = "unserializeFromConn", kind = INTERNAL, parameterNames = {"con", "refhook"}, behavior = IO)
@@ -118,12 +125,12 @@ public class SerializeFunctions {
             casts.arg("object").mustNotBeMissing();
             connection(casts);
             casts.arg("ascii").mustBe(logicalValue(), RError.Message.ASCII_NOT_LOGICAL).asLogicalVector().findFirst();
-            casts.arg("version").allowNull().mustBe(integerValue()).asIntegerVector().findFirst();
+            version(casts);
             casts.arg("refhook").mustNotBeMissing();
         }
 
         @Specialization
-        protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, RNull version, RNull refhook) {
+        protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
             int type;
             if (asciiLogical == RRuntime.LOGICAL_NA) {
                 type = RSerialize.ASCII_HEX;
@@ -132,14 +139,7 @@ public class SerializeFunctions {
             } else {
                 type = RSerialize.XDR;
             }
-            return doSerializeToConnBase(this, object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
-        }
-
-        @SuppressWarnings("unused")
-        @Specialization
-        protected Object doSerializeToConn(Object object, int conn, byte asciiLogical, int version, Object refhook) {
-            // TODO: implement "version" support
-            throw RError.error(this, RError.Message.UNIMPLEMENTED_ARG_TYPE, 4);
+            return doSerializeToConnBase(this, object, conn, type);
         }
     }
 
@@ -170,16 +170,16 @@ public class SerializeFunctions {
             Casts casts = new Casts(Serialize.class);
             casts.arg("con").allowNull().mustBe(integerValue()).asIntegerVector().findFirst();
             casts.arg("type").asIntegerVector().findFirst();
+            version(casts);
         }
 
         @Specialization
-        protected Object serialize(Object object, int conn, int type, RNull version, RNull refhook) {
-            return doSerializeToConnBase(this, object, conn, type, RRuntime.LOGICAL_NA, version, refhook);
+        protected Object serialize(Object object, int conn, int type, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
+            return doSerializeToConnBase(this, object, conn, type);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object serialize(Object object, RNull conn, int type, RNull version, RNull refhook) {
+        protected Object serialize(Object object, RNull conn, int type, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
             byte[] data = RSerialize.serialize(object, type, RSerialize.DEFAULT_VERSION, null);
             return RDataFactory.createRawVector(data);
         }
@@ -192,14 +192,15 @@ public class SerializeFunctions {
             Casts casts = new Casts(SerializeB.class);
             connection(casts);
             casts.arg("xdr").asLogicalVector().findFirst();
+            version(casts);
         }
 
         @Specialization
-        protected Object serializeB(Object object, int conn, byte xdrLogical, RNull version, RNull refhook) {
+        protected Object serializeB(Object object, int conn, byte xdrLogical, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
             if (!RRuntime.fromLogical(xdrLogical)) {
                 throw RError.nyi(this, "xdr==FALSE");
             }
-            return doSerializeToConnBase(this, object, conn, RRuntime.LOGICAL_FALSE, xdrLogical, version, refhook);
+            return doSerializeToConnBase(this, object, conn, RRuntime.LOGICAL_FALSE);
         }
     }
 }
