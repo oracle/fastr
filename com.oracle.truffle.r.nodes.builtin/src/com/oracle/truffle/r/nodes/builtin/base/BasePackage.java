@@ -361,6 +361,7 @@ public class BasePackage extends RBuiltinPackage {
         add(CumMin.class, CumMinNodeGen::create);
         add(CumProd.class, CumProdNodeGen::create);
         add(CumSum.class, CumSumNodeGen::create);
+        add(MaxCol.class, MaxCol::create);
         add(CacheClass.class, CacheClassNodeGen::create);
         add(CurlDownload.class, CurlDownloadNodeGen::create);
         add(Date.class, DateNodeGen::create);
