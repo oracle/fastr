@@ -110,6 +110,8 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval(Ignored.ImplementationError, "options(keep.source=FALSE); fc <- setClass('FooSerial1', representation(a = 'call')); serialize(fc, connection=NULL)");
 
         assertEval("{ options(keep.source=FALSE); f <- function() NULL; attributes(f) <- list(skeleton=quote(`<undef>`())); data <- serialize(f, conn=NULL); unserialize(conn=data) }");
+        assertEval("serialize('foo', NULL, version=2)");
+        assertEval("serialize('foo', NULL, version=3)");
     }
 
     @Test
