@@ -42,7 +42,7 @@ FastR is available in two forms:
 FastR is intended eventually to be a drop-in replacement for GNU R. Currently, however, the implementation is incomplete. Notable limitations are:
 
 1. Graphics support: FastR supports only grid and grid-based packages, graphics package is not supported. The FastR grid package implementation is purely Java based, see its [documentation](documentation/graphics.md) for more details and limitations.
-2. Many packages either do not install, particularly those containing native (C/C++) code, or fail tests due to bugs and limitations in FastR. In particular popular packages such as `data.table` and `Rcpp` currently do not work with FastR.
+2. Some packages either do not install, or fail tests due to bugs and limitations in FastR. In particular support for popular packages such as `data.table` and `Rcpp` is work in progress.
 
 ## Running FastR
 
@@ -73,8 +73,8 @@ prior to the build. These are:
     The xz package, version 5.2.2 or later
     The curl package, version 7.50.1 or later
 
-If any of these are missing the GNU R build will fail which will cause the FastR build to fail also. If the build fails, more details can be found in `gnur_configure.log`
-file in the `com.oracle.truffle.r.native/gnur/R-{version}` directory. Note that your system may have existing installations of these packages, possibly in standard system locations,
+If any of these are missing the GNU R build will fail which will cause the FastR build to fail also. If the build fails, more details can be found in log files in
+the `libdownloads/R-{version}` directory. Note that your system may have existing installations of these packages, possibly in standard system locations,
 but older versions. These must either be upgraded or newer versions installed with the package manager on your system. Since different systems use different package
 managers some of which install packages in directories that are not scanned by default by the C compiler and linker, it may be necessary to inform the build of these
 locations using the following environment variables:
