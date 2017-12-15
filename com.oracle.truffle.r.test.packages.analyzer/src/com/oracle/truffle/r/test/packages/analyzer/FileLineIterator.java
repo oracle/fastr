@@ -35,7 +35,6 @@ public class FileLineIterator extends LineIterator {
 
     private static final Logger LOGGER = Logger.getLogger(FileLineIterator.class.getName());
 
-    /** 100 MB */
     public static final int MAX_FILE_SIZE = 200 * 1024 * 1024;
 
     private BufferedReader reader;
