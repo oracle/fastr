@@ -49,7 +49,7 @@ public class FileLineIterator extends LineIterator {
                 nextLine();
             } else {
                 this.reader = new BufferedReader(new InputStreamReader(new LimitSizeInputStreamReader(Files.newInputStream(p), MAX_FILE_SIZE)));
-                LOGGER.warning(String.format("Will read at most %d bytes from file %s.", size, p));
+                LOGGER.fine(String.format("Will read at most %d bytes from file %s.", MAX_FILE_SIZE, p));
                 this.reader = null;
             }
         } catch (IOException e) {
