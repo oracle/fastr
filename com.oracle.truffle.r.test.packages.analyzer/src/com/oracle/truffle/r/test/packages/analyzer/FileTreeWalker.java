@@ -157,10 +157,13 @@ public class FileTreeWalker {
         lfParser.addDetector(ConfigureErrorDetector.INSTANCE);
         lfParser.addTestResultDetector(DiffDetector.INSTANCE);
 
+        long startTime = System.currentTimeMillis();
         LogFile parseLogFile = lfParser.parseLogFile();
         Collection<Problem> problems = parseLogFile.collectProblems();
         pkgTestRun.setSuccess(parseLogFile.isSuccess());
         pkgTestRun.setLogFile(parseLogFile.getPath());
+        long endTime = System.currentTimeMillis();
+        LOGGER.info(String.format("Finished in %d seconds", (endTime - startTime) / 1000L));
 
         // log problems
         LOGGER.fine("Overall test result: " + (pkgTestRun.isSuccess() ? "OK" : "FAILED"));
