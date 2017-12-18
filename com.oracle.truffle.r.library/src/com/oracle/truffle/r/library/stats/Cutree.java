@@ -17,6 +17,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -50,6 +51,11 @@ public abstract class Cutree extends RExternalBuiltinNode.Arg2 {
         boolean foundJ;
 
         int n = getDimNode.nrows(merge) + 1;
+        if (!getDimNode.isSquareMatrix(merge)) {
+            // Note: otherwise array index out of bounds
+            throw error(Message.MUST_BE_SQUARE_MATRIX, "x");
+        }
+
         /*
          * The C code uses 1-based indices for the next three arrays and so set the int * value
          * behind the actual start of the array. To keep the logic equivalent, we call adj(k) on the

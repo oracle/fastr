@@ -34,7 +34,7 @@ public abstract class DoubleCentre extends RExternalBuiltinNode.Arg1 {
                     @Cached("createNonShared(a)") VectorReuse reuse,
                     @Cached("create()") GetDimAttributeNode getDimNode) {
         int n = getDimNode.nrows(a);
-        if (!getDimNode.isMatrix(a) || n != a.getLength() / n) {
+        if (!getDimNode.isSquareMatrix(a)) {
             // Note: otherwise array index out of bounds
             throw error(Message.MUST_BE_SQUARE_MATRIX, "x");
         }

@@ -662,6 +662,14 @@ public final class SpecialAttributesFunctions {
             return nullDimsProfile.profile(dims == null) ? false : dims.getLength() == 2;
         }
 
+        public final boolean isSquareMatrix(RAbstractVector vector) {
+            RIntVector dims = (RIntVector) execute(vector);
+            if (nullDimsProfile.profile(dims == null) || dims.getLength() < 2) {
+                return false;
+            }
+            return dims.getDataAt(0) == dims.getDataAt(1);
+        }
+
         @Specialization(insertBefore = "getAttrFromAttributable")
         protected Object getScalarVectorDims(@SuppressWarnings("unused") RScalarVector x) {
             return null;
