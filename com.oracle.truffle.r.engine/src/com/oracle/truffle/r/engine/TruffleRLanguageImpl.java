@@ -32,6 +32,7 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
@@ -188,7 +189,23 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     protected CallTarget parse(ParsingRequest request) throws Exception {
         CompilerAsserts.neverPartOfCompilation();
         try {
-            return RContext.getEngine().parseToCallTarget(request.getSource(), request.getFrame());
+            return RContext.getEngine().parseToCallTarget(request.getSource(), null);
+        } catch (IncompleteSourceException e) {
+            throw e;
+        } catch (ParseException e) {
+            if (request.getSource().isInteractive()) {
+                throw e.throwAsRError();
+            } else {
+                throw e;
+            }
+        }
+    }
+
+    @Override
+    protected ExecutableNode parse(InlineParsingRequest request) throws Exception {
+        CompilerAsserts.neverPartOfCompilation();
+        try {
+            return RContext.getEngine().parseToExecutableNode(request.getSource());
         } catch (IncompleteSourceException e) {
             throw e;
         } catch (ParseException e) {

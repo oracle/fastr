@@ -168,16 +168,14 @@ public class FastRDebugTest {
      * Test is currently ignored because of missing functionality in Truffle.
      */
     @Test
-    @Ignore
     public void testConditionalBreakpoint() throws Throwable {
-        final Source source = sourceFromText("main <- function() {\n" +
+        final Source source = sourceFromText("main <- function() { res <- 0;\n" +
                         "  for(i in seq(10)) {\n" +
-                        "    print(i)\n" +
+                        "    res <- res + i\n" +
                         "  }\n" +
+                        "  res\n" +
                         "}\n",
                         "test.r");
-        context.eval(source);
-
         run.addLast(() -> {
             assertNull(suspendedEvent);
             assertNotNull(debuggerSession);
@@ -186,15 +184,17 @@ public class FastRDebugTest {
             debuggerSession.install(breakpoint);
         });
 
-        assertLocation(3, "print(i)", "i", "5");
-        continueExecution();
-
         // Init before eval:
         performWork();
-
-        final Source evalSrc = sourceFromText("main()\n", "test.r");
-        context.eval(evalSrc);
+        context.eval(source);
         assertExecutedOK();
+
+        assertLocation(3, "res <- res + i", "i", "5");
+        continueExecution();
+
+        final Source evalSrc = sourceFromText("main()\n", "test2.r");
+        Value result = context.eval(evalSrc);
+        assertEquals("result is correct", 55, result.asInt());
     }
 
     @Test
