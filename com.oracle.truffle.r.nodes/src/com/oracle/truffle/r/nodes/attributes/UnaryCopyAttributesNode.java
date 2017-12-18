@@ -29,6 +29,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -92,7 +94,9 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
                     @Cached("createBinaryProfile()") ConditionProfile noDimensions,
                     @Cached("createBinaryProfile()") ConditionProfile hasNamesSource,
                     @Cached("createBinaryProfile()") ConditionProfile hasDimNames,
-                    @Cached("create()") GetDimAttributeNode getDimsNode) {
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
+                    @Cached("create()") ShareObjectNode updateRefCountNode) {
         RVector<?> result = target.materialize();
 
         if (copyAllAttributes) {
@@ -109,6 +113,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
             RStringVector vecNames = getNamesNode.getNames(source);
             if (hasNamesSource.profile(vecNames != null)) {
+                updateRefCountNode.execute(updateChildRefCountNode.updateState(source, vecNames));
                 putNames.execute(initAttributes.execute(result), vecNames);
                 return result;
             }
@@ -119,6 +124,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
         RList newDimNames = getDimNamesNode.getDimNames(source);
         if (hasDimNames.profile(newDimNames != null)) {
+            updateRefCountNode.execute(updateChildRefCountNode.updateState(source, newDimNames));
             putDimNames.execute(result.getAttributes(), newDimNames);
             newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
             return result;

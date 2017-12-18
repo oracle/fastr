@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.api.dsl.Cached;
 import java.util.List;
 
 import com.oracle.truffle.api.dsl.Specialization;
@@ -29,6 +30,8 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
@@ -100,13 +103,18 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
-    protected void copyClassOnly(RAttributeStorage source, RVector<?> target) {
+    protected void copyClassOnly(RAttributeStorage source, RVector<?> target,
+                    @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
+                    @Cached("create()") ShareObjectNode updateRefCountNode) {
         Object classAttr = classAttrGetter.execute(source.getAttributes());
+        updateRefCountNode.execute(updateChildRefCountNode.updateState(source, classAttr));
         target.initAttributes(RAttributesLayout.createClass(classAttr));
     }
 
     @Specialization
-    protected void copyGeneric(RAttributeStorage source, RAttributeStorage target) {
+    protected void copyGeneric(RAttributeStorage source, RAttributeStorage target,
+                    @Cached("create()") UpdateShareableChildValueNode updateChildRefCountNode,
+                    @Cached("create()") ShareObjectNode updateRefCountNode) {
         DynamicObject orgAttributes = source.getAttributes();
         if (orgAttributes != null) {
             Shape shape = orgAttributes.getShape();
@@ -116,6 +124,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
                 String name = (String) p.getKey();
                 if (name != RRuntime.DIM_ATTR_KEY && name != RRuntime.DIMNAMES_ATTR_KEY && name != RRuntime.NAMES_ATTR_KEY) {
                     Object val = p.get(orgAttributes, shape);
+                    updateRefCountNode.execute(updateChildRefCountNode.updateState(source, val));
                     target.initAttributes().define(name, val);
                 }
             }

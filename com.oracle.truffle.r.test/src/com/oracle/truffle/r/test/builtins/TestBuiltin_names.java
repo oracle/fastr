@@ -204,6 +204,7 @@ public class TestBuiltin_names extends TestBase {
         assertEval("{ x<-c(1,2,3); dim(x)<-3; dimnames(x)<-list(c(11,12,13)); names(x) }");
         assertEval("{ symNames <- c(\"foobar\", \"bar\"); names(symNames) = symNames; names(names(symNames)); }");
         assertEval("{ y<-c(d=\"e\"); attr(y, \"foo\")<-\"foo\"; x<-c(42); names(x)<-y; attributes(names(x)) }");
+        assertEval("{ x <- c(10, 20); names(x) <- c('ahoj', 'svete'); y <- c(1,2); z <- choose(x,y); names(z)[[1]] <- 'onlyinz'; names(x) }");
     }
 
     @Test

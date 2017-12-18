@@ -243,4 +243,10 @@ public class TestBuiltin_attr extends TestBase {
         assertEval("x <- c(1, 3); attr(x, 'abc') <- 42; attr(x, 'ab', exact=TRUE)");
         assertEval(Ignored.Unimplemented, "x <- c(1,2); attr(x, 'row.namess') <- 42; attr(x, 'row.names')");
     }
+
+    @Test
+    public void testModOfCopied() {
+        assertEval("a<-1; attr(a,'myattr')<-c('x','y'); b<-choose(a,1); attr(b,'myattr')[1]<-'z'; a ");
+        assertEval("a<-1; attr(a,'myattr')<-42; b<-choose(a,1); attr(b,'myattr')[1]<-'z'; a ");
+    }
 }

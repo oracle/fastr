@@ -203,5 +203,7 @@ public class TestBuiltin_classassign extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{x<-1;attr(x,\"class\")<-c(1,2,3);}");
 
         assertEval("{ x<-function() 42; class(x)<-\"foo\"; class(x)<-NULL; x }");
+
+        assertEval("{ a<-1; class(a)<-c('x','y'); b<-choose(a,1); class(b)[1]<-'z'; a; }");
     }
 }
