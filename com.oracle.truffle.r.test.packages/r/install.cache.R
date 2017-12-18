@@ -88,7 +88,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkgname, lib) {
         # to produce a TAR with relative paths, we need to change the working dir
         prev.wd <- getwd()
         setwd(lib)
-        if(zip(toPath, pkgname) != 0L) {
+        if(zip(toPath, pkgname, flags="-r9Xq") != 0L) {
             log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)
             return (FALSE)
         }
