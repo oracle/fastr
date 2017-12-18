@@ -20,17 +20,11 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.packages.analyzer.detectors;
+package com.oracle.truffle.r.test.packages.analyzer;
 
-import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
+import java.io.Closeable;
+import java.util.Iterator;
 
-public abstract class LineDetector extends Detector<FileLineReader> {
+public abstract class LineIterator implements Iterator<String>, Closeable {
 
-    protected LineDetector() {
-        super(null);
-    }
-
-    protected LineDetector(Detector<?> parent) {
-        super(parent);
-    }
 }

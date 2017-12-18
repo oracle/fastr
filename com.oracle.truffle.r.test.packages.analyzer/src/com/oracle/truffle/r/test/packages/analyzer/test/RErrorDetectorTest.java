@@ -26,12 +26,12 @@ import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Optional;
 
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.oracle.truffle.r.test.packages.analyzer.FileLineListReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.RErrorDetector;
@@ -51,8 +51,8 @@ public class RErrorDetectorTest {
 
     @Test
     public void testMultiLine() {
-        List<String> lines = Arrays.asList(new String[]{"Error in check(options) : ",
-                        "ERROR: installing Rd objects failed for package ‘RUnit’"});
+        FileLineListReader lines = new FileLineListReader(Arrays.asList(new String[]{"Error in check(options) : ",
+                        "ERROR: installing Rd objects failed for package ‘RUnit’"}));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -65,7 +65,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testSingleLine0() {
-        List<String> lines = Collections.singletonList("Error in check(options) : invalid value for 'label' ");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("Error in check(options) : invalid value for 'label' "));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -78,7 +78,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testSingleLine1() {
-        List<String> lines = Collections.singletonList("Error in check : invalid value for 'label' ");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("Error in check : invalid value for 'label' "));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -91,7 +91,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testSingleLineMultipleColon() {
-        List<String> lines = Collections.singletonList("Error in check(options) : invalid value for 'label' : ");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("Error in check(options) : invalid value for 'label' : "));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -104,7 +104,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testSingleLineWithoutCallstring0() {
-        List<String> lines = Collections.singletonList("Error: invalid value for 'label' ");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("Error: invalid value for 'label' "));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -117,7 +117,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testSingleLineWithoutCallstring1() {
-        List<String> lines = Collections.singletonList("Error: invalid value for 'label' : ");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("Error: invalid value for 'label' : "));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -129,7 +129,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testRInternalError0() {
-        List<String> lines = Collections.singletonList("RInternalError: invalid value for 'label'");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("RInternalError: invalid value for 'label'"));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(0, detect.size());
@@ -137,7 +137,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testRInternalError1() {
-        List<String> lines = Collections.singletonList("> RInternalError: invalid value for 'label'");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("> RInternalError: invalid value for 'label'"));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(0, detect.size());
@@ -145,7 +145,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testRInternalError2() {
-        List<String> lines = Collections.singletonList("  RInternalError: invalid value for 'label'");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("  RInternalError: invalid value for 'label'"));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(0, detect.size());
@@ -153,7 +153,7 @@ public class RErrorDetectorTest {
 
     @Test
     public void testWithLinePrefix() {
-        List<String> lines = Collections.singletonList("> Error: invalid value for 'label'");
+        FileLineListReader lines = new FileLineListReader(Collections.singletonList("> Error: invalid value for 'label'"));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -165,8 +165,8 @@ public class RErrorDetectorTest {
 
     @Test
     public void testCallstringWithNamesAndValues0() {
-        List<String> lines = Arrays.asList(new String[]{"Error in grep(pattern, all.names, value = TRUE) : ",
-                        "  invalid regular expression '*': Dangling meta character '*' near index 0"});
+        FileLineListReader lines = new FileLineListReader(Arrays.asList(new String[]{"Error in grep(pattern, all.names, value = TRUE) : ",
+                        "  invalid regular expression '*': Dangling meta character '*' near index 0"}));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());
@@ -178,8 +178,8 @@ public class RErrorDetectorTest {
 
     @Test
     public void testCallstringWithNamesAndValues1() {
-        List<String> lines = Arrays.asList(new String[]{"Error in grep(pattern, all.names, value = \":\") : ",
-                        "  invalid regular expression '*': Dangling meta character '*' near index 0"});
+        FileLineListReader lines = new FileLineListReader(Arrays.asList(new String[]{"Error in grep(pattern, all.names, value = \":\") : ",
+                        "  invalid regular expression '*': Dangling meta character '*' near index 0"}));
 
         Collection<Problem> detect = RErrorDetector.INSTANCE.detect(pkgTestRun, loc(), lines);
         Assert.assertEquals(1, detect.size());

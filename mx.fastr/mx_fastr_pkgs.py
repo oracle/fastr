@@ -495,6 +495,7 @@ def _set_test_status(fastr_test_info):
         with open(join(_pkg_testdir('fastr', pkg), 'testfile_status'), 'w') as f:
             f.write('# <file path> <tests passed> <tests skipped> <tests failed>\n')
             for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
+                print "generating testfile_status for {0}".format(fastr_relpath)
                 if fastr_testfile_status.status == "FAILED":
                     relpath = fastr_relpath + ".fail"
                 else:
@@ -504,6 +505,8 @@ def _set_test_status(fastr_test_info):
                 if os.path.exists(test_output_file):
                     ok, skipped, failed = fastr_testfile_status.report
                     f.write("{0} {1} {2} {3}\n".format(relpath, ok, skipped, failed))
+                else:
+                    print "File {0} does not exist".format(test_output_file)
 
         print 'END checking ' + pkg
 
@@ -604,7 +607,8 @@ def _replace_engine_references(output):
             # ignore differences which come from test directory paths
             output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
 
-def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
+
+def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, verbose=False):
     '''
     Compares the test output of GnuR and FastR by ignoring implementation-specific differences like header, error,
     and warning messages.
@@ -636,13 +640,15 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
 
     gnur_cur_statement_start = -1
     fastr_cur_statement_start = -1
-    while gnur_i < gnur_end:
-        gnur_line = gnur_content[gnur_i]
-        if fastr_i >= fastr_len:
-            overall_result = 1
-            break
+    while True:
+        gnur_line, gnur_i = _get_next_line(gnur_prompt, gnur_content, gnur_end, gnur_i)
+        fastr_line, fastr_i = _get_next_line(fastr_prompt, fastr_content, fastr_len, fastr_i)
 
-        fastr_line = fastr_content[fastr_i]
+        if gnur_line is None or fastr_line is None:
+            # fail if FastR's output is shorter than GnuR's
+            if gnur_line is not None and fastr_line is None:
+                overall_result = 1
+            break
 
         # check if the current line starts a statement
         if _is_statement_begin(gnur_prompt, gnur_line) and gnur_cur_statement_start != gnur_i:
@@ -681,8 +687,6 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
                 to_match = 'Error' if 'Error' in gnur_line else 'Warning'
                 if to_match not in fastr_line:
                     result = 1
-                    # XXX do not break
-                    # break
                 else:
                     # accept differences in the error/warning messages but we need to synchronize
                     sync = True
@@ -691,8 +695,6 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
                 # genuine difference (modulo whitespace)
                 if not _ignore_whitespace(gnur_line, fastr_line):
                     result = 1
-                    # XXX do not break, but we might need to synchronize indices
-                    # break
 
 
         # report a mismatch or success
@@ -704,6 +706,13 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
             if fastr_cur_statement_start in statements_passed:
                 statements_passed.remove(fastr_cur_statement_start)
             statements_failed.add(fastr_cur_statement_start)
+
+            # for compatibility: print the first difference
+            if verbose:
+                print gnur_filename + ':%d' % (gnur_cur_statement_start+1) + ' vs. ' + fastr_filename + ':%d' % (fastr_cur_statement_start+1)
+                print gnur_line.strip()
+                print "vs."
+                print fastr_line.strip()
         else:
             assert result == 0
             if fastr_cur_statement_start not in statements_failed:
@@ -736,12 +745,17 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename):
             gnur_i = gnur_i + 1
             fastr_i = fastr_i + 1
 
-    if overall_result == 1:
-        print gnur_filename + ':%d' % gnur_i + ' vs. ' + fastr_filename + ':%d' % fastr_i
-        print gnur_line.strip()
-        print "vs."
-        print fastr_line.strip()
     return overall_result, len(statements_passed), len(statements_failed)
+
+
+def _get_next_line(prompt, content, content_len, line_idx):
+    i = line_idx
+    while i < content_len:
+        line = content[i]
+        if line.replace(prompt, "", 1).strip() is not "":
+            return line, i
+        i = i + 1
+    return None, i
 
 
 def _ignore_whitespace(gnur_line, fastr_line):

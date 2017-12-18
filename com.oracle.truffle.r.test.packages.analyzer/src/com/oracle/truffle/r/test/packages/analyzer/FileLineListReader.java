@@ -20,17 +20,46 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.packages.analyzer.detectors;
+package com.oracle.truffle.r.test.packages.analyzer;
 
-import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
+import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
-public abstract class LineDetector extends Detector<FileLineReader> {
+public class FileLineListReader extends FileLineReader {
 
-    protected LineDetector() {
-        super(null);
+    private final List<String> l;
+
+    public FileLineListReader(List<String> lines) {
+        this.l = lines;
     }
 
-    protected LineDetector(Detector<?> parent) {
-        super(parent);
+    @Override
+    public boolean isEmpty() {
+        return l.isEmpty();
     }
+
+    @Override
+    public LineIterator iterator() {
+        return new LineIterator() {
+
+            private final Iterator<String> it = l.iterator();
+
+            @Override
+            public void close() throws IOException {
+                // nothing to do
+            }
+
+            @Override
+            public String next() {
+                return it.next();
+            }
+
+            @Override
+            public boolean hasNext() {
+                return it.hasNext();
+            }
+        };
+    }
+
 }

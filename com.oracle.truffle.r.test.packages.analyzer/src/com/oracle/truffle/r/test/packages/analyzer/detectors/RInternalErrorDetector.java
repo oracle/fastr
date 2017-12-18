@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 
+import com.oracle.truffle.r.test.packages.analyzer.LineIterator;
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -41,22 +43,25 @@ public class RInternalErrorDetector extends LineDetector {
 
     @Override
     public String getName() {
-        // TODO Auto-generated method stub
         return null;
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, FileLineReader body) {
         Collection<Problem> problems = new LinkedList<>();
-        assert body.isEmpty() || startLocation != null;
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
-        for (String line : body) {
-            int indexOf = line.indexOf(P);
-            if (indexOf != -1) {
-                String message = line.substring(indexOf + P.length());
-                problems.add(new RInternalErrorProblem(pkg, this, new Location(startLocation.file, lineNr), message));
+        try (LineIterator it = body.iterator()) {
+            while (it.hasNext()) {
+                String line = it.next();
+                int indexOf = line.indexOf(P);
+                if (indexOf != -1) {
+                    String message = line.substring(indexOf + P.length());
+                    problems.add(new RInternalErrorProblem(pkg, this, new Location(startLocation.file, lineNr), message));
+                }
+                ++lineNr;
             }
-            ++lineNr;
+        } catch (IOException e) {
+            // ignore
         }
         return problems;
     }

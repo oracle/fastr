@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.nio.file.FileVisitResult;
 import java.nio.file.FileVisitor;
 import java.nio.file.Files;
-import java.nio.file.NoSuchFileException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
@@ -46,6 +45,9 @@ import java.util.logging.Logger;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.oracle.truffle.r.test.packages.analyzer.FileLineListReader;
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
+import com.oracle.truffle.r.test.packages.analyzer.FileLineStreamReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.detectors.Detector;
@@ -57,6 +59,8 @@ import com.oracle.truffle.r.test.packages.analyzer.parser.DiffParser.DiffChunk;
 public class LogFileParser {
 
     private static final Logger LOGGER = Logger.getLogger(LogFileParser.class.getName());
+
+    private static final long MAX_FILE_SIZE = 200 * 1024 * 1024;
 
     private RPackageTestRun pkg;
     private BufferedReader reader;
@@ -93,28 +97,33 @@ public class LogFileParser {
     }
 
     public LogFile parseLogFile() throws IOException {
-        try (BufferedReader r = Files.newBufferedReader(logFile.path)) {
-            this.reader = r;
-            consumeLine();
+        long size = Files.size(logFile.path);
+        if (size <= MAX_FILE_SIZE) {
+            try (BufferedReader r = Files.newBufferedReader(logFile.path)) {
+                this.reader = r;
+                consumeLine();
 
-            Section installTest0 = parseInstallTest();
-            logFile.addSection(installTest0);
-            if (!installTest0.isSuccess()) {
-                return logFile;
-            }
-            Section installTest1 = parseInstallTest();
-            logFile.addSection(installTest1);
-            if (installTest1.isSuccess()) {
-                logFile.addSection(parseCheckResults());
-            }
-            TestResult overallResult = parseOverallStatus();
-            logFile.setSuccess(overallResult.toBoolean());
+                Section installTest0 = parseInstallTest();
+                logFile.addSection(installTest0);
+                if (!installTest0.isSuccess()) {
+                    return logFile;
+                }
+                Section installTest1 = parseInstallTest();
+                logFile.addSection(installTest1);
+                if (installTest1.isSuccess()) {
+                    logFile.addSection(parseCheckResults());
+                }
+                TestResult overallResult = parseOverallStatus();
+                logFile.setSuccess(overallResult.toBoolean());
 
-            // In the end, a recursive diff is executed which might produce error messages.
-            collectBody();
-            expectEOF();
-        } finally {
-            this.reader = null;
+                // In the end, a recursive diff is executed which might produce error messages.
+                collectBody();
+                expectEOF();
+            } finally {
+                this.reader = null;
+            }
+        } else {
+            LOGGER.severe(String.format("Cannot analyze %s, file is too large (%d bytes, max=%d bytes)", logFile.path, size, MAX_FILE_SIZE));
         }
         return logFile;
     }
@@ -176,18 +185,15 @@ public class LogFileParser {
 
                 if (Files.isReadable(outputFile)) {
                     ignoreFiles.add(outputFile);
-                    checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, Files.readAllLines(outputFile)));
+                    checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, outputFile, 0, new FileLineStreamReader(outputFile)));
                 } else {
                     // try to find the file anywhere in the test run directory (there were some
                     // cases)
                     Optional<Path> findFirst = null;
-                    try {
-                        findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
-                        if (findFirst.isPresent()) {
-                            ignoreFiles.add(findFirst.get());
-                            checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, findFirst.get(), 0, Files.readAllLines(findFirst.get())));
-                        }
-                    } catch (NoSuchFileException e) {
+                    findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
+                    if (findFirst.isPresent()) {
+                        ignoreFiles.add(findFirst.get());
+                        checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, findFirst.get(), 0, new FileLineStreamReader(findFirst.get())));
                     }
                     if (findFirst == null || !findFirst.isPresent()) {
                         LOGGER.warning("Cannot read output file " + outputFile);
@@ -198,8 +204,10 @@ public class LogFileParser {
                 }
 
                 checkResults.setSuccess(false);
-            } else {
+            } else if (laMatches(Token.END_CHECKING)) {
                 break;
+            } else {
+                consumeLine();
             }
         }
 
@@ -305,10 +313,10 @@ public class LogFileParser {
                     testing.problems.addAll(applyTestResultDetectors(diffResult));
                     diffResult.stream().forEach(chunk -> {
                         if (!chunk.getLeft().isEmpty()) {
-                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), chunk.getLeft()));
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getLeftFile(), chunk.getLeftStartLine(), new FileLineListReader(chunk.getLeft())));
                         }
                         if (!chunk.getRight().isEmpty()) {
-                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), chunk.getRight()));
+                            testing.problems.addAll(applyDetectors(Token.RUNNING_SPECIFIC_TESTS, chunk.getRightFile(), chunk.getRightStartLine(), new FileLineListReader(chunk.getRight())));
                         }
                     });
 
@@ -330,7 +338,6 @@ public class LogFileParser {
             if (laMatches("Running ")) {
                 consumeLine();
             }
-            // TODO anything more to parse ?
             testing.problems.addAll(applyDetectors(Token.RUNNING_VIGNETTES, logFile.path, collectBody(Token.END_TESTING)));
         }
 
@@ -423,7 +430,7 @@ public class LogFileParser {
             @Override
             public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
                 if (endsWith(file, ".Rout", ".fail") && includeCheck.test(file)) {
-                    outputCheck.problems.addAll(applyDetectors(Token.BEGIN_CHECKING, file, 0, Files.readAllLines(file)));
+                    outputCheck.problems.addAll(applyDetectors(Token.BEGIN_CHECKING, file, 0, new FileLineStreamReader(file)));
                 }
                 return FileVisitResult.CONTINUE;
             }
@@ -454,12 +461,12 @@ public class LogFileParser {
         if (!body.isEmpty()) {
             Line firstLine = body.get(0);
             List<String> strBody = body.stream().map(l -> l.text).collect(Collectors.toList());
-            return applyDetectors(start, file, firstLine.lineNr, strBody);
+            return applyDetectors(start, file, firstLine.lineNr, new FileLineListReader(strBody));
         }
         return new LinkedList<>();
     }
 
-    private Collection<Problem> applyDetectors(Token start, Path file, int startLineNr, List<String> body) {
+    private Collection<Problem> applyDetectors(Token start, Path file, int startLineNr, FileLineReader body) {
         assert Files.isRegularFile(file);
         Location startLocation = null;
         if (!body.isEmpty()) {
@@ -487,7 +494,9 @@ public class LogFileParser {
     }
 
     private Collection<Problem> applyTestResultDetectors(List<DiffChunk> diffChunk) {
-        return testResultDetectors.stream().map(detector -> detector.detect(pkg, null, diffChunk)).flatMap(l -> l.stream()).collect(Collectors.toList());
+        return testResultDetectors.stream().map(detector -> {
+            return detector.detect(pkg, null, diffChunk);
+        }).flatMap(l -> l.stream()).collect(Collectors.toList());
     }
 
     /**

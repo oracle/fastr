@@ -22,12 +22,14 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.oracle.truffle.r.test.packages.analyzer.LineIterator;
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -47,17 +49,22 @@ public final class SymbolLookupErrorDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, FileLineReader body) {
         Collection<Problem> problems = new LinkedList<>();
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
-        for (String line : body) {
-            Matcher matcher = PATTERN.matcher(line);
-            if (matcher.matches()) {
-                String message = matcher.group("MSG");
-                problems.add(new SymbolLookupErrorProblem(pkgTestRun, this, new Location(startLocation.file, lineNr), message));
+        try (LineIterator it = body.iterator()) {
+            while (it.hasNext()) {
+                String line = it.next();
+                Matcher matcher = PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    String message = matcher.group("MSG");
+                    problems.add(new SymbolLookupErrorProblem(pkgTestRun, this, new Location(startLocation.file, lineNr), message));
 
+                }
+                ++lineNr;
             }
-            ++lineNr;
+        } catch (IOException e) {
+            // ignore
         }
         return problems;
     }

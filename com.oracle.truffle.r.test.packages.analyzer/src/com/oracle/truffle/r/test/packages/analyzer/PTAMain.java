@@ -204,6 +204,7 @@ public class PTAMain {
         sb.append("    --glob GLOB\t\tGlob-style directory filter for packages to consider (default: \"*\").").append(LF);
         sb.append("    --outDir PATH\tPath to directory for HTML output (default: \"html\").").append(LF);
         sb.append("    --console\t\tPrint output to console (by default, only errors are printed).").append(LF);
+        sb.append("    --verbose\t\tUse highest verbosity level.").append(LF);
         System.out.println(sb.toString());
         System.exit(1);
     }

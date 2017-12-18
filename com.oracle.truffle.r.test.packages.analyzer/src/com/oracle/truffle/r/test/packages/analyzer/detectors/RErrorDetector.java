@@ -22,13 +22,14 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.LinkedList;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import com.oracle.truffle.r.test.packages.analyzer.LineIterator;
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -48,28 +49,31 @@ public class RErrorDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkg, Location startLocation, FileLineReader body) {
 
         Collection<Problem> problems = new LinkedList<>();
         assert body.isEmpty() || startLocation != null;
         int lineOffset = startLocation != null ? startLocation.lineNr : 0;
 
         int i = -1;
-        Iterator<String> it = body.iterator();
-        while (it.hasNext()) {
-            String line = it.next();
-            ++i;
-            Matcher matcher = PATTERN.matcher(line);
-            if (matcher.matches()) {
-                String callString = matcher.group("CALLSTR");
-                String message = matcher.group("MSG");
-                if (message.trim().isEmpty() && it.hasNext()) {
-                    // message could be in the next line
-                    message = it.next();
-                    ++i;
+        try (LineIterator it = body.iterator()) {
+            while (it.hasNext()) {
+                String line = it.next();
+                ++i;
+                Matcher matcher = PATTERN.matcher(line);
+                if (matcher.matches()) {
+                    String callString = matcher.group("CALLSTR");
+                    String message = matcher.group("MSG");
+                    if (message.trim().isEmpty() && it.hasNext()) {
+                        // message could be in the next line
+                        message = it.next();
+                        ++i;
+                    }
+                    problems.add(new RErrorProblem(pkg, this, new Location(startLocation.file, i + lineOffset), callString, message));
                 }
-                problems.add(new RErrorProblem(pkg, this, new Location(startLocation.file, i + lineOffset), callString, message));
             }
+        } catch (IOException e) {
+            // ignore
         }
 
         return problems;

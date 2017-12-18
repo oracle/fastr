@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
 

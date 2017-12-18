@@ -22,10 +22,12 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer.detectors;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.LinkedList;
-import java.util.List;
 
+import com.oracle.truffle.r.test.packages.analyzer.LineIterator;
+import com.oracle.truffle.r.test.packages.analyzer.FileLineReader;
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
 import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
@@ -45,17 +47,22 @@ public class ConfigureErrorDetector extends LineDetector {
     }
 
     @Override
-    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, List<String> body) {
+    public Collection<Problem> detect(RPackageTestRun pkgTestRun, Location startLocation, FileLineReader body) {
         Collection<Problem> problems = new LinkedList<>();
         assert body.isEmpty() || startLocation != null;
         int lineNr = startLocation != null ? startLocation.lineNr : 0;
-        for (String line : body) {
-            if (line.startsWith(PREFIX)) {
-                String message = line.substring(PREFIX.length());
-                problems.add(new ConfigureErrorProblem(pkgTestRun, this, new Location(startLocation.file, lineNr), message));
+        try (LineIterator it = body.iterator()) {
+            while (it.hasNext()) {
+                String line = it.next();
+                if (line.startsWith(PREFIX)) {
+                    String message = line.substring(PREFIX.length());
+                    problems.add(new ConfigureErrorProblem(pkgTestRun, this, new Location(startLocation.file, lineNr), message));
 
+                }
+                ++lineNr;
             }
-            ++lineNr;
+        } catch (IOException e) {
+            // ignore
         }
         return problems;
     }
