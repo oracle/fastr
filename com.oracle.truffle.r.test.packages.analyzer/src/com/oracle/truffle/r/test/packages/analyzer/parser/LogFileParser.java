@@ -60,6 +60,8 @@ public class LogFileParser {
 
     private static final Logger LOGGER = Logger.getLogger(LogFileParser.class.getName());
 
+    private static final long MAX_FILE_SIZE = 200 * 1024 * 1024;
+
     private RPackageTestRun pkg;
     private BufferedReader reader;
     private Line curLine;
@@ -95,28 +97,33 @@ public class LogFileParser {
     }
 
     public LogFile parseLogFile() throws IOException {
-        try (BufferedReader r = Files.newBufferedReader(logFile.path)) {
-            this.reader = r;
-            consumeLine();
+        long size = Files.size(logFile.path);
+        if (size <= MAX_FILE_SIZE) {
+            try (BufferedReader r = Files.newBufferedReader(logFile.path)) {
+                this.reader = r;
+                consumeLine();
 
-            Section installTest0 = parseInstallTest();
-            logFile.addSection(installTest0);
-            if (!installTest0.isSuccess()) {
-                return logFile;
-            }
-            Section installTest1 = parseInstallTest();
-            logFile.addSection(installTest1);
-            if (installTest1.isSuccess()) {
-                logFile.addSection(parseCheckResults());
-            }
-            TestResult overallResult = parseOverallStatus();
-            logFile.setSuccess(overallResult.toBoolean());
+                Section installTest0 = parseInstallTest();
+                logFile.addSection(installTest0);
+                if (!installTest0.isSuccess()) {
+                    return logFile;
+                }
+                Section installTest1 = parseInstallTest();
+                logFile.addSection(installTest1);
+                if (installTest1.isSuccess()) {
+                    logFile.addSection(parseCheckResults());
+                }
+                TestResult overallResult = parseOverallStatus();
+                logFile.setSuccess(overallResult.toBoolean());
 
-            // In the end, a recursive diff is executed which might produce error messages.
-            collectBody();
-            expectEOF();
-        } finally {
-            this.reader = null;
+                // In the end, a recursive diff is executed which might produce error messages.
+                collectBody();
+                expectEOF();
+            } finally {
+                this.reader = null;
+            }
+        } else {
+            LOGGER.severe(String.format("Cannot analyze %s, file is too large (%d bytes, max=%d bytes)", logFile.path, size, MAX_FILE_SIZE));
         }
         return logFile;
     }
