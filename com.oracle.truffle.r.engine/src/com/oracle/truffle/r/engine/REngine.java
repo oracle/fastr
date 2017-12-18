@@ -43,6 +43,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -336,6 +337,29 @@ final class REngine implements Engine, Engine.Timings {
             List<RSyntaxNode> statements = parseImpl(source);
             return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(source, statements), executionFrame));
         }
+    }
+
+    @Override
+    public ExecutableNode parseToExecutableNode(Source source) throws ParseException {
+        List<RSyntaxNode> list = parseImpl(source);
+        RNode[] statements = new RNode[list.size()];
+        for (int i = 0; i < statements.length; i++) {
+            statements[i] = list.get(i).asRNode();
+        }
+        return new ExecutableNode(context.getLanguage()) {
+            @Child R2Foreign toForeignNode = R2Foreign.create();
+
+            @Override
+            public Object execute(VirtualFrame frame) {
+                if (statements.length == 0) {
+                    return RNull.instance;
+                }
+                for (int i = 0; i < statements.length - 1; i++) {
+                    statements[i].execute(frame);
+                }
+                return toForeignNode.execute(statements[statements.length - 1].execute(frame));
+            }
+        };
     }
 
     private static SourceSection createSourceSection(Source source, List<RSyntaxNode> statements) {

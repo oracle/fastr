@@ -30,7 +30,9 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -177,6 +179,12 @@ public interface Engine {
      * {@link PolyglotEngine} is responsible for actually invoking the call target.
      */
     CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException;
+
+    /**
+     * Returns ASTs representing given source. The node is meant to be inserted into existing AST
+     * and executed as part of it.
+     */
+    ExecutableNode parseToExecutableNode(Source source) throws ParseException;
 
     /**
      * Parse and evaluate {@code rscript} in {@code frame}. {@code printResult == true}, the result
