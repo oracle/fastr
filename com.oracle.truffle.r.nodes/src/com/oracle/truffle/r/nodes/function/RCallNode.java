@@ -571,6 +571,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             Object[] argumentsArray = originalCall.explicitArgs != null ? ((RArgsValuesAndNames) originalCall.explicitArgs.execute(frame)).getArguments()
                             : arguments.evaluateFlattenObjects(frame, originalCall.lookupVarArgs(frame));
             if (r2ForeignNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 r2ForeignNode = insert(R2Foreign.create());
             }
             for (int i = 0; i < argumentsArray.length; i++) {
@@ -623,6 +624,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             String member = lhs.getLHSMember();
             Object[] argumentsArray = evaluateArgs(frame);
             if (messageNode == null || foreignCallArgCount != argumentsArray.length) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 messageNode = insert(Message.createInvoke(argumentsArray.length).createNode());
                 foreignCallArgCount = argumentsArray.length;
                 foreign2RNode = insert(Foreign2R.create());

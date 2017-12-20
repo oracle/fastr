@@ -926,8 +926,15 @@ public final class SpecialAttributesFunctions {
 
         public void initAttributes(RAbstractContainer x, RAbstractContainer source) {
             if (getDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDimNode = insert(GetDimAttributeNode.create());
+            }
+            if (getNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNamesNode = insert(GetNamesAttributeNode.create());
+            }
+            if (getDimNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDimNamesNode = insert(GetDimNamesAttributeNode.create());
             }
             this.initAttributes(x, getDimNode.getDimensions(source), getNamesNode.getNames(source), getDimNamesNode.getDimNames(source));

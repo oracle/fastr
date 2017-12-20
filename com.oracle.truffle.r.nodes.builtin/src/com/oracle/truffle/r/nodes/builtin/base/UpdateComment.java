@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
@@ -60,6 +61,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     @Specialization
     protected Object dim(RAbstractContainer container, RAbstractStringVector value) {
         if (setCommentAttrNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             setCommentAttrNode = insert(createGetCommentAttrNode());
         }
         setCommentAttrNode.execute(container, value);
