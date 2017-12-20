@@ -664,7 +664,7 @@ public final class SpecialAttributesFunctions {
 
         public final boolean isSquareMatrix(RAbstractVector vector) {
             RIntVector dims = (RIntVector) execute(vector);
-            if (nullDimsProfile.profile(dims == null) || dims.getLength() < 2) {
+            if (nullDimsProfile.profile(dims == null) || dims.getLength() != 2) {
                 return false;
             }
             return dims.getDataAt(0) == dims.getDataAt(1);
