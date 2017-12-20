@@ -59,6 +59,8 @@ suite = {
   # N.B. The first four with a "path" attribute must be located
   # relative to the suite root and not the mx cache because they are
   # explicitly referenced in the Parser annotation processor.
+  # We reference ANTLR twice, because the "path" reference is not
+  # properly handled by MX in all cases and causes integration problems.
   "libraries" : {
     "GNUR" : {
         "path" : "libdownloads/R-3.4.0.tar.gz",
@@ -74,7 +76,7 @@ suite = {
         "resource" : "true"
     },
 
-    "ANTLR-3.5" : {
+    "ANTLR-3.5_4_ANNOT_PROC" : {
       "path" : "libdownloads/antlr-runtime-3.5.jar",
       "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar"],
       "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
@@ -86,10 +88,22 @@ suite = {
       "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
     },
 
+    "ANTLR-3.5" : {
+      "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
+      "maven" : {
+        "groupId" : "org.antlr",
+        "artifactId" : "antlr",
+        "version" : "3.5",
+      },
+    },
+
     "XZ-1.6" : {
-      "path" : "libdownloads/xz-1.6.jar",
-      "urls" : ["http://central.maven.org/maven2/org/tukaani/xz/1.6/xz-1.6.jar"],
       "sha1" : "05b6f921f1810bdf90e25471968f741f87168b64",
+      "maven" : {
+        "groupId" : "org.tukaani",
+        "artifactId" : "xz",
+        "version" : "1.6",
+      },
     },
 
   },
@@ -98,7 +112,7 @@ suite = {
     "com.oracle.truffle.r.parser.processor" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "ANTLR-3.5",
+        "ANTLR-3.5_4_ANNOT_PROC",
         "ANTLR-C-3.5",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
