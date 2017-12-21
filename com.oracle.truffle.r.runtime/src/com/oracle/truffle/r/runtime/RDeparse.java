@@ -813,13 +813,15 @@ public class RDeparse {
                 }
             } else if (value instanceof TruffleObject) {
                 Object rObject = new TruffleObjectConverter().convert((TruffleObject) value);
-                append("<foreign object: ");
-                if (rObject != null) {
-                    appendConstant(rObject);
+                if (rObject == value) {
+                    append("<foreign object>");
+                } else if (rObject == null) {
+                    append("<foreign object: null>");
                 } else {
-                    append("null");
+                    append("<foreign object: ");
+                    appendConstant(rObject);
+                    append('>');
                 }
-                append('>');
             } else {
                 throw RInternalError.shouldNotReachHere("unexpected type while deparsing constant: " + value == null ? "null" : value.getClass().getSimpleName());
             }
