@@ -27,6 +27,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.Map;
 
 import org.graalvm.options.OptionCategory;
@@ -116,13 +117,17 @@ public class RscriptCommand {
         };
         boolean useJVM = false;
         Map<String, String> polyglotOptions = new HashMap<>();
-        for (int i = 1; i < argsList.size(); i++) {
-            String arg = argsList.get(i);
-            if ("--jvm".equals(arg)) {
-                useJVM = true;
-                argsList.remove(i);
-            } else if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
-                argsList.remove(i);
+        Iterator<String> iterator = argsList.iterator();
+        if (iterator.hasNext()) {
+            iterator.next(); // skip first argument
+            while (iterator.hasNext()) {
+                String arg = iterator.next();
+                if ("--jvm".equals(arg)) {
+                    useJVM = true;
+                    iterator.remove();
+                } else if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
+                    iterator.remove();
+                }
             }
         }
         if (launcher.runPolyglotAction()) {
