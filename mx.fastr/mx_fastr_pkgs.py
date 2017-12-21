@@ -407,6 +407,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
         mx_fastr.gnu_rscript(args, env=env)
     _log_step('END', 'install/test', 'GnuR')
 
+
 def _set_test_status(fastr_test_info):
     def _failed_outputs(outputs):
         '''
@@ -496,17 +497,25 @@ def _set_test_status(fastr_test_info):
             f.write('# <file path> <tests passed> <tests skipped> <tests failed>\n')
             for fastr_relpath, fastr_testfile_status in fastr_outputs.iteritems():
                 print "generating testfile_status for {0}".format(fastr_relpath)
-                if fastr_testfile_status.status == "FAILED":
-                    relpath = fastr_relpath + ".fail"
-                else:
-                    relpath = fastr_relpath
-
+                relpath = fastr_relpath
                 test_output_file = join(_pkg_testdir('fastr', pkg), relpath)
+
                 if os.path.exists(test_output_file):
                     ok, skipped, failed = fastr_testfile_status.report
                     f.write("{0} {1} {2} {3}\n".format(relpath, ok, skipped, failed))
+                elif fastr_testfile_status.status == "FAILED":
+                    # In case of status == "FAILED", also try suffix ".fail" because we just do not know if the test
+                    # failed and finished or just never finished.
+                    relpath_fail = fastr_relpath + ".fail"
+                    test_output_file_fail = join(_pkg_testdir('fastr', pkg), relpath_fail)
+                    if os.path.exists(test_output_file_fail):
+                        ok, skipped, failed = fastr_testfile_status.report
+                        f.write("{0} {1} {2} {3}\n".format(relpath_fail, ok, skipped, failed))
+                    else:
+                        print "File {0} or {1} does not exist".format(test_output_file, test_output_file_fail)
                 else:
                     print "File {0} does not exist".format(test_output_file)
+
 
         print 'END checking ' + pkg
 
@@ -609,14 +618,14 @@ def _replace_engine_references(output):
 
 
 def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, verbose=False):
-    '''
+    """
     Compares the test output of GnuR and FastR by ignoring implementation-specific differences like header, error,
     and warning messages.
     It returns a 3-tuple (<status>, <statements passed>, <statements failed>), where status=0 if files are equal,
     status=1 if the files are different, status=-1 if the files could not be compared. In case of status=1,
     statements passed and statements failed give the numbers on how many statements produced the same or a different
     output, respectively.
-    '''
+    """
     _replace_engine_references(gnur_content)
     _replace_engine_references(fastr_content)
     gnur_start = _find_start(gnur_content)
@@ -696,7 +705,6 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                 if not _ignore_whitespace(gnur_line, fastr_line):
                     result = 1
 
-
         # report a mismatch or success
         if result == 1:
             # we need to synchronize the indices such that we can continue
@@ -727,7 +735,6 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                 break
             ni = -1
             # find next statement line (i.e. starting with a prompt)
-
 
             while gnur_i < gnur_end:
                 if _is_statement_begin(gnur_prompt, gnur_content[gnur_i]):
@@ -804,10 +811,10 @@ def remove_dup_pkgs(args):
 
 
 def computeApiChecksum(includeDir):
-    '''
+    """
     Computes a checksum of the header files found in the provided directory (recursively).
     The result is a SHA256 checksum (as string with hex digits) of all header files.
-    '''
+    """
     m = hashlib.sha256()
     rootDir = includeDir
     for root, _, files in os.walk(rootDir):
