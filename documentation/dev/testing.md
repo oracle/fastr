@@ -210,4 +210,40 @@ To debug why a test fails requires first that the package is installed locally p
 
 First, note that, by default,  the `installpkgs` command itself introduces an extra level on sub-process in order to avoid a failure from aborting the entire install command when installing/testing multiple packages. You can see this by setting the environment variable `FASTR_LOG_SYSTEM` to any value. The first sub-process logged will be running the command `com.oracle.truffle.r.test.packages/r/install.package.R` and the second will be the one running `R CMD INSTALL --install-tests` of the digest package. For ease of debugging you can set the `--run-mode` option to `internal`, which executes the first phase of the install in the process running `installpkgs`. Similar considerations apply to the testing phase. By default a sub-process is used to run the `com.oracle.truffle.r.test.packages/r/test.package.R script`, which then runs the actual test using a sub-process to invoke `R CMD BATCH`. Again the first sub-process can be avoided using `--run-mode internal`. N.B. If you run the tests for `digest` you will see that there are four separate sub-processes used to run different tests. The latter three are the specific tests for digest that were made available by installing with `--install-tests`. Not all packages have such additional tests. Note that there is no way to avoid the tests being run in sub-processes so setting the `-d` option to the `installpkgs` command will have no effect on those. Instead set the environment variable `MX_R_GLOBAL_ARGS=-d` which will cause the sub-processes to run under the debugger. Note that you will not (initially) see the `Listening for transport dt_socket at address: 8000` message on the console, but activating the debug launch from the IDE will connect to the sub-process.
 
+### INSTALLED PACKAGES CACHE
 
+#### Description
+
+Avoids re-installing of packages for every test. Packages are cached for a specific native API version, i.e., checksum of the native header files.
+
+Directory structure:
+
+    - pkg-cache-dir
+    --+- version.table
+    --+- libraryVERSION0
+    ----+- packageArchive0.gz
+    ----+- packageArchive1.gz
+    ----+- ...
+    --+- libraryVERSION1
+    ----+- packageArchive0.gz
+    ----+- packageArchive1.gz
+    ----+- ...
+    --+- ...
+
+The API checksum must be provided because we do not want to rely on some R package to compute it.
+
+#### Usage
+
+Run `mx pkgtest --cache-pkgs version=<checksum>,dir=<pkg-cache-dir>,size=<cache-size>`, e.g.
+```
+mx pkgtest --cache-pkgs version=730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525,dir=/tmp/cache_dir
+```
+
+The `version` key specifies the API version to use, i.e., a checksum of the header files of the native API (mandatory, no default).
+The `pkg-cache-dir` key specifies the directory of the cache (mandatory, no default).
+The `size` key specifies the number of different API versions for which to cache packages (optional, default=`2L`).
+
+#### Details
+
+The version must be provided externally such that the R script does not rely on any package.
+The version must reflect the native API in the sense that if two R runtimes have the same native API version, then the packages can be used for both runtimes.

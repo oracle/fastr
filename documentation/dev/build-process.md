@@ -2,9 +2,8 @@
 
 This document describes the process of building FastR with a focus on the GNUR integration.
 The description is organized in a top-down manner beginning with outlining the `mx build` command and
-then delving into individual scripts that patch and build parts of GNUR.
-
-See also [building](building.md), [release](../../com.oracle.truffle.r.release/README.md)
+then delving into individual scripts that patch and build parts of GNUR. Last section describes the
+"release" build used to create the final release artifact including recommended packages.
 
 ## `mx build`
 
@@ -146,12 +145,7 @@ _Other required sources_:
 
 It builds `libR` and optionally (JNI) `libjniboot`.
 
-See:
-
- * [ffi](ffi.md)
- * [managed ffi](managed_ffi.md)
- * [truffle llvm ffi](truffle_llvm_ffi.md)
- * [truffle nfi](truffle_nfi.md)
+See also: [ffi](ffi.md).
 
 The `FASTR_RFFI` variable controls which version of FFI is build: `managed` (i.e. no native), `llvm` and `nfi`.
 
@@ -215,6 +209,10 @@ GNUR library (binary) files to the FastR library directory. It also defines a co
 The package sources are compiled and linked into the corresponding dynamic library (`<package>.so`).
 Finally and optionally (Darwin, non-LLVM), the library is installed using the system tools.
 
+For each package the source and header files copied from GNUR can be identified by looking at
+the git history of `gnur` branch. How and if those were patched can be found out in git history
+of the `master` branch. Following packages have some special handling or caveats worth mention.
+
 #### Package `base`
 
 In the pre-build stage, it changes GnuR's build script `$(GNUR_HOME_BINARY)/src/library/base/makebasedb.R`
@@ -234,85 +232,14 @@ _Patched files_:
 
 _Other required sources_:
 
- * The headers reachable from `$(GNUR_HOME)/src/library/graphics`
- * C sources from `$(GNUR_HOME)/src/library/graphics/src`: `base.c, graphics.c, init.c, par.c, plot.c, plot3d.c, stem.c`
  * The headers defined in `fficall/src/include/gnurheaders.mk`
 
 #### Package `grDevices`
 
 _Other required sources_:
 
- * The header files reachable from `$(GNUR_HOME)/src/library/grDevices`
  * `$(GNUR_HOME)/src/main/gzio.h`
- * All Cairo C sources: `$(GNUR_HOME)/src/library/grDevices/src/cairo/*.c`
- * Other C sources from `$(GNUR_HOME)/src/library/grDevices/src`: `axis_scales.c, chull.c, colors.c, devCairo.c, devPS.c, devPicTeX.c, devQuartz.c, devices.c, init.c, stubs.c`
  * The headers defined in `fficall/src/include/gnurheaders.mk`
-
-#### Package `grid`
-
-_Patched files_:
-
- * `grid.c`, `state.c` using sed (`sed_grid`, `sed_state`)
-
-_Other required sources_:
-
- * `grid.h`
- * `gpar.c, just.c, layout.c, matrix.c, register.c, unit.c, util.c, viewport.c`
-
-#### Package `methods`
-
-_Other required sources_:
-
- * `init.c`
- * `methods.h`
-
-#### Package `parallel`
-
-_Patched files_:
-
- * `glpi.h`, `rngstream.c`
-
-_Other required sources_:
-
- * `init.c`
- * `parallel.h`
-
-#### Package `splines`
-
-_Patched files_:
-
- * `splines.c`
-
-#### Package `stats`
-
-_Patched files_:
-
- * `fft.c` using `ed_fft`
- * `modreg.h`, `nls.h`, `port.h`, `stats.h`, `ts.h`
-
-_Other required sources_:
-
- * Fortan sources: `bsplvd.f, bvalue.f, bvalus.f, eureka.f, hclust.f, kmns.f, lminfl.f, loessf.f, ppr.f, qsbart.f, sgram.f, sinerp.f, sslvrg.f, stl.f, stxwx.f`
- * C sources: `init.c, isoreg.c, kmeans.c, loessc.c, monoSpl.c, sbart.c` 
- * All headers
-
-#### Package `tools`
-
-_Patched files_:
-
- * `gramRd.c`
-
-_Other required sources_:
-
- * `init.c`
- * `tools.h`
-
-#### Package `utils`
-
-_Other required sources_:
-
- * `init.c`
- * `utils.h`
 
 ### Building `run`
 
@@ -340,7 +267,22 @@ _Other required sources_:
  * `$(GNUR_HOME)/doc/*` (processed by `configure`)
  * From `$(GNUR_HOME)/share/`: directories `R, Rd, make, java, encodings`
 
-## Installing recommended packages		
+## Release build
+
+The *FASTR_RELEASE* mx distribution is built only when `FASTR_RELEASE` environment variable is exported.
+The building logic for *FASTR_RELEASE* resides in Python class `ReleaseBuildTask` and the output is a jar
+file that if unzipped contains a stand-alone FastR distribution including everything that is needed to
+run FastR.
+
+This build requires `PKG_LDFLAGS_OVERRIDE` environment variable, for example on MacOS
+
+    export PKG_LDFLAGS_OVERRIDE=-L/opt/local/lib
+
+or on some Linux distributions
+
+    export PKG_LDFLAGS_OVERRIDE="\"-L/lib/x86_64-linux-gnu -L/usr/lib/x86_64-linux-gnu/\""
+
+### Installing recommended packages
 
 Note: This build resides in a separate project: `com.oracle.truffle.r.native.recommended`.
 
