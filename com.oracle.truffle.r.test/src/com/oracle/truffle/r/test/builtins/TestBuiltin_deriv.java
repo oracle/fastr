@@ -187,6 +187,7 @@ public class TestBuiltin_deriv extends TestBase {
         assertEval(Output.IgnoreWhitespace, "(df <- deriv(~x^2*sin(x), \"x\", function.arg=TRUE));df(0)");
         assertEval(Output.IgnoreWhitespace, "(df <- deriv(~x^2*sin(x), \"x\", function.arg=c(\"x\")));df(0)");
         assertEval(Output.IgnoreWhitespace, "(df <- deriv(~x^2*sin(x), \"x\", function.arg=function(x=1){}));df(0)");
+        assertEval(Output.IgnoreWhitespace, "(df <- deriv(~x^2*sin(x), \"x\", function.arg=function(x)NULL));df(0)");
     }
 
     @Test

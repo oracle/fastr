@@ -346,7 +346,13 @@ public abstract class Deriv extends RExternalBuiltinNode {
             RNode[] defArgs = formals.getArguments();
             List<Argument<RSyntaxNode>> targetArgs = new ArrayList<>();
             for (int i = 0; i < defArgs.length; i++) {
-                targetArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, formals.getSignature().getName(i), cloneElement((RSyntaxNode) defArgs[i])));
+                RSyntaxNode defArgClone;
+                if (defArgs[i] == null) {
+                    defArgClone = ConstantNode.create(RMissing.instance);
+                } else {
+                    defArgClone = cloneElement((RSyntaxNode) defArgs[i]);
+                }
+                targetArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, formals.getSignature().getName(i), defArgClone));
             }
 
             return new DerivResult(blockCall, targetArgs);
