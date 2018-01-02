@@ -178,6 +178,16 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         return combineCached(args, false, args.getSignature(), cachedPrecedence, cast, naNameBranch, hasNamesProfile, getNamesNode);
     }
 
+    @TruffleBoundary
+    @Specialization(replaces = "combine", guards = {"!recursive"})
+    protected Object combineGeneric(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
+                    @Cached("create()") BranchProfile naNameBranch,
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+        int cachedPrecedence = precedence(args, args.getLength());
+        return combineCached(args, false, args.getSignature(), cachedPrecedence, createCast(cachedPrecedence), naNameBranch, hasNamesProfile, getNamesNode);
+    }
+
     @Specialization(guards = "recursive")
     protected Object combineRecursive(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("create()") Combine recursiveCombine,
