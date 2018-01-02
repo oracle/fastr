@@ -30,6 +30,8 @@ x <- list(1)
 attr(x, 'myattr') <- 'hello';
 attrs <- rffi.ATTRIB(x)
 stopifnot(attrs[[1]] == 'hello')
+attr <- rffi.getAttrib(x, 'myattr')
+stopifnot(attr == 'hello')
 
 # loess invokes loess_raw native function passing in string value as argument and that is what we test here.
 loess(dist ~ speed, cars);

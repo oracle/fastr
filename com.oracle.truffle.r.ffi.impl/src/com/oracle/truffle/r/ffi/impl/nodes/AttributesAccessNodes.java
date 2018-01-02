@@ -22,17 +22,24 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.ATTRIBNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMostAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.TAGNodeGen;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -46,8 +53,36 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 
 public final class AttributesAccessNodes {
+
+    public static final class GetAttrib extends FFIUpCallNode.Arg2 {
+        @Child private GetAttributeNode getAttributeNode = GetAttributeNode.create();
+        @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
+        @Child private CastNode castStringNode;
+        private final ConditionProfile nameIsSymbolProfile = ConditionProfile.createBinaryProfile();
+
+        @Override
+        public Object executeObject(Object source, Object nameObj) {
+            String name;
+            if (nameIsSymbolProfile.profile(nameObj instanceof RSymbol)) {
+                name = ((RSymbol) nameObj).getName();
+            } else {
+                name = castToString(nameObj);
+            }
+            Object result = getAttributeNode.execute(source, name);
+            return result == null ? RNull.instance : sharedAttrUpdate.updateState(source, result);
+        }
+
+        private String castToString(Object name) {
+            if (castStringNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castStringNode = insert(newCastBuilder().asStringVector().mustBe(singleElement()).findFirst().buildCastNode());
+            }
+            return (String) castStringNode.doCast(name);
+        }
+    }
 
     public abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
         @Child private GetAttributesNode getAttributesNode;

@@ -32,8 +32,12 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
  * This node is responsible for retrieving a value from an arbitrary attribute. It accepts both
@@ -54,8 +58,25 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
 
     public abstract Object execute(Object attrs, String name);
 
+    @Specialization
+    protected RNull attr(RNull container, @SuppressWarnings("unused") String name) {
+        return container;
+    }
+
+    @Specialization(guards = "isRowNamesAttr(name)")
+    protected Object getRowNames(DynamicObject attrs, @SuppressWarnings("unused") String name,
+                    @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
+        return GetAttributesNode.getFullRowNames(getRowNamesNode.execute(attrs));
+    }
+
+    @Specialization(guards = "isNamesAttr(name)")
+    protected Object getNames(DynamicObject attrs, @SuppressWarnings("unused") String name,
+                    @Cached("create()") GetNamesAttributeNode getNamesAttributeNode) {
+        return getNamesAttributeNode.execute(attrs);
+    }
+
     @Specialization(limit = "3", //
-                    guards = {"cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
+                    guards = {"!isSpecialAttribute(name)", "cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     protected Object getAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name,
                     @SuppressWarnings("unused") @Cached("name") String cachedName,
@@ -65,7 +86,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     }
 
     @TruffleBoundary
-    @Specialization(replaces = {"getAttrCached"})
+    @Specialization(replaces = "getAttrCached", guards = "!isSpecialAttribute(name)")
     protected Object getAttrFallback(DynamicObject attrs, String name) {
         return attrs.get(name);
     }
@@ -94,5 +115,17 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
         }
 
         return recursive.execute(attributes, name);
+    }
+
+    protected static boolean isRowNamesAttr(String name) {
+        return name.equals(RRuntime.ROWNAMES_ATTR_KEY);
+    }
+
+    protected static boolean isNamesAttr(String name) {
+        return name.equals(RRuntime.NAMES_ATTR_KEY);
+    }
+
+    protected static boolean isSpecialAttribute(String name) {
+        return isRowNamesAttr(name) || isNamesAttr(name);
     }
 }

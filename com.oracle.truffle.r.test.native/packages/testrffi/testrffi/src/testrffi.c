@@ -347,6 +347,10 @@ SEXP test_ATTRIB(SEXP x) {
     return ATTRIB(x);
 }
 
+SEXP test_getAttrib(SEXP source, SEXP name) {
+    return Rf_getAttrib(source, name);
+}
+
 SEXP test_stringNA(void) {
     SEXP x = allocVector(STRSXP, 1);
     SET_STRING_ELT(x, 0, NA_STRING);
