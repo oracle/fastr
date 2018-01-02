@@ -502,9 +502,10 @@ replaceDots <- function(x, replacement) {
         }
         return(x)
     }
-
-    for (i in seq_along(x)) {
-        x[[i]] <- replaceDots(x[[i]], replacement);
+    if (is.language(x)) {
+        for (i in seq_along(x)) {
+            x[[i]] <- replaceDots(x[[i]], replacement);
+        }
     }
     x
 }
@@ -682,7 +683,11 @@ termsform <- function (x.in, specials, data, keep.order, allowDotAsName) {
     # Step 6: Fix up the formula by substituting for dot, which should be
     # the framenames joined by +
     if (haveDot) {
-      x <- ExpandDots(x, framenames)
+        if (length(framenames) > 0) {
+            x <- ExpandDots(x, framenames)
+        } else if (!allowDotAsName) {
+           error("'.' in formula and no 'data' argument")
+        }
     }
     
     attr(x, "order") <- ord

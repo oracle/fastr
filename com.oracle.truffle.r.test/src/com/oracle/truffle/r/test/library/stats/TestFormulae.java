@@ -105,4 +105,14 @@ public class TestFormulae extends TestBase {
     public void testExpandDostsAndSpecialsTermsform() {
         assertEval("f <- terms.formula(cyl~myfun(mpg)+., specials=c('myfun'), data=mtcars); attrs <- attributes(f); " + SHOW_ATTRS);
     }
+
+    @Test
+    public void testDotWithData() {
+        assertEval("terms.formula(x ~ .^4, data=data.frame(1:5))");
+    }
+
+    @Test
+    public void testDotWithNoFramenames() {
+        assertEval(Output.IgnoreErrorContext, "terms.formula(x ~ .^4)");
+    }
 }
