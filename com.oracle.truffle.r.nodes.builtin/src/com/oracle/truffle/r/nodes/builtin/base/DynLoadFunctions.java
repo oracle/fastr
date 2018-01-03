@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.size;
@@ -169,14 +171,15 @@ public class DynLoadFunctions {
         static {
             Casts casts = new Casts(GetSymbolInfo.class);
             casts.arg("symbol").mustBe(stringValue()).asStringVector().mustBe(notEmpty()).findFirst();
+            casts.arg("package").defaultError(RError.Message.REQUIRES_NAME_DLLINFO).returnIf(instanceOf(RExternalPtr.class)).mustBe(stringValue()).asStringVector().findFirst();
             casts.arg("withRegistrationInfo").mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean());
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object getSymbolInfo(String symbol, String packageName, boolean withReg) {
+        protected Object getSymbolInfo(String symbol, RAbstractStringVector packageName, boolean withReg) {
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
-            DLL.SymbolHandle f = findSymbolNode.execute(RRuntime.asString(symbol), packageName, rns);
+            DLL.SymbolHandle f = findSymbolNode.execute(RRuntime.asString(symbol), packageName.getDataAt(0), rns);
             SymbolInfo symbolInfo = null;
             if (f != DLL.SYMBOL_NOT_FOUND) {
                 symbolInfo = new SymbolInfo(rns.getDllInfo(), symbol, f);
