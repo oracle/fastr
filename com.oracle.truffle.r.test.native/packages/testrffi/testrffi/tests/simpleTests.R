@@ -45,6 +45,21 @@ promiseInfo <- foo(tmp)
 stopifnot('some_unique_name' %in% ls(promiseInfo[[2]]))
 eval(promiseInfo[[1]], promiseInfo[[2]])
 
+# parent.frame call in Rf_eval. Simulates pattern from rlang package
+getCurrEnv <- function(r = parent.frame()) r
+fn <- function(eval_fn) {
+  list(middle(eval_fn), getCurrEnv())
+}
+middle <- function(eval_fn) {
+  deep(eval_fn, getCurrEnv())
+}
+deep <- function(eval_fn, eval_env) {
+  # the result value of rffi.tryEval is list, first element is the actual result
+  eval_fn(quote(parent.frame()), eval_env)[[1]]
+}
+res <- fn(rffi.tryEval)
+stopifnot(identical(res[[1]], res[[2]]))
+
 # fiddling the pointers to the native arrays: we get data pointer to the first SEXP argument (vec),
 # then put value 42/TRUE directly into it at index 0,
 # value of symbol 'myvar' through Rf_eval at index 1,

@@ -65,13 +65,13 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     @Specialization
     @TruffleBoundary
     Object handleExpression(RExpression expr, REnvironment env) {
-        return RContext.getEngine().eval(expr, env, RCaller.topLevel);
+        return RContext.getEngine().eval(expr, env, null);
     }
 
     @Specialization
     @TruffleBoundary
     Object handleLanguage(RLanguage expr, REnvironment env) {
-        return RContext.getEngine().eval(expr, env, RCaller.topLevel);
+        return RContext.getEngine().eval(expr, env, null);
     }
 
     @Specialization

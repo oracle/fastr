@@ -99,7 +99,12 @@ public abstract class VirtualEvalFrame extends SubstituteVirtualFrame implements
         Object[] arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
         arguments[RArguments.INDEX_IS_IRREGULAR] = true;
         arguments[RArguments.INDEX_FUNCTION] = function;
-        arguments[RArguments.INDEX_CALL] = call;
+        if (call != null) {
+            // Otherwise leave here the call from originalFrame
+            arguments[RArguments.INDEX_CALL] = call;
+        } else if (arguments[RArguments.INDEX_CALL] == null) {
+            arguments[RArguments.INDEX_CALL] = RCaller.topLevel;
+        }
         MaterializedFrame unwrappedFrame = originalFrame instanceof SubstituteVirtualFrame ? ((SubstituteVirtualFrame) originalFrame).getOriginalFrame() : originalFrame;
         @SuppressWarnings("unchecked")
         Class<MaterializedFrame> clazz = (Class<MaterializedFrame>) unwrappedFrame.getClass();

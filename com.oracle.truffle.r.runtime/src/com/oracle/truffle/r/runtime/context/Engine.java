@@ -199,12 +199,14 @@ public interface Engine {
     Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult) throws ParseException;
 
     /**
-     * Support for the {@code eval} {@code .Internal}.
+     * Support for the {@code eval} {@code .Internal}. If the {@code caller} argument is null, it is
+     * taken from the environment's frame.
      */
     Object eval(RExpression expr, REnvironment envir, RCaller caller);
 
     /**
      * Variant of {@link #eval(RExpression, REnvironment, RCaller)} for a single language element.
+     * If the {@code caller} argument is null, it is taken from the environment's frame.
      */
     Object eval(RLanguage expr, REnvironment envir, RCaller caller);
 

@@ -52,6 +52,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
+import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
@@ -273,6 +274,8 @@ public interface StdUpCallsRFFI {
 
     void Rf_copyMatrix(Object s, Object t, int byrow);
 
+    @RFFIRunGC
+    @RFFIUpCallNode(TryRfEvalNode.class)
     Object R_tryEval(Object expr, Object env, int silent);
 
     Object R_ToplevelExec();

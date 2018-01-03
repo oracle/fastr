@@ -878,20 +878,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object R_tryEval(Object expr, Object env, int silent) {
-        Object handlerStack = RErrorHandling.getHandlerStack();
-        Object restartStack = RErrorHandling.getRestartStack();
-        try {
-            // TODO handle silent
-            RErrorHandling.resetStacks();
-            Object result = Rf_eval(expr, env);
-            return result;
-        } catch (Throwable t) {
-            return null;
-        } finally {
-            RErrorHandling.restoreStacks(handlerStack, restartStack);
-        }
+        throw implementedAsNode();
     }
 
     /**
