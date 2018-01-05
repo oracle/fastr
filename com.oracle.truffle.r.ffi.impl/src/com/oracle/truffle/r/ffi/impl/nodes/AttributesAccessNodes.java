@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -116,14 +117,16 @@ public final class AttributesAccessNodes {
 
         @Specialization
         public Object doPairlist(RPairList obj) {
-            return obj.getTag();
+            Object result = obj.getTag();
+            assert result instanceof RSymbol || result == RNull.instance;
+            return result;
         }
 
         @Specialization
         public Object doArgs(RArgsValuesAndNames obj) {
             ArgumentsSignature signature = obj.getSignature();
             if (signature.getLength() > 0 && signature.getName(0) != null) {
-                return signature.getName(0);
+                return RDataFactory.createSymbol(signature.getName(0));
             }
             return RNull.instance;
         }
@@ -138,7 +141,7 @@ public final class AttributesAccessNodes {
                         @Cached("create()") GetNamesAttributeNode getNamesAttributeNode) {
             RStringVector names = getNamesAttributeNode.getNames(obj);
             if (names != null && names.getLength() > 0) {
-                return names.getDataAt(0);
+                return RDataFactory.createSymbol(names.getDataAt(0));
             }
             return RNull.instance;
         }
