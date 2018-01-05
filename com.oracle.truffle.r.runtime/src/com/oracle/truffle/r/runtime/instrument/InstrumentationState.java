@@ -35,11 +35,9 @@ import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.tools.Profiler;
 
 /**
  * Collects together all the context-specific state related to profiling, instrumentation.
@@ -63,11 +61,6 @@ public final class InstrumentationState implements RContext.ContextState {
      * The {@link Instrumenter} associated with this {@link RContext}. Never {@code null}.
      */
     private final Instrumenter instrumenter;
-
-    /**
-     * The {@link Profiler}, if any, associated with this {@link RContext}.
-     */
-    private Profiler profiler;
 
     private TracememContext tracememContext;
 
@@ -234,14 +227,6 @@ public final class InstrumentationState implements RContext.ContextState {
 
     public boolean getTracingState() {
         return tracingState;
-    }
-
-    public Profiler getProfiler() {
-        if (profiler == null) {
-            PolyglotEngine vm = RContext.getInstance().getVM();
-            profiler = Profiler.find(vm);
-        }
-        return profiler;
     }
 
     public Instrumenter getInstrumenter() {
