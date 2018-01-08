@@ -48,6 +48,7 @@ import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
@@ -170,8 +171,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     @Specialization
     protected Object doEval(VirtualFrame frame, RLanguage expr, Object envir, Object enclos) {
-        RCaller rCaller = RCaller.create(frame, getOriginalCall());
         REnvironment environment = envCast.execute(frame, envir, enclos);
+        RCaller rCaller = getCaller(frame, environment);
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
         } catch (ReturnException ret) {
@@ -187,8 +188,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     @Specialization
     protected Object doEval(VirtualFrame frame, RExpression expr, Object envir, Object enclos) {
-        RCaller rCaller = RCaller.create(frame, getOriginalCall());
         REnvironment environment = envCast.execute(frame, envir, enclos);
+        RCaller rCaller = getCaller(frame, environment);
         try {
             return RContext.getEngine().eval(expr, environment, rCaller);
         } catch (ReturnException ret) {
@@ -271,5 +272,13 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         envCast.execute(frame, envir, enclos);
         visibility.execute(frame, true);
         return expr;
+    }
+
+    private RCaller getCaller(VirtualFrame frame, REnvironment environment) {
+        if (environment instanceof REnvironment.Function) {
+            return RArguments.getCall(environment.getFrame());
+        } else {
+            return RCaller.create(frame, getOriginalCall());
+        }
     }
 }

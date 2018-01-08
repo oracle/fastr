@@ -123,7 +123,6 @@ public final class CoerceNodes {
     public abstract static class AsCharacterFactor extends FFIUpCallNode.Arg1 {
 
         @Child private InheritsCheckNode inheritsFactorNode = InheritsCheckNode.createFactor();
-        @Child private GetAttributeNode getAttributeNode = GetAttributeNode.create();
         @Child private RFactorNodes.GetLevels getLevels = RFactorNodes.GetLevels.create();
 
         @Specialization

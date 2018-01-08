@@ -68,4 +68,10 @@ public class TestBuiltin_eval extends TestBase {
     public void testReturnInEvalExpr() {
         assertEval("f1 <- function(x) { eval(quote(if(x>2){return()}else 1)); 10 };f1(5);f1(0)");
     }
+
+    @Test
+    public void testEvalVisibility() {
+        assertEval("eval(parse(text='x<-1'))");
+        assertEval("eval(parse(text='1+1'))");
+    }
 }

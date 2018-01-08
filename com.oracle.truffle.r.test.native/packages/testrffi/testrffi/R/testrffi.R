@@ -165,6 +165,10 @@ rffi.ATTRIB <- function(x) {
     .Call('test_ATTRIB', x);
 }
 
+rffi.getAttrib <- function(source, name) {
+    .Call('test_getAttrib', source, name);
+}
+
 rffi.getStringNA <- function() {
     .Call("test_stringNA")
 }

@@ -110,21 +110,9 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
         return container;
     }
 
-    @Specialization(guards = "!isRowNamesAttr(name)")
+    @Specialization
     protected Object attr(RAbstractContainer container, String name, boolean exact) {
         return attrRA(container, intern.execute(name), exact);
-    }
-
-    @Specialization(guards = "isRowNamesAttr(name)")
-    protected Object attrRowNames(RAbstractContainer container, @SuppressWarnings("unused") String name, @SuppressWarnings("unused") boolean exact,
-                    @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
-        // TODO: if exact == false, check for partial match (there is an ignored tests for it)
-        DynamicObject attributes = container.getAttributes();
-        if (attributes == null) {
-            return RNull.instance;
-        } else {
-            return GetAttributesNode.getFullRowNames(getRowNamesNode.getRowNames(container));
-        }
     }
 
     /**
@@ -140,9 +128,5 @@ public abstract class Attr extends RBuiltinNode.Arg3 {
         } else {
             throw RError.nyi(this, "object cannot be attributed");
         }
-    }
-
-    protected static boolean isRowNamesAttr(String name) {
-        return name.equals(RRuntime.ROWNAMES_ATTR_KEY);
     }
 }

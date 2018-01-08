@@ -287,21 +287,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_getAttrib(Object obj, Object name) {
-        Object result = RNull.instance;
-        if (obj instanceof RAttributable) {
-            RAttributable attrObj = (RAttributable) obj;
-            DynamicObject attrs = attrObj.getAttributes();
-            if (attrs != null) {
-                String nameAsString = Utils.intern(((RSymbol) name).getName());
-                Object attr = attrs.get(nameAsString);
-                if (attr != null) {
-                    result = attr;
-                }
-            }
-        }
-        return result;
+        throw implementedAsNode();
     }
 
     @Override
@@ -891,20 +878,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object R_tryEval(Object expr, Object env, int silent) {
-        Object handlerStack = RErrorHandling.getHandlerStack();
-        Object restartStack = RErrorHandling.getRestartStack();
-        try {
-            // TODO handle silent
-            RErrorHandling.resetStacks();
-            Object result = Rf_eval(expr, env);
-            return result;
-        } catch (Throwable t) {
-            return null;
-        } finally {
-            RErrorHandling.restoreStacks(handlerStack, restartStack);
-        }
+        throw implementedAsNode();
     }
 
     /**
