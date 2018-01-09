@@ -103,11 +103,18 @@ public class LogFileParser {
                 this.reader = r;
                 consumeLine();
 
+                // consume any leading lines (there might be some output of 'mx')
+                collectBody(Token.BEGIN_INSTALL_TEST);
+
                 Section installTest0 = parseInstallTest();
                 logFile.addSection(installTest0);
                 if (!installTest0.isSuccess()) {
                     return logFile;
                 }
+
+                // again, consume any leading lines
+                collectBody(Token.BEGIN_INSTALL_TEST);
+
                 Section installTest1 = parseInstallTest();
                 logFile.addSection(installTest1);
                 if (installTest1.isSuccess()) {
