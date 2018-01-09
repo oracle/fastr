@@ -135,6 +135,8 @@ trim <- function (x) gsub("^\\s+|\\s+$", "", x)
 
 strip.version <- function(x) gsub("\\s*\\(.*\\)$", "", x)
 
+initial.packages <- c("methods", "datasets", "utils", "grDevices", "graphics", "stats")
+
 default.packages <- c("R", "base", "grid", "splines", "utils",
 		"compiler", "grDevices", "methods", "stats", "stats4",
 		"datasets", "graphics", "parallel", "tools", "tcltk")
@@ -857,12 +859,16 @@ is.fastr <- function() {
 
 system.test <- function(pkgname) {
 	script <- normalizePath("com.oracle.truffle.r.test.packages/r/test.package.R")
+    options <- character(0)
 	if (is.fastr()) {
 		rscript = file.path(R.home(), "bin", "Rscript")
 	} else {
-		rscript = gnu_rscript()
+        # GnuR's Rscript command does not load the 'methods' package by default.
+        # But the examples are assumed to be run in a shell where the package is on the search path.
+	    options <- paste0("--default-packages=", paste0(initial.packages, collapse=","))
+        rscript = gnu_rscript()
 	}
-	args <- c(script, pkgname, file.path(testdir, pkgname), lib.install)
+	args <- c(options, script, pkgname, file.path(testdir, pkgname), lib.install)
 	# we want to stop tests that hang, but some packages have many tests
 	# each of which spawns a sub-process (over which we have no control)
 	# so we time out the entire set after 20 minutes.

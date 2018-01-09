@@ -21,6 +21,10 @@
 # questions.
 #
 
+is.fastr <- function() {
+    length(grep('FastR', R.Version()$version.string))
+}
+
 # A simple log function; to be replaced by a user of this file.
 log.message <- function(..., level=0) {
     cat(..., "\n")
@@ -255,7 +259,7 @@ recommended.base.packages <- c("boot", "class", "cluster", "codetools", "foreign
 base.packages <- c("base", "compiler", "datasets", "grDevices", "graphics", "grid", "methods", "parallel", "splines", "stats", "stats4", "tools", "utils")
 
 # the list of packages that will be excluded in the transitive dependecies
-ignored.packages <- recommended.base.packages
+ignored.packages <- if (is.fastr()) recommended.base.packages else base.packages
 
 package.dependencies <- function(pkg, lib, dependencies = c("Depends", "Imports", "LinkingTo"), pl = available.packages()) {
     if (!(pkg %in% rownames(pl))) {
