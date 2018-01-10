@@ -276,17 +276,17 @@ package.dependencies <- function(pkg, lib, dependencies = c("Depends", "Imports"
     deps <- trimws(sub("\\(.*\\)", "", deps))
 
     # ignore dependency to "R" and ignore already installed packages
-    installed.packages <- tryCatch({
+    installed.pkgs.list <- tryCatch({
         # query base and recommended packages
         ip <- available.packages(lib.loc=lib)
         ip[as.logical(match(ip[,"Priority"], c("base", "recommended"), nomatch=0L)),"Package"]
-        installed.pacakges(lib.loc=lib)
+        installed.packages(lib.loc=lib)
     }, error = function(e) {
         character(0)
     }, warning = function(e) {
         character(0)
     })
-    setdiff(deps, c("R", installed.packages, ignored.packages))
+    setdiff(deps, c("R", installed.pkgs.list, ignored.packages))
 }
 
 transitive.dependencies <- function(pkg, lib, pl = available.packages(), deptype=c("Depends", "Imports", "LinkingTo"), suggests=FALSE) {
