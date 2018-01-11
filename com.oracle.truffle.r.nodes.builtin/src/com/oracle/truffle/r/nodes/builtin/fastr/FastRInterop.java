@@ -923,6 +923,7 @@ public class FastRInterop {
                         @Cached("createInvoke(args.getLength())") Node invokeNode) {
 
             if (getDataNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDataNode = insert(GetReadonlyData.ListData.create());
             }
 

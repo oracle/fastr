@@ -162,7 +162,11 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         RList dimNames = getDimNamesNode.getDimNames(vector);
         if (setDimNamesProfile.profile(dimNames != null)) {
             if (setDimNames == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 setDimNames = insert(SetDimNamesAttributeNode.create());
+            }
+            if (extractListElement == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 extractListElement = insert(ExtractListElement.create());
             }
             Object[] permData = new Object[dimNames.getLength()];

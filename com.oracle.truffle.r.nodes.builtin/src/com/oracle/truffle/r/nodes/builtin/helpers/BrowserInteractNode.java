@@ -131,6 +131,9 @@ public abstract class BrowserInteractNode extends Node {
                         break LW;
                     case "Q":
                         throw new JumpToTopLevelException();
+                    case "help":
+                        printHelp(ch);
+                        break;
                     case "where": {
                         if (currentCaller.getDepth() > 1) {
                             Object stack = Utils.createTraceback(0);
@@ -204,5 +207,16 @@ public abstract class BrowserInteractNode extends Node {
 
     private static String browserPrompt(int depth) {
         return "Browse[" + depth + "]> ";
+    }
+
+    private static void printHelp(ConsoleIO out) {
+        out.println("n          next");
+        out.println("s          step into");
+        out.println("f          finish");
+        out.println("c or cont  continue");
+        out.println("Q          quit");
+        out.println("where      show stack");
+        out.println("help       show help");
+        out.println("<expr>     evaluate expression");
     }
 }

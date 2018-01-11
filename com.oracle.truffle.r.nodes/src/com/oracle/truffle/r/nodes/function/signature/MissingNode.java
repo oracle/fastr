@@ -212,8 +212,10 @@ public final class MissingNode extends OperatorNode {
                 throw error(Message.INVALID_USE, "missing");
             }
             if (ArgumentsSignature.VARARG_NAME.equals(identifier)) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 readVarArgs = insert(LocalReadVariableNode.create(ArgumentsSignature.VARARG_NAME, false));
             } else {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 level = insert(new MissingCheckLevel(identifier, 0));
             }
         }

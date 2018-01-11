@@ -664,7 +664,7 @@ public final class SpecialAttributesFunctions {
 
         public final boolean isSquareMatrix(RAbstractVector vector) {
             RIntVector dims = (RIntVector) execute(vector);
-            if (nullDimsProfile.profile(dims == null) || dims.getLength() < 2) {
+            if (nullDimsProfile.profile(dims == null) || dims.getLength() != 2) {
                 return false;
             }
             return dims.getDataAt(0) == dims.getDataAt(1);
@@ -926,8 +926,15 @@ public final class SpecialAttributesFunctions {
 
         public void initAttributes(RAbstractContainer x, RAbstractContainer source) {
             if (getDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDimNode = insert(GetDimAttributeNode.create());
+            }
+            if (getNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getNamesNode = insert(GetNamesAttributeNode.create());
+            }
+            if (getDimNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDimNamesNode = insert(GetDimNamesAttributeNode.create());
             }
             this.initAttributes(x, getDimNode.getDimensions(source), getNamesNode.getNames(source), getDimNamesNode.getDimNames(source));

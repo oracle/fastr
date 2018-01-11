@@ -33,6 +33,7 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -142,6 +143,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         private void lazyCreateRList2EnvNode() {
             if (rList2EnvNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 rList2EnvNode = insert(RList2EnvNode.create());
             }
         }

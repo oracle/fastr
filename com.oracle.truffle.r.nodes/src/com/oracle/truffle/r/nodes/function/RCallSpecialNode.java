@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -319,6 +320,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     @Override
     public Node deepCopy() {
         assert !inReplace && callSpecialParent == null && ignoredArguments.length == 0;
+        CompilerAsserts.neverPartOfCompilation();
         RCallSpecialNode node = (RCallSpecialNode) RContext.getASTBuilder().process(this).asRNode();
         node.functionNode = node.insert(node.functionNode);
         node.special = node.insert(node.special);

@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -77,6 +78,7 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
     protected RLanguage tilde(VirtualFrame frame, Object x, Object y) {
 
         if (setEnvAttrNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
             setEnvAttrNode = insert(createSetEnvAttrNode());
         }
 

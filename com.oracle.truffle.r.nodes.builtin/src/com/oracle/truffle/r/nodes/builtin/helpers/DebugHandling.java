@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -515,7 +516,7 @@ public class DebugHandling {
         void setFinishing(AbstractLoopNode loopNode) {
             // Disable every statement listener except that for loopNode
             for (LoopStatementEventListener lser : loopStatementListeners) {
-                if (lser.getLoopNode() == loopNode) {
+                if (lser.handlesLoop(loopNode)) {
                     lser.setFinishing();
                 } else {
                     lser.disable();
@@ -708,24 +709,24 @@ public class DebugHandling {
          * The wrapper for the loop node is stable whereas the loop node itself will be replaced
          * with a specialized node.
          */
-        private final RSyntaxNode loopNode;
+        private final SourceSection loopSourceSection;
         private final FunctionStatementsEventListener fser;
 
         LoopStatementEventListener(FunctionDefinitionNode functionDefinitionNode, Object text, Object condition, RSyntaxNode loopNode, FunctionStatementsEventListener fser) {
             super(functionDefinitionNode, text, condition);
-            this.loopNode = loopNode;
+            this.loopSourceSection = loopNode.getSourceSection();
             this.fser = fser;
         }
 
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!disabled() && context.getInstrumentedNode() == loopNode) {
+            if (isEnabled(context)) {
                 super.onEnter(context, frame);
             }
         }
 
-        RSyntaxNode getLoopNode() {
-            return loopNode;
+        boolean handlesLoop(RSyntaxNode loop) {
+            return loopSourceSection != null && loopSourceSection.equals(loop.getSourceSection());
         }
 
         void setFinishing() {
@@ -734,7 +735,7 @@ public class DebugHandling {
 
         @Override
         public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-            if (!disabled() && context.getInstrumentedNode() == loopNode) {
+            if (isEnabled(context)) {
                 CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
@@ -742,10 +743,14 @@ public class DebugHandling {
 
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-            if (!disabled() && context.getInstrumentedNode() == loopNode) {
+            if (isEnabled(context)) {
                 CompilerDirectives.transferToInterpreter();
                 returnCleanup();
             }
+        }
+
+        private boolean isEnabled(EventContext ctx) {
+            return !disabled() && loopSourceSection != null && loopSourceSection.equals(ctx.getInstrumentedNode().getSourceSection());
         }
 
         private void returnCleanup() {

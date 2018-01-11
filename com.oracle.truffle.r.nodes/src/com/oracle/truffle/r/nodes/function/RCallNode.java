@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.NodeChild;
@@ -62,6 +63,8 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
+import com.oracle.truffle.r.nodes.function.RCallNodeGen.SendForeignExecuteMessageNodeGen;
+import com.oracle.truffle.r.nodes.function.RCallNodeGen.SendForeignInvokeMessageNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
@@ -555,12 +558,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     protected abstract static class ForeignCall extends LeafCallNode {
-
-        @Child protected CallArgumentsNode arguments;
-        @Child protected Node messageNode;
-        @Child protected Foreign2R foreign2RNode;
-        @Child protected R2Foreign r2ForeignNode;
-        @CompilationFinal protected int foreignCallArgCount;
+        @Child private CallArgumentsNode arguments;
+        @Child private Foreign2R foreign2RNode;
 
         protected ForeignCall(RCallNode originalCall, CallArgumentsNode arguments) {
             super(originalCall);
@@ -568,74 +567,120 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         protected Object[] evaluateArgs(VirtualFrame frame) {
-            Object[] argumentsArray = originalCall.explicitArgs != null ? ((RArgsValuesAndNames) originalCall.explicitArgs.execute(frame)).getArguments()
+            return originalCall.explicitArgs != null ? ((RArgsValuesAndNames) originalCall.explicitArgs.execute(frame)).getArguments()
                             : arguments.evaluateFlattenObjects(frame, originalCall.lookupVarArgs(frame));
+        }
+
+        protected Foreign2R getForeign2RNode() {
+            if (foreign2RNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                foreign2RNode = insert(Foreign2R.create());
+            }
+            return foreign2RNode;
+        }
+    }
+
+    protected static final class ForeignExecute extends ForeignCall {
+        @Child private SendForeignExecuteMessage sendExecuteMessage = SendForeignExecuteMessageNodeGen.create();
+
+        protected ForeignExecute(RCallNode originalCall, CallArgumentsNode arguments) {
+            super(originalCall, arguments);
+        }
+
+        public Object execute(VirtualFrame frame, TruffleObject function) {
+            return getForeign2RNode().execute(sendExecuteMessage.execute(function, evaluateArgs(frame)));
+        }
+    }
+
+    protected static final class ForeignInvoke extends ForeignCall {
+        @Child private SendForeignInvokeMessage sendInvokeMessage = SendForeignInvokeMessageNodeGen.create();
+
+        protected ForeignInvoke(RCallNode originalCall, CallArgumentsNode arguments) {
+            super(originalCall, arguments);
+        }
+
+        public Object execute(VirtualFrame frame, DeferredFunctionValue function) {
+            return getForeign2RNode().execute(sendInvokeMessage.execute(function, evaluateArgs(frame)));
+        }
+    }
+
+    protected abstract static class SendForeignMessageBase extends Node {
+        @Child private R2Foreign r2ForeignNode;
+
+        @ExplodeLoop
+        protected Object[] args2Foreign(Object[] args) {
             if (r2ForeignNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 r2ForeignNode = insert(R2Foreign.create());
             }
-            for (int i = 0; i < argumentsArray.length; i++) {
-                argumentsArray[i] = r2ForeignNode.execute(argumentsArray[i]);
+            for (int i = 0; i < args.length; i++) {
+                args[i] = r2ForeignNode.execute(args[i]);
             }
-            return argumentsArray;
+            return args;
         }
     }
 
     /**
      * Calls a foreign function using message EXECUTE.
      */
-    protected static final class ForeignExecute extends ForeignCall {
+    protected abstract static class SendForeignExecuteMessage extends SendForeignMessageBase {
 
-        protected ForeignExecute(RCallNode originalCall, CallArgumentsNode arguments) {
-            super(originalCall, arguments);
+        public abstract Object execute(TruffleObject function, Object[] args);
+
+        protected static Node createMessageNode(int argsLen) {
+            return Message.createExecute(argsLen).createNode();
         }
 
-        protected Object execute(VirtualFrame frame, TruffleObject function) {
-            Object[] argumentsArray = evaluateArgs(frame);
-            if (messageNode == null || foreignCallArgCount != argumentsArray.length) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                messageNode = insert(Message.createExecute(argumentsArray.length).createNode());
-                foreignCallArgCount = argumentsArray.length;
-                foreign2RNode = insert(Foreign2R.create());
-            }
-
+        @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "8")
+        protected Object doCached(TruffleObject function, Object[] argumentsArray,
+                        @Cached("createMessageNode(argumentsArray.length)") Node messageNode,
+                        @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
             try {
-                Object result = ForeignAccess.sendExecute(messageNode, function, argumentsArray);
-                return foreign2RNode.execute(result);
+                return ForeignAccess.sendExecute(messageNode, function, args2Foreign(argumentsArray));
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException e) {
                 CompilerDirectives.transferToInterpreter();
                 RInternalError.reportError(e);
                 throw RError.interopError(RError.findParentRBase(this), e, function);
             }
         }
+
+        @Specialization(replaces = "doCached")
+        @TruffleBoundary
+        protected Object doGeneric(TruffleObject function, Object[] argumentsArray) {
+            return doCached(function, argumentsArray, createMessageNode(argumentsArray.length), argumentsArray.length);
+        }
     }
 
     /**
      * Calls a foreign function using message INVOKE.
      */
-    protected static final class ForeignInvoke extends ForeignCall {
+    protected abstract static class SendForeignInvokeMessage extends SendForeignMessageBase {
 
-        protected ForeignInvoke(RCallNode originalCall, CallArgumentsNode arguments) {
-            super(originalCall, arguments);
+        public abstract Object execute(DeferredFunctionValue function, Object[] args);
+
+        protected static Node createMessageNode(int argsLen) {
+            return Message.createInvoke(argsLen).createNode();
         }
 
-        protected Object execute(VirtualFrame frame, DeferredFunctionValue lhs) {
+        @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "8")
+        protected Object doCached(DeferredFunctionValue lhs, Object[] argumentsArray,
+                        @Cached("createMessageNode(argumentsArray.length)") Node messageNode,
+                        @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
             TruffleObject receiver = lhs.getLHSReceiver();
             String member = lhs.getLHSMember();
-            Object[] argumentsArray = evaluateArgs(frame);
-            if (messageNode == null || foreignCallArgCount != argumentsArray.length) {
-                messageNode = insert(Message.createInvoke(argumentsArray.length).createNode());
-                foreignCallArgCount = argumentsArray.length;
-                foreign2RNode = insert(Foreign2R.create());
-            }
-
             try {
-                Object result = ForeignAccess.sendInvoke(messageNode, receiver, member, argumentsArray);
-                return foreign2RNode.execute(result);
+                return ForeignAccess.sendInvoke(messageNode, receiver, member, args2Foreign(argumentsArray));
             } catch (ArityException | UnsupportedMessageException | UnsupportedTypeException | UnknownIdentifierException e) {
                 CompilerDirectives.transferToInterpreter();
                 RInternalError.reportError(e);
                 throw RError.interopError(RError.findParentRBase(this), e, receiver);
             }
+        }
+
+        @Specialization(replaces = "doCached")
+        @TruffleBoundary
+        protected Object doGeneric(DeferredFunctionValue lhs, Object[] argumentsArray) {
+            return doCached(lhs, argumentsArray, createMessageNode(argumentsArray.length), argumentsArray.length);
         }
     }
 
