@@ -133,7 +133,8 @@ def copylib(args):
 #        if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
         if mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris':
             return 0
-        mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
+        if os.environ.get('FASTR_RELEASE') != 'dev':
+            mx.abort(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, but required with FASTR_RELEASE')
 
     mx.log(args[0] + ' not found in PKG_LDFLAGS_OVERRIDE, assuming system location')
     return 0
