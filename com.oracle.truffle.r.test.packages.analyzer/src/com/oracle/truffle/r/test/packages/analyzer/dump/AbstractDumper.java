@@ -69,20 +69,20 @@ public abstract class AbstractDumper {
     }
 
     protected static Collection<Problem> eliminateRedundantProblems(Collection<Problem> problems) {
-        LOGGER.fine("Building detector hierarchy.");
+        LOGGER.info("Building detector hierarchy.");
         Set<Detector<?>> collect = problems.stream().map(p -> p.getDetector()).collect(Collectors.toSet());
         Map<Detector<?>, Collection<Detector<?>>> hierarchy = new HashMap<>();
         for (Detector<?> detector : collect) {
             hierarchy.put(detector, collectChildrenRecursive(detector));
         }
 
-        LOGGER.fine("Grouping problems by detector.");
+        LOGGER.info("Grouping problems by detector.");
         Map<Detector<?>, List<Problem>> collect2 = problems.stream().collect(Collectors.groupingBy(p -> p.getDetector()));
 
-        LOGGER.fine("Eliminating redundnat problems.");
+        LOGGER.info("Eliminating redundnat problems.");
         List<Problem> cleaned = problems.stream().filter(p -> isIncluded(p, hierarchy, collect2)).collect(Collectors.toList());
         assert new HashSet<>(cleaned).size() == cleaned.size();
-        LOGGER.fine(String.format("Eliminated %d redundant problems.", (problems.size() - cleaned.size())));
+        LOGGER.info(String.format("Eliminated %d redundant problems.", (problems.size() - cleaned.size())));
         return cleaned;
     }
 

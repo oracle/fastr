@@ -122,14 +122,14 @@ public class HTMLDumper extends AbstractDumper {
     }
 
     private static Collection<Problem> collectAllProblems(Collection<RPackage> pkgs) {
-        LOGGER.fine(String.format("Collecting problems for %d test runs.", pkgs.size()));
+        LOGGER.info(String.format("Collecting problems for %d test runs.", pkgs.size()));
         Collection<Problem> problems = new ArrayList<>();
         for (RPackage pkg : pkgs) {
             for (RPackageTestRun run : pkg.getTestRuns()) {
                 problems.addAll(run.getProblems());
             }
         }
-        LOGGER.fine(String.format("Collected %d problems.", problems.size()));
+        LOGGER.info(String.format("Collected %d problems.", problems.size()));
         return problems;
     }
 
