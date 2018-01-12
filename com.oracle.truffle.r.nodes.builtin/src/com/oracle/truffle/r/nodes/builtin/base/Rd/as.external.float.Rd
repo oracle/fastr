@@ -16,7 +16,11 @@ An interop float value. Error in case the given value can't be converted to a fl
 Marks a R value to be converted to float when passed over to a foreign language.
 }
 \examples{
-as.external.float(1.1)
+javaFloat <- as.external.float(123)
+
+## used to pass a java float to a java method call
+floatClass <- new.java.class('java.lang.Float')
+floatClass$valueOf(javaFloat)
 }
 \seealso{
 \code{\link{as.external.byte}}, \code{\link{as.external.char}}, \code{\link{as.external.long}}, \code{\link{as.external.short}}

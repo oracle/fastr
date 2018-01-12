@@ -20,6 +20,7 @@ Creates a new java array given by the class name and length or dimensions.
 \examples{
 new.java.array('java.lang.Double', 10)
 new.java.array('java.lang.Double', c(2, 3))
+new.java.array('int', c(2L, 3L))
 }
 \seealso{
 \code{\link{as.java.array}}, \code{\link{is.external.array}}

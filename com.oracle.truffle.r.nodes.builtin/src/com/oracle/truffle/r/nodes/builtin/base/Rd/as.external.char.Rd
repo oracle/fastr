@@ -16,7 +16,11 @@ An interop char value. Error in case the given value can't be converted to a cha
 Marks a R value to be converted to char when passed over to a foreign language.
 }
 \examples{
-as.external.char('a')
+javaChar <- as.external.char(123)
+
+## used to pass a java char to a java method call
+charClass <- new.java.class('java.lang.Character')
+charClass$valueOf(javaChar)
 }
 \seealso{
 \code{\link{as.external.byte}}, \code{\link{as.external.float}}, \code{\link{as.external.long}}, \code{\link{as.external.short}}

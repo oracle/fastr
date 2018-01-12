@@ -17,5 +17,5 @@ Determines whether the passed external object can be executed.
 }
 \examples{
 javaClass <- new.java.class('java.util.Collections')
-is.external.executable(javaClass$addAll())
+is.external.executable(javaClass$addAll)
 }

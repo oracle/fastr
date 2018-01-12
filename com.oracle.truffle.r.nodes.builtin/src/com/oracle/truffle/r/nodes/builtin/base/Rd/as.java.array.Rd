@@ -18,7 +18,9 @@ An external object representing a java array. Error in case the array could not 
 Converts a R vector or list to a java array.
 }
 \examples{
-as.java.array(c(1, 2, 3), 'java.lang.Double')
+as.java.array(c(1, 2, 3))
+as.java.array(c(1L, 2L, 3L), 'int')
+as.java.array(c(1L, 2L, 3L), 'java.lang.Integer')
 }
 \seealso{
 \code{\link{new.java.array}}, \code{\link{is.external.array}}
