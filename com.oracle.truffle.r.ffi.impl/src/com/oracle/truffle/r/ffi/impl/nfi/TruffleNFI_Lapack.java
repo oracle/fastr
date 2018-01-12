@@ -196,6 +196,32 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
+    private static class TruffleNFI_ZunmqrNode extends TruffleNFI_DownCallNode implements ZunmqrNode {
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.zunmqr;
+        }
+
+        @Override
+        public int execute(String side, String trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
+            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
+        }
+
+    }
+
+    private static final class TruffleNFI_ZtrtrsNode extends TruffleNFI_DownCallNode implements ZtrtrsNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.ztrtrs;
+        }
+
+        @Override
+        public int execute(String uplo, String trans, String diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
+            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
+        }
+    }
+
     @Override
     public IlaverNode createIlaverNode() {
         return new TruffleNFI_IlaverNode();
@@ -264,5 +290,15 @@ public class TruffleNFI_Lapack implements LapackRFFI {
     @Override
     public DsyevrNode createDsyevrNode() {
         return new TruffleNFI_DsyevrNode();
+    }
+
+    @Override
+    public ZunmqrNode createZunmqrNode() {
+        return new TruffleNFI_ZunmqrNode();
+    }
+
+    @Override
+    public ZtrtrsNode createZtrtrsNode() {
+        return new TruffleNFI_ZtrtrsNode();
     }
 }

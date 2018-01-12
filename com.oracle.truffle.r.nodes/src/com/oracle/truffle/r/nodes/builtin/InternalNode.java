@@ -353,5 +353,5 @@ public abstract class InternalNode extends OperatorNode {
                     "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",
                     "rawConnectionValue", "sockSelect", "gzcon", "memCompress", "memDecompress", "mkUnbound", "env.profile", "setSessionTimeLimit", "icuSetCollate", "findInterval", "rowsum_df",
                     "La_qr_cmplx", "La_rs_cmplx", "La_rg_cmplx", "La_rs_cmplx", "La_dlange", "La_dgecon", "La_dtrcon", "La_zgecon", "La_ztrcon", "La_solve_cmplx", "La_chol2inv", "qr_qy_real",
-                    "qr_coef_cmplx", "qr_qy_cmpl", "La_svd", "La_svd_cmplx");
+                    "qr_qy_cmpl", "La_svd", "La_svd_cmplx");
 }

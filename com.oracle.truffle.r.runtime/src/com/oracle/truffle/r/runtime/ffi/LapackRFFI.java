@@ -189,6 +189,24 @@ public interface LapackRFFI {
         }
     }
 
+    interface ZunmqrNode extends NodeInterface {
+
+        int execute(String side, String trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork);
+
+        static ZunmqrNode create() {
+            return RFFIFactory.getLapackRFFI().createZunmqrNode();
+        }
+    }
+
+    interface ZtrtrsNode extends NodeInterface {
+
+        int execute(String uplo, String trans, String diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb);
+
+        static ZtrtrsNode create() {
+            return RFFIFactory.getLapackRFFI().createZtrtrsNode();
+        }
+    }
+
     IlaverNode createIlaverNode();
 
     DgeevNode createDgeevNode();
@@ -216,5 +234,9 @@ public interface LapackRFFI {
     DgeconNode createDgeconNode();
 
     DsyevrNode createDsyevrNode();
+
+    ZunmqrNode createZunmqrNode();
+
+    ZtrtrsNode createZtrtrsNode();
 
 }

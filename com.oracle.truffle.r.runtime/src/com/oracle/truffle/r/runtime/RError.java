@@ -916,7 +916,8 @@ public final class RError extends RuntimeException implements TruffleException {
         MUST_BE_MULTIPLE("argument '%s' must be a multiple of %d long"),
         MUSTNOT_CONTAIN_NAS("argument '%s' must not contain NAs"),
         VERSION_N_NOT_SUPPORTED("version %d not supported"),
-        ATOMIC_VECTOR_ARGUMENTS_ONLY("atomic vector arguments only");
+        ATOMIC_VECTOR_ARGUMENTS_ONLY("atomic vector arguments only"),
+        MUST_BE_COMPLEX_MATRIX("'%s' must be a complex matrix");
 
         public final String message;
         final boolean hasArgs;
