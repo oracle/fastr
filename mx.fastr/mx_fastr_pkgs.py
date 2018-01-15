@@ -617,6 +617,10 @@ def _replace_engine_references(output):
             output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
 
 
+def _is_ignored_function(fun_name, gnur_content, gnur_stmt, fastr_content, fastr_stmt):
+    return gnur_stmt != -1 and fun_name in gnur_content[gnur_stmt] and fastr_stmt != -1 and fun_name in fastr_content[fastr_stmt]
+
+
 def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, verbose=False):
     """
     Compares the test output of GnuR and FastR by ignoring implementation-specific differences like header, error,
@@ -701,7 +705,12 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                 else:
                     # accept differences in the error/warning messages but we need to synchronize
                     sync = True
-
+            elif _is_ignored_function("sessionInfo", gnur_content, gnur_cur_statement_start, fastr_content, fastr_cur_statement_start):
+                # ignore differences in 'sessionInfo' output
+                sync = True
+            elif _is_ignored_function("extSoftVersion", gnur_content, gnur_cur_statement_start, fastr_content, fastr_cur_statement_start):
+                # ignore differences in 'extSoftVersion' output
+                sync = True
             else:
                 # genuine difference (modulo whitespace)
                 if not _ignore_whitespace(gnur_line, fastr_line):
