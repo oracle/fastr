@@ -32,17 +32,18 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
@@ -111,7 +112,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization
-    protected RLogicalVector doLogicalVector(RLogicalVector operand) {
+    protected RAbstractLogicalVector doLogicalVector(RAbstractLogicalVector operand) {
         return operand;
     }
 
@@ -133,17 +134,17 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization
-    protected RLogicalVector doStringVector(RStringVector operand) {
+    protected RLogicalVector doStringVector(RAbstractStringVector operand) {
         return createResultVector(operand, index -> naCheck.convertStringToLogical(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RLogicalVector doComplexVector(RComplexVector operand) {
+    protected RLogicalVector doComplexVector(RAbstractComplexVector operand) {
         return createResultVector(operand, index -> naCheck.convertComplexToLogical(operand.getDataAt(index)));
     }
 
     @Specialization
-    protected RLogicalVector doRawVectorDims(RRawVector operand) {
+    protected RLogicalVector doRawVectorDims(RAbstractRawVector operand) {
         return createResultVector(operand, index -> RRuntime.raw2logical(operand.getRawDataAt(index)));
     }
 
@@ -193,16 +194,16 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RLogicalVector doForeignObject(TruffleObject obj,
+    protected RAbstractLogicalVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ForeignArray2R foreignArray2R) {
         Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RLogicalVector) {
-                return (RLogicalVector) o;
+            if (o instanceof RAbstractLogicalVector) {
+                return (RAbstractLogicalVector) o;
             }
             o = castLogicalRecursive(o);
             if (o instanceof RLogicalVector) {
-                return (RLogicalVector) o;
+                return (RAbstractLogicalVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");

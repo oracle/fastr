@@ -231,16 +231,16 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RIntVector doForeignObject(TruffleObject obj,
+    protected RAbstractIntVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ForeignArray2R foreignArray2R) {
         Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RIntVector) {
-                return (RIntVector) o;
+            if (o instanceof RAbstractIntVector) {
+                return (RAbstractIntVector) o;
             }
             o = castIntegerRecursive(o);
-            if (o instanceof RIntVector) {
-                return (RIntVector) o;
+            if (o instanceof RAbstractIntVector) {
+                return (RAbstractIntVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");

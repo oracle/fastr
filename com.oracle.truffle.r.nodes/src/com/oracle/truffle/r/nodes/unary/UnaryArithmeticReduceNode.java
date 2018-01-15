@@ -35,13 +35,13 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
@@ -318,7 +318,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization(guards = "supportComplex")
-    protected RComplex doComplexVector(RComplexVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected RComplex doComplexVector(RAbstractComplexVector operand, boolean naRm, @SuppressWarnings("unused") boolean finite) {
         RBaseNode.reportWork(this, operand.getLength());
         boolean profiledNaRm = naRmProfile.profile(naRm);
         RComplex result = RRuntime.double2complex(semantics.getDoubleStart());
@@ -348,7 +348,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     // "largest" String for the implementation of max function
 
     @Specialization(guards = {"supportString", "operand.getLength() == 0"})
-    protected String doStringVectorEmpty(@SuppressWarnings("unused") RStringVector operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
+    protected String doStringVectorEmpty(@SuppressWarnings("unused") RAbstractStringVector operand, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean finite) {
         if (semantics.getEmptyWarning() != null) {
             warning(semantics.emptyWarningCharacter);
         }
@@ -356,7 +356,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization(guards = {"supportString", "operand.getLength() == 1"})
-    protected String doStringVectorOneElem(RStringVector operand, boolean naRm, boolean finite) {
+    protected String doStringVectorOneElem(RAbstractStringVector operand, boolean naRm, boolean finite) {
         boolean profiledNaRm = naRmProfile.profile(naRm);
         String result = operand.getDataAt(0);
         if (profiledNaRm) {
@@ -369,7 +369,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     }
 
     @Specialization(guards = {"supportString", "operand.getLength() > 1"})
-    protected String doStringVector(RStringVector operand, boolean naRm, boolean finite) {
+    protected String doStringVector(RAbstractStringVector operand, boolean naRm, boolean finite) {
         boolean profiledNaRm = naRmProfile.profile(naRm);
         na.enable(operand);
         int offset = 0;

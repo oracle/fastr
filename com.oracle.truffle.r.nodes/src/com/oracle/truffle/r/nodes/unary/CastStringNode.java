@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
 @ImportStatic(RRuntime.class)
@@ -76,12 +77,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization
-    protected RStringVector doStringVector(RStringVector vector) {
-        return vector;
-    }
-
-    @Specialization
-    protected RStringSequence doStringSequence(RStringSequence vector) {
+    protected RAbstractStringVector doStringVector(RAbstractStringVector vector) {
         return vector;
     }
 
@@ -90,7 +86,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return RDataFactory.createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
     }
 
-    @Specialization(guards = "!isIntSequence(operandIn)")
+    @Specialization(guards = {"!isIntSequence(operandIn)", "!isRAbstractStringVector(operandIn)"})
     protected RStringVector doAbstractContainer(RAbstractContainer operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
@@ -109,16 +105,16 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RStringVector doForeignObject(TruffleObject obj,
+    protected RAbstractStringVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ForeignArray2R foreignArray2R) {
         Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RStringVector) {
-                return (RStringVector) o;
+            if (o instanceof RAbstractStringVector) {
+                return (RAbstractStringVector) o;
             }
             o = castStringRecursive(o);
-            if (o instanceof RStringVector) {
-                return (RStringVector) o;
+            if (o instanceof RAbstractStringVector) {
+                return (RAbstractStringVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
