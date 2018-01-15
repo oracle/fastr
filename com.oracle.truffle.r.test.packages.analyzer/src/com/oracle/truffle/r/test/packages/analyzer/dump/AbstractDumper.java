@@ -30,6 +30,7 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
@@ -39,6 +40,8 @@ import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
 
 public abstract class AbstractDumper {
+
+    private static final Logger LOGGER = Logger.getLogger(AbstractDumper.class.getName());
 
     public abstract void dump(Collection<RPackage> problems, Collection<LogFileParseException> collection);
 
@@ -66,17 +69,20 @@ public abstract class AbstractDumper {
     }
 
     protected static Collection<Problem> eliminateRedundantProblems(Collection<Problem> problems) {
-        // build detector hierarchy
+        LOGGER.info("Building detector hierarchy.");
         Set<Detector<?>> collect = problems.stream().map(p -> p.getDetector()).collect(Collectors.toSet());
         Map<Detector<?>, Collection<Detector<?>>> hierarchy = new HashMap<>();
         for (Detector<?> detector : collect) {
             hierarchy.put(detector, collectChildrenRecursive(detector));
         }
 
+        LOGGER.info("Grouping problems by detector.");
         Map<Detector<?>, List<Problem>> collect2 = problems.stream().collect(Collectors.groupingBy(p -> p.getDetector()));
 
+        LOGGER.info("Eliminating redundnat problems.");
         List<Problem> cleaned = problems.stream().filter(p -> isIncluded(p, hierarchy, collect2)).collect(Collectors.toList());
         assert new HashSet<>(cleaned).size() == cleaned.size();
+        LOGGER.info(String.format("Eliminated %d redundant problems.", (problems.size() - cleaned.size())));
         return cleaned;
     }
 

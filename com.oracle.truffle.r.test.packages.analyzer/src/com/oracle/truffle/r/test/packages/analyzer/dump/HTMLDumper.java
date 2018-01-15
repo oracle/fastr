@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.logging.Logger;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
@@ -46,6 +47,8 @@ import com.oracle.truffle.r.test.packages.analyzer.model.RPackageTestRun;
 import com.oracle.truffle.r.test.packages.analyzer.parser.LogFileParseException;
 
 public class HTMLDumper extends AbstractDumper {
+
+    private static final Logger LOGGER = Logger.getLogger(HTMLDumper.class.getName());
 
     private static final String TITLE = "FastR Package Test Dashboard";
     private Path destDir;
@@ -75,7 +78,7 @@ public class HTMLDumper extends AbstractDumper {
             createAndCheckOutDir();
             dumpIndexFile(packages, parseErrors);
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error writing HTML output: " + e.getMessage());
         }
     }
 
@@ -94,6 +97,7 @@ public class HTMLDumper extends AbstractDumper {
             Tag pkgDistributionTable = generateTestRunDistributionTable(indexFile, builder, groupByTestRuns(allTestRuns, allProblems));
             Tag distrinctProblemDistributionTable = generateDistinctProblemDistribution(builder, groupByProblemContent(allProblems));
 
+            LOGGER.info("Writing index file.");
             builder.html(builder.head(builder.title(TITLE)), builder.body(
                             builder.h1(TITLE),
                             builder.p("Total number of analysis candidates: " + allTestRuns.size()),
@@ -103,7 +107,7 @@ public class HTMLDumper extends AbstractDumper {
                             builder.h2("Distinct Problem Distribution"), distrinctProblemDistributionTable));
             builder.dump();
         } catch (IOException e) {
-            e.printStackTrace();
+            LOGGER.severe("Error during generation of HTML output: " + e.getMessage());
         }
     }
 
@@ -118,16 +122,19 @@ public class HTMLDumper extends AbstractDumper {
     }
 
     private static Collection<Problem> collectAllProblems(Collection<RPackage> pkgs) {
+        LOGGER.info(String.format("Collecting problems for %d test runs.", pkgs.size()));
         Collection<Problem> problems = new ArrayList<>();
         for (RPackage pkg : pkgs) {
             for (RPackageTestRun run : pkg.getTestRuns()) {
                 problems.addAll(run.getProblems());
             }
         }
+        LOGGER.info(String.format("Collected %d problems.", problems.size()));
         return problems;
     }
 
     private Tag generateTestRunDistributionTable(Path indexFile, HTMLBuilder builder, Map<RPackageTestRun, List<Problem>> groupByTestRun) {
+        LOGGER.info("Generating test run distribution table.");
         List<RPackageTestRun> collect = groupByTestRun.keySet().stream().sorted((a, b) -> Integer.compare(groupByTestRun.get(b).size(), groupByTestRun.get(a).size())).collect(Collectors.toList());
 
         Tag table = builder.table(builder.tr(
@@ -162,6 +169,7 @@ public class HTMLDumper extends AbstractDumper {
     }
 
     private Tag generateDistinctProblemDistribution(HTMLBuilder builder, Map<ProblemContent, List<Problem>> groupByPkg) {
+        LOGGER.info("Generating distinct problem distribution table.");
         List<ProblemContent> collect = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size())).collect(Collectors.toList());
 
         Tag table = builder.table(builder.tr(
@@ -186,6 +194,7 @@ public class HTMLDumper extends AbstractDumper {
     }
 
     private Tag generateTypeDistributionTable(HTMLBuilder builder, Map<Class<? extends Problem>, List<Problem>> groupByType) {
+        LOGGER.info("Generating problem type distribution table.");
         List<Class<? extends Problem>> collect = groupByType.keySet().stream().sorted((a, b) -> Integer.compare(groupByType.get(b).size(), groupByType.get(a).size())).collect(Collectors.toList());
 
         Tag table = builder.table();
