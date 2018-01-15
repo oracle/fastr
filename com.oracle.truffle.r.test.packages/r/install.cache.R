@@ -102,6 +102,19 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         # to produce a ZIP with relative paths, we need to change the working dir
         prev.wd <- getwd()
         setwd(lib)
+
+        # cleanup older package versions
+        tryCatch({
+            fs <- list.files(version.dir, full.names=TRUE, recursive=FALSE)
+            pkg.cached.versions.idxs <- grepl(pkgname, fs)
+            if (length(pkg.cached.versions.idxs) != 0L) {
+                log.message("cleaning up old package versions '", fs[pkg.cached.versions.idxs], "'", level=1)
+                unlink(fs[pkg.cached.versions.idxs], recursive=FALSE)
+            }
+        }, error = function(e) {
+            log.message("could not cleanup old package versions of '", pkgname, "' because: ", e$message)
+        })
+
         if(zip(toPath, pkgname, flags="-r9Xq") != 0L) {
             log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)
             return (FALSE)
