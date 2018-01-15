@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "b1c4af13e75d2dc839b5050ba020356ec1602788",
+               "version" : "e140680ae7ebc4329e5cd96889258a75b6987dfe",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -114,7 +114,6 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "com.oracle.truffle.r.runtime",
-        "truffle:TRUFFLE_DEBUG",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -197,7 +196,6 @@ suite = {
         "com.oracle.truffle.r.nodes.builtin",
         "com.oracle.truffle.r.parser",
         "truffle:JLINE",
-        "truffle:TRUFFLE_DEBUG",
         "truffle:TRUFFLE_NFI",
       ],
      "generatedDependencies" : [
@@ -218,7 +216,6 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
-        "truffle:TRUFFLE_DEBUG",
         "XZ-1.6",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
@@ -358,7 +355,6 @@ suite = {
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",
-        "truffle:TRUFFLE_DEBUG",
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
       ],
@@ -374,7 +370,6 @@ suite = {
       "distDependencies" : [
         "FASTR",
         "truffle:TRUFFLE_API",
-        "truffle:TRUFFLE_DEBUG",
         "TRUFFLE_R_PARSER_PROCESSOR",
         "truffle:TRUFFLE_TCK",
       ],
