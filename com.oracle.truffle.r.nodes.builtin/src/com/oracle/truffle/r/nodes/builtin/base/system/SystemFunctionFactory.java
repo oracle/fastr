@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 
@@ -42,7 +43,7 @@ public abstract class SystemFunctionFactory {
             theInstance = (SystemFunctionFactory) Class.forName(className).newInstance();
         } catch (Exception ex) {
             // CheckStyle: stop system..print check
-            Utils.rSuicide("Failed to instantiate class: " + className);
+            RSuicide.rSuicide("Failed to instantiate class: " + className);
         }
     }
 

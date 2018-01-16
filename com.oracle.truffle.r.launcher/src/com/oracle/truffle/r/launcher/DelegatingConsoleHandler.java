@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,26 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.managed;
+package com.oracle.truffle.r.launcher;
 
-import static com.oracle.truffle.r.ffi.impl.managed.Managed_RFFIFactory.unsupported;
+import java.util.function.Supplier;
 
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
-
-public class Managed_REmbedRFFI implements REmbedRFFI {
-    @Override
-    public ReadConsoleNode createReadConsoleNode() {
-        throw unsupported("REmbed");
-    }
-
-    @Override
-    public WriteConsoleNode createWriteConsoleNode() {
-        throw unsupported("REmbed");
-    }
-
-    @Override
-    public WriteErrConsoleNode createWriteErrConsoleNode() {
-        throw unsupported("REmbed");
-    }
+/**
+ * Represents a console handler that may delegate its operations to the given {@link ConsoleHandler}
+ * . This is used for R embedding where the user may provide custom overrides of some console
+ * functions.
+ */
+public abstract class DelegatingConsoleHandler extends ConsoleHandler {
+    public abstract void setDelegate(Supplier<ConsoleHandler> handler);
 }

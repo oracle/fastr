@@ -83,6 +83,12 @@ public enum NativeFunction {
     lminfl("([double], sint32, sint32, sint32, sint32, [double], [double], [double], [double], [double], double): void", "call_stats_", "stats"),
     // FastR helpers
     set_exception_flag("(): void"),
+    // FastR internal helper for R embedded mode
+    rembedded_write_console("(string, sint32):void"),
+    rembedded_write_err_console("(string, sint32):void"),
+    rembedded_read_console("(string):string"),
+    rembedded_native_clean_up("(sint32, sint32, sint32):void"),
+    rembedded_native_suicide("(string):void"),
     // user-defined RNG
     unif_init("(sint32): void", "user_", anyLibrary()),
     norm_rand("(): pointer", "user_", anyLibrary()),

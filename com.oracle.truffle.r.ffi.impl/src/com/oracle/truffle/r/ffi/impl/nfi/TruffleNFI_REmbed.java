@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,33 +22,82 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 
 public class TruffleNFI_REmbed implements REmbedRFFI {
 
-    @Override
-    public void suicide(String x) {
-        throw RInternalError.unimplemented();
+    private static class TruffleNFI_ReadConsoleNode extends TruffleNFI_DownCallNode implements ReadConsoleNode {
+        @Child private Node unboxNode;
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.rembedded_read_console;
+        }
+
+        @Override
+        public String execute(String prompt) {
+            Object result = call(prompt);
+            if (result instanceof String) {
+                return (String) result;
+            }
+            assert result instanceof TruffleObject : "NFI is expected to send us TruffleObject or String";
+            if (unboxNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                unboxNode = insert(Message.UNBOX.createNode());
+            }
+            try {
+                return (String) ForeignAccess.sendUnbox(unboxNode, (TruffleObject) result);
+            } catch (ClassCastException | UnsupportedMessageException e) {
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("Unboxing TruffleObject from NFI, which should be String wrapper, failed. " + e.getMessage());
+            }
+        }
+    }
+
+    private static class TruffleNFI_WriteConsoleNode extends TruffleNFI_DownCallNode implements WriteConsoleNode {
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.rembedded_write_console;
+        }
+
+        @Override
+        public void execute(String x) {
+            call(x, x.length());
+        }
+    }
+
+    private static class TruffleNFI_WriteErrConsoleNode extends TruffleNFI_DownCallNode implements WriteErrConsoleNode {
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.rembedded_write_err_console;
+        }
+
+        @Override
+        public void execute(String x) {
+            call(x, x.length());
+        }
     }
 
     @Override
-    public void cleanUp(int type, int x, int y) {
-        throw RInternalError.unimplemented();
+    public ReadConsoleNode createReadConsoleNode() {
+        return new TruffleNFI_ReadConsoleNode();
     }
 
     @Override
-    public String readConsole(String prompt) {
-        throw RInternalError.unimplemented();
+    public WriteConsoleNode createWriteConsoleNode() {
+        return new TruffleNFI_WriteConsoleNode();
     }
 
     @Override
-    public void writeConsole(String x) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public void writeErrConsole(String x) {
-        throw RInternalError.unimplemented();
+    public WriteErrConsoleNode createWriteErrConsoleNode() {
+        return new TruffleNFI_WriteErrConsoleNode();
     }
 }

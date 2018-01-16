@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,19 +22,20 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
+import java.io.InputStream;
+import java.io.OutputStream;
+
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
 import org.graalvm.polyglot.Source;
 
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCommand;
 import com.oracle.truffle.r.launcher.RStartParams;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource.Internal;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
@@ -53,13 +54,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * Rf_mainloop();
  * </pre>
  *
- * {@code Rf_initialize_R} invokes {@link #initializeR(String[])}. This creates an
- * {@link RStartParams} object in {@code embedded} mode that is recorded in the
- * {@link ChildContextInfo} object which is itself stored as a global symbol in the associated
- * {@link PolyglotEngine} instance. The FastR {@link PolyglotEngine} is then partially initialized.
- * The call to {@code R_SetParams} will adjust the values stored in the {@link RStartParams} object
- * and then {@code Rf_mainloop}, which calls {@link #setupRmainloop()} and then
- * {@link #runRmainloop()}, which will complete the FastR initialization and enter the
+ * {@code Rf_initialize_R} invokes {@link #initializeR(String[])}, which creates new polyglot
+ * {@link Context}. The call to {@code R_SetParams} adjusts the values stored in the
+ * {@link RStartParams} object and then {@code Rf_mainloop}, which calls {@link #setupRmainloop()}
+ * and then {@link #runRmainloop()}, which will complete the FastR initialization and enter the
  * read-eval-print loop.
  */
 public class REmbedded {
@@ -78,12 +76,31 @@ public class REmbedded {
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
 
-        consoleHandler = RCommand.createConsoleHandler(options, true, System.in, System.out);
-        try (Context cntx = Context.newBuilder().allowHostAccess(true).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(System.out).err(System.err).build()) {
-            context = cntx;
-            consoleHandler.setContext(context);
-            context.eval(INIT);
-        }
+        EmbeddedConsoleHandler embeddedConsoleHandler = new EmbeddedConsoleHandler();
+
+        consoleHandler = RCommand.createConsoleHandler(options, embeddedConsoleHandler, System.in, System.out);
+        InputStream input = consoleHandler.createInputStream();
+        boolean useEmbedded = consoleHandler == embeddedConsoleHandler;
+        OutputStream stdOut = useEmbedded ? embeddedConsoleHandler.createStdOutputStream(System.out) : System.out;
+        OutputStream stdErr = useEmbedded ? embeddedConsoleHandler.createErrOutputStream(System.err) : System.err;
+        context = Context.newBuilder().allowHostAccess(true).arguments("R", options.getArguments()).in(input).out(stdOut).err(stdErr).build();
+        consoleHandler.setContext(context);
+        context.eval(INIT);
+    }
+
+    /**
+     * Adjusts the values stored in {@link RStartParams}. Invoked from the native embedding code,
+     * i.e. not from a down-call, so the callbacks native array is not set-up properly. Moreover,
+     * this call is made during R initialization, so it not entirely clear if the FFI implementation
+     * has been fully initialized yet.
+     */
+    @SuppressWarnings("unused")
+    private static void setParams(boolean quietA, boolean slaveA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
+                    boolean loadInitFileA, boolean debugInitFileA, int restoreActionA, int saveActionA, boolean noRenvironA) {
+        context.enter();
+        RStartParams params = RContext.getInstance().getStartParams();
+        params.setParams(quietA, slaveA, interactiveA, verboseA, loadSiteFileA, loadInitFileA, debugInitFileA, restoreActionA, saveActionA, noRenvironA);
+        context.leave();
     }
 
     /**
@@ -106,11 +123,10 @@ public class REmbedded {
      * native code after {@link #initializeR} returned.
      */
     private static void runRmainloop() {
+        context.enter();
         RContext.getInstance().completeEmbeddedInitialization();
-        if (!RContext.getInstance().getStartParams().isQuiet()) {
-            System.out.println(RRuntime.WELCOME_MESSAGE);
-        }
         int status = RCommand.readEvalPrint(context, consoleHandler);
+        context.leave();
         context.close();
         Utils.systemExit(status);
     }
@@ -127,13 +143,14 @@ public class REmbedded {
     // Checkstyle: stop method name check
 
     /**
-     * Upcalled from embedded mode to (really) commit suicide. This provides the default
+     * Upcalled from embedded mode via JNI to (really) commit suicide. This provides the default
      * implementation of the {@code R_Suicide} function in the {@code Rinterface} API. If an
      * embeddee overrides it, it typically will save this value and invoke it after its own
      * customization.
      */
     @SuppressWarnings("unused")
     private static void R_Suicide(String msg) {
-        Utils.rSuicideDefault(msg);
+        RSuicide.rSuicideDefault(msg);
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
@@ -89,7 +89,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
                     baseEnv.put(methodName, function);
                     baseEnv.lockBinding(methodName);
                 } catch (PutException ex) {
-                    Utils.rSuicide("failed to install builtin function: " + methodName);
+                    RSuicide.rSuicide("failed to install builtin function: " + methodName);
                 }
             }
         }
@@ -100,7 +100,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
         try {
             baseSource = RSource.fromFileName(basePathbase.toString(), true);
         } catch (IOException ex) {
-            throw Utils.rSuicide(String.format("unable to open the base package %s", basePathbase));
+            throw RSuicide.rSuicide(String.format("unable to open the base package %s", basePathbase));
         }
         // Load the (stub) DLL for base
         if (FastROptions.LoadPackagesNativeCode.getBooleanValue()) {

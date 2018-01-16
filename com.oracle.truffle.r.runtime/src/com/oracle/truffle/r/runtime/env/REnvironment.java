@@ -44,8 +44,8 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -858,7 +858,7 @@ public abstract class REnvironment extends RAttributeStorage {
         try {
             put(key, value);
         } catch (PutException ex) {
-            Utils.rSuicide("exception in safePut");
+            RSuicide.rSuicide("exception in safePut");
         }
     }
 

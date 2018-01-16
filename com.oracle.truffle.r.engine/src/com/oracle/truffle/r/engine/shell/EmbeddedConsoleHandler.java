@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,25 @@
  */
 package com.oracle.truffle.r.engine.shell;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import java.io.BufferedOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.nio.ByteBuffer;
+import java.nio.charset.StandardCharsets;
+import java.util.function.Supplier;
+
+import org.graalvm.polyglot.Context;
+
+import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
-import com.oracle.truffle.r.launcher.DefaultConsoleHandler;
-import com.oracle.truffle.r.launcher.JLineConsoleHandler;
-import com.oracle.truffle.r.launcher.RStartParams;
+import com.oracle.truffle.r.launcher.DelegatingConsoleHandler;
 import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.ReadConsoleNode;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteConsoleBaseNode;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -38,99 +50,192 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  * N.B. At the time the constructor is created, we do not know if the console is overridden so we
  * have be lazy about that.
  *
+ * Since we do not have access to FastR internals in the launcher project. We're using internal
+ * FastR builtins to implement the functionality.
+ *
  */
-public class EmbeddedConsoleHandler extends ConsoleHandler {
-
-    private final RStartParams startParams;
-    /**
-     * Only not {@code null} when console is not overridden.
-     */
+public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
+    private Context context;
+    private Supplier<ConsoleHandler> delegateFactory;
     private ConsoleHandler delegate;
-    private REmbedRFFI rEmbedRFFI;
-    private String prompt;
 
-    EmbeddedConsoleHandler(RStartParams startParams) {
-        this.startParams = startParams;
+    private CallTarget readLineCallTarget;
+    private CallTarget writeCallTarget;
+    private CallTarget writeErrCallTarget;
+
+    @Override
+    public void setContext(Context context) {
+        this.context = context;
     }
 
-    @TruffleBoundary
-    private REmbedRFFI getREmbedRFFI() {
-        if (rEmbedRFFI == null) {
-            rEmbedRFFI = RFFIFactory.getREmbedRFFI();
-            if (!(RInterfaceCallbacks.R_WriteConsole.isOverridden() || RInterfaceCallbacks.R_ReadConsole.isOverridden())) {
-                if (startParams.noReadline()) {
-                    delegate = new DefaultConsoleHandler(System.in, System.out, false);
+    @Override
+    public void setDelegate(Supplier<ConsoleHandler> delegateFactory) {
+        this.delegateFactory = delegateFactory;
+    }
+
+    @SuppressWarnings("try")
+    @Override
+    public String readLine() {
+        try (ContextClose ignored = inContext()) {
+            return isOverridden("R_ReadConsole") ? (String) getReadLineCallTarget().call("TODO prompt>") : getDelegate().readLine();
+        }
+    }
+
+    @SuppressWarnings("try")
+    @Override
+    public void setPrompt(String prompt) {
+        try (ContextClose ignored = inContext()) {
+            if (!isOverridden("R_ReadConsole")) {
+                getDelegate().setPrompt(prompt);
+            } else {
+                // TODO: set prompt
+            }
+        }
+    }
+
+    @Override
+    public InputStream createInputStream() {
+        return new InputStream() {
+            private String currentLine;
+            private int currentLineIdx;
+            private InputStream delegateInputStream;
+
+            @SuppressWarnings("try")
+            @Override
+            public int read() throws IOException {
+                try (ContextClose ignored = inContext()) {
+                    return readImpl();
+                }
+            }
+
+            private int readImpl() throws IOException {
+                if (!isOverridden("R_ReadConsole")) {
+                    if (delegateInputStream == null) {
+                        delegateInputStream = getDelegate().createInputStream();
+                    }
+                    return delegateInputStream.read();
+                }
+                if (currentLine == null || currentLineIdx >= currentLine.length()) {
+                    currentLine = readLine();
+                    currentLineIdx = 0;
+                    if (currentLine == null) {
+                        return 0;
+                    }
+                }
+                return currentLine.charAt(currentLineIdx++);
+            }
+        };
+    }
+
+    public OutputStream createStdOutputStream(OutputStream defaultValue) {
+        return createOutputSteam(this::getWriteCallTarget, defaultValue);
+    }
+
+    public OutputStream createErrOutputStream(OutputStream defaultValue) {
+        return createOutputSteam(this::getWriteErrCallTarget, defaultValue);
+    }
+
+    private OutputStream createOutputSteam(Supplier<CallTarget> writeCallTarget, OutputStream defaultStream) {
+        return new BufferedOutputStream(new EmbeddedConsoleOutputSteam(writeCallTarget, defaultStream), 128);
+    }
+
+    private boolean isOverridden(String name) {
+        RInterfaceCallbacks clbk = RInterfaceCallbacks.valueOf(name);
+        return clbk.isOverridden();
+    }
+
+    private final class EmbeddedConsoleOutputSteam extends OutputStream {
+        private final OutputStream delegate;
+        private Supplier<CallTarget> writeCallTarget;
+
+        EmbeddedConsoleOutputSteam(Supplier<CallTarget> writeCallTarget, OutputStream delegate) {
+            this.writeCallTarget = writeCallTarget;
+            this.delegate = delegate;
+        }
+
+        @SuppressWarnings("try")
+        @Override
+        public void write(byte[] b, int off, int len) throws IOException {
+            // Note: R_WriteConsole callback is (seemingly...) used for both stdout and stderr
+            try (ContextClose ignored = inContext()) {
+                if (!isOverridden("R_WriteConsole")) {
+                    delegate.write(b, off, len);
                 } else {
-                    delegate = new JLineConsoleHandler(System.in, System.out, startParams.isSlave());
+                    String str = StandardCharsets.US_ASCII.decode(ByteBuffer.wrap(b, off, len)).toString();
+                    writeCallTarget.get().call(str);
                 }
             }
         }
-        return rEmbedRFFI;
-    }
 
-    // @Override
-    // @TruffleBoundary
-    // public void println(String s) {
-    // getREmbedRFFI();
-    // if (delegate == null) {
-    // getREmbedRFFI().writeConsole(s);
-    // getREmbedRFFI().writeConsole("\n");
-    // } else {
-    // delegate.println(s);
-    // }
-    // }
-    //
-    // @Override
-    // @TruffleBoundary
-    // public void print(String s) {
-    // getREmbedRFFI();
-    // if (delegate == null) {
-    // rEmbedRFFI.writeConsole(s);
-    // } else {
-    // delegate.print(s);
-    // }
-    // }
-    //
-    // @Override
-    // @TruffleBoundary
-    // public void printErrorln(String s) {
-    // getREmbedRFFI();
-    // if (delegate == null) {
-    // rEmbedRFFI.writeErrConsole(s);
-    // rEmbedRFFI.writeErrConsole("\n");
-    // } else {
-    // delegate.printErrorln(s);
-    // }
-    // }
-    //
-    // @Override
-    // @TruffleBoundary
-    // public void printError(String s) {
-    // getREmbedRFFI();
-    // if (delegate == null) {
-    // rEmbedRFFI.writeErrConsole(s);
-    // } else {
-    // delegate.printError(s);
-    // }
-    // }
-
-    @Override
-    @TruffleBoundary
-    public String readLine() {
-        getREmbedRFFI();
-        if (delegate == null) {
-            return rEmbedRFFI.readConsole(prompt);
-        } else {
-            return delegate.readLine();
+        @Override
+        public void write(int b) throws IOException {
+            write(new byte[]{(byte) b}, 0, 1);
         }
     }
 
-    @Override
-    @TruffleBoundary
-    public void setPrompt(String prompt) {
-        this.prompt = prompt;
-        if (delegate != null) {
-            delegate.setPrompt(prompt);
+    private ConsoleHandler getDelegate() {
+        if (delegate == null) {
+            delegate = delegateFactory.get();
+        }
+        return delegate;
+    }
+
+    private ContextClose inContext() {
+        context.enter();
+        return new ContextClose();
+    }
+
+    private final class ContextClose implements AutoCloseable {
+        @Override
+        public void close() {
+            context.leave();
+        }
+    }
+
+    private CallTarget getReadLineCallTarget() {
+        if (readLineCallTarget == null) {
+            readLineCallTarget = Truffle.getRuntime().createCallTarget(new RootNode(null) {
+                @Child private ReadConsoleNode readConsoleNode = RFFIFactory.getREmbedRFFI().createReadConsoleNode();
+
+                @Override
+                public Object execute(VirtualFrame frame) {
+                    return readConsoleNode.execute((String) frame.getArguments()[0]);
+                }
+            });
+        }
+        return readLineCallTarget;
+    }
+
+    private CallTarget getWriteCallTarget() {
+        if (writeCallTarget == null) {
+            writeCallTarget = createWriteCallTarget(RFFIFactory.getREmbedRFFI().createWriteConsoleNode());
+        }
+        return writeCallTarget;
+    }
+
+    private CallTarget getWriteErrCallTarget() {
+        if (writeErrCallTarget == null) {
+            writeErrCallTarget = createWriteCallTarget(RFFIFactory.getREmbedRFFI().createWriteErrConsoleNode());
+        }
+        return writeErrCallTarget;
+    }
+
+    private CallTarget createWriteCallTarget(WriteConsoleBaseNode writeConsoleNode) {
+        return Truffle.getRuntime().createCallTarget(new WriteOutBaseRootNode(writeConsoleNode));
+    }
+
+    private static final class WriteOutBaseRootNode extends RootNode {
+        @Child private WriteConsoleBaseNode writeNode;
+
+        WriteOutBaseRootNode(WriteConsoleBaseNode writeNode) {
+            super(null);
+            this.writeNode = writeNode;
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            writeNode.execute((String) frame.getArguments()[0]);
+            return null;
         }
     }
 }

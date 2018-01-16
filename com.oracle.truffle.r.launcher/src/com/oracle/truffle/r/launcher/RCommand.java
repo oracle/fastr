@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Supplier;
 
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
@@ -94,7 +95,7 @@ public class RCommand {
     public static RuntimeException fatal(String message, Object... args) {
         System.out.println("FATAL: " + String.format(message, args));
         System.exit(-1);
-        return null;
+        return new RuntimeException();
     }
 
     public static RuntimeException fatal(Throwable t, String message, Object... args) {
@@ -163,7 +164,7 @@ public class RCommand {
         }
         RCmdOptions options = RCmdOptions.parseArguments(Client.R, argsList.toArray(new String[argsList.size()]), false);
         assert env == null || env.length == 0 : "re-enable setting environments";
-        ConsoleHandler consoleHandler = createConsoleHandler(options, false, inStream, outStream);
+        ConsoleHandler consoleHandler = createConsoleHandler(options, null, inStream, outStream);
         try (Context context = Context.newBuilder().allowHostAccess(useJVM).options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(
                         errStream).build()) {
             consoleHandler.setContext(context);
@@ -173,7 +174,7 @@ public class RCommand {
         }
     }
 
-    public static ConsoleHandler createConsoleHandler(RCmdOptions options, boolean embedded, InputStream inStream, OutputStream outStream) {
+    public static ConsoleHandler createConsoleHandler(RCmdOptions options, DelegatingConsoleHandler useDelegatingWrapper, InputStream inStream, OutputStream outStream) {
         /*
          * Whether the input is from stdin, a file (-f), or an expression on the command line (-e)
          * it goes through the console. N.B. -f and -e can't be used together and this is already
@@ -203,18 +204,20 @@ public class RCommand {
         } else {
             boolean isInteractive = options.getBoolean(RCmdOption.INTERACTIVE);
             if (!isInteractive && rsp.askForSave()) {
-                fatal("you must specify '--save', '--no-save' or '--vanilla'");
+                throw fatal("you must specify '--save', '--no-save' or '--vanilla'");
             }
-            if (embedded) {
+            boolean useReadLine = isInteractive && !rsp.noReadline();
+            if (useDelegatingWrapper != null) {
                 /*
                  * If we are in embedded mode, the creation of ConsoleReader and the ConsoleHandler
                  * should be lazy, as these may not be necessary and can cause hangs if stdin has
                  * been redirected.
                  */
-                throw fatal("embedded mode disabled");
-                // consoleHandler = new EmbeddedConsoleHandler(rsp, engine);
+                Supplier<ConsoleHandler> delegateFactory = useReadLine ? () -> new JLineConsoleHandler(inStream, outStream, rsp.isSlave())
+                                : () -> new DefaultConsoleHandler(inStream, outStream, isInteractive);
+                useDelegatingWrapper.setDelegate(delegateFactory);
+                return useDelegatingWrapper;
             } else {
-                boolean useReadLine = isInteractive && !rsp.noReadline();
                 if (useReadLine) {
                     return new JLineConsoleHandler(inStream, outStream, rsp.isSlave());
                 } else {

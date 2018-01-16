@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2014,  The R Core Team
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,14 +13,27 @@ package com.oracle.truffle.r.runtime;
 
 import java.util.ArrayList;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
+import com.oracle.truffle.r.runtime.ffi.DLL.RFindSymbolNode;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 
-public class RCleanUp {
+public abstract class RCleanUp {
+
+    private RCleanUp() {
+    }
 
     private static ArrayList<InstrumentationState.CleanupHandler> cleanupHandlers = new ArrayList<>();
 
@@ -28,9 +41,11 @@ public class RCleanUp {
         cleanupHandlers.add(cleanupHandler);
     }
 
-    public static void cleanUp(SA_TYPE saveType, int status, boolean runLast) {
+    public static void cleanUp(RContext ctx, SA_TYPE saveType, int status, boolean runLast) {
         if (RInterfaceCallbacks.R_CleanUp.isOverridden()) {
-            RFFIFactory.getREmbedRFFI().cleanUp(saveType.ordinal(), status, runLast ? 1 : 0);
+            RootCallTarget invokeUserCleanup = ctx.getOrCreateCachedCallTarget(UserDefinedCleanUpRootNode.class, () -> new UserDefinedCleanUpRootNode(ctx).getCallTarget());
+            Object[] args = new Object[]{asVector(saveType.ordinal()), asVector(status), asVector(runLast ? 1 : 0)};
+            invokeUserCleanup.call(args);
         } else {
             stdCleanUp(saveType, status, runLast);
         }
@@ -117,5 +132,32 @@ public class RCleanUp {
         RContext.getEngine().checkAndRunStartupShutdownFunction(".Last");
         // TODO errors should return to toplevel if interactive
         RContext.getEngine().checkAndRunStartupShutdownFunction(".Last.sys");
+    }
+
+    private static RIntVector asVector(int value) {
+        return RDataFactory.createIntVectorFromScalar(value);
+    }
+
+    private static final class UserDefinedCleanUpRootNode extends RootNode {
+        protected UserDefinedCleanUpRootNode(RContext ctx) {
+            super(null);
+            invokeCallNode = ctx.getRFFI().callRFFI.createInvokeCallNode();
+            Truffle.getRuntime().createCallTarget(this);
+        }
+
+        private static final String SYMBOL_NAME = "invokeCleanUp";
+        @Child InvokeCallNode invokeCallNode;
+        @Child RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            SymbolHandle invokeCleanUp = findSymbolNode.execute(SYMBOL_NAME, null, null);
+            if (invokeCleanUp == null) {
+                CompilerDirectives.transferToInterpreter();
+                throw RInternalError.shouldNotReachHere("Cannot find " + SYMBOL_NAME + " symbol which should be declared in Rembedded.c");
+            }
+            invokeCallNode.dispatch(new NativeCallInfo(SYMBOL_NAME, invokeCleanUp, null), frame.getArguments());
+            return null;
+        }
     }
 }

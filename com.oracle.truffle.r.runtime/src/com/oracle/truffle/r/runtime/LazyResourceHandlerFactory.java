@@ -37,6 +37,7 @@ import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory.Handler;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Default implementation uses the default mechanism in {@code java.lang.Class}.
@@ -105,7 +106,7 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
             }
             return result;
         } catch (Exception ex) {
-            Utils.rSuicide(ex, "Could not load R files from resources. Details: " + ex.getMessage());
+            RSuicide.rSuicide(RContext.getInstance(), ex, "Could not load R files from resources. Details: " + ex.getMessage());
             return null;
         }
     }

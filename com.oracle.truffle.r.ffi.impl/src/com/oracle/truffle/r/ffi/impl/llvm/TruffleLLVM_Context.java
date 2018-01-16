@@ -57,7 +57,7 @@ final class TruffleLLVM_Context extends RFFIContext {
     public ContextState initialize(RContext context) {
         if (context.isInitial()) {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
-            DLL.loadLibR(librffiPath);
+            DLL.loadLibR(context, librffiPath);
         }
         dllState.initialize(context);
         callState.initialize(context);

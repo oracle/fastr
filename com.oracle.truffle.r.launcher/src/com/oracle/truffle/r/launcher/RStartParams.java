@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,23 +47,23 @@ import java.util.List;
  */
 public class RStartParams {
 
-    private final boolean quiet;
-    private final boolean slave;
+    private boolean quiet;
+    private boolean slave;
 
     /**
      * The setting of this value in GNU R is unusual and not simply based on the value of the
      * --interactive option, so we do not check the option in
      * {@link #RStartParams(RCmdOptions, boolean)}, but later in {@code RCommand}.
      */
-    private final boolean interactive;
-    private final boolean verbose;
-    private final boolean loadSiteFile;
-    private final boolean loadInitFile;
-    private final boolean debugInitFile;
+    private boolean interactive;
+    private boolean verbose;
+    private boolean loadSiteFile;
+    private boolean loadInitFile;
+    private boolean debugInitFile;
     private final boolean restoreAction;
     private final boolean askForSave;
     private final boolean save;
-    private final boolean noRenviron;
+    private boolean noRenviron;
 
     /**
      * This is not a configurable option, but it is set on the command line and needs to be stored
@@ -130,23 +130,19 @@ public class RStartParams {
     }
 
     /**
-     * Only upcalled from native code.
+     * Used for R embedding, allows to alter some of the values.
      */
-    @SuppressWarnings("unused")
-    public static void setParams(boolean quietA, boolean slaveA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
+    public void setParams(boolean quietA, boolean slaveA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
                     boolean loadInitFileA, boolean debugInitFileA, int restoreActionA, int saveActionA, boolean noRenvironA) {
-        assert false : "re-enable setParams";
-        // RStartParams params = RContext.getInstance().getStartParams();
-        // params.setQuiet(quietA);
-        // params.setSlave(slaveA);
-        // params.setInteractive(interactiveA);
-        // params.setVerbose(verboseA);
-        // params.setLoadSiteFile(loadSiteFileA);
-        // params.setLoadInitFile(loadInitFileA);
-        // params.setDebugInitFile(debugInitFileA);
-        // params.setSaveAction(SA_TYPE.values()[saveActionA]);
-        // params.setRestoreAction(SA_TYPE.values()[restoreActionA]);
-        // params.setNoRenviron(noRenvironA);
+        quiet = quietA;
+        slave = slaveA;
+        interactive = interactiveA;
+        verbose = verboseA;
+        loadSiteFile = loadSiteFileA;
+        loadInitFile = loadInitFileA;
+        debugInitFile = debugInitFileA;
+        // TODO: save and restore actions?
+        noRenviron = noRenvironA;
     }
 
     public boolean isQuiet() {

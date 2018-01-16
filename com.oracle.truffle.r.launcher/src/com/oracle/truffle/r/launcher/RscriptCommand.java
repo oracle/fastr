@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -136,7 +136,7 @@ public class RscriptCommand {
         RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, argsList.toArray(new String[argsList.size()]), false);
         String[] arguments = preprocessRScriptOptions(launcher, options);
 
-        ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, false, inStream, outStream);
+        ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, null, inStream, outStream);
         try (Context context = Context.newBuilder().allowHostAccess(useJVM).options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(outStream).err(
                         errStream).build()) {
             consoleHandler.setContext(context);

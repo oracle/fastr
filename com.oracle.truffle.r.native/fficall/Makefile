@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -56,7 +56,7 @@ ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
 ifeq ($(OS_NAME),Darwin)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
 ifneq ($(FASTR_RFFI),llvm)	
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
@@ -65,7 +65,7 @@ ifneq ($(FASTR_RFFI),llvm)
 	mx rupdatelib $(FASTR_LIB_DIR)
 endif
 else
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack  -lpcre -lz
+	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
 endif
 endif # managed
 

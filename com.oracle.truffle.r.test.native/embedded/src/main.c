@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,11 +70,13 @@ int main(int argc, char **argv) {
 		printf("R_HOME must be set\n");
 		exit(1);
 	}
+	printf("Initializing R with Rf_initialize_R...\n");
 	Rf_initialize_R(argc, argv);
 	structRstart rp;
 	Rstart Rp = &rp;
 	R_DefParams(Rp);
 	Rp->SaveAction = SA_SAVEASK;
+	printf("Initializing R with R_SetParams...\n");
 	R_SetParams(Rp);
 	ptr_stdR_CleanUp = ptr_R_CleanUp;
 	ptr_R_CleanUp = &testR_CleanUp;
@@ -82,7 +84,12 @@ int main(int argc, char **argv) {
 	ptr_R_Suicide = &testR_Suicide;
 	ptr_R_ReadConsole = &testR_ReadConsole;
 	ptr_R_WriteConsole = &testR_WriteConsole;
-	DllInfo *eDllInfo = R_getEmbeddingDllInfo();
+    // TODO:
+	// printf("Calling R_getEmbeddingDllInfo...\n");
+	// DllInfo *eDllInfo = R_getEmbeddingDllInfo();
+	printf("Running R with Rf_mainloop...\n");
 	Rf_mainloop();
+	printf("Closing R with Rf_endEmbeddedR...\n");
 	Rf_endEmbeddedR(0);
+	printf("Done");
 }

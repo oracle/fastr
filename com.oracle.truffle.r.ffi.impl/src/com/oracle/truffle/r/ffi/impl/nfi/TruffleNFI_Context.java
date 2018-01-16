@@ -282,7 +282,7 @@ final class TruffleNFI_Context extends RFFIContext {
         try {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
             if (context.isInitial()) {
-                DLL.loadLibR(librffiPath);
+                DLL.loadLibR(context, librffiPath);
             } else {
                 // force initialization of NFI
                 DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
