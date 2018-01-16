@@ -36,17 +36,17 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
@@ -123,7 +123,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RDoubleVector doStringVector(RStringVector operand,
+    protected RDoubleVector doStringVector(RAbstractStringVector operand,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile,
                     @Cached("create()") BranchProfile warningBranch) {
         naCheck.enable(operand);
@@ -160,7 +160,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization
-    protected RDoubleVector doComplexVector(RComplexVector operand) {
+    protected RDoubleVector doComplexVector(RAbstractComplexVector operand) {
         naCheck.enable(operand);
         double[] ddata = new double[operand.getLength()];
         boolean warning = false;
@@ -223,16 +223,16 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     @Specialization(guards = "isForeignObject(obj)")
-    protected RDoubleVector doForeignObject(TruffleObject obj,
+    protected RAbstractDoubleVector doForeignObject(TruffleObject obj,
                     @Cached("create()") ForeignArray2R foreignArray2R) {
         Object o = foreignArray2R.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
-            if (o instanceof RDoubleVector) {
-                return (RDoubleVector) o;
+            if (o instanceof RAbstractDoubleVector) {
+                return (RAbstractDoubleVector) o;
             }
             o = castDoubleRecursive(o);
-            if (o instanceof RDoubleVector) {
-                return (RDoubleVector) o;
+            if (o instanceof RAbstractDoubleVector) {
+                return (RAbstractDoubleVector) o;
             }
         }
         throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");

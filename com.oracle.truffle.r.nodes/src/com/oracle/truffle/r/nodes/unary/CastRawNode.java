@@ -31,17 +31,18 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
@@ -185,7 +186,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRawVector doLogicalVector(RLogicalVector operand) {
+    protected RRawVector doLogicalVector(RAbstractLogicalVector operand) {
         byte[] bdata = new byte[operand.getLength()];
         boolean warning = false;
         for (int i = 0; i < operand.getLength(); i++) {
@@ -205,7 +206,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRawVector doStringVector(RStringVector operand,
+    protected RRawVector doStringVector(RAbstractStringVector operand,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile,
                     @Cached("create()") NAProfile naProfile) {
         naCheck.enable(operand);
@@ -245,7 +246,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRawVector doComplexVector(RComplexVector operand) {
+    protected RRawVector doComplexVector(RAbstractComplexVector operand) {
         byte[] bdata = new byte[operand.getLength()];
         boolean imaginaryDiscardedWarning = false;
         boolean outOfRangeWarning = false;
@@ -294,7 +295,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RRawVector doRawVector(RRawVector operand) {
+    protected RAbstractRawVector doRawVector(RAbstractRawVector operand) {
         return operand;
     }
 

@@ -32,6 +32,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
 public abstract class RForeignWrapper implements RAbstractVector {
 
@@ -61,12 +62,12 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     @Override
     public final boolean isComplete() {
-        return true;
+        return false;
     }
 
     @Override
     public final void setComplete(boolean complete) {
-        // sequences are always complete
+        // we will not make any assumptions about the delegate Truffle Object
     }
 
     @Override

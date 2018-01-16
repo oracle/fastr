@@ -99,45 +99,43 @@ public abstract class ForeignArray2R extends RBaseNode {
      *
      */
     public Object convert(Object obj, boolean recursive) {
-        if (FastROptions.ForeignObjectWrappers.getBooleanValue()) {
-            if (isForeignArray(obj)) {
-                TruffleObject truffleObject = (TruffleObject) obj;
-                try {
-                    int size = (int) ForeignAccess.sendGetSize(getSize, truffleObject);
-                    if (size == 0) {
-                        return new RForeignListWrapper(truffleObject);
-                    } else {
-                        Object firstElement = ForeignAccess.sendRead(read, truffleObject, 0);
-                        switch (InteropTypeCheck.determineType(firstElement)) {
-                            case BOOLEAN:
-                                return new RForeignBooleanWrapper(truffleObject);
-                            case DOUBLE:
-                                return new RForeignDoubleWrapper(truffleObject);
-                            case INTEGER:
-                                return new RForeignIntWrapper(truffleObject);
-                            case STRING:
-                                return new RForeignStringWrapper(truffleObject);
-                            default:
-                                return new RForeignListWrapper(truffleObject);
-                        }
+        if (FastROptions.ForeignObjectWrappers.getBooleanValue() && isForeignArray(obj)) {
+            TruffleObject truffleObject = (TruffleObject) obj;
+            try {
+                int size = (int) ForeignAccess.sendGetSize(getSize, truffleObject);
+                if (size == 0) {
+                    return new RForeignListWrapper(truffleObject);
+                } else {
+                    Object firstElement = ForeignAccess.sendRead(read, truffleObject, 0);
+                    if (isForeignArray(firstElement)) {
+                        throw error(RError.Message.GENERIC, "Wrapping of multi-dim arrays not supported.");
                     }
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                    throw RInternalError.shouldNotReachHere(e);
+                    switch (InteropTypeCheck.determineType(firstElement)) {
+                        case BOOLEAN:
+                            return new RForeignBooleanWrapper(truffleObject);
+                        case DOUBLE:
+                            return new RForeignDoubleWrapper(truffleObject);
+                        case INTEGER:
+                            return new RForeignIntWrapper(truffleObject);
+                        case STRING:
+                            return new RForeignStringWrapper(truffleObject);
+                        default:
+                            return new RForeignListWrapper(truffleObject);
+                    }
                 }
-            } else {
-                return obj;
+            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                throw RInternalError.shouldNotReachHere(e);
             }
-        } else {
-            Object result = execute(obj, recursive, null, 0);
-            if (result instanceof ForeignArrayData) {
-                ForeignArrayData arrayData = (ForeignArrayData) result;
-                if (arrayData.elements.isEmpty()) {
-                    return RDataFactory.createList();
-                }
-                return asAbstractVector(arrayData);
-            }
-            return result;
         }
+        Object result = execute(obj, recursive, null, 0);
+        if (result instanceof ForeignArrayData) {
+            ForeignArrayData arrayData = (ForeignArrayData) result;
+            if (arrayData.elements.isEmpty()) {
+                return RDataFactory.createList();
+            }
+            return asAbstractVector(arrayData);
+        }
+        return result;
     }
 
     protected abstract Object execute(Object obj, boolean recursive, ForeignArrayData arrayData, int depth);

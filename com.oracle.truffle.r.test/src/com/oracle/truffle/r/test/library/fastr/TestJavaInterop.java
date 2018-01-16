@@ -1106,6 +1106,19 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testArraysWithNullConversion() throws IllegalArgumentException {
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$booleanObjectArrayWithNull)", "list(T, NULL, T)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$byteObjectArrayWithNull)", "list(1, NULL, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$charObjectArrayWithNull)", "list('a', NULL, 'c')");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$doubleObjectArrayWithNull)", "list(1.1, NULL, 1.3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$floatObjectArrayWithNull)", "list(1.1, NULL, 1.3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$integerObjectArrayWithNull)", "list(1L, NULL, 3L)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$longObjectArrayWithNull)", "list(1, NULL, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$shortObjectArrayWithNull)", "list(1L, NULL, 3L)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$stringArrayWithNull)", "list('a', NULL, 'c')");
+    }
+
+    @Test
     public void testForeignVectorArithmeticOp() throws NoSuchFieldException,
                     IllegalAccessException {
         TestJavaInterop.this.testForeignVectorArithmeticOp("fieldBooleanArray", false, "integer(0)");
@@ -2216,38 +2229,47 @@ public class TestJavaInterop extends TestBase {
         public Boolean[] booleanObjectArray = {true, false, true};
         public Boolean[][] booleanObjectArray2 = {{true, false, true}, {true, false, true}};
         public Boolean[][][] booleanObjectArray3 = {{{true, false, true}, {true, false, true}}, {{true, false, true}, {true, false, true}}};
+        public Boolean[] booleanObjectArrayWithNull = {true, null, true};
 
         public Byte[] byteObjectArray = {1, 2, 3};
         public Byte[][] byteObjectArray2 = {{1, 2, 3}, {1, 2, 3}};
         public Byte[][][] byteObjectArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+        public Byte[] byteObjectArrayWithNull = {1, null, 3};
 
         public Character[] charObjectArray = {'a', 'b', 'c'};
         public Character[][] charObjectArray2 = {{'a', 'b', 'c'}, {'a', 'b', 'c'}};
         public Character[][][] charObjectArray3 = {{{'a', 'b', 'c'}, {'a', 'b', 'c'}}, {{'a', 'b', 'c'}, {'a', 'b', 'c'}}};
+        public Character[] charObjectArrayWithNull = {'a', null, 'c'};
 
         public Double[] doubleObjectArray = {1.1, 1.2, 1.3};
         public Double[][] doubleObjectArray2 = {{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}};
         public Double[][][] doubleObjectArray3 = {{{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}}, {{1.1, 1.2, 1.3}, {1.1, 1.2, 1.3}}};
+        public Double[] doubleObjectArrayWithNull = {1.1, null, 1.3};
 
         public Float[] floatObjectArray = {1.1f, 1.2f, 1.3f};
         public Float[][] floatObjectArray2 = {{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}};
         public Float[][][] floatObjectArray3 = {{{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}}, {{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f}}};
+        public Float[] floatObjectArrayWithNull = {1.1f, null, 1.3f};
 
         public Integer[] integerObjectArray = {1, 2, 3};
         public Integer[][] integerObjectArray2 = {{1, 2, 3}, {1, 2, 3}};
         public Integer[][][] integerObjectArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+        public Integer[] integerObjectArrayWithNull = {1, null, 3};
 
         public Long[] longObjectArray = {1L, 2L, 3L};
         public Long[][] longObjectArray2 = {{1L, 2L, 3L}, {1L, 2L, 3L}};
         public Long[][][] longObjectArray3 = {{{1L, 2L, 3L}, {1L, 2L, 3L}}, {{1L, 2L, 3L}, {1L, 2L, 3L}}};
+        public Long[] longObjectArrayWithNull = {1L, null, 3L};
 
         public Short[] shortObjectArray = {1, 2, 3};
         public Short[][] shortObjectArray2 = {{1, 2, 3}, {1, 2, 3}};
         public Short[][][] shortObjectArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
+        public Short[] shortObjectArrayWithNull = {1, null, 3};
 
         public String[] stringArray = {"a", "b", "c"};
         public String[][] stringArray2 = {{"a", "b", "c"}, {"a", "b", "c"}};
         public String[][][] stringArray3 = {{{"a", "b", "c"}, {"a", "b", "c"}}, {{"a", "b", "c"}, {"a", "b", "c"}}};
+        public String[] stringArrayWithNull = {"a", null, "c"};
 
         public Object[] onlyIntegerObjectArray = {1, 2, 3};
         public Object[] onlyLongObjectArray = {1L, 2L, 3L};
