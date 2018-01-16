@@ -16,7 +16,11 @@ An interop long value. Error in case the given value can't be converted to a lon
 Marks a R value to be converted to long when passed over to a foreign language.
 }
 \examples{
-as.external.long(123)
+javaLong <- as.external.long(123)
+
+## used to pass a java long to a java method call
+longClass <- new.java.class('java.lang.Long')
+longClass$valueOf(javaLong)
 }
 \seealso{
 \code{\link{as.external.byte}}, \code{\link{as.external.char}}, \code{\link{as.external.float}}, \code{\link{as.external.short}}

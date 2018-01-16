@@ -16,7 +16,11 @@ An interop byte value. Error in case the given value can't be converted to a byt
 Marks a R value to be converted to byte when passed over to a foreign language.
 }
 \examples{
-as.external.byte(123)
+javaByte <- as.external.byte(123)
+
+## used to pass a java byte to a java method call
+byteClass <- new.java.class('java.lang.Byte')
+byteClass$valueOf(javaByte)
 }
 \seealso{
 \code{\link{as.external.char}}, \code{\link{as.external.float}}, \code{\link{as.external.long}}, \code{\link{as.external.short}}

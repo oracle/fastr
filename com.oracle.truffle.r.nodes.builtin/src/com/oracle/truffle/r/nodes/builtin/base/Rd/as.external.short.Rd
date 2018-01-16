@@ -16,7 +16,11 @@ An interop short value. Error in case the given value can't be converted to a sh
 Marks a R value to be converted to short when passed over to a foreign language.
 }
 \examples{
-as.external.short(123)
+javaShort <- as.external.short(123)
+
+## used to pass a java short to a java method call
+shortClass <- new.java.class('java.lang.Short')
+shortClass$valueOf(javaShort)
 }
 \seealso{
 \code{\link{as.external.byte}}, \code{\link{as.external.char}}, \code{\link{as.external.short}}, \code{\link{as.external.long}}

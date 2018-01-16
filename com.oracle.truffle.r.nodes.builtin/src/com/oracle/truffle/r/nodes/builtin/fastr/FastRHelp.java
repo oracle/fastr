@@ -39,30 +39,57 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 
-@RBuiltin(name = ".fastr.interop.getHelpRd", visibility = ON, kind = PRIMITIVE, parameterNames = {"builtinName"}, behavior = COMPLEX)
-public abstract class FastRHelp extends RBuiltinNode.Arg1 {
+public class FastRHelp {
 
-    static {
-        Casts casts = new Casts(FastRHelp.class);
-        casts.arg("builtinName").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+    @RBuiltin(name = ".fastr.interop.helpPath", visibility = ON, kind = PRIMITIVE, parameterNames = {"builtinName"}, behavior = COMPLEX)
+    public abstract static class FastRHelpPath extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts casts = new Casts(FastRHelpPath.class);
+            casts.arg("builtinName").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+        }
+
+        @Specialization()
+        @TruffleBoundary
+        public Object helpPath(String builtinName) {
+            String path = "/com/oracle/truffle/r/nodes/builtin/base/Rd/" + builtinName + ".Rd";
+            try (InputStream in = getClass().getResourceAsStream(path)) {
+                if (in != null) {
+                    return path;
+                }
+            } catch (IOException ex) {
+
+            }
+            return RNull.instance;
+        }
     }
 
-    @Specialization()
-    @TruffleBoundary
-    public Object isExternal(String builtinName) {
-        InputStream in = getClass().getResourceAsStream("/com/oracle/truffle/r/nodes/builtin/fastr/Rd/" + builtinName + ".Rd");
-        if (in != null) {
-            try (BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
-                StringBuilder sb = new StringBuilder();
-                String line;
-                while ((line = r.readLine()) != null) {
-                    sb.append(line).append("\n");
-                }
-                return sb.toString();
-            } catch (IOException ex) {
-                RError.warning(this, RError.Message.GENERIC, "problems while reading " + builtinName + ".Rd", ex.getMessage());
-            }
+    @RBuiltin(name = ".fastr.interop.helpRd", visibility = ON, kind = PRIMITIVE, parameterNames = {"path"}, behavior = COMPLEX)
+    public abstract static class FastRHelpRd extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts casts = new Casts(FastRHelpRd.class);
+            casts.arg("path").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
-        return RNull.instance;
+
+        @Specialization()
+        @TruffleBoundary
+        public Object getHelpRdPath(String path) {
+            try (InputStream in = getClass().getResourceAsStream(path)) {
+                if (in != null) {
+                    try (BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
+                        StringBuilder sb = new StringBuilder();
+                        String line;
+                        while ((line = r.readLine()) != null) {
+                            sb.append(line).append("\n");
+                        }
+                        return sb.toString();
+                    }
+                }
+            } catch (IOException ex) {
+                RError.warning(this, RError.Message.GENERIC, "problems while reading " + path, ex.getMessage());
+            }
+            return RNull.instance;
+        }
     }
 }

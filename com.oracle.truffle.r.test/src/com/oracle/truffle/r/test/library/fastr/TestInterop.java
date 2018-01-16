@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.test.TestBase;
 import java.io.File;
 import org.junit.After;
+import static org.junit.Assert.assertTrue;
 
 public class TestInterop extends TestBase {
 
@@ -103,6 +104,22 @@ public class TestInterop extends TestBase {
                         "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
         assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength, silent=TRUE); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
                         "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
+    }
+
+    @Test
+    public void testHelp() {
+        assertHelpResult(fastREval("?as.external.byte", null, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
+        assertHelpResult(fastREval("help(as.external.byte)", null, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
+        assertHelpResult(fastREval("example(as.external.byte)", null, false), null, "byteClass$valueOf(javaByte)", "[1] 123");
+    }
+
+    private void assertHelpResult(String result, String startsWith, String... contains) {
+        if (startsWith != null) {
+            assertTrue(result.startsWith(startsWith));
+        }
+        for (String s : contains) {
+            assertTrue(result.contains(s));
+        }
     }
 
     /**
