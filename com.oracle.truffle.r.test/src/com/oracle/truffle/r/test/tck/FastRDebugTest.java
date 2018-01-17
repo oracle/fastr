@@ -29,15 +29,18 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.api.debug.Breakpoint;
@@ -56,7 +59,6 @@ import com.oracle.truffle.tck.DebuggerTester;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
-import org.junit.Ignore;
 
 public class FastRDebugTest {
     private Debugger debugger;
@@ -386,7 +388,7 @@ public class FastRDebugTest {
         assertArguments(1, "main(1, 2, 3, 4)");
 
         stepInto(1);
-        assertArguments(2, "x <- 10L", "a", "b", "c", "d");
+        assertArguments(2, "x <- 10L", "a", "1.0", "b", "2.0", "c", "3.0", "d", "4.0");
         continueExecution();
         performWork();
 
@@ -493,6 +495,49 @@ public class FastRDebugTest {
         final Source evalSource = sourceFromText("main()\n", "evaltest.r");
         context.eval(evalSource);
 
+        assertExecutedOK();
+    }
+
+    @Test
+    @Ignore
+    public void testReenterArgumentsAndValues() throws Throwable {
+        // Test that after a re-enter, arguments are kept and variables are cleared.
+        final Source source = sourceFromText("" +
+                        "main <- function () {\n" +
+                        "  i <- 10\n" +
+                        "  fnc(i <- i + 1, 20)\n" +
+                        "}\n" +
+                        "fnc <- function(n, m) {\n" +
+                        "  x <- n + m\n" +
+                        "  n <- m - n\n" +
+                        "  m <- m / 2\n" +
+                        "  x <- x + n * m\n" +
+                        "  x\n" +
+                        "}\n" +
+                        "main()\n", "testReenterArgsAndVals.r");
+
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.install(Breakpoint.newBuilder(DebuggerTester.getSourceImpl(source)).lineIs(6).build());
+        });
+
+        assertArguments(6, "x <- n + m", "n", "<unevaluated>", "m", "20.0");
+        assertScope(6, "x <- n + m", false, true, "n", "<unevaluated>", "m", "20.0");
+        stepOver(4);
+        assertArguments(10, "x", "n", "9.0", "m", "10.0");
+        assertScope(10, "x", false, true, "n", "9.0", "m", "10.0", "x", "121.0");
+        run.addLast(() -> suspendedEvent.prepareUnwindFrame(suspendedEvent.getTopStackFrame()));
+        assertArguments(3, "return fnc(i <- i + 1, 20)");
+        assertScope(3, "return fnc(i <- i + 1, 20)", false, true, "i", "11.0");
+        continueExecution();
+        assertArguments(6, "x <- n + m", "n", "11.0", "m", "20.0");
+        assertScope(6, "x <- n + m", false, true, "n", "11.0", "m", "20.0");
+        continueExecution();
+
+        performWork();
+        Value ret = context.eval(source);
+        assertEquals(121, ret.asInt());
         assertExecutedOK();
     }
 
@@ -609,19 +654,24 @@ public class FastRDebugTest {
                     scope = suspendedEvent.getSession().getTopScope("R");
                 }
 
-                Set<String> actualIdentifiers = new HashSet<>();
-                scope.getArguments().forEach((x) -> actualIdentifiers.add(x.getName()));
+                int n = expectedArgs.length / 2;
+                List<DebugValue> actualValues = new ArrayList<>(n);
+                scope.getArguments().forEach((x) -> actualValues.add(x));
 
-                assertEquals(line + ": " + code, expectedArgs.length, actualIdentifiers.size());
+                assertEquals(line + ": " + code, n, actualValues.size());
 
-                Set<String> expectedIds = new HashSet<>(Arrays.asList(expectedArgs));
-                Assert.assertEquals(expectedIds, actualIdentifiers);
+                for (int i = 0; i < n; i++) {
+                    int i2 = i << 1;
+                    assertEquals(expectedArgs[i2], actualValues.get(i).getName());
+                    assertEquals(expectedArgs[i2 + 1], actualValues.get(i).as(String.class));
+                }
 
                 if (!run.isEmpty()) {
                     run.removeFirst().run();
                 }
             } catch (RuntimeException | Error e) {
 
+                e.printStackTrace(System.err);
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
                 frame.forEach(var -> {
                     System.out.println(var);
@@ -700,7 +750,7 @@ public class FastRDebugTest {
 
     /**
      * Assert either meta object or string value for a set of variables.
-     * 
+     *
      * @param expectedSource expected source in which the values should be examined.
      * @param metaObjects <code>true</code> for checking metaObject or <code>false</code> for
      *            checking <code>value.as(String.class)</code>.
