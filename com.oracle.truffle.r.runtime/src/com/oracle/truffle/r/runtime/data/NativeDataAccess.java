@@ -365,6 +365,15 @@ public final class NativeDataAccess {
         return data;
     }
 
+    public static double[] copyComplexNativeData(Object mirrorObj) {
+        NativeMirror mirror = (NativeMirror) mirrorObj;
+        long address = mirror.dataAddress;
+        assert address != 0;
+        double[] data = new double[(int) (mirror.length << 1)];
+        UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, data.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        return data;
+    }
+
     public static int[] copyIntNativeData(Object mirrorObj) {
         NativeMirror mirror = (NativeMirror) mirrorObj;
         long address = mirror.dataAddress;
