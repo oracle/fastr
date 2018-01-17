@@ -56,41 +56,77 @@ public class RCallBaseNodeWrapperFactory implements InstrumentableFactory<RCallB
 
         @Override
         public Object execute(VirtualFrame frame) {
-            try {
-                probeNode.onEnter(frame);
-                Object returnValue = delegate.execute(frame);
-                probeNode.onReturnValue(frame, returnValue);
-                return returnValue;
-            } catch (Throwable t) {
-                probeNode.onReturnExceptional(frame, t);
-                throw t;
+            Object returnValue;
+            for (;;) {
+                boolean wasOnReturnExecuted = false;
+                try {
+                    probeNode.onEnter(frame);
+                    returnValue = delegate.execute(frame);
+                    wasOnReturnExecuted = true;
+                    probeNode.onReturnValue(frame, returnValue);
+                    break;
+                } catch (Throwable t) {
+                    Object result = probeNode.onReturnExceptionalOrUnwind(frame, t, wasOnReturnExecuted);
+                    if (result == ProbeNode.UNWIND_ACTION_REENTER) {
+                        continue;
+                    } else if (result != null) {
+                        returnValue = result;
+                        break;
+                    }
+                    throw t;
+                }
             }
+            return returnValue;
         }
 
         @Override
         public Object visibleExecute(VirtualFrame frame) {
-            try {
-                probeNode.onEnter(frame);
-                Object returnValue = delegate.visibleExecute(frame);
-                probeNode.onReturnValue(frame, returnValue);
-                return returnValue;
-            } catch (Throwable t) {
-                probeNode.onReturnExceptional(frame, t);
-                throw t;
+            Object returnValue;
+            for (;;) {
+                boolean wasOnReturnExecuted = false;
+                try {
+                    probeNode.onEnter(frame);
+                    returnValue = delegate.visibleExecute(frame);
+                    wasOnReturnExecuted = true;
+                    probeNode.onReturnValue(frame, returnValue);
+                    break;
+                } catch (Throwable t) {
+                    Object result = probeNode.onReturnExceptionalOrUnwind(frame, t, wasOnReturnExecuted);
+                    if (result == ProbeNode.UNWIND_ACTION_REENTER) {
+                        continue;
+                    } else if (result != null) {
+                        returnValue = result;
+                        break;
+                    }
+                    throw t;
+                }
             }
+            return returnValue;
         }
 
         @Override
         public Object execute(VirtualFrame frame, Object function) {
-            try {
-                probeNode.onEnter(frame);
-                Object returnValue = delegate.execute(frame, function);
-                probeNode.onReturnValue(frame, returnValue);
-                return returnValue;
-            } catch (Throwable t) {
-                probeNode.onReturnExceptional(frame, t);
-                throw t;
+            Object returnValue;
+            for (;;) {
+                boolean wasOnReturnExecuted = false;
+                try {
+                    probeNode.onEnter(frame);
+                    returnValue = delegate.execute(frame, function);
+                    wasOnReturnExecuted = true;
+                    probeNode.onReturnValue(frame, returnValue);
+                    break;
+                } catch (Throwable t) {
+                    Object result = probeNode.onReturnExceptionalOrUnwind(frame, t, wasOnReturnExecuted);
+                    if (result == ProbeNode.UNWIND_ACTION_REENTER) {
+                        continue;
+                    } else if (result != null) {
+                        returnValue = result;
+                        break;
+                    }
+                    throw t;
+                }
             }
+            return returnValue;
         }
 
         @Override
