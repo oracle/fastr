@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -221,8 +221,7 @@ typedef Rboolean (*call_R_BindingIsActive)(SEXP sym, SEXP env);
 typedef Rboolean (*call_R_HasFancyBindings)(SEXP rho);
 typedef Rboolean (*call_Rf_isS4)(SEXP x);
 typedef SEXP (*call_Rf_asS4)(SEXP x, Rboolean b, int i);
-typedef SEXP (*call_R_tryEval)(SEXP x, SEXP y, int *ErrorOccurred);
-typedef SEXP (*call_R_tryEvalSilent)(SEXP x, SEXP y, int *ErrorOccurred);
+typedef SEXP (*call_R_tryEval)(SEXP x, SEXP y, int *ErrorOccurred, int silent);
 typedef double (*call_R_atof)(const char *str);
 typedef double (*call_R_strtod)(const char *c, char **end);
 typedef SEXP (*call_R_PromiseExpr)(SEXP x);
@@ -321,4 +320,3 @@ typedef void (*call_R_ReleaseObject)(SEXP x);
 typedef void* (*call_R_alloc)(int n, int size);
 
 #endif
-

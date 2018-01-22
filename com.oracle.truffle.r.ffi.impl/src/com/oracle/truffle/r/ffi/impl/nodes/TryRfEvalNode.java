@@ -22,13 +22,19 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 
-public class TryRfEvalNode extends FFIUpCallNode.Arg3 {
+public final class TryRfEvalNode extends FFIUpCallNode.Arg4 {
     @Child RfEvalNode rfEvalNode = RfEvalNode.create();
+    @Child Node writeErrorFlagNode = Message.WRITE.createNode();
 
     @Override
-    public Object executeObject(Object expr, Object env, @SuppressWarnings("unused") Object silent) {
+    public Object executeObject(Object expr, Object env, Object errorFlag, @SuppressWarnings("unused") Object silent) {
         Object handlerStack = RErrorHandling.getHandlerStack();
         Object restartStack = RErrorHandling.getRestartStack();
         try {
@@ -36,6 +42,12 @@ public class TryRfEvalNode extends FFIUpCallNode.Arg3 {
             RErrorHandling.resetStacks();
             return rfEvalNode.executeObject(expr, env);
         } catch (Throwable t) {
+            try {
+                ForeignAccess.sendWrite(writeErrorFlagNode, (TruffleObject) errorFlag, 0, 1);
+            } catch (InteropException e) {
+                // Ignore it, when using NFI, e.g., the errorFlag TO does not support the WRITE
+                // message
+            }
             return null;
         } finally {
             RErrorHandling.restoreStacks(handlerStack, restartStack);

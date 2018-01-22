@@ -53,6 +53,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
+import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
@@ -276,7 +277,7 @@ public interface StdUpCallsRFFI {
 
     @RFFIRunGC
     @RFFIUpCallNode(TryRfEvalNode.class)
-    Object R_tryEval(Object expr, Object env, int silent);
+    Object R_tryEval(Object expr, Object env, @RFFICpointer Object errorFlag, int silent);
 
     Object R_ToplevelExec();
 
