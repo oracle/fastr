@@ -240,9 +240,9 @@ create.blacklist.with <- function(blacklist, iter) {
 	this.blacklist
 }
 
-# iteratively adds to blacklist until no new blackisted packages are found
+# iteratively adds to blacklist until no new blacklisted packages are found
 create.blacklist.iter <- function(blacklist) {
-	v <-blacklist
+	v <- if(is.null(blacklist)) character(0) else blacklist
 	result <-v
 	iter <- 1
 	while (length(v) > 0) {
@@ -871,7 +871,7 @@ parse.args <- function() {
 			usage()
 		} else if (a == "--verbose" || a == "-v") {
 			verbose <<- T
-		} else if (a == "-V") {
+		} else if (a == "-V"  || a == "--very-verbose") {
 			verbose <<- T
 			very.verbose <<- T
 		} else if (a == "--quiet") {
