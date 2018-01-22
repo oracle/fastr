@@ -23,6 +23,8 @@
 
 #include <rffiutils.h>
 
+#define DOUBLES_AS_COMPLEX(d)   ((Rcomplex *)(d))
+
 extern void ilaver_(int *major, int *minor, int *patch);
 
 void call_lapack_ilaver(int* version) {
@@ -141,3 +143,32 @@ int call_lapack_dsyevr(char jobz, char range, char uplo, int n, double *a, int l
             z, &ldz, isuppz, work, &lwork, iwork, &liwork, &info);
     return info;
 }
+
+extern void zunmqr_(const char *side, const char *trans,
+		 const int *m, const int *n, const int *k,
+		 Rcomplex *a, const int *lda,
+		 Rcomplex *tau,
+		 Rcomplex *c, const int *ldc,
+		 Rcomplex *work, const int *lwork, int *info);
+
+int call_lapack_zunmqr(const char *side, const char *trans, int m, int n, int k, double *a, int lda, double *tau,
+		 double *c, int ldc, double *work, int lwork) {
+    int info;
+    zunmqr_(side, trans, &m, &n, &k, DOUBLES_AS_COMPLEX(a), &lda, DOUBLES_AS_COMPLEX(tau),
+            DOUBLES_AS_COMPLEX(c), &ldc, DOUBLES_AS_COMPLEX(work), &lwork, &info);
+    return info;
+}
+
+
+extern void ztrtrs_(const char *uplo, const char *trans, const char *diag,
+		 const int *n, const int *nrhs,
+		 Rcomplex *a, const int *lda,
+		 Rcomplex *b, const int *ldb, int *info);
+
+int call_lapack_ztrtrs(const char *uplo, const char *trans, const char *diag,
+		 int n, int nrhs, double *a, int lda, double *b, int ldb) {
+    int info;
+    ztrtrs_(uplo, trans, diag, &n, &nrhs, DOUBLES_AS_COMPLEX(a), &lda, DOUBLES_AS_COMPLEX(b), &ldb, &info);
+    return info;
+}
+

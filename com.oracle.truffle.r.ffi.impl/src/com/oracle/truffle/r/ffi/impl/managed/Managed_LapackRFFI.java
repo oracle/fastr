@@ -96,4 +96,14 @@ public class Managed_LapackRFFI implements LapackRFFI {
     public DsyevrNode createDsyevrNode() {
         throw unsupported("lapack");
     }
+
+    @Override
+    public ZunmqrNode createZunmqrNode() {
+        throw unsupported("lapack");
+    }
+
+    @Override
+    public ZtrtrsNode createZtrtrsNode() {
+        throw unsupported("lapack");
+    }
 }

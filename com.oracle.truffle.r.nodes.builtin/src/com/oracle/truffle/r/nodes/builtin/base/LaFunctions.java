@@ -39,7 +39,9 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -50,6 +52,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNames
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
@@ -58,14 +61,18 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
+import com.oracle.truffle.r.runtime.data.nodes.VectorDataReuse;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -367,6 +374,65 @@ public class LaFunctions {
             // TODO check complete
             return RDataFactory.createDoubleVector(bData, RDataFactory.INCOMPLETE_VECTOR);
         }
+    }
+
+    @RBuiltin(name = "qr_coef_cmplx", kind = INTERNAL, parameterNames = {"q", "b"}, behavior = PURE)
+    public abstract static class QrCoefCmplx extends RBuiltinNode.Arg2 {
+
+        static {
+            Casts casts = new Casts(QrCoefCmplx.class);
+            casts.arg(0).mustBe(RList.class);
+            casts.arg(1).asComplexVector(false, true, false).mustBe(matrix(), Message.MUST_BE_COMPLEX_MATRIX, "b");
+        }
+
+        @Node.Child private LapackRFFI.ZunmqrNode zunmqrNode = LapackRFFI.ZunmqrNode.create();
+        @Node.Child private LapackRFFI.ZtrtrsNode ztrtrsNode = LapackRFFI.ZtrtrsNode.create();
+
+        @Specialization
+        Object doQrCoefCmplx(RList q, RAbstractComplexVector b,
+                        @Cached("create()") GetReadonlyData.Complex getReadonlyData,
+                        @Cached("create()") VectorDataReuse.Complex vectorDataReuse,
+                        @Cached("create()") ExtractListElement extractQrElement,
+                        @Cached("create()") ExtractListElement extractTauElement,
+                        @Cached("create()") GetDimAttributeNode getQDimAttribute,
+                        @Cached("create()") GetDimAttributeNode getBDimAttribute,
+                        @Cached("create()") CastComplexNode bAsComplex,
+                        @Cached("create()") VectorFactory resultVectorFactory) {
+            RAbstractComplexVector qr = (RAbstractComplexVector) extractQrElement.execute(q, 0);
+            RAbstractComplexVector tau = (RAbstractComplexVector) extractTauElement.execute(q, 2);
+            int k = tau.getLength();
+            int[] qDims = getQDimAttribute.getDimensions(qr);
+            int[] bDims = getBDimAttribute.getDimensions(b);
+            int n = qDims[0];
+            if (bDims[0] != n) {
+                throw error(Message.RHS_SHOULD_HAVE_ROWS, n, bDims[0]);
+            }
+            int nrhs = bDims[1];
+            int lwork = -1;
+            double[] tmp = new double[2]; // Complex
+            double[] qrData = getReadonlyData.execute(qr.materialize());
+            double[] tauData = getReadonlyData.execute(tau.materialize());
+            double[] bComplexData = vectorDataReuse.execute(b.materialize());
+            int info = zunmqrNode.execute(
+                            "L", "C", n, nrhs, k, qrData, n, tauData, bComplexData, n, tmp, lwork);
+            if (info != 0) {
+                throw error(Message.LAPACK_ERROR, info, "zunmqr");
+            }
+            lwork = (int) tmp[0];
+            double[] work = new double[2]; // Complex
+            info = zunmqrNode.execute(
+                            "L", "C", n, nrhs, k, qrData, n, tauData, bComplexData, n, work, lwork);
+            if (info != 0) {
+                throw error(Message.LAPACK_ERROR, info, "zunmqr");
+            }
+            info = ztrtrsNode.execute(
+                            "U", "N", "N", k, nrhs, qrData, n, bComplexData, n);
+            if (info != 0) {
+                throw error(Message.LAPACK_ERROR, info, "zunmqr");
+            }
+            return resultVectorFactory.createComplexVector(bComplexData, b.isComplete(), bDims);
+        }
+
     }
 
     @RBuiltin(name = "det_ge_real", kind = INTERNAL, parameterNames = {"a", "uselog"}, behavior = PURE)
