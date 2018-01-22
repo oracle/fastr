@@ -250,4 +250,36 @@ public class RCompression {
         }
         throw new IOException();
     }
+
+    public static String getBz2Version() throws IOException {
+        // assumes: "bzip2, a block-sorting file compressor. Version 1.0.6, 6-Sept-2010."
+        String[] command = {"bzip2", "-V"};
+        int rc;
+        ProcessBuilder pb = new ProcessBuilder(command);
+        Process p = pb.start();
+        // version is written to the error output stream
+        InputStream is = p.getErrorStream();
+        ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
+        readThread.start();
+        try {
+            rc = p.waitFor();
+            if (rc == 0) {
+                String output = new String(readThread.getData());
+                String version = "Version ";
+                String firstLine = output.split("\\n")[0];
+                int versionIdx = firstLine.indexOf(version);
+                if (versionIdx >= 0) {
+                    int commaIdx = firstLine.lastIndexOf('.');
+                    if (commaIdx > versionIdx) {
+                        return firstLine.substring(versionIdx + version.length(), commaIdx);
+                    }
+                }
+            } else {
+                throw new IOException("bzip2 error code: " + rc);
+            }
+        } catch (InterruptedException ex) {
+            // fall through
+        }
+        throw new IOException();
+    }
 }

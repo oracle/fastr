@@ -600,6 +600,7 @@ public class BasePackage extends RBuiltinPackage {
         add(LaFunctions.Version.class, LaFunctionsFactory.VersionNodeGen::create);
         add(LaFunctions.LaSolve.class, LaFunctionsFactory.LaSolveNodeGen::create);
         add(LaFunctions.Svd.class, LaFunctionsFactory.SvdNodeGen::create);
+        add(LaFunctions.LaLibrary.class, LaFunctionsFactory.LaLibraryNodeGen::create);
         add(Lapply.class, LapplyNodeGen::create);
         add(Length.class, LengthNodeGen::create);
         add(Lengths.class, LengthsNodeGen::create);

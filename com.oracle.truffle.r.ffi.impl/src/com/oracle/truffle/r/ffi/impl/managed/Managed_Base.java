@@ -200,4 +200,9 @@ public class Managed_Base implements BaseRFFI {
     public GlobNode createGlobNode() {
         return null;
     }
+
+    @Override
+    public ESoftVersionNode createESoftVersionNode() {
+        return null;
+    }
 }

@@ -24,9 +24,11 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.r.ffi.impl.interop.base.ESoftVersionResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
@@ -214,6 +216,22 @@ public class TruffleNFI_Base implements BaseRFFI {
         }
     }
 
+    private static class TruffleNFI_ESoftVersionNode extends TruffleNFI_DownCallNode implements ESoftVersionNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.eSoftVersion;
+        }
+
+        @Override
+        public Map<String, String> eSoftVersion() {
+            ESoftVersionResult result = new ESoftVersionResult();
+            call(result);
+            return result.getVersions();
+        }
+
+    }
+
     @Override
     public GetpidNode createGetpidNode() {
         return new TruffleNFI_GetpidNode();
@@ -263,4 +281,10 @@ public class TruffleNFI_Base implements BaseRFFI {
     public GlobNode createGlobNode() {
         return new TruffleNFI_GlobNode();
     }
+
+    @Override
+    public ESoftVersionNode createESoftVersionNode() {
+        return new TruffleNFI_ESoftVersionNode();
+    }
+
 }

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
@@ -163,6 +164,14 @@ public interface BaseRFFI {
         }
     }
 
+    interface ESoftVersionNode extends NodeInterface {
+        Map<String, String> eSoftVersion();
+
+        static ESoftVersionNode create() {
+            return RFFIFactory.getBaseRFFI().createESoftVersionNode();
+        }
+    }
+
     /*
      * The RFFI implementation influences exactly what subclass of the above nodes is created. Each
      * implementation must therefore, implement these methods that are called by the associated
@@ -188,6 +197,8 @@ public interface BaseRFFI {
     UnameNode createUnameNode();
 
     GlobNode createGlobNode();
+
+    ESoftVersionNode createESoftVersionNode();
 
     /*
      * Some functions are called from non-Truffle contexts, which requires a RootNode

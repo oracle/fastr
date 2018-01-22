@@ -41,6 +41,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
@@ -63,7 +64,6 @@ import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -864,6 +864,19 @@ public class LaFunctions {
             val[2] = vtResult;
 
             return RDataFactory.createList(val, nm);
+        }
+    }
+
+    @RBuiltin(name = "La_library", kind = INTERNAL, parameterNames = {}, behavior = PURE)
+    public abstract static class LaLibrary extends RBuiltinNode.Arg0 {
+
+        static {
+            Casts.noCasts(LaLibrary.class);
+        }
+
+        @Specialization
+        protected Object doLibrary() {
+            return RDataFactory.createStringVector(LibPaths.getBuiltinLibPath("Rlapack"));
         }
     }
 }
