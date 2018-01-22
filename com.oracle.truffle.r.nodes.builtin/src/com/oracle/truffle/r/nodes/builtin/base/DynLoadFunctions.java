@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
@@ -35,6 +34,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -48,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
@@ -216,6 +218,35 @@ public class DynLoadFunctions {
 
         protected static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
+        }
+    }
+
+    @RBuiltin(name = "eSoftVersion", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
+    public abstract static class ExtSoftVersion extends RBuiltinNode.Arg0 {
+
+        static {
+            Casts.noCasts(ExtSoftVersion.class);
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RStringVector getSymbolInfo() {
+            String[] data = new String[]{"zlib", "bzlib", "xz", "PCRE", "ICU", "TRE", "iconv"};
+            RStringVector names = RDataFactory.createStringVector(data, true);
+
+            Map<String, String> versionFunctionTable = new HashMap<>();
+            versionFunctionTable.put("zlib", "zlibVersion");
+            versionFunctionTable.put("bzlib", "BZ2_bzlibVersion");
+            versionFunctionTable.put("xz", "lzma_version_string");
+            versionFunctionTable.put("PCRE", "pcre_version");
+            versionFunctionTable.put("TRE", "tre_version");
+
+            // TODO
+
+            // ICU -> empty
+            // TRE mandatory
+            // iconv -> unknown
+            return RDataFactory.createStringVector(0);
         }
     }
 }

@@ -395,6 +395,7 @@ public class BasePackage extends RBuiltinPackage {
         add(DynLoadFunctions.GetLoadedDLLs.class, DynLoadFunctionsFactory.GetLoadedDLLsNodeGen::create);
         add(DynLoadFunctions.GetSymbolInfo.class, DynLoadFunctionsFactory.GetSymbolInfoNodeGen::create);
         add(DynLoadFunctions.IsLoaded.class, DynLoadFunctionsFactory.IsLoadedNodeGen::create);
+        add(DynLoadFunctions.ExtSoftVersion.class, DynLoadFunctionsFactory.ExtSoftVersionNodeGen::create);
         add(EncodeString.class, EncodeStringNodeGen::create);
         add(EncodingFunctions.Encoding.class, EncodingFunctionsFactory.EncodingNodeGen::create);
         add(EncodingFunctions.SetEncoding.class, EncodingFunctionsFactory.SetEncodingNodeGen::create);
