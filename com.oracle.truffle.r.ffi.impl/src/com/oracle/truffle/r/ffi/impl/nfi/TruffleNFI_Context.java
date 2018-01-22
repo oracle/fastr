@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -123,7 +123,7 @@ final class TruffleNFI_Context extends RFFIContext {
             if (function.getLibrary() == NativeFunction.baseLibrary()) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
             } else if (function.getLibrary() == NativeFunction.anyLibrary()) {
-                DLLInfo lib = DLL.findLibraryContainingSymbol(function.getCallName());
+                DLLInfo lib = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
                 if (lib == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
                 }
@@ -292,7 +292,7 @@ final class TruffleNFI_Context extends RFFIContext {
                 case SHARE_ALL:
                     // new thread, initialize properly
                     assert defaultLibrary == null && rlibDLLInfo == null;
-                    rlibDLLInfo = DLL.findLibraryContainingSymbol("dot_call0");
+                    rlibDLLInfo = DLL.findLibraryContainingSymbol(context, "dot_call0");
                     defaultLibrary = (TruffleObject) RContext.getInstance().getEnv().parse(Source.newBuilder("default").name("(load default)").mimeType("application/x-native").build()).call();
                     initCallbacks(context);
                     break;

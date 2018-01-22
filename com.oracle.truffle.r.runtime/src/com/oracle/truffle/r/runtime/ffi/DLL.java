@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -16,9 +16,11 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -45,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 
@@ -103,9 +106,10 @@ public class DLL {
         @Override
         public void beforeDispose(RContext contextArg) {
             if (!isShareDLLKind(context.getKind())) {
+                RootCallTarget closeCallTarget = DLCloseRootNode.create(contextArg);
                 for (int i = 1; i < list.size(); i++) {
                     DLLInfo dllInfo = list.get(i);
-                    DLLRFFI.DLCloseRootNode.create().getCallTarget().call(dllInfo.handle);
+                    closeCallTarget.call(dllInfo.handle);
                 }
             }
             list = null;
@@ -635,12 +639,11 @@ public class DLL {
     }
 
     private static final class RFindSymbolRootNode extends RootNode {
-        private static RFindSymbolRootNode findSymbolRootNode;
-
         @Child private RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
 
         private RFindSymbolRootNode() {
             super(RContext.getInstance().getLanguage());
+            Truffle.getRuntime().createCallTarget(this);
         }
 
         @Override
@@ -654,12 +657,8 @@ public class DLL {
             return findSymbolNode.execute((String) args[0], (String) args[1], (RegisteredNativeSymbol) args[2]);
         }
 
-        private static synchronized RFindSymbolRootNode create() {
-            if (findSymbolRootNode == null) {
-                findSymbolRootNode = new RFindSymbolRootNode();
-                Truffle.getRuntime().createCallTarget(findSymbolRootNode);
-            }
-            return findSymbolRootNode;
+        private static CallTarget create(RContext context) {
+            return context.getOrCreateCachedCallTarget(RFindSymbolRootNode.class, () -> new RFindSymbolRootNode().getCallTarget());
         }
     }
 
@@ -714,9 +713,9 @@ public class DLL {
      * This is called by {@link UserRNG} because at the time the user-defined RNG is initialized it
      * is not known which library defines the RNG symbols.
      */
-    public static DLLInfo findLibraryContainingSymbol(String symbol) {
+    public static DLLInfo findLibraryContainingSymbol(RContext context, String symbol) {
         RegisteredNativeSymbol rns = RegisteredNativeSymbol.any();
-        SymbolHandle func = (SymbolHandle) RFindSymbolRootNode.create().getCallTarget().call(symbol, null, rns);
+        SymbolHandle func = (SymbolHandle) RFindSymbolRootNode.create(context).call(symbol, null, rns);
         if (func == SYMBOL_NOT_FOUND) {
             return null;
         } else {
@@ -746,9 +745,9 @@ public class DLL {
      */
     public static SymbolHandle findSymbol(String name, DLLInfo dllInfo) {
         if (dllInfo != null) {
-            return (SymbolHandle) DLLRFFI.DLSymRootNode.create().getCallTarget().call(dllInfo.handle, name);
+            return (SymbolHandle) DLLRFFI.DLSymRootNode.create(RContext.getInstance()).call(dllInfo.handle, name);
         } else {
-            return (SymbolHandle) RFindSymbolRootNode.create().getCallTarget().call(name, null, RegisteredNativeSymbol.any());
+            return (SymbolHandle) RFindSymbolRootNode.create(RContext.getInstance()).call(name, null, RegisteredNativeSymbol.any());
         }
     }
 

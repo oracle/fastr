@@ -8,7 +8,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -37,10 +37,10 @@ public class RGraphics {
                 RGridGraphicsAdapter.initialize();
             }
         } else if (initialized.compareAndSet(false, true) && FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
-            DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol("InitGraphics");
+            DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol(context, "InitGraphics");
             DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
             assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
-            CallRFFI.InvokeVoidCallRootNode.create().getCallTarget().call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), new Object[0]);
+            CallRFFI.InvokeVoidCallRootNode.create(context).call(new NativeCallInfo("InitGraphics", symbolHandle, dllInfo), new Object[0]);
         }
         context.internalGraphicsInitialized = true;
     }

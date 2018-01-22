@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,7 +131,7 @@ public final class UserRNG implements RandomNumberGenerator {
     @Override
     @TruffleBoundary
     public void init(int seed) {
-        DLLInfo dllInfo = DLL.findLibraryContainingSymbol(Function.Rand.symbol);
+        DLLInfo dllInfo = DLL.findLibraryContainingSymbol(RContext.getInstance(), Function.Rand.symbol);
         callGeneric = Truffle.getRuntime().createCallTarget(new GenericUserRNGRootNode());
         if (dllInfo == null) {
             throw RError.error(RError.NO_CALLER, RError.Message.RNG_SYMBOL, Function.Rand.symbol);

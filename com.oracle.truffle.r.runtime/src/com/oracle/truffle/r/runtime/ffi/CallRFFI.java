@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -83,10 +84,8 @@ public interface CallRFFI {
     HandleUpCallExceptionNode createHandleUpCallExceptionNode();
 
     final class InvokeCallRootNode extends RFFIRootNode<InvokeCallNode> {
-        private static InvokeCallRootNode invokeCallRootNode;
-
-        private InvokeCallRootNode() {
-            super(RFFIFactory.getCallRFFI().createInvokeCallNode());
+        protected InvokeCallRootNode(InvokeCallNode baseRFFINode) {
+            super(baseRFFINode);
         }
 
         @Override
@@ -95,19 +94,15 @@ public interface CallRFFI {
             return rffiNode.dispatch((NativeCallInfo) args[0], (Object[]) args[1]);
         }
 
-        public static InvokeCallRootNode create() {
-            if (invokeCallRootNode == null) {
-                invokeCallRootNode = new InvokeCallRootNode();
-            }
-            return invokeCallRootNode;
+        public static CallTarget create(RContext context) {
+            CallRFFI callRFFI = context.getRFFI().callRFFI;
+            return context.getOrCreateCachedCallTarget(InvokeCallRootNode.class, () -> new InvokeCallRootNode(callRFFI.createInvokeCallNode()).getCallTarget());
         }
     }
 
     final class InvokeVoidCallRootNode extends RFFIRootNode<InvokeVoidCallNode> {
-        private static InvokeVoidCallRootNode InvokeVoidCallRootNode;
-
-        private InvokeVoidCallRootNode() {
-            super(RFFIFactory.getCallRFFI().createInvokeVoidCallNode());
+        protected InvokeVoidCallRootNode(InvokeVoidCallNode wrapper) {
+            super(wrapper);
         }
 
         @Override
@@ -117,11 +112,9 @@ public interface CallRFFI {
             return RNull.instance; // unused
         }
 
-        public static InvokeVoidCallRootNode create() {
-            if (InvokeVoidCallRootNode == null) {
-                InvokeVoidCallRootNode = new InvokeVoidCallRootNode();
-            }
-            return InvokeVoidCallRootNode;
+        public static CallTarget create(RContext context) {
+            CallRFFI callRFFI = context.getRFFI().callRFFI;
+            return context.getOrCreateCachedCallTarget(InvokeVoidCallNode.class, () -> new InvokeVoidCallRootNode(callRFFI.createInvokeVoidCallNode()).getCallTarget());
         }
     }
 }
