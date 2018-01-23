@@ -1,10 +1,11 @@
 # prerequisites:
 # - 'testthat' package has to be installed: install.packages("testthat")
 # - FastR`s rJava package has to be installed: bin/r CMD INSTALL com.oracle.truffle.r.pkgs/rjava
-# - mxbuild/dists/fastr-unit-tests.jar has to be on FastR classpath
 
 library(testthat)
 library(rJava)
+
+.jaddClassPath(paste0(Sys.getenv("R_HOME"), "/mxbuild/dists/fastr-unit-tests.jar"))
 
 testName <- "test J function"
 test_that(testName, {
