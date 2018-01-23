@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,11 +29,11 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.text.Collator;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
-import java.util.Map.Entry;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.ROptions;
+import com.oracle.truffle.r.runtime.ROptions.ContextStateImpl;
 import com.oracle.truffle.r.runtime.ROptions.OptionsException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -134,12 +135,12 @@ public class OptionsFunctions {
             ROptions.ContextStateImpl options = RContext.getInstance().stateROptions;
             Object[] values = args.getArguments();
             ArgumentsSignature signature = args.getSignature();
-            Object[] data = new Object[values.length];
-            String[] names = new String[values.length];
+            ArrayList<Object> data = new ArrayList<>(values.length);
+            ArrayList<String> names = new ArrayList<>(values.length);
             for (int i = 0; i < values.length; i++) {
                 String argName = signature.getName(i);
                 Object value = values[i];
-                if (argNameNull.profile(argName == null || value instanceof RList)) {
+                if (argNameNull.profile(argName == null)) {
                     // getting
                     String optionName = null;
                     if (value instanceof RStringVector) {
@@ -149,63 +150,50 @@ public class OptionsFunctions {
                         optionName = (String) value;
                     } else if (value instanceof RList) {
                         // setting
-                        RList list = (RList) value;
-                        RStringVector thisListnames = null;
-                        Object nn = list.getNames();
-                        if (nn instanceof RStringVector) {
-                            thisListnames = (RStringVector) nn;
-                        } else {
-                            throw RError.error(RError.SHOW_CALLER, Message.LIST_NO_VALID_NAMES);
-                        }
-                        Object[] listData = new Object[list.getLength()];
-                        String[] listNames = new String[listData.length];
-                        for (int j = 0; j < listData.length; j++) {
-                            String name = thisListnames.getDataAt(j);
-                            Object previousVal = options.getValue(name);
-                            listData[j] = previousVal == null ? RNull.instance : previousVal;
-                            listNames[j] = name;
-                            options.setValue(name, list.getDataAtAsObject(j));
-                        }
+                        // named lists are set the "as-is", which makes the options hierarchical
+                        // not named list is un-listed and each value (with its name) is used as
+                        // "top-level" option
+                        handleUnnamedList(data, names, (RList) value, options);
                         // any settings means result is invisible
                         visible = false;
-                        // if this is the only argument, no need to copy, can just return
-                        if (values.length == 1) {
-                            data = listData;
-                            names = listNames;
-                            break;
-                        } else {
-                            // resize and copy
-                            int newSize = values.length - 1 + listData.length;
-                            Object[] newData = new Object[newSize];
-                            String[] newNames = new String[newSize];
-                            System.arraycopy(data, 0, newData, 0, i);
-                            System.arraycopy(names, 0, newNames, 0, i);
-                            System.arraycopy(listData, 0, newData, i, listData.length);
-                            System.arraycopy(listNames, 0, newNames, i, listNames.length);
-                            data = newData;
-                            names = newNames;
-                        }
                     } else {
                         throw error(Message.INVALID_UNNAMED_ARGUMENT);
                     }
                     Object optionVal = options.getValue(optionName);
-                    data[i] = optionVal == null ? RNull.instance : optionVal;
-                    names[i] = optionName;
+                    data.add(optionVal == null ? RNull.instance : optionVal);
+                    names.add(optionName);
                 } else {
                     // setting
                     Object previousVal = options.getValue(argName);
-                    data[i] = previousVal == null ? RNull.instance : previousVal;
-                    names[i] = argName;
+                    data.add(previousVal == null ? RNull.instance : previousVal);
+                    names.add(argName);
                     options.setValue(argName, value);
                     // any settings means result is invisible
                     visible = false;
                 }
             }
-            RList result = RDataFactory.createList(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
+            RList result = RDataFactory.createList(data.toArray(), RDataFactory.createStringVector(names.toArray(new String[names.size()]), RDataFactory.COMPLETE_VECTOR));
             return new ResultWithVisibility(result, visible);
         }
 
-        protected boolean isMissing(RArgsValuesAndNames args) {
+        private static void handleUnnamedList(ArrayList<Object> data, ArrayList<String> names, RList list, ContextStateImpl options) throws OptionsException {
+            RStringVector thisListnames;
+            Object nn = list.getNames();
+            if (nn instanceof RStringVector) {
+                thisListnames = (RStringVector) nn;
+            } else {
+                throw RError.error(RError.SHOW_CALLER, Message.LIST_NO_VALID_NAMES);
+            }
+            for (int j = 0; j < list.getLength(); j++) {
+                String name = thisListnames.getDataAt(j);
+                Object previousVal = options.getValue(name);
+                data.add(previousVal == null ? RNull.instance : previousVal);
+                names.add(name);
+                options.setValue(name, list.getDataAtAsObject(j));
+            }
+        }
+
+        boolean isMissing(RArgsValuesAndNames args) {
             return args.isEmpty();    // length() == 1 && args.getValue(0) == RMissing.instance;
         }
     }
