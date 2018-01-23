@@ -1366,7 +1366,7 @@ SEXP Rf_asS4(SEXP x, Rboolean b, int i) {
 
 static SEXP R_tryEvalInternal(SEXP x, SEXP y, int *ErrorOccurred, int silent) {
     TRACE0();
-    return ((call_R_tryEval) callbacks[R_tryEval_x])(x, y, silent);
+    return ((call_R_tryEval) callbacks[R_tryEval_x])(x, y, ErrorOccurred, silent);
 }
 
 SEXP R_tryEval(SEXP x, SEXP y, int *ErrorOccurred) {

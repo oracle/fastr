@@ -878,7 +878,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object R_tryEval(Object expr, Object env, int silent) {
+    public Object R_tryEval(Object expr, Object env, Object errorFlag, int silent) {
         throw implementedAsNode();
     }
 
