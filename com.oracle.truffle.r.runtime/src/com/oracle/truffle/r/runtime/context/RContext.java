@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -102,6 +102,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
+import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -341,6 +342,7 @@ public final class RContext {
     public final ROptions.ContextStateImpl stateROptions;
     public final REnvironment.ContextStateImpl stateREnvironment;
     public final RErrorHandling.ContextStateImpl stateRErrorHandling;
+    public final FastrInteropTryContextState stateInteropTry;
     public final ConnectionSupport.ContextStateImpl stateRConnection;
     public final RRNG.ContextStateImpl stateRNG;
     public final RSerialize.ContextStateImpl stateRSerialize;
@@ -444,6 +446,7 @@ public final class RContext {
         this.stateStdConnections = StdConnections.ContextStateImpl.newContextState();
         this.stateREnvironment = REnvironment.ContextStateImpl.newContextState(this);
         this.stateRErrorHandling = RErrorHandling.ContextStateImpl.newContextState();
+        this.stateInteropTry = FastrInteropTryContextState.newContextState();
         this.stateRConnection = ConnectionSupport.ContextStateImpl.newContextState();
         this.stateRNG = RRNG.ContextStateImpl.newContextState();
         this.stateRSerialize = RSerialize.ContextStateImpl.newContextState();
