@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ public abstract class FastRSlotAssign extends RBuiltinNode.Arg4 {
         casts.arg("object").mustNotBeNull();
         casts.arg("name").defaultError(Message.SLOT_INVALID_TYPE_OR_LEN).mustNotBeMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         casts.arg("check").mustNotBeMissing().asLogicalVector().findFirst().mustNotBeNA(Message.NA_UNEXP).map(toBoolean());
-        casts.arg("value").mustNotBeMissing();
+        casts.arg("value").castForeignObjects(false).mustNotBeMissing();
     }
 
     @Child private InternStringNode intern = InternStringNodeGen.create();
