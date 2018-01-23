@@ -279,7 +279,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case BOOLEAN:
                 WriteArray<byte[]> wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
                     array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).byteValue();
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 byte[] byteArray = new byte[size];
                 if (dims != null) {
@@ -290,7 +290,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case DOUBLE:
                 WriteArray<double[]> wda = (array, resultIdx, sourceIdx, complete) -> {
                     array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).doubleValue();
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 double[] doubleArray = new double[size];
                 if (dims != null) {
@@ -301,7 +301,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case INTEGER:
                 WriteArray<int[]> wia = (array, resultIdx, sourceIdx, complete) -> {
                     array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).intValue();
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 int[] intArray = new int[size];
                 if (dims != null) {
@@ -312,7 +312,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case STRING:
                 WriteArray<String[]> wsa = (array, resultIdx, sourceIdx, complete) -> {
                     array[resultIdx] = String.valueOf(arrayData.elements.get(sourceIdx));
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 String[] stringArray = new String[size];
                 if (dims != null) {
