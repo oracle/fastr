@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,6 +55,8 @@ public class TestBuiltin_options extends TestBase {
         assertEval("{ getOption(character()) }");
         assertEval("{ options(\"timeout\", \"width\") }");
         assertEval("{ options(options(digits = 5)) }");
+        assertEval("{ options(list(aaa = 42, bbb = 'hello')); x <- options('aaa', 'bbb'); options(aaa=NULL, bbb=NULL); x }");
+        assertEval("{ options(lll = list(aaa = 42, bbb = 'hello')); x <- options('lll', 'aaa', 'bbb'); options(aaa=NULL, bbb=NULL, lll=NULL); x }");
     }
 
     @Test
