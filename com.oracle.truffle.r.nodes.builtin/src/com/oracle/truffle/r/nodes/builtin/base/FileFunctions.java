@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -634,11 +634,10 @@ public class FileFunctions {
         }
 
         private RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, boolean allFiles, boolean fullNames, boolean recursive,
-                        boolean ignoreCaseIn, boolean includeDirsIn, boolean noDotDot) {
+                        boolean ignoreCase, boolean includeDirsIn, boolean noDotDot) {
             boolean includeDirs = !recursive || includeDirsIn;
-            @SuppressWarnings("unused")
-            boolean ignoreCase = check(ignoreCaseIn, "ignoreCase");
-            Pattern pattern = patternString == null ? null : Pattern.compile(patternString);
+            int flags = ignoreCase ? Pattern.CASE_INSENSITIVE : 0;
+            Pattern pattern = patternString == null ? null : Pattern.compile(patternString, flags);
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
             ArrayList<String> files = new ArrayList<>();
@@ -691,13 +690,6 @@ public class FileFunctions {
                 Arrays.sort(data);
                 return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
             }
-        }
-
-        private boolean check(boolean value, String argName) {
-            if (value) {
-                warning(RError.Message.GENERIC, "'" + argName + "'" + " is not implemented");
-            }
-            return value;
         }
 
         private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
