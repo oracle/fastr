@@ -152,11 +152,11 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     @Specialization(guards = "isJavaIterable(obj)")
     @TruffleBoundary
-    protected ForeignArrayData doJavaIterable(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth,
+    protected ForeignArrayData doJavaIterable(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, ForeignArrayData arrayData, int depth,
                     @Cached("createExecute(0).createNode()") Node execute) {
 
         try {
-            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, recursive, execute, depth);
+            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, execute, depth);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
             throw error(RError.Message.GENERIC, "error while casting external object to list: " + e.getMessage());
         }
@@ -197,7 +197,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         return arrayData;
     }
 
-    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, boolean recursive, Node execute, int depth)
+    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, Node execute, int depth)
                     throws UnknownIdentifierException, ArityException, UnsupportedMessageException, UnsupportedTypeException {
         if (read == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -210,11 +210,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         while ((boolean) ForeignAccess.sendExecute(execute, hasNextFunction)) {
             TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
             Object element = ForeignAccess.sendExecute(execute, nextFunction);
-            if (recursive && (isJavaIterable(element) || isForeignArray(element, hasSize))) {
-                recurse(arrayData, element, depth);
-            } else {
-                arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
-            }
+            arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
         }
         return arrayData;
     }
