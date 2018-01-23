@@ -62,6 +62,7 @@ com.oracle.truffle.r.native/fficall/src/truffle_common/Rembedded.c,gnu_r.copyrig
 com.oracle.truffle.r.native/fficall/src/common/arithmetic_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/coerce_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/errors_fastr.c,gnu_r.core.copyright
+com.oracle.truffle.r.native/fficall/src/common/qsort.c,gnu_r.core.copyright
 com.oracle.truffle.r.native/fficall/src/common/inlined_fastr.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/fficall/src/common/localecharset_fastr.c,gnu_r.copyright
 com.oracle.truffle.r.native/fficall/src/common/print_fastr.c,gnu_r_gentleman_ihaka.copyright

@@ -1218,16 +1218,6 @@ void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
     checkExitCall();
 }
 
-void R_qsort_I  (double *v, int *II, int i, int j) {
-    TRACE0();
-    unimplemented("R_qsort_I");
-}
-
-void R_qsort_int_I(int *iv, int *II, int i, int j) {
-    TRACE0();
-    unimplemented("R_qsort_int_I");
-}
-
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
     TRACE0();
     unimplemented("R_BadLongVector");
