@@ -152,11 +152,11 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     @Specialization(guards = "isJavaIterable(obj)")
     @TruffleBoundary
-    protected ForeignArrayData doJavaIterable(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth,
+    protected ForeignArrayData doJavaIterable(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, ForeignArrayData arrayData, int depth,
                     @Cached("createExecute(0).createNode()") Node execute) {
 
         try {
-            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, recursive, execute, depth);
+            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, execute, depth);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
             throw error(RError.Message.GENERIC, "error while casting external object to list: " + e.getMessage());
         }
@@ -197,7 +197,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         return arrayData;
     }
 
-    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, boolean recursive, Node execute, int depth)
+    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, Node execute, int depth)
                     throws UnknownIdentifierException, ArityException, UnsupportedMessageException, UnsupportedTypeException {
         if (read == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -210,11 +210,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         while ((boolean) ForeignAccess.sendExecute(execute, hasNextFunction)) {
             TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
             Object element = ForeignAccess.sendExecute(execute, nextFunction);
-            if (recursive && (isJavaIterable(element) || isForeignArray(element, hasSize))) {
-                recurse(arrayData, element, depth);
-            } else {
-                arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
-            }
+            arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
         }
         return arrayData;
     }
@@ -279,7 +275,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case BOOLEAN:
                 WriteArray<byte[]> wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
                     array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).byteValue();
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 byte[] byteArray = new byte[size];
                 if (dims != null) {
@@ -290,7 +286,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case DOUBLE:
                 WriteArray<double[]> wda = (array, resultIdx, sourceIdx, complete) -> {
                     array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).doubleValue();
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 double[] doubleArray = new double[size];
                 if (dims != null) {
@@ -301,7 +297,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case INTEGER:
                 WriteArray<int[]> wia = (array, resultIdx, sourceIdx, complete) -> {
                     array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).intValue();
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 int[] intArray = new int[size];
                 if (dims != null) {
@@ -312,7 +308,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             case STRING:
                 WriteArray<String[]> wsa = (array, resultIdx, sourceIdx, complete) -> {
                     array[resultIdx] = String.valueOf(arrayData.elements.get(sourceIdx));
-                    complete[0] &= RRuntime.isNA(array[resultIdx]);
+                    complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 String[] stringArray = new String[size];
                 if (dims != null) {

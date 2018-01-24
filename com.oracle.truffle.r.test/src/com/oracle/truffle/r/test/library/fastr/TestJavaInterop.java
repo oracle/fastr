@@ -39,6 +39,8 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.library.fastr.TestJavaInterop.TestClass.TestPOJO;
+import java.lang.reflect.Constructor;
 
 public class TestJavaInterop extends TestBase {
 
@@ -1382,6 +1384,28 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("range(to)", "invalid 'type' (external object) of argument"));
     }
 
+    private static final String CREATE_EXCEPTIONS_TO = "to <- new('" + TestExceptionsClass.class.getName() + "');";
+
+    @Test
+    public void testException() {
+        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException');",
+                        errorIn("new.external(Class, ...)", "Foreign function failed: java.io.IOException"));
+        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg');",
+                        errorIn("new.external(Class, ...)", "Foreign function failed: java.io.IOException: msg"));
+        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException');",
+                        errorIn("new.external(Class, ...)", "Foreign function failed: java.lang.RuntimeException"));
+        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg');",
+                        errorIn("new.external(Class, ...)", "Foreign function failed: java.lang.RuntimeException: msg"));
+
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')", errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: java.io.IOException"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
+                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: java.io.IOException: msg"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: java.lang.RuntimeException"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: java.lang.RuntimeException: msg"));
+    }
+
     private String getRValue(Object value) {
         if (value == null) {
             return "NULL";
@@ -1419,6 +1443,11 @@ public class TestJavaInterop extends TestBase {
             }
             sb.append("\\n')");
             return sb.toString();
+        }
+        if (value instanceof TestPOJO) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("[external object]\n$data\n[1] \"").append(((TestPOJO) value).data).append("\"\n\n$toString\n[external object]\n\n$getData\n[external object]\n\n");
+            return String.format("cat('%s')", sb.toString());
         }
         return value.toString();
     }
@@ -1829,6 +1858,7 @@ public class TestJavaInterop extends TestBase {
 
         public static Object fieldStaticNullObject = null;
         public Object fieldNullObject = null;
+        public TestPOJO pojo = new TestPOJO("POJO for field");
 
         public List<Boolean> listBoolean = new ArrayList<>(Arrays.asList(true, false, true));
         public List<Byte> listByte = new ArrayList<>(Arrays.asList((byte) 1, (byte) 2, (byte) 3));
@@ -1853,6 +1883,23 @@ public class TestJavaInterop extends TestBase {
 
         public List<Element> listObject = new ArrayList<>(Arrays.asList(new Element("a"), new Element("b"), new Element("c"), null));
         public Element[] arrayObject = new Element[]{new Element("a"), new Element("b"), new Element("c"), null};
+
+        public static class TestPOJO {
+            public final String data;
+
+            public TestPOJO(String data) {
+                this.data = data;
+            }
+
+            public String getData() {
+                return data;
+            }
+
+            @Override
+            public String toString() {
+                return String.format("TetsPOJO[data='%s']", data);
+            }
+        }
 
         public TestClass() {
             this(true, Byte.MAX_VALUE, 'a', Double.MAX_VALUE, 1.1f, Integer.MAX_VALUE, Long.MAX_VALUE, Short.MAX_VALUE, "a string");
@@ -2005,6 +2052,10 @@ public class TestJavaInterop extends TestBase {
             return fieldStringObject;
         }
 
+        public TestPOJO returnsPOJO() {
+            return new TestPOJO("POJO for method");
+        }
+
         public String[] methodStringArray() {
             return fieldStringArray;
         }
@@ -2087,6 +2138,9 @@ public class TestJavaInterop extends TestBase {
 
         public void methodAcceptsOnlyNull(Object o) {
             Assert.assertNull(o);
+        }
+
+        public void methodVoid() {
         }
 
         public String classAsArg(Class<?> c) {
@@ -2443,6 +2497,50 @@ public class TestJavaInterop extends TestBase {
         @Override
         public Iterator<Object> iterator() {
             throw new UnsupportedOperationException("Should not reach here.");
+        }
+    }
+
+    public static class TestExceptionsClass {
+
+        public TestExceptionsClass() {
+
+        }
+
+        public TestExceptionsClass(String className) throws Throwable {
+            if (className != null) {
+                throwEx(className);
+            }
+        }
+
+        public TestExceptionsClass(String className, String msg) throws Throwable {
+            if (className != null) {
+                throwEx(className, msg);
+            }
+        }
+
+        public static void exception(String className) throws Throwable {
+            throwEx(className);
+        }
+
+        public static void exception(String className, String msg) throws Throwable {
+            throwEx(className, msg);
+        }
+
+        private static void throwEx(String className) throws Throwable {
+            throwEx(className, null);
+        }
+
+        private static void throwEx(String className, String msg) throws Throwable {
+            Class<?> clazz = Class.forName(className);
+            Object t;
+            if (msg == null) {
+                t = clazz.newInstance();
+            } else {
+                Constructor<?> ctor = clazz.getDeclaredConstructor(String.class);
+                t = ctor.newInstance(msg);
+            }
+            assert t instanceof Throwable : "throwable instance expected: " + className;
+            throw (Throwable) t;
         }
     }
 }

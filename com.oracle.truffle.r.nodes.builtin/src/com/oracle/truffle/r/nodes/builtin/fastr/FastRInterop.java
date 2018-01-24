@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,18 +24,14 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.File;
 import java.io.IOException;
@@ -47,6 +43,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -66,16 +63,25 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.Source.Builder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
@@ -94,6 +100,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
+import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
+import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
@@ -610,7 +618,7 @@ public class FastRInterop {
 
         static {
             Casts casts = new Casts(ToJavaArray.class);
-            casts.arg("x").mustNotBeMissing();
+            casts.arg("x").castForeignObjects(false).mustNotBeMissing();
             casts.arg("className").allowMissing().mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
             casts.arg("flat").mapMissing(Predef.constant(RRuntime.LOGICAL_TRUE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
@@ -846,6 +854,8 @@ public class FastRInterop {
             } catch (IllegalStateException | SecurityException | IllegalArgumentException | UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
                 String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + e.getMessage();
                 throw error(RError.Message.GENERIC, msg);
+            } catch (RuntimeException e) {
+                throw RError.handleInteropException(this, e, clazz);
             }
         }
 
@@ -946,6 +956,81 @@ public class FastRInterop {
                 throw error(RError.Message.GENERIC, e.getMessage());
             }
         }
+    }
+
+    @RBuiltin(name = ".fastr.interop.try", kind = PRIMITIVE, parameterNames = {"function", "check"}, behavior = COMPLEX)
+    public abstract static class FastRInteropTry extends RBuiltinNode.Arg2 {
+        @Node.Child private RExplicitCallNode call = RExplicitCallNode.create();
+
+        static {
+            Casts casts = new Casts(FastRInteropTry.class);
+            casts.arg("function").mustBe(instanceOf(RFunction.class));
+            casts.arg("check").mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst();
+        }
+
+        @Specialization
+        public Object tryFunc(VirtualFrame frame, RFunction function, byte check) {
+            boolean isCheck = RRuntime.fromLogical(check);
+            getInteropTryState().stepIn();
+            try {
+                return call.execute(frame, function, RArgsValuesAndNames.EMPTY);
+            } catch (FastRInteropTryException e) {
+                Throwable cause = e.getCause();
+                CompilerDirectives.transferToInterpreter();
+                if (cause instanceof TruffleException) {
+                    cause = cause.getCause();
+                    if (isCheck) {
+                        String causeName = cause.getClass().getName();
+                        String msg = cause.getMessage();
+                        msg = msg != null ? String.format("%s: %s", causeName, msg) : causeName;
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, msg);
+                    } else {
+                        getInteropTryState().lastException = cause;
+                    }
+                } else {
+                    RInternalError.reportError(e);
+                }
+            } finally {
+                getInteropTryState().stepOut();
+            }
+            return RNull.instance;
+        }
+
+    }
+
+    @RBuiltin(name = ".fastr.interop.getTryException", kind = PRIMITIVE, parameterNames = {"clear"}, behavior = COMPLEX)
+    public abstract static class FastRInteropGetException extends RBuiltinNode.Arg1 {
+        static {
+            Casts casts = new Casts(FastRInteropGetException.class);
+            casts.arg("clear").mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst();
+        }
+
+        @Specialization
+        public Object getException(byte clear) {
+            Throwable ret = getInteropTryState().lastException;
+            if (RRuntime.fromLogical(clear)) {
+                getInteropTryState().lastException = null;
+            }
+            return ret != null ? JavaInterop.asTruffleObject(ret) : RNull.instance;
+        }
+    }
+
+    @RBuiltin(name = ".fastr.interop.clearTryException", kind = PRIMITIVE, parameterNames = {}, behavior = COMPLEX)
+    public abstract static class FastRInteropClearException extends RBuiltinNode.Arg0 {
+
+        static {
+            NodeWithArgumentCasts.Casts.noCasts(FastRInteropClearException.class);
+        }
+
+        @Specialization
+        public Object clearException() {
+            getInteropTryState().lastException = null;
+            return RNull.instance;
+        }
+    }
+
+    private static FastrInteropTryContextState getInteropTryState() {
+        return RContext.getInstance().stateInteropTry;
     }
 
 }
