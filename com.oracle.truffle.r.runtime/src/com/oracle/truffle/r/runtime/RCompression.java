@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.util.zip.GZIPInputStream;
 
 import org.tukaani.xz.LZMA2InputStream;
 
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 /**
@@ -148,12 +149,12 @@ public class RCompression {
     }
 
     private static boolean gzipCompress(byte[] udata, byte[] cdata) {
-        int rc = (int) ZipRFFI.CompressRootNode.create().getCallTarget().call(cdata, udata);
+        int rc = (int) ZipRFFI.CompressRootNode.create(RContext.getInstance()).call(cdata, udata);
         return rc == 0;
     }
 
     private static boolean gzipUncompress(byte[] udata, byte[] data) {
-        int rc = (int) ZipRFFI.UncompressRootNode.create().getCallTarget().call(udata, data);
+        int rc = (int) ZipRFFI.UncompressRootNode.create(RContext.getInstance()).call(udata, data);
         return rc == 0;
     }
 

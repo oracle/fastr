@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -230,13 +230,13 @@ public final class RContext {
     private final RStartParams startParameters;
     private final RCmdOptions cmdOptions;
     private final RContext.ContextKind contextKind;
-    public final Map<Class<?>, RootCallTarget> nativeCallTargets = new HashMap<>();
+    public final Map<Class<?>, RootCallTarget> cachedCallTagets = new HashMap<>();
 
-    public RootCallTarget getOrCreateNativeCallTarget(Class<?> clazz, Supplier<RootCallTarget> creatFunction) {
-        RootCallTarget result = nativeCallTargets.get(clazz);
+    public RootCallTarget getOrCreateCachedCallTarget(Class<?> clazz, Supplier<RootCallTarget> createFunction) {
+        RootCallTarget result = cachedCallTagets.get(clazz);
         if (result == null) {
-            result = creatFunction.get();
-            nativeCallTargets.put(clazz, result);
+            result = createFunction.get();
+            cachedCallTagets.put(clazz, result);
         }
         return result;
     }

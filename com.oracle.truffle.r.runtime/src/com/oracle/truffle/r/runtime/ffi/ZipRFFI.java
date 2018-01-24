@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * zip compression/uncompression.
@@ -59,10 +61,8 @@ public interface ZipRFFI {
     // RootNodes for calling when not in Truffle context
 
     final class CompressRootNode extends RFFIRootNode<CompressNode> {
-        private static CompressRootNode compressRootNode;
-
-        private CompressRootNode() {
-            super(RFFIFactory.getZipRFFI().createCompressNode());
+        protected CompressRootNode(CompressNode wrapped) {
+            super(wrapped);
         }
 
         @Override
@@ -71,19 +71,14 @@ public interface ZipRFFI {
             return rffiNode.execute((byte[]) args[0], (byte[]) args[1]);
         }
 
-        public static CompressRootNode create() {
-            if (compressRootNode == null) {
-                compressRootNode = new CompressRootNode();
-            }
-            return compressRootNode;
+        public static CallTarget create(RContext context) {
+            return context.getOrCreateCachedCallTarget(CompressRootNode.class, () -> new CompressRootNode(context.getRFFI().zipRFFI.createCompressNode()).getCallTarget());
         }
     }
 
     final class UncompressRootNode extends RFFIRootNode<UncompressNode> {
-        private static UncompressRootNode uncompressRootNode;
-
-        private UncompressRootNode() {
-            super(RFFIFactory.getZipRFFI().createUncompressNode());
+        protected UncompressRootNode(UncompressNode wrapped) {
+            super(wrapped);
         }
 
         @Override
@@ -92,11 +87,8 @@ public interface ZipRFFI {
             return rffiNode.execute((byte[]) args[0], (byte[]) args[1]);
         }
 
-        public static UncompressRootNode create() {
-            if (uncompressRootNode == null) {
-                uncompressRootNode = new UncompressRootNode();
-            }
-            return uncompressRootNode;
+        public static CallTarget create(RContext context) {
+            return context.getOrCreateCachedCallTarget(UncompressRootNode.class, () -> new UncompressRootNode(context.getRFFI().zipRFFI.createUncompressNode()).getCallTarget());
         }
     }
 }

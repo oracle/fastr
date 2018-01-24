@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,13 +87,24 @@ public final class Closure {
         return new Closure(name, expr);
     }
 
-    private RootCallTarget getCallTarget(FrameDescriptor desc) {
-
+    private synchronized RootCallTarget getCallTarget(FrameDescriptor desc, boolean canReuseExpr) {
+        // This whole method is synchronized, not only the hash-map, so that we can lazily
+        // initialize the call targets hash-map, and reuse 'expr' in case we're the first thread
+        // executing this method
         // Create lazily, as it is not needed at all for INLINED promises!
+        RootCallTarget result;
         if (callTargets == null) {
             callTargets = new WeakHashMap<>();
+            result = generateCallTarget((RNode) (canReuseExpr ? expr : RContext.getASTBuilder().process(expr.asRSyntaxNode())));
+            callTargets.put(desc, result);
+        } else {
+            result = callTargets.get(desc);
+            if (result == null) {
+                result = generateCallTarget((RNode) RContext.getASTBuilder().process(expr.asRSyntaxNode()));
+                callTargets.put(desc, result);
+            }
         }
-        return callTargets.get(desc);
+        return result;
     }
 
     /**
@@ -103,12 +114,7 @@ public final class Closure {
         CompilerAsserts.neverPartOfCompilation();
 
         FrameDescriptor desc = frame.getFrameDescriptor();
-        RootCallTarget callTarget = getCallTarget(desc);
-        if (callTarget == null) {
-            // clone for additional call targets
-            callTarget = generateCallTarget((RNode) (callTargets.isEmpty() ? expr : RContext.getASTBuilder().process(expr.asRSyntaxNode())));
-            callTargets.put(desc, callTarget);
-        }
+        RootCallTarget callTarget = getCallTarget(desc, true);
         return callTarget.call(frame);
     }
 
@@ -119,12 +125,9 @@ public final class Closure {
         CompilerAsserts.neverPartOfCompilation();
 
         FrameDescriptor desc = envir.getFrame().getFrameDescriptor();
-        RootCallTarget callTarget = getCallTarget(desc);
-        if (callTarget == null) {
-            // clone for additional call targets
-            callTarget = generateCallTarget((RNode) RContext.getASTBuilder().process(expr.asRSyntaxNode()));
-            callTargets.put(desc, callTarget);
-        }
+        RootCallTarget callTarget = getCallTarget(desc, false);
+        // Note: because we're creating new frame, we must not reuse expr, which may have cached
+        // some frame slots
         MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, caller);
         return callTarget.call(vFrame);
     }

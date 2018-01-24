@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -76,8 +76,8 @@ public interface DLLRFFI {
     // RootNodes
 
     final class DLOpenRootNode extends RFFIRootNode<DLOpenNode> {
-        private DLOpenRootNode() {
-            super(RFFIFactory.getDLLRFFI().createDLOpenNode());
+        private DLOpenRootNode(DLOpenNode wrapped) {
+            super(wrapped);
         }
 
         @Override
@@ -87,15 +87,13 @@ public interface DLLRFFI {
         }
 
         public static RootCallTarget create(RContext context) {
-            return context.getOrCreateNativeCallTarget(DLOpenRootNode.class, () -> new DLOpenRootNode().getCallTarget());
+            return context.getOrCreateCachedCallTarget(DLOpenRootNode.class, () -> new DLOpenRootNode(context.getRFFI().dllRFFI.createDLOpenNode()).getCallTarget());
         }
     }
 
     final class DLSymRootNode extends RFFIRootNode<DLSymNode> {
-        private static DLSymRootNode dlSymRootNode;
-
-        private DLSymRootNode() {
-            super(RFFIFactory.getDLLRFFI().createDLSymNode());
+        protected DLSymRootNode(DLSymNode wrapped) {
+            super(wrapped);
         }
 
         @Override
@@ -104,19 +102,14 @@ public interface DLLRFFI {
             return rffiNode.execute(args[0], (String) args[1]);
         }
 
-        public static DLSymRootNode create() {
-            if (dlSymRootNode == null) {
-                dlSymRootNode = new DLSymRootNode();
-            }
-            return dlSymRootNode;
+        public static RootCallTarget create(RContext context) {
+            return context.getOrCreateCachedCallTarget(DLSymRootNode.class, () -> new DLSymRootNode(context.getRFFI().dllRFFI.createDLSymNode()).getCallTarget());
         }
     }
 
     final class DLCloseRootNode extends RFFIRootNode<DLCloseNode> {
-        private static DLCloseRootNode dlCloseRootNode;
-
-        private DLCloseRootNode() {
-            super(RFFIFactory.getDLLRFFI().createDLCloseNode());
+        protected DLCloseRootNode(DLCloseNode wrapped) {
+            super(wrapped);
         }
 
         @Override
@@ -125,11 +118,8 @@ public interface DLLRFFI {
             return rffiNode.execute(args[0]);
         }
 
-        public static DLCloseRootNode create() {
-            if (dlCloseRootNode == null) {
-                dlCloseRootNode = new DLCloseRootNode();
-            }
-            return dlCloseRootNode;
+        public static RootCallTarget create(RContext context) {
+            return context.getOrCreateCachedCallTarget(DLCloseRootNode.class, () -> new DLCloseRootNode(context.getRFFI().dllRFFI.createDLCloseNode()).getCallTarget());
         }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,13 +29,14 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Objects;
 
-import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.RConnection.SeekMode;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallRootNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -66,7 +68,7 @@ public class NativeConnections {
     private static NativeCallInfo getNativeFunctionInfo(String name) {
         NativeCallInfo nativeCallInfo = callInfoTable.get(name);
         if (nativeCallInfo == null) {
-            DLLInfo findLibraryContainingSymbol = DLL.findLibraryContainingSymbol(name);
+            DLLInfo findLibraryContainingSymbol = DLL.findLibraryContainingSymbol(RContext.getInstance(), name);
             SymbolHandle findSymbol = DLL.findSymbol(name, findLibraryContainingSymbol);
             nativeCallInfo = new NativeCallInfo(name, findSymbol, findLibraryContainingSymbol);
             callInfoTable.put(name, nativeCallInfo);
@@ -135,7 +137,7 @@ public class NativeConnections {
 
         public boolean getFlag(String name) {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(GET_FLAG_NATIVE_CONNECTION);
-            RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
+            CallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create(RContext.getInstance());
 
             Object result = nativeCallTarget.call(ni, new Object[]{addr, name});
             if (result instanceof RLogicalVector) {
@@ -172,7 +174,7 @@ public class NativeConnections {
         RIntVector rwCode = RDataFactory.createIntVectorFromScalar(rw);
 
         NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(SEEK_NATIVE_CONNECTION);
-        RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
+        CallTarget nativeCallTarget = InvokeCallRootNode.create(RContext.getInstance());
         Object result = nativeCallTarget.call(ni, new Object[]{addr, where, seekCode, rwCode});
         if (result instanceof RDoubleVector) {
             return (long) ((RDoubleVector) result).getDataAt(0);
@@ -288,7 +290,7 @@ public class NativeConnections {
 
     private static void openNative(RExternalPtr addr) throws IOException {
         NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(OPEN_NATIVE_CONNECTION);
-        RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
+        CallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create(RContext.getInstance());
 
         Object result = nativeCallTarget.call(ni, new Object[]{addr});
         if (!(result instanceof RLogicalVector && ((RLogicalVector) result).getDataAt(0) == RRuntime.LOGICAL_TRUE)) {
@@ -315,7 +317,7 @@ public class NativeConnections {
         @Override
         public int read(ByteBuffer dst) throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(READ_NATIVE_CONNECTION);
-            RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
+            CallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create(RContext.getInstance());
             RRawVector bufferVec = RDataFactory.createRawVector(dst.remaining());
             Object call = nativeCallTarget.call(ni, new Object[]{base.addr, bufferVec, dst.remaining()});
             if (!(call instanceof RIntVector)) {
@@ -339,14 +341,14 @@ public class NativeConnections {
         @Override
         public void close() throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(CLOSE_NATIVE_CONNECTION);
-            RootCallTarget nativeCallTarget = CallRFFI.InvokeVoidCallRootNode.create().getCallTarget();
+            CallTarget nativeCallTarget = CallRFFI.InvokeVoidCallRootNode.create(RContext.getInstance());
             nativeCallTarget.call(ni, new Object[]{base.addr});
         }
 
         @Override
         public int write(ByteBuffer src) throws IOException {
             NativeCallInfo ni = NativeConnections.getNativeFunctionInfo(WRITE_NATIVE_CONNECTION);
-            RootCallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create().getCallTarget();
+            CallTarget nativeCallTarget = CallRFFI.InvokeCallRootNode.create(RContext.getInstance());
             ByteBuffer slice = src;
             if (src.position() > 0) {
                 slice = src.slice();
