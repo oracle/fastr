@@ -167,7 +167,7 @@ SEXP interactive(void) {
 }
 
 SEXP tryEval(SEXP expr, SEXP env) {
-	int error;
+	int error = 0;
 	SEXP r = R_tryEval(expr, env, &error);
 	SEXP v;
 	PROTECT(v = allocVector(VECSXP, 2));
