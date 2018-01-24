@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -656,6 +656,8 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
         if gnur_line is None or fastr_line is None:
             # fail if FastR's output is shorter than GnuR's
             if gnur_line is not None and fastr_line is None:
+                if verbose:
+                    print "FastR's output is shorter than GnuR's"
                 overall_result = 1
             break
 
@@ -707,6 +709,12 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
 
         # report a mismatch or success
         if result == 1:
+            if verbose:
+                print gnur_filename + ':%d' % (gnur_cur_statement_start+1) + ' vs. ' + fastr_filename + ':%d' % (fastr_cur_statement_start+1)
+                print gnur_line.strip()
+                print "vs."
+                print fastr_line.strip()
+
             # we need to synchronize the indices such that we can continue
             sync = True
             # report the last statement to produce different output
@@ -715,12 +723,9 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                 statements_passed.remove(fastr_cur_statement_start)
             statements_failed.add(fastr_cur_statement_start)
 
-            # for compatibility: print the first difference
-            if verbose:
-                print gnur_filename + ':%d' % (gnur_cur_statement_start+1) + ' vs. ' + fastr_filename + ':%d' % (fastr_cur_statement_start+1)
-                print gnur_line.strip()
-                print "vs."
-                print fastr_line.strip()
+            # set overall result and reset temporary result
+            overall_result = 1
+            result = 0
         else:
             assert result == 0
             if fastr_cur_statement_start not in statements_failed:
@@ -744,9 +749,6 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                 gnur_i = gnur_i + 1
             if ni > 0:
                 fastr_i = ni
-
-            overall_result = 1
-            result = 0
         else:
             # just advance by one line in FastR and GnuR
             gnur_i = gnur_i + 1
