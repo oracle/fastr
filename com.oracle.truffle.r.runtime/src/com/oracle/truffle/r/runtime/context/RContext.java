@@ -103,6 +103,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
+import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -350,6 +351,7 @@ public final class RContext {
     public final InstrumentationState stateInstrumentation;
     public final ContextStateImpl stateInternalCode;
     public final DLL.ContextStateImpl stateDLL;
+    public final RNullMRContextState stateRNullMR;
 
     @CompilationFinal private RFFIContext stateRFFI;
 
@@ -370,7 +372,7 @@ public final class RContext {
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRLocale, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG,
                         stateRFFI,
-                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL};
+                        stateRSerialize, stateLazyDBCache, stateInstrumentation, stateDLL, stateRNullMR};
     }
 
     public static void setEmbedded() {
@@ -454,6 +456,7 @@ public final class RContext {
         this.stateInstrumentation = InstrumentationState.newContextState(instrumenter);
         this.stateInternalCode = ContextStateImpl.newContextState();
         this.stateDLL = DLL.ContextStateImpl.newContextState();
+        this.stateRNullMR = RNullMRContextState.newContextState();
         this.engine = RContext.getRRuntimeASTAccess().createEngine(this);
         state.add(State.CONSTRUCTED);
 
@@ -527,6 +530,7 @@ public final class RContext {
         stateLazyDBCache.initialize(this);
         stateInstrumentation.initialize(this);
         stateInternalCode.initialize(this);
+        stateRNullMR.initialize(this);
         state.add(State.INITIALIZED);
 
         if (!embedded) {

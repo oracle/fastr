@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,29 +42,32 @@ public class RFunctionMRTest extends AbstractMRTest {
 
     @Test
     public void testExecute() throws UnsupportedTypeException, ArityException, UnsupportedMessageException {
-        RFunction f = create("function() {}");
-        assertTrue(ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), f));
+        execInContext(() -> {
+            RFunction f = create("function() {}");
+            assertTrue(ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), f));
 
-        TruffleObject result = (TruffleObject) ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f);
-        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), result));
+            TruffleObject result = (TruffleObject) ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f);
+            assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), result));
 
-        f = create("function() {1L}");
-        assertEquals(1, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+            f = create("function() {1L}");
+            assertEquals(1, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
-        f = create("function() {1}");
-        assertEquals(1.0, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+            f = create("function() {1}");
+            assertEquals(1.0, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
-        f = create("function() {TRUE}");
-        assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+            f = create("function() {TRUE}");
+            assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
-        f = create("function(a) {a}");
-        assertEquals("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));
+            f = create("function(a) {a}");
+            assertEquals("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));
 
-        f = create("function(a) { is.logical(a) }");
-        assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
+            f = create("function(a) { is.logical(a) }");
+            assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
 
-        f = create("function(a) { as.external.short(a) }");
-        assertTrue(ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, 123) instanceof Short);
+            f = create("function(a) { as.external.short(a) }");
+            assertTrue(ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, 123) instanceof Short);
+            return null;
+        });
 
     }
 
