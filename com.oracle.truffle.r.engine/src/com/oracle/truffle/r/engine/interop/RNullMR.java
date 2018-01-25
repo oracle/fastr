@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,20 +28,18 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 
 @MessageResolution(receiverType = RNull.class)
 public class RNullMR {
-    /**
-     * Workaround to avoid NFI converting {@link RNull} to {@code null}.
-     */
-    private static boolean isNull = true;
 
     @Resolve(message = "IS_NULL")
     public abstract static class RNullIsNullNode extends Node {
         protected Object access(@SuppressWarnings("unused") RNull receiver) {
-            return isNull;
+            return RContext.getInstance().stateRNullMR.isNull();
         }
     }
 
@@ -81,9 +79,13 @@ public class RNullMR {
         }
     }
 
+    /**
+     * Workaround to avoid NFI converting {@link RNull} to {@code null}.
+     */
     static boolean setIsNull(boolean value) {
-        boolean prev = isNull;
-        isNull = value;
+        RNullMRContextState state = RContext.getInstance().stateRNullMR;
+        boolean prev = state.isNull();
+        state.setIsNull(value);
         return prev;
     }
 }
