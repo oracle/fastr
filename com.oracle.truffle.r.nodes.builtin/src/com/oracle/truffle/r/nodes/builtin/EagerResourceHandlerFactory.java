@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,7 +80,6 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
         String fileName = Paths.get(name).getFileName().toString();
         FileInfo fileInfo = files.get(fileName);
         if (fileInfo == null || fileInfo.data == null) {
-            RInternalError.shouldNotReachHere("getResourceAsStream: failed to find resource: " + name);
             return null;
         } else {
             return new ByteArrayInputStream(fileInfo.data);
@@ -92,23 +91,6 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
         return this;
     }
 
-    public static boolean addResource(@SuppressWarnings("unused") Class<?> accessor, String name, String path, boolean capture) {
-        byte[] bytes = null;
-        if (capture) {
-            try {
-                bytes = Files.readAllBytes(Paths.get(path));
-            } catch (IOException ex) {
-                return false;
-            }
-        }
-        try {
-            files.put(name, new FileInfo(name, new URL("file://" + path), bytes));
-        } catch (MalformedURLException ex) {
-            RInternalError.shouldNotReachHere("addResource " + ex.getMessage());
-        }
-        return true;
-    }
-
     private static void gatherResources() {
         CodeSource source = RBuiltinPackage.class.getProtectionDomain().getCodeSource();
         try {
@@ -118,7 +100,7 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
             while (iter.hasMoreElements()) {
                 JarEntry entry = iter.nextElement();
                 String name = entry.getName();
-                if (name.endsWith(".R") || name.endsWith("CONTRIBUTORS")) {
+                if (name.endsWith(".R") || name.endsWith("CONTRIBUTORS") || name.endsWith(".Rd")) {
                     int size = (int) entry.getSize();
                     byte[] buf = new byte[size];
                     InputStream is = fastrJar.getInputStream(entry);
@@ -142,9 +124,10 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
     public Map<String, String> getRFiles(Class<?> accessor, String pkgName) {
         Map<String, String> result = new HashMap<>();
         for (Map.Entry<String, FileInfo> entry : files.entrySet()) {
-            if (entry.getValue().url.toString().contains(pkgName + "/R")) {
+            String url = entry.getValue().url.toString();
+            if (url.endsWith(".R") && url.contains(pkgName + "/R")) {
                 String content = new String(entry.getValue().data);
-                result.put(entry.getValue().url.toString(), content);
+                result.put(url, content);
             }
         }
         return result;

@@ -32,6 +32,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
+
+import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import java.io.BufferedReader;
@@ -53,12 +55,11 @@ public class FastRHelp {
         @TruffleBoundary
         public Object helpPath(String builtinName) {
             String path = "/com/oracle/truffle/r/nodes/builtin/base/Rd/" + builtinName + ".Rd";
-            try (InputStream in = getClass().getResourceAsStream(path)) {
+            try (InputStream in = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), path)) {
                 if (in != null) {
                     return path;
                 }
             } catch (IOException ex) {
-
             }
             return RNull.instance;
         }
@@ -75,7 +76,7 @@ public class FastRHelp {
         @Specialization()
         @TruffleBoundary
         public Object getHelpRdPath(String path) {
-            try (InputStream in = getClass().getResourceAsStream(path)) {
+            try (InputStream in = ResourceHandlerFactory.getHandler().getResourceAsStream(getClass(), path)) {
                 if (in != null) {
                     try (BufferedReader r = new BufferedReader(new InputStreamReader(in))) {
                         StringBuilder sb = new StringBuilder();

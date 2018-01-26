@@ -70,7 +70,7 @@ suite = {
       "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
       "maven" : {
         "groupId" : "org.antlr",
-        "artifactId" : "antlr",
+        "artifactId" : "antlr-runtime",
         "version" : "3.5",
       },
     },
