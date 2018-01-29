@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,6 +27,7 @@ import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
+import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
@@ -79,10 +80,24 @@ public class DatePOSIXFunctions {
         public final int[] yday;
         public final int[] isdst;
         private boolean complete = true;
-        private final String zone;
+        private final RAbstractStringVector zone;
 
-        POSIXltBuilder(int length, String zone) {
-            this.zone = zone;
+        private final TimeZone realZone;
+
+        POSIXltBuilder(int length, String explicitZone) {
+            String[] zones = new String[3];
+            zones[0] = explicitZone;
+            realZone = explicitZone.isEmpty() ? RContext.getInstance().stateREnvVars.getSystemTimeZone() : TimeZone.getTimeZone(explicitZone);
+            // getTimeZone returns the default if the ID does not exist, by comparing the return's
+            // value ID to the explicit one we can find out the if the zone was found.
+            if (explicitZone.isEmpty() || realZone.getID().equals(explicitZone)) {
+                zones[1] = realZone.getDisplayName(false, TimeZone.SHORT);
+                zones[2] = realZone.useDaylightTime() ? realZone.getDisplayName(true, TimeZone.SHORT) : "";
+            } else {
+                zones[1] = explicitZone;
+                zones[2] = "";
+            }
+            this.zone = RDataFactory.createStringVector(zones, RDataFactory.COMPLETE_VECTOR);
             sec = new double[length];
             min = new int[length];
             hour = new int[length];
@@ -92,6 +107,10 @@ public class DatePOSIXFunctions {
             wday = new int[length];
             yday = new int[length];
             isdst = new int[length];
+        }
+
+        public TimeZone getRealZone() {
+            return realZone;
         }
 
         public void setEntry(int index, double newSec, int newMin, int newHour, int newMDay, int newMon, int newYear, int newWDay, int newYDay, int newIsDst) {
@@ -151,14 +170,13 @@ public class DatePOSIXFunctions {
         @TruffleBoundary
         protected RList doDate2POSIXlt(RAbstractDoubleVector x) {
             int xLen = x.getLength();
-            TimeZone zone = TimeZone.getTimeZone("UTC");
             POSIXltBuilder builder = new POSIXltBuilder(xLen, "UTC");
             for (int i = 0; i < xLen; i++) {
                 double d = x.getDataAt(i);
                 if (RRuntime.isFinite(d)) {
                     int day = (int) Math.floor(d);
                     Instant instant = Instant.ofEpochSecond(day * 3600L * 24L);
-                    ZonedDateTime date = ZonedDateTime.ofInstant(instant, zone.toZoneId());
+                    ZonedDateTime date = ZonedDateTime.ofInstant(instant, builder.getRealZone().toZoneId());
                     builder.setEntry(i, 0, 0, 0, date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900, date.getDayOfWeek().ordinal(), date.getDayOfYear(), 0);
                 } else {
                     builder.setIncompleteEntry(i);
@@ -187,20 +205,16 @@ public class DatePOSIXFunctions {
         @Specialization
         @TruffleBoundary
         protected RList asPOSIXlt(RAbstractDoubleVector x, String tz) {
-            TimeZone zone;
-            if (tz.isEmpty()) {
-                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone();
-            } else {
-                zone = TimeZone.getTimeZone(tz);
-            }
             int xLen = x.getLength();
-            POSIXltBuilder builder = new POSIXltBuilder(xLen, zone.getDisplayName(false, TimeZone.SHORT));
+            POSIXltBuilder builder = new POSIXltBuilder(xLen, tz);
             for (int i = 0; i < xLen; i++) {
                 double second = x.getDataAt(i);
                 if (RRuntime.isFinite(second)) {
                     Instant instant = Instant.ofEpochSecond((long) second);
-                    ZonedDateTime date = ZonedDateTime.ofInstant(instant, zone.toZoneId());
-                    builder.setEntry(i, date.getSecond(), date.getMinute(), date.getHour(), date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900, date.getDayOfWeek().ordinal(),
+                    double miliseconds = second - Math.floor(second);
+                    ZonedDateTime date = ZonedDateTime.ofInstant(instant, builder.getRealZone().toZoneId());
+                    builder.setEntry(i, date.getSecond() + miliseconds, date.getMinute(), date.getHour(), date.getDayOfMonth(), date.getMonthValue() - 1, date.getYear() - 1900,
+                                    date.getDayOfWeek().ordinal(),
                                     date.getDayOfYear(), 0);
                 } else {
                     builder.setIncompleteEntry(i);
@@ -403,15 +417,9 @@ public class DatePOSIXFunctions {
         @Specialization
         @TruffleBoundary
         protected RList strptime(RAbstractStringVector x, RAbstractStringVector format, RAbstractStringVector tz) {
-            TimeZone zone;
             String zoneString = RRuntime.asString(tz);
-            if (zoneString.isEmpty()) {
-                zone = RContext.getInstance().stateREnvVars.getSystemTimeZone();
-            } else {
-                zone = TimeZone.getTimeZone(zoneString);
-            }
             int length = x.getLength();
-            POSIXltBuilder builder = new POSIXltBuilder(length, zone.getDisplayName(false, TimeZone.SHORT));
+            POSIXltBuilder builder = new POSIXltBuilder(length, zoneString);
             DateTimeFormatterBuilder[] builders = createFormatters(format, true);
             DateTimeFormatter[] formatters = new DateTimeFormatter[builders.length];
             for (int i = 0; i < builders.length; i++) {
@@ -436,7 +444,8 @@ public class DatePOSIXFunctions {
                         LocalTime tm = LocalTime.from(parse);
                         time = LocalDateTime.of(LocalDate.now(), tm);
                     }
-                    builder.setEntry(i, time.getSecond(), time.getMinute(), time.getHour(), time.getDayOfMonth(), time.getMonthValue() - 1, time.getYear() - 1900, time.getDayOfWeek().ordinal(),
+                    double ms = (time.toInstant(ZoneOffset.UTC).toEpochMilli() % 1000) / 1000;
+                    builder.setEntry(i, time.getSecond() + ms, time.getMinute(), time.getHour(), time.getDayOfMonth(), time.getMonthValue() - 1, time.getYear() - 1900, time.getDayOfWeek().ordinal(),
                                     time.getDayOfYear(), 0);
                     continue;
                 } catch (DateTimeException e) {

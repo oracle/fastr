@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -76,5 +76,6 @@ public class TestBuiltin_asPOSIXlt extends TestBase {
     public void testasPOSIXlt() {
         assertEval(Output.MayIgnoreErrorContext, ".Internal(as.POSIXlt(, 1))");
         assertEval(Output.MayIgnoreErrorContext, ".Internal(as.POSIXlt(2, ))");
+        assertEval("{ q <- Sys.time(); as.vector(unclass(as.POSIXct(as.POSIXlt(q))) - unclass(q)) }");
     }
 }
