@@ -118,4 +118,4 @@ rffi.RfEvalWithPromiseInPairList()
 # CAR/CDR tests
 rffi.CAR(NULL)
 rffi.CDR(NULL)
-rffi.CAR(as.symbol('a'))
+invisible(rffi.CAR(as.symbol('a'))) # TODO: printing CHARSEXP not implemented in FastR
