@@ -114,3 +114,8 @@ for(i in seq(5000)) {
 # Following code calls Rf_eval with a language object that contains a promise instead of the expected function
 set.seed(42)
 rffi.RfEvalWithPromiseInPairList()
+
+# CAR/CDR tests
+rffi.CAR(NULL)
+rffi.CDR(NULL)
+rffi.CAR(as.symbol('a'))
