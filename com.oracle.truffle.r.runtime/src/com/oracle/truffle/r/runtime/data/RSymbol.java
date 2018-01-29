@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
+
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RType;
 
@@ -32,12 +38,22 @@ import com.oracle.truffle.r.runtime.RType;
 @ValueType
 public final class RSymbol extends RAttributeStorage {
 
+    /**
+     * Note: GnuR caches all symbols and some packages rely on their identity.
+     */
+    private static final ConcurrentHashMap<String, RSymbol> symbolTable = new ConcurrentHashMap<>();
+
     public static final RSymbol MISSING = RDataFactory.createSymbol("");
 
     private final String name;
 
-    public RSymbol(String name) {
+    private RSymbol(String name) {
         this.name = name;
+    }
+
+    public static RSymbol install(String name) {
+        CompilerAsserts.neverPartOfCompilation();
+        return symbolTable.computeIfAbsent(name, RSymbol::new);
     }
 
     @Override

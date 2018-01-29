@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -618,7 +618,7 @@ public final class RDataFactory {
 
         public final RSymbol createSymbol(String name) {
             assert Utils.isInterned(name);
-            return traceDataCreated(new RSymbol(name));
+            return traceDataCreated(RSymbol.install(name));
         }
 
         /*
@@ -1197,7 +1197,7 @@ public final class RDataFactory {
 
     public static RSymbol createSymbol(String name) {
         assert Utils.isInterned(name);
-        return traceDataCreated(new RSymbol(name));
+        return traceDataCreated(RSymbol.install(name));
     }
 
     /*

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
@@ -609,12 +610,13 @@ public class EnvFunctions {
             casts.arg("env").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
         }
 
-        private BranchProfile frameSlotBranchProfile;
+        @CompilationFinal private BranchProfile frameSlotBranchProfile;
 
         @TruffleBoundary
         @Specialization
         protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env) {
             if (frameSlotBranchProfile == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 frameSlotBranchProfile = BranchProfile.create();
             }
 

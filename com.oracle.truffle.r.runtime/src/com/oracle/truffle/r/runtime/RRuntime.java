@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -167,7 +167,7 @@ public class RRuntime {
 
     public static final String OP_NAMESPACE_SCOPE_EXPORTED = "::";
 
-    public static final RSymbol DEFERRED_DEFAULT_MARKER = new RSymbol("__Deferred_Default_Marker__");
+    public static final RSymbol DEFERRED_DEFAULT_MARKER = RSymbol.install("__Deferred_Default_Marker__");
 
     public static final String R_TARGET = "target";
     public static final String R_DOT_TARGET = ".target";
@@ -184,7 +184,7 @@ public class RRuntime {
     public static final String R_SRCFILE = "srcfile";
 
     public static final String NULL = "NULL";
-    public static final RSymbol PSEUDO_NULL = new RSymbol("\u0001NULL\u0001");
+    public static final RSymbol PSEUDO_NULL = RSymbol.install("\u0001NULL\u0001");
     public static final String UNBOUND = "UNBOUND";
 
     @CompilationFinal(dimensions = 1) private static final String[] rawStringCache = new String[256];

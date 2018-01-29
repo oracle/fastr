@@ -131,8 +131,6 @@ import sun.misc.Unsafe;
  */
 public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
-    private final Map<String, Object> nameSymbolCache = new ConcurrentHashMap<>();
-
     private static RuntimeException implementedAsNode() {
         // TODO: Exception handling over native boundaries is currently missing. Once this works,
         // remove the following two lines.
@@ -270,6 +268,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         while (env != REnvironment.emptyEnv()) {
             Object value = env.get(name.getName());
             if (value != null) {
+                if (value instanceof RPromise && ((RPromise) value).isOptimized()) {
+                    // From the point of view of RFFI, optimized promises (i.e. promises with null
+                    // env) should not show up
+                    return ((RPromise) value).getRawValue();
+                }
                 return value;
             }
             if (!inherits) {
@@ -350,12 +353,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_install(String name) {
-        Object ret = nameSymbolCache.get(name);
-        if (ret == null) {
-            ret = RDataFactory.createSymbolInterned(name);
-            nameSymbolCache.put(name, ret);
-        }
-        return ret;
+        return RDataFactory.createSymbolInterned(name);
     }
 
     @Override

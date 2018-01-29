@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,20 +26,13 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAARNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CAD4RNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDDRNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADDRNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CADRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDARNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDDRNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
@@ -75,7 +68,7 @@ public final class ListAccessNodes {
 
         @Specialization
         protected Object car(RSymbol sym) {
-            return sym;
+            return CharSXPWrapper.create(sym.getName());
         }
 
         @Specialization
@@ -95,57 +88,6 @@ public final class ListAccessNodes {
 
         public static CARNode create() {
             return CARNodeGen.create();
-        }
-    }
-
-    @TypeSystemReference(RTypes.class)
-    public abstract static class CAARNode extends FFIUpCallNode.Arg1 {
-
-        @Child private CARNode car1 = CARNode.create();
-        @Child private CARNode car2 = CARNode.create();
-
-        @Specialization
-        protected Object caar(Object value) {
-            return car2.executeObject(car1.executeObject(value));
-        }
-
-        public static CAARNode create() {
-            return CAARNodeGen.create();
-        }
-    }
-
-    @TypeSystemReference(RTypes.class)
-    public static final class SETCADRNode extends FFIUpCallNode.Arg2 {
-        @Child private SETCARNode setcarNode = SETCARNode.create();
-        @Child private CDRNode cdrNode = CDRNode.create();
-
-        @Override
-        public Object executeObject(Object x, Object y) {
-            return setcarNode.executeObject(cdrNode.executeObject(x), y);
-        }
-    }
-
-    @TypeSystemReference(RTypes.class)
-    public abstract static class SETCARNode extends FFIUpCallNode.Arg2 {
-        public static SETCARNode create() {
-            return SETCARNodeGen.create();
-        }
-
-        @Specialization
-        protected Object doRLang(RLanguage x, Object y) {
-            x.getPairList().setCar(y);
-            return y;
-        }
-
-        @Specialization
-        protected Object doRLang(RPairList x, Object y) {
-            x.setCar(y);
-            return y;
-        }
-
-        @Fallback
-        protected Object car(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
-            throw RInternalError.unimplemented("SETCAR only works on pair lists or language objects");
         }
     }
 
@@ -183,6 +125,16 @@ public final class ListAccessNodes {
             return copy;
         }
 
+        @Specialization
+        protected RNull cdr(@SuppressWarnings("unused") RSymbol symbol) {
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull handleNull(@SuppressWarnings("unused") RNull rNull) {
+            return rNull;
+        }
+
         @Fallback
         protected Object cdr(@SuppressWarnings("unused") Object obj) {
             throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists");
@@ -194,153 +146,161 @@ public final class ListAccessNodes {
     }
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class CADRNode extends FFIUpCallNode.Arg1 {
-        @Specialization
-        protected Object cadr(RPairList pl) {
-            return pl.cadr();
+    public static final class CAARNode extends FFIUpCallNode.Arg1 {
+
+        @Child private CARNode car1 = CARNode.create();
+        @Child private CARNode car2 = CARNode.create();
+
+        @Override
+        public Object executeObject(Object x) {
+            return car2.executeObject(car1.executeObject(x));
+        }
+
+        public static CAARNode create() {
+            return new CAARNode();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public static final class SETCADRNode extends FFIUpCallNode.Arg2 {
+        @Child private SETCARNode setcarNode = SETCARNode.create();
+        @Child private CDRNode cdrNode = CDRNode.create();
+
+        @Override
+        public Object executeObject(Object x, Object y) {
+            return setcarNode.executeObject(cdrNode.executeObject(x), y);
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class SETCARNode extends FFIUpCallNode.Arg2 {
+        public static SETCARNode create() {
+            return SETCARNodeGen.create();
         }
 
         @Specialization
-        protected Object cadr(RLanguage lang) {
-            return lang.getDataAtAsObject(1);
+        protected Object doRLang(RLanguage x, Object y) {
+            x.getPairList().setCar(y);
+            return y;
+        }
+
+        @Specialization
+        protected Object doRPairList(RPairList x, Object y) {
+            x.setCar(y);
+            return y;
         }
 
         @Fallback
-        protected Object cadr(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CADR only works on pair lists and language objects");
+        protected Object car(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
+            throw RInternalError.unimplemented("SETCAR only works on pair lists or language objects");
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public static final class CADRNode extends FFIUpCallNode.Arg1 {
+        @Child private CDRNode cdr = CDRNode.create();
+        @Child private CARNode car = CARNode.create();
+
+        @Override
+        public Object executeObject(Object x) {
+            return car.executeObject(cdr.executeObject(x));
         }
 
         public static CADRNode create() {
-            return CADRNodeGen.create();
+            return new CADRNode();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class CDARNode extends FFIUpCallNode.Arg1 {
+    public static final class CDARNode extends FFIUpCallNode.Arg1 {
         @Child private CARNode car = CARNode.create();
         @Child private CDRNode cdr = CDRNode.create();
 
-        @Specialization
-        protected Object cdar(Object value) {
-            return cdr.executeObject(car.executeObject(value));
+        @Override
+        public Object executeObject(Object x) {
+            return cdr.executeObject(car.executeObject(x));
         }
 
         public static CDARNode create() {
-            return CDARNodeGen.create();
+            return new CDARNode();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class CADDRNode extends FFIUpCallNode.Arg1 {
-        @Specialization
-        protected Object caddr(RPairList pl) {
-            return pl.caddr();
-        }
+    public static final class CADDRNode extends FFIUpCallNode.Arg1 {
+        @Child private CARNode car = CARNode.create();
+        @Child private CDRNode cdr1 = CDRNode.create();
+        @Child private CDRNode cdr2 = CDRNode.create();
 
-        @Specialization
-        protected Object caddr(RLanguage lang) {
-            return lang.getDataAtAsObject(2);
-        }
-
-        @Fallback
-        protected Object caddr(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CADDR only works on pair lists and language objects");
+        @Override
+        public Object executeObject(Object x) {
+            return car.executeObject(cdr1.executeObject(cdr2.executeObject(x)));
         }
 
         public static CADDRNode create() {
-            return CADDRNodeGen.create();
+            return new CADDRNode();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class CADDDRNode extends FFIUpCallNode.Arg1 {
-        @Specialization
-        protected Object cadddr(RPairList pl) {
-            RPairList tmp = (RPairList) pl.cddr();
-            return tmp.cadr();
-        }
+    public static final class CADDDRNode extends FFIUpCallNode.Arg1 {
+        @Child private CARNode car = CARNode.create();
+        @Child private CDRNode cdr1 = CDRNode.create();
+        @Child private CDRNode cdr2 = CDRNode.create();
+        @Child private CDRNode cdr3 = CDRNode.create();
 
-        @Specialization
-        protected Object cadddr(RLanguage lang) {
-            return lang.getDataAtAsObject(3);
-        }
-
-        @Fallback
-        protected Object cadddr(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CADDDR only works on pair lists and language objects");
+        @Override
+        public Object executeObject(Object x) {
+            return car.executeObject(cdr1.executeObject(cdr2.executeObject(cdr3.executeObject(x))));
         }
 
         public static CADDDRNode create() {
-            return CADDDRNodeGen.create();
+            return new CADDDRNode();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class CAD4RNode extends FFIUpCallNode.Arg1 {
-        @Specialization
-        protected Object cad4r(RPairList pl) {
-            RPairList tmp = (RPairList) pl.cddr();
-            return tmp.caddr();
-        }
+    public static final class CAD4RNode extends FFIUpCallNode.Arg1 {
+        @Child private CADDDRNode cadddr = CADDDRNode.create();
+        @Child private CDRNode cdr = CDRNode.create();
 
-        @Specialization
-        protected Object cad4r(RLanguage lang) {
-            return lang.getDataAtAsObject(4);
-        }
-
-        @Fallback
-        protected Object cad4r(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CAD4R only works on pair lists and language objects");
+        @Override
+        public Object executeObject(Object x) {
+            return cadddr.executeObject(cdr.executeObject(x));
         }
 
         public static CAD4RNode create() {
-            return CAD4RNodeGen.create();
+            return new CAD4RNode();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class CDDRNode extends FFIUpCallNode.Arg1 {
-        @Specialization
-        protected Object cddr(RPairList pl) {
-            return pl.cddr();
-        }
+    public static final class CDDRNode extends FFIUpCallNode.Arg1 {
+        @Child private CDRNode cdr1 = CDRNode.create();
+        @Child private CDRNode cdr2 = CDRNode.create();
 
-        @Specialization
-        protected Object cddr(RLanguage lang) {
-            RPairList l = lang.getPairList();
-            return l.cddr();
-        }
-
-        @Fallback
-        protected Object cddr(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CDDR only works on pair lists and language objects");
+        @Override
+        public Object executeObject(Object x) {
+            return cdr1.executeObject(cdr2.executeObject(x));
         }
 
         public static CDDRNode create() {
-            return CDDRNodeGen.create();
+            return new CDDRNode();
         }
     }
 
     @TypeSystemReference(RTypes.class)
-    public abstract static class CDDDRNode extends FFIUpCallNode.Arg1 {
-        @Specialization
-        protected Object cdddr(RPairList pl) {
-            return pl.cddr();
-        }
+    public static final class CDDDRNode extends FFIUpCallNode.Arg1 {
+        @Child CDDRNode cddr = CDDRNode.create();
+        @Child CDRNode cdr = CDRNode.create();
 
-        @Specialization
-        protected Object cdddr(RLanguage lang) {
-            RPairList l = (RPairList) lang.getPairList().cddr();
-            return l.cdr();
-        }
-
-        @Fallback
-        protected Object cdddr(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CDDDR only works on pair lists and language objects");
+        @Override
+        public Object executeObject(Object x) {
+            return cdr.executeObject(cddr.executeObject(x));
         }
 
         public static CDDDRNode create() {
-            return CDDDRNodeGen.create();
+            return new CDDDRNode();
         }
     }
 }
