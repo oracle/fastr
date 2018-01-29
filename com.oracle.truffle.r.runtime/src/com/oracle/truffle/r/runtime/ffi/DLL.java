@@ -105,7 +105,8 @@ public class DLL {
 
         @Override
         public void beforeDispose(RContext contextArg) {
-            if (!isShareDLLKind(context.getKind())) {
+            // Note: the first entry should be RLib
+            if (!isShareDLLKind(context.getKind()) && list.size() > 1) {
                 RootCallTarget closeCallTarget = DLCloseRootNode.create(contextArg);
                 for (int i = 1; i < list.size(); i++) {
                     DLLInfo dllInfo = list.get(i);
@@ -341,7 +342,9 @@ public class DLL {
                 data[3] = rnt.dotSymbol.numArgs;
                 klass[0] = rnt.nst.name() + "Routine";
             }
-            return RDataFactory.createList(data, n > 3 ? NAMES_4_VEC : NAMES_3_VEC);
+            RList result = RDataFactory.createList(data, n > 3 ? NAMES_4_VEC : NAMES_3_VEC);
+            result.setClassAttr(RDataFactory.createStringVector(klass, RDataFactory.COMPLETE_VECTOR));
+            return result;
         }
     }
 
