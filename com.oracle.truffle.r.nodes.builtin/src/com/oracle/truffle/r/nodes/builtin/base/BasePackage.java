@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctions.SockSelect;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.SockSelectNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.DebugFunctions.FastRSetBreakpoint;
 import com.oracle.truffle.r.nodes.builtin.base.DebugFunctionsFactory.FastRSetBreakpointNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.VersionFunctions.RVersion;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.AssignFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.ExistsFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.GetFastPathNodeGen;
@@ -395,7 +396,7 @@ public class BasePackage extends RBuiltinPackage {
         add(DynLoadFunctions.GetLoadedDLLs.class, DynLoadFunctionsFactory.GetLoadedDLLsNodeGen::create);
         add(DynLoadFunctions.GetSymbolInfo.class, DynLoadFunctionsFactory.GetSymbolInfoNodeGen::create);
         add(DynLoadFunctions.IsLoaded.class, DynLoadFunctionsFactory.IsLoadedNodeGen::create);
-        add(DynLoadFunctions.ExtSoftVersion.class, DynLoadFunctionsFactory.ExtSoftVersionNodeGen::create);
+        add(VersionFunctions.ExtSoftVersion.class, VersionFunctionsFactory.ExtSoftVersionNodeGen::create);
         add(EncodeString.class, EncodeStringNodeGen::create);
         add(EncodingFunctions.Encoding.class, EncodingFunctionsFactory.EncodingNodeGen::create);
         add(EncodingFunctions.SetEncoding.class, EncodingFunctionsFactory.SetEncodingNodeGen::create);
@@ -669,7 +670,7 @@ public class BasePackage extends RBuiltinPackage {
         add(RNGFunctions.RNGkind.class, RNGFunctionsFactory.RNGkindNodeGen::create);
         add(RNGFunctions.SetSeed.class, RNGFunctionsFactory.SetSeedNodeGen::create);
         add(RNGFunctions.FastRSetSeed.class, RNGFunctionsFactory.FastRSetSeedNodeGen::create);
-        add(RVersion.class, RVersionNodeGen::create);
+        add(RVersion.class, VersionFunctionsFactory.RVersionNodeGen::create);
         add(RawFunctions.CharToRaw.class, RawFunctionsFactory.CharToRawNodeGen::create);
         add(RawFunctions.RawToChar.class, RawFunctionsFactory.RawToCharNodeGen::create);
         add(RawFunctions.RawShift.class, RawFunctionsFactory.RawShiftNodeGen::create);

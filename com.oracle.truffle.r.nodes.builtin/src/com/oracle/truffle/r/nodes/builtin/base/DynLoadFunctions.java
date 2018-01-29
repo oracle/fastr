@@ -33,18 +33,13 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -52,10 +47,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI.ESoftVersionNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLException;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -223,46 +215,6 @@ public class DynLoadFunctions {
 
         protected static boolean isDLLInfo(RExternalPtr externalPtr) {
             return DLL.isDLLInfo(externalPtr);
-        }
-    }
-
-    @RBuiltin(name = "eSoftVersion", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class ExtSoftVersion extends RBuiltinNode.Arg0 {
-        @Child private ESoftVersionNode eSoftVersionNode = BaseRFFI.ESoftVersionNode.create();
-
-        static {
-            Casts.noCasts(ExtSoftVersion.class);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        protected RStringVector getSymbolInfo() {
-
-            Map<String, String> eSoftVersion = eSoftVersionNode.eSoftVersion();
-
-            List<String> libNames = new ArrayList<>();
-            List<String> versions = new ArrayList<>();
-
-            for (Map.Entry<String, String> versionEntry : eSoftVersion.entrySet()) {
-                libNames.add(versionEntry.getKey());
-                versions.add(versionEntry.getValue());
-            }
-
-            // BZIP2
-            try {
-                versions.add(RCompression.getBz2Version());
-                libNames.add("bzip2");
-            } catch (IOException e) {
-                // ignore
-            }
-
-            // BLAS
-            libNames.add("BLAS");
-            versions.add(LibPaths.getBuiltinLibPath("Rblas"));
-
-            RStringVector names = RDataFactory.createStringVector(libNames.toArray(new String[0]), true);
-            return RDataFactory.createStringVector(versions.toArray(new String[0]), true, names);
-
         }
     }
 }
