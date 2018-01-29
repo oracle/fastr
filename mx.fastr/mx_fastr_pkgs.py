@@ -651,12 +651,12 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
     gnur_prompt = _capture_prompt(gnur_content, gnur_i)
     fastr_prompt = _capture_prompt(fastr_content, fastr_i)
 
-    gnur_cur_statement_start = -1
-    fastr_cur_statement_start = -1
-    while True:
-        gnur_line, gnur_i = _get_next_line(gnur_prompt, gnur_content, gnur_end, gnur_i)
-        fastr_line, fastr_i = _get_next_line(fastr_prompt, fastr_content, fastr_len, fastr_i)
+    gnur_line, gnur_i = _get_next_line(gnur_prompt, gnur_content, gnur_end, gnur_i)
+    fastr_line, fastr_i = _get_next_line(fastr_prompt, fastr_content, fastr_len, fastr_i)
+    gnur_cur_statement_start = gnur_i
+    fastr_cur_statement_start = fastr_i
 
+    while True:
         if gnur_line is None or fastr_line is None:
             # fail if FastR's output is shorter than GnuR's
             if gnur_line is not None and fastr_line is None:
@@ -664,14 +664,6 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                     print "FastR's output is shorter than GnuR's"
                 overall_result = 1
             break
-
-        # check if the current line starts a statement
-        if _is_statement_begin(gnur_prompt, gnur_line) and gnur_cur_statement_start != gnur_i:
-            gnur_cur_statement_start = gnur_i
-
-        # if we find a new statement begin
-        if _is_statement_begin(fastr_prompt, fastr_line) and fastr_cur_statement_start != fastr_i:
-            fastr_cur_statement_start = fastr_i
 
         # flag indicating that we want to synchronize
         sync = False
@@ -763,6 +755,17 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
             gnur_i = gnur_i + 1
             fastr_i = fastr_i + 1
 
+        gnur_line, gnur_i = _get_next_line(gnur_prompt, gnur_content, gnur_end, gnur_i)
+        fastr_line, fastr_i = _get_next_line(fastr_prompt, fastr_content, fastr_len, fastr_i)
+
+        # check if the current line starts a statement
+        if _is_statement_begin(gnur_prompt, gnur_line) and gnur_cur_statement_start != gnur_i:
+            gnur_cur_statement_start = gnur_i
+
+        # if we find a new statement begin
+        if _is_statement_begin(fastr_prompt, fastr_line) and fastr_cur_statement_start != fastr_i:
+            fastr_cur_statement_start = fastr_i
+
     return overall_result, len(statements_passed), len(statements_failed)
 
 
@@ -790,8 +793,10 @@ def _capture_prompt(lines, idx):
 
 
 def _is_statement_begin(captured_prompt, line):
-    line_wo_prompt = line.replace(captured_prompt, "").strip()
-    return line.startswith(captured_prompt) and line_wo_prompt is not "" and not line_wo_prompt.startswith("#")
+    if not line is None:
+        line_wo_prompt = line.replace(captured_prompt, "").strip()
+        return line.startswith(captured_prompt) and line_wo_prompt is not "" and not line_wo_prompt.startswith("#")
+    return False
 
 
 def pkgtest_cmp(args):
