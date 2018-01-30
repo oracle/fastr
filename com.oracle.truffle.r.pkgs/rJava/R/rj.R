@@ -13,7 +13,7 @@
 .jnew <- function (class, ..., check = TRUE, silent = !check) {
     class <- gsub("/", ".", as.character(class))
     co <- new.java.class(class)
-    args <- .fromS4(co, ...)
+    args <- .ellipsisToJObj(co, ...)
     o <- .fastr.interop.try(function() { do.call(new.external, args) }, check)
     new("jobjRef", jobj=o, jclass=class)
 }
@@ -23,16 +23,14 @@
 .jcall <- function (obj, returnSig = "V", method, ..., evalArray = TRUE, 
     evalString = TRUE, check = TRUE, interface = "RcallMethod", 
     simplify = FALSE, use.true.class = FALSE) {
-    if (isS4(obj)) {
-        obj <- obj@jobj
-    } 
-    args <- .fromS4(...)
+    obj <- .toJObj(obj)    
 
     if (is.character(obj)) {
         obj <- gsub("/", ".", as.character(obj))
         obj <- new.java.class(obj)
     }
 
+    args <- .ellipsisToJObj(...)
     extMethod <- function(...) {obj[method](...)}
     r <- .fastr.interop.try(function() { do.call(extMethod, args) }, check)
     
@@ -69,43 +67,51 @@
 
 #' @export
 .jbyte <- function (x) {
-    x <- as.external.byte(x)
-    invisible(x)
+    storage.mode( x ) <- "integer"
+    new("jbyte", x)
 }
 
 #' @export
 .jchar <- function (x) {
-    x <- as.external.char(x)
-    invisible(x)
+    storage.mode( x ) <- "character"
+    new("jchar", x)
 }
 
 #' @export
 .jshort <- function (x) {
-    x <- as.external.short(x)
-    invisible(x)
+    storage.mode( x ) <- "integer"
+    new("jshort", x)
 }
 
 #' @export
 .jlong <- function (x) {
-    x <- as.external.long(x)
-    invisible(x)
+    storage.mode( x ) <- "double"
+    new("jlong", x)
 }
 
 #' @export
-.jfloat <- function (x) {
-    x <- as.external.float(x)
-    invisible(x)
+.jfloat <- function (x) {    
+    storage.mode( x ) <- "double"
+    new("jfloat", x )
 }
 
 #' @export
-J <- function (class, method, ...) {
-    class <- gsub("/", ".", as.character(class))
-    javaClass <- new.java.class(class)
+J <- function (class, method, ...) {         
     if (nargs() == 1L && missing(method)) {
-        javaClass
+        if(inherits(class, "jclassName")) {
+            return(class)
+        } else if(is.character(class)) {
+            className <- class
+            jobj <- .jfindClass(class)
+        } else {            
+            className <- as.character(class)
+            jobj <- .jfindClass(className)
+        }
+        new("jclassName", name=className, jobj=jobj)
     } else {
-        .jcall(javaClass, ,method, ...)
-    }    
+        # .jrcall(class, method, ...)
+        .jcall(class, , method, ...)
+    }
 }
 
 #' @export
@@ -153,7 +159,17 @@ J <- function (class, method, ...) {
 
 #' @export
 .jfindClass <- function (cl, silent = FALSE) {
-    new.java.class(cl)
+    if (inherits(cl, "jclassName")) return(cl@jobj)
+    if (!is.character(cl) || length(cl)!=1) {
+        stop("invalid class name")
+    }
+
+    cl <- gsub("/", ".", as.character(cl))
+    javaClass <- new.java.class(cl)
+    cls <- new('jobjRef', jobj=javaClass, jclass='java.lang.Class', stringValue=paste0("class ", cl))
+    .jcheck(silent)
+    if (!silent && is.jnull(cls)) stop("class not found")
+    cls
 }
 
 .toS4 <- function(obj) {
@@ -168,21 +184,28 @@ J <- function (class, method, ...) {
     res
 }
 
-.fromS4 <- function(...) {
-    l <- list(...)
-    if (length(l)) {
-        for (i in 1:length(l)) {
-            if (isS4(l[[i]])) {
-                o <- l[[i]]@jobj
-                if (is.null(o)) {
-                    l[i] <- list(NULL)
-                } else {
-                    l[[i]] <- o
-                }                    
-            }
-        }
-    }
-    l
+.ellipsisToJObj <- function(...) {
+    lapply(list(...), function(x) .toJObj(x))
+}
+
+.toJObj <- function(x) {
+    if (is(x, "jobjRef")) {
+        x@jobj
+    } else if (is(x, "jclassName")) {
+        x@jobj@jobj
+    } else if (is(x, "jbyte")) {
+        as.external.byte(x)    
+    } else if (is(x, "jchar")) {
+        as.external.char(x)    
+    } else if (is(x, "jfloat")) {
+        as.external.float(x)
+    } else if (is(x, "jlong")) {
+        as.external.long(x)
+    } else if (is(x, "jshort")) {
+        as.external.short(x)        
+    } else {
+        x
+    } 
 }
 
 #' @export
@@ -204,7 +227,7 @@ J <- function (class, method, ...) {
 }
 
 #' @export
-.jnull <- function (class = "java/lang/Object") {    
+.jnull <- function (class = "java/lang/Object") {
     new("jobjRef", jobj=NULL, jclass=class)
 }
 
@@ -245,15 +268,22 @@ is.jnull <- function (x) {
 
 #' @export
 .jstrVal <- function (obj) {
-    if (is.character(obj)) 
+    if (is.character(obj)) {
         return(obj)
+    }    
     r <- NULL
-    if (!is(obj, "jobjRef")) 
+    if (!is(obj, "jobjRef")) {
         stop("can get value of Java objects only")
-    if (!is.null(obj@jclass) && obj@jclass == "lang/java/String") 
-        r <- .External(RgetStringValue, obj@jobj)
-    else r <- obj@jobj["toString"]()
-    r
+    }
+    if(!is.null(obj@stringValue)) {
+        obj@stringValue
+    } else {
+        obj@jobj["toString"]()
+    }
+}
+
+.isJavaArray <- function(o){
+    is.external.array(o) && java.class(o) != NULL
 }
 
 #
@@ -262,42 +292,85 @@ is.jnull <- function (x) {
 
 setClass("truffle.object", representation(jobj="ANY"))
 setClassUnion("TruffleObjectOrNull",members=c("truffle.object", "NULL"))
+setClassUnion("characterOrNull",members=c("character", "NULL"))
 
+#
 # jobjRef
-setClass("jobjRef", representation(jobj="TruffleObjectOrNull", jclass="character"), prototype=list(jobj=NULL, jclass="java/lang/Object"))
+#
+setClass("jobjRef", representation(jobj="TruffleObjectOrNull", jclass="character", stringValue="characterOrNull"), prototype=list(jobj=NULL, jclass="java/lang/Object", stringValue=NULL))
 
-._jobjRef_dollar <- function(x, name) {
+setMethod("$", c(x="jobjRef"), function(x, name) {
     if(name %in% names(x@jobj)) {        
         if(is.external.executable(x@jobj[name])) {
             function(...) { .jcall(x, , name, ...) }    
         } else {
             .jfield(x, , name)                
         }
-    } else if( is.character(name) && length(name) == 1L && name == "length" && is.external.array(x) ){        
+    } else if( is.character(name) && length(name) == 1L && name == "length" && is.external.array(x) ) {
         length( x@obj )
     } else {
         stop(sprintf( "no field, method or inner class called '%s' ", name)) 
     }
-}
-setMethod("$", c(x="jobjRef"), ._jobjRef_dollar )
+})
 
-._jobjRef_dollargets <- function(x, name, value) {
+setMethod("$<-", c(x="jobjRef"), function(x, name, value) {
     if(name %in% names(x@jobj)) {
         if(!is.external.executable(x@jobj[name])) {
-            if(isS4(value)) {
-                value <- value@jobj
-            }
+            value <- .toJObj(value)
             x@jobj[name] <- value
         }
     }
     x
-}
-setMethod("$<-", c(x="jobjRef"), ._jobjRef_dollargets )
+})
 
 setMethod("show", c(object="jobjRef"), function(object) {
-  if (is.jnull(object)) show("Java-Object<null>") else show(paste("Java-Object{", .jstrVal(object), "}", sep=''))
-  invisible(NULL)
+    if (is.jnull(object)) {
+        show("Java-Object<null>") 
+    } else {
+        show(paste("Java-Object{", .jstrVal(object), "}", sep=''))
+    }
+    invisible(NULL)
 })
+
+#
+# jclassName
+#
+
+setClass("jclassName", representation(name="character", jobj="jobjRef"))
+setMethod("show", c(object="jclassName"), function(object) {
+    invisible(show(paste("Java-Class-Name:", object@name)))
+})
+setMethod("as.character", c(x="jclassName"), function(x, ...) x@name)
+setMethod("$", c(x="jclassName"), function(x, name) {
+    if(name == "class") {
+        x@jobj
+    } 
+    obj <- x@jobj@jobj
+    if(name %in% names(obj)) {
+        if(is.external.executable(obj[name])) {
+            function(...) { .jcall(obj, , name, ...) }    
+        } else {
+            .jfield(obj, , name)
+        }
+    } else {
+        stop("no static field, method or inner class called `", name, "' in `", x@name, "'")
+    } 
+})
+setMethod("$<-", c(x="jclassName"), function(x, name, value) {
+    value <- .toJObj(value)
+    x@jobj@jobj[name] <- value
+    x
+})
+
+# TODO makes CMD INSTALL complain
+# setGeneric("new")
+# setMethod("new", signature(Class="jclassName"), function(Class, ...) .jnew(Class, ...))
+
+setClass("jfloat", representation("array"))
+setClass("jlong", representation("array"))
+setClass("jbyte", representation("array"))
+setClass("jshort", representation("array"))
+setClass("jchar", representation("array"))
 
 #
 # noop stubs
