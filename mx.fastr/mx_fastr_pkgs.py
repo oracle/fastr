@@ -674,34 +674,40 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                 if fastr_content[fastr_i].startswith('NULL') and not gnur_line.startswith('NULL'):
                     # ignore additional visible NULL
                     fastr_i = fastr_i + 1
-                continue
-            if gnur_line.startswith('Warning') and gnur_i + 1 < gnur_end and 'closing unused connection' in gnur_content[gnur_i + 1]:
+                sync = True
+            elif gnur_line.startswith('Warning') and gnur_i + 1 < gnur_end and 'closing unused connection' in gnur_content[gnur_i + 1]:
                 # ignore message about closed connection
                 gnur_i = gnur_i + 2
-                continue
-            if gnur_i > 0 and gnur_content[gnur_i - 1].startswith('   user  system elapsed'):
+                sync = True
+            elif gnur_i > 0 and gnur_content[gnur_i - 1].startswith('   user  system elapsed'):
                 # ignore differences in timing
                 gnur_i = gnur_i + 1
                 fastr_i = fastr_i + 1
-                continue
+                sync = True
             # we are fuzzy on Error/Warning as FastR often differs
             # in the context/format of the error/warning message AND GnuR is sometimes
             # inconsistent over which error message it uses. Unlike the unit test environment,
             # we cannot tag tests in any way, so we simply check that FastR does report
             # an error. We then scan forward to try to get the files back in sync, as the
             # the number of error/warning lines may differ.
-            if 'Error' in gnur_line or 'Warning' in gnur_line:
+            elif 'Error' in gnur_line or 'Warning' in gnur_line:
                 to_match = 'Error' if 'Error' in gnur_line else 'Warning'
                 if to_match not in fastr_line:
                     result = 1
                 else:
                     # accept differences in the error/warning messages but we need to synchronize
+                    gnur_i = gnur_i + 1
+                    fastr_i = fastr_i + 1
                     sync = True
             elif _is_ignored_function("sessionInfo", gnur_content, gnur_cur_statement_start, fastr_content, fastr_cur_statement_start):
                 # ignore differences in 'sessionInfo' output
+                gnur_i = gnur_i + 1
+                fastr_i = fastr_i + 1
                 sync = True
             elif _is_ignored_function("extSoftVersion", gnur_content, gnur_cur_statement_start, fastr_content, fastr_cur_statement_start):
                 # ignore differences in 'extSoftVersion' output
+                gnur_i = gnur_i + 1
+                fastr_i = fastr_i + 1
                 sync = True
             else:
                 # genuine difference (modulo whitespace)
@@ -717,6 +723,8 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
                 print fastr_line.strip()
 
             # we need to synchronize the indices such that we can continue
+            gnur_i = gnur_i + 1
+            fastr_i = fastr_i + 1
             sync = True
             # report the last statement to produce different output
             assert fastr_cur_statement_start != -1
@@ -734,8 +742,6 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
 
         # synchronize: skip until lines match (or file end reached)
         if sync:
-            gnur_i = gnur_i + 1
-            fastr_i = fastr_i + 1
             if gnur_i == gnur_end - 1:
                 # at end (there is always a blank line)
                 break
