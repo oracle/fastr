@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -141,8 +140,7 @@ public abstract class PrepareArguments extends Node {
                     ArgumentsAndSignature arguments = createArguments(call, varArgSignature, s3DefaultArguments);
                     entry = e = insert(new GenericCallEntry(varArgSignature, s3DefaultArguments, arguments));
                 }
-                VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
-                return executeArgs(e.arguments.matchedArguments, e.arguments.matchedSuppliedSignature, frame);
+                return executeArgs(e.arguments.matchedArguments, e.arguments.matchedSuppliedSignature, materializedFrame);
             }
         }
 
