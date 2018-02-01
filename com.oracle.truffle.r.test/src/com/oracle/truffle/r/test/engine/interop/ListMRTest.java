@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,8 +86,6 @@ public class ListMRTest extends AbstractMRTest {
             assertEquals(123.1, ForeignAccess.sendRead(Message.READ.createNode(), obj, "d"));
 
             obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 2, false);
-            RAbstractContainer returnedList = JavaInterop.asJavaObject(RAbstractContainer.class, obj);
-            assertEquals((byte) 0, returnedList.getDataAtAsObject(2));
             assertEquals(false, ForeignAccess.sendRead(Message.READ.createNode(), obj, "b"));
 
             obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "newnew", "nneeww");
