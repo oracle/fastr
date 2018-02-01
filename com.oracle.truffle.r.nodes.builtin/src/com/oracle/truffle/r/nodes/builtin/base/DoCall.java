@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,19 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 
+import java.util.function.Supplier;
+
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -40,27 +45,26 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.DoCallNodeGen.DoCallInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctions.Get;
 import com.oracle.truffle.r.nodes.builtin.base.GetFunctionsFactory.GetNodeGen;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
-import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -79,6 +83,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX)
@@ -119,8 +124,9 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
     }
 
     protected abstract static class DoCallInternal extends Node {
-        @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-        @Child private SetVisibilityNode setVisibilityNode = SetVisibilityNode.create();
+        @Child private GetNamesAttributeNode getNamesNode;
+        @Child private SetVisibilityNode setVisibilityNode;
+        private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
 
         public static DoCallInternal create() {
             return DoCallInternalNodeGen.create();
@@ -128,23 +134,80 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
 
         public abstract Object execute(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env);
 
-        protected final ArgumentsSignature getArgsNames(RList argsAsList) {
-            ArgumentsSignature signature = ArgumentsSignature.fromNamesAttribute(getNamesNode.getNames(argsAsList));
-            return signature == null ? ArgumentsSignature.empty(argsAsList.getLength()) : signature;
+        protected FrameDescriptor getFrameDescriptor(REnvironment env) {
+            return env.getFrame(frameAccessProfile).getFrameDescriptor();
         }
 
         /**
-         * Fast version that works only for simple cases. It does not explicitly create the AST and
-         * evaluate it, but instead it directly implements what the execution of such AST would do.
+         * Because the underlying AST in {@link RExplicitCallNode} may cache frame slots, i.e.
+         * expect the {@link FrameDescriptor} to never change, we're caching this AST and also
+         * {@link GetVisibilityNode} for each {@link FrameDescriptor} we encounter.
          */
-        @Specialization(guards = "isSimple(func, argsAsList)")
-        public Object doSimple(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env,
-                        @Cached("create()") ShareObjectNode shareObjectNode,
+        @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "20")
+        public Object doFastPath(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+                        @Cached("getFrameDescriptor(env)") @SuppressWarnings("unused") FrameDescriptor fd,
+                        @Cached("create()") RExplicitCallNode explicitCallNode,
+                        @Cached("create()") GetVisibilityNode getVisibilityNode,
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
-                        @Cached("create()") BranchProfile containsRSymbolProfile,
-                        @Cached("createClassProfile()") ValueProfile frameAccessProfile) {
+                        @Cached("create()") BranchProfile containsRSymbolProfile) {
+            MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
+            RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
+            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, func, args);
+            MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
+
+            Object resultValue = explicitCallNode.execute(evalFrame, func, args, caller);
+            setVisibility(virtualFrame, getVisibilityNode.execute(evalFrame));
+            return resultValue;
+        }
+
+        /**
+         * Slow-path version avoids the problem by creating {@link RExplicitCallNode} for every call
+         * again and again and putting it behind truffle boundary to avoid deoptimization.
+         */
+        @Specialization(replaces = "doFastPath")
+        public Object doSlowPath(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+                        @Cached("create()") SlowPathExplicitCall slowPathExplicitCall,
+                        @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
+                        @Cached("create()") BranchProfile containsRSymbolProfile) {
+            MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
+            RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
+            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, func, args);
+            MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
+
+            Object resultValue = slowPathExplicitCall.execute(evalFrame, caller, func, args);
+            setVisibility(virtualFrame, getVisibilitySlowPath(evalFrame));
+            return resultValue;
+        }
+
+        /**
+         * The contract is that the function call will be evaluated in the given environment, but at
+         * the same time some primitives expect to see {@code do.call(foo, ...)} as the caller, so
+         * we create a frame the fakes caller, but otherwise delegates to the frame backing the
+         * explicitly given environment.
+         */
+        private MaterializedFrame getEvalFrame(VirtualFrame virtualFrame, MaterializedFrame envFrame) {
+            return VirtualEvalFrame.create(envFrame, RArguments.getFunction(virtualFrame), RArguments.getCall(virtualFrame));
+        }
+
+        /**
+         * If the call leads to actual call via
+         * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new
+         * frame and new set of arguments for it, then for this new arguments we explicitly provide
+         * a caller that looks like the function was called from the explicitly given environment
+         * (it will be its parent call), but at the same time its depth is one above the do.call
+         * function that actually invoked it.
+         *
+         * @see RCaller
+         * @see RArguments
+         */
+        private RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, RFunction func, RArgsValuesAndNames args) {
+            Supplier<RSyntaxElement> callerSyntax = RCallerHelper.createFromArguments(func, args);
+            return RCaller.create(RArguments.getDepth(virtualFrame) + 1, RArguments.getCall(envFrame), callerSyntax);
+        }
+
+        private RArgsValuesAndNames getArguments(MaterializedFrame promiseFrame, boolean quote, ConditionProfile quoteProfile,
+                        BranchProfile containsRSymbolProfile, RList argsAsList) {
             Object[] argValues = argsAsList.getDataCopy();
-            MaterializedFrame envFrame = env.getFrame(frameAccessProfile).materialize();
             if (quoteProfile.profile(!quote)) {
                 for (int i = 0; i < argValues.length; i++) {
                     Object arg = argValues[i];
@@ -154,43 +217,32 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         if (symbol.getName().isEmpty()) {
                             argValues[i] = REmpty.instance;
                         } else {
-                            argValues[i] = createLookupPromise(envFrame, symbol);
+                            argValues[i] = createLookupPromise(promiseFrame, symbol);
                         }
+                    } else if (arg instanceof RLanguage) {
+                        argValues[i] = RDataFactory.createPromise(PromiseState.Default, Closure.createPromiseClosure(((RLanguage) arg).getRep()), promiseFrame);
                     }
                 }
             }
-            for (int i = 0; i < argValues.length; i++) {
-                shareObjectNode.execute(argValues[i]);
-            }
             ArgumentsSignature signature = getArgsNames(argsAsList);
-            RCaller caller = RCaller.createWithInternalParent(virtualFrame, RCallerHelper.createFromArguments(func, new RArgsValuesAndNames(argValues, signature)));
-            try {
-                Object resultValue = RContext.getEngine().evalFunction(func, envFrame, caller, false, signature, argValues);
-                setVisibilityNode.execute(virtualFrame, getVisibility(envFrame));
-                return resultValue;
-            } finally {
-                for (int i = 0; i < argValues.length; i++) {
-                    ShareObjectNode.unshare(argValues[i]);
-                }
-            }
+            return new RArgsValuesAndNames(argValues, signature);
         }
 
-        protected static boolean isSimple(RFunction function, RList args) {
-            RBuiltinDescriptor builtin = function.getRBuiltin();
-            if (builtin != null && builtin.getDispatch() != RDispatch.DEFAULT) {
-                return false;
+        private void setVisibility(VirtualFrame frame, boolean value) {
+            if (setVisibilityNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                setVisibilityNode = insert(SetVisibilityNode.create());
             }
-            for (int i = 0; i < args.getLength(); i++) {
-                if (args.getDataAt(i) instanceof RLanguage) {
-                    // Note: language is tricky because of formulae, which are language that is
-                    // really not meant to be evaluated again in a different frame than the one were
-                    // the were evaluated for the first time. The solution should be to clone the
-                    // language's rep and get its nodes in uninitilized state, but that does not
-                    // work for some reason.
-                    return false;
-                }
+            setVisibilityNode.execute(frame, value);
+        }
+
+        private ArgumentsSignature getArgsNames(RList argsAsList) {
+            if (getNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getNamesNode = insert(GetNamesAttributeNode.create());
             }
-            return true;
+            ArgumentsSignature signature = ArgumentsSignature.fromNamesAttribute(getNamesNode.getNames(argsAsList));
+            return signature == null ? ArgumentsSignature.empty(argsAsList.getLength()) : signature;
         }
 
         @TruffleBoundary
@@ -200,7 +252,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         @TruffleBoundary
-        private static boolean getVisibility(MaterializedFrame envFrame) {
+        private static boolean getVisibilitySlowPath(MaterializedFrame envFrame) {
             FrameSlot envVisibilitySlot = FrameSlotChangeMonitor.findOrAddFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
             if (envVisibilitySlot != null) {
                 try {
@@ -211,62 +263,18 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             }
             return false;
         }
+    }
 
-        @Specialization(guards = "!isSimple(func, argsAsList)")
-        public Object doGeneric(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env) {
-            CallResult result = doCallGeneric(func, argsAsList.getDataWithoutCopying(), getArgsNames(argsAsList), quote, RArguments.getCall(virtualFrame), env);
-            setVisibilityNode.execute(virtualFrame, result.visibility);
-            return result.value;
+    static class SlowPathExplicitCall extends TruffleBoundaryNode {
+        @Child private RExplicitCallNode slowPathCallNode;
+
+        public static SlowPathExplicitCall create() {
+            return new SlowPathExplicitCall();
         }
 
-        @TruffleBoundary
-        private static CallResult doCallGeneric(RFunction function, Object[] argValues, ArgumentsSignature argsSignature, boolean quote, RCaller call, REnvironment env) {
-            RSyntaxNode[] argsConstants = new RSyntaxNode[argValues.length];
-            for (int i = 0; i < argValues.length; i++) {
-                if (!quote && argValues[i] instanceof RLanguage) {
-                    argsConstants[i] = ((RLanguage) argValues[i]).getRep().asRSyntaxNode();
-                } else if (!quote && argValues[i] instanceof RSymbol) {
-                    RSymbol symbol = (RSymbol) argValues[i];
-                    if (symbol.isMissing()) {
-                        argsConstants[i] = ConstantNode.create(REmpty.instance);
-                    } else {
-                        argsConstants[i] = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) argValues[i]).getName(), false);
-                    }
-                } else {
-                    argsConstants[i] = ConstantNode.create(argValues[i]);
-                }
-            }
-            for (int i = 0; i < argValues.length; i++) {
-                ShareObjectNode.share(argValues[i]);
-            }
-            Closure closure = Closure.createLanguageClosure(RASTUtils.createCall(ConstantNode.create(function), true, argsSignature, argsConstants).asRNode());
-            RLanguage lang = RDataFactory.createLanguage(closure);
-            try {
-                Object resultValue = RContext.getEngine().eval(lang, env, call.withInternalParent());
-                MaterializedFrame envFrame = env.getFrame();
-                FrameSlot envVisibilitySlot = FrameSlotChangeMonitor.findOrAddFrameSlot(envFrame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean);
-                boolean resultVisibility = false;
-                if (envVisibilitySlot != null) {
-                    resultVisibility = envFrame.getBoolean(envVisibilitySlot);
-                }
-                return new CallResult(resultValue, resultVisibility);
-            } catch (FrameSlotTypeException e) {
-                throw RInternalError.shouldNotReachHere();
-            } finally {
-                for (int i = 0; i < argValues.length; i++) {
-                    ShareObjectNode.unshare(argValues[i]);
-                }
-            }
-        }
-
-        private static final class CallResult {
-            public final Object value;
-            public final boolean visibility;
-
-            CallResult(Object value, boolean visibility) {
-                this.value = value;
-                this.visibility = visibility;
-            }
+        public Object execute(VirtualFrame evalFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
+            slowPathCallNode = insert(RExplicitCallNode.create());
+            return slowPathCallNode.execute(evalFrame, func, args, caller);
         }
     }
 }

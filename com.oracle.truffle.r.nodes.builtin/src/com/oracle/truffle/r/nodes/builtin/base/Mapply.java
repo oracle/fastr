@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -227,7 +227,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
                     values[listIndex] = vecElement;
                 }
                 /* Now call the function */
-                result[i] = callNode.execute(frame, function, new RArgsValuesAndNames(values, signature));
+                result[i] = callNode.call(frame, function, new RArgsValuesAndNames(values, signature));
             }
             return result;
         }

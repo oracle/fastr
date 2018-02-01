@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -131,7 +131,7 @@ public final class LocalReadVariableNode extends Node {
             if (binding.isHidden() && !binding.isInitialized()) {
                 return null;
             }
-            Object readValue = readActiveBinding.execute(frame, binding.getFunction(), RArgsValuesAndNames.EMPTY);
+            Object readValue = readActiveBinding.call(frame, binding.getFunction(), RArgsValuesAndNames.EMPTY);
             if (readValue == RMissing.instance) {
                 return null;
             }

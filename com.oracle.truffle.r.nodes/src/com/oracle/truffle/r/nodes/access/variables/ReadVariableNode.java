@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -275,7 +275,7 @@ public final class ReadVariableNode extends RBaseNode {
             if (binding.isHidden() && !binding.isInitialized()) {
                 throw error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }
-            Object readValue = readActiveBinding.execute(frame, binding.getFunction(), RArgsValuesAndNames.EMPTY);
+            Object readValue = readActiveBinding.call(frame, binding.getFunction(), RArgsValuesAndNames.EMPTY);
             if (readValue == RMissing.instance) {
                 throw error(mode == RType.Function ? RError.Message.UNKNOWN_FUNCTION : RError.Message.UNKNOWN_OBJECT, identifier);
             }

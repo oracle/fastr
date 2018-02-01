@@ -973,7 +973,7 @@ public class FastRInterop {
             boolean isCheck = RRuntime.fromLogical(check);
             getInteropTryState().stepIn();
             try {
-                return call.execute(frame, function, RArgsValuesAndNames.EMPTY);
+                return call.call(frame, function, RArgsValuesAndNames.EMPTY);
             } catch (FastRInteropTryException e) {
                 Throwable cause = e.getCause();
                 CompilerDirectives.transferToInterpreter();

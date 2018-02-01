@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -63,7 +63,7 @@ public abstract class RExplicitBaseEnvCallDispatcher extends Node {
     @Specialization
     public Object doCached(VirtualFrame frame, RArgsValuesAndNames arguments,
                     @Cached("getFunction(frame)") RFunction function) {
-        return callNode.execute(frame, function, arguments);
+        return callNode.call(frame, function, arguments);
     }
 
     RFunction getFunction(VirtualFrame frame) {

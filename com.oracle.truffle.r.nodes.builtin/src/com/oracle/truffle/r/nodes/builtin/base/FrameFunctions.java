@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,6 +89,16 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The frame for the sys functions themselves is not counted in the R spec. Frames are numbered 0,
  * 1, .. starting from .GlobalEnv. Non-negative arguments are frame numbers, negative arguments are
  * relative to the current frame.
+ *
+ * The main thing to note is distinction between {@code sys.parent} and {@code sys.frame}.
+ * {@code sys.parent} gives you "logical" parent, but not necessarily the frame preceding the
+ * current frame on the call stack. In FastR this is captured by {@link RCaller#getParent()}.
+ * {@code sys.frame(n)} gives you frame with number {@code n} and traverses the stack without taking
+ * the parent relation into account. In FastR the frame number is captured in
+ * {@link RCaller#getDepth()}. See also builtins in {@code FrameFunctions} for more details.
+ *
+ * @see RArguments
+ * @see RCaller
  */
 public class FrameFunctions {
 
@@ -112,19 +122,11 @@ public class FrameFunctions {
             return RInternalError.guaranteeNonNull(getNumberedFrame(frame, actualFrame));
         }
 
-        protected RCaller getCall(RCaller currentCall, int n) {
+        protected RCaller getCall(VirtualFrame frame, int n) {
+            RCaller currentCall = RArguments.getCall(frame);
             int actualFrame = decodeFrameNumber(currentCall, n);
-            RCaller call = currentCall;
-            while (call != null) {
-                while (call.isPromise()) {
-                    call = call.getPromiseOriginalCall();
-                }
-                if (call.getDepth() == actualFrame) {
-                    return call;
-                }
-                call = call.getParent();
-            }
-            throw RInternalError.shouldNotReachHere();
+            Frame targetFrame = getNumberedFrame(frame, actualFrame);
+            return RArguments.getCall(targetFrame);
         }
 
         /**
@@ -197,13 +199,12 @@ public class FrameFunctions {
             /*
              * sys.call preserves provided names but does not create them, unlike match.call.
              */
-            return createCall(RArguments.getCall(frame), which);
+            return createCall(helper.getCall(frame, which));
         }
 
         @TruffleBoundary
-        private Object createCall(RCaller currentCall, int which) {
-            RCaller call = helper.getCall(currentCall, which);
-            assert !call.isPromise();
+        private Object createCall(RCaller call) {
+            assert call == null || !call.isPromise();
             if (call == null || !call.isValidCaller()) {
                 return RNull.instance;
             }
@@ -672,9 +673,6 @@ public class FrameFunctions {
             }
             int i = 0;
             while (i < n) {
-                if (call.hasInternalParent()) {
-                    i--;    // in this loop iteration, we deal with the parent, but do not count it
-                }
                 call = call.getParent();
                 if (call == null) {
                     nullCallerProfile.enter();

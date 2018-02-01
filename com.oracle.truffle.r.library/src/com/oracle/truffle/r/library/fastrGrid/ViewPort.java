@@ -151,7 +151,7 @@ public final class ViewPort {
 
         public RList execute(VirtualFrame frame) {
             RFunction gridTopLevel = (RFunction) readGridTopLevel.execute(frame);
-            RList topVP = (RList) callNode.execute(frame, gridTopLevel, RArgsValuesAndNames.EMPTY);
+            RList topVP = (RList) callNode.call(frame, gridTopLevel, RArgsValuesAndNames.EMPTY);
             topVP.makeSharedPermanent();
 
             GridDevice device = GridContext.getContext().getCurrentDevice();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,14 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
  * Represents the caller of a function and stored in {@link RArguments}. A value of this type never
- * appears in a Truffle execution.
+ * appears in a Truffle execution. Caller remembers its parent caller and frame number as described
+ * in {@code sys.parent} R function documentation: frames are numbered from 0 (global environment),
+ * parent does not have to have the frame with number one less, e.g. with do.call(fun, args, envir)
+ * when fun asks for parent, it should get 'envir', moreover, when evaluating promises parent frame
+ * and frame with number one less are typically also not the same frames. See also builtins in
+ * {@code FrameFunctions} for more details.
+ * 
+ * @see RArguments
  */
 public final class RCaller {
 
@@ -64,6 +71,13 @@ public final class RCaller {
         this.parent = parentFromFrame(callingFrame);
         this.payload = nodeOrSupplier;
         this.parentIsInternal = parentIsInternal;
+    }
+
+    private RCaller(int depth, RCaller parent, Object nodeOrSupplier) {
+        this.depth = depth;
+        this.parent = parent;
+        this.payload = nodeOrSupplier;
+        this.parentIsInternal = false;
     }
 
     private static int depthFromFrame(Frame callingFrame) {
@@ -142,6 +156,11 @@ public final class RCaller {
         return new RCaller(callingFrame, supplier, false);
     }
 
+    public static RCaller create(int depth, RCaller parent, Object payload) {
+        assert payload != null;
+        return new RCaller(depth, parent, payload, false);
+    }
+
     public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
         return new RCaller(depthFromFrame(callingFrame), parent, supplier, false);
@@ -159,5 +178,9 @@ public final class RCaller {
 
     public void setVisibility(boolean visibility) {
         this.visibility = visibility;
+    }
+
+    public Object getPayload() {
+        return payload;
     }
 }
