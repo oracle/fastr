@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,9 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -61,8 +63,6 @@ public class VectorMRTest extends AbstractMRTest {
             assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), vb, 0));
 
             TruffleObject nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, 0, 123);
-            RAbstractIntVector returnedVec = JavaInterop.asJavaObject(RAbstractIntVector.class, nvi);
-            assertEquals(123, returnedVec.getDataAt(0));
             assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
 
             assertEquals(10, ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), nvi));
@@ -71,8 +71,6 @@ public class VectorMRTest extends AbstractMRTest {
             assertEquals(321, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 100));
 
             nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), nvi, 0, "abc");
-            RAbstractVector vec = JavaInterop.asJavaObject(RAbstractVector.class, nvi);
-            assertTrue(vec instanceof RAbstractStringVector);
             assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
             return null;
         });
