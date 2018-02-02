@@ -26,6 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -50,7 +51,7 @@ public abstract class ClosureCache<K> {
         return getOrCreateClosure(Closure.LANGUAGE_CLOSURE_WRAPPER_NAME, key);
     }
 
-    protected abstract RNode keyToNode(K key);
+    protected abstract RBaseNode keyToNode(K key);
 
     @TruffleBoundary
     private Closure getOrCreateClosure(String name, K key) {
@@ -69,9 +70,9 @@ public abstract class ClosureCache<K> {
         }
     }
 
-    public static final class RNodeClosureCache extends ClosureCache<RNode> {
+    public static final class RNodeClosureCache extends ClosureCache<RBaseNode> {
         @Override
-        protected RNode keyToNode(RNode key) {
+        protected RBaseNode keyToNode(RBaseNode key) {
             return key;
         }
     }

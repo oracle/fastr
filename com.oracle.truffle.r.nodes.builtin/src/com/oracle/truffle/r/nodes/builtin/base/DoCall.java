@@ -68,6 +68,9 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.ClosureCache;
+import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
+import com.oracle.truffle.r.runtime.data.ClosureCache.SymbolClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
@@ -127,6 +130,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         @Child private GetNamesAttributeNode getNamesNode;
         @Child private SetVisibilityNode setVisibilityNode;
         private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
+        private final RNodeClosureCache languagesClosureCache = new RNodeClosureCache();
+        private final SymbolClosureCache symbolsClosureCache = new SymbolClosureCache();
 
         public static DoCallInternal create() {
             return DoCallInternalNodeGen.create();
@@ -217,15 +222,27 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         if (symbol.getName().isEmpty()) {
                             argValues[i] = REmpty.instance;
                         } else {
-                            argValues[i] = createLookupPromise(promiseFrame, symbol);
+                            argValues[i] = createLookupPromise(promiseFrame, symbol.getName());
                         }
                     } else if (arg instanceof RLanguage) {
-                        argValues[i] = RDataFactory.createPromise(PromiseState.Default, Closure.createPromiseClosure(((RLanguage) arg).getRep()), promiseFrame);
+                        argValues[i] = createLanguagePromise(promiseFrame, (RLanguage) arg);
                     }
                 }
             }
             ArgumentsSignature signature = getArgsNames(argsAsList);
             return new RArgsValuesAndNames(argValues, signature);
+        }
+
+        @TruffleBoundary
+        private RPromise createLanguagePromise(MaterializedFrame promiseFrame, RLanguage arg) {
+            Closure closure = languagesClosureCache.getOrCreatePromiseClosure(arg.getRep());
+            return RDataFactory.createPromise(PromiseState.Default, closure, promiseFrame);
+        }
+
+        @TruffleBoundary
+        private RPromise createLookupPromise(MaterializedFrame callerFrame, String name) {
+            Closure closure = symbolsClosureCache.getOrCreatePromiseClosure(name);
+            return RDataFactory.createPromise(PromiseState.Supplied, closure, callerFrame);
         }
 
         private void setVisibility(VirtualFrame frame, boolean value) {
@@ -243,12 +260,6 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             }
             ArgumentsSignature signature = ArgumentsSignature.fromNamesAttribute(getNamesNode.getNames(argsAsList));
             return signature == null ? ArgumentsSignature.empty(argsAsList.getLength()) : signature;
-        }
-
-        @TruffleBoundary
-        private static RPromise createLookupPromise(MaterializedFrame callerFrame, RSymbol symbol) {
-            Closure closure = Closure.createPromiseClosure(RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false).asRNode());
-            return RDataFactory.createPromise(PromiseState.Supplied, closure, callerFrame);
         }
 
         @TruffleBoundary
