@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -26,7 +26,7 @@ import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
@@ -58,7 +58,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     @Child private SetFixedAttributeNode putDimensions = SetFixedAttributeNode.createDim();
     @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
-    @Child private GetNamesAttributeNode getAxisNamesNode = GetNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractAxisNamesNode = ExtractNamesAttributeNode.create();
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
     @Child private ReuseNonSharedNode reuseNonShared = ReuseNonSharedNode.create();
 
@@ -224,7 +224,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         if (dimNames != null) {
             hasDimNamesProfile.enter();
             assert dimNames.getLength() == 2;
-            RStringVector axisNames = getAxisNamesNode.getNames(dimNames);
+            RStringVector axisNames = extractAxisNamesNode.execute(dimNames);
             RStringVector transAxisNames = axisNames == null ? null : RDataFactory.createStringVector(new String[]{axisNames.getDataAt(1), axisNames.getDataAt(0)}, true);
             RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)}, transAxisNames);
             putDimNames.execute(dest.getAttributes(), newDimNames);

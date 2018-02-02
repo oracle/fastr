@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -62,5 +62,6 @@ public class TestBuiltin_vapply extends TestBase {
     public void testVapplyNames() {
         assertEval("{ a <- vapply(list(a=1:20,b=1:20), function (x) x, FUN.VALUE=1:20); attributes(a); a[1:5] }");
         assertEval("{ b <- list(a=structure(c(1:3), names=c('x','y')),b=structure(c(1:3), names=c('x2','y2','z2'))); a <- vapply(b, function (x) x, FUN.VALUE=1:3); attributes(a); a[1:5] }");
+        assertEval("{ a<-structure(1:2, names=c('a1','a2')); b<-vapply(a, function(v) v + 3, 0); names(b)[1]<-'x'; a }");
     }
 }

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1997-2014, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,7 +27,7 @@ import com.oracle.truffle.r.library.fastrGrid.GridColorUtils;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.GridState.GridPalette;
 import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -59,7 +59,7 @@ public abstract class Col2RGB extends RExternalBuiltinNode.Arg2 {
     @Specialization
     @TruffleBoundary
     Object execute(RAbstractVector col, boolean alpha,
-                    @Cached("create()") GetNamesAttributeNode getNames) {
+                    @Cached("create()") ExtractNamesAttributeNode extractNames) {
         int length = col.getLength();
         int columns = alpha ? 4 : 3;
         int[] result = new int[length * columns];
@@ -108,7 +108,7 @@ public abstract class Col2RGB extends RExternalBuiltinNode.Arg2 {
             Arrays.fill(result, RRuntime.INT_NA);
         }
 
-        RStringVector names = getNames.getNames(col);
+        RStringVector names = extractNames.execute(col);
         RList dimNames = RDataFactory.createList(new Object[]{alpha ? NAMES_ALPHA : NAMES, names == null ? RNull.instance : names});
         return RDataFactory.createIntVector(result, false, new int[]{columns, length}, null, dimNames);
     }

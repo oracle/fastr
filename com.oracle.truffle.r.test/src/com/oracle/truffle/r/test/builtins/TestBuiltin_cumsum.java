@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -117,5 +117,7 @@ public class TestBuiltin_cumsum extends TestBase {
 
         assertEval("values <- c(1,2,NaN,1, NA); cumsum(values); cumsum(as.integer(values))");
         assertEval("values <- c(1,2,NA,1, NaN); cumsum(values); cumsum(as.integer(values))");
+
+        assertEval("a <- structure(c(1,2,3), names=c('a1','a2','a3')); b<-cumsum(a); names(b)[1]<-'x'; a; ");
     }
 }

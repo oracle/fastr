@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -34,7 +34,7 @@ import java.util.HashMap;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
@@ -64,7 +64,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
     private static final int NO_COMCHAR = 100000; /* won't occur even in Unicode */
 
     private final NACheck naCheck = NACheck.create();
-    @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractNames = ExtractNamesAttributeNode.create();
 
     @Child private CastToVectorNode castVector;
 
@@ -315,7 +315,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
                 list.updateDataAt(i, vec.createEmptySameType(blockSize, RDataFactory.COMPLETE_VECTOR), null);
             }
         }
-        list.setNames(getNames.getNames(what));
+        list.setNames(extractNames.execute(what));
 
         naCheck.enable(true);
 

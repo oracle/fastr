@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,7 @@ import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -154,7 +154,7 @@ public abstract class Bind extends RBaseNode {
     }
 
     private Object bindInternal(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, CastNode castNode, boolean needsVectorCast, SetDimAttributeNode setDimNode,
-                    GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
+                    GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode) {
         ArgumentsSignature signature = promiseArgs.getSignature();
         String[] vecNames = nullNamesProfile.profile(signature.getNonNullCount() == 0) ? null : new String[signature.getLength()];
         RAbstractVector[] vectors = new RAbstractVector[args.length];
@@ -205,10 +205,10 @@ public abstract class Bind extends RBaseNode {
 
         if (type == BindType.cbind) {
             return genericCBind(promiseArgs, vectors, resultVec, resultDimensions, bindDims, rowsAndColumnsNotEqual, allEmpty, vecNames, deparseLevel, setDimNode, getDimNamesNode,
-                            getNamesNode);
+                            extractNamesNode);
         } else {
             return genericRBind(promiseArgs, vectors, resultVec, resultDimensions, bindDims, rowsAndColumnsNotEqual, allEmpty, vecNames, deparseLevel, setDimNode, getDimNamesNode,
-                            getNamesNode);
+                            extractNamesNode);
         }
     }
 
@@ -236,8 +236,8 @@ public abstract class Bind extends RBaseNode {
                     @Cached("create()") CastLogicalNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, getNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
     }
 
     @Specialization(guards = {"precedence == INT_PRECEDENCE", "args.length > 1"})
@@ -245,8 +245,8 @@ public abstract class Bind extends RBaseNode {
                     @Cached("create()") CastIntegerNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, getNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
     }
 
     @Specialization(guards = {"precedence == DOUBLE_PRECEDENCE", "args.length > 1"})
@@ -254,8 +254,8 @@ public abstract class Bind extends RBaseNode {
                     @Cached("create()") CastDoubleNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, getNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
     }
 
     @Specialization(guards = {"precedence == STRING_PRECEDENCE", "args.length> 1"})
@@ -263,8 +263,8 @@ public abstract class Bind extends RBaseNode {
                     @Cached("create()") CastStringNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, getNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
     }
 
     @Specialization(guards = {"precedence == COMPLEX_PRECEDENCE", "args.length > 1"})
@@ -272,8 +272,8 @@ public abstract class Bind extends RBaseNode {
                     @Cached("create()") CastComplexNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, getNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, true, setDimNode, getDimNamesNode, extractNamesNode);
     }
 
     @Specialization(guards = {"precedence == LIST_PRECEDENCE", "args.length > 1"})
@@ -281,15 +281,15 @@ public abstract class Bind extends RBaseNode {
                     @Cached("create()") CastListNode cast,
                     @Cached("create()") SetDimAttributeNode setDimNode,
                     @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
-        return bindInternal(deparseLevel, args, promiseArgs, cast, false, setDimNode, getDimNamesNode, getNamesNode);
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+        return bindInternal(deparseLevel, args, promiseArgs, cast, false, setDimNode, getDimNamesNode, extractNamesNode);
     }
 
     /**
      * Compute dimnames for rows (cbind) or columns (rbind) from names of elements of combined
      * vectors.
      */
-    protected Object getDimResultNamesFromElements(RAbstractVector vec, int dimLength, int dimInd, GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
+    protected Object getDimResultNamesFromElements(RAbstractVector vec, int dimLength, int dimInd, GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode) {
         Object firstDimResultNames = RNull.instance;
         Object firstDimNames = RNull.instance;
         int[] dim = getVectorDimensions(vec);
@@ -300,7 +300,7 @@ public abstract class Bind extends RBaseNode {
             }
         } else {
             if (!GetDimAttributeNode.isArray(dim) || dim.length == 1) {
-                RStringVector names = getNamesNode.getNames(vec);
+                RStringVector names = extractNamesNode.execute(vec);
                 firstDimNames = names == null ? RNull.instance : names;
             } else {
                 RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
@@ -436,7 +436,7 @@ public abstract class Bind extends RBaseNode {
 
     @Specialization(guards = {"precedence != NO_PRECEDENCE", "args.length == 1"})
     protected Object allOneElem(int deparseLevel, Object[] args, RArgsValuesAndNames promiseArgs, @SuppressWarnings("unused") int precedence,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
 
         RAbstractVector vec = vectorProfile.profile(castVector(args[0]));
         int[] rawDimensions = null;
@@ -447,7 +447,7 @@ public abstract class Bind extends RBaseNode {
 
         // for cbind dimNamesA is names for the 1st dim and dimNamesB is names for 2nd dim; for
         // rbind the other way around
-        Object dimNamesA = getNamesNode.getNames(vec);
+        Object dimNamesA = extractNamesNode.execute(vec);
         if (dimNamesA == null) {
             dimNamesA = RNull.instance;
         }
@@ -480,7 +480,7 @@ public abstract class Bind extends RBaseNode {
 
     public RVector<?> genericCBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] secondDims, boolean rowsAndColumnsNotEqual,
                     boolean allEmpty, String[] vecNames, int deparseLevel, SetDimAttributeNode setDimNode,
-                    GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
+                    GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode) {
 
         int ind = 0;
         Object rowDimResultNames = RNull.instance;
@@ -491,7 +491,7 @@ public abstract class Bind extends RBaseNode {
             RAbstractVector vec = vectorProfile.profile(vectors[i]);
             if (rowDimResultNames == RNull.instance) {
                 // get the first valid names value
-                rowDimResultNames = getDimResultNamesFromElements(vec, resultDimensions[0], 0, getDimNamesNode, getNamesNode);
+                rowDimResultNames = getDimResultNamesFromElements(vec, resultDimensions[0], 0, getDimNamesNode, extractNamesNode);
             }
 
             // compute dimnames for the second dimension
@@ -662,7 +662,7 @@ public abstract class Bind extends RBaseNode {
 
     public RVector<?> genericRBind(RArgsValuesAndNames promiseArgs, RAbstractVector[] vectors, RVector<?> result, int[] resultDimensions, int[] firstDims, boolean rowsAndColumnsNotEqual,
                     boolean allEmpty, String[] vecNames, int deparseLevel, SetDimAttributeNode setDimNode,
-                    GetDimNamesAttributeNode getDimNamesNode, GetNamesAttributeNode getNamesNode) {
+                    GetDimNamesAttributeNode getDimNamesNode, ExtractNamesAttributeNode extractNamesNode) {
 
         Object colDimResultNames = RNull.instance;
         String[] rowDimNamesArray = new String[resultDimensions[0]];
@@ -673,7 +673,7 @@ public abstract class Bind extends RBaseNode {
             RAbstractVector vec = vectorProfile.profile(vectors[i]);
             if (colDimResultNames == RNull.instance) {
                 // get the first valid names value
-                colDimResultNames = getDimResultNamesFromElements(vec, resultDimensions[1], 1, getDimNamesNode, getNamesNode);
+                colDimResultNames = getDimResultNamesFromElements(vec, resultDimensions[1], 1, getDimNamesNode, extractNamesNode);
             }
 
             // compute dimnames for the second dimension

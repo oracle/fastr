@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -52,6 +53,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
     protected final boolean copyAllAttributes;
 
     @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
+    @Child protected ExtractDimNamesAttributeNode extractDimNamesNode = ExtractDimNamesAttributeNode.create();
     @Child protected GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
     @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
@@ -122,7 +124,7 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
 
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
 
-        RList newDimNames = getDimNamesNode.getDimNames(source);
+        RList newDimNames = extractDimNamesNode.execute(source);
         if (hasDimNames.profile(newDimNames != null)) {
             updateRefCountNode.execute(updateChildRefCountNode.updateState(source, newDimNames));
             putDimNames.execute(result.getAttributes(), newDimNames);

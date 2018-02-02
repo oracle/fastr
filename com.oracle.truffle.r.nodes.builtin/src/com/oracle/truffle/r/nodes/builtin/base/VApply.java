@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
@@ -96,8 +96,8 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
     @Child private CastLogicalNode castLogical;
     @Child private CastStringNode castString;
     @Child private SetDimAttributeNode setDimNode;
-    @Child private GetNamesAttributeNode getColNamesNode = GetNamesAttributeNode.create();
-    @Child private GetNamesAttributeNode getRowNamesNode = GetNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractColNamesNode = ExtractNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractRowNamesNode = ExtractNamesAttributeNode.create();
     @Child private SetDimNamesAttributeNode setDimNamesNode = SetDimNamesAttributeNode.create();
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
 
@@ -210,7 +210,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
 
             if (useNamesProfile.profile(useNames)) {
                 // the names from the input vector are used as the column names in the result
-                RStringVector names = getColNamesNode.getNames(vecMat);
+                RStringVector names = extractColNamesNode.execute(vecMat);
                 RStringVector colNames = null;
                 if (names != null) {
                     colNames = names;
@@ -222,7 +222,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
                     // take the names from the first input vector and use it as the row names in the
                     // result
                     Object firstVec = applyResult[0];
-                    Object rn = getRowNamesNode.getNames(firstVec);
+                    Object rn = extractRowNamesNode.execute(firstVec);
                     rowNames = rn == null ? RNull.instance : rn;
                 }
                 if (colNames != null) {
@@ -230,7 +230,7 @@ public abstract class VApply extends RBuiltinNode.Arg4 {
                 }
             }
         } else if (useNamesProfile.profile(useNames)) {
-            RStringVector names = getColNamesNode.getNames(vecMat);
+            RStringVector names = extractColNamesNode.execute(vecMat);
             RStringVector newNames = null;
             if (names != null) {
                 newNames = names;
