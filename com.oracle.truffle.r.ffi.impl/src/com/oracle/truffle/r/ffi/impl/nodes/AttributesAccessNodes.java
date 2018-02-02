@@ -126,7 +126,7 @@ public final class AttributesAccessNodes {
         public Object doArgs(RArgsValuesAndNames obj) {
             ArgumentsSignature signature = obj.getSignature();
             if (signature.getLength() > 0 && signature.getName(0) != null) {
-                return RDataFactory.createSymbol(signature.getName(0));
+                return getSymbol(signature.getName(0));
             }
             return RNull.instance;
         }
@@ -141,7 +141,7 @@ public final class AttributesAccessNodes {
                         @Cached("create()") GetNamesAttributeNode getNamesAttributeNode) {
             RStringVector names = getNamesAttributeNode.getNames(obj);
             if (names != null && names.getLength() > 0) {
-                return RDataFactory.createSymbol(names.getDataAt(0));
+                return getSymbol(names.getDataAt(0));
             }
             return RNull.instance;
         }
@@ -150,6 +150,11 @@ public final class AttributesAccessNodes {
         @TruffleBoundary
         public RNull doOthers(Object obj) {
             throw RInternalError.unimplemented("TAG is not implemented for type " + obj.getClass().getSimpleName());
+        }
+
+        @TruffleBoundary
+        private Object getSymbol(String name) {
+            return RDataFactory.createSymbol(name);
         }
 
         public static TAG create() {

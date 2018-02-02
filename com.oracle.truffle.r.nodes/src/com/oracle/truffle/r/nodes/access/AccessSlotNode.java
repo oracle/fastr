@@ -6,12 +6,13 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.nodes.access;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -67,9 +68,8 @@ public abstract class AccessSlotNode extends BaseAccessSlotNode {
         return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, object);
     }
 
-    // this is really a fallback specialization but @Fallback does not work here (because of the
-    // type of "object"?)
     @Specialization(guards = {"!slotAccessAllowed(object)", "!isDotData(name)"})
+    @TruffleBoundary
     protected Object getSlot(RAttributable object, String name,
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         RStringVector classAttr = getClassNode.getClassAttr(object);
@@ -84,6 +84,7 @@ public abstract class AccessSlotNode extends BaseAccessSlotNode {
     }
 
     @Fallback
+    @TruffleBoundary
     protected Object getSlot(Object object, String name) {
         throw error(RError.Message.SLOT_CANNOT_GET, name, RRuntime.getRTypeName(object));
     }

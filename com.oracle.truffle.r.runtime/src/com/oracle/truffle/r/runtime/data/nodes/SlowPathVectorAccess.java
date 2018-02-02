@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,8 @@
 package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -41,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 public abstract class SlowPathVectorAccess extends VectorAccess {
 
     protected boolean naReported; // TODO: move this into the iterator
+    private final BranchProfile warningReportedProfile = BranchProfile.create();
 
     protected SlowPathVectorAccess() {
         // VectorAccess.supports has an assertion that relies on this being Object.class
@@ -53,8 +56,8 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
     }
 
     protected final void warning(RError.Message message) {
-        CompilerAsserts.neverPartOfCompilation();
         if (!naReported) {
+            warningReportedProfile.enter();
             RError.warning(RError.SHOW_CALLER, message);
             naReported = true;
         }

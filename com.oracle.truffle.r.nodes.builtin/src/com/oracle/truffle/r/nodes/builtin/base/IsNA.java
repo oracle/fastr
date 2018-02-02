@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -171,7 +171,7 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
 
     @Fallback
     protected byte isNA(Object value) {
-        warning(RError.Message.IS_NA_TO_NON_VECTOR, Predef.typeName().apply(value));
+        warning(RError.Message.IS_NA_TO_NON_VECTOR, Predef.getTypeName(value));
         return RRuntime.LOGICAL_FALSE;
     }
 }

@@ -28,6 +28,7 @@ import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RType;
 
@@ -51,8 +52,8 @@ public final class RSymbol extends RAttributeStorage {
         this.name = name;
     }
 
+    @TruffleBoundary
     public static RSymbol install(String name) {
-        CompilerAsserts.neverPartOfCompilation();
         return symbolTable.computeIfAbsent(name, RSymbol::new);
     }
 

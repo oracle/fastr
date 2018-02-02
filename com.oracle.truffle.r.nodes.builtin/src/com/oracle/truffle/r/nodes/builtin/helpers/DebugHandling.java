@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
@@ -750,7 +751,7 @@ public class DebugHandling {
         }
 
         private boolean isEnabled(EventContext ctx) {
-            return !disabled() && loopSourceSection != null && loopSourceSection.equals(ctx.getInstrumentedNode().getSourceSection());
+            return !disabled() && loopSourceSection != null && Utils.equals(loopSourceSection, ctx.getInstrumentedNode().getSourceSection());
         }
 
         private void returnCleanup() {

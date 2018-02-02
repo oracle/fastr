@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -164,7 +165,7 @@ public class FastRTrace {
             }
             complexCase(func, tracer, exit, at, print, signature);
             visibility.execute(frame, true);
-            return func.toString();
+            return Utils.toString(func);
         }
 
         @SuppressWarnings("unused")
@@ -217,7 +218,7 @@ public class FastRTrace {
                 throw RError.nyi(this, "method tracing");
             }
 
-            return func.toString();
+            return Utils.toString(func);
         }
     }
 }

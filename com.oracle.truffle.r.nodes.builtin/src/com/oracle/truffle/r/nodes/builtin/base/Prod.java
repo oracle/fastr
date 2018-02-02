@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -154,7 +154,7 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
         if (i == length) {
             return complexValue;
         }
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(args.getArgument(i)));
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.getTypeName(args.getArgument(i)));
     }
 
     protected static double prodDouble(Object v, VectorAccess access, boolean naRm) {
@@ -193,6 +193,6 @@ public abstract class Prod extends RBuiltinNode.Arg2 {
 
     @Fallback
     protected Object prod(Object v, @SuppressWarnings("unused") Object naRm) {
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(v));
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.getTypeName(v));
     }
 }

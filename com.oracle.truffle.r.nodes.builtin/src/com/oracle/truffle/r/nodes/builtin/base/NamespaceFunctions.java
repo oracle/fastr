@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -115,6 +116,7 @@ public class NamespaceFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected byte doIsNamespaceEnv(REnvironment env) {
             return RRuntime.asLogical(env.isNamespaceEnv());
         }
@@ -180,6 +182,7 @@ public class NamespaceFunctions {
             return RNull.instance;
         }
 
+        @TruffleBoundary
         private void doUnregisterNamespace(String name) {
             Object ns = REnvironment.unregisterNamespace(name);
             if (ns == null) {

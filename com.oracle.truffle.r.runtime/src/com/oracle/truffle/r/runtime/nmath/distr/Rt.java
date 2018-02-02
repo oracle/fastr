@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2008, The R Core Team
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -17,6 +17,8 @@ import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq.RChisq;
 
 public final class Rt extends RandFunction1_Double {
+    @Child private RChisq rchisq = new RChisq();
+
     @Override
     public double execute(double df, RandomNumberProvider rand) {
         if (Double.isNaN(df) || df <= 0.0) {
@@ -26,7 +28,7 @@ public final class Rt extends RandFunction1_Double {
         if (!Double.isFinite(df)) {
             return rand.normRand();
         } else {
-            return rand.normRand() / Math.sqrt(RChisq.rchisq(df, rand) / df);
+            return rand.normRand() / Math.sqrt(rchisq.execute(df, rand) / df);
         }
     }
 }
