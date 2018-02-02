@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.LapplyNodeGen.LapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -84,10 +84,10 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         Object[] result = lapply.execute(frame, vec, fun);
         // set here else it gets overridden by the iterator evaluation
-        return RDataFactory.createList(result, getNamesNode.getNames(vec));
+        return RDataFactory.createList(result, extractNamesNode.execute(vec));
     }
 
     @Specialization

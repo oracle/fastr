@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -52,6 +53,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
     @Child protected HasFixedAttributeNode hasDimNode = HasFixedAttributeNode.createDim();
     @Child protected GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child protected ExtractDimNamesAttributeNode extractDimNamesNode = ExtractDimNamesAttributeNode.create();
     @Child protected GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
 
     protected CopyAttributesNode(boolean copyAllAttributes) {
@@ -181,7 +183,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
 
         if (result != left) {
-            RList newDimNames = getDimNamesNode.getDimNames(left);
+            RList newDimNames = extractDimNamesNode.execute(left);
             if (hasDimNames.profile(newDimNames != null)) {
                 putDimNames.execute(result.getAttributes(), newDimNames);
 
@@ -189,7 +191,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 return result;
             }
             if (result != right) {
-                newDimNames = getDimNamesNode.getDimNames(right);
+                newDimNames = extractDimNamesNode.execute(right);
                 if (hasDimNames.profile(newDimNames != null)) {
                     setDimNamesNode.setDimNames(result, newDimNames);
                 }
@@ -247,7 +249,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         RVector.verifyDimensions(result.getLength(), newDimensions, this);
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         if (rightNotResult) {
-            RList newDimNames = getDimNamesNode.getDimNames(right);
+            RList newDimNames = extractDimNamesNode.execute(right);
             if (hasDimNames.profile(newDimNames != null)) {
                 setDimNamesNode.setDimNames(result, newDimNames);
             }
@@ -297,7 +299,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         }
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         if (left != result) {
-            RList newDimNames = getDimNamesNode.getDimNames(left);
+            RList newDimNames = extractDimNamesNode.execute(left);
             if (hasDimNames.profile(newDimNames != null)) {
                 setDimNamesNode.setDimNames(result, newDimNames);
             }

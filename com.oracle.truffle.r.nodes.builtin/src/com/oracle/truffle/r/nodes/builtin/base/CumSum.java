@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -49,6 +49,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -60,7 +62,7 @@ import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 @RBuiltin(name = "cumsum", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = MATH_GROUP_GENERIC, behavior = PURE)
 public abstract class CumSum extends RBuiltinNode.Arg1 {
 
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractNamesNode = ExtractNamesAttributeNode.create();
     @Child private BinaryArithmetic add = BinaryArithmetic.ADD.createOperation();
 
     static {
@@ -86,17 +88,17 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "x.getLength()==0")
     protected RAbstractVector cumEmpty(RAbstractComplexVector x) {
-        return RDataFactory.createComplexVector(new double[0], true, getNamesNode.getNames(x));
+        return RDataFactory.createComplexVector(new double[0], true, extractNamesNode.execute(x));
     }
 
     @Specialization(guards = "x.getLength()==0")
     protected RAbstractVector cumEmpty(RAbstractDoubleVector x) {
-        return RDataFactory.createDoubleVector(new double[0], true, getNamesNode.getNames(x));
+        return RDataFactory.createDoubleVector(new double[0], true, extractNamesNode.execute(x));
     }
 
     @Specialization(guards = "x.getLength()==0")
     protected RAbstractVector cumEmpty(RAbstractIntVector x) {
-        return RDataFactory.createIntVector(new int[0], true, getNamesNode.getNames(x));
+        return RDataFactory.createIntVector(new int[0], true, extractNamesNode.execute(x));
     }
 
     @Specialization(guards = "xAccess.supports(x)")
@@ -119,7 +121,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
                 }
                 array[iter.getIndex()] = prev;
             }
-            return RDataFactory.createIntVector(array, xAccess.na.neverSeenNA() && !add.introducesNA(), getNamesNode.getNames(x));
+            return RDataFactory.createIntVector(array, xAccess.na.neverSeenNA() && !add.introducesNA(), extractNamesNode.execute(x));
         }
     }
 
@@ -148,7 +150,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
                 assert !RRuntime.isNA(prev) : "double addition should not introduce NAs";
                 array[iter.getIndex()] = prev;
             }
-            return RDataFactory.createDoubleVector(array, xAccess.na.neverSeenNA(), getNamesNode.getNames(x));
+            return RDataFactory.createDoubleVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
         }
     }
 
@@ -175,7 +177,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
                 array[iter.getIndex() * 2] = prev.getRealPart();
                 array[iter.getIndex() * 2 + 1] = prev.getImaginaryPart();
             }
-            return RDataFactory.createComplexVector(array, xAccess.na.neverSeenNA(), getNamesNode.getNames(x));
+            return RDataFactory.createComplexVector(array, xAccess.na.neverSeenNA(), extractNamesNode.execute(x));
         }
     }
 

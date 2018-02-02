@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,8 +35,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -76,8 +76,8 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                     @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
                     @Cached("create()") GetDimAttributeNode getDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         convertType(type);
         boolean keepNA = keepNAProfile.profile(keepNAIn);
         int len = vector.getLength();
@@ -93,8 +93,8 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                 result[i] = (int) (Math.log10(x) + 1); // not the fastest one
             }
         }
-        RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), getNamesNode.getNames(vector));
-        RList dimNames = getDimNamesNode.getDimNames(vector);
+        RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), extractNamesNode.execute(vector));
+        RList dimNames = extractDimNamesNode.execute(vector);
         if (nullDimNamesProfile.profile(dimNames != null)) {
             setDimNamesNode.setDimNames(resultVector, dimNames);
         }
@@ -109,8 +109,8 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                     @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
                     @Cached("create()") GetDimAttributeNode getDimNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
         convertType(type);
         boolean keepNA = keepNAProfile.profile(keepNAIn);
         int len = vector.getLength();
@@ -126,8 +126,8 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                 result[i] = item.length();
             }
         }
-        RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), getNamesNode.getNames(vector));
-        RList dimNames = getDimNamesNode.getDimNames(vector);
+        RIntVector resultVector = RDataFactory.createIntVector(result, isComplete, getDimNode.getDimensions(vector), extractNamesNode.execute(vector));
+        RList dimNames = extractDimNamesNode.execute(vector);
         if (nullDimNamesProfile.profile(dimNames != null)) {
             setDimNamesNode.setDimNames(resultVector, dimNames);
         }

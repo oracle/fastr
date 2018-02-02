@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.nmath.RMath;
@@ -795,6 +796,9 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 if (dimNames != null) {
                     Object names = dimNames.getDataAt(1);
                     if (names != RNull.instance) {
+                        if (names instanceof RShareable && !((RShareable) names).isShared()) {
+                            ((RShareable) names).incRefCount();
+                        }
                         newDimNames = RDataFactory.createList(new Object[]{names, names});
                     }
                 }
@@ -804,6 +808,12 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
                 Object namesX = dimNamesX.getLength() >= 2 ? dimNamesX.getDataAt(1) : RNull.instance;
                 Object namesY = dimNamesY.getLength() >= 2 ? dimNamesY.getDataAt(1) : RNull.instance;
                 if (namesX != RNull.instance || namesY != RNull.instance) {
+                    if (namesX instanceof RShareable && !((RShareable) namesX).isShared()) {
+                        ((RShareable) namesX).incRefCount();
+                    }
+                    if (namesY instanceof RShareable && !((RShareable) namesY).isShared()) {
+                        ((RShareable) namesY).incRefCount();
+                    }
                     newDimNames = RDataFactory.createList(new Object[]{namesX, namesY});
                 }
             }

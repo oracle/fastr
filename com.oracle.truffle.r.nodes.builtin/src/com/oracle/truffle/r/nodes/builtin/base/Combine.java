@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,8 @@ import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastComplexNodeGen;
@@ -479,8 +480,8 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
 
     protected static final class CombineInputCast extends Node {
 
-        @Child private GetDimNamesAttributeNode getDimNamesNode;
-        @Child private GetNamesAttributeNode getNamesNode;
+        @Child private ExtractDimNamesAttributeNode extractDimNamesNode;
+        @Child private ExtractNamesAttributeNode extractNamesNode;
 
         private final ValueProfile valueProfile = ValueProfile.createClassProfile();
         private final ValueProfile inputValueProfile = ValueProfile.createClassProfile();
@@ -493,29 +494,29 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
             if (profiled instanceof RVector<?>) {
                 RVector<?> vector = (RVector<?>) profiled;
                 if (vector.getAttributes() != null) {
-                    if (getNamesNode == null) {
+                    if (extractNamesNode == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        getNamesNode = insert(GetNamesAttributeNode.create());
+                        extractNamesNode = insert(ExtractNamesAttributeNode.create());
                     }
                     if (hasNamesProfile == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         hasNamesProfile = ConditionProfile.createBinaryProfile();
                     }
-                    RStringVector vecNames = getNamesNode.getNames(vector);
+                    RStringVector vecNames = extractNamesNode.execute(vector);
                     if (hasNamesProfile.profile(vecNames != null)) {
                         RVector<?> result = vector.copyDropAttributes();
                         result.initAttributes(RAttributesLayout.createNames(vecNames));
                         return result;
                     } else {
-                        if (getDimNamesNode == null) {
+                        if (extractDimNamesNode == null) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
-                            getDimNamesNode = insert(GetDimNamesAttributeNode.create());
+                            extractDimNamesNode = insert(ExtractDimNamesAttributeNode.create());
                         }
                         if (hasDimNamesProfile == null) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             hasDimNamesProfile = ConditionProfile.createBinaryProfile();
                         }
-                        RList dimNames = getDimNamesNode.getDimNames(vector);
+                        RList dimNames = extractDimNamesNode.execute(vector);
                         if (hasDimNamesProfile.profile(dimNames != null)) {
                             RVector<?> result = vector.copyDropAttributes();
                             result.initAttributes(RAttributesLayout.createDimNames(dimNames));

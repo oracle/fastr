@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,8 +33,8 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -59,8 +59,8 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
 
     @Child private VectorFactory factory = VectorFactory.create();
     @Child private GetDimAttributeNode getDimsNode = GetDimAttributeNode.create();
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-    @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractNamesNode = ExtractNamesAttributeNode.create();
+    @Child private ExtractDimNamesAttributeNode extractDimNamesNode = ExtractDimNamesAttributeNode.create();
 
     static {
         Casts.noCasts(IsNA.class);
@@ -143,7 +143,7 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
                 }
                 data[iter.getIndex()] = RRuntime.asLogical(isNA);
             }
-            return factory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(vector), getNamesNode.getNames(vector), getDimNamesNode.getDimNames(vector));
+            return factory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR, getDimsNode.getDimensions(vector), extractNamesNode.execute(vector), extractDimNamesNode.execute(vector));
         }
     }
 

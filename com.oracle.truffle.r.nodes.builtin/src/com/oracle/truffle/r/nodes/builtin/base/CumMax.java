@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -25,7 +25,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class CumMax extends RBuiltinNode.Arg1 {
 
     private final NACheck na = NACheck.create();
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractNamesNode = ExtractNamesAttributeNode.create();
 
     static {
         Casts casts = new Casts(CumMax.class);
@@ -110,7 +110,7 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
             }
             cmaxV[i] = max;
         }
-        return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
+        return RDataFactory.createDoubleVector(cmaxV, na.neverSeenNA(), extractNamesNode.execute(v));
     }
 
     @Specialization(replaces = "cummaxIntSequence")
@@ -131,6 +131,6 @@ public abstract class CumMax extends RBuiltinNode.Arg1 {
             }
             cmaxV[i] = max;
         }
-        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), getNamesNode.getNames(v));
+        return RDataFactory.createIntVector(cmaxV, na.neverSeenNA(), extractNamesNode.execute(v));
     }
 }

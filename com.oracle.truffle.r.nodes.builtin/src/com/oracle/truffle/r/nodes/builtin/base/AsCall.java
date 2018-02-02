@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,12 +72,12 @@ public abstract class AsCall extends RBuiltinNode.Arg1 {
 
     private ArgumentsSignature createSignature(RAbstractContainer x) {
         int length = x.getLength() - 1;
-        if (nullNamesProfile.profile(getNamesNode.getNames(x) == null)) {
+        RStringVector ns = getNamesNode.getNames(x);
+        if (nullNamesProfile.profile(ns == null)) {
             return ArgumentsSignature.empty(length);
         } else {
             String[] names = new String[length];
             // extract names, converting "" to null
-            RStringVector ns = getNamesNode.getNames(x);
             for (int i = 0; i < length; i++) {
                 String name = ns.getDataAt(i + 1);
                 if (name != null && !name.isEmpty()) {

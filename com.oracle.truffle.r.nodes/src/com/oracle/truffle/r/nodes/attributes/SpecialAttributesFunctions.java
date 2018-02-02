@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -464,6 +465,30 @@ public final class SpecialAttributesFunctions {
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             return xTypeProfile.profile(x).getNames();
         }
+    }
+
+    public abstract static class ExtractNamesAttributeNode extends RBaseNode {
+
+        @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+        @Child private UpdateShareableChildValueNode updateRefCount = UpdateShareableChildValueNode.create();
+
+        private final ConditionProfile nonNullValue = ConditionProfile.createBinaryProfile();
+
+        public static ExtractNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.ExtractNamesAttributeNodeGen.create();
+        }
+
+        public abstract RStringVector execute(Object x);
+
+        @Specialization
+        protected RStringVector extractNames(Object x) {
+            RStringVector names = getNames.getNames(x);
+            if (nonNullValue.profile(names != null)) {
+                updateRefCount.updateState(x, names);
+            }
+            return names;
+        }
+
     }
 
     public abstract static class SetDimAttributeNode extends SetSpecialAttributeNode {
@@ -903,13 +928,37 @@ public final class SpecialAttributesFunctions {
         }
     }
 
+    public abstract static class ExtractDimNamesAttributeNode extends RBaseNode {
+
+        @Child private GetDimNamesAttributeNode getDimNames = GetDimNamesAttributeNode.create();
+        @Child private UpdateShareableChildValueNode updateRefCount = UpdateShareableChildValueNode.create();
+
+        private final ConditionProfile nonNullValue = ConditionProfile.createBinaryProfile();
+
+        public static ExtractDimNamesAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.ExtractDimNamesAttributeNodeGen.create();
+        }
+
+        public abstract RList execute(Object x);
+
+        @Specialization
+        protected RList extractDimNames(Object x) {
+            RList dimNames = getDimNames.getDimNames(x);
+            if (nonNullValue.profile(dimNames != null)) {
+                updateRefCount.updateState(x, dimNames);
+            }
+            return dimNames;
+        }
+
+    }
+
     public abstract static class InitDimsNamesDimNamesNode extends RBaseNode {
 
         private final ConditionProfile doAnythingProfile = ConditionProfile.createBinaryProfile();
 
         @Child private GetDimAttributeNode getDimNode;
-        @Child private GetNamesAttributeNode getNamesNode;
-        @Child private GetDimNamesAttributeNode getDimNamesNode;
+        @Child private ExtractNamesAttributeNode extractNamesNode;
+        @Child private ExtractDimNamesAttributeNode extractDimNamesNode;
 
         protected InitDimsNamesDimNamesNode() {
         }
@@ -929,15 +978,15 @@ public final class SpecialAttributesFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDimNode = insert(GetDimAttributeNode.create());
             }
-            if (getNamesNode == null) {
+            if (extractNamesNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getNamesNode = insert(GetNamesAttributeNode.create());
+                extractNamesNode = insert(ExtractNamesAttributeNode.create());
             }
-            if (getDimNamesNode == null) {
+            if (extractDimNamesNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getDimNamesNode = insert(GetDimNamesAttributeNode.create());
+                extractDimNamesNode = insert(ExtractDimNamesAttributeNode.create());
             }
-            this.initAttributes(x, getDimNode.getDimensions(source), getNamesNode.getNames(source), getDimNamesNode.getDimNames(source));
+            this.initAttributes(x, getDimNode.getDimensions(source), extractNamesNode.execute(source), extractDimNamesNode.execute(source));
         }
 
         public abstract void execute(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames);
@@ -1247,4 +1296,29 @@ public final class SpecialAttributesFunctions {
             return getClassAttr(x) != null ? true : false;
         }
     }
+
+    public abstract static class ExtractClassAttributeNode extends RBaseNode {
+
+        @Child private GetClassAttributeNode getClassAttr = GetClassAttributeNode.create();
+        @Child private UpdateShareableChildValueNode updateRefCount = UpdateShareableChildValueNode.create();
+
+        private final ConditionProfile nonNullValue = ConditionProfile.createBinaryProfile();
+
+        public static ExtractClassAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.ExtractClassAttributeNodeGen.create();
+        }
+
+        public abstract RStringVector execute(Object x);
+
+        @Specialization
+        protected RStringVector extractClassAttr(Object x) {
+            RStringVector classAttr = getClassAttr.getClassAttr(x);
+            if (nonNullValue.profile(classAttr != null)) {
+                updateRefCount.updateState(x, classAttr);
+            }
+            return classAttr;
+        }
+
+    }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,9 +34,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -61,8 +61,8 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
     private final NAProfile naProfile = NAProfile.create();
 
     @Child private GetDimAttributeNode getDims = GetDimAttributeNode.create();
-    @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
-    @Child private GetDimNamesAttributeNode getDimNames = GetDimNamesAttributeNode.create();
+    @Child private ExtractNamesAttributeNode extractNames = ExtractNamesAttributeNode.create();
+    @Child private ExtractDimNamesAttributeNode extractDimNames = ExtractDimNamesAttributeNode.create();
 
     static {
         Casts.noCasts(UnaryNotNode.class);
@@ -171,7 +171,7 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
                     if (vectorAccess.getType() == RType.Logical) {
                         ((RVector<?>) result).copyAttributesFrom(vector);
                     } else {
-                        factory.reinitializeAttributes((RVector<?>) result, getDims.getDimensions(vector), getNames.getNames(vector), getDimNames.getDimNames(vector));
+                        factory.reinitializeAttributes((RVector<?>) result, getDims.getDimensions(vector), extractNames.execute(vector), extractDimNames.execute(vector));
                     }
                     break;
             }

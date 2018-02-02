@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -237,10 +238,16 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
         Object dimName1 = RNull.instance;
         if (aDimNames != null && aDimNames.getLength() > 0) {
             dimName1 = aDimNames.getDataAt(0);
+            if (dimName1 instanceof RShareable && !((RShareable) dimName1).isShared()) {
+                ((RShareable) dimName1).incRefCount();
+            }
         }
         Object dimName2 = RNull.instance;
         if (bDimNames != null && bDimNames.getLength() > 1) {
             dimName2 = bDimNames.getDataAt(1);
+            if (dimName2 instanceof RShareable && !((RShareable) dimName2).isShared()) {
+                ((RShareable) dimName2).incRefCount();
+            }
         }
         setDimNamesNode.setDimNames(resultVec, RDataFactory.createList(new Object[]{dimName1, dimName2}));
         return resultVec;

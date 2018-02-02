@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -71,5 +71,7 @@ public class TestBuiltin_cumprod extends TestBase {
     public void testCumProd() {
         assertEval("values <- c(1,2,NaN,1, NA); cumprod(values); cumprod(as.integer(values))");
         assertEval("values <- c(1,2,NA,1, NaN); cumprod(values); cumprod(as.integer(values))");
+
+        assertEval("a <- structure(c(1,2,3), names=c('a1','a2','a3')); b<-cumprod(a); names(b)[1]<-'x'; a; ");
     }
 }

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -64,5 +64,6 @@ public class TestBuiltin_tolower extends TestBase {
         assertEval("tolower(c('NA', 'na'))");
         assertEval("tolower(NA_integer_)");
         assertEval("tolower(NA_real_)");
+        assertEval("a <- structure(c('X', 'Y'), names=c('a1','a2')); b<-toupper(a); names(b)[1]<-'bb'; a; ");
     }
 }
