@@ -236,7 +236,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         @TruffleBoundary
         private RPromise createLanguagePromise(MaterializedFrame promiseFrame, RLanguage arg) {
             Closure closure = languagesClosureCache.getOrCreatePromiseClosure(arg.getRep());
-            return RDataFactory.createPromise(PromiseState.Default, closure, promiseFrame);
+            return RDataFactory.createPromise(PromiseState.Supplied, closure, promiseFrame);
         }
 
         @TruffleBoundary
@@ -283,7 +283,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             return new SlowPathExplicitCall();
         }
 
-        public Object execute(VirtualFrame evalFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
+        @TruffleBoundary
+        public Object execute(MaterializedFrame evalFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
             slowPathCallNode = insert(RExplicitCallNode.create());
             return slowPathCallNode.execute(evalFrame, func, args, caller);
         }
