@@ -54,30 +54,24 @@ public final class RCaller {
     private final RCaller parent;
     /**
      * The payload can be an RSyntaxNode, a {@link Supplier}, or an {@link RCaller} (which marks
-     * promise evaluation frames).
+     * promise evaluation frames). Payload represents the syntax (AST) of how the function was
+     * invoked. If the function was invoked via regular call node, then the syntax can be that call
+     * node (RSyntaxNode case), if the function was invoked by other means and we do not have the
+     * actual syntax for the invocation, we only provide it lazily via Supplier, so that we do not
+     * have to always construct the AST nodes.
      */
     private final Object payload;
-    /**
-     * Marks those callers whose parent should not be taken into account when iterating R level
-     * frames using e.g. {@code parent.frame()}. This is the case for function invoked through
-     * {@code do.call} -- R pretends that they were called by the caller of {@code do.call} so that
-     * code like {@code eval(formula, parent.frame(2))} gives the same results regardless of whether
-     * the function was invoked directly or through {@code do.call}.
-     */
-    private final boolean parentIsInternal;
 
-    private RCaller(Frame callingFrame, Object nodeOrSupplier, boolean parentIsInternal) {
+    private RCaller(Frame callingFrame, Object nodeOrSupplier) {
         this.depth = depthFromFrame(callingFrame);
         this.parent = parentFromFrame(callingFrame);
         this.payload = nodeOrSupplier;
-        this.parentIsInternal = parentIsInternal;
     }
 
     private RCaller(int depth, RCaller parent, Object nodeOrSupplier) {
         this.depth = depth;
         this.parent = parent;
         this.payload = nodeOrSupplier;
-        this.parentIsInternal = false;
     }
 
     private static int depthFromFrame(Frame callingFrame) {
@@ -88,27 +82,12 @@ public final class RCaller {
         return callingFrame == null ? null : RArguments.getCall(callingFrame);
     }
 
-    private RCaller(int depth, RCaller parent, Object nodeOrSupplier, boolean parentIsInternal) {
-        this.depth = depth;
-        this.parent = parent;
-        this.payload = nodeOrSupplier;
-        this.parentIsInternal = parentIsInternal;
-    }
-
-    public RCaller withInternalParent() {
-        return new RCaller(depth, parent, payload, true);
-    }
-
     public int getDepth() {
         return depth;
     }
 
     public RCaller getParent() {
         return parent;
-    }
-
-    public boolean hasInternalParent() {
-        return parentIsInternal;
     }
 
     public RSyntaxElement getSyntaxNode() {
@@ -129,47 +108,42 @@ public final class RCaller {
     }
 
     public static RCaller createInvalid(Frame callingFrame) {
-        return new RCaller(callingFrame, null, false);
+        return new RCaller(callingFrame, null);
     }
 
     public static RCaller createInvalid(Frame callingFrame, RCaller parent) {
-        return new RCaller(depthFromFrame(callingFrame), parent, null, false);
+        return new RCaller(depthFromFrame(callingFrame), parent, null);
     }
 
     public static RCaller create(Frame callingFrame, RSyntaxElement node) {
         assert node != null;
-        return new RCaller(callingFrame, node, false);
+        return new RCaller(callingFrame, node);
     }
 
     public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxElement node) {
         assert node != null;
-        return new RCaller(depthFromFrame(callingFrame), parent, node, false);
-    }
-
-    public static RCaller createWithInternalParent(Frame callingFrame, Supplier<RSyntaxElement> supplier) {
-        assert supplier != null;
-        return new RCaller(callingFrame, supplier, true);
+        return new RCaller(depthFromFrame(callingFrame), parent, node);
     }
 
     public static RCaller create(Frame callingFrame, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
-        return new RCaller(callingFrame, supplier, false);
+        return new RCaller(callingFrame, supplier);
     }
 
     public static RCaller create(int depth, RCaller parent, Object payload) {
         assert payload != null;
-        return new RCaller(depth, parent, payload, false);
+        return new RCaller(depth, parent, payload);
     }
 
     public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
-        return new RCaller(depthFromFrame(callingFrame), parent, supplier, false);
+        return new RCaller(depthFromFrame(callingFrame), parent, supplier);
     }
 
     public static RCaller createForPromise(RCaller originalCaller, Frame frame) {
         int newDepth = frame == null ? 0 : RArguments.getDepth(frame);
         RCaller originalCall = frame == null ? null : RArguments.getCall(frame);
-        return new RCaller(newDepth, originalCaller, originalCall, false);
+        return new RCaller(newDepth, originalCaller, originalCall);
     }
 
     public boolean getVisibility() {
@@ -178,9 +152,5 @@ public final class RCaller {
 
     public void setVisibility(boolean visibility) {
         this.visibility = visibility;
-    }
-
-    public Object getPayload() {
-        return payload;
     }
 }

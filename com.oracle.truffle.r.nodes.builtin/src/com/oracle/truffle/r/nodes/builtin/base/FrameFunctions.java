@@ -544,9 +544,6 @@ public class FrameFunctions {
             RCaller call = RArguments.getCall(frame);
             int i = 0;
             while (i < n + 1) {
-                if (call.hasInternalParent()) {
-                    i--;    // in this loop iteration, we deal with the parent, but do not count it
-                }
                 call = call.getParent();
                 if (call == null) {
                     nullCallerProfile.enter();
@@ -616,7 +613,7 @@ public class FrameFunctions {
                         RCaller currentCall = RArguments.getCall(f);
                         if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
                             int currentCallIdx = currentCall.getDepth() - 1;
-                            while (currentCall != null && (currentCall.hasInternalParent() || currentCall.isPromise())) {
+                            while (currentCall != null && (currentCall.isPromise())) {
                                 currentCall = currentCall.getParent();
                             }
                             result[currentCallIdx] = currentCall == null ? 0 : currentCall.getParent().getDepth();
