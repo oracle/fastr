@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.Arrays;
-import java.util.IdentityHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -34,15 +33,14 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache;
+import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -57,7 +55,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * {@link RootCallTarget} for every argument.
  * </p>
  */
-public final class CallArgumentsNode extends RBaseNode implements UnmatchedArguments {
+public final class CallArgumentsNode extends RBaseNode {
     /**
      * A list of arguments. Single arguments may be <code>null</code>; semantics have to be
      * specified by implementing classes
@@ -66,8 +64,9 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
 
     protected final ArgumentsSignature signature;
 
-    @Child private FrameSlotNode varArgsSlotNode;
     @Child private PromiseCheckHelperNode promiseHelper;
+
+    private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
     /**
      * If a supplied argument is a {@link ReadVariableNode} whose name is "...", this field contains
@@ -75,15 +74,12 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
      */
     @CompilationFinal(dimensions = 1) private final int[] varArgsSymbolIndices;
 
-    private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
-
     private CallArgumentsNode(RNode[] arguments, ArgumentsSignature signature, int[] varArgsSymbolIndices) {
         assert signature != null && signature.getLength() == arguments.length : Arrays.toString(arguments) + " " + signature;
         this.arguments = arguments;
         this.signature = signature;
         assert signature != null;
         this.varArgsSymbolIndices = varArgsSymbolIndices;
-        this.varArgsSlotNode = !containsVarArgsSymbol() ? null : FrameSlotNode.create(ArgumentsSignature.VARARG_NAME);
     }
 
     /**
@@ -124,6 +120,10 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
             throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
         }
         return varArgs;
+    }
+
+    public RNodeClosureCache getClosureCache() {
+        return closureCache;
     }
 
     /**
@@ -262,25 +262,14 @@ public final class CallArgumentsNode extends RBaseNode implements UnmatchedArgum
         return varArgsSymbolIndices.length > 0;
     }
 
-    public int[] getVarArgsSymbolIndices() {
-        return varArgsSymbolIndices;
-    }
-
-    @Override
-    public IdentityHashMap<RNode, Closure> getContent() {
-        return closureCache;
-    }
-
     /**
      * @return The {@link RNode}s of the arguments given to a function call, in the same order. A
      *         single argument being <code>null</code> means 'argument not provided'.
      */
-    @Override
     public RNode[] getArguments() {
         return arguments;
     }
 
-    @Override
     public ArgumentsSignature getSignature() {
         return signature;
     }

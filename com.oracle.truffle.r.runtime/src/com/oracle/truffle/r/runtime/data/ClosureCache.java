@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,49 +22,64 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.IdentityHashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * A trait that enables the caching of {@link Closure}s for certain expressions ({@link RNode}s).
+ * Class that enables the caching of {@link Closure}s for certain expressions ({@link RNode}s).
+ * Instance of this class is supposed to be a field in AST node, which is using the cache. The field
+ * must be initialized in the constructor, but the underlying data structure (ConcurrentHashMap) is
+ * initialized lazily. All methods are thread safe.
+ * 
+ * Closures need to be cached so that we cache the corresponding call-targets and if the expression
+ * is evaluated again, we invoke it through the same call-target, which may be compiled by Truffle.
  */
-public interface ClosureCache {
+public abstract class ClosureCache<K> {
 
-    default Closure getOrCreatePromiseClosure(RNode expr) {
-        return getOrCreateClosure(Closure.PROMISE_CLOSURE_WRAPPER_NAME, expr);
+    private ConcurrentHashMap<K, Closure> cache;
+
+    public Closure getOrCreatePromiseClosure(K key) {
+        return getOrCreateClosure(Closure.PROMISE_CLOSURE_WRAPPER_NAME, key);
     }
 
-    default Closure getOrCreateLanguageClosure(RNode expr) {
-        return getOrCreateClosure(Closure.LANGUAGE_CLOSURE_WRAPPER_NAME, expr);
+    public Closure getOrCreateLanguageClosure(K key) {
+        return getOrCreateClosure(Closure.LANGUAGE_CLOSURE_WRAPPER_NAME, key);
     }
 
-    /**
-     * @param expr
-     * @return A {@link Closure} representing the given {@link RNode}. If expr is <code>null</code>
-     *         <code>null</code> is returned.
-     */
+    protected abstract RNode keyToNode(K key);
+
     @TruffleBoundary
-    default Closure getOrCreateClosure(String name, RNode expr) {
-        if (expr == null) {
+    private Closure getOrCreateClosure(String name, K key) {
+        if (key == null) {
             return null;
         }
-
-        IdentityHashMap<RNode, Closure> cache = getContent();
-        Closure result = cache.get(expr);
-        if (result == null) {
-            result = Closure.create(name, expr);
-            cache.put(expr, result);
+        if (cache == null) {
+            initMap();
         }
-        return result;
+        return cache.computeIfAbsent(key, k -> Closure.create(name, keyToNode(k)));
     }
 
-    /**
-     * Access to the raw content.
-     *
-     * @return The {@link Map} containing the cached values
-     */
-    IdentityHashMap<RNode, Closure> getContent();
+    private synchronized void initMap() {
+        if (cache == null) {
+            cache = new ConcurrentHashMap<>();
+        }
+    }
+
+    public static final class RNodeClosureCache extends ClosureCache<RNode> {
+        @Override
+        protected RNode keyToNode(RNode key) {
+            return key;
+        }
+    }
+
+    public static final class SymbolClosureCache extends ClosureCache<String> {
+        @Override
+        protected RNode keyToNode(String key) {
+            return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, key, false).asRNode();
+        }
+    }
 }

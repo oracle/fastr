@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.Arrays;
-import java.util.IdentityHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
@@ -31,8 +30,8 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache;
+import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -50,11 +49,9 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  * ever one {@link RootCallTarget} for every default argument.
  * </p>
  */
-public final class FormalArguments extends Arguments<RNode> implements ClosureCache {
+public final class FormalArguments extends Arguments<RNode> {
 
     public static final FormalArguments NO_ARGS = new FormalArguments(new RNode[0], new Object[0], ArgumentsSignature.empty(0));
-
-    private final IdentityHashMap<RNode, Closure> closureCache = new IdentityHashMap<>();
 
     /**
      * These argument constants define what will be passed along in case there is no supplied
@@ -63,6 +60,8 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
      * with the actual default values on the callee side.
      */
     @CompilationFinal(dimensions = 1) private final Object[] internalDefaultArguments;
+
+    private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
     private FormalArguments(RNode[] defaultArguments, Object[] internalDefaultArguments, ArgumentsSignature signature) {
         super(defaultArguments, signature);
@@ -117,8 +116,7 @@ public final class FormalArguments extends Arguments<RNode> implements ClosureCa
                         value == RArgsValuesAndNames.EMPTY;
     }
 
-    @Override
-    public IdentityHashMap<RNode, Closure> getContent() {
+    public RNodeClosureCache getClosureCache() {
         return closureCache;
     }
 
