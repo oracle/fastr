@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -193,7 +193,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
                     // arrays, iterables or Objects then no need to recurse
 
                     // TODO well that is not exactly correct, but would be quite crazy
-                    if (!(ct.isArray() || ct.isAssignableFrom(Iterable.class) || ct == Object.class)) {
+                    if (ct != null && !(ct.isArray() || ct.isAssignableFrom(Iterable.class) || ct == Object.class)) {
                         return size;
                     }
                 }
@@ -209,10 +209,11 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
             return totalSize;
         }
 
-        @Specialization(guards = {"isJavaIterable(obj)"})
+        @Specialization(guards = {"isJavaIterable(obj)", "!isForeignArray(obj, hasSize)"})
         protected int getJavaIterableLength(TruffleObject obj,
                         @Cached("READ.createNode()") Node read,
                         @Cached("createExecute(0).createNode()") Node execute,
+                        @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("create()") Foreign2R foreign2R) {
             int totalSize = 0;
             try {

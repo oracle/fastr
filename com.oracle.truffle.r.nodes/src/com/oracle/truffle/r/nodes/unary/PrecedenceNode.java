@@ -251,7 +251,7 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = {"isJavaIterable(obj)"})
+    @Specialization(guards = {"isJavaIterable(obj)", "!isForeignArray(obj, hasSize)"})
     protected int doJavaIterable(TruffleObject obj, boolean recursive,
                     @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("READ.createNode()") Node read,
@@ -315,7 +315,7 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @TruffleBoundary
     private int getPrecedence(Class<?> ct, boolean recursive) {
-        if (recursive && ct.isArray()) {
+        if (recursive && ct != null && ct.isArray()) {
             return getPrecedence(ct.getComponentType(), true);
         }
         return getPrecedence(ct);
