@@ -89,7 +89,7 @@ import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX)
+@RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX, splitCaller = true)
 public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSyntaxNodeChildren {
 
     static {
