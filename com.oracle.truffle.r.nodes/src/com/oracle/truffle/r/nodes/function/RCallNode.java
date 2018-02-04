@@ -359,22 +359,24 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RArgsValuesAndNames argAndNames = (RArgsValuesAndNames) explicitArgs.execute(frame);
 
-        Object dispatchObject = argAndNames.getArgument(0);
-
-        if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
-            RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-            // TODO create a node that looks up the name in the names attribute
-            int index = list.getElementIndexByName(builtin.getName());
-            if (index != -1) {
-                RFunction basicFun = (RFunction) list.getDataAt(index);
-                Object result = call.execute(frame, basicFun, argAndNames, null, null);
-                if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
-                    return result;
+        RStringVector type = null;
+        if (!argAndNames.isEmpty()) {
+            Object dispatchObject = argAndNames.getArgument(0);
+            if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+                RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+                // TODO create a node that looks up the name in the names attribute
+                int index = list.getElementIndexByName(builtin.getName());
+                if (index != -1) {
+                    RFunction basicFun = (RFunction) list.getDataAt(index);
+                    Object result = call.execute(frame, basicFun, argAndNames, null, null);
+                    if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
+                        return result;
+                    }
                 }
             }
+            type = classHierarchyNode.execute(promiseHelperNode.checkEvaluate(frame, dispatchObject));
         }
 
-        RStringVector type = argAndNames.isEmpty() ? null : classHierarchyNode.execute(promiseHelperNode.checkEvaluate(frame, dispatchObject));
         S3Args s3Args;
         RFunction resultFunction;
         if (implicitTypeProfile.profile(type != null)) {
