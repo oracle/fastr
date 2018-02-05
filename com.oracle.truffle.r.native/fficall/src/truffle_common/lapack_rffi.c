@@ -159,7 +159,6 @@ int call_lapack_zunmqr(const char *side, const char *trans, int m, int n, int k,
     return info;
 }
 
-
 extern void ztrtrs_(const char *uplo, const char *trans, const char *diag,
 		 const int *n, const int *nrhs,
 		 Rcomplex *a, const int *lda,
@@ -170,5 +169,16 @@ int call_lapack_ztrtrs(const char *uplo, const char *trans, const char *diag,
     int info;
     ztrtrs_(uplo, trans, diag, &n, &nrhs, DOUBLES_AS_COMPLEX(a), &lda, DOUBLES_AS_COMPLEX(b), &ldb, &info);
     return info;
+}
+
+extern void dtrsm_(const char *side, const char *uplo,
+		const char *transa, const char *diag,
+		const int *m, const int *n, const double *alpha,
+		const double *a, const int *lda,
+		double *b, const int *ldb);
+
+void call_lapack_dtrsm(const char *side, const char *uplo, const char *transa, const char *diag,
+		int m, int n, double alpha, double *a, int lda, double *b, int ldb) {
+    dtrsm_(side, uplo, transa, diag, &m, &n, &alpha, a, &lda, b, &ldb);
 }
 

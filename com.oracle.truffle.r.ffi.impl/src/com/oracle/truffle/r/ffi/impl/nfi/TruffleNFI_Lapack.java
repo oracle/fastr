@@ -222,6 +222,20 @@ public class TruffleNFI_Lapack implements LapackRFFI {
         }
     }
 
+    private static class TruffleNFI_DtrsmNode extends TruffleNFI_DownCallNode implements DtrsmNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.dtrsm;
+        }
+
+        @Override
+        public void execute(String side, String uplo, String transa, String diag, int m, int n, double alpha, double[] a, int lda, double[] b, int ldb) {
+            call(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
+        }
+
+    }
+
     @Override
     public IlaverNode createIlaverNode() {
         return new TruffleNFI_IlaverNode();
@@ -300,5 +314,10 @@ public class TruffleNFI_Lapack implements LapackRFFI {
     @Override
     public ZtrtrsNode createZtrtrsNode() {
         return new TruffleNFI_ZtrtrsNode();
+    }
+
+    @Override
+    public DtrsmNode createDtrsmNode() {
+        return new TruffleNFI_DtrsmNode();
     }
 }

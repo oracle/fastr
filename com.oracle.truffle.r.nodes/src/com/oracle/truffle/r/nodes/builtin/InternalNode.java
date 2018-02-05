@@ -340,7 +340,7 @@ public abstract class InternalNode extends OperatorNode {
      * listing of missing builtins.
      */
     private static final List<String> NOT_IMPLEMENTED = Arrays.asList(
-                    ".addTryHandlers", "interruptsSuspended", "restart", "backsolve", "max.col", "comment", "`comment<-`", "list2env", "tcrossprod",
+                    ".addTryHandlers", "interruptsSuspended", "restart", "max.col", "comment", "`comment<-`", "list2env", "tcrossprod",
                     "beta", "dchisq", "pchisq", "qchisq", "dexp", "pexp", "qexp", "dgeom", "pgeom", "qgeom", "dpois", "ppois", "qpois", "dt", "pt", "qt", "dsignrank", "psignrank",
                     "qsignrank", "besselJ", "besselY", "psigamma", "dbeta", "pbeta", "qbeta", "dbinom", "pbinom", "qbinom", "dcauchy", "pcauchy", "qcauchy", "df", "pf", "qf", "dgamma", "pgamma",
                     "qgamma", "dlnorm", "plnorm", "qlnorm", "dlogis", "plogis", "qlogis", "dnbinom", "pnbinom", "qnbinom", "dnorm", "pnorm", "qnorm", "dunif", "punif", "qunif", "dweibull", "pweibull",
