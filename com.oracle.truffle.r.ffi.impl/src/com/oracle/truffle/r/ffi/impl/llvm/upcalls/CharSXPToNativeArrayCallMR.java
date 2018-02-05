@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ public class CharSXPToNativeArrayCallMR implements RTruffleObject {
 
     @Resolve(message = "EXECUTE")
     public abstract static class CharSXPToNativeArrayCallExecute extends Node {
+
         protected java.lang.Object access(CharSXPToNativeArrayCall receiver, Object[] arguments) {
             return receiver.upCallsImpl.charSXPToNativeCharArray(arguments[0]);
         }

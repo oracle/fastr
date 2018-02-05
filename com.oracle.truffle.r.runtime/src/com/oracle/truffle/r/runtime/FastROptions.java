@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -60,7 +60,7 @@ public enum FastROptions {
     EmitTmpSource("Write deparsed source code to temporary files for better debugging.", true),
     EmitTmpDir("The directory where to allocate temporary files with deparsed source code.", null, true),
     EmitTmpHashed("Use an SHA-256 hash as file name to reduce temporary file creation.", true),
-    SpawnUsesPolyglot("use PolyglotEngine for .fastr.context.spwan", false),
+    SpawnUsesPolyglot("use PolyglotEngine for .fastr.context.spawn", false),
     SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
     ForeignObjectWrappers("use wrappers for foreign objects (as opposed to full conversion)", false),
 

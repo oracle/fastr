@@ -22,16 +22,22 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import com.oracle.truffle.api.interop.ArityException;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
+import org.graalvm.polyglot.Context;
 import org.junit.AfterClass;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.BeforeClass;
+import org.junit.Test;
 
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -39,14 +45,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import org.graalvm.polyglot.Context;
-import org.junit.Test;
-import java.util.concurrent.Callable;
 
 public abstract class AbstractMRTest {
 
@@ -54,7 +53,7 @@ public abstract class AbstractMRTest {
 
     @BeforeClass
     public static void before() {
-        context = Context.newBuilder("R").build();
+        context = Context.newBuilder("R", "llvm").build();
     }
 
     @AfterClass
@@ -64,6 +63,17 @@ public abstract class AbstractMRTest {
 
     protected void execInContext(Callable<Object> c) {
         FastRSession.execInContext(context, c);
+    }
+
+    @Before
+    public void beforeMethod() {
+        /**
+         * Currently, the tests derived from this abstract test class fail when running in the LLVM
+         * mode due to interferences between the engine created in TestBase.RunListener and the one
+         * created in this class. To run the tests in the LLVM mode there must be only one engine in
+         * the VM.
+         */
+        org.junit.Assume.assumeTrue(!"llvm".equals(System.getenv().get("FASTR_RFFI")));
     }
 
     /**
@@ -80,7 +90,7 @@ public abstract class AbstractMRTest {
     protected abstract TruffleObject createEmptyTruffleObject() throws Exception;
 
     /**
-     * 
+     *
      * @param obj
      * @return array of keys or <code>null</code> if KEYS message not supported
      */
@@ -173,11 +183,7 @@ public abstract class AbstractMRTest {
                     continue;
                 }
                 try {
-                    if (obj == RNull.instance) {
-                        assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == NativePointer.NULL_NATIVEPOINTER);
-                    } else {
-                        assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
-                    }
+                    assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) != obj);
                 } catch (UnsupportedMessageException e) {
                 }
             }

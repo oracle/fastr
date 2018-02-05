@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,18 @@
  */
 package com.oracle.truffle.r.test.library.base;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 
 // Checkstyle: stop line length check
 public class TestSharedCluster extends TestBase {
+
+    @Before
+    public void beforeMethod() {
+        org.junit.Assume.assumeTrue(!"llvm".equals(System.getenv().get("FASTR_RFFI")));
+    }
 
     @Test
     public void testSharedCluster() {

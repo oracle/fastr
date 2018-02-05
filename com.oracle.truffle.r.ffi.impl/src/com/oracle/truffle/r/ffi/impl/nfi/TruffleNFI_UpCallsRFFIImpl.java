@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,34 +22,19 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.guaranteeInstanceOf;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.MessageResolution;
-import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
-import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_UpCallsRFFIImplFactory.VectorWrapperMRFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -82,136 +67,6 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         return result;
     }
 
-    @MessageResolution(receiverType = VectorWrapper.class)
-    public static class VectorWrapperMR {
-
-        @Resolve(message = "IS_POINTER")
-        public abstract static class IntVectorWrapperNativeIsPointerNode extends Node {
-            protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
-                return true;
-            }
-        }
-
-        // TODO: with separate version of this for the different types, it would be more efficient
-        // and not need the dispatch
-        public abstract static class DispatchAllocate extends Node {
-            private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
-
-            public abstract long execute(Object vector);
-
-            @Specialization
-            protected static long get(RIntVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            protected static long get(RLogicalVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            protected static long get(RRawVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            protected static long get(RDoubleVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            protected static long get(RComplexVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            protected static long get(CharSXPWrapper vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            protected static long get(@SuppressWarnings("unused") RNull nullValue) {
-                // Note: GnuR is OK with, e.g., INTEGER(NULL), but it's illegal to read from or
-                // write to the resulting address.
-                return EMPTY_DATA_ADDRESS;
-            }
-
-            @Fallback
-            protected static long get(Object vector) {
-                throw RInternalError.shouldNotReachHere("invalid wrapped object " + vector.getClass().getSimpleName());
-            }
-        }
-
-        // TODO: "TO_NATIVE" should do the actual work of transferring the data
-
-        @Resolve(message = "AS_POINTER")
-        public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
-            @Child private DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
-
-            protected long access(VectorWrapper receiver) {
-                long address = dispatch.execute(receiver.vector);
-                // System.out.println(String.format("allocating native buffer for %s at %16x",
-                // receiver.vector.getClass().getSimpleName(), address));
-                return address;
-            }
-        }
-
-        // TODO: "READ", "WRITE"
-
-        @CanResolve
-        public abstract static class VectorWrapperCheck extends Node {
-            protected static boolean test(TruffleObject receiver) {
-                return receiver instanceof VectorWrapper;
-            }
-        }
-    }
-
-    public static final class VectorWrapper implements TruffleObject {
-
-        private final Object vector;
-
-        public VectorWrapper(Object vector) {
-            this.vector = vector;
-        }
-
-        @Override
-        public ForeignAccess getForeignAccess() {
-            return VectorWrapperMRForeign.ACCESS;
-        }
-    }
-
-    @Override
-    public Object INTEGER(Object x) {
-        // also handles LOGICAL
-        assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
-        return new VectorWrapper(guaranteeVectorOrNull(x, RVector.class));
-    }
-
-    @Override
-    public Object LOGICAL(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RLogicalVector.class));
-    }
-
-    @Override
-    public Object REAL(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RDoubleVector.class));
-    }
-
-    @Override
-    public Object RAW(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RRawVector.class));
-    }
-
-    @Override
-    public Object COMPLEX(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RComplexVector.class));
-    }
-
-    @Override
-    public Object R_CHAR(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, CharSXPWrapper.class));
-    }
-
     @Override
     @TruffleBoundary
     public Object getCCallable(String pkgName, String functionName) {
@@ -239,10 +94,4 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         return (TruffleNFI_Context) RContext.getInstance().getStateRFFI();
     }
 
-    private static Object guaranteeVectorOrNull(Object obj, Class<?> clazz) {
-        if (obj == RNull.instance) {
-            return RNull.instance;
-        }
-        return guaranteeInstanceOf(obj, clazz);
-    }
 }

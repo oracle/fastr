@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,9 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = DLL.DLLInfo.class)
 public class DLLInfoMR {
@@ -40,17 +41,10 @@ public class DLLInfoMR {
         }
     }
 
-    @Resolve(message = "IS_POINTER")
-    public abstract static class IsPointerNode extends Node {
-        protected boolean access(Object receiver) {
-            return NativeDataAccess.isPointer(receiver);
-        }
-    }
-
-    @Resolve(message = "AS_POINTER")
+    @Resolve(message = "TO_NATIVE")
     public abstract static class AsPointerNode extends Node {
-        protected long access(Object receiver) {
-            return NativeDataAccess.asPointer(receiver);
+        protected Object access(Object receiver) {
+            return new RObjectNativeWrapper((DLLInfo) receiver);
         }
     }
 }

@@ -55,4 +55,4 @@ SEXP selectlist(SEXP call, SEXP op, SEXP args, SEXP rho)  UNIMPLEMENTED
 
 SEXP processevents(void)  UNIMPLEMENTED
 
-SEXP octsize(SEXP s)  UNIMPLEMENTED
+//SEXP octsize(SEXP s)  UNIMPLEMENTED

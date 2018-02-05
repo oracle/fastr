@@ -61,8 +61,8 @@ ifeq ($(OS_NAME),Darwin)
 endif
 
 # we can't create exact dependencies since we don't know exactly
-# what versions of the lubs (if any) will be copied, so we use a sentinel
-# file to indicate that the check has been done. 
+# what versions of the libs (if any) will be copied, so we use a sentinel
+# file to indicate that the check has been done.
 rcopylib.done: 
 	for target in $(OTHER_LIB_TARGETS); do \
 		mx rcopylib $$target $(FASTR_LIB_DIR) || exit 1; \
@@ -70,7 +70,6 @@ rcopylib.done:
 	touch rcopylib.done
 
 clean:
-	rm -f $(BLAS_TARGET) $(LAPACK_TARGET) 
+	rm -f $(BLAS_TARGET) $(LAPACK_TARGET)
 	rm -f $(foreach target,$(OTHER_LIB_TARGETS),$(wildcard $(FASTR_LIB_DIR)/lib$(target).*))
 	rm -f rcopylib.done
-

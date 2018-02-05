@@ -399,7 +399,7 @@ public final class NativeDataAccess {
     private static final Assumption noDoubleNative = Truffle.getRuntime().createAssumption();
     private static final Assumption noComplexNative = Truffle.getRuntime().createAssumption();
     private static final Assumption noRawNative = Truffle.getRuntime().createAssumption();
-    private static final Assumption noCahrSXPNative = Truffle.getRuntime().createAssumption();
+    private static final Assumption noCharSXPNative = Truffle.getRuntime().createAssumption();
 
     static int getData(RIntVector vector, int[] data, int index) {
         if (noIntNative.isValid() || data != null) {
@@ -554,7 +554,7 @@ public final class NativeDataAccess {
     }
 
     static String getData(CharSXPWrapper vector, String data) {
-        if (noCahrSXPNative.isValid() || data != null) {
+        if (noCharSXPNative.isValid() || data != null) {
             return data;
         } else {
             NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
@@ -567,6 +567,21 @@ public final class NativeDataAccess {
             byte[] bytes = new byte[length];
             UnsafeAdapter.UNSAFE.copyMemory(null, address, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, length);
             return new String(bytes, StandardCharsets.UTF_8);
+        }
+    }
+
+    static int getDataLength(CharSXPWrapper vector, String data) {
+        if (noCharSXPNative.isValid() || data != null) {
+            return data.length();
+        } else {
+            NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+            long address = mirror.dataAddress;
+            assert address != 0;
+            int length = 0;
+            while (length < mirror.length && UnsafeAdapter.UNSAFE.getByte(address + length) != 0) {
+                length++;
+            }
+            return length;
         }
     }
 
@@ -634,10 +649,21 @@ public final class NativeDataAccess {
         assert mirror != null;
         assert mirror.dataAddress == 0 ^ contents == null;
         if (mirror.dataAddress == 0) {
-            noCahrSXPNative.invalidate();
+            noCharSXPNative.invalidate();
             mirror.allocateNative(contents);
         }
         return mirror.dataAddress;
+    }
+
+    public static String readNativeString(long addr) {
+        int len;
+        for (len = 0; UnsafeAdapter.UNSAFE.getByte(addr + len) != 0; len++) {
+        }
+        byte[] bytes = new byte[len];
+        for (int i = 0; i < len; i++) {
+            bytes[i] = UnsafeAdapter.UNSAFE.getByte(addr + i);
+        }
+        return new String(bytes);
     }
 
     public static void setNativeContents(RObject obj, long address, int length) {

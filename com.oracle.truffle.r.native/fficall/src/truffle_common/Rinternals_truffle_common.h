@@ -23,7 +23,7 @@
 
 /* This file is "included" by the corresponding Rinternals.c in the
    truffle_nfi and truffle_llvm directories.
-   The implementation must define the following five functions:
+   The implementation must define the following functions:
 
    char *ensure_truffle_chararray_n(const char *x, int n)
      Ensures that the sequence of 'n' bytes starting at 'x' is in the
@@ -32,6 +32,10 @@
    void *ensure_string(const char *x)
      Ensures that (on the Java side of the upcall) x, which must be null-terminated,
      appears as a java.lang.String
+
+   void *ensure_function(void *fptr)
+     Ensures that (on the Java side of the upcall) fptr appears as an executable
+     Truffle object.
 
    Any of these functions could be the identity function.
 */
@@ -1018,13 +1022,6 @@ int *FASTR_INTEGER(SEXP x) {
     return result;
 }
 
-int *LOGICAL(SEXP x){
-    TRACE0();
-    int *result = ((call_LOGICAL) callbacks[LOGICAL_x])(x);
-    checkExitCall();
-    return result;
-}
-
 double *FASTR_REAL(SEXP x){
     TRACE(TARGp, x);
     double *result = ((call_REAL) callbacks[REAL_x])(x);
@@ -1032,16 +1029,23 @@ double *FASTR_REAL(SEXP x){
     return result;
 }
 
-Rbyte *RAW(SEXP x) {
+Rcomplex *COMPLEX(SEXP x) {
     TRACE0();
-    Rbyte *result = ((call_RAW) callbacks[RAW_x])(x);
+    Rcomplex *result = ((call_COMPLEX) callbacks[COMPLEX_x])(x);
     checkExitCall();
     return result;
 }
 
-Rcomplex *COMPLEX(SEXP x) {
+int *LOGICAL(SEXP x){
     TRACE0();
-    Rcomplex *result = ((call_COMPLEX) callbacks[COMPLEX_x])(x);
+    int *result = ((call_LOGICAL) callbacks[LOGICAL_x])(x);
+    checkExitCall();
+    return result;
+}
+
+Rbyte *RAW(SEXP x) {
+    TRACE0();
+    Rbyte *result = ((call_RAW) callbacks[RAW_x])(x);
     checkExitCall();
     return result;
 }
@@ -1655,7 +1659,7 @@ Rboolean R_forceSymbols(DllInfo *dllInfo, Rboolean value) {
 void *Rdynload_setSymbol(DllInfo *info, int nstOrd, void* routinesAddr, int index) {
     TRACE0();
     const char *name;
-    void * fun;
+    void *fun;
     int numArgs;
     switch (nstOrd) {
     TRACE0();
@@ -1688,7 +1692,7 @@ void *Rdynload_setSymbol(DllInfo *info, int nstOrd, void* routinesAddr, int inde
         break;
     }
     }
-    void *result = ((call_setDotSymbolValues) callbacks[setDotSymbolValues_x])(info, ensure_string(name), fun, numArgs);
+    void *result = ((call_setDotSymbolValues) callbacks[setDotSymbolValues_x])(info, ensure_string(name), (DL_FUNC) ensure_function(fun), numArgs);
     checkExitCall();
     return result;
 }

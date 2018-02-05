@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,9 +27,7 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RInternalError;
 
 @MessageResolution(receiverType = ReadlinkResult.class)
 public class ReadlinkResultMR {
@@ -51,16 +49,21 @@ public class ReadlinkResultMR {
     @Resolve(message = "EXECUTE")
     public abstract static class BaseReadlinkResultCallbackExecute extends Node {
 
-        @Child private Node uboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
+        @Child private Node isNullNode = com.oracle.truffle.api.interop.Message.IS_NULL.createNode();
 
         protected Object access(ReadlinkResult receiver, Object[] arguments) {
-            try {
-                Object link = ForeignAccess.sendUnbox(uboxNode, (TruffleObject) arguments[0]);
-                receiver.setResult(link instanceof String ? (String) link : null, (int) arguments[1]);
-                return receiver;
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
+            Object link = arguments[0];
+            if (link instanceof TruffleObject) {
+                if (ForeignAccess.sendIsNull(isNullNode, (TruffleObject) link)) {
+                    link = null;
+                } else {
+                    assert false;
+                }
+            } else {
+                assert link instanceof String;
             }
+            receiver.setResult((String) link, (int) arguments[1]);
+            return receiver;
         }
     }
 }

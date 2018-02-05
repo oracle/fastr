@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 
 public class TruffleLLVM_PCRE implements PCRERFFI {
 
-    TruffleLLVM_PCRE() {
+    void initialize() {
         // Need to ensure that the native pcre library is loaded
         String pcrePath = LibPaths.getBuiltinLibPath("pcre");
         TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);

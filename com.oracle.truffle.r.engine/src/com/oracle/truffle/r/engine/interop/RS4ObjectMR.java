@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,12 +48,14 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
+import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = RS4Object.class)
 public class RS4ObjectMR {
@@ -105,15 +107,15 @@ public class RS4ObjectMR {
 
     @Resolve(message = "IS_POINTER")
     public abstract static class IsPointerNode extends Node {
-        protected boolean access(Object receiver) {
-            return NativeDataAccess.isPointer(receiver);
+        protected boolean access(@SuppressWarnings("unused") Object receiver) {
+            return false;
         }
     }
 
-    @Resolve(message = "AS_POINTER")
-    public abstract static class AsPointerNode extends Node {
-        protected long access(Object receiver) {
-            return NativeDataAccess.asPointer(receiver);
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class ToNativeNode extends Node {
+        protected Object access(RObject receiver) {
+            return new RObjectNativeWrapper(receiver);
         }
     }
 

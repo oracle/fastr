@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,9 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestExternal_Rmd5 extends TestBase {
     @Test
     public void testRmd5() {
-        assertEval(".Call(tools:::Rmd5, \"abc\")");
-        assertEval(".Call(tools:::Rmd5, c(\"abc\",\"xyz\"))");
-        assertEval(".Call(tools:::Rmd5, 1)");
-        assertEval(".Call(tools:::Rmd5, NULL)");
+        assertEval(".Call(tools:::C_Rmd5, \"abc\")");
+        assertEval(".Call(tools:::C_Rmd5, c(\"abc\",\"xyz\"))");
+        assertEval(".Call(tools:::C_Rmd5, 1)");
+        assertEval(".Call(tools:::C_Rmd5, NULL)");
     }
 }

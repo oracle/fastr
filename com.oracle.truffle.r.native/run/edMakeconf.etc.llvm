@@ -23,5 +23,10 @@ d
 i
 OBJC = $(R_HOME)/bin/llvm-cc
 .
+/^AR =/
+d
+i
+AR = $(R_HOME)/bin/llvm-ar
+.
 w
 q

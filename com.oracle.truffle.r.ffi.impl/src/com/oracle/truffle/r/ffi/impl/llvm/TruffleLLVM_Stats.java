@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 
@@ -161,10 +162,16 @@ public class TruffleLLVM_Stats implements StatsRFFI {
         }
     }
 
-    private static class TruffleLLVM_LminflNode extends Node implements LminflNode {
+    private static class TruffleLLVM_LminflNode extends TruffleLLVM_DownCallNode implements LminflNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.lminfl;
+        }
+
         @Override
         public void execute(double[] x, int ldx, int n, int k, int docoef, double[] qraux, double[] resid, double[] hat, double[] coef, double[] sigma, double tol) {
-            throw RInternalError.unimplemented("lfmin for LLVM backend, lfmin is used in influence external.");
+            call(x, ldx, n, k, docoef, qraux, resid, hat, coef, sigma, tol);
         }
     }
 

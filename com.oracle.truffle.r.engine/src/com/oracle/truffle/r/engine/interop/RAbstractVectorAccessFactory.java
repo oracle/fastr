@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,14 +50,21 @@ import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.V
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
+import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
+import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 abstract class InteropRootNode extends RootNode {
@@ -149,6 +156,66 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
         protected abstract Object execute(VirtualFrame frame, Object receiver, Object identifier, Object valueObj);
 
         @Specialization
+        protected Object write(RAbstractRawVector receiver, int idx, byte valueObj) {
+            return writeRaw(receiver, new Object[]{idx + 1}, valueObj);
+        }
+
+        @Specialization
+        protected Object write(RAbstractRawVector receiver, long idx, byte valueObj) {
+            return writeRaw(receiver, new Object[]{idx + 1}, valueObj);
+        }
+
+        private Object writeRaw(RAbstractRawVector receiver, Object[] positions, byte valueObj) {
+            if (replace == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                replace = insert(ReplaceVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false, true, true));
+            }
+            return replace.apply(receiver, positions, RRaw.valueOf(valueObj));
+        }
+
+        @Specialization
+        protected Object write(RAbstractLogicalVector receiver, int idx, byte valueObj) {
+            return writeLogical(receiver, new Object[]{idx + 1}, valueObj);
+        }
+
+        @Specialization
+        protected Object write(RAbstractLogicalVector receiver, long idx, byte valueObj) {
+            return writeLogical(receiver, new Object[]{idx + 1}, valueObj);
+        }
+
+        protected static boolean isIntNA(int valueObj) {
+            return RRuntime.isNA(valueObj);
+        }
+
+        @Specialization(guards = "isIntNA(valueObj)")
+        protected Object writeLogicalNA(RAbstractLogicalVector receiver, int idx, @SuppressWarnings("unused") int valueObj) {
+            return writeLogical(receiver, new Object[]{idx + 1}, RRuntime.LOGICAL_NA);
+        }
+
+        @Specialization(guards = "!isIntNA(valueObj)")
+        protected Object writeLogicalNonNA(RAbstractLogicalVector receiver, int idx, int valueObj) {
+            return writeLogical(receiver, new Object[]{idx + 1}, (byte) valueObj);
+        }
+
+        @Specialization(guards = "isIntNA(valueObj)")
+        protected Object writeLogicalNA(RAbstractLogicalVector receiver, long idx, @SuppressWarnings("unused") int valueObj) {
+            return writeLogical(receiver, new Object[]{idx + 1}, RRuntime.LOGICAL_NA);
+        }
+
+        @Specialization(guards = "!isIntNA(valueObj)")
+        protected Object writeLogicalNonNA(RAbstractLogicalVector receiver, long idx, int valueObj) {
+            return writeLogical(receiver, new Object[]{idx + 1}, (byte) valueObj);
+        }
+
+        private Object writeLogical(RAbstractLogicalVector receiver, Object[] positions, byte valueObj) {
+            if (replace == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                replace = insert(ReplaceVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false, true, true));
+            }
+            return replace.apply(receiver, positions, valueObj);
+        }
+
+        @Specialization
         protected Object write(TruffleObject receiver, int idx, Object valueObj) {
             // idx + 1 R is indexing from 1
             return write(receiver, new Object[]{idx + 1}, valueObj);
@@ -168,7 +235,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             Object value = foreign2R.execute(valueObj);
             if (replace == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
+                replace = insert(ReplaceVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false, true, true));
             }
             return replace.apply(receiver, positions, value);
         }
@@ -356,12 +423,12 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
 
     @Override
     public CallTarget accessIsPointer() {
-        return NativeDataAccess.createIsPointer();
-    }
-
-    @Override
-    public CallTarget accessAsPointer() {
-        return NativeDataAccess.createAsPointer();
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return false;
+            }
+        });
     }
 
     @Override
@@ -370,7 +437,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-                return NativeDataAccess.toNative(arg);
+                return new RObjectNativeWrapper((RObject) arg);
             }
         });
     }

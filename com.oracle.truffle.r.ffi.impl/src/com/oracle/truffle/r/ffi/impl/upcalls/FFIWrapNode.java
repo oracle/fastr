@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,7 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_UpCallsRFFIImpl.VectorWrapper;
+import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -103,7 +103,7 @@ public abstract class FFIWrapNode extends Node {
     }
 
     @Specialization
-    protected static Object wrap(VectorWrapper value) {
+    protected static Object wrap(JavaUpCallsRFFIImpl.VectorWrapper value) {
         return value;
     }
 

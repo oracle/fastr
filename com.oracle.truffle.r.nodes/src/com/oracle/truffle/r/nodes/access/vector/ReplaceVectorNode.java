@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,14 +79,16 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     protected final ElementAccessMode mode;
     private final boolean recursive;
     protected final boolean ignoreRecursive;
+    protected final boolean ignoreRefCount;
 
     @Child private BoxPrimitiveNode boxVector = BoxPrimitiveNode.create();
     @Child private BoxPrimitiveNode boxValue = BoxPrimitiveNode.create();
 
-    ReplaceVectorNode(ElementAccessMode mode, boolean recursive, boolean ignoreRecursive) {
+    ReplaceVectorNode(ElementAccessMode mode, boolean recursive, boolean ignoreRecursive, boolean ignoreRefCount) {
         this.mode = mode;
         this.recursive = recursive;
         this.ignoreRecursive = ignoreRecursive;
+        this.ignoreRefCount = ignoreRefCount;
     }
 
     public final Object apply(Object vector, Object[] positions, Object value) {
@@ -96,11 +98,11 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     protected abstract Object execute(Object vector, Object[] positions, Object value);
 
     public static ReplaceVectorNode create(ElementAccessMode mode, boolean ignoreRecursive) {
-        return ReplaceVectorNodeGen.create(mode, false, ignoreRecursive);
+        return ReplaceVectorNodeGen.create(mode, false, ignoreRecursive, false);
     }
 
     protected static ReplaceVectorNode createRecursive(ElementAccessMode mode) {
-        return ReplaceVectorNodeGen.create(mode, true, false);
+        return ReplaceVectorNodeGen.create(mode, true, false, false);
     }
 
     private boolean isRecursiveSubscript(Object vector, Object[] positions) {
@@ -125,7 +127,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
             return null;
         }
         return new CachedReplaceVectorNode(mode, vector, positions, value.getClass(), RRuntime.isForeignObject(value) ? RType.TruffleObject : ((RTypedValue) value).getRType(), true,
-                        recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value));
+                        recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value), ignoreRefCount);
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, value)"})
@@ -168,7 +170,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     }
 
     protected ReplaceVectorNode createForContainerTypes() {
-        return ReplaceVectorNodeGen.create(mode, false, false);
+        return ReplaceVectorNodeGen.create(mode, false, false, false);
     }
 
     @Specialization

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -29,7 +29,10 @@ import java.util.HashSet;
 import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
@@ -793,7 +796,9 @@ public class RDeparse {
                 append(')');
             } else if (value instanceof RExternalPtr) {
                 SymbolHandle handle = ((RExternalPtr) value).getAddr();
-                if (handle.isLong()) {
+                if (handle == null) {
+                    append("<pointer: 0x?>");
+                } else if (handle.isLong()) {
                     append("<pointer: 0x").append(Long.toHexString(handle.asAddress())).append('>');
                 } else {
                     append("<pointer: external ptr 0x").append(Long.toHexString(System.identityHashCode(handle.asTruffleObject()))).append('>');

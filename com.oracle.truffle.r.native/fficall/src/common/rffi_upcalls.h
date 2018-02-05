@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -302,7 +302,7 @@ typedef int (*call_isSeekable)(SEXP conn);
 
 typedef void (*call_registerRoutines)(DllInfo *dllInfo, int nstOrd, int num, const void* routines);
 typedef int (*call_useDynamicSymbols)(DllInfo *dllInfo, Rboolean value);
-typedef void * (*call_setDotSymbolValues)(DllInfo *dllInfo, char *name, void *fun, int numArgs);
+typedef void * (*call_setDotSymbolValues)(DllInfo *dllInfo, char *name, DL_FUNC fun, int numArgs);
 typedef int (*call_forceSymbols)(DllInfo *dllInfo, Rboolean value);
 typedef int (*call_registerCCallable)(const char *pkgname, const char *name, void *fun);
 typedef void* (*call_getCCallable)(const char *pkgname, const char *name);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -95,7 +96,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     private static TruffleLLVM_DLL truffleDLL;
 
     TruffleLLVM_DLL() {
-        assert truffleDLL == null;
+        if (truffleDLL != null) {
+            libRModules = truffleDLL.libRModules;
+        }
         truffleDLL = this;
     }
 
@@ -185,10 +188,18 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     parseLLVM(libName, ir);
                 }
                 return new LLVM_Handle(libName, irs);
-            } catch (
-
-            Exception ex) {
-                throw new UnsatisfiedLinkError(ex.getMessage());
+            } catch (Exception ex) {
+                CompilerDirectives.transferToInterpreter();
+                StringBuilder sb = new StringBuilder();
+                Throwable t = ex;
+                while (t != null) {
+                    if (t != ex) {
+                        sb.append(": ");
+                    }
+                    sb.append(t.getMessage());
+                    t = t.getCause();
+                }
+                throw new UnsatisfiedLinkError(sb.toString());
             }
         }
 

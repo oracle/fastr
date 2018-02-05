@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,12 +35,21 @@ public class NativeCharArrayMR {
         protected byte access(NativeCharArray receiver, int index) {
             return receiver.read(index);
         }
+
+        protected byte access(NativeCharArray receiver, long index) {
+            return receiver.read((int) index);
+        }
     }
 
     @Resolve(message = "WRITE")
     public abstract static class NCAWriteNode extends Node {
         protected Object access(NativeCharArray receiver, int index, byte value) {
             receiver.write(index, value);
+            return value;
+        }
+
+        protected Object access(NativeCharArray receiver, long index, byte value) {
+            receiver.write((int) index, value);
             return value;
         }
     }
@@ -63,6 +72,21 @@ public class NativeCharArrayMR {
     public abstract static class NCAToNativeNode extends Node {
         protected Object access(NativeCharArray receiver) {
             return new CharNativePointer(receiver);
+        }
+    }
+
+    @Resolve(message = "EXECUTE")
+    public abstract static class NCAToStringNode extends Node {
+
+        protected java.lang.Object access(NativeCharArray receiver, @SuppressWarnings("unused") Object[] arguments) {
+            return new String(receiver.getValue());
+        }
+    }
+
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class NCAToStringIsExecutableNode extends Node {
+        protected Object access(@SuppressWarnings("unused") NativeCharArray receiver) {
+            return true;
         }
     }
 

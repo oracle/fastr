@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,8 +41,10 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
+import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = RLanguage.class)
 public class RLanguageMR {
@@ -58,13 +60,6 @@ public class RLanguageMR {
     public abstract static class RLanguageGetSizeNode extends Node {
         protected Object access(RLanguage receiver) {
             return receiver.getLength();
-        }
-    }
-
-    @Resolve(message = "TO_NATIVE")
-    public abstract static class RLanguageToNativeNode extends Node {
-        protected Object access(RLanguage receiver) {
-            return NativeDataAccess.toNative(receiver);
         }
     }
 
@@ -88,15 +83,15 @@ public class RLanguageMR {
 
     @Resolve(message = "IS_POINTER")
     public abstract static class IsPointerNode extends Node {
-        protected boolean access(Object receiver) {
-            return NativeDataAccess.isPointer(receiver);
+        protected boolean access(@SuppressWarnings("unused") Object receiver) {
+            return false;
         }
     }
 
-    @Resolve(message = "AS_POINTER")
-    public abstract static class AsPointerNode extends Node {
-        protected long access(Object receiver) {
-            return NativeDataAccess.asPointer(receiver);
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class ToNativeNode extends Node {
+        protected Object access(RObject receiver) {
+            return new RObjectNativeWrapper(receiver);
         }
     }
 

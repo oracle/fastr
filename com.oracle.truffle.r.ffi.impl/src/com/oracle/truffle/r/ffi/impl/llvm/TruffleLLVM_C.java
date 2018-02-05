@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
@@ -68,6 +69,8 @@ class TruffleLLVM_C implements CRFFI {
                     narg = new NativeDoubleArray((double[]) arg);
                 } else if (arg instanceof byte[]) {
                     narg = new NativeRawArray((byte[]) arg);
+                } else if (arg instanceof TruffleObject) {
+                    narg = arg;
                 } else {
                     throw RInternalError.unimplemented(".C type: " + arg.getClass().getSimpleName());
                 }

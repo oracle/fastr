@@ -107,6 +107,7 @@ for(i in seq(5000)) {
 
 for(i in seq(5000)) {
     obj <- preserved_objects[[i]]
+    stopifnot(obj == i)
     rffi.release_object(obj)
 }
 
