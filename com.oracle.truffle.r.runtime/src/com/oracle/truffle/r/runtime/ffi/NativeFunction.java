@@ -43,6 +43,7 @@ public enum NativeFunction {
     strtol("((sint64, sint32): void, string, sint32): void", "call_base_"),
     uname("((string, string, string, string, string): void): void", "call_base_"),
     glob("((string): void, string): void", "call_base_"),
+    eSoftVersion("((string, string): void): void", "call_base_"),
     // PCRE
     maketables("(): sint64", "call_pcre_"),
     compile("((uint64, string, sint32): void, string, sint32, uint64): void", "call_pcre_"),

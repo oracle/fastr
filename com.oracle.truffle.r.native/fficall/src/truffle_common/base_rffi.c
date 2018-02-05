@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -106,4 +106,19 @@ void call_base_readlink(void (*call_setresult)(void *link, int cerrno), char *pa
 void call_base_strtol(void (*call_setresult)(long result, int cerrno), char *s, int base) {
     long rc = strtol(s, NULL, base);
 	call_setresult(rc, errno);
+}
+
+#include <zlib.h>
+#include <bzlib.h>
+#ifdef HAVE_PCRE_PCRE_H
+# include <pcre/pcre.h>
+#else
+# include <pcre.h>
+#endif
+void call_base_eSoftVersion(void (*call_eSoftVersion_setfields)(char *zlibVersion, char *pcreVersion)) {
+
+    char sZlibVersion[256], sPcreVersion[256];
+    snprintf(sZlibVersion, 256, "%s", zlibVersion());
+    snprintf(sPcreVersion, 256, "%s", pcre_version());
+    call_eSoftVersion_setfields(sZlibVersion, sPcreVersion);
 }

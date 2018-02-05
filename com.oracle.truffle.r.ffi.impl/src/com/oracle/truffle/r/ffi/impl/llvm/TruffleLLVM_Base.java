@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,10 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Map;
 
 import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
+import com.oracle.truffle.r.ffi.impl.interop.base.ESoftVersionResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.GlobResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.ReadlinkResult;
 import com.oracle.truffle.r.ffi.impl.interop.base.StrtolResult;
@@ -224,6 +226,22 @@ public class TruffleLLVM_Base implements BaseRFFI {
         }
     }
 
+    private static class TruffleLLVM_ESoftVersionNode extends TruffleLLVM_DownCallNode implements ESoftVersionNode {
+
+        @Override
+        protected NativeFunction getFunction() {
+            return NativeFunction.eSoftVersion;
+        }
+
+        @Override
+        public Map<String, String> eSoftVersion() {
+            ESoftVersionResult result = new ESoftVersionResult();
+            call(result);
+            return result.getVersions();
+        }
+
+    }
+
     @Override
     public GetpidNode createGetpidNode() {
         return new TruffleLLVM_GetpidNode();
@@ -272,5 +290,10 @@ public class TruffleLLVM_Base implements BaseRFFI {
     @Override
     public GlobNode createGlobNode() {
         return new TruffleLLVM_GlobNode();
+    }
+
+    @Override
+    public ESoftVersionNode createESoftVersionNode() {
+        return new TruffleLLVM_ESoftVersionNode();
     }
 }
