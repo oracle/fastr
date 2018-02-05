@@ -259,12 +259,15 @@ public class RCompression {
         Process p = pb.start();
         // version is written to the error output stream
         InputStream is = p.getErrorStream();
+        OutputStream os = p.getOutputStream();
         ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable(command[0], is);
         readThread.start();
+        os.close();
         try {
             rc = p.waitFor();
             if (rc == 0) {
-                String output = new String(readThread.getData());
+                readThread.join();
+                String output = new String(readThread.getData(), 0, readThread.getTotalRead());
                 String version = "Version ";
                 String firstLine = output.split("\\n")[0];
                 int versionIdx = firstLine.indexOf(version);
