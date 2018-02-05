@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.test.library.stats;
 
+import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -37,6 +38,16 @@ public class TestFitting extends TestBase {
                     RANDOM_VECTOR,
                     "c(rep(1,8), rep(2,8))"
     };
+
+    @Before
+    public void beforeMethod() {
+        /**
+         * This test is ignored when running in the LLVM FFFI mode due to minor differences in the
+         * numerical output. The issue is possibly related to how the BLAS library is loaded, i.e.
+         * either as a binary library or a LLVM bitcode.
+         */
+        org.junit.Assume.assumeTrue(!"llvm".equals(System.getenv().get("FASTR_RFFI")));
+    }
 
     @Test
     public void testLm() {

@@ -34,7 +34,7 @@ public final class TryRfEvalNode extends FFIUpCallNode.Arg4 {
     @Child Node writeErrorFlagNode = Message.WRITE.createNode();
 
     @Override
-    public Object executeObject(Object expr, Object env, Object errorFlag, @SuppressWarnings("unused") Object silent) {
+    public Object executeObject(Object expr, Object env, Object errorFlag, Object silent) {
         Object handlerStack = RErrorHandling.getHandlerStack();
         Object restartStack = RErrorHandling.getRestartStack();
         try {

@@ -441,8 +441,12 @@ double convertJust(int vjust);
 void justification(double width, double height, double hjust, double vjust,
 		   double *hadj, double *vadj);
 
-/* From util.c */
-SEXP getListElement(SEXP list, char *str);
+/*
+ * From util.c
+ *
+ * The original name was getListElement, but it has to be changed to a unique name due to a clash during LLVM compilation.
+ */
+SEXP gridGetListElement(SEXP list, char *str);
 
 void setListElement(SEXP list, char *str, SEXP value);
 

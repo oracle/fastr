@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ class TruffleLLVM_NativeDLL {
         @Resolve(message = "EXECUTE")
         public abstract static class ErrorCallbackExecuteNode extends Node {
             protected Object access(@SuppressWarnings("unused") VirtualFrame frame, ErrorCallback receiver, Object[] arguments) {
-                receiver.setResult((String) arguments[0]);
+                receiver.setResult("" + arguments[0]);
                 return receiver;
             }
         }
@@ -115,7 +115,7 @@ class TruffleLLVM_NativeDLL {
                 long result = (long) ForeignAccess.sendExecute(Function.dlopen.executeNode, symbolHandle.asTruffleObject(), errorCallbackImpl, new NativeCharArray(path.getBytes()), local ? 1 : 0,
                                 now ? 1 : 0);
                 if (result == 0) {
-                    throw new UnsatisfiedLinkError(errorCallbackImpl.errorMessage);
+                    throw new UnsatisfiedLinkError(errorCallbackImpl.errorMessage + " : " + path);
                 }
                 return result;
             } catch (InteropException e) {

@@ -143,7 +143,7 @@ _Other required sources_:
 		
 ### Building `fficall`
 
-It builds `libR` and optionally (JNI) `libjniboot`.
+It builds `libR`.
 
 See also: [ffi](ffi.md).
 

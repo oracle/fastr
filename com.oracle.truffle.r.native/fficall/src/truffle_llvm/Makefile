@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ SULONG_INCLUDES = -I$(SULONG_DIR)/include
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 LOCAL_INCLUDES = -I . -I $(abspath ../include) -I $(abspath ../common) 
 
-INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(SULONG_INCLUDES)
+INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(SULONG_INCLUDES) $(NFI_INCLUDES)
 
 FFLAGS :=
 

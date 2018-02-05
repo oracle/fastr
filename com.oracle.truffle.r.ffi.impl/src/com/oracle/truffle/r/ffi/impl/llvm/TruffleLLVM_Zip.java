@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,11 +22,19 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 public class TruffleLLVM_Zip implements ZipRFFI {
+
+    void initialize() {
+        // Need to ensure that the native libz library is loaded
+        String libzPath = LibPaths.getBuiltinLibPath("z");
+        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(libzPath, false, true);
+    }
+
     private static class TruffleLLVM_CompressNode extends TruffleLLVM_DownCallNode implements CompressNode {
 
         @Override

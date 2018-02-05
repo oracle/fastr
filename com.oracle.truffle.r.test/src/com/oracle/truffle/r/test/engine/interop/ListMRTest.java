@@ -26,6 +26,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -41,7 +42,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import org.graalvm.polyglot.Value;
 
 public class ListMRTest extends AbstractMRTest {
 
@@ -51,7 +51,7 @@ public class ListMRTest extends AbstractMRTest {
     @Test
     public void testNativePointer() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
         for (TruffleObject obj : new TruffleObject[]{create("list", testValues), create("pairlist", testValues)}) {
-            assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
+            assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) != obj);
         }
     }
 

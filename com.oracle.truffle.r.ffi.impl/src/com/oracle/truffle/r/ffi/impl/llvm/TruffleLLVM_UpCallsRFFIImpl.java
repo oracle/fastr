@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,9 +53,9 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
  */
 public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
-    private static TruffleObject setSymbolHandle;
+    private TruffleObject setSymbolHandle;
 
-    public TruffleLLVM_UpCallsRFFIImpl() {
+    void initialize() {
         setSymbolHandle = new SymbolHandle(RContext.getInstance().getEnv().importSymbol("@" + "Rdynload_setSymbol")).asTruffleObject();
     }
 
@@ -73,37 +73,16 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object Rf_mkCharLenCE(Object obj, int len, int encoding) {
-        if (obj instanceof NativeCharArray) {
+        if (obj instanceof VectorWrapper) {
+            Object wrappedCharSXP = ((VectorWrapper) obj).getVector();
+            assert wrappedCharSXP instanceof CharSXPWrapper;
+            return wrappedCharSXP;
+        } else if (obj instanceof NativeCharArray) {
             byte[] bytes = ((NativeCharArray) obj).getValue();
             return super.Rf_mkCharLenCE(bytes, bytes.length, encoding);
         } else {
             throw RInternalError.unimplemented();
         }
-    }
-
-    @Override
-    public Object RAW(Object x) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object LOGICAL(Object x) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object INTEGER(Object x) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object REAL(Object x) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public Object COMPLEX(Object x) {
-        throw RInternalError.unimplemented();
     }
 
     @Override
@@ -132,11 +111,6 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         } else {
             throw RInternalError.shouldNotReachHere();
         }
-    }
-
-    @Override
-    public Object R_CHAR(Object x) {
-        throw RInternalError.unimplemented();
     }
 
     public Object getCallback(int index) {

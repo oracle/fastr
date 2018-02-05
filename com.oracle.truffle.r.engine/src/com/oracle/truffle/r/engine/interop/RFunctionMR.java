@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,12 +39,14 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
+import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = RFunction.class)
 public class RFunctionMR {
@@ -60,13 +62,6 @@ public class RFunctionMR {
     public abstract static class RFunctionIsExecutabledNode extends Node {
         protected Object access(@SuppressWarnings("unused") RFunction receiver) {
             return true;
-        }
-    }
-
-    @Resolve(message = "TO_NATIVE")
-    public abstract static class RFunctionToNativeNode extends Node {
-        protected Object access(RFunction receiver) {
-            return NativeDataAccess.toNative(receiver);
         }
     }
 
@@ -106,15 +101,15 @@ public class RFunctionMR {
 
     @Resolve(message = "IS_POINTER")
     public abstract static class IsPointerNode extends Node {
-        protected boolean access(Object receiver) {
-            return NativeDataAccess.isPointer(receiver);
+        protected boolean access(@SuppressWarnings("unused") Object receiver) {
+            return false;
         }
     }
 
-    @Resolve(message = "AS_POINTER")
-    public abstract static class AsPointerNode extends Node {
-        protected long access(Object receiver) {
-            return NativeDataAccess.asPointer(receiver);
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class ToNativeNode extends Node {
+        protected Object access(RObject receiver) {
+            return new RObjectNativeWrapper(receiver);
         }
     }
 

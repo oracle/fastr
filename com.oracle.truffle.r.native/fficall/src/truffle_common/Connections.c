@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -298,7 +298,6 @@ Rconnection R_GetConnection(SEXP sConn) {
     }
 
     init_con(new, summaryDesc, 0, openMode);
-    free(openMode); // the init_con function makes a copy
     new->class = connClass;
     new->canseek = (Rboolean) isSeekable;
     setFd(new, fd);

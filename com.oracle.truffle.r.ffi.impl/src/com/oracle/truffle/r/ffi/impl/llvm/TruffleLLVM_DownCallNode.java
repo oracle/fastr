@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.r.ffi.impl.common.DownCallNode;
 import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
 import com.oracle.truffle.r.ffi.impl.interop.NativeNACheck;
+import com.oracle.truffle.r.ffi.impl.interop.NativePointer;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 
 public abstract class TruffleLLVM_DownCallNode extends DownCallNode {
@@ -49,7 +50,7 @@ public abstract class TruffleLLVM_DownCallNode extends DownCallNode {
             } else if (obj instanceof int[]) {
                 args[i] = new NativeIntegerArray((int[]) obj);
             } else if (obj == null) {
-                args[i] = 0;
+                args[i] = NativePointer.NULL_NATIVEPOINTER;
             }
         }
     }

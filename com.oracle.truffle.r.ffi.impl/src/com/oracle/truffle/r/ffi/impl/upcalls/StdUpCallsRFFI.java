@@ -50,6 +50,8 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
+import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
@@ -317,7 +319,8 @@ public interface StdUpCallsRFFI {
 
     Object Rf_classgets(Object x, Object y);
 
-    Object R_MakeExternalPtr(long addr, Object tag, Object prot);
+    @RFFIUpCallNode(RMakeExternalPtrNode.class)
+    Object R_MakeExternalPtr(@RFFICpointer Object addr, Object tag, Object prot);
 
     long R_ExternalPtrAddr(Object x);
 
@@ -345,7 +348,8 @@ public interface StdUpCallsRFFI {
 
     Object R_CHAR(Object x);
 
-    Object R_new_custom_connection(@RFFICstring String description, @RFFICstring String mode, @RFFICstring String className, Object readAddr);
+    @RFFIUpCallNode(NewCustomConnectionNode.class)
+    Object R_new_custom_connection(@RFFICstring(convert = false) Object description, @RFFICstring(convert = false) Object mode, @RFFICstring(convert = false) Object className, Object readAddr);
 
     int R_ReadConnection(int fd, long bufAddress, int size);
 
@@ -353,11 +357,11 @@ public interface StdUpCallsRFFI {
 
     Object R_GetConnection(int fd);
 
-    String getSummaryDescription(Object x);
+    Object getSummaryDescription(Object x);
 
-    String getConnectionClassString(Object x);
+    Object getConnectionClassString(Object x);
 
-    String getOpenModeString(Object x);
+    Object getOpenModeString(Object x);
 
     boolean isSeekable(Object x);
 

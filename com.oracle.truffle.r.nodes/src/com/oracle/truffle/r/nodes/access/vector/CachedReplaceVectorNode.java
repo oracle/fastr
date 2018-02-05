@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,6 +85,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     private final boolean updatePositionNames;
 
     private final boolean isValueGt1;
+    protected final boolean ignoreRefCount;
 
     @Child private WriteIndexedVectorNode writeVectorNode;
     @Child private PositionsCheckNode positionsCheckNode;
@@ -97,7 +98,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
     @CompilationFinal protected Runnable error;
 
     CachedReplaceVectorNode(ElementAccessMode mode, RAbstractVector vector, Object[] positions, Class<?> valueClass, RType valueType, boolean updatePositionNames, boolean recursive,
-                    boolean isValueGt1) {
+                    boolean isValueGt1, boolean ignoreRefCount) {
         super(mode, vector, positions, recursive);
         assert vectorType.isVector();
 
@@ -111,6 +112,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         this.valueClass = valueClass;
         this.valueType = valueType;
         this.isValueGt1 = isValueGt1;
+        this.ignoreRefCount = ignoreRefCount;
 
         // determine the target cast type
         if (vectorType == RType.List && mode.isSubscript()) {
@@ -228,7 +230,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         if (valueLengthOneProfile.profile(valueLength != 1)) {
             verifyValueLength(positionProfiles, valueLength);
         }
-        if (vector instanceof RShareable) {
+        if (vector instanceof RShareable && !ignoreRefCount) {
             RShareable shareable = (RShareable) vector;
             // TODO find out if we need to copy always in the recursive case
             if (recursive || sharedConditionProfile.execute(shareable.isShared()) || valueEqualsVectorProfile.profile(vector == value)) {

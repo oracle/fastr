@@ -949,3 +949,7 @@ com.oracle.truffle.r.native/gnur/patch/src/main/rlocale_data.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/sort.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/xspline.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/nmath/nmath.h,no.copyright
+com.oracle.truffle.r.native/fficall/src/common/rffi_upcalls.h,no.copyright
+com.oracle.truffle.r.test.native/packages/testrffi/testrffi/src/testrffi.c,no.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/engine/interop/REnvironmentMRTest.java,no.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/engine/interop/VectorMRTest.java,no.copyright

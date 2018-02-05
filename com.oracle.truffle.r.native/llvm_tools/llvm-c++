@@ -1,5 +1,6 @@
+#!/bin/bash
 #
-# Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -20,7 +21,6 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
-#!/bin/bash
 
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
@@ -31,7 +31,8 @@ analyze_args "$@"
 
 if [ $is_link -eq 1 ]
 then
-  create_bc_lib "$@"
+  extraObj=`cat $R_PACKAGE_DIR/libobjects`
+  create_bc_lib $@ $extraObj
 else
   llvm_tool=clang++
   get_llvm_tool
@@ -39,4 +40,3 @@ else
   mem2reg_opt
   fake_obj
 fi
-

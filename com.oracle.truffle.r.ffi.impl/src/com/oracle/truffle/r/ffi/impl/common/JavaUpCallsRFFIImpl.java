@@ -38,15 +38,32 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ArityException;
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImplFactory.VectorWrapperNativePointerFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -55,9 +72,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RErrorHandling;
-import com.oracle.truffle.r.runtime.RErrorHandling.HandlerStacks;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
@@ -65,15 +80,15 @@ import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
-import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -88,11 +103,13 @@ import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -568,7 +585,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             RShareable r = (RShareable) x;
             int actual = getNamed(r);
             if (v < actual) {
-                RError.warning(RError.NO_CALLER, Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
+                RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
                 return RNull.instance;
             }
             if (v == 2) {
@@ -1229,8 +1246,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public RExternalPtr R_MakeExternalPtr(long addr, Object tag, Object prot) {
-        return RDataFactory.createExternalPtr(new SymbolHandle(addr), tag, prot);
+    public RExternalPtr R_MakeExternalPtr(Object addr, Object tag, Object prot) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1311,14 +1328,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public Object R_new_custom_connection(String description, String mode, String className, Object connAddrObj) {
-        // TODO handle encoding properly !
-        RExternalPtr connAddr = guaranteeInstanceOf(connAddrObj, RExternalPtr.class);
-        try {
-            return new NativeRConnection(description, mode, className, connAddr).asVector();
-        } catch (IOException e) {
-            return InvalidConnection.instance.asVector();
-        }
+    public Object R_new_custom_connection(Object description, Object mode, Object className, Object connAddrObj) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1358,25 +1369,31 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return RConnection.fromIndex(fd);
     }
 
-    @Override
-    @TruffleBoundary
-    public String getSummaryDescription(Object x) {
-        BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
-        return conn.getSummaryDescription();
+    private static VectorWrapper wrapString(String s) {
+        CharSXPWrapper v = CharSXPWrapper.create(s);
+        NativeDataAccess.asPointer(v);
+        return new VectorWrapper(v);
     }
 
     @Override
     @TruffleBoundary
-    public String getConnectionClassString(Object x) {
+    public Object getSummaryDescription(Object x) {
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
-        return conn.getConnectionClass();
+        return wrapString(conn.getSummaryDescription());
     }
 
     @Override
     @TruffleBoundary
-    public String getOpenModeString(Object x) {
+    public Object getConnectionClassString(Object x) {
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
-        return conn.getOpenMode().toString();
+        return wrapString(conn.getConnectionClass());
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object getOpenModeString(Object x) {
+        BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
+        return wrapString(conn.getOpenMode().toString());
     }
 
     @Override
@@ -1645,4 +1662,276 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         throw implementedAsNode();
     }
 
+    public static class VectorWrapperNativePointer implements TruffleObject {
+
+        private final TruffleObject vector;
+
+        VectorWrapperNativePointer(TruffleObject vector) {
+            this.vector = vector;
+            assert vector instanceof RObject;
+            NativeDataAccess.asPointer(vector); // initialize the native mirror in the vector
+        }
+
+        abstract static class InteropRootNode extends RootNode {
+            InteropRootNode() {
+                super(/* TruffleRLanguageImpl.getCurrentLanguage() */null);
+            }
+
+            @Override
+            public final SourceSection getSourceSection() {
+                return RSyntaxNode.INTERNAL;
+            }
+        }
+
+        // TODO: with separate version of this for the different types, it would be more efficient
+        // and not need the dispatch
+        public abstract static class DispatchAllocate extends Node {
+            private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
+
+            public abstract long execute(Object vector);
+
+            @Specialization
+            protected static long get(RIntVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RLogicalVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RRawVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RDoubleVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(RComplexVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(CharSXPWrapper vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            protected static long get(@SuppressWarnings("unused") RNull nullValue) {
+                // Note: GnuR is OK with, e.g., INTEGER(NULL), but it's illegal to read from or
+                // write to the resulting address.
+                return EMPTY_DATA_ADDRESS;
+            }
+
+            @Fallback
+            protected static long get(Object vector) {
+                throw RInternalError.shouldNotReachHere("invalid wrapped object " + vector.getClass().getSimpleName());
+            }
+        }
+
+        @Override
+        public ForeignAccess getForeignAccess() {
+            return ForeignAccess.create(VectorWrapperNativePointer.class, new StandardFactory() {
+                @Override
+                public CallTarget accessIsNull() {
+                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                        @Override
+                        public Object execute(VirtualFrame frame) {
+                            return false;
+                        }
+                    });
+                }
+
+                @Override
+                public CallTarget accessIsPointer() {
+                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                        @Override
+                        public Object execute(VirtualFrame frame) {
+                            return true;
+                        }
+                    });
+                }
+
+                @Override
+                public CallTarget accessAsPointer() {
+                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                        @Child private DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
+
+                        @Override
+                        public Object execute(VirtualFrame frame) {
+                            VectorWrapperNativePointer receiver = (VectorWrapperNativePointer) ForeignAccess.getReceiver(frame);
+                            return dispatch.execute(receiver.vector);
+                        }
+                    });
+                }
+
+                @Override
+                public CallTarget accessToNative() {
+                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                        @Override
+                        public Object execute(VirtualFrame frame) {
+                            return ForeignAccess.getReceiver(frame);
+                        }
+                    });
+                }
+            });
+        }
+    }
+
+    @MessageResolution(receiverType = VectorWrapper.class)
+    public static class VectorWrapperMR {
+
+        @Resolve(message = "IS_POINTER")
+        public abstract static class IntVectorWrapperNativeIsPointerNode extends Node {
+            protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
+                return false;
+            }
+        }
+
+        @Resolve(message = "TO_NATIVE")
+        public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
+            protected Object access(VectorWrapper receiver) {
+                return new VectorWrapperNativePointer(receiver.vector);
+            }
+        }
+
+        @Resolve(message = "HAS_SIZE")
+        public abstract static class VectorWrapperHasSizeNode extends Node {
+            protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
+                return true;
+            }
+        }
+
+        @Resolve(message = "GET_SIZE")
+        public abstract static class VectorWrapperGetSizeNode extends Node {
+            @Child private Node getSizeMsg = Message.GET_SIZE.createNode();
+
+            protected Object access(VectorWrapper receiver) {
+                try {
+                    return ForeignAccess.sendGetSize(getSizeMsg, receiver.vector);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere(e);
+                }
+            }
+        }
+
+        @Resolve(message = "READ")
+        abstract static class VectorWrapperReadNode extends Node {
+            @Child private Node readMsg = Message.READ.createNode();
+
+            public Object access(VectorWrapper receiver, Object index) {
+                try {
+                    return ForeignAccess.sendRead(readMsg, receiver.vector, index);
+                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                    throw RInternalError.shouldNotReachHere(e);
+                }
+            }
+        }
+
+        @Resolve(message = "WRITE")
+        abstract static class VectorWrapperWriteNode extends Node {
+            @Child private Node writeMsg = Message.WRITE.createNode();
+
+            public Object access(VectorWrapper receiver, Object index, Object value) {
+                try {
+                    return ForeignAccess.sendWrite(writeMsg, receiver.vector, index, value);
+                } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException e) {
+                    throw RInternalError.shouldNotReachHere(e);
+                }
+            }
+        }
+
+        @Resolve(message = "IS_EXECUTABLE")
+        abstract static class VectorWrapperIsExecutableNode extends Node {
+            @Child private Node isExecMsg = Message.IS_EXECUTABLE.createNode();
+
+            public Object access(VectorWrapper receiver) {
+                return ForeignAccess.sendIsExecutable(isExecMsg, receiver.vector);
+            }
+        }
+
+        @Resolve(message = "EXECUTE")
+        abstract static class VectorWrapperExecuteNode extends Node {
+            @Child private Node execMsg = Message.createExecute(0).createNode();
+
+            protected Object access(VectorWrapper receiver, Object[] arguments) {
+                try {
+                    // Currently, there is only one "executable" object, which is CharSXPWrapper.
+                    // See CharSXPWrapperMR for the EXECUTABLE message handler.
+                    assert arguments.length == 0 && receiver.vector instanceof CharSXPWrapper;
+                    return ForeignAccess.sendExecute(execMsg, receiver.vector);
+                } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                    throw RInternalError.shouldNotReachHere(e);
+                }
+            }
+        }
+
+        @CanResolve
+        public abstract static class VectorWrapperCheck extends Node {
+            protected static boolean test(TruffleObject receiver) {
+                return receiver instanceof VectorWrapper;
+            }
+        }
+    }
+
+    public static final class VectorWrapper implements TruffleObject {
+
+        private final TruffleObject vector;
+
+        public VectorWrapper(TruffleObject vector) {
+            this.vector = vector;
+        }
+
+        public TruffleObject getVector() {
+            return vector;
+        }
+
+        @Override
+        public ForeignAccess getForeignAccess() {
+            return VectorWrapperMRForeign.ACCESS;
+        }
+    }
+
+    @Override
+    public Object INTEGER(Object x) {
+        // also handles LOGICAL
+        assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
+        return new VectorWrapper(guaranteeVectorOrNull(x, RVector.class));
+    }
+
+    @Override
+    public Object LOGICAL(Object x) {
+        return new VectorWrapper(guaranteeVectorOrNull(x, RLogicalVector.class));
+    }
+
+    @Override
+    public Object REAL(Object x) {
+        return new VectorWrapper(guaranteeVectorOrNull(x, RDoubleVector.class));
+    }
+
+    @Override
+    public Object RAW(Object x) {
+        return new VectorWrapper(guaranteeVectorOrNull(x, RRawVector.class));
+    }
+
+    @Override
+    public Object COMPLEX(Object x) {
+        return new VectorWrapper(guaranteeVectorOrNull(x, RComplexVector.class));
+    }
+
+    @Override
+    public Object R_CHAR(Object x) {
+        return new VectorWrapper(guaranteeVectorOrNull(x, CharSXPWrapper.class));
+    }
+
+    private static TruffleObject guaranteeVectorOrNull(Object obj, Class<? extends TruffleObject> clazz) {
+        if (obj == RNull.instance) {
+            return RNull.instance;
+        }
+        return guaranteeInstanceOf(obj, clazz);
+    }
 }

@@ -111,7 +111,7 @@ darwinEnvironment : {
     PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
     F77: "/usr/local/bin/gfortran-4.9"
     TZDIR: "/usr/share/zoneinfo"
-	PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"""
+	  PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"""
     PKG_LDFLAGS_OVERRIDE : """" -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64 -L/usr/local/Cellar/gcc@4.9/4.9.4/lib/gcc/4.9/ -L/usr/lib""""
   }
 }
@@ -125,6 +125,43 @@ gateTestLinuxNFI : ${gateTestCommon} {
       FASTR_RFFI : "nfi"
       TZDIR: "/usr/share/zoneinfo"
   }
+}
+
+requireGCC: {
+    downloads: {
+        DRAGONEGG_GCC: {name: "gcc+dragonegg", version: "4.6.4-1", platformspecific: true}
+        DRAGONEGG_LLVM: {name: "clang+llvm", version: "3.2", platformspecific: true}
+    }
+}
+
+gateTestLinuxLLVM : ${common} ${requireGCC} {
+  capabilities: [linux, amd64]
+
+  packages: {
+      llvm: "==3.8"
+  }
+
+  environment :  {
+      TZDIR: "/usr/share/zoneinfo"
+      FASTR_RFFI : "llvm"
+      FASTR_LLVM_HOME : "$DRAGONEGG_LLVM/bin"
+      FASTR_LLVM_GFORTRAN_LLVM_AS : "$DRAGONEGG_LLVM/bin/llvm-as"
+      FASTR_LLVM_GFORTRAN : "$DRAGONEGG_GCC/bin/gfortran"
+      FASTR_LLVM_DRAGONEGG : "$DRAGONEGG_GCC/lib/dragonegg.so"
+      DEFAULT_DYNAMIC_IMPORTS : "sulong"
+  }
+
+  setup: [
+    ["git", "clone", ["mx", "urlrewrite", "https://github.com/graalvm/sulong.git"], "../sulong"],
+    ["mx", "sforceimports"],
+    ["git","clone", "--depth", "1", ${repoBase}"r-apptests.git", "../r-apptests"]
+  ]
+
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
+    ["mx", "rscript", "../r-apptests/renjin-tests/driver.R", "--setwd", "../r-apptests/renjin-tests/"]
+    ["mx", "pkgtest", "--repos", "FASTR", "--run-tests", "testrffi"]
+  ]
 }
 
 gateTestManagedLinux: ${common} {
@@ -142,6 +179,43 @@ gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
     JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
     EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
   }
+}
+
+gateTestDarwinLLVM: ${common} ${darwinEnvironment} ${requireGCC} {
+  capabilities: [darwin_sierra, amd64]
+
+  packages : ${packagesDarwin} {
+    llvm: "==4.0.1"
+  }
+
+  environment :  {
+      FASTR_RFFI : "llvm"
+      FASTR_LLVM_HOME : "$DRAGONEGG_LLVM/bin"
+      FASTR_LLVM_GFORTRAN_LLVM_AS : "$DRAGONEGG_LLVM/bin/llvm-as"
+      FASTR_LLVM_GFORTRAN : "$DRAGONEGG_GCC/bin/gfortran"
+      FASTR_LLVM_DRAGONEGG : "$DRAGONEGG_GCC/lib/dragonegg.so"
+      DEFAULT_DYNAMIC_IMPORTS : "sulong"
+      # homebrew doesn't put llvm on the path by default
+      PATH: "/usr/local/Cellar/llvm@4/4.0.1/bin:$PATH"
+      LC_MESSAGES: "en_US"
+	  LC_COLLATE: "en_US"
+	  LC_TIME: "en_US"
+	  LC_MONETARY: "en_US"
+	  LC_COLLATE: "en_US.UTF-8"
+  }
+
+  setup: [
+    ["ls", "/usr/local/Cellar"]
+    ["git", "clone", ["mx", "urlrewrite", "https://github.com/graalvm/sulong.git"], "../sulong"],
+    ["mx", "sforceimports"],
+    ["git", "clone", "--depth", "1", ${repoBase}"r-apptests.git", "../r-apptests"]
+  ]
+
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
+    ["mx", "rscript", "../r-apptests/renjin-tests/driver.R", "--setwd", "../r-apptests/renjin-tests/"]
+    ["mx", "pkgtest", "--repos", "FASTR", "--run-tests", "testrffi"]
+  ]
 }
 
 # This performs a number of "style" checks on the code to ensure it confirms to the project standards.
@@ -199,4 +273,6 @@ builds = [
   #${gateTestManagedLinux}     {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-managed-linux-amd64"}
   ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}
   ${gnurTests}                {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-gnur-tests"}
+  ${gateTestLinuxLLVM}        { targets : [gate], name: "gate-test-llvm-linux-amd64" }
+  ${gateTestDarwinLLVM}        { targets : [gate], name: "gate-test-llvm-darwin-amd64" }
 ]

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ public final class FFIUnwrapNode extends Node {
 
     private final BranchProfile isRTruffleObject = BranchProfile.create();
     private final BranchProfile isNonBoxed = BranchProfile.create();
+    private final BranchProfile isString = BranchProfile.create();
 
     public Object execute(Object x) {
         if (x instanceof RTruffleObject) {
@@ -93,10 +94,14 @@ public final class FFIUnwrapNode extends Node {
             }
             isNonBoxed.enter();
             return x;
+        } else if (x instanceof String) {
+            isString.enter();
+            return x;
         } else {
             CompilerDirectives.transferToInterpreter();
             throw RInternalError.shouldNotReachHere("unexpected primitive value of class " + x.getClass().getSimpleName());
         }
+
     }
 
     public static FFIUnwrapNode create() {

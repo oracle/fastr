@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -280,7 +281,14 @@ public class MethodsListDispatch {
                 if (code == MethodCode.NO_METHODS && value != null) {
                     primMethodsInfo.setPrimGeneric(primMethodIndex, null);
                     primMethodsInfo.setPrimMethodList(primMethodIndex, null);
-                } else if (fundef != RNull.instance && value == null) {
+                } else if (fundef != RNull.instance && (value == null || RContext.getInstance().getKind() == ContextKind.SHARE_NOTHING)) {
+                    // If the context kind is SHARE_NOTHING, primMethodsInfo must also be updated.
+                    // Otherwise, the standard generic dispatcher (see StandardGeneric) running in a
+                    // child context would get an invalid method table for a given primitive
+                    // generic function obtained from the enclosing environment of that generic
+                    // primitive function from the initial context. NB: The setMethod function, if
+                    // called from a child context, uses the enclosing environment of the generic
+                    // function from the current context to update the method table.
                     if (!(fundef instanceof RFunction)) {
                         throw error(RError.Message.PRIM_GENERIC_NOT_FUNCTION, fundef.getRType().getName());
                     }
