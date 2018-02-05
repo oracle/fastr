@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2015, The R Foundation
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -16,9 +16,11 @@ package com.oracle.truffle.r.runtime.nmath.distr;
 import com.oracle.truffle.r.runtime.nmath.RMathError;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
+import com.oracle.truffle.r.runtime.nmath.distr.Chisq.RChisq;
 
 public final class RNchisq extends RandFunction2_Double {
-    private final RGamma rgamma = new RGamma();
+    @Child private RGamma rgamma = new RGamma();
+    @Child private RChisq rchisq = new RChisq();
 
     @Override
     public double execute(double df, double lambda, RandomNumberProvider rand) {
@@ -31,7 +33,7 @@ public final class RNchisq extends RandFunction2_Double {
         } else {
             double r = RPois.rpois(lambda / 2., rand);
             if (r > 0.) {
-                r = Chisq.RChisq.rchisq(2. * r, rand);
+                r = rchisq.execute(2. * r, rand);
             }
             if (df > 0.) {
                 r += rgamma.execute(df / 2., 2., rand);

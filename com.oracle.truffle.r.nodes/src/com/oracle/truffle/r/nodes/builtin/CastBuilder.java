@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,9 @@ package com.oracle.truffle.r.nodes.builtin;
 import java.util.Arrays;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.AndFilter;
@@ -789,7 +791,13 @@ public final class CastBuilder {
          * @return a function returning the type name of its argument
          */
         public static Function<Object, String> typeName() {
+            CompilerAsserts.neverPartOfCompilation();
             return arg -> RRuntime.getRTypeName(arg);
+        }
+
+        @TruffleBoundary
+        public static String getTypeName(Object arg) {
+            return RRuntime.getRTypeName(arg);
         }
     }
 }

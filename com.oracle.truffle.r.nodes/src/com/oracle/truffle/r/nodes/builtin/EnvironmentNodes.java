@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -61,15 +62,16 @@ public final class EnvironmentNodes {
         public abstract REnvironment execute(Object listOrNull, REnvironment target, String envName, REnvironment parentEnv);
 
         @Specialization(guards = "isEmpty(list)")
-        protected REnvironment doEmptyList(@SuppressWarnings("unused") RAbstractListVector list, REnvironment target, String envName, REnvironment parentEnv) {
-            REnvironment createNewEnv;
-            if (target == null) {
-                createNewEnv = RDataFactory.createNewEnv(envName);
-                RArguments.initializeEnclosingFrame(createNewEnv.getFrame(), parentEnv.getFrame());
-                createNewEnv.setParent(parentEnv);
-            } else {
-                createNewEnv = target;
-            }
+        protected REnvironment doEmptyList(@SuppressWarnings("unused") RAbstractListVector list, REnvironment target, String envName, REnvironment parentEnv,
+                        @Cached("createBinaryProfile()") ConditionProfile nullTargetProfile) {
+            return nullTargetProfile.profile(target == null) ? createNewEnv(envName, parentEnv) : target;
+        }
+
+        @TruffleBoundary
+        private REnvironment createNewEnv(String envName, REnvironment parentEnv) {
+            REnvironment createNewEnv = RDataFactory.createNewEnv(envName);
+            RArguments.initializeEnclosingFrame(createNewEnv.getFrame(), parentEnv.getFrame());
+            createNewEnv.setParent(parentEnv);
             return createNewEnv;
         }
 

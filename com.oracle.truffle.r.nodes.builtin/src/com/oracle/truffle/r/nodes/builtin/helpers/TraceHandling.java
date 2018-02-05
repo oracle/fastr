@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.EventContext;
@@ -208,15 +209,26 @@ public class TraceHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
+                MaterializedFrame materializedFrame = frame.materialize();
                 if (print) {
-                    try {
-                        String callString = getCallSource(frame);
-                        outputHandler.writeString("Tracing " + callString + " on entry", true);
-                    } catch (IOException ex) {
-                        throw RError.ioError(RError.SHOW_CALLER2, ex);
-                    }
+                    printEnter(materializedFrame);
                 }
-                RContext.getEngine().eval(tracer, frame.materialize());
+                evalTracer(materializedFrame);
+            }
+        }
+
+        @TruffleBoundary
+        private void evalTracer(MaterializedFrame frame) {
+            RContext.getEngine().eval(tracer, frame);
+        }
+
+        @TruffleBoundary
+        private void printEnter(MaterializedFrame frame) {
+            try {
+                String callString = getCallSource(frame);
+                outputHandler.writeString("Tracing " + callString + " on entry", true);
+            } catch (IOException ex) {
+                throw RError.ioError(RError.SHOW_CALLER2, ex);
             }
         }
 

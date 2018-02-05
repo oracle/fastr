@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -234,6 +234,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = {"(isRMissing(left) || isRMissing(right))"})
+    @TruffleBoundary
     protected Object doOneArg(@SuppressWarnings("unused") Object left, @SuppressWarnings("unused") Object right) {
         throw error(RError.Message.IS_OF_WRONG_ARITY, 1, factory.createOperation().opName(), 2);
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -698,6 +698,11 @@ public final class Utils {
     @TruffleBoundary
     public static String toString(Object obj) {
         return obj.toString();
+    }
+
+    @TruffleBoundary
+    public static boolean equals(Object a, Object b) {
+        return a.equals(b);
     }
 
     @TruffleBoundary

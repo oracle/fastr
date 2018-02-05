@@ -419,7 +419,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Fallback
     protected Object doFallback(Object obj, @SuppressWarnings("unused") boolean naRm, @SuppressWarnings("unused") boolean infinite) {
-        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.typeName().apply(obj));
+        throw error(RError.Message.INVALID_TYPE_ARGUMENT, Predef.getTypeName(obj));
     }
 
     protected UnaryArithmeticReduceNode createRecursive() {

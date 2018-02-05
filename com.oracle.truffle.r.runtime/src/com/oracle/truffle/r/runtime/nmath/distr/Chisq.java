@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000, The R Core Team
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -48,16 +48,14 @@ public final class Chisq {
     }
 
     public static final class RChisq extends RandFunction1_Double {
-        public static double rchisq(double df, RandomNumberProvider rand) {
+        @Child private RGamma rGamma = new RGamma();
+
+        @Override
+        public double execute(double df, RandomNumberProvider rand) {
             if (!Double.isFinite(df) || df < 0.0) {
                 return RMathError.defaultError();
             }
-            return new RGamma().execute(df / 2.0, 2.0, rand);
-        }
-
-        @Override
-        public double execute(double a, RandomNumberProvider rand) {
-            return rchisq(a, rand);
+            return rGamma.execute(df / 2.0, 2.0, rand);
         }
     }
 }
