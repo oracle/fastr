@@ -323,6 +323,7 @@ public final class RError extends RuntimeException implements TruffleException {
          */
         GENERIC("%s"),
         TOO_SHORT("'%s' is too short"),
+        CONVERTED_FROM_WARNING("(converted from warning) %s"),
         INVALID_DATA_OF_TYPE_TOO_SHORT("invalid data of mode '%s' (too short)"),
         VECTOR_SIZE_TOO_LARGE("vector size specified is too large"),
         ARG_RECYCYLED("an argument will be fractionally recycled"),

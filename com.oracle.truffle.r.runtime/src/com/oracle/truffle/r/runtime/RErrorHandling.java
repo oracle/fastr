@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -602,12 +602,6 @@ public class RErrorHandling {
         warningCallInvoke(call, warningMessage);
     }
 
-    static void errorcall(boolean showCall, RBaseNode callObj, Message msg, Object... args) {
-        Object call = showCall ? findCaller(callObj) : RNull.instance;
-        RStringVector warningMessage = RDataFactory.createStringVectorFromScalar(formatMessage(msg, args));
-        warningCallInvoke(call, warningMessage);
-    }
-
     private static void warningCallInvoke(Object call, RStringVector warningMessage) {
         /*
          * Warnings generally do not prevent results being printed. However, this call into R will
@@ -660,7 +654,7 @@ public class RErrorHandling {
             String fmsg = formatMessage(msg, args);
             String message = createWarningMessage(call, fmsg);
             if (w >= 2) {
-                throw RInternalError.unimplemented();
+                throw errorcallDfltWithCall(null, call, RError.Message.CONVERTED_FROM_WARNING, fmsg);
             } else if (w == 1) {
                 Utils.writeStderr(message, true);
             } else if (w == 0 && errorHandlingState.warnings.size() < errorHandlingState.maxWarnings) {
