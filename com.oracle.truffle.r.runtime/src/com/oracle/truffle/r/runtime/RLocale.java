@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,10 @@ public enum RLocale {
             throw RInternalError.shouldNotReachHere(e);
         }
         return collator;
+    }
+
+    public static int compare(Collator collator, String k1, String k2) {
+        return collator == null ? k1.compareTo(k2) : collator.compare(k1, k2);
     }
 
     public static final class ContextStateImpl implements RContext.ContextState {

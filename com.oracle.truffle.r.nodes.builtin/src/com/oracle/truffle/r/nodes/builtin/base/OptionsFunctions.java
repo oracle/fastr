@@ -87,9 +87,7 @@ public class OptionsFunctions {
             Arrays.sort(entries, new Comparator<Map.Entry<String, Object>>() {
                 @Override
                 public int compare(Map.Entry<String, Object> o1, Map.Entry<String, Object> o2) {
-                    String k1 = o1.getKey();
-                    String k2 = o2.getKey();
-                    return collator == null ? k1.compareTo(k2) : collator.compare(k1, k2);
+                    return RLocale.compare(collator, o1.getKey(), o2.getKey());
                 }
             });
 
