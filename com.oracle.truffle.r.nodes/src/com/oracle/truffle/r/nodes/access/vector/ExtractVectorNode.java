@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -108,14 +109,14 @@ public abstract class ExtractVectorNode extends RBaseNode {
     protected abstract Object execute(Object vector, Object[] positions, Object exact, Object dropDimensions);
 
     @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"}, limit = "3")
-    protected Object doRecursive(RAbstractVector vector, Object[] positions, Object exact, Object dropDimensions,  //
+    protected Object doRecursive(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
         return cached.apply(vector, positions, exact, dropDimensions);
     }
 
-    protected RecursiveExtractSubscriptNode createRecursiveCache(Object vector, Object[] positions) {
-        if (isRecursiveSubscript(vector, positions)) {
-            return RecursiveExtractSubscriptNode.create((RAbstractListVector) vector, positions[0]);
+    protected RecursiveExtractSubscriptNode createRecursiveCache(Object x, Object[] positions) {
+        if (isRecursiveSubscript(x, positions)) {
+            return RecursiveExtractSubscriptNode.create((RAbstractContainer) x, positions[0]);
         }
         return null;
     }
@@ -133,7 +134,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     }
 
     private boolean isRecursiveSubscript(Object vector, Object[] positions) {
-        return !recursive && !ignoreRecursive && mode.isSubscript() && vector instanceof RAbstractListVector && positions.length == 1;
+        return !recursive && !ignoreRecursive && mode.isSubscript() && (vector instanceof RAbstractListVector || vector instanceof RLanguage) && positions.length == 1;
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
@@ -244,7 +245,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         public RecursiveExtractSubscriptNode getRecursive(RAbstractContainer vector, Object[] positions) {
             CompilerAsserts.neverPartOfCompilation();
             if (cachedRecursive == null || !cachedRecursive.isSupported(vector, positions)) {
-                cachedRecursive = insert(RecursiveExtractSubscriptNode.create((RAbstractListVector) vector, positions[0]));
+                cachedRecursive = insert(RecursiveExtractSubscriptNode.create(vector, positions[0]));
             }
             return cachedRecursive;
         }

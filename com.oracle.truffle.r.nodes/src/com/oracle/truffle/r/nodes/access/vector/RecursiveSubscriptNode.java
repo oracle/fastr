@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 abstract class RecursiveSubscriptNode extends RBaseNode {
@@ -34,7 +34,7 @@ abstract class RecursiveSubscriptNode extends RBaseNode {
 
     @Child protected RLengthNode positionLengthNode = RLengthNode.create();
 
-    RecursiveSubscriptNode(RAbstractListVector vector, Object position) {
+    RecursiveSubscriptNode(RAbstractContainer vector, Object position) {
         this.vectorClass = vector.getClass();
         this.positionClass = position.getClass();
     }

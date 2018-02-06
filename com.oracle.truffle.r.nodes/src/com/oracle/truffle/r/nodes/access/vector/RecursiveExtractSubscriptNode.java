@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RInteger;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
@@ -36,11 +38,11 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
     @Child private ExtractVectorNode recursiveSubscriptExtract = ExtractVectorNode.createRecursive(ElementAccessMode.SUBSCRIPT);
     @Child private ExtractVectorNode subscriptExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
 
-    RecursiveExtractSubscriptNode(RAbstractListVector vector, Object position) {
+    RecursiveExtractSubscriptNode(RAbstractContainer vector, Object position) {
         super(vector, position);
     }
 
-    public static RecursiveExtractSubscriptNode create(RAbstractListVector vector, Object position) {
+    public static RecursiveExtractSubscriptNode create(RAbstractContainer vector, Object position) {
         return RecursiveExtractSubscriptNodeGen.create(vector, position);
     }
 
@@ -71,7 +73,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
         for (int i = 1; i < positionLength; i++) {
             Object selection = getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(i)}, RLogical.TRUE, RLogical.TRUE);
             try {
-                if (!(currentVector instanceof RAbstractListVector)) {
+                if (!(currentVector instanceof RAbstractListVector || currentVector instanceof RLanguage)) {
                     throw indexingFailed(i);
                 }
                 currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{selection}, exact, dropDimensions);
