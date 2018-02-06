@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,6 +13,7 @@ package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -22,6 +23,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -47,7 +49,7 @@ public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
             List<String> lines = new ArrayList<>(nlines);
             int totalLines = 0;
             while (totalLines < nlines) {
-                String[] readLines = openConn.readLines(nlines - totalLines, true, skipNull);
+                String[] readLines = openConn.readLines(nlines - totalLines, EnumSet.of(ReadLineWarning.EMBEDDED_NUL, ReadLineWarning.INCOMPLETE_LAST_LINE), skipNull);
                 if (readLines.length == 0) {
                     break;
                 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
+import java.util.EnumSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
@@ -129,6 +130,15 @@ public interface RConnection extends AutoCloseable, RTruffleObject {
         WRITE
     }
 
+    enum ReadLineWarning {
+        EMBEDDED_NUL,
+        INCOMPLETE_LAST_LINE;
+
+        public static EnumSet<ReadLineWarning> allIf(boolean warn) {
+            return warn ? EnumSet.of(ReadLineWarning.EMBEDDED_NUL, ReadLineWarning.INCOMPLETE_LAST_LINE) : EnumSet.noneOf(ReadLineWarning.class);
+        }
+    }
+
     /**
      * Support for {@code isSeekable} Internal.
      */
@@ -209,7 +219,7 @@ public interface RConnection extends AutoCloseable, RTruffleObject {
      * Read (n > 0 up to n else unlimited) lines on the connection.
      */
     @TruffleBoundary
-    String[] readLines(int n, boolean warn, boolean skipNul) throws IOException;
+    String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException;
 
     /**
      * Returns {@code true} iff this is a text mode connection.

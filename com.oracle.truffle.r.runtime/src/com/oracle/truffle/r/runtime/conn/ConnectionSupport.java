@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.EnumSet;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -372,7 +373,7 @@ public class ConnectionSupport {
         private static final int INVALID_DESCRIPTOR = -1;
 
         @Override
-        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             throw RInternalError.shouldNotReachHere("INVALID CONNECTION");
         }
 
@@ -757,7 +758,7 @@ public class ConnectionSupport {
             opened = true;
         }
 
-        protected String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+        protected String[] readLinesInternal(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             checkOpen();
             return theConnection.readLines(n, warn, skipNul);
         }
@@ -956,7 +957,7 @@ public class ConnectionSupport {
          * available.
          */
         @TruffleBoundary
-        private String[] readLinesWithPushBack(int n, boolean warn, boolean skipNul) throws IOException {
+        private String[] readLinesWithPushBack(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             // NOTE: 'n' may be negative indicating to read as much lines as available
             final List<String> res;
             if (n >= 0) {
@@ -996,7 +997,7 @@ public class ConnectionSupport {
         }
 
         @Override
-        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             if (pushBack == null) {
                 return readLinesInternal(n, warn, skipNul);
             } else if (pushBack.size() == 0) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
+import java.util.EnumSet;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -71,7 +73,7 @@ public abstract class ReadDCF extends RBuiltinNode.Arg3 {
                     keepWhiteSet.add(keepWhite.getDataAt(i));
                 }
             }
-            dcf = DCF.read(openConn.readLines(0, true, false), keepWhiteSet);
+            dcf = DCF.read(openConn.readLines(0, EnumSet.noneOf(ReadLineWarning.class), false), keepWhiteSet);
         } catch (IOException ex) {
             throw error(RError.Message.ERROR_READING_CONNECTION, ex.getMessage());
         }

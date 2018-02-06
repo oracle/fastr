@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.EnumSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -119,7 +121,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             throw RError.nyi(this, "parse from stdin not implemented");
         }
         try (RConnection openConn = connection.forceOpen("r")) {
-            lines = openConn.readLines(0, false, false);
+            lines = openConn.readLines(0, EnumSet.noneOf(ReadLineWarning.class), false);
         } catch (IOException ex) {
             throw error(RError.Message.PARSE_ERROR);
         }

@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.HashMap;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -44,6 +45,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -189,7 +191,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
 
         try (RConnection openConn = data.con.forceOpen("r")) {
             if (nskip > 0) {
-                openConn.readLines(nskip, true, skipNull);
+                openConn.readLines(nskip, EnumSet.of(ReadLineWarning.EMBEDDED_NUL), skipNull);
             }
             if (what instanceof RList) {
                 return scanFrame((RList) what, nmax, nlines, flush, fill, strip == RRuntime.LOGICAL_TRUE, blSkip, multiLine, data);
@@ -276,7 +278,7 @@ public abstract class Scan extends RBuiltinNode.Arg19 {
 
     private static String[] getItems(LocalData data, boolean blSkip) throws IOException {
         while (true) {
-            String[] str = data.con.readLines(1, true, false);
+            String[] str = data.con.readLines(1, EnumSet.of(ReadLineWarning.EMBEDDED_NUL), false);
             if (str == null || str.length == 0) {
                 return null;
             } else {

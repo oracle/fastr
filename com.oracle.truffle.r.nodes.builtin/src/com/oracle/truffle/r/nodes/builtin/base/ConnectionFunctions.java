@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,6 +86,7 @@ import com.oracle.truffle.r.runtime.conn.FileConnections.CompressedRConnection;
 import com.oracle.truffle.r.runtime.conn.FileConnections.FileRConnection;
 import com.oracle.truffle.r.runtime.conn.PipeConnections.PipeRConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;
 import com.oracle.truffle.r.runtime.conn.RawConnections.RawRConnection;
 import com.oracle.truffle.r.runtime.conn.SocketConnections.RSocketConnection;
 import com.oracle.truffle.r.runtime.conn.TextConnections.TextRConnection;
@@ -616,7 +617,7 @@ public abstract class ConnectionFunctions {
         protected Object readLines(int con, int n, boolean ok, boolean warn, @SuppressWarnings("unused") String encoding, boolean skipNul) {
             // TODO Implement argument 'encoding'.
             try (RConnection openConn = RConnection.fromIndex(con).forceOpen("rt")) {
-                String[] lines = openConn.readLines(n, warn, skipNul);
+                String[] lines = openConn.readLines(n, ReadLineWarning.allIf(warn), skipNul);
                 if (n > 0 && lines.length < n && !ok) {
                     throw error(RError.Message.TOO_FEW_LINES_READ_LINES);
                 }
