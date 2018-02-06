@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
