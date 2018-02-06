@@ -17,6 +17,8 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyDoubleVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.matrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.not;
@@ -24,6 +26,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.or;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.squareMatrix;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -879,4 +882,62 @@ public class LaFunctions {
             return RDataFactory.createStringVector(LibPaths.getBuiltinLibPath("Rlapack"));
         }
     }
+
+    @RBuiltin(name = "backsolve", kind = INTERNAL, parameterNames = {"r", "b", "k", "upper.tri", "transpose"}, behavior = PURE)
+    public abstract static class Backsolve extends RBuiltinNode.Arg5 {
+
+        static {
+            Casts casts = new Casts(Backsolve.class);
+            casts.arg(0).asDoubleVector(false, true, false).mustBe(matrix());
+            casts.arg(1).asDoubleVector(false, true, false).mustBe(matrix());
+            casts.arg(2).mustBe(integerValue()).asIntegerVector().mustBe(singleElement()).findFirst().mustNotBeNA(Message.INVALID_ARG, "k");
+            casts.arg(3).mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst().mustNotBeNA(Message.INVALID_ARG, "upper.tri").map(toBoolean());
+            casts.arg(4).mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst().mustNotBeNA(Message.INVALID_ARG, "transpose").map(toBoolean());
+        }
+
+        @Child private LapackRFFI.DtrsmNode dtrsmNode = LapackRFFI.DtrsmNode.create();
+
+        @Specialization
+        Object doBacksolve(RAbstractDoubleVector r, RAbstractDoubleVector b, int k, boolean upperTri, boolean transpose,
+                        @Cached("create()") GetDimAttributeNode getRDimAttribute,
+                        @Cached("create()") GetDimAttributeNode getBDimAttribute,
+                        @Cached("create()") GetReadonlyData.Double getReadonlyData,
+                        @Cached("create()") VectorFactory resultVectorFactory) {
+            int[] rDims = getRDimAttribute.getDimensions(r);
+            int[] bDims = getBDimAttribute.getDimensions(b);
+            int nrr = rDims[0];
+            int ncr = rDims[1];
+            int nrb = bDims[0];
+            int ncb = bDims[1];
+            // k is the number of rows to be used: there must be at least that
+            // many rows and cols in the rhs and at least that many rows on
+            // the rhs.
+            if (k <= 0 || k > nrr || k > ncr || k > nrb) {
+                throw error(Message.INVALID_ARG, "k");
+            }
+
+            double[] rData = getReadonlyData.execute(r.materialize());
+            // Check for zeros on diagonal of r: only k row/cols are used.
+            int incr = nrr + 1;
+            for (int i = 0; i < k; i++) {
+                if (rData[i * incr] == 0d) {
+                    throw error(Message.SINGULAR_BACKSOLVE, i + 1);
+                }
+            }
+
+            double[] resultData = new double[k * ncb];
+            if (k > 0 && ncb > 0) {
+                // Copy (part) cols of b to result.
+                double[] bData = getReadonlyData.execute(b.materialize());
+                for (int j = 0; j < ncb; j++) {
+                    System.arraycopy(bData, j * nrb, resultData, j * k, k);
+                }
+                dtrsmNode.execute("L", upperTri ? "U" : "L", transpose ? "T" : "N", "N",
+                                k, ncb, 1d, rData, nrr, resultData, k);
+            }
+            return resultVectorFactory.createDoubleVector(resultData, b.isComplete(), new int[]{k, ncb});
+        }
+
+    }
+
 }

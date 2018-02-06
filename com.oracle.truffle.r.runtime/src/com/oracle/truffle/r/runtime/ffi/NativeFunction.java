@@ -73,6 +73,7 @@ public enum NativeFunction {
                     "call_lapack_"),
     zunmqr("(string, string, sint32, sint32, sint32, [double], sint32, [double], [double], sint32, [double], sint32) : sint32", "call_lapack_"),
     ztrtrs("(string, string, string, sint32, sint32, [double], sint32, [double], sint32) : sint32", "call_lapack_"),
+    dtrsm("(string, string, string, string, sint32, sint32, double, [double], sint32, [double], sint32) : void", "call_lapack_"),
     // misc
     exactSumFunc("([double], sint32, sint32, sint32): double", "call_misc_"),
     dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_misc_"),

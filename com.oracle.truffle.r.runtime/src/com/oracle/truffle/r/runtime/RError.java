@@ -941,7 +941,8 @@ public final class RError extends RuntimeException implements TruffleException {
         MUSTNOT_CONTAIN_NAS("argument '%s' must not contain NAs"),
         VERSION_N_NOT_SUPPORTED("version %d not supported"),
         ATOMIC_VECTOR_ARGUMENTS_ONLY("atomic vector arguments only"),
-        MUST_BE_COMPLEX_MATRIX("'%s' must be a complex matrix");
+        MUST_BE_COMPLEX_MATRIX("'%s' must be a complex matrix"),
+        SINGULAR_BACKSOLVE("singular matrix in 'backsolve'. First zero in diagonal [%d]");
 
         public final String message;
         final boolean hasArgs;

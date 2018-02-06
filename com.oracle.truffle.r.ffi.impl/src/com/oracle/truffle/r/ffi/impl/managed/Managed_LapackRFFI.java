@@ -106,4 +106,9 @@ public class Managed_LapackRFFI implements LapackRFFI {
     public ZtrtrsNode createZtrtrsNode() {
         throw unsupported("lapack");
     }
+
+    @Override
+    public DtrsmNode createDtrsmNode() {
+        throw unsupported("lapack");
+    }
 }

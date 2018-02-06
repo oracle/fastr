@@ -207,6 +207,15 @@ public interface LapackRFFI {
         }
     }
 
+    interface DtrsmNode extends NodeInterface {
+
+        void execute(String side, String uplo, String transa, String diag, int m, int n, double alpha, double[] a, int lda, double[] b, int ldb);
+
+        static DtrsmNode create() {
+            return RFFIFactory.getLapackRFFI().createDtrsmNode();
+        }
+    }
+
     IlaverNode createIlaverNode();
 
     DgeevNode createDgeevNode();
@@ -238,5 +247,7 @@ public interface LapackRFFI {
     ZunmqrNode createZunmqrNode();
 
     ZtrtrsNode createZtrtrsNode();
+
+    DtrsmNode createDtrsmNode();
 
 }
