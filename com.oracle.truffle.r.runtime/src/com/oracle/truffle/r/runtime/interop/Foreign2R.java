@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class})

@@ -32,9 +32,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.generate.FastRSession;
-import org.graalvm.polyglot.Value;
-import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.junit.After;
 import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
 

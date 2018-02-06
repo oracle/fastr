@@ -24,11 +24,8 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import java.io.ByteArrayInputStream;
 import java.io.File;
-import java.io.IOException;
 import java.io.InputStream;
-import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.Enumeration;

@@ -63,7 +63,6 @@ import com.oracle.truffle.r.test.generate.TestOutputManager;
 import com.oracle.truffle.r.test.generate.TestOutputManager.TestInfo;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
-import org.graalvm.polyglot.proxy.ProxyExecutable;
 import static org.junit.Assert.fail;
 import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
 

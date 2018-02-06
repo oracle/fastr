@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
-import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -33,9 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 /**
  * Allows to read {@link FastROptions} from (e.g. internal) R code.

@@ -18,7 +18,6 @@ import static com.oracle.truffle.r.library.fastrGrid.Unit.inchesToCm;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.RRuntime;

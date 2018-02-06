@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Information is returned on how format() would be formatted.

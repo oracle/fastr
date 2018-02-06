@@ -44,7 +44,6 @@ import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
