@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -2066,5 +2066,17 @@ public class TestBuiltin_operators extends TestBase {
     private void assertColon(String[] parameters) {
         assertEval(template("%0:%1", parameters, parameters));
         assertEval(template("typeof(%0:%1)", parameters, parameters));
+    }
+
+    @Test
+    public void testEqualsList() {
+        assertEval("{ l <- list(an=1, bn=2, 3, 4);  l == 1 }");
+        assertEval("{ l <- list(an=1, bn=2, 3, 4);  1 == l }");
+        assertEval("{ l <- list(an=1L, bn=2L, 3, 4);  l == 1 }");
+        assertEval("{ l <- list(an=1L, bn=2L, 3, 4);  1 == l }");
+        assertEval("{ l <- list(an='a', bn='b', 3, 4);  l == 'a' }");
+        assertEval("{ l <- list(an='a', bn='b', 3, 4);  'a' == l }");
+        assertEval("{ l <- list(an=T, bn=F, T, F);  l == T }");
+        assertEval("{ l <- list(an=T, bn=F, T, F);  T == l }");
     }
 }

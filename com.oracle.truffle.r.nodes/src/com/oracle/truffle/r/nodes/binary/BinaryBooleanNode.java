@@ -23,11 +23,14 @@
 package com.oracle.truffle.r.nodes.binary;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.CopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
@@ -73,6 +76,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     protected static final int CACHE_LIMIT = 5;
 
     protected final BooleanOperationFactory factory;
+
+    @Child private CopyAttributesNode copyAttributes;
 
     BinaryBooleanNode(BooleanOperationFactory factory) {
         this.factory = factory;
@@ -172,23 +177,33 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                     @Cached("createRecursive()") BinaryBooleanNode recursive) {
         Object recursiveLeft = left;
         if (isRAbstractListVector(left)) {
-            recursiveLeft = castListToAtomic((RAbstractListBaseVector) left, cast, right.getRType());
+            if (copyAttributes == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                copyAttributes = insert(CopyAttributesNodeGen.create(true));
+            }
+            recursiveLeft = castListToAtomic((RAbstractListBaseVector) left, cast, right.getRType(), copyAttributes);
         }
         Object recursiveRight = right;
         if (isRAbstractListVector(right)) {
-            recursiveRight = castListToAtomic((RAbstractListBaseVector) right, cast, left.getRType());
+            if (copyAttributes == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                copyAttributes = insert(CopyAttributesNodeGen.create(true));
+            }
+            recursiveRight = castListToAtomic((RAbstractListBaseVector) right, cast, left.getRType(), copyAttributes);
         }
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
 
     @TruffleBoundary
-    private static Object castListToAtomic(RAbstractListBaseVector source, CastTypeNode cast, RType type) {
+    private static Object castListToAtomic(RAbstractListBaseVector source, CastTypeNode cast, RType type, CopyAttributesNode copyAttributes) {
         RVector<?> result = type.create(source.getLength(), false);
         Object store = result.getInternalStore();
         for (int i = 0; i < source.getLength(); i++) {
             Object value = source.getDataAt(i);
             if (type == RType.Character) {
-                value = RDeparse.deparse(value);
+                if (!(value instanceof String)) {
+                    value = RDeparse.deparse(value);
+                }
                 ((RStringVector) result).setDataAt(store, i, (String) value);
             } else {
                 value = cast.execute(value, type);
@@ -220,6 +235,9 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                     ((RRawVector) result).setRawDataAt(store, i, ((RRaw) value).getValue());
                 }
             }
+        }
+        if (copyAttributes != null) {
+            copyAttributes.execute(result, result, source.getLength(), source, source.getLength());
         }
         return result;
     }
