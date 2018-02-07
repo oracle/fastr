@@ -168,6 +168,7 @@ _pta_main_class = 'com.oracle.truffle.r.test.packages.analyzer.PTAMain'
 def _pta_project():
     return 'com.oracle.truffle.r.test.packages.analyzer'
 
+
 def pta(args, **kwargs):
     '''
     Run analysis for package installation/testing results.
@@ -176,10 +177,25 @@ def pta(args, **kwargs):
     vmArgs += [_pta_main_class]
     mx.run_java(vmArgs + args)
 
+
 def pkgtest(args):
     '''
     Package installation/testing.
-    rc: 0 for success; 1: install fail, 2: test fail, 3: install&test fail
+
+    Options:
+        --quiet                  Reduce output during testing.
+        --cache-pkgs dir=DIR     Use package cache in directory DIR (will be created if not existing).
+                                 Optional parameters:
+                                     size=N        Maximum number of different API versions in the cache.
+        --no-install             Do not install any packages (can only test installed packages).
+        --list-versions          List packages to be installed/tested without installing/testing them.
+        --pkg-pattern PATTERN    A regular expression to match packages.
+
+    Return codes:
+        0: success
+        1: install fail
+        2: test fail
+        3: install & test fail
     '''
 
     test_installed = '--no-install' in args
@@ -303,6 +319,7 @@ def pkgtest(args):
     shutil.rmtree(fastr_install_tmp, ignore_errors=True)
     return rc
 
+
 def _set_pkg_cache_api_version(arg_list, include_dir):
     '''
     Looks for argument '--cache-pkgs' and appends the native API version to the value list of this argument.
@@ -310,7 +327,10 @@ def _set_pkg_cache_api_version(arg_list, include_dir):
     if "--cache-pkgs" in arg_list:
         pkg_cache_values_idx = arg_list.index("--cache-pkgs") + 1
         if pkg_cache_values_idx < len(arg_list):
+            if 'version=' in arg_list[pkg_cache_values_idx]:
+                mx.log("Ignoring specified API version and using automatically computed one.")
             arg_list[pkg_cache_values_idx] = arg_list[pkg_cache_values_idx] + ",version={0}".format(computeApiChecksum(include_dir))
+
 
 class TestFileStatus:
     '''
