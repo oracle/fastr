@@ -44,7 +44,6 @@ import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentWri
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;

@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
-import com.oracle.truffle.r.test.engine.interop.AbstractMRTest;
 import com.oracle.truffle.r.test.engine.interop.VectorMRTest;
 import java.io.IOException;
 import java.lang.reflect.AccessibleObject;

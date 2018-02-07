@@ -61,7 +61,6 @@ import com.oracle.truffle.r.nodes.unary.CastLogicalNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;

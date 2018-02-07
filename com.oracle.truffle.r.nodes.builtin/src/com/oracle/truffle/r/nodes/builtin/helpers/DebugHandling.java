@@ -46,7 +46,6 @@ import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
-import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;

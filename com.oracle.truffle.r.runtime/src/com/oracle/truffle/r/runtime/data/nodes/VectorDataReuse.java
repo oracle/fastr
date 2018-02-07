@@ -27,7 +27,6 @@
  */
 package com.oracle.truffle.r.runtime.data.nodes;
 
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
