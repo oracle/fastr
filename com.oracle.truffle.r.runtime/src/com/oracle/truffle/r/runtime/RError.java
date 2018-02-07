@@ -589,6 +589,7 @@ public final class RError extends RuntimeException implements TruffleException {
         IS_NULL("'%s' is NULL"),
         MUST_BE_SCALAR("'%s' must be of length 1"),
         ROWS_MUST_MATCH("number of rows of matrices must match (see arg %d)"),
+        COLS_MUST_MATCH("number of columns of matrices must match (see arg %d)"),
         ROWS_NOT_MULTIPLE("number of rows of result is not a multiple of vector length (arg %d)"),
         ARG_ONE_OF("'%s' should be one of %s"),
         MUST_BE_SQUARE_MATRIX("'%s' must be a square matrix"),

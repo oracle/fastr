@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -106,6 +106,11 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("v <- 1; attr(v, 'a') <- 'a'; attr(v, 'a1') <- 'a1'; cbind(v); cbind(v, v)");
         assertEval("v <- 1:3; attr(v, 'a') <- 'a'; attr(v, 'a1') <- 'a1'; cbind(v); cbind(v, v)");
         assertEval("v <- 1:3; v1<-1:3; attr(v, 'a') <- 'a'; attr(v1, 'a1') <- 'a1'; cbind(v, v1)");
+
+        assertEval("cbind(array(1:8,c(2,4),list(c('x','y'), c('a','b', 'a2', 'b2'))), 1:8)");
+        assertEval("cbind(1, 1:4, matrix(1:8, nrow=2))");
+        assertEval("cbind(matrix(1:4,nrow=2), matrix(1:8,nrow=4))");
+        assertEval(Output.IgnoreWarningContext, "cbind(1:2, 1:3, 1:4)");
     }
 
     @Test
@@ -166,6 +171,11 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ attributes(cbind(integer(0), integer(0))) }");
         assertEval("{ attributes(cbind(c(1), integer(0))) }");
         assertEval("{ attributes(cbind(structure(1:4, dim=c(2,2), dimnames=list(y=c('y1', 'y2'), x=c('x1', 'x2'))), integer(0))) }");
+
+        assertEval("cbind(array(1:8,c(2,2,2),list(c('a','b'), c('d','e'), c('f','g'))), array(1:8,c(2,2,2),list(c('a1','b1'), c('d1','e1'), c('f1','g1'))))");
+        assertEval("cbind(array(1:8,c(2,2),list(c('a','b'), c('d','e'))), array(1:4,c(2,2),list(c('f','g'), c('h','i'))))");
+        assertEval(Output.IgnoreWarningContext, "cbind(array(1:8,c(2,2),list(c('a','b'), c('d','e'))), array(1:8,c(2,2,2),list(c('a1','b1'), c('d1','e1'), c('f1','g1'))))");
+        assertEval("cbind(array(1:8,c(2,4),list(c('x','y'), c('a','b', 'a2', 'b2'))), array(1:8,c(2,2,2),list(c('a1','b1'), c('d1','e1'), c('f1','g1'))))");
     }
 
     @Test

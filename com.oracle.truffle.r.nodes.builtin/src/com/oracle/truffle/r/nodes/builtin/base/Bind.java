@@ -64,6 +64,7 @@ import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -302,9 +303,8 @@ public abstract class Bind extends RBaseNode {
             if (!GetDimAttributeNode.isArray(dim) || dim.length == 1) {
                 RStringVector names = extractNamesNode.execute(vec);
                 firstDimNames = names == null ? RNull.instance : names;
-            } else {
-                RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
             }
+            // dimnames are simply ignored for arrays with 3 and more dimensions
         }
         if (firstDimNames != RNull.instance) {
             RAbstractStringVector names = (RAbstractStringVector) firstDimNames;
@@ -365,43 +365,74 @@ public abstract class Bind extends RBaseNode {
                     }
                 }
             } else {
-                RInternalError.unimplemented("binding multi-dimensional arrays is not supported");
-                return 0;
+                for (int i = 0; i < resDim; i++) {
+                    dimNamesArray[ind++] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+                }
+                return -ind;
             }
         }
     }
 
     /**
      * @param vectors vectors to be combined
-     * @param res result dims
-     * @param bindDims columns dim (cbind) or rows dim (rbind)
-     * @return whether number of rows (cbind) or columns (rbind) in vectors is the same
+     * @param res (output) dimensions of the resulting matrix.
+     * @param bindDims (output, size == vectors.length) for each vector gives how many columns
+     *            (cbind) it will fill in the resulting matrix, i.e. 1 for vectors and columns count
+     *            for matrices.
+     * @return whether some vectors will have to be recycled, i.e. iterated more than once when
+     *         filling the result
      */
     protected boolean getResultDimensions(RAbstractVector[] vectors, int[] res, int[] bindDims) {
+        /*
+         * From the documentation: if there are several matrix arguments, they must all have the
+         * same number of columns (or rows) and this will be the number of columns (or rows) of the
+         * result. If all the arguments are vectors, the number of columns (rows) in the result is
+         * equal to the length of the longest vector. Values in shorter arguments are recycled to
+         * achieve this length (with a warning if they are recycled only fractionally)
+         *
+         * When the arguments consist of a mix of matrices and vectors the number of columns (rows)
+         * of the result is determined by the number of columns (rows) of the matrix arguments. Any
+         * vectors have their values recycled or subsetted to achieve this length.
+         */
+        assert vectors.length > 0;
+        // NOTE: naming is chosen for cbind version, but it applies to rbind too
+        int rowsCountMatrix = -1; // the number of rows of the first matrix argument if any
+        int rowsCountVector = 0;  // the max length of simple vectors
+        int minRowsCountVector = 0;  // the min length of simple vectors, to determine return value
+        int[] rowsCountsVectors = new int[vectors.length];  // rows count of each vector/matrix
+        int columnsCount = 0; // the total number of columns (cbind) in the resulting matrix
         int srcDim1Ind = type == BindType.cbind ? 0 : 1;
         int srcDim2Ind = type == BindType.cbind ? 1 : 0;
-        assert vectors.length > 0;
-        RAbstractVector v = vectorProfile.profile(vectors[0]);
-        int[] dim = getDimensions(v, getVectorDimensions(v));
-        assert dim.length == 2;
-        bindDims[0] = dim[srcDim2Ind];
-        res[srcDim1Ind] = dim[srcDim1Ind];
-        res[srcDim2Ind] = dim[srcDim2Ind];
-        boolean notEqualDims = false;
-        for (int i = 1; i < vectors.length; i++) {
-            RAbstractVector v2 = vectorProfile.profile(vectors[i]);
-            int[] dims = getDimensions(v2, getVectorDimensions(v2));
-            assert dims.length == 2;
-            bindDims[i] = dims[srcDim2Ind];
-            if (dims[srcDim1Ind] != res[srcDim1Ind]) {
-                notEqualDims = true;
-                if (dims[srcDim1Ind] > res[srcDim1Ind]) {
-                    res[srcDim1Ind] = dims[srcDim1Ind];
-                }
+        for (int i = 0; i < vectors.length; i++) {
+            RAbstractVector v = vectorProfile.profile(vectors[i]);
+            int[] dims = getVectorDimensions(v);
+            if (dims == null || dims.length != 2) {
+                int vectorLen = v.getLength();
+                rowsCountsVectors[i] = vectorLen;
+                rowsCountVector = Math.max(rowsCountVector, vectorLen);
+                minRowsCountVector = Math.min(minRowsCountVector, vectorLen);
+                columnsCount++;
+                bindDims[i] = 1;
+                continue;
             }
-            res[srcDim2Ind] += dims[srcDim2Ind];
+            columnsCount += dims[srcDim2Ind];
+            bindDims[i] = dims[srcDim2Ind];
+            if (rowsCountMatrix == -1) {
+                rowsCountMatrix = dims[srcDim1Ind];
+
+            } else if (rowsCountMatrix != dims[srcDim1Ind]) {
+                error(type == BindType.cbind ? Message.ROWS_MUST_MATCH : Message.COLS_MUST_MATCH, i + 1);
+            }
         }
-        return notEqualDims;
+        res[srcDim2Ind] = columnsCount;
+        int resultRowsCount = res[srcDim1Ind] = rowsCountMatrix != -1 ? rowsCountMatrix : rowsCountVector;
+        for (int i = 0; i < vectors.length; i++) {
+            if (rowsCountsVectors[i] != 0 && rowsCountsVectors[i] > resultRowsCount) {
+                warning(type == BindType.cbind ? Message.ROWS_NOT_MULTIPLE : Message.COLUMNS_NOT_MULTIPLE, i + 1);
+                break; // reported only for first ocurrence
+            }
+        }
+        return minRowsCountVector < resultRowsCount;
     }
 
     protected int[] getDimensions(RAbstractVector vector, int[] dimensions) {
@@ -504,21 +535,24 @@ public abstract class Bind extends RBaseNode {
             }
 
             // compute result vector values
-            int vecLength = vec.getLength();
-            for (int j = 0; j < vecLength; j++) {
-                result.transferElementSameType(ind++, vec, j);
-            }
-            if (rowsAndColumnsNotEqual) {
-                everSeenNotEqualRows.enter();
-                if (vecLength < resultDimensions[0]) {
-                    // re-use vector elements
-                    int k = 0;
-                    for (int j = 0; j < resultDimensions[0] - vecLength; j++, k = Utils.incMod(k, vecLength)) {
-                        result.transferElementSameType(ind++, vectors[i], k);
-                    }
-
-                    if (k != 0) {
-                        RError.warning(this, RError.Message.ROWS_NOT_MULTIPLE, i + 1);
+            int[] dims = getDimensions(vec, getVectorDimensions(vec));
+            assert dims.length == 2;
+            for (int col = 0; col < dims[1]; col++) {
+                int rowsCount = Math.min(dims[0], resultDimensions[0]);
+                for (int row = 0; row < rowsCount; row++) {
+                    result.transferElementSameType(ind++, vec, dims[0] * col + row);
+                }
+                if (rowsAndColumnsNotEqual) {
+                    everSeenNotEqualRows.enter();
+                    if (rowsCount < resultDimensions[0]) {
+                        // re-use vector elements
+                        int k = 0;
+                        for (int j = 0; j < resultDimensions[0] - dims[0]; j++, k = Utils.incMod(k, dims[0])) {
+                            result.transferElementSameType(ind++, vectors[i], dims[0] * col + k);
+                        }
+                        if (k != 0) {
+                            RError.warning(this, RError.Message.ROWS_NOT_MULTIPLE, i + 1);
+                        }
                     }
                 }
             }
