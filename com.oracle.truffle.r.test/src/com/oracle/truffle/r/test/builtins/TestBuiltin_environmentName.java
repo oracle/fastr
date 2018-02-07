@@ -31,4 +31,14 @@ public class TestBuiltin_environmentName extends TestBase {
     public void testenvironmentName3() {
         assertEval("argv <- list(structure(numeric(0), .Dim = c(0L, 0L))); .Internal(environmentName(argv[[1]]))");
     }
+
+    @Test
+    public void test() {
+        assertEval("environmentName(globalenv())");
+        assertEval("environmentName(baseenv())");
+        assertEval("environmentName(emptyenv())");
+        assertEval("environmentName(parent.env(globalenv()))");
+        assertEval("environmentName(environment(sum))");
+        assertEval("environmentName(environment(lm))");
+    }
 }
