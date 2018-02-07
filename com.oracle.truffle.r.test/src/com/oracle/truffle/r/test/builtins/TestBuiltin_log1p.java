@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -30,5 +30,11 @@ public class TestBuiltin_log1p extends TestBase {
     @Test
     public void testlog1p3() {
         assertEval(Ignored.ReferenceError, "log1p(c(1+1i,-1-1i))");
+    }
+
+    @Test
+    public void testlog1p() {
+        assertEval("log1p(NaN)");
+        assertEval("log1p(NA)");
     }
 }

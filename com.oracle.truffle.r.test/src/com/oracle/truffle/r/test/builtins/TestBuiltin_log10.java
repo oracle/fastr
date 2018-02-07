@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -66,5 +66,7 @@ public class TestBuiltin_log10 extends TestBase {
         assertEval("{ x <- c(a=1, b=10) ; round( c(log(x), log10(x), log2(x)), digits=5 ) }");
 
         assertEval("{ log10(c(1+1i, -1-1i)) }");
+        assertEval("{ log10(NaN) }");
+        assertEval("{ log10(NA) }");
     }
 }
