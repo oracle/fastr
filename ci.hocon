@@ -273,6 +273,7 @@ builds = [
   #${gateTestManagedLinux}     {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-managed-linux-amd64"}
   ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}
   ${gnurTests}                {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-gnur-tests"}
-  ${gateTestLinuxLLVM}        { targets : [gate], name: "gate-test-llvm-linux-amd64" }
+  # disabled because of spurious dragonegg problems
+  #${gateTestLinuxLLVM}        { targets : [gate], name: "gate-test-llvm-linux-amd64" }
   ${gateTestDarwinLLVM}        { targets : [gate], name: "gate-test-llvm-darwin-amd64" }
 ]
