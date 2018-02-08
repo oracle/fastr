@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,10 +30,11 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
@@ -46,27 +47,39 @@ public abstract class RExplicitCallNode extends Node {
         return RExplicitCallNodeGen.create();
     }
 
-    public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args);
+    public final Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args) {
+        return execute(frame, function, args, null);
+    }
+
+    public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller);
 
     private final RFrameSlot argsIdentifier = RFrameSlot.createTemp(true);
+    private final RFrameSlot callerIdentifier = RFrameSlot.createTemp(true);
     @CompilationFinal private FrameSlot argsFrameSlot;
+    @CompilationFinal private FrameSlot callerFrameSlot;
 
     @Specialization
-    protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args,
-                    @Cached("createExplicitCall()") RCallBaseNode call) {
+    protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller,
+                    @Cached("createExplicitCall()") RCallNode call) {
         if (argsFrameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
         }
+        if (callerFrameSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callerFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), callerIdentifier, FrameSlotKind.Object);
+        }
         try {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, args);
+            FrameSlotChangeMonitor.setObject(frame, callerFrameSlot, caller == null ? RNull.instance : caller);
             return call.execute(frame, function);
         } finally {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
+            FrameSlotChangeMonitor.setObject(frame, callerFrameSlot, null);
         }
     }
 
-    protected RCallBaseNode createExplicitCall() {
-        return RCallNode.createExplicitCall(argsIdentifier);
+    protected RCallNode createExplicitCall() {
+        return RCallNode.createExplicitCall(argsIdentifier, callerIdentifier);
     }
 }

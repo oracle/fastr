@@ -585,7 +585,7 @@ public abstract class Bind extends RBaseNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dispatchCallNode = insert(RExplicitCallNode.create());
                 }
-                return dispatchCallNode.execute(frame, dispatchFunction, (RArgsValuesAndNames) RArguments.getArgument(frame, 0));
+                return dispatchCallNode.call(frame, dispatchFunction, (RArgsValuesAndNames) RArguments.getArgument(frame, 0));
             } else {
                 if (bind == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();

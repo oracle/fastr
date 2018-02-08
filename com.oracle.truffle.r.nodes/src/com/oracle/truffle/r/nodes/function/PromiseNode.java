@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.Closure;
-import com.oracle.truffle.r.runtime.data.ClosureCache;
+import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -356,7 +356,7 @@ public abstract class PromiseNode extends RNode {
     }
 
     @TruffleBoundary
-    static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
+    static RNode createVarArgs(RNode[] nodes, ArgumentsSignature signature, RNodeClosureCache closureCache, boolean forcedEager) {
         return new VarArgsPromiseNode(nodes, signature, closureCache, forcedEager);
     }
 
@@ -368,7 +368,7 @@ public abstract class PromiseNode extends RNode {
         private final Closure[] closures;
         private final ArgumentsSignature signature;
 
-        private VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, ClosureCache closureCache, boolean forcedEager) {
+        private VarArgsPromiseNode(RNode[] nodes, ArgumentsSignature signature, RNodeClosureCache closureCache, boolean forcedEager) {
             this.promised = new RNode[nodes.length];
             this.closures = new Closure[nodes.length];
             boolean noOpt = false;

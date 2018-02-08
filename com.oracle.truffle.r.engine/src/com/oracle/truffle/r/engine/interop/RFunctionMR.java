@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -71,13 +72,15 @@ public class RFunctionMR {
 
         private static final FrameDescriptor emptyFrameDescriptor = FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<interop>", new FrameDescriptor("R interop frame"));
         private static final RFrameSlot argsIdentifier = RFrameSlot.createTemp(false);
+        private static final RFrameSlot explicitCallerId = RFrameSlot.createTemp(false);
         private static final FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(emptyFrameDescriptor, argsIdentifier, FrameSlotKind.Object);
+        private static final FrameSlot slotCaller = FrameSlotChangeMonitor.findOrAddFrameSlot(emptyFrameDescriptor, explicitCallerId, FrameSlotKind.Object);
 
         static {
             FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<function>", emptyFrameDescriptor);
         }
 
-        @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier);
+        @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier, explicitCallerId);
 
         protected Object access(RFunction receiver, Object[] arguments) {
             Object[] dummyFrameArgs = RArguments.createUnitialized();
@@ -90,6 +93,7 @@ public class RFunctionMR {
             RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(convertedArguments, ArgumentsSignature.empty(arguments.length));
             try {
                 FrameSlotChangeMonitor.setObject(dummyFrame, slot, actualArgs);
+                FrameSlotChangeMonitor.setObject(dummyFrame, slotCaller, RNull.instance);
                 Object value = call.execute(dummyFrame, receiver);
                 return r2Foreign.execute(value);
             } finally {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache;
+import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -163,7 +164,7 @@ public class ArgumentMatcher {
             argNodes = suppliedArgs.getArguments();
             signature = suppliedArgs.getSignature();
         }
-        return ArgumentMatcher.matchNodes(target, argNodes, signature, s3DefaultArguments, callingNode, arguments, noOpt);
+        return ArgumentMatcher.matchNodes(target, argNodes, signature, s3DefaultArguments, callingNode, arguments.getClosureCache(), noOpt);
     }
 
     public static MatchPermutation matchArguments(ArgumentsSignature supplied, ArgumentsSignature formal, RBaseNode callingNode, RBuiltinDescriptor builtin) {
@@ -327,7 +328,7 @@ public class ArgumentMatcher {
      *         accordingly.
      */
     private static Arguments<RNode> matchNodes(RRootNode target, RNode[] suppliedArgs, ArgumentsSignature suppliedSignature, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode,
-                    ClosureCache closureCache, boolean noOpt) {
+                    RNodeClosureCache closureCache, boolean noOpt) {
         CompilerAsserts.neverPartOfCompilation();
         assert suppliedArgs.length == suppliedSignature.getLength();
 
@@ -494,13 +495,13 @@ public class ArgumentMatcher {
              * InfixEmulationFunctions.tilde).
              */
             RNode defaultArg = formals.getDefaultArgument(formalIndex);
-            Closure defaultClosure = formals.getOrCreatePromiseClosure(defaultArg);
+            Closure defaultClosure = formals.getClosureCache().getOrCreatePromiseClosure(defaultArg);
             return PromiseNode.create(RPromiseFactory.create(PromiseState.Default, defaultClosure), noOpt, false);
         }
         return ConstantNode.create(formals.getInternalDefaultArgumentAt(formalIndex));
     }
 
-    private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, ClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath) {
+    private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, RNodeClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath) {
         // Create promise, unless it's the empty value
         if (suppliedArg instanceof ConstantNode) {
             ConstantNode a = (ConstantNode) suppliedArg;

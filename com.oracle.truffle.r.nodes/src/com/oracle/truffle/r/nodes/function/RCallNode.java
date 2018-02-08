@@ -85,7 +85,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -98,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -150,6 +150,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     @Child private ReadVariableNode lookupVarArgs;
     protected final LocalReadVariableNode explicitArgs;
 
+    @Child public LocalReadVariableNode explicitCaller;
+
     private final ConditionProfile nullBuiltinProfile = ConditionProfile.createBinaryProfile();
 
     // needed for INTERNAL_GENERIC calls:
@@ -160,6 +162,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         if (explicitArgs == null) {
             return RCaller.create(frame, this);
         } else {
+            Object explicitCallerValue = explicitCaller.execute(frame);
+            if (explicitCallerValue != RNull.instance) {
+                return (RCaller) explicitCallerValue;
+            }
             return RCaller.create(frame, RCallerHelper.createFromArguments(function, (RArgsValuesAndNames) explicitArgs.execute(frame)));
         }
     }
@@ -174,11 +180,12 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         this.signature = signature;
     }
 
-    protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier) {
+    protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier, Object explicitCallerIdentifier) {
         assert sourceSection != null;
         this.sourceSection = sourceSection;
         this.arguments = null;
         this.explicitArgs = LocalReadVariableNode.create(explicitArgsIdentifier, false);
+        this.explicitCaller = LocalReadVariableNode.create(explicitCallerIdentifier, false);
         this.varArgIndexes = null;
         this.lookupVarArgs = null;
         this.signature = null;
@@ -352,22 +359,24 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RArgsValuesAndNames argAndNames = (RArgsValuesAndNames) explicitArgs.execute(frame);
 
-        Object dispatchObject = argAndNames.getArgument(0);
-
-        if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
-            RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-            // TODO create a node that looks up the name in the names attribute
-            int index = list.getElementIndexByName(builtin.getName());
-            if (index != -1) {
-                RFunction basicFun = (RFunction) list.getDataAt(index);
-                Object result = call.execute(frame, basicFun, argAndNames, null, null);
-                if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
-                    return result;
+        RStringVector type = null;
+        if (!argAndNames.isEmpty()) {
+            Object dispatchObject = argAndNames.getArgument(0);
+            if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
+                RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+                // TODO create a node that looks up the name in the names attribute
+                int index = list.getElementIndexByName(builtin.getName());
+                if (index != -1) {
+                    RFunction basicFun = (RFunction) list.getDataAt(index);
+                    Object result = call.execute(frame, basicFun, argAndNames, null, null);
+                    if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
+                        return result;
+                    }
                 }
             }
+            type = classHierarchyNode.execute(promiseHelperNode.checkEvaluate(frame, dispatchObject));
         }
 
-        RStringVector type = argAndNames.isEmpty() ? null : classHierarchyNode.execute(promiseHelperNode.checkEvaluate(frame, dispatchObject));
         S3Args s3Args;
         RFunction resultFunction;
         if (implicitTypeProfile.profile(type != null)) {
@@ -751,8 +760,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * allows to invoke a function with argument(s) supplied by hand. Consider using
      * {@link com.oracle.truffle.r.nodes.function.call.RExplicitCallNode} instead.
      */
-    public static RCallNode createExplicitCall(Object explicitArgsIdentifier) {
-        return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, null);
+    public static RCallNode createExplicitCall(Object explicitArgsIdentifier, Object explicitCallerIdentifier) {
+        return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, explicitCallerIdentifier, null);
     }
 
     static boolean needsSplitting(RootCallTarget target) {
@@ -870,9 +879,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 if (e == null || e.cachedTarget != cachedTarget) {
                     entry = e = insert(new GenericCallEntry(cachedTarget, createCacheNode(cachedTarget), createArguments(cachedTarget)));
                 }
-                VirtualFrame frame = SubstituteVirtualFrame.create(materializedFrame);
-                RArgsValuesAndNames orderedArguments = e.prepareArguments.execute(frame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
-                return e.leafCall.execute(frame, function, orderedArguments, (S3Args) s3Args);
+                RArgsValuesAndNames orderedArguments = e.prepareArguments.execute(materializedFrame, (RArgsValuesAndNames) varArgs, (S3DefaultArguments) s3DefaultArguments, originalCall);
+                return e.leafCall.execute(materializedFrame, function, orderedArguments, (S3Args) s3Args);
             }
         }
 

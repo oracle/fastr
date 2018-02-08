@@ -130,6 +130,11 @@ public class TestInteractiveDebug extends TestBase {
         assertEval("do.call('browser', list())\nc\n");
         assertEval("browser()\nwhere\nc\n");
         assertEval("options(error=browser); prod('a')\nwhere\nc\n");
+        assertEval(
+                        "{ bar <- function(vbar) do.call(browser, list(), envir = parent.frame(2));" +
+                                        "baz <- function(vbaz) bar(vbaz);" +
+                                        "start <- function(vstart) baz(vstart);" +
+                                        "start(42); }\nls()\nc");
     }
 
     @Test

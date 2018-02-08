@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,5 +32,18 @@ public class TestBuiltin_sysframe extends TestBase {
     @Test
     public void frameAccessCommonTest() {
         assertEval("{ foo <- function(x) lapply(1:7, function(x) ls(sys.frame(x)));" + SYS_PARENT_SETUP + "}");
+    }
+
+    @Test
+    public void sysFrameWithPromises() {
+        // Note: the parameter names help to identify the corresponding environments in the output
+        assertEval(
+                        "{ top <- function(vtop) vtop;" +
+                                        "foo <- function(vfoo) top(vfoo);" +
+                                        "boo <- function(vboo) foo(sys.frame(vboo));" +
+                                        "bar <- function(vbar) do.call(boo, list(vbar), envir = parent.frame(2));" +
+                                        "baz <- function(vbaz) bar(vbaz);" +
+                                        "start <- function(vstart) baz(vstart);" +
+                                        "lapply(lapply(0:8, function(i) start(i)), function(env) sort(tolower(ls(env)))); }");
     }
 }

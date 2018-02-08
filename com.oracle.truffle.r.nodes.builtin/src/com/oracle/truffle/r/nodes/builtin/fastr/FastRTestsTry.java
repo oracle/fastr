@@ -55,7 +55,7 @@ public abstract class FastRTestsTry extends RBuiltinNode.Arg1 {
     @Specialization
     public Object tryFunc(VirtualFrame frame, RFunction func) {
         try {
-            call.execute(frame, func, RArgsValuesAndNames.EMPTY);
+            call.call(frame, func, RArgsValuesAndNames.EMPTY);
         } catch (Throwable ex) {
             // try to recover from a possibly incosistent state when running tests:
             // some handlers might still be lying around and interfere with subsequent calls

@@ -72,6 +72,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache;
+import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -87,7 +88,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
-public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction, ClosureCache {
+public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNode, RSyntaxFunction {
 
     private final FormalArguments formalArguments;
 
@@ -107,6 +108,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private String name;
     private SourceSection sourceSectionR;
     private final SourceSection[] argSourceSections;
+
+    private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
     @Child private RNode saveArguments;
     @Child private FrameSlotNode onExitSlot;
@@ -380,7 +383,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                                     CompilerDirectives.transferToInterpreter();
                                     RInternalError.shouldNotReachHere("unexpected type for on.exit entry: " + expr.car());
                                 }
-                                onExitExpressionCache.execute(frame, getOrCreateLanguageClosure((RNode) expr.car()));
+                                onExitExpressionCache.execute(frame, closureCache.getOrCreateLanguageClosure((RNode) expr.car()));
                             }
                         }
                     } catch (ReturnException ex) {
@@ -564,14 +567,5 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             handlerStackSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.HandlerStack, FrameSlotKind.Object);
         }
         return handlerStackSlot;
-    }
-
-    @Override
-    public IdentityHashMap<RNode, Closure> getContent() {
-        if (languageClosureCache == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            languageClosureCache = new IdentityHashMap<>();
-        }
-        return languageClosureCache;
     }
 }

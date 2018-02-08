@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -48,5 +48,7 @@ public class TestBuiltin_docall extends TestBase {
         assertEval("{ boo <- function(c) ls(parent.frame(2)); foo <- function(a,b) boo(a); bar <- function(x,z) do.call('foo', list(parse(text='goo()'),2)); bar() }");
         assertEval("{ boo <- function(c) ls(parent.frame(3)); foo <- function(a,b) boo(a); bar <- function(x,z) do.call('foo', list(parse(text='goo()'),2)); baz <- function(bazX) bar(bazX,1); baz(); }");
         assertEval("{ f1 <- function(a) ls(parent.frame(2)); f2 <- function(b) f1(b); f3 <- function(c) f2(c); f4 <- function(d) do.call('f3', list(d)); f4(42); }");
+
+        assertEval("do.call('c', list())");
     }
 }
