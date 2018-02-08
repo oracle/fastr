@@ -25,6 +25,14 @@ x <- "12345"; rffi.char_length(x)
 
 strVec <- rffi.getStringNA();
 stopifnot(anyNA(strVec))
+stopifnot(rffi.isNAString(strVec))
+rffi.LENGTH(strVec)
+# this will call CHAR(x) on the NA string, which materializes it to native pointer...
+rffi.char_length(strVec)
+strVec <- rffi.setStringElt(c('hello'), as.character(NA))
+stopifnot(anyNA(strVec))
+
+stopifnot(rffi.isNAString(as.character(NA)))
 
 x <- list(1)
 attr(x, 'myattr') <- 'hello';

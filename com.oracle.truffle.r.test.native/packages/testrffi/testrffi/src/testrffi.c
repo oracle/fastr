@@ -357,6 +357,19 @@ SEXP test_stringNA(void) {
     return x;
 }
 
+SEXP test_setStringElt(SEXP vec, SEXP elt) {
+    SET_STRING_ELT(vec, 0, STRING_ELT(elt, 0));
+    return vec;
+}
+
+SEXP test_isNAString(SEXP vec) {
+    if (STRING_ELT(vec, 0) == NA_STRING) {
+        return ScalarLogical(1);
+    } else {
+        return ScalarLogical(0);
+    }
+}
+
 // This function is expected to be called only with environment that has single
 // promise value in the '...' variable and this is asserted inside this function.
 // The return value is list with the promises' expression and environment.

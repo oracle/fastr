@@ -173,6 +173,10 @@ rffi.getStringNA <- function() {
     .Call("test_stringNA")
 }
 
+rffi.setStringElt <- function(x,y) {
+	.Call("test_setStringElt", x, y)
+}
+
 rffi.captureDotsWithSingleElement <- function(env) {
     .Call('test_captureDotsWithSingleElement', env)
 }
@@ -199,4 +203,8 @@ rffi.parseVector <- function(x) {
 
 rffi.RfEvalWithPromiseInPairList <- function() {
     .Call('test_RfEvalWithPromiseInPairList')
+}
+
+rffi.isNAString <- function(x) {
+	.Call('test_isNAString', x)
 }

@@ -43,6 +43,12 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
     }
 
     public String getContents() {
+        if (this == NA) {
+            // The NA string may have been moved to the native space if someone called R_CHAR on it,
+            // but on the Java side, it should still look like NA string, i.e. RRuntime.isNA should
+            // be true for its contents
+            return RRuntime.STRING_NA;
+        }
         return NativeDataAccess.getData(this, contents);
     }
 
