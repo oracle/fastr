@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,38 +25,31 @@ package com.oracle.truffle.r.library.fastrGrid.grDevices;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.NullDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
-public class DevCairo extends RExternalBuiltinNode {
+public class PDF extends RExternalBuiltinNode {
     static {
-        Casts.noCasts(DevCairo.class);
+        Casts.noCasts(PDF.class);
     }
 
     @Override
     @TruffleBoundary
     protected Object call(RArgsValuesAndNames args) {
-        if (args.getLength() < 4) {
-            throw error(Message.ARGUMENTS_REQUIRED_COUNT, args.getLength(), "devCairo", 4);
+        if (args.getLength() < 1) {
+            throw error(Message.ARGUMENTS_REQUIRED_COUNT, args.getLength(), "PDF", 1);
         }
 
         String filename = RRuntime.asString(args.getArgument(0));
         if (filename == null) {
             GridContext.getContext().setCurrentDevice("null", new NullDevice());
-            return RNull.instance;
         }
 
-        int witdh = RRuntime.asInteger(args.getArgument(2));
-        int height = RRuntime.asInteger(args.getArgument(3));
-        if (RRuntime.isNA(witdh) || RRuntime.isNA(height) || RRuntime.isNA(filename) || filename.isEmpty()) {
-            throw error(Message.INVALID_ARG_TYPE);
-        }
+        // TODO: only a null PDF device "supported"
 
-        GridContext.getContext().setCurrentDevice("svg", new SVGDevice(FileDevUtils.formatInitialFilename(filename), witdh / 72., height / 72.), filename);
         return RNull.instance;
     }
 }

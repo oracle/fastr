@@ -114,6 +114,9 @@ public final class CPar extends RExternalBuiltinNode {
             case "ylog":
                 // TODO:
                 return RDataFactory.createLogicalVectorFromScalar(false);
+            case "page":
+                // TODO:
+                return RDataFactory.createLogicalVectorFromScalar(false);
             default:
                 if (!FastROptions.IgnoreGraphicsCalls.getBooleanValue()) {
                     throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");
