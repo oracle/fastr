@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -66,4 +66,13 @@ public class TestBuiltin_parse extends TestBase {
     public void testSrcfile() {
         assertEval("parse(text='', srcfile=srcfile(system.file('testfile')))");
     }
+
+    @Test
+    public void testParseData() {
+        assertEvalFastR("p <- parse(text = 'x = 1', keep.source = TRUE); attr(p, 'srcfile')$parseData",
+                        "structure(c(1L, 1L, 1L, 1L, 1L, 263L, 0L, 0L), text = \"x\", tokens = \"SYMBOL\", class = \"parseData\", .Dim = c(8L, 1L))");
+        assertEvalFastR("p <- parse(text = 'x = x + 1; rnorm(1, std = z); f2 <- function(a=1) a', keep.source = TRUE); attr(p, 'srcfile')$parseData",
+                        "structure(c(1L, 1L, 1L, 1L, 1L, 263L, 0L, 0L, 1L, 5L, 1L, 5L, 1L, 263L, 1L, 0L, 1L, 12L, 1L, 28L, 1L, 296L, 2L, 0L, 1L, 27L, 1L, 27L, 1L, 263L, 3L, 0L, 1L, 31L, 1L, 32L, 1L, 263L, 4L, 0L, 1L, 51L, 1L, 51L, 1L, 263L, 5L, 0L), text = c(\"x\", \"x\", \"rnorm\", \"z\", \"f2\", \"a\"), tokens = c(\"SYMBOL\", \"SYMBOL\", \"SYMBOL_FUNCTION_CALL\", \"SYMBOL\", \"SYMBOL\", \"SYMBOL\"), class = \"parseData\", .Dim = c(8L, 6L))");
+    }
+
 }
