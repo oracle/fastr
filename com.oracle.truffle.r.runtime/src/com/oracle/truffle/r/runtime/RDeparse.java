@@ -137,7 +137,7 @@ public class RDeparse {
     public static final int PREC_NS = 16;
     public static final int PREC_SUBSET = 17;
 
-    private static class PPInfo {
+    public static class PPInfo {
         public final PP kind;
         public final int prec;
         public final boolean rightassoc;
@@ -153,7 +153,7 @@ public class RDeparse {
         }
     }
 
-    private static class Func {
+    public static class Func {
         public final String op;
         public final String closeOp;
         public final PPInfo info;
@@ -209,7 +209,7 @@ public class RDeparse {
 
     private static final PPInfo USERBINOP = new PPInfo(PP.BINARY, PREC_PERCENT, false);
 
-    private static Func getFunc(String op) {
+    public static Func getFunc(String op) {
         for (Func func : FUNCTAB) {
             if (func.op.equals(op)) {
                 return func;

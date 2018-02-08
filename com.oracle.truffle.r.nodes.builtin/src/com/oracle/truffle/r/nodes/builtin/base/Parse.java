@@ -30,7 +30,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.EnumSet;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -41,6 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
+import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -57,12 +60,19 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 /**
  * Internal component of the {@code parse} base package function.
@@ -269,5 +279,174 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
 
         setWholeSrcRefAttrNode.execute(exprs, RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
         setSrcFileAttrNode.execute(exprs, srcFile);
+
+        RIntVector parseData = new ParseDataVisitor(exprs).getParseData();
+        srcFile.safePut("parseData", parseData);
+    }
+
+    /**
+     * This class aspires to reconstruct the original parse tree through visiting a parsed
+     * expression(s).
+     *
+     * The current implementation does not reconstruct the parse tree completely. Instead, it deals
+     * with symbols only (i.e. a flat tree is produced), which should suffice for templating
+     * packages, such as knitr.
+     */
+    static class ParseDataVisitor extends RSyntaxVisitor<Object> {
+
+        private final RExpression exprs;
+
+        /**
+         * A list of parse data octets. Every octet corresponds to one term/non-term. The octet is
+         * composed as follows:
+         *
+         * <pre>
+         * line1 col1 line2 col2 terminal token id parent
+         * </pre>
+         *
+         */
+        private final List<Integer> data = new ArrayList<>();
+        private boolean containsNA = false;
+
+        private final List<String> tokens = new ArrayList<>();
+
+        private final List<String> text = new ArrayList<>();
+
+        private int idCounter = 0;
+
+        ParseDataVisitor(RExpression exprs) {
+            this.exprs = exprs;
+        }
+
+        /**
+         * This enum mimics the <code>yytokentype</code> enum from <code>src/main/gram.c</code>.
+         */
+        enum TokenType {
+            SYMBOL(263, true),
+            SYMBOL_FUNCTION_CALL(296, true),
+            SPECIAL(304, true);
+
+            final int code;
+            final boolean terminal;
+
+            TokenType(int c, boolean term) {
+                this.code = c;
+                this.terminal = term;
+            }
+        }
+
+        private void addOctet(RSyntaxElement element, TokenType tokenType, String txt) {
+            addOctet(element.getSourceSection().getStartLine(), element.getSourceSection().getStartColumn(), element.getSourceSection().getEndLine(), element.getSourceSection().getEndColumn(),
+                            tokenType, txt);
+        }
+
+        private void addOctet(RSymbol symbol) {
+            addOctet(RRuntime.INT_NA, RRuntime.INT_NA, RRuntime.INT_NA, RRuntime.INT_NA, TokenType.SYMBOL, symbol.getName());
+            containsNA = true;
+        }
+
+        private void addOctet(int startLine, int startColumn, int endLine, int endColumn, TokenType tokenType, String txt) {
+            // TODO: adjust the parentId correctly
+            int parentId = 0;
+
+            data.add(startLine);
+            data.add(startColumn);
+            data.add(endLine);
+            data.add(endColumn);
+            data.add(tokenType.terminal ? 1 : 0);
+            data.add(tokenType.code);
+            data.add(idCounter);
+            data.add(parentId);
+
+            tokens.add(tokenType.name());
+            text.add(txt);
+
+            idCounter++;
+        }
+
+        @TruffleBoundary
+        RIntVector getParseData() {
+            int exprLen = exprs.getLength();
+            for (int i = 0; i < exprLen; i++) {
+                Object x = exprs.getDataAt(i);
+                if (x instanceof RLanguage) {
+                    RBaseNode rep = ((RLanguage) x).getRep();
+                    assert rep instanceof RSyntaxElement;
+                    accept((RSyntaxElement) rep);
+                } else if (x instanceof RSymbol) {
+                    addOctet((RSymbol) x);
+                } else {
+                    // TODO: primitives
+                }
+            }
+
+            int[] dataArray = new int[data.size()];
+            for (int i = 0; i < dataArray.length; i++) {
+                dataArray[i] = data.get(i);
+            }
+            RIntVector parseData = RDataFactory.createIntVector(dataArray, !containsNA);
+
+            String[] textArray = new String[text.size()];
+            for (int i = 0; i < textArray.length; i++) {
+                textArray[i] = text.get(i);
+            }
+
+            String[] tokensArray = new String[tokens.size()];
+            for (int i = 0; i < tokensArray.length; i++) {
+                tokensArray[i] = tokens.get(i);
+            }
+
+            parseData.setAttr("text", RDataFactory.createStringVector(textArray, true));
+            parseData.setAttr("tokens", RDataFactory.createStringVector(tokensArray, true));
+            parseData.setClassAttr(RDataFactory.createStringVector("parseData"));
+            parseData.setDimensions(new int[]{8, idCounter});
+            return parseData;
+        }
+
+        @Override
+        protected Object visit(RSyntaxCall element) {
+            RSyntaxElement lhs = element.getSyntaxLHS();
+            if (lhs instanceof RSyntaxLookup) {
+                String symbol = ((RSyntaxLookup) lhs).getIdentifier();
+                RDeparse.Func func = RDeparse.getFunc(symbol);
+                if (func == null) {
+                    addOctet(element, TokenType.SYMBOL_FUNCTION_CALL, symbol);
+                }
+            }
+
+            RSyntaxElement[] args = element.getSyntaxArguments();
+            for (int i = 0; i < args.length; i++) {
+                accept(args[i]);
+            }
+
+            return null;
+        }
+
+        @Override
+        protected Object visit(RSyntaxConstant element) {
+            // TODO: recognize constants
+            return null;
+        }
+
+        @Override
+        protected Object visit(RSyntaxLookup element) {
+            String symbol = element.getIdentifier();
+            addOctet(element, TokenType.SYMBOL, symbol);
+            return null;
+        }
+
+        @Override
+        protected Object visit(RSyntaxFunction element) {
+            for (RSyntaxElement arg : element.getSyntaxArgumentDefaults()) {
+                if (arg != null) {
+                    accept(arg);
+                }
+            }
+
+            accept(element.getSyntaxBody());
+
+            return null;
+        }
+
     }
 }
