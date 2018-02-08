@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -443,7 +444,7 @@ public class FileConnections {
         }
 
         @Override
-        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             setReadPosition();
             return super.readLines(n, warn, skipNul);
         }
@@ -598,7 +599,7 @@ public class FileConnections {
         }
 
         @Override
-        public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             setReadPosition();
             return super.readLines(n, warn, skipNul);
         }

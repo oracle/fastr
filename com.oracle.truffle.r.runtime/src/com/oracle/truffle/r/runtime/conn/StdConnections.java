@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
+import java.util.EnumSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
@@ -202,7 +203,7 @@ public class StdConnections {
 
         @Override
         @TruffleBoundary
-        public String[] readLinesInternal(int n, boolean warn, boolean skipNul) throws IOException {
+        public String[] readLinesInternal(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             ArrayList<String> lines = new ArrayList<>();
             String line;
             while ((line = console.readLine()) != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.runtime.conn;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.ByteBuffer;
+import java.util.EnumSet;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -41,7 +42,7 @@ abstract class DelegateWriteRConnection extends DelegateRConnection {
     }
 
     @Override
-    public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+    public String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
         throw new IOException(RError.Message.CANNOT_READ_CONNECTION.message);
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.env.frame;
 
+import java.text.Collator;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.HashSet;
+import java.util.Locale;
 import java.util.Set;
 import java.util.regex.Pattern;
 
@@ -38,7 +41,9 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -193,7 +198,14 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         String[] data = new String[matchedNamesList.size()];
         matchedNamesList.toArray(data);
         if (sorted) {
-            Arrays.sort(data);
+            Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
+            Collator collator = locale == Locale.ROOT || locale == null ? null : RLocale.getOrderCollator(locale);
+            Arrays.sort(data, new Comparator<String>() {
+                @Override
+                public int compare(String o1, String o2) {
+                    return RLocale.compare(collator, o1, o2);
+                }
+            });
         }
         return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
     }

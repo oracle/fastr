@@ -214,7 +214,16 @@ static int Rvsnprintf(char *buf, size_t size, const char  *format, va_list ap) {
 
 void Rf_errorcall(SEXP x, const char *format, ...) {
     TRACE0();
-    UNIMPLEMENTED;
+    // See also comments in Rf_error
+    char buf[BUFSIZE];
+    va_list(ap);
+    va_start(ap,format);
+    Rvsnprintf(buf, BUFSIZE - 1, format, ap);
+    va_end(ap);
+    ((call_Rf_errorcall) callbacks[Rf_errorcall_x])(x, ensure_string(buf));
+    checkExitCall();
+    // Should not reach here
+    unimplemented("Unexpected return from Rf_errorcall, should be no return function");
 }
 
 void Rf_warningcall(SEXP x, const char *format, ...) {
@@ -253,7 +262,7 @@ void Rf_error(const char *format, ...) {
     // RError.error does quite a lot of stuff including potentially searching for R condition handlers
     // and, if it finds any, does not return, but throws a different exception than RError.
     // We definitely need to exit the FFI call and we certainly cannot return to our caller.
-    char buf[8192];
+    char buf[BUFSIZE];
     va_list(ap);
     va_start(ap,format);
     Rvsnprintf(buf, BUFSIZE - 1, format, ap);

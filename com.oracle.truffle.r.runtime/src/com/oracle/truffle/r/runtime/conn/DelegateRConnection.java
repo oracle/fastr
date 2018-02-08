@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import java.nio.charset.Charset;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.util.ArrayList;
+import java.util.EnumSet;
 import java.util.Objects;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -129,13 +130,13 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
     /**
      * {@code readLines} from the connection. It would be convenient to use a {@link BufferedReader}
      * but mixing binary and text operations, which is a requirement, would then be difficult.
-     *
-     * @param warn Specifies if warnings should be output.
+     * 
+     * @param warn Specifies which warnings should be output.
      * @param skipNul Specifies if the null character should be ignored.
      */
     @Override
     @TruffleBoundary
-    public String[] readLines(int n, boolean warn, boolean skipNul) throws IOException {
+    public String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
         base.setIncomplete(false);
         ArrayList<String> lines = new ArrayList<>();
         int totalRead = 0;
@@ -165,7 +166,7 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
                         base.setIncomplete(true);
                     } else {
                         lines.add(incompleteFinalLine);
-                        if (warn) {
+                        if (warn.contains(ReadLineWarning.INCOMPLETE_LAST_LINE)) {
                             RError.warning(RError.SHOW_CALLER, RError.Message.INCOMPLETE_FINAL_LINE, base.getSummaryDescription());
                         }
                     }
@@ -184,7 +185,7 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
                 }
             } else if (ch == 0) {
                 nullRead = true;
-                if (warn && !skipNul) {
+                if (warn.contains(ReadLineWarning.EMBEDDED_NUL) && !skipNul) {
                     RError.warning(RError.SHOW_CALLER, RError.Message.LINE_CONTAINS_EMBEDDED_NULLS, lines.size() + 1);
                 }
             }
