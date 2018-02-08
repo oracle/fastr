@@ -486,7 +486,7 @@ def _set_test_status(fastr_test_info):
                 fastr_content = f.readlines()
 
             # first, parse file and see if a known test framework has been used
-            ok, skipped, failed = handle_output_file(fastr_content)
+            ok, skipped, failed = handle_output_file(fastr_testfile_status.abspath, fastr_content)
             if ok is not None:
                 fastr_testfile_status.report = ok, skipped, failed
             else:
@@ -540,18 +540,21 @@ def _set_test_status(fastr_test_info):
         print 'END checking ' + pkg
 
 
-def handle_output_file(test_output_file_contents):
+def handle_output_file(file, test_output_file_contents):
     """
     R package tests are usually distributed over several files. Each file can be interpreted as a test suite.
     This function parses the output file of all test suites and tries to detect if it used the testthat or RUnit.
     In this case, it parses the summary (number of passed, skipped, failed tests) of these test frameworks.
     If none of the frameworks is used, it performs an output diff and tries to determine, how many statements
     produces different output, i.e., every statement is considered to be a unit test.
+    :param file Path to the file.
     :param test_output_file_contents: the lines of the output file
     :return: A 3-tuple with the number of passed, skipped, and failed tests.
     """
+    mx.log("Detecting output type of {!s}".format(file))
     for i in range(0, len(test_output_file_contents)):
-        if test_output_file_contents[i].startswith("testthat results"):
+        if "testthat results" in test_output_file_contents[i]:
+            mx.log("Detected testthat summary in {!s}".format(file))
             return _parse_testthat_result(test_output_file_contents, i)
 
         # TODO parse RUnit test protocol
