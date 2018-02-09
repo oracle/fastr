@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -40,6 +39,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MatchArgNodeGen.MatchArgInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
@@ -80,14 +80,19 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
         @Child private PMatch pmatch = PMatchNodeGen.create();
         @Child private Identical identical = IdenticalNodeGen.create();
 
-        @Child private CastNode argCast = newCastBuilder().asStringVector().buildCastNode();
-        @Child private CastNode choicesCast = newCastBuilder().allowMissing().mustBe(stringValue()).asStringVector().buildCastNode();
+        @Child private CastNode argCast = newCastBuilder().defaultError(Message.MUST_BE_NULL_OR_STRING, "arg").allowNull().mustBe(stringValue()).buildCastNode();
+        @Child private CastNode choicesCast = newCastBuilder().allowNull().asStringVector().buildCastNode();
         @Child private CastNode severalOKCast = newCastBuilder().mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean()).buildCastNode();
 
         public abstract Object execute(Object arg, Object choices, Object severalOK);
 
         public final Object castAndExecute(Object arg, Object choices, Object severalOK) {
             return execute(argCast.doCast(arg), choicesCast.doCast(choices), severalOKCast.doCast(severalOK));
+        }
+
+        @Specialization
+        protected Object match(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") RNull choices, @SuppressWarnings("unused") boolean severalOK) {
+            return RNull.instance;
         }
 
         @Specialization
@@ -144,13 +149,24 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
             }
             RIntVector matched = pmatch.execute(arg, choices, -1, true);
             int count = count(matched);
-            if (count == 1) {
-                return choices.getDataAt(matched.getDataAt(0) - 1);
-            }
             checkEmpty(choices, count);
+            if (count == 1) {
+                for (int i = 0; i < matched.getLength(); i++) {
+                    int matchedIdx = matched.getDataAt(i);
+                    if (matchedIdx > 0) {
+                        return choices.getDataAt(matchedIdx - 1);
+                    }
+                }
+                assert false;
+            }
             String[] result = new String[count];
+            int resultIdx = -1;
             for (int i = 0; i < matched.getLength(); i++) {
-                result[i] = choices.getDataAt(matched.getDataAt(i) - 1);
+                int matchedIdx = matched.getDataAt(i);
+                if (matchedIdx > 0) {
+                    resultIdx++;
+                    result[resultIdx] = choices.getDataAt(matchedIdx - 1);
+                }
             }
             return RDataFactory.createStringVector(result, choices.isComplete());
         }
