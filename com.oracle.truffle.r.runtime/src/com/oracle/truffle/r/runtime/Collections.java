@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,7 @@ public final class Collections {
         }
 
         public boolean add(double key) {
-            int ind = Math.abs(Double.hashCode(key)) % keys.length;
+            int ind = getInd(key, keys.length);
             int firstInd = ind;
             while (true) {
                 if (RRuntime.isNAorNaN(keys[ind])) {
@@ -108,7 +108,7 @@ public final class Collections {
                         Arrays.fill(newKeys, RRuntime.DOUBLE_NA);
                         for (int i = 0; i < keys.length; i++) {
                             if (!RRuntime.isNAorNaN(keys[i])) {
-                                int tmpInd = Math.abs(Double.hashCode(keys[i])) % newKeys.length;
+                                int tmpInd = getInd(keys[i], newKeys.length);
                                 while (true) {
                                     if (RRuntime.isNAorNaN(newKeys[tmpInd])) {
                                         newKeys[tmpInd] = keys[i];
@@ -124,10 +124,21 @@ public final class Collections {
                         keys = newKeys;
 
                         // start hashing from the beginning
-                        ind = Math.abs(Double.hashCode(key)) % keys.length;
+                        ind = getInd(key, keys.length);
                     }
                 }
             }
+        }
+
+        private static int getInd(double key, int keyLength) {
+            int h = Double.hashCode(key);
+            if (h == Integer.MIN_VALUE) {
+                // HOTFIX:
+                // Double.hashCode(-0.0) is Integer.MIN_VALUE
+                // Maths.abs(Integer.MIN_VALUE) is Integer.MIN_VALUE
+                return 0;
+            }
+            return Math.abs(h) % keyLength;
         }
     }
 
