@@ -32,24 +32,22 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.UpdateAttrNodeGen.InternStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
+import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -73,24 +71,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
     @Child private SetAttributeNode setGenAttrNode;
     @Child private SetDimAttributeNode setDimNode;
 
-    @Child private InternStringNode intern = InternStringNodeGen.create();
-
-    public abstract static class InternStringNode extends Node {
-
-        public abstract String execute(String value);
-
-        @Specialization(limit = "3", guards = "value == cachedValue")
-        protected static String internCached(@SuppressWarnings("unused") String value,
-                        @SuppressWarnings("unused") @Cached("value") String cachedValue,
-                        @Cached("intern(value)") String interned) {
-            return interned;
-        }
-
-        @Specialization(replaces = "internCached")
-        protected static String intern(String value) {
-            return Utils.intern(value);
-        }
-    }
+    @Child private InternStringNode intern = InternStringNode.create();
 
     static {
         Casts casts = new Casts(UpdateAttr.class);

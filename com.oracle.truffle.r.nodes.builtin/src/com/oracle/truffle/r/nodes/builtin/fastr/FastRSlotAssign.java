@@ -35,9 +35,8 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.UpdateAttr.InternStringNode;
-import com.oracle.truffle.r.nodes.builtin.base.UpdateAttrNodeGen.InternStringNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.UpdateSlot.CheckSlotAssignNode;
+import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -54,7 +53,7 @@ public abstract class FastRSlotAssign extends RBuiltinNode.Arg4 {
         casts.arg("value").castForeignObjects(false).mustNotBeMissing();
     }
 
-    @Child private InternStringNode intern = InternStringNodeGen.create();
+    @Child private InternStringNode intern = InternStringNode.create();
     @Child private UpdateSlotNode updateSlotNode = UpdateSlotNodeGen.create();
 
     @Override
