@@ -146,7 +146,7 @@ public final class EnvironmentNodes {
             }
             REnvironment env = RArguments.getEnvironment(enclosing);
             if (createProfile.profile(env == null)) {
-                return REnvironment.createEnclosingEnvironments(enclosing.materialize());
+                return REnvironment.frameToEnvironment(enclosing.materialize());
             }
             return env;
         }

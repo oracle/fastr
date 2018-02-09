@@ -660,27 +660,8 @@ public abstract class REnvironment extends RAttributeStorage {
         MaterializedFrame f = frame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) frame).getOriginalFrame() : frame;
         REnvironment env = RArguments.getEnvironment(f);
         if (env == null) {
-            if (RArguments.getFunction(f) == null) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            env = createEnclosingEnvironments(f);
-        }
-        return env;
-    }
-
-    /**
-     * This chain can be followed back to whichever "base" (i.e. non-function) environment the
-     * outermost function was defined in, e.g. "global" or "base". The purpose of this method is to
-     * create an analogous lexical parent chain of {@link Function} instances with the correct
-     * {@link MaterializedFrame}.
-     */
-    @TruffleBoundary
-    public static REnvironment createEnclosingEnvironments(MaterializedFrame frame) {
-        MaterializedFrame f = frame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) frame).getOriginalFrame() : frame;
-        REnvironment env = RArguments.getEnvironment(f);
-        if (env == null) {
-            // parent is the env of the enclosing frame
-            env = REnvironment.Function.create(f);
+            assert RArguments.getFunction(f) != null;
+            RArguments.setEnvironment(f, env = new REnvironment.Function(f));
         }
         return env;
     }
@@ -1067,14 +1048,6 @@ public abstract class REnvironment extends RAttributeStorage {
         private Function(MaterializedFrame frame) {
             // function environments are not named
             super(UNNAMED, frame);
-        }
-
-        private static Function create(MaterializedFrame frame) {
-            Function result = (Function) RArguments.getEnvironment(frame);
-            if (result == null) {
-                result = new Function(frame);
-            }
-            return result;
         }
     }
 
