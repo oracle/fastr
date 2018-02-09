@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.nio.charset.StandardCharsets;
+
 import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
@@ -31,12 +33,16 @@ import com.oracle.truffle.r.runtime.RRuntime;
  * FastR already uses {@code String} to denote a length-1 string vector, it cannot be used to
  * represent a {@code CHARSXP}, so this class exists to do so.
  *
+ * As opposed to Strings on the Java side, the native side "Strings" should be treated as array of
+ * bytes. {@link CharSXPWrapper} wraps the byte array, but does not add the '\0' at the end of it.
+ *
  * N.B. Use limited to RFFI implementations.
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject {
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
 
     private String contents;
+    private byte[] bytes;
 
     private CharSXPWrapper(String contents) {
         this.contents = contents;
@@ -52,8 +58,12 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         return NativeDataAccess.getData(this, contents);
     }
 
+    public byte getByteAt(int index) {
+        return NativeDataAccess.getDataAt(this, getBytes(), index);
+    }
+
     public int getLength() {
-        return NativeDataAccess.getDataLength(this, contents);
+        return NativeDataAccess.getDataLength(this, getBytes());
     }
 
     @Override
@@ -71,9 +81,17 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
 
     public long allocateNativeContents() {
         try {
-            return NativeDataAccess.allocateNativeContents(this, contents);
+            return NativeDataAccess.allocateNativeContents(this, getBytes());
         } finally {
             contents = null;
+            bytes = null;
         }
+    }
+
+    private byte[] getBytes() {
+        if (bytes == null && contents != null) {
+            bytes = contents.getBytes(StandardCharsets.UTF_8);
+        }
+        return bytes;
     }
 }

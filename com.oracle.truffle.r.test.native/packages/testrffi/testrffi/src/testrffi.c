@@ -370,6 +370,20 @@ SEXP test_isNAString(SEXP vec) {
     }
 }
 
+SEXP test_getBytes(SEXP vec) {
+    char* bytes = R_CHAR(STRING_ELT(vec, 0));
+    SEXP result;
+    PROTECT(result = allocVector(RAWSXP, Rf_length(STRING_ELT(vec, 0))));
+    unsigned char* resData = RAW(result);
+    int i = 0;
+    while (*bytes != '\0') {
+        resData[i++] = (unsigned char) *bytes;
+        bytes++;
+    }
+    UNPROTECT(1);
+    return result;
+}
+
 // This function is expected to be called only with environment that has single
 // promise value in the '...' variable and this is asserted inside this function.
 // The return value is list with the promises' expression and environment.

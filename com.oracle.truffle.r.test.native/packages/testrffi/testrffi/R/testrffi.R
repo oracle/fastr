@@ -208,3 +208,7 @@ rffi.RfEvalWithPromiseInPairList <- function() {
 rffi.isNAString <- function(x) {
 	.Call('test_isNAString', x)
 }
+
+rffi.getBytes <- function(x) {
+	.Call('test_getBytes', x)
+}

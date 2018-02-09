@@ -83,6 +83,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_ParseVector, 1),
         CALLDEF(test_RfEvalWithPromiseInPairList, 0),
         CALLDEF(test_isNAString, 1),
+        CALLDEF(test_getBytes, 1),
         CALLDEF(test_setStringElt, 2),
         {NULL, NULL, 0}
 };

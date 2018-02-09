@@ -91,7 +91,7 @@ public final class MiscNodes {
 
         @Specialization
         protected int length(CharSXPWrapper obj) {
-            return obj.getContents().length();
+            return obj.getLength();
         }
 
         @Specialization
