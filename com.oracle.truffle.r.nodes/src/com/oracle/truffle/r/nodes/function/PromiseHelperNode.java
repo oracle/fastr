@@ -158,14 +158,14 @@ public final class PromiseHelperNode extends RBaseNode {
         }
 
         int state = optStateProfile.profile(promise.getState());
-        if (PromiseState.isExplicit(state)) {
+        if (isExplicitProfile.profile(PromiseState.isExplicit(state))) {
             CompilerDirectives.transferToInterpreter();
             // reset profiles, this is very likely a one-time event
             isEvaluatedProfile = ConditionProfile.createBinaryProfile();
             optStateProfile = PrimitiveValueProfile.createEqualityProfile();
             return evaluateSlowPath(frame, promise);
         }
-        if (PromiseState.isDefaultOpt(state)) {
+        if (isDefaultOptProfile.profile(PromiseState.isDefaultOpt(state))) {
             return generateValueDefault(frame, promise);
         } else {
             return generateValueNonDefault(frame, state, (EagerPromise) promise);
@@ -320,7 +320,7 @@ public final class PromiseHelperNode extends RBaseNode {
      * <code>null</code>
      */
     public void materialize(RPromise promise) {
-        if (isDefaultOptProfile.profile(!PromiseState.isDefaultOpt(promise.getState()))) {
+        if (!isDefaultOptProfile.profile(PromiseState.isDefaultOpt(promise.getState()))) {
             EagerPromise eager = (EagerPromise) promise;
             eager.materialize();
         }
@@ -364,6 +364,7 @@ public final class PromiseHelperNode extends RBaseNode {
     private final ValueProfile valueProfile = ValueProfile.createClassProfile();
 
     // Eager
+    private final ConditionProfile isExplicitProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDefaultOptProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();

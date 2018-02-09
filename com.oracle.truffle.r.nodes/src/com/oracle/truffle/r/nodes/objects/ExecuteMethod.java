@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
@@ -37,12 +38,15 @@ final class ExecuteMethod extends RBaseNode {
     @Child private CollectArgumentsNode collectArgs;
     @Child private CallMatcherNode callMatcher;
 
+    private final ValueProfile functionProfile = ValueProfile.createClassProfile();
+    private final ValueProfile signatureProfile = ValueProfile.createIdentityProfile();
+
     public Object executeObject(VirtualFrame frame, RFunction fdef, String fname) {
         if (collectArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgs = insert(CollectArgumentsNodeGen.create());
         }
-        ArgumentsSignature signature = RArguments.getSignature(frame);
+        ArgumentsSignature signature = signatureProfile.profile(RArguments.getSignature(frame, functionProfile));
 
         // Collect arguments; we cannot use the arguments of the original call because there might
         // be overriding default arguments.
