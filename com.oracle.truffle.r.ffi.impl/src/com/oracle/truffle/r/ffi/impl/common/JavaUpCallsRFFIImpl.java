@@ -1651,7 +1651,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object FORMALS(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object BODY(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object CLOENV(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public void SET_FORMALS(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public void SET_BODY(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public void SET_CLOENV(Object x, Object y) {
         throw implementedAsNode();
     }
 

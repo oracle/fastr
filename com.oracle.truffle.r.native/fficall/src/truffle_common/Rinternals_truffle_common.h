@@ -788,17 +788,23 @@ SEXP SETCAD4R(SEXP e, SEXP y) {
 
 SEXP FORMALS(SEXP x) {
     TRACE0();
-    return unimplemented("FORMALS");
+    SEXP result = ((call_FORMALS) callbacks[FORMALS_x])(x);
+    checkExitCall();
+    return result;
 }
 
 SEXP BODY(SEXP x) {
     TRACE0();
-    return unimplemented("BODY");
+    SEXP result = ((call_BODY) callbacks[BODY_x])(x);
+    checkExitCall();
+    return result;
 }
 
 SEXP CLOENV(SEXP x) {
     TRACE(TARGp, x);
-    return ((call_CLOENV) callbacks[CLOENV_x])(x);
+    SEXP result = ((call_CLOENV) callbacks[CLOENV_x])(x);
+    checkExitCall();
+    return result;
 }
 
 int RDEBUG(SEXP x) {
@@ -840,17 +846,20 @@ void SET_RTRACE(SEXP x, int v) {
 
 void SET_FORMALS(SEXP x, SEXP v) {
     TRACE0();
-    unimplemented("SET_FORMALS");
+    ((call_SET_FORMALS) callbacks[SET_FORMALS_x])(x, v);
+    checkExitCall();
 }
 
 void SET_BODY(SEXP x, SEXP v) {
     TRACE0();
-    unimplemented("SET_BODY");
+    ((call_SET_FORMALS) callbacks[SET_BODY_x])(x, v);
+    checkExitCall();
 }
 
 void SET_CLOENV(SEXP x, SEXP v) {
     TRACE0();
-    unimplemented("SET_CLOENV");
+    ((call_SET_FORMALS) callbacks[SET_CLOENV_x])(x, v);
+    checkExitCall();
 }
 
 SEXP SYMVALUE(SEXP x) {

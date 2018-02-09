@@ -25,22 +25,18 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.FormalArguments;
-import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
+@ImportStatic(RASTUtils.class)
 @RBuiltin(name = "formals", kind = INTERNAL, parameterNames = {"fun"}, behavior = PURE)
 public abstract class Formals extends RBuiltinNode.Arg1 {
 
@@ -59,29 +55,12 @@ public abstract class Formals extends RBuiltinNode.Arg1 {
 
     @Specialization(replaces = "formalsCached")
     protected Object formals(RFunction fun) {
-        return createFormals(fun);
+        return RASTUtils.createFormals(fun);
     }
 
     @Fallback
     protected Object formals(@SuppressWarnings("unused") Object fun) {
         // for anything that is not a function, GnuR returns NULL
         return RNull.instance;
-    }
-
-    @TruffleBoundary
-    protected Object createFormals(RFunction fun) {
-        if (fun.isBuiltin()) {
-            return RNull.instance;
-        }
-        FunctionDefinitionNode fdNode = (FunctionDefinitionNode) fun.getTarget().getRootNode();
-        FormalArguments formalArgs = fdNode.getFormalArguments();
-        Object succ = RNull.instance;
-        for (int i = formalArgs.getSignature().getLength() - 1; i >= 0; i--) {
-            RNode argument = formalArgs.getDefaultArgument(i);
-            Object lang = argument == null ? RSymbol.MISSING : RASTUtils.createLanguageElement(argument.asRSyntaxNode());
-            RSymbol name = RDataFactory.createSymbol(formalArgs.getSignature().getName(i));
-            succ = RDataFactory.createPairList(lang, succ, name);
-        }
-        return succ;
     }
 }

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.RootNode;
@@ -49,10 +50,10 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
 
     private final String name;
     private final String packageName;
-    private final RootCallTarget target;
+    @CompilationFinal private RootCallTarget target;
     private final RBuiltinDescriptor builtin;
 
-    private final MaterializedFrame enclosingFrame;
+    @CompilationFinal private MaterializedFrame enclosingFrame;
 
     RFunction(String name, String packageName, RootCallTarget target, RBuiltinDescriptor builtin, MaterializedFrame enclosingFrame) {
         this.packageName = packageName;
@@ -115,5 +116,13 @@ public final class RFunction extends RSharingAttributeStorage implements RTypedV
         }
         newFunction.setTypedValueInfo(getTypedValueInfo());
         return newFunction;
+    }
+
+    public void reassignTarget(RootCallTarget newTarget) {
+        this.target = newTarget;
+    }
+
+    public void reassignEnclosingFrame(MaterializedFrame newEnclosingFrame) {
+        this.enclosingFrame = newEnclosingFrame;
     }
 }

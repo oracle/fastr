@@ -23,31 +23,46 @@
 package com.oracle.truffle.r.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.ReadVariadicComponentNode;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.FormalArguments;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode.VarArgNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
+import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentBaseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -172,22 +187,12 @@ public final class RASTUtils {
     public static RBaseNode createNodeForValue(Object value) {
         if (value instanceof RNode) {
             return (RNode) value;
-        } else if (value instanceof RSymbol) {
-            RSymbol symbol = (RSymbol) value;
-            if (symbol.isMissing()) {
-                return RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, REmpty.instance).asRNode();
-            } else {
-                return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, ((RSymbol) value).getName(), false).asRNode();
-            }
-        } else if (value instanceof RLanguage) {
-            RLanguage l = (RLanguage) value;
-            return RASTUtils.cloneNode(l.getRep());
         } else if (value instanceof RPromise) {
             RPromise promise = (RPromise) value;
             RNode promiseRep = (RNode) unwrap(((RPromise) value).getRep());
             if (promiseRep instanceof VarArgNode) {
                 VarArgNode varArgNode = (VarArgNode) promiseRep;
-                RPromise varArgPromise = (RPromise) varArgNode.execute((VirtualFrame) promise.getFrame());
+                RPromise varArgPromise = (RPromise) varArgNode.execute(promise.getFrame());
                 Node unwrappedRep = unwrap(varArgPromise.getRep());
                 if (unwrappedRep instanceof ConstantNode) {
                     return (ConstantNode) unwrappedRep;
@@ -201,6 +206,40 @@ public final class RASTUtils {
             }
             return RASTUtils.cloneNode(promiseRep);
         } else {
+            return createNodeForRValue(value);
+        }
+    }
+
+    @TruffleBoundary
+    public static RBaseNode createNodeForRValue(Object value) {
+        if (value instanceof RSymbol) {
+            RSymbol symbol = (RSymbol) value;
+            if (symbol.isMissing()) {
+                return RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, REmpty.instance).asRNode();
+            } else {
+                return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false).asRNode();
+            }
+        } else if (value instanceof RLanguage) {
+            return RASTUtils.cloneNode(((RLanguage) value).getRep());
+        } else {
+            assert value instanceof String || value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof TruffleObject;
+            return ConstantNode.create(value);
+        }
+    }
+
+    @TruffleBoundary
+    public static RSyntaxNode createSyntaxNodeForRValue(Object value) {
+        if (value instanceof RSymbol) {
+            RSymbol symbol = (RSymbol) value;
+            if (symbol.isMissing()) {
+                return RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, REmpty.instance);
+            } else {
+                return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false);
+            }
+        } else if (value instanceof RLanguage) {
+            return RContext.getASTBuilder().process(((RLanguage) value).getSyntaxElement());
+        } else {
+            assert value instanceof String || value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof TruffleObject;
             return ConstantNode.create(value);
         }
     }
@@ -222,5 +261,92 @@ public final class RASTUtils {
         }
         SourceSection sourceSection = sourceUnavailable ? RSyntaxNode.SOURCE_UNAVAILABLE : RSyntaxNode.LAZY_DEPARSE;
         return RCallSpecialNode.createCall(sourceSection, fnNode, signature, arguments);
+    }
+
+    @TruffleBoundary
+    public static Object createFormals(RFunction fun) {
+        if (fun.isBuiltin()) {
+            return RNull.instance;
+        }
+        FunctionDefinitionNode fdNode = (FunctionDefinitionNode) fun.getTarget().getRootNode();
+        FormalArguments formalArgs = fdNode.getFormalArguments();
+        Object succ = RNull.instance;
+        for (int i = formalArgs.getSignature().getLength() - 1; i >= 0; i--) {
+            RNode argument = formalArgs.getDefaultArgument(i);
+            Object lang = argument == null ? RSymbol.MISSING : RASTUtils.createLanguageElement(argument.asRSyntaxNode());
+            RSymbol name = RDataFactory.createSymbol(formalArgs.getSignature().getName(i));
+            succ = RDataFactory.createPairList(lang, succ, name);
+        }
+        return succ;
+    }
+
+    @TruffleBoundary
+    public static void modifyFunction(RFunction fun, Object newBody, Object newFormals, MaterializedFrame newEnv) {
+        RootCallTarget target = fun.getTarget();
+        FunctionDefinitionNode root = (FunctionDefinitionNode) target.getRootNode();
+
+        SaveArgumentsNode saveArguments;
+        FormalArguments formals;
+        int formalsLength = newFormals == RNull.instance ? 0 : ((RPairList) newFormals).getLength();
+        String[] argumentNames = new String[formalsLength];
+        RNode[] defaultValues = new RNode[formalsLength];
+        AccessArgumentNode[] argAccessNodes = new AccessArgumentNode[formalsLength];
+        RNode[] init = new RNode[formalsLength];
+
+        Object current = newFormals;
+        int i = 0;
+        while (current != RNull.instance) {
+
+            final RSyntaxNode defaultValue;
+            Object arg = ((RPairList) current).car();
+            if (arg == RMissing.instance) {
+                defaultValue = null;
+            } else if (arg == RNull.instance) {
+                defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, RNull.instance);
+            } else if (arg instanceof RLanguage) {
+                defaultValue = RASTUtils.createSyntaxNodeForRValue(arg);
+            } else if (arg instanceof RSymbol) {
+                RSymbol symbol = (RSymbol) arg;
+                if (symbol.isMissing()) {
+                    defaultValue = null;
+                } else {
+                    defaultValue = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, symbol.getName(), false);
+                }
+            } else if (RRuntime.convertScalarVectors(arg) instanceof RAttributable) {
+                defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, arg);
+            } else {
+                throw RInternalError.unimplemented();
+            }
+            AccessArgumentNode accessArg = AccessArgumentNode.create(i);
+            argAccessNodes[i] = accessArg;
+            Object tag = ((RPairList) current).getTag();
+            String argName = ((RSymbol) tag).getName();
+            init[i] = WriteVariableNode.createArgSave(argName, accessArg);
+
+            // Store formal arguments
+            argumentNames[i] = argName;
+            defaultValues[i] = defaultValue.asRNode();
+            current = ((RPairList) current).cdr();
+            i++;
+        }
+        saveArguments = new SaveArgumentsNode(init);
+        formals = FormalArguments.createForFunction(defaultValues, ArgumentsSignature.get(argumentNames));
+        for (AccessArgumentNode access : argAccessNodes) {
+            access.setFormals(formals);
+        }
+
+        RSyntaxNode bodyNode = root.getBody();
+        if (newBody != null) {
+            bodyNode = RASTUtils.createSyntaxNodeForRValue(newBody);
+        }
+
+        FrameDescriptor descriptor = new FrameDescriptor();
+        FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<SET_BODY/SET_FORMALS/SET_CLOENV>", descriptor);
+        FrameSlotChangeMonitor.initializeEnclosingFrame(descriptor, newEnv);
+        FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, descriptor, null, saveArguments, bodyNode, formals,
+                        root.getName(), null);
+        RootCallTarget callTarget = Truffle.getRuntime().createCallTarget(rootNode);
+        fun.reassignTarget(callTarget);
+        fun.reassignEnclosingFrame(newEnv);
     }
 }

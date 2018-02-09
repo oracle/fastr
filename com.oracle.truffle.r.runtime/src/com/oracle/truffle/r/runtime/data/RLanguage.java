@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
  * Denotes an (unevaluated) R language element. It is equivalent to a LANGSXP value in GnuR. It
@@ -324,5 +325,10 @@ public final class RLanguage extends RSharingAttributeStorage implements RAbstra
     @Override
     public VectorAccess slowPathAccess() {
         return SLOW_PATH_ACCESS;
+    }
+
+    public RSyntaxElement getSyntaxElement() {
+        regenerateFromList();
+        return closure.getSyntaxElement();
     }
 }
