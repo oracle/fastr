@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -205,6 +205,9 @@ public class TestBuiltin_names extends TestBase {
         assertEval("{ symNames <- c(\"foobar\", \"bar\"); names(symNames) = symNames; names(names(symNames)); }");
         assertEval("{ y<-c(d=\"e\"); attr(y, \"foo\")<-\"foo\"; x<-c(42); names(x)<-y; attributes(names(x)) }");
         assertEval("{ x <- c(10, 20); names(x) <- c('ahoj', 'svete'); y <- c(1,2); z <- choose(x,y); names(z)[[1]] <- 'onlyinz'; names(x) }");
+        assertEval("{ e <- new.env(); names(e) <- c('a'); }");
+        // FIXME: set names on language does not set the first name
+        assertEval(Ignored.ImplementationError, "{ x <- parse(text='x+y')[[1]]; names(x) <- c('a','b','c'); names(x); }");
     }
 
     @Test

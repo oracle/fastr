@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,11 @@ package com.oracle.truffle.r.nodes.function;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.Instrumentable;
+import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @TypeSystemReference(RTypes.class)
 @Instrumentable(factory = com.oracle.truffle.r.nodes.function.RCallBaseNodeWrapperFactory.class)
@@ -35,4 +37,7 @@ public abstract class RCallBaseNode extends RNode implements RInstrumentableNode
 
     public abstract Object execute(VirtualFrame frame, Object function);
 
+    public abstract Arguments<RSyntaxNode> getArguments();
+
+    public abstract RNode getFunction();
 }

@@ -122,7 +122,6 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     /**
      * Convert to a {@link RList}.
      */
-    // TODO (chumer) too complex for a non truffle boundary
     @TruffleBoundary
     public RList toRList() {
         int len = 0;
@@ -270,9 +269,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         throw RInternalError.shouldNotReachHere();
     }
 
-    @Override
     @TruffleBoundary
-    public RPairList copy() {
+    public RPairList copy(boolean keepAttributes) {
         BaseVectorFactory dataFactory = RDataFactory.getInstance();
         RPairList curr = dataFactory.createPairList();
         RPairList result = curr;
@@ -289,10 +287,15 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
             curr.cdr = dataFactory.createPairList();
             curr = (RPairList) curr.cdr;
         }
-        if (getAttributes() != null) {
+        if (keepAttributes && getAttributes() != null) {
             result.initAttributes(RAttributesLayout.copy(getAttributes()));
         }
         return result;
+    }
+
+    @Override
+    public RPairList copy() {
+        return copy(true);
     }
 
     @Override
