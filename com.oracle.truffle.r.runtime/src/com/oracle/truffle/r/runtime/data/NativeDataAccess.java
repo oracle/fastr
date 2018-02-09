@@ -147,9 +147,8 @@ public final class NativeDataAccess {
         }
 
         @TruffleBoundary
-        void allocateNative(String source) {
+        void allocateNativeString(byte[] bytes) {
             assert dataAddress == 0;
-            byte[] bytes = source.getBytes(StandardCharsets.US_ASCII);
             dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(bytes.length + 1);
             UnsafeAdapter.UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, dataAddress, bytes.length);
             UnsafeAdapter.UNSAFE.putByte(dataAddress + bytes.length, (byte) 0); // C strings
@@ -570,9 +569,21 @@ public final class NativeDataAccess {
         }
     }
 
-    static int getDataLength(CharSXPWrapper vector, String data) {
+    static byte getDataAt(CharSXPWrapper vector, byte[] data, int index) {
         if (noCharSXPNative.isValid() || data != null) {
-            return data.length();
+            return data[index];
+        } else {
+            NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+            long address = mirror.dataAddress;
+            assert address != 0;
+            assert index < mirror.length;
+            return UnsafeAdapter.UNSAFE.getByte(address + index);
+        }
+    }
+
+    static int getDataLength(CharSXPWrapper vector, byte[] data) {
+        if (noCharSXPNative.isValid() || data != null) {
+            return data.length;
         } else {
             NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
             long address = mirror.dataAddress;
@@ -644,13 +655,13 @@ public final class NativeDataAccess {
         return mirror.dataAddress;
     }
 
-    static long allocateNativeContents(CharSXPWrapper vector, String contents) {
+    static long allocateNativeContents(CharSXPWrapper vector, byte[] data) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ contents == null;
+        assert mirror.dataAddress == 0 ^ data == null;
         if (mirror.dataAddress == 0) {
             noCharSXPNative.invalidate();
-            mirror.allocateNative(contents);
+            mirror.allocateNativeString(data);
         }
         return mirror.dataAddress;
     }

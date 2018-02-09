@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+
 extern void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata, char** cdata);
 
 extern SEXP addInt(SEXP a, SEXP b);
@@ -109,3 +110,9 @@ extern SEXP test_createNativeConnection(void);
 extern SEXP test_ParseVector(SEXP src);
 
 extern SEXP test_RfEvalWithPromiseInPairList(void);
+
+extern SEXP test_isNAString(SEXP vec);
+
+extern SEXP test_setStringElt(SEXP vec, SEXP elt);
+
+extern SEXP test_getBytes(SEXP vec);

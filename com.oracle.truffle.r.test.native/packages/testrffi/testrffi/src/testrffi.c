@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -355,6 +355,33 @@ SEXP test_stringNA(void) {
     SEXP x = allocVector(STRSXP, 1);
     SET_STRING_ELT(x, 0, NA_STRING);
     return x;
+}
+
+SEXP test_setStringElt(SEXP vec, SEXP elt) {
+    SET_STRING_ELT(vec, 0, STRING_ELT(elt, 0));
+    return vec;
+}
+
+SEXP test_isNAString(SEXP vec) {
+    if (STRING_ELT(vec, 0) == NA_STRING) {
+        return ScalarLogical(1);
+    } else {
+        return ScalarLogical(0);
+    }
+}
+
+SEXP test_getBytes(SEXP vec) {
+    char* bytes = R_CHAR(STRING_ELT(vec, 0));
+    SEXP result;
+    PROTECT(result = allocVector(RAWSXP, Rf_length(STRING_ELT(vec, 0))));
+    unsigned char* resData = RAW(result);
+    int i = 0;
+    while (*bytes != '\0') {
+        resData[i++] = (unsigned char) *bytes;
+        bytes++;
+    }
+    UNPROTECT(1);
+    return result;
 }
 
 // This function is expected to be called only with environment that has single

@@ -71,10 +71,9 @@ public class CharSXPWrapperMR {
 
         protected Object access(CharSXPWrapper receiver, Number indexNum) {
             int index = indexNum.intValue();
-            String contents = receiver.getContents();
-            int len = contents.length();
+            int len = receiver.getLength();
             if (prof1.profile(index < len)) {
-                return contents.charAt(index);
+                return receiver.getByteAt(index);
             } else if (prof2.profile(index == len)) {
                 return 0;
             } else {

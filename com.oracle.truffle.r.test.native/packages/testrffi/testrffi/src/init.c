@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -82,6 +82,9 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_createNativeConnection, 0),
         CALLDEF(test_ParseVector, 1),
         CALLDEF(test_RfEvalWithPromiseInPairList, 0),
+        CALLDEF(test_isNAString, 1),
+        CALLDEF(test_getBytes, 1),
+        CALLDEF(test_setStringElt, 2),
         {NULL, NULL, 0}
 };
 
