@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -57,6 +58,7 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
     // TODO: re-do with a multi-element cache? (list comparison will have some cost, though)
 
     @Children private final ClassHierarchyScalarNode[] classHierarchyNodes;
+    @CompilationFinal(dimensions = 1) private final ConditionProfile[] isArgsAndNamesProfiles;
     @Child private ClassHierarchyScalarNode classHierarchyNodeSlowPath;
     @Child private PromiseCheckHelperNode promiseHelper = new PromiseCheckHelperNode();
 
@@ -67,35 +69,31 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
     public abstract RStringVector execute(VirtualFrame frame, int argLength);
 
     protected CollectGenericArgumentsNode(int argLength) {
-        ClassHierarchyScalarNode[] hierarchyNodes = new ClassHierarchyScalarNode[argLength];
+        classHierarchyNodes = new ClassHierarchyScalarNode[argLength];
+        isArgsAndNamesProfiles = new ConditionProfile[argLength];
         for (int i = 0; i < argLength; i++) {
-            hierarchyNodes[i] = ClassHierarchyScalarNodeGen.create();
+            classHierarchyNodes[i] = ClassHierarchyScalarNodeGen.create();
+            isArgsAndNamesProfiles[i] = ConditionProfile.createBinaryProfile();
         }
         nProvidedArgs = argLength;
-        classHierarchyNodes = hierarchyNodes;
     }
 
     @ExplodeLoop
     @Specialization(rewriteOn = SlowPathException.class)
     protected RStringVector combineCached(VirtualFrame frame, int argLength) throws SlowPathException {
         int nActualArgs = RArguments.getArgumentsLength(frame);
-        if (argLength != nProvidedArgs || !(nActualArgs == nProvidedArgs || nActualArgs == nProvidedArgs + 1)) {
+        if (argLength != nProvidedArgs || nActualArgs < nProvidedArgs) {
             throw new SlowPathException();
         }
         String[] result = new String[nProvidedArgs];
-
-        // The length of the actual and formal arguments may not be equal because "..." is just
-        // ignored in formals (i.e. '.SigArgs').
-        assert nActualArgs == result.length || nActualArgs == result.length + 1;
 
         // Intentionally using 'i' as loop variable since nActualArgs >=
         // signatureArgumentNames.length
         int j = 0;
         for (int i = 0; i < nProvidedArgs; i++) {
-            Object value = RArguments.getArgument(frame, j);
-            if (value instanceof RArgsValuesAndNames) {
-                j++;
-                value = RArguments.getArgument(frame, j);
+            Object value = RArguments.getArgument(frame, j++);
+            if (isArgsAndNamesProfiles[i].profile(value instanceof RArgsValuesAndNames)) {
+                value = RArguments.getArgument(frame, j++);
             }
             if (value == REmpty.instance || value == RMissing.instance) {
                 value = null;
@@ -103,7 +101,6 @@ public abstract class CollectGenericArgumentsNode extends RBaseNode {
             Object evaledArg = promiseHelper.checkEvaluate(frame, value);
             assert !(evaledArg instanceof RArgsValuesAndNames);
             result[i] = valueMissingProfile.profile(value == null) ? "missing" : classHierarchyNodes[i].executeString(evaledArg);
-            j++;
         }
         return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
     }
