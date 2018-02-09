@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  *
  * The state starts out a "unresolved" and transforms to "resolved".
  */
-abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
+public abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
 
     protected WriteSuperFrameVariableNode(String name) {
         super(name);
@@ -57,7 +57,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
         return new UnresolvedWriteSuperFrameVariableNode(name, mode, rhs);
     }
 
-    protected abstract void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame);
+    public abstract void execute(VirtualFrame frame, Object value, MaterializedFrame enclosingFrame);
 
     @Override
     public final Object execute(VirtualFrame frame) {
@@ -68,7 +68,7 @@ abstract class WriteSuperFrameVariableNode extends BaseWriteVariableNode {
 
     @NodeChild(value = "enclosingFrame", type = AccessEnclosingFrameNode.class)
     @NodeChild(value = "frameSlotNode", type = FrameSlotNode.class)
-    protected abstract static class ResolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNode {
+    public abstract static class ResolvedWriteSuperFrameVariableNode extends WriteSuperFrameVariableNode {
 
         private final ValueProfile storedObjectProfile = ValueProfile.createClassProfile();
         private final BranchProfile invalidateProfile = BranchProfile.create();
