@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -55,6 +55,11 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
     static {
         Casts casts = new Casts(Substitute.class);
         casts.arg(1).defaultError(INVALID_ENVIRONMENT_SPECIFIED).allowNullAndMissing().mustBe(instanceOf(RAbstractListVector.class).or(instanceOf(REnvironment.class)));
+    }
+
+    @Specialization
+    protected Object doSubstitute(VirtualFrame frame, @SuppressWarnings("unused") RMissing exprMissing, @SuppressWarnings("unused") RMissing envMissing) {
+        return RSymbol.MISSING;
     }
 
     @Specialization
