@@ -251,13 +251,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             return addAttributes(result, list);
         } else if (repType == RLanguage.RepType.FUNCTION) {
-            RList argsList = (RList) list.getDataAt(1);
+            RAbstractContainer argsList = (RAbstractContainer) list.getDataAt(1);
             RSyntaxNode body = (RSyntaxNode) unwrapToRNode(list.getDataAt(2), false);
             List<Argument<RSyntaxNode>> resArgs = new LinkedList<>();
             RStringVector argsNames = argsList.getNames();
             for (int i = 0; i < argsList.getLength(); i++) {
                 String argName = argsNames == null ? null : argsNames.getDataAt(i);
-                Object argVal = argsList.getDataAt(i);
+                Object argVal = argsList.getDataAtAsObject(i);
                 Argument<RSyntaxNode> arg = RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, argName, argVal == RSymbol.MISSING ? null : (RSyntaxNode) unwrapToRNode(argVal, false));
                 resArgs.add(arg);
             }
