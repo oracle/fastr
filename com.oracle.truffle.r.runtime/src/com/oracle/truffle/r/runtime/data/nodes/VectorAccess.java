@@ -363,7 +363,6 @@ public abstract class VectorAccess extends Node {
         if (castVector instanceof RAbstractContainer) {
             RAbstractContainer container = (RAbstractContainer) castVector;
             int length = getLength(container);
-            RBaseNode.reportWork(this, length);
             na.enable(container);
             return new RandomIterator(getStore(container), length);
         } else {
