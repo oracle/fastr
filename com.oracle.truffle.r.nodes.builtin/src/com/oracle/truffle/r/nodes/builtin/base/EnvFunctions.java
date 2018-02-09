@@ -491,7 +491,7 @@ public class EnvFunctions {
             ContextStateImpl state = RContext.getInstance().stateREnvironment;
             if (env == state.getGlobalEnv()) {
                 return "R_GlobalEnv";
-            } else if (env == state.getBaseEnv()) {
+            } else if (env == state.getBaseEnv() || env == state.getBaseNamespace()) {
                 return "base";
             } else if (env == REnvironment.emptyEnv()) {
                 return "R_EmptyEnv";
