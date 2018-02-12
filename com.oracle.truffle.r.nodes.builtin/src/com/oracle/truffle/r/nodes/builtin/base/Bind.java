@@ -170,6 +170,15 @@ public abstract class Bind extends RBaseNode {
                 fromNotNullArgVector = vector;
             }
             if (emptyVectorProfile.profile(vector.getLength() == 0)) {
+                int[] dims = getVectorDimensions(vector);
+                int srcDim1Ind = type == BindType.cbind ? 0 : 1;
+                if (dims != null && dims[srcDim1Ind] > 0) {
+                    // an empty matrix with a positive column, resp. row, dimension cannot be
+                    // ignored
+                    vectors[ind] = vector;
+                    complete &= vector.isComplete();
+                    ind++;
+                }
                 // nothing to do
             } else {
                 vectors[ind] = vector;
@@ -704,6 +713,9 @@ public abstract class Bind extends RBaseNode {
         boolean allRowDimNamesNull = true;
         int dstRowInd = 0;
         for (int i = 0; i < vectors.length; i++) {
+            if (firstDims[i] == 0) {
+                continue;
+            }
             RAbstractVector vec = vectorProfile.profile(vectors[i]);
             if (colDimResultNames == RNull.instance) {
                 // get the first valid names value

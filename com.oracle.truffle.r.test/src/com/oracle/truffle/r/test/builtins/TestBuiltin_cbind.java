@@ -91,6 +91,9 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("{ cbind(2,3, c(1,1,1)) }");
         assertEval("{ cbind(2.1:10,32.2) }");
 
+        assertEval("{ cbind(integer(0), NULL, matrix(integer(0),0,1)) }");
+        assertEval("{ cbind(integer(0), NULL, matrix(integer(0),1,0)) }");
+
         assertEval("{ x<-list(a=7, b=NULL, c=42); y<-as.data.frame(do.call(cbind,x)); y }");
 
         // Note: CachedExtractVectorNode replaces vector 'a', 'b', with a scalar 'b', which caused
