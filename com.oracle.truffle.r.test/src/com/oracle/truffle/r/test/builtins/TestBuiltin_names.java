@@ -208,6 +208,9 @@ public class TestBuiltin_names extends TestBase {
         assertEval("{ e <- new.env(); names(e) <- c('a'); }");
         // FIXME: set names on language does not set the first name
         assertEval(Ignored.ImplementationError, "{ x <- parse(text='x+y')[[1]]; names(x) <- c('a','b','c'); names(x); }");
+        assertEval("names(pairlist(a=3, b=4))");
+        assertEval("names(pairlist(1,2,3))");
+        assertEval("names(pairlist(a=1,2,q=3))");
     }
 
     @Test

@@ -326,6 +326,9 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
     @Override
     public RStringVector getNames() {
+        if (this.tag == RNull.instance) {
+            return null;
+        }
         int l = getLength();
         String[] data = new String[l];
         RPairList pl = this;
