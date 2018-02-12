@@ -178,8 +178,8 @@ public final class FastRSession implements RSession {
 
     private String readLine() {
         /*
-         * We cannot use an InputStreamReader because it buffers characters internally, whereas readLine()
-         * should not buffer across newlines.
+         * We cannot use an InputStreamReader because it buffers characters internally, whereas
+         * readLine() should not buffer across newlines.
          */
 
         ByteBuffer bytes = ByteBuffer.allocate(16);

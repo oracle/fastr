@@ -318,9 +318,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             CompilerDirectives.transferToInterpreter();
             if (e instanceof DebugExitException || e instanceof JumpToTopLevelException || e instanceof ExitException || e instanceof ThreadDeath) {
                 /*
-                 * These relate to debugging support and various other reasons for returning to the top level.
-                 * exitHandlers must be suppressed and the exceptions must pass through unchanged; they are not
-                 * errors
+                 * These relate to debugging support and various other reasons for returning to the
+                 * top level. exitHandlers must be suppressed and the exceptions must pass through
+                 * unchanged; they are not errors
                  */
                 CompilerDirectives.transferToInterpreter();
                 runOnExitHandlers = false;
@@ -334,9 +334,10 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             }
         } finally {
             /*
-             * Although a user function may throw an exception from an onExit handler, all evaluations are
-             * wrapped in an anonymous function (see REngine.makeCallTarget) that has no exit handlers (by
-             * fiat), so any exceptions from onExits handlers will be caught above.
+             * Although a user function may throw an exception from an onExit handler, all
+             * evaluations are wrapped in an anonymous function (see REngine.makeCallTarget) that
+             * has no exit handlers (by fiat), so any exceptions from onExits handlers will be
+             * caught above.
              */
             if (argPostProcess != null) {
                 resetArgs.enter();
