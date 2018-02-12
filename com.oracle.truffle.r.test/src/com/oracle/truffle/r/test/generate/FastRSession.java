@@ -22,9 +22,15 @@
  */
 package com.oracle.truffle.r.test.generate;
 
+import static org.junit.Assert.fail;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.lang.reflect.AccessibleObject;
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
@@ -34,6 +40,17 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.Callable;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Engine;
+import org.graalvm.polyglot.Instrument;
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 
 import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.debug.SuspendedCallback;
@@ -53,21 +70,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.engine.interop.VectorMRTest;
-import java.io.IOException;
-import java.lang.reflect.AccessibleObject;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
-import java.util.concurrent.Callable;
-import java.util.logging.Level;
-import java.util.logging.Logger;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Engine;
-import org.graalvm.polyglot.Instrument;
-import org.graalvm.polyglot.PolyglotException;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
-import org.graalvm.polyglot.proxy.ProxyExecutable;
-import static org.junit.Assert.fail;
 
 public final class FastRSession implements RSession {
 
@@ -86,6 +88,7 @@ public final class FastRSession implements RSession {
     private final ByteArrayOutputStream output = new ByteArrayOutputStream();
     private final TestByteArrayInputStream input = new TestByteArrayInputStream();
 
+    private Engine mainEngine;
     private Context mainContext;
     private RContext mainRContext;
 
@@ -124,27 +127,14 @@ public final class FastRSession implements RSession {
         return null;
     }
 
-    public ChildContextInfo checkContext(ChildContextInfo contextInfoArg) {
-        ChildContextInfo contextInfo;
-        if (contextInfoArg == null) {
-            contextInfo = createContextInfo(ContextKind.SHARE_PARENT_RW);
-        } else {
-            contextInfo = contextInfoArg;
-        }
-        return contextInfo;
-    }
-
-    public ChildContextInfo createContextInfo(ContextKind contextKind) {
+    public Context createContext(ContextKind contextKind) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         Map<String, String> env = new HashMap<>();
         env.put("TZ", "GMT");
-        ChildContextInfo ctx = ChildContextInfo.create(params, env, contextKind, mainRContext, input, output, output);
+        ChildContextInfo ctx = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
         RContext.childInfo = ctx;
-        return ctx;
-    }
 
-    public Context createContext() {
-        return Context.newBuilder("R").in(input).out(output).err(output).build();
+        return Context.newBuilder("R").engine(mainEngine).build();
     }
 
     private FastRSession() {
@@ -163,7 +153,8 @@ public final class FastRSession implements RSession {
             RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
             ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
             RContext.childInfo = info;
-            mainContext = createContext();
+            mainEngine = Engine.newBuilder().in(input).out(output).err(output).build();
+            mainContext = Context.newBuilder("R").engine(mainEngine).build();
             mainRContext = mainContext.eval(GET_CONTEXT).asHostObject();
         } finally {
             try {
@@ -187,8 +178,8 @@ public final class FastRSession implements RSession {
 
     private String readLine() {
         /*
-         * We cannot use an InputStreamReader because it buffers characters internally, whereas
-         * readLine() should not buffer across newlines.
+         * We cannot use an InputStreamReader because it buffers characters internally, whereas readLine()
+         * should not buffer across newlines.
          */
 
         ByteBuffer bytes = ByteBuffer.allocate(16);
@@ -219,13 +210,13 @@ public final class FastRSession implements RSession {
     }
 
     @Override
-    public String eval(TestBase testClass, String expression, ChildContextInfo contextInfo, boolean longTimeout) throws Throwable {
+    public String eval(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout) throws Throwable {
+        assert contextKind != null;
         Timer timer = null;
         output.reset();
         input.setContents(expression);
         try {
-            checkContext(contextInfo);
-            Context evalContext = createContext();
+            Context evalContext = createContext(contextKind);
             // set up some interop objects used by fastr-specific tests:
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
@@ -284,7 +275,7 @@ public final class FastRSession implements RSession {
         }
     }
 
-    private Throwable getWrappedThrowable(PolyglotException e) {
+    private static Throwable getWrappedThrowable(PolyglotException e) {
         Object f = getField(e, "impl");
         return (Throwable) getField(f, "exception");
     }

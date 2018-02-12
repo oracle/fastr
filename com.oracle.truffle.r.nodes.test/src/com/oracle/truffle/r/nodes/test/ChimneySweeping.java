@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -224,7 +225,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     @Override
     SingleBuiltinDiagnostics init() throws Throwable {
         super.init();
-        try (Context context = diagSuite.fastRSession.createContext()) {
+        try (Context context = diagSuite.fastRSession.createContext(ContextKind.SHARE_PARENT_RW)) {
             execInContext(context, () -> {
                 this.castNodes = builtinFactory.getCastNodes();
                 print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinMetaClass().getName() + ") ***");
@@ -488,7 +489,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
             String output;
             try {
-                output = diagSuite.fastRSession.eval(null, call, null, false);
+                output = diagSuite.fastRSession.eval(null, call, ContextKind.SHARE_PARENT_RW, false);
             } catch (Throwable t) {
                 output = "ERROR: " + t.getMessage();
             }

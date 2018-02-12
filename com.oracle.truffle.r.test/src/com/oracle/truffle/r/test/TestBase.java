@@ -35,6 +35,7 @@ import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import org.graalvm.polyglot.Engine;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -46,13 +47,11 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
-import org.graalvm.polyglot.Engine;
 
 /**
  * Base class for all unit tests. The unit tests are actually arranged as a collection of
@@ -639,7 +638,7 @@ public class TestBase {
     private boolean evalAndCompare(String[] inputs, TestTrait... traitsList) {
         WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
-        ChildContextInfo contextInfo = traits.context.contains(Context.NonShared) ? fastROutputManager.fastRSession.createContextInfo(ContextKind.SHARE_NOTHING) : null;
+        ContextKind contextKind = traits.context.contains(Context.NonShared) ? ContextKind.SHARE_NOTHING : ContextKind.SHARE_PARENT_RW;
         int index = 1;
         boolean allOk = true;
         boolean skipFastREval = traits.isIgnored || generatingExpected();
@@ -648,7 +647,7 @@ public class TestBase {
             if (skipFastREval) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextInfo, traits.context.contains(Context.LongTimeout));
+                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout));
                 CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
@@ -981,12 +980,13 @@ public class TestBase {
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected String fastREval(String input, ChildContextInfo contextInfo, boolean longTimeout) {
+    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout) {
+        assert contextKind != null;
         microTestInfo.expression = input;
         String result;
         try {
             beforeEval();
-            result = fastROutputManager.fastRSession.eval(this, input, contextInfo, longTimeout);
+            result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
@@ -1025,7 +1025,7 @@ public class TestBase {
         if (generatingExpected()) {
             return expectedOutputManager.getRSession().eval(null, system2Command, null, true);
         } else {
-            return fastROutputManager.fastRSession.eval(null, system2Command, null, true);
+            return fastROutputManager.fastRSession.eval(null, system2Command, ContextKind.SHARE_PARENT_RW, true);
         }
     }
 

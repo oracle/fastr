@@ -13,6 +13,7 @@ package com.oracle.truffle.r.test.library.base;
 import org.junit.Assert;
 import org.junit.Test;
 
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestSimpleVectors extends TestBase {
@@ -1071,19 +1072,21 @@ public class TestSimpleVectors extends TestBase {
     @Test
     public void testIgnored1() {
         Assert.assertEquals(TEST_IGNORED1_EXPECTED_VAL,
-                        fastREval("{ x <- c(a=as.raw(10), b=as.raw(11), c=as.raw(12)) ; x[10] }", null, false));
+                        fastREval("{ x <- c(a=as.raw(10), b=as.raw(11), c=as.raw(12)) ; x[10] }", ContextKind.SHARE_PARENT_RW, false));
     }
 
     @Test
     public void testIgnored2() {
         Assert.assertEquals(TEST_IGNORED2_EXPECTED_VAL,
-                        fastREval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[s] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }", null, false));
+                        fastREval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[s] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }", ContextKind.SHARE_PARENT_RW,
+                                        false));
     }
 
     @Test
     public void testIgnored3() {
         Assert.assertEquals(TEST_IGNORED3_EXPECTED_VAL,
-                        fastREval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[c(s,s)] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }", null, false));
+                        fastREval("{ x <- c(a=as.raw(10),b=as.raw(11),c=as.raw(12),d=as.raw(13)) ; f <- function(s) { x[c(s,s)] } ; f(TRUE) ; f(1L) ; f(as.character(NA)) }",
+                                        ContextKind.SHARE_PARENT_RW, false));
     }
 
     @Test
