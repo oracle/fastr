@@ -42,7 +42,6 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
-import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
