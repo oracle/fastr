@@ -46,7 +46,6 @@ import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -82,7 +81,6 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootWithBody;
-import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -571,7 +569,6 @@ final class REngine implements Engine, Engine.Timings {
     private static final class AnonymousRootNode extends RootNode implements RootWithBody {
 
         private final ValueProfile frameTypeProfile = ValueProfile.createClassProfile();
-        private final ConditionProfile isVirtualFrameProfile = ConditionProfile.createBinaryProfile();
 
         private final String description;
         private final boolean printResult;
@@ -602,14 +599,7 @@ final class REngine implements Engine, Engine.Timings {
         }
 
         private VirtualFrame prepareFrame(VirtualFrame frame) {
-            VirtualFrame vf;
-            MaterializedFrame originalFrame = (MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]);
-            if (isVirtualFrameProfile.profile(originalFrame instanceof VirtualFrame)) {
-                vf = (VirtualFrame) originalFrame;
-            } else {
-                vf = SubstituteVirtualFrame.create(originalFrame);
-            }
-            return vf;
+            return (MaterializedFrame) frameTypeProfile.profile(frame.getArguments()[0]);
         }
 
         @Override

@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.test.library.utils;
 
-import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -32,8 +31,6 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
-import org.junit.After;
-import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
 
 // Checkstyle: stop line length check
 public class TestInteractiveDebug extends TestBase {
@@ -45,19 +42,6 @@ public class TestInteractiveDebug extends TestBase {
         String content = "bar <- function(x) print(x)\n\nfun <- function(x) {\nprint('Hello')\nfor(i in seq(3)) print(i)\nbar('World')\nprint(x)\n}";
         debugFile = testDir.resolve("debug.r");
         Files.write(debugFile, content.getBytes(), StandardOpenOption.WRITE, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-    }
-
-    @After
-    public void cleanupDebugListeners() {
-
-        try (org.graalvm.polyglot.Context context = org.graalvm.polyglot.Context.newBuilder("R", "llvm").build()) {
-            // a context has to be around when calling DebugHandling.dispose();
-            execInContext(context, () -> {
-                DebugHandling.dispose();
-                return null;
-
-            });
-        }
     }
 
     @Test
