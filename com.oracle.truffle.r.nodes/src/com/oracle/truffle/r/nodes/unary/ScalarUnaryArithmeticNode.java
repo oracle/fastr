@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,11 +87,8 @@ public class ScalarUnaryArithmeticNode extends UnaryMapNAFunctionNode {
 
     @Override
     public final double applyDouble(RComplex operand) {
-        if (operandNACheck.check(operand)) {
-            return RRuntime.DOUBLE_NA;
-        }
         try {
-            return arithmetic.opd(operand.getRealPart(), operand.getImaginaryPart());
+            return arithmetic.opdChecked(operandNACheck, operand.getRealPart(), operand.getImaginaryPart());
         } catch (Throwable e) {
             CompilerDirectives.transferToInterpreter();
             throw Operation.handleException(e);

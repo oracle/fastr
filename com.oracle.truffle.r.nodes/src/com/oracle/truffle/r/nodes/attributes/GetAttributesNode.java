@@ -85,7 +85,7 @@ public abstract class GetAttributesNode extends RBaseNode {
         if (hasAttributes(pairList)) {
             return createResult(pairList, false, names);
         } else if (names != null) {
-            return RDataFactory.createList(new Object[] {names}, RDataFactory.createStringVector(RRuntime.NAMES_ATTR_KEY));
+            return RDataFactory.createList(new Object[]{names}, RDataFactory.createStringVector(RRuntime.NAMES_ATTR_KEY));
         }
         return RNull.instance;
     }
