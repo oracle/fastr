@@ -535,10 +535,11 @@ public class GrepFunctions {
                     } else {
                         replacement = convertGroups(replacement);
 
+                        Matcher matcher = Pattern.compile(pattern, Pattern.DOTALL).matcher(input);
                         if (gsub) {
-                            value = input.replaceAll(pattern, replacement);
+                            value = matcher.replaceAll(replacement);
                         } else {
-                            value = input.replaceFirst(pattern, replacement);
+                            value = matcher.replaceFirst(replacement);
                         }
                     }
                     result[i] = value;
@@ -958,7 +959,7 @@ public class GrepFunctions {
             if (pattern.length() > 0 && pattern.charAt(0) == '*') {
                 actualPattern = pattern.substring(1);
             }
-            return Pattern.compile(actualPattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
+            return Pattern.compile(actualPattern, Pattern.DOTALL | (ignoreCase ? Pattern.CASE_INSENSITIVE : 0)).matcher(text);
         }
     }
 
@@ -1069,7 +1070,7 @@ public class GrepFunctions {
 
         @TruffleBoundary
         private static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
-            return Pattern.compile(pattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
+            return Pattern.compile(pattern, Pattern.DOTALL | (ignoreCase ? Pattern.CASE_INSENSITIVE : 0)).matcher(text);
         }
     }
 

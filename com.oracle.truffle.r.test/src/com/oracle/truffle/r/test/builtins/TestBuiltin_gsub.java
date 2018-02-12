@@ -200,6 +200,11 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaÄ', perl = TRUE) }");
         assertEval("{ gsub(pattern = 'a*', replacement = 'x', x = 'ÄaaaaÄ', perl = TRUE) }");
 
+        // the dot does not match the new line in a non-Perl regexp
+        assertEval("{ gsub('.*X', '', 'a\nXb', perl = FALSE) }");
+        // the dot matches the new line in a Perl regexp
+        assertEval("{ gsub('.*X', '', 'a\nXb', perl = TRUE) }");
+
         // Expected output: [1] "xaxbx"
         // FastR output: [1] "axxxxxb"
         assertEval(Ignored.ImplementationError, "{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");

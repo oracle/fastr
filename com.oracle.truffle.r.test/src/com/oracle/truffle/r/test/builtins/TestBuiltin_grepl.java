@@ -79,5 +79,9 @@ public class TestBuiltin_grepl extends TestBase {
         assertEval("{ .Internal(grepl(7, \"7\", F, F, F, F, F, F)) }");
         assertEval("{ .Internal(grepl(character(), \"7\", F, F, F, F, F, F)) }");
         assertEval("{ .Internal(grepl(\"7\", 7, F, F, F, F, F, F)) }");
+        // the dot does not match the new line in a non-Perl regexp
+        assertEval("{ .Internal(grepl('.+X', 'a\nXb', F, F, F, F, F, F)) }");
+        // the dot matches the new line in a Perl regexp
+        assertEval("{ .Internal(grepl('.+X', 'a\nXb', F, F, T, F, F, F)) }");
     }
 }
