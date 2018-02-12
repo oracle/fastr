@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -168,6 +169,22 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
     @Specialization
     @TruffleBoundary
     protected RStringVector sprintf(String fmt, RAbstractStringVector x) {
+        String[] r = new String[x.getLength()];
+        for (int k = 0; k < r.length; k++) {
+            r[k] = format(fmt, x.getDataAt(k));
+        }
+        return RDataFactory.createStringVector(r, RDataFactory.COMPLETE_VECTOR);
+    }
+
+    @Specialization(guards = "fmtLengthOne(fmt)")
+    @TruffleBoundary
+    protected RStringVector sprintf(RAbstractStringVector fmt, RAbstractLogicalVector x) {
+        return sprintf(fmt.getDataAt(0), x);
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected RStringVector sprintf(String fmt, RAbstractLogicalVector x) {
         String[] r = new String[x.getLength()];
         for (int k = 0; k < r.length; k++) {
             r[k] = format(fmt, x.getDataAt(k));
