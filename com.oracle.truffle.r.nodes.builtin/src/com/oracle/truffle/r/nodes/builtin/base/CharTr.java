@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,8 +36,12 @@ import com.oracle.truffle.r.nodes.function.opt.ReuseTemporaryNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "chartr", kind = INTERNAL, parameterNames = {"old", "new", "x"}, behavior = PURE)
 public abstract class CharTr extends RBuiltinNode.Arg3 {
@@ -53,34 +57,44 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
         return CharTrNodeGen.create();
     }
 
-    @Specialization
-    RStringVector doIt(String oldStr, String newStr, RAbstractStringVector values,
-                    @Cached("create()") RemoveRegAttributesNode removeRegAttributesNode,
-                    @Cached("create()") ReuseTemporaryNode reuseTemporaryNode) {
+    @Specialization(guards = "vectorReuse.supports(values)")
+    RAbstractStringVector doIt(String oldStr, String newStr, RAbstractStringVector values,
+                    @Cached("createTemporary(values)") VectorReuse vectorReuse,
+                    @Cached("create()") RemoveRegAttributesNode removeRegAttributesNode) {
         if (newStr.length() < oldStr.length()) {
             throw error(X_LONGER_THAN_Y, "old", "new");
         }
-        RStringVector result = (RStringVector) reuseTemporaryNode.execute(values);
+        RAbstractStringVector result = vectorReuse.getResult(values);
+        VectorAccess resultAccess = vectorReuse.access(result);
         removeRegAttributesNode.execute(result);
-        Object store = result.getInternalStore();
-        for (int i = 0; i < result.getLength(); i++) {
-            String value = result.getDataAt(store, i);
-            if (RRuntime.isNA(value)) {
-                continue;
-            }
-            int replaceIdx = 0;
-            while (replaceIdx < oldStr.length()) {
-                if (replaceIdx + 2 < oldStr.length() && oldStr.charAt(replaceIdx + 1) == '-') {
-                    value = replaceRange(replaceIdx, oldStr, newStr, value);
-                    replaceIdx += 3;
-                } else {
-                    value = value.replace(oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
-                    replaceIdx++;
+        try (SequentialIterator readIter = resultAccess.access(result); SequentialIterator writeIter = resultAccess.access(result)) {
+            while (resultAccess.next(readIter)) {
+                resultAccess.next(writeIter);
+                String value = resultAccess.getString(readIter);
+                if (RRuntime.isNA(value)) {
+                    continue;
                 }
+                int replaceIdx = 0;
+                while (replaceIdx < oldStr.length()) {
+                    if (replaceIdx + 2 < oldStr.length() && oldStr.charAt(replaceIdx + 1) == '-') {
+                        value = replaceRange(replaceIdx, oldStr, newStr, value);
+                        replaceIdx += 3;
+                    } else {
+                        value = value.replace(oldStr.charAt(replaceIdx), newStr.charAt(replaceIdx));
+                        replaceIdx++;
+                    }
+                }
+                resultAccess.setString(writeIter, value);
             }
-            result.setDataAt(store, i, value);
         }
         return result;
+    }
+
+    @Specialization(replaces = "doIt")
+    RAbstractStringVector doItGeneric(String oldStr, String newStr, RAbstractStringVector values,
+                    @Cached("createTemporaryGeneric()") VectorReuse vectorReuse,
+                    @Cached("create()") RemoveRegAttributesNode removeRegAttributesNode) {
+        return doIt(oldStr, newStr, values, vectorReuse, removeRegAttributesNode);
     }
 
     private String replaceRange(int replaceIdx, String oldStr, String newStr, String value) {
