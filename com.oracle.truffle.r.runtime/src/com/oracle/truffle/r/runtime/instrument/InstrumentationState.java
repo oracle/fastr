@@ -182,6 +182,11 @@ public final class InstrumentationState implements RContext.ContextState {
         void cleanup(int status);
     }
 
+    public interface DisposableExecutionEventListener extends ExecutionEventListener {
+
+        void dispose();
+    }
+
     private InstrumentationState(Instrumenter instrumenter) {
         this.instrumenter = instrumenter;
     }
@@ -266,6 +271,15 @@ public final class InstrumentationState implements RContext.ContextState {
 
     public boolean debugGloballyDisabled() {
         return debugGloballyDisabled;
+    }
+
+    @Override
+    public void beforeDispose(RContext context) {
+        for (ExecutionEventListener l : getDebugListeners()) {
+            if (l instanceof DisposableExecutionEventListener) {
+                ((DisposableExecutionEventListener) l).dispose();
+            }
+        }
     }
 
     public static InstrumentationState newContextState(Instrumenter instrumenter) {

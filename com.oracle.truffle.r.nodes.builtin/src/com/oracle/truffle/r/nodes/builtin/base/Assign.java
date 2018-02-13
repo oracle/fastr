@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,14 +26,24 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElemen
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import static com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.findOrAddFrameSlot;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.FrameSlotNode;
+import com.oracle.truffle.r.nodes.access.WriteSuperFrameVariableNode.ResolvedWriteSuperFrameVariableNode;
+import com.oracle.truffle.r.nodes.access.WriteSuperFrameVariableNodeFactory.ResolvedWriteSuperFrameVariableNodeGen;
+import com.oracle.truffle.r.nodes.access.WriteVariableNode.Mode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.AssignNodeGen.AssignInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -104,9 +114,10 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
      * The general case that requires searching the environment hierarchy.
      */
     @Specialization
-    protected Object assign(RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits,
+    protected Object assign(VirtualFrame frame, RAbstractStringVector xVec, Object value, REnvironment envir, byte inherits,
                     @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
-                    @Cached("create()") ShareObjectNode share) {
+                    @Cached("create()") ShareObjectNode share,
+                    @Cached("create()") AssignInternalNode assign) {
         String x = checkVariable(xVec);
         REnvironment env = envir;
         if (inheritsProfile.profile(RRuntime.fromLogical(inherits))) {
@@ -127,11 +138,39 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
                 throw error(RError.Message.CANNOT_ASSIGN_IN_EMPTY_ENV);
             }
         }
-        try {
-            env.put(x, share.execute(value));
-        } catch (PutException ex) {
-            throw error(ex);
-        }
+        assign.execute(frame, env, x, share.execute(value));
         return value;
+    }
+
+    protected abstract static class AssignInternalNode extends RBaseNode {
+
+        public static AssignInternalNode create() {
+            return AssignInternalNodeGen.create();
+        }
+
+        protected final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
+
+        public abstract void execute(VirtualFrame frame, REnvironment env, String name, Object value);
+
+        protected static ResolvedWriteSuperFrameVariableNode createWrite(String name, FrameDescriptor envDesc) {
+            return ResolvedWriteSuperFrameVariableNodeGen.create(name, Mode.REGULAR, null, null, FrameSlotNode.create(findOrAddFrameSlot(envDesc, name, FrameSlotKind.Illegal)));
+        }
+
+        @Specialization(guards = {"env.getFrame(frameAccessProfile).getFrameDescriptor() == envDesc", "write.getName().equals(name)"})
+        protected void assignCached(VirtualFrame frame, REnvironment env, @SuppressWarnings("unused") String name, Object value,
+                        @Cached("env.getFrame().getFrameDescriptor()") @SuppressWarnings("unused") FrameDescriptor envDesc,
+                        @Cached("createWrite(name, envDesc)") ResolvedWriteSuperFrameVariableNode write) {
+            write.execute(frame, value, env.getFrame(frameAccessProfile));
+        }
+
+        @Specialization(replaces = "assignCached")
+        @TruffleBoundary
+        protected void assign(REnvironment env, String name, Object value) {
+            try {
+                env.put(name, value);
+            } catch (PutException ex) {
+                throw error(ex);
+            }
+        }
     }
 }

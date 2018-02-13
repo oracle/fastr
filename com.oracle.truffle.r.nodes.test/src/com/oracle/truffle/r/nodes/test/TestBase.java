@@ -24,6 +24,8 @@ package com.oracle.truffle.r.nodes.test;
 
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
@@ -45,7 +47,7 @@ public class TestBase {
     public static void setupClass() {
         FastRSession session = FastRSession.create();
         testVMContext = session.getContext();
-        context = session.createContext();
+        context = session.createContext(ContextKind.SHARE_PARENT_RW);
     }
 
     @AfterClass

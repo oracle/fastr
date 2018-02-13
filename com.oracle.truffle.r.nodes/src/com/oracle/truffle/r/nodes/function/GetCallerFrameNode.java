@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
@@ -54,7 +55,13 @@ public final class GetCallerFrameNode extends RBaseNode {
             return (MaterializedFrame) callerFrameObject;
         }
         if (callerFrameObject instanceof CallerFrameClosure) {
-            closureProfile.enter();
+            if (slowPathInitialized) {
+                closureProfile.enter();
+            } else {
+                // don't initialize the profile at the first call
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                slowPathInitialized = true;
+            }
             CallerFrameClosure closure = (CallerFrameClosure) callerFrameObject;
             RCaller parent = RArguments.getCall(frame);
             MaterializedFrame slowPathFrame = notifyCallers(closure, parent);

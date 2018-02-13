@@ -615,7 +615,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     protected abstract static class SendForeignMessageBase extends Node {
         @Child private R2Foreign r2ForeignNode;
 
-        @ExplodeLoop
         protected Object[] args2Foreign(Object[] args) {
             if (r2ForeignNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();

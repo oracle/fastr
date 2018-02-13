@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,14 @@ import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
 
 public abstract class CallRFunctionBaseNode extends Node {
 
     protected final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
     protected final CallerFrameClosure invalidateNoCallerFrame = new InvalidateNoCallerFrame(needsNoCallerFrame);
+    private final ConditionProfile topLevelProfile = ConditionProfile.createBinaryProfile();
     private static final CallerFrameClosure DUMMY = new DummyCallerFrameClosure();
 
     public boolean setNeedsCallerFrame() {
@@ -62,7 +64,7 @@ public abstract class CallRFunctionBaseNode extends Node {
         } else {
             if (callerFrame != null) {
                 return callerFrame;
-            } else if (topLevel) {
+            } else if (topLevelProfile.profile(topLevel)) {
                 return DUMMY;
             }
             return curFrame.materialize();

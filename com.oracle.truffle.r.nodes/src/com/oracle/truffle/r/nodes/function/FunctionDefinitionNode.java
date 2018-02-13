@@ -314,22 +314,24 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
             CompilerDirectives.transferToInterpreter();
             SetVisibilityNode.executeSlowPath(frame, false);
             throw e;
-        } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
-            /*
-             * These relate to debugging support and various other reasons for returning to the top
-             * level. exitHandlers must be suppressed and the exceptions must pass through
-             * unchanged; they are not errors
-             */
-            CompilerDirectives.transferToInterpreter();
-            runOnExitHandlers = false;
-            throw e;
-        } catch (FastRInteropTryException e) {
-            CompilerDirectives.transferToInterpreter();
-            throw e;
         } catch (Throwable e) {
             CompilerDirectives.transferToInterpreter();
-            runOnExitHandlers = false;
-            throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, e.toString());
+            if (e instanceof DebugExitException || e instanceof JumpToTopLevelException || e instanceof ExitException || e instanceof ThreadDeath) {
+                /*
+                 * These relate to debugging support and various other reasons for returning to the
+                 * top level. exitHandlers must be suppressed and the exceptions must pass through
+                 * unchanged; they are not errors
+                 */
+                CompilerDirectives.transferToInterpreter();
+                runOnExitHandlers = false;
+                throw e;
+            } else if (e instanceof FastRInteropTryException) {
+                CompilerDirectives.transferToInterpreter();
+                throw e;
+            } else {
+                runOnExitHandlers = false;
+                throw e instanceof RInternalError ? (RInternalError) e : new RInternalError(e, e.toString());
+            }
         } finally {
             /*
              * Although a user function may throw an exception from an onExit handler, all

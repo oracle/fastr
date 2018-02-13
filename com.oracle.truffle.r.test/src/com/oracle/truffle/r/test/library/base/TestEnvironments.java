@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -227,12 +227,13 @@ public class TestEnvironments extends TestBase {
         assertEval("{ environmentName(1) }");
 
         // locking
+        // in general, we don't guarantee that locking produces errors
         assertEval("{ e<-new.env(); environmentIsLocked(e) }");
         assertEval("{ e<-new.env(); lockEnvironment(e); environmentIsLocked(e) }");
-        assertEval("{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
+        assertEval(Ignored.Unimplemented, "{ e<-new.env(); lockEnvironment(e); assign(\"a\", 1, e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e); assign(\"a\", 2, e) }");
-        assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); assign(\"a\", 2, e) }");
-        assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); assign(\"a\", 2, e) }");
+        assertEval(Ignored.Unimplemented, "{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); assign(\"a\", 2, e) }");
+        assertEval(Ignored.Unimplemented, "{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); assign(\"a\", 2, e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e) ; lockEnvironment(e, TRUE); unlockBinding(\"a\", e); assign(\"a\", 2, e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e); bindingIsLocked(\"a\", e) }");
         assertEval("{ e<-new.env(); assign(\"a\", 1, e); lockBinding(\"a\", e); bindingIsLocked(\"a\", e) }");

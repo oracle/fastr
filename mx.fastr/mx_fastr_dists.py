@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -226,6 +226,8 @@ class FastRArchiveParticipant:
             assert isinstance(self.dist.deps[0], FastRReleaseProject)
             self.release_project = self.dist.deps[0]
             self.dist.deps[0].deps = []
+            if hasattr(self.dist, '.archived_deps'):
+                delattr(self.dist, '.archived_deps')
 
     def __add__(self, arcname, contents):
         return False

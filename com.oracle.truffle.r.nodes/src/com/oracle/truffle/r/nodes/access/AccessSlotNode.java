@@ -21,10 +21,10 @@ import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.function.ImplicitClassHierarchyNode;
+import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -52,12 +52,12 @@ public abstract class AccessSlotNode extends BaseAccessSlotNode {
 
     @Specialization(guards = {"slotAccessAllowed(object)"})
     protected Object getSlotS4Cached(RAttributable object, String name,
+                    @Cached("create()") InternStringNode intern,
                     @Cached("createAttrAccess()") GetAttributeNode attrAccess,
                     @Cached("create()") InitAttributesNode initAttrNode,
                     @Cached("create()") GetClassAttributeNode getClassNode) {
         Object value = attrAccess.execute(initAttrNode.execute(object), name);
-        String internedName = Utils.intern(name);
-        return getSlotS4Internal(object, internedName, value, getClassNode);
+        return getSlotS4Internal(object, intern.execute(name), value, getClassNode);
     }
 
     @Specialization(guards = {"!slotAccessAllowed(object)", "isDotData(name)"})

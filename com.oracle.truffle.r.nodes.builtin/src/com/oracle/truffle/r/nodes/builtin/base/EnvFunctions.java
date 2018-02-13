@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -88,6 +89,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.REnvironment.ContextStateImpl;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
@@ -484,7 +486,20 @@ public class EnvFunctions {
         }
 
         @Specialization
+        @TruffleBoundary
         protected String environmentName(REnvironment env) {
+            ContextStateImpl state = RContext.getInstance().stateREnvironment;
+            if (env == state.getGlobalEnv()) {
+                return "R_GlobalEnv";
+            } else if (env == state.getBaseEnv() || env == state.getBaseNamespace()) {
+                return "base";
+            } else if (env == REnvironment.emptyEnv()) {
+                return "R_EmptyEnv";
+            } else if (env.isPackageEnv() != null) {
+                return env.isPackageEnv();
+            } else if (env.isNamespaceEnv()) {
+                return env.getNamespaceSpec().getDataAt(0);
+            }
             return env.getName();
         }
 

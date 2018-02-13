@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -130,6 +130,7 @@ public class RErrorHandling {
          * {@code .signalSimpleWarning} in "conditions.R".
          */
         private RFunction dotSignalSimpleWarning;
+        private RFunction dotHandleSimpleError;
 
         /**
          * Initialize and return the value of {@link #dotSignalSimpleWarning}. This is lazy because
@@ -144,6 +145,16 @@ public class RErrorHandling {
                 dotSignalSimpleWarning = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
             }
             return dotSignalSimpleWarning;
+        }
+
+        private RFunction getDotHandleSimpleError() {
+            if (dotHandleSimpleError == null) {
+                CompilerDirectives.transferToInterpreter();
+                String name = ".handleSimpleError";
+                Object f = REnvironment.baseEnv().findFunction(name);
+                dotHandleSimpleError = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, f);
+            }
+            return dotHandleSimpleError;
         }
 
         public static ContextStateImpl newContextState() {
@@ -389,7 +400,9 @@ public class RErrorHandling {
                     } else {
                         RFunction handler = (RFunction) entry.getDataAt(2);
                         RStringVector errorMsgVec = RDataFactory.createStringVectorFromScalar(fMsg);
-                        RContext.getRRuntimeASTAccess().callback(handler, new Object[]{errorMsgVec});
+                        RFunction f = errorHandlingState.getDotHandleSimpleError();
+                        assert f != null;
+                        RContext.getRRuntimeASTAccess().callback(f, new Object[]{handler, errorMsgVec, call});
                     }
                 } else {
                     throw gotoExitingHandler(RNull.instance, call, entry);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import java.util.function.Consumer;
 import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -56,7 +57,7 @@ class DefaultArgsExtractor {
     }
 
     Map<String, Samples<?>> extractDefaultArgs(String functionName) {
-        final Context context = fastRSession.createContext();
+        final Context context = fastRSession.createContext(ContextKind.SHARE_PARENT_RW);
 
         HashMap<String, Samples<?>> samplesMap = new HashMap<>();
         try {

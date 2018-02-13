@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.test.generate;
 
-import com.oracle.truffle.r.runtime.context.ChildContextInfo;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
 
 /**
@@ -42,7 +42,7 @@ public interface RSession {
      * This result will always be non-null or an exception will be thrown in, say, a timeout
      * occurring.
      */
-    String eval(TestBase testClass, String expression, ChildContextInfo contextInfo, boolean longTimeout) throws Throwable;
+    String eval(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout) throws Throwable;
 
     /**
      * A name to identify the session.

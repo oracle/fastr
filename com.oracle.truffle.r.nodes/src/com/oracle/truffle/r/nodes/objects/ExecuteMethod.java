@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -14,6 +14,7 @@ package com.oracle.truffle.r.nodes.objects;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
@@ -37,12 +38,15 @@ final class ExecuteMethod extends RBaseNode {
     @Child private CollectArgumentsNode collectArgs;
     @Child private CallMatcherNode callMatcher;
 
+    private final ValueProfile functionProfile = ValueProfile.createClassProfile();
+    private final ValueProfile signatureProfile = ValueProfile.createIdentityProfile();
+
     public Object executeObject(VirtualFrame frame, RFunction fdef, String fname) {
         if (collectArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             collectArgs = insert(CollectArgumentsNodeGen.create());
         }
-        ArgumentsSignature signature = RArguments.getSignature(frame);
+        ArgumentsSignature signature = signatureProfile.profile(RArguments.getSignature(frame, functionProfile));
 
         // Collect arguments; we cannot use the arguments of the original call because there might
         // be overriding default arguments.

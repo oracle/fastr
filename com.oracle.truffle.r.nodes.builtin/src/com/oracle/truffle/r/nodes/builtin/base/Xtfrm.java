@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,7 +64,7 @@ public abstract class Xtfrm extends RBuiltinNode.Arg1 {
 
         REnvironment env = RArguments.getEnvironment(frame);
         if (createProfile.profile(env == null)) {
-            env = REnvironment.createEnclosingEnvironments(frame.materialize());
+            env = REnvironment.frameToEnvironment(frame.materialize());
         }
         RFunction func = (RFunction) getNode.execute(frame, "xtfrm.default", env, RType.Function.getName(), true);
         return RContext.getEngine().evalFunction(func, null, null, true, null, x);

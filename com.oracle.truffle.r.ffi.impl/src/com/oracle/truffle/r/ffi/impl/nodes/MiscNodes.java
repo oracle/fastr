@@ -23,17 +23,25 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionBodyNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionEnvironmentNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionFormalsNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.OctSizeNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RHasSlotNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionBodyNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionEnvironmentNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionFormalsNodeGen;
+import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.HasSlotNode;
@@ -43,6 +51,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNames
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
+import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -241,11 +250,40 @@ public final class MiscNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    public abstract static class GetFunctionBody extends FFIUpCallNode.Arg1 {
+
+        @Specialization
+        @TruffleBoundary
+        public static Object body(RFunction fun) {
+            RootNode root = fun.getRootNode();
+            if (root instanceof FunctionDefinitionNode) {
+                return RASTUtils.createLanguageElement(((FunctionDefinitionNode) root).getBody());
+            } else {
+                return RNull.instance;
+            }
+        }
+
+        public static GetFunctionBody create() {
+            return GetFunctionBodyNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class GetFunctionFormals extends FFIUpCallNode.Arg1 {
+
+        @Specialization
+        protected Object formals(RFunction fun) {
+            return RASTUtils.createFormals(fun);
+        }
+
+        public static GetFunctionFormals create() {
+            return GetFunctionFormalsNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
     public abstract static class GetFunctionEnvironment extends FFIUpCallNode.Arg1 {
 
-        /**
-         * Returns the environment that {@code func} was created in.
-         */
         @Specialization
         protected Object environment(RFunction fun,
                         @Cached("create()") GetFunctionEnvironmentNode getEnvNode) {
@@ -254,6 +292,52 @@ public final class MiscNodes {
 
         public static GetFunctionEnvironment create() {
             return GetFunctionEnvironmentNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class SetFunctionBody extends FFIUpCallNode.Arg2 {
+
+        @Specialization
+        @TruffleBoundary
+        protected Object body(RFunction fun, Object body) {
+            RASTUtils.modifyFunction(fun, body, RASTUtils.createFormals(fun), fun.getEnclosingFrame());
+            return RNull.instance;
+        }
+
+        public static SetFunctionBody create() {
+            return SetFunctionBodyNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class SetFunctionFormals extends FFIUpCallNode.Arg2 {
+
+        @Specialization
+        @TruffleBoundary
+        protected Object formals(RFunction fun, Object formals) {
+            RASTUtils.modifyFunction(fun, GetFunctionBody.body(fun), formals, fun.getEnclosingFrame());
+            return RNull.instance;
+        }
+
+        public static SetFunctionFormals create() {
+            return SetFunctionFormalsNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class SetFunctionEnvironment extends FFIUpCallNode.Arg2 {
+
+        @Specialization
+        @TruffleBoundary
+        protected Object environment(RFunction fun, REnvironment env) {
+            RASTUtils.modifyFunction(fun, GetFunctionBody.body(fun), RASTUtils.createFormals(fun), env.getFrame());
+            fun.reassignEnclosingFrame(env.getFrame());
+            return RNull.instance;
+        }
+
+        public static SetFunctionEnvironment create() {
+            return SetFunctionEnvironmentNodeGen.create();
         }
     }
 

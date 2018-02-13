@@ -242,6 +242,24 @@ public interface StdUpCallsRFFI {
 
     Object SETCDR(Object x, Object y);
 
+    @RFFIUpCallNode(MiscNodes.GetFunctionFormals.class)
+    Object FORMALS(Object x);
+
+    @RFFIUpCallNode(MiscNodes.GetFunctionBody.class)
+    Object BODY(Object x);
+
+    @RFFIUpCallNode(MiscNodes.GetFunctionEnvironment.class)
+    Object CLOENV(Object x);
+
+    @RFFIUpCallNode(MiscNodes.SetFunctionFormals.class)
+    void SET_FORMALS(Object x, Object y);
+
+    @RFFIUpCallNode(MiscNodes.SetFunctionBody.class)
+    void SET_BODY(Object x, Object y);
+
+    @RFFIUpCallNode(MiscNodes.SetFunctionEnvironment.class)
+    void SET_CLOENV(Object x, Object y);
+
     @RFFIUpCallNode(SETCADRNode.class)
     Object SETCADR(Object x, Object y);
 
@@ -409,9 +427,6 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(MiscNodes.RHasSlotNode.class)
     int R_has_slot(Object container, Object name);
-
-    @RFFIUpCallNode(MiscNodes.GetFunctionEnvironment.class)
-    Object CLOENV(Object x);
 
     @RFFIUpCallNode(MiscNodes.OctSizeNode.class)
     Object octsize(Object size);

@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
+import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
 import java.io.File;
 import org.junit.After;
@@ -108,12 +109,12 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testHelp() {
-        assertHelpResult(fastREval("?as.external.byte", null, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
-        assertHelpResult(fastREval("help(as.external.byte)", null, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
-        assertHelpResult(fastREval("example(as.external.byte)", null, false), null, "byteClass$valueOf(javaByte)", "[1] 123");
+        assertHelpResult(fastREval("?as.external.byte", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
+        assertHelpResult(fastREval("help(as.external.byte)", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
+        assertHelpResult(fastREval("example(as.external.byte)", ContextKind.SHARE_PARENT_RW, false), null, "byteClass$valueOf(javaByte)", "[1] 123");
     }
 
-    private void assertHelpResult(String result, String startsWith, String... contains) {
+    private static void assertHelpResult(String result, String startsWith, String... contains) {
         if (startsWith != null) {
             assertTrue(result.startsWith(startsWith));
         }

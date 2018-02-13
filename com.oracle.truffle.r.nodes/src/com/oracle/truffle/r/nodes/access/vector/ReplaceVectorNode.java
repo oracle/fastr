@@ -36,11 +36,14 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ExtractSingleName;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ReadElementNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -274,74 +277,77 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot corce position to character for foreign access.");
     }
 
-    @Specialization(guards = {"isForeignObject(object)", "positions.length == cachedLength"})
+    @Specialization(guards = {"isForeignObject(object)"})
     protected Object accessField(TruffleObject object, Object[] positions, Object value,
-                    @Cached("WRITE.createNode()") Node foreignWrite,
-                    @Cached("READ.createNode()") Node foreignRead,
-                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
-                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
-                    @SuppressWarnings("unused") @Cached("positions.length") int cachedLength,
-                    @Cached("create()") CastStringNode castNode,
-                    @Cached("createFirstString()") FirstStringNode firstString,
-                    @Cached("create()") R2Foreign r2Foreign) {
+                    @Cached("createReadElement()") ReadElementNode readElement,
+                    @Cached("createWriteElement()") WriteElementNode writeElement,
+                    @Cached("create()") VectorLengthProfile lengthProfile) {
         Object writtenValue = value;
         try {
             TruffleObject result = object;
-            for (int i = 0; i < positions.length - 1; i++) {
-                result = (TruffleObject) ExtractVectorNode.read(this, positions[i], foreignRead, keyInfoNode, hasSizeNode, result, firstString, castNode);
+            for (int i = 0; i < lengthProfile.profile(positions.length) - 1; i++) {
+                result = (TruffleObject) readElement.execute(positions[i], result);
             }
-            write(positions[positions.length - 1], foreignWrite, keyInfoNode, hasSizeNode, result, writtenValue, firstString, castNode, r2Foreign);
+            writeElement.execute(positions[positions.length - 1], result, writtenValue);
             return object;
         } catch (InteropException e) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
 
-    @Specialization(guards = {"isForeignObject(object)"}, replaces = "accessField")
-    protected Object accessFieldGeneric(TruffleObject object, Object[] positions, Object value,
-                    @Cached("WRITE.createNode()") Node foreignWrite,
-                    @Cached("READ.createNode()") Node foreignRead,
-                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
-                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
-                    @Cached("create()") CastStringNode castNode,
-                    @Cached("createFirstString()") FirstStringNode firstString,
-                    @Cached("create()") R2Foreign r2Foreign) {
-        return accessField(object, positions, value, foreignWrite, foreignRead, keyInfoNode, hasSizeNode, positions.length, castNode, firstString, r2Foreign);
+    protected static ReadElementNode createReadElement() {
+        return ExtractVectorNode.createReadElement();
     }
 
-    private void write(Object position, Node foreignWrite, Node keyInfoNode, Node hasSizeNode, TruffleObject object, Object writtenValue, FirstStringNode firstString, CastStringNode castNode,
-                    R2Foreign r2Foreign)
-                    throws InteropException, RError {
-        Object pos = position;
-        if (pos instanceof Integer) {
-            pos = ((Integer) pos) - 1;
-        } else if (pos instanceof Double) {
-            pos = ((Double) pos) - 1;
-        } else if (pos instanceof RAbstractDoubleVector) {
-            pos = ((RAbstractDoubleVector) pos).getDataAt(0) - 1;
-        } else if (pos instanceof RAbstractIntVector) {
-            pos = ((RAbstractIntVector) pos).getDataAt(0) - 1;
-        } else if (pos instanceof RAbstractStringVector) {
-            String string = firstString.executeString(castNode.doCast(pos));
-            pos = string;
-        } else if (!(pos instanceof String)) {
-            throw error(RError.Message.GENERIC, "invalid index during foreign access");
-        }
+    protected static WriteElementNode createWriteElement() {
+        return new WriteElementNode();
+    }
 
-        int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
-        if (KeyInfo.isWritable(info) || ForeignAccess.sendHasSize(hasSizeNode, object) ||
-                        (pos instanceof String && !JavaInterop.isJavaObject(Object.class, object))) {
-            ForeignAccess.sendWrite(foreignWrite, object, pos, r2Foreign.execute(writtenValue));
-            return;
-        } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
-            TruffleObject clazz = toJavaClass(object);
-            info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
-            if (KeyInfo.isWritable(info)) {
-                ForeignAccess.sendWrite(foreignWrite, clazz, pos, r2Foreign.execute(writtenValue));
-                return;
+    static final class WriteElementNode extends RBaseNode {
+
+        @Child private Node keyInfoNode = com.oracle.truffle.api.interop.Message.KEY_INFO.createNode();
+        @Child private Node hasSizeNode = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
+        @Child private Node foreignWrite = com.oracle.truffle.api.interop.Message.WRITE.createNode();
+        @Child private R2Foreign r2Foreign = R2Foreign.create();
+        @Child private CastStringNode castNode = CastStringNode.create();
+        @Child private FirstStringNode firstString = ExtractVectorNode.createFirstString();
+
+        private final ConditionProfile isIntProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isDoubleProfile = ConditionProfile.createBinaryProfile();
+
+        private void execute(Object position, TruffleObject object, Object writtenValue) throws InteropException {
+            Object pos = position;
+            if (isIntProfile.profile(pos instanceof Integer)) {
+                pos = ((int) pos) - 1;
+            } else if (isDoubleProfile.profile(pos instanceof Double)) {
+                pos = ((double) pos) - 1;
+            } else if (pos instanceof RAbstractDoubleVector) {
+                pos = ((RAbstractDoubleVector) pos).getDataAt(0) - 1;
+            } else if (pos instanceof RAbstractIntVector) {
+                pos = ((RAbstractIntVector) pos).getDataAt(0) - 1;
+            } else if (pos instanceof RAbstractStringVector) {
+                String string = firstString.executeString(castNode.doCast(pos));
+                pos = string;
+            } else if (!(pos instanceof String)) {
+                throw error(RError.Message.GENERIC, "invalid index during foreign access");
             }
+
+            int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
+            if (KeyInfo.isWritable(info) || ForeignAccess.sendHasSize(hasSizeNode, object) ||
+                            (pos instanceof String && !JavaInterop.isJavaObject(Object.class, object))) {
+                ForeignAccess.sendWrite(foreignWrite, object, pos, r2Foreign.execute(writtenValue));
+                return;
+            } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
+                TruffleObject clazz = toJavaClass(object);
+                info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
+                if (KeyInfo.isWritable(info)) {
+                    ForeignAccess.sendWrite(foreignWrite, clazz, pos, r2Foreign.execute(writtenValue));
+                    return;
+                }
+            }
+            throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
         }
-        throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
     }
 
     @TruffleBoundary

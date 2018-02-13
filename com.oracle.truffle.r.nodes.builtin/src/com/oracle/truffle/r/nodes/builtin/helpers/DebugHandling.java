@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
@@ -140,17 +141,6 @@ public class DebugHandling {
         return fser != null && (!fser.disabled() || fser.parentListener != null && !fser.parentListener.disabled());
     }
 
-    /**
-     *
-     */
-    public static void dispose() {
-        for (ExecutionEventListener l : RContext.getInstance().stateInstrumentation.getDebugListeners()) {
-            if (l instanceof DebugEventListener) {
-                ((DebugEventListener) l).dispose();
-            }
-        }
-    }
-
     private static FunctionStatementsEventListener getFunctionStatementsEventListener(RFunction func) {
         return (FunctionStatementsEventListener) RContext.getInstance().stateInstrumentation.getDebugListener(RInstrumentation.getSourceSection(func));
     }
@@ -215,7 +205,7 @@ public class DebugHandling {
         return fser;
     }
 
-    private abstract static class DebugEventListener implements ExecutionEventListener {
+    private abstract static class DebugEventListener implements InstrumentationState.DisposableExecutionEventListener {
 
         private EventBinding<? extends DebugEventListener> binding;
 
@@ -260,6 +250,7 @@ public class DebugHandling {
             this.binding = binding;
         }
 
+        @Override
         public void dispose() {
             if (binding != null && !binding.isDisposed()) {
                 binding.dispose();

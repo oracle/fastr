@@ -35,6 +35,7 @@ import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen.ExtractSingleNameNodeGen;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -261,11 +263,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     @Specialization(guards = {"isForeignObject(object)", "positionsByVector(positions)"})
     protected Object accessFieldByVectorPositions(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
-                    @Cached("READ.createNode()") Node foreignRead,
-                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
-                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
-                    @Cached("create()") CastStringNode castNode,
-                    @Cached("createFirstString()") FirstStringNode firstString,
+                    @Cached("createReadElement()") ReadElementNode readElement,
                     @Cached("IS_NULL.createNode()") Node isNullNode,
                     @Cached("IS_BOXED.createNode()") Node isBoxedNode,
                     @Cached("UNBOX.createNode()") Node unboxNode,
@@ -276,24 +274,21 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
         try {
             for (int i = 0; i < vec.getLength(); i++) {
-                Object res = read(this, vec.getDataAtAsObject(i), foreignRead, keyInfoNode, hasSizeNode, object, firstString, castNode);
+                Object res = readElement.execute(vec.getDataAtAsObject(i), object);
                 arrayData.add(res, () -> isNullNode, () -> isBoxedNode, () -> unboxNode, () -> foreign2RNode);
             }
             return ForeignArray2R.asAbstractVector(arrayData);
         } catch (InteropException e) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
 
-    @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)", "positions.length == cachedLength"})
+    @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)"})
     protected Object accessField(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
-                    @Cached("READ.createNode()") Node foreignRead,
-                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
-                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
-                    @Cached("positions.length") @SuppressWarnings("unused") int cachedLength,
-                    @Cached("create()") CastStringNode castNode,
-                    @Cached("createFirstString()") FirstStringNode firstString,
+                    @Cached("createReadElement()") ReadElementNode readElement,
                     @Cached("createClassProfile()") ValueProfile positionProfile,
+                    @Cached("create()") VectorLengthProfile lengthProfile,
                     @Cached("create()") Foreign2R foreign2RNode) {
         Object[] pos = positionProfile.profile(positions);
         if (pos.length == 0) {
@@ -301,58 +296,61 @@ public abstract class ExtractVectorNode extends RBaseNode {
         }
         try {
             Object result = object;
-            for (int i = 0; i < pos.length; i++) {
-                result = read(this, pos[i], foreignRead, keyInfoNode, hasSizeNode, (TruffleObject) result, firstString, castNode);
-                if (pos.length > 1 && i < pos.length - 1) {
-                    assert result instanceof TruffleObject;
-                }
+            for (int i = 0; i < lengthProfile.profile(pos.length); i++) {
+                result = readElement.execute(pos[i], (TruffleObject) result);
+                assert !(pos.length > 1 && i < pos.length - 1) || result instanceof TruffleObject;
             }
             return foreign2RNode.execute(result);
         } catch (InteropException | NoSuchFieldError e) {
+            CompilerDirectives.transferToInterpreter();
             throw RError.interopError(RError.findParentRBase(this), e, object);
         }
     }
 
-    @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)"}, replaces = "accessField")
-    protected Object accessFieldGeneric(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
-                    @Cached("READ.createNode()") Node foreignRead,
-                    @Cached("KEY_INFO.createNode()") Node keyInfoNode,
-                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
-                    @Cached("create()") CastStringNode castNode,
-                    @Cached("createFirstString()") FirstStringNode firstString,
-                    @Cached("createClassProfile()") ValueProfile positionProfile,
-                    @Cached("create()") Foreign2R foreign2RNode) {
-        return accessField(object, positions, exact, dropDimensions, foreignRead, keyInfoNode, hasSizeNode, positions.length, castNode, firstString, positionProfile, foreign2RNode);
+    protected static ReadElementNode createReadElement() {
+        return new ReadElementNode();
     }
 
-    public static Object read(RBaseNode caller, Object positions, Node foreignRead, Node keyInfoNode, Node hasSizeNode, TruffleObject object, FirstStringNode firstString, CastStringNode castNode)
-                    throws RError, InteropException {
-        Object pos = positions;
-        if (pos instanceof Integer) {
-            pos = ((int) pos) - 1;
-        } else if (pos instanceof Double) {
-            pos = ((double) pos) - 1;
-        } else if (pos instanceof RAbstractDoubleVector) {
-            pos = ((RAbstractDoubleVector) pos).getDataAt(0) - 1;
-        } else if (pos instanceof RAbstractIntVector) {
-            pos = ((RAbstractIntVector) pos).getDataAt(0) - 1;
-        } else if (pos instanceof RAbstractStringVector) {
-            pos = firstString.executeString(castNode.doCast(pos));
-        } else if (!(pos instanceof String)) {
-            throw caller.error(RError.Message.GENERIC, "invalid index during foreign access");
-        }
+    static final class ReadElementNode extends RBaseNode {
 
-        int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
-        if (KeyInfo.isReadable(info) || ForeignAccess.sendHasSize(hasSizeNode, object)) {
-            return ForeignAccess.sendRead(foreignRead, object, pos);
-        } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
-            TruffleObject clazz = toJavaClass(object);
-            info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
-            if (KeyInfo.isReadable(info)) {
-                return ForeignAccess.sendRead(foreignRead, clazz, pos);
+        @Child private Node foreignRead = com.oracle.truffle.api.interop.Message.READ.createNode();
+        @Child private Node keyInfoNode = com.oracle.truffle.api.interop.Message.KEY_INFO.createNode();
+        @Child private Node hasSizeNode = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
+        @Child private CastStringNode castNode = CastStringNode.create();
+        @Child private FirstStringNode firstString = createFirstString();
+
+        private final ConditionProfile isIntProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isDoubleProfile = ConditionProfile.createBinaryProfile();
+
+        public Object execute(Object position, TruffleObject object) throws InteropException {
+            Object pos = position;
+            if (isIntProfile.profile(pos instanceof Integer)) {
+                pos = ((int) pos) - 1;
+            } else if (isDoubleProfile.profile(pos instanceof Double)) {
+                pos = ((double) pos) - 1;
+            } else if (pos instanceof RAbstractDoubleVector) {
+                pos = ((RAbstractDoubleVector) pos).getDataAt(0) - 1;
+            } else if (pos instanceof RAbstractIntVector) {
+                pos = ((RAbstractIntVector) pos).getDataAt(0) - 1;
+            } else if (pos instanceof RAbstractStringVector) {
+                pos = firstString.executeString(castNode.doCast(pos));
+            } else if (!(pos instanceof String)) {
+                throw error(RError.Message.GENERIC, "invalid index during foreign access");
             }
+
+            int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
+            if (KeyInfo.isReadable(info) || ForeignAccess.sendHasSize(hasSizeNode, object)) {
+                return ForeignAccess.sendRead(foreignRead, object, pos);
+            } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
+                TruffleObject clazz = toJavaClass(object);
+                info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
+                if (KeyInfo.isReadable(info)) {
+                    return ForeignAccess.sendRead(foreignRead, clazz, pos);
+                }
+            }
+            throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
+
         }
-        throw caller.error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
     }
 
     @TruffleBoundary

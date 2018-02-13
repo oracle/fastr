@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
@@ -138,6 +139,10 @@ public final class Closure {
 
     public RBaseNode getExpr() {
         return expr;
+    }
+
+    public RSyntaxElement getSyntaxElement() {
+        return expr.asRSyntaxNode();
     }
 
     public String asSymbol() {
