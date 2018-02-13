@@ -45,8 +45,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 public final class EnvironmentNodes {
 
     /**
-     * Convert an {@link RList} to an {@link REnvironment}, which is needed in several builtins,
-     * e.g. {@code substitute}.
+     * Convert an {@link RList} to an {@link REnvironment}, which is needed in several builtins, e.g.
+     * {@code substitute}.
      */
     public abstract static class RList2EnvNode extends RBaseNode {
         private final boolean ignoreMissingNames;
@@ -68,7 +68,7 @@ public final class EnvironmentNodes {
         }
 
         @TruffleBoundary
-        private REnvironment createNewEnv(String envName, REnvironment parentEnv) {
+        private static REnvironment createNewEnv(String envName, REnvironment parentEnv) {
             REnvironment createNewEnv = RDataFactory.createNewEnv(envName);
             RArguments.initializeEnclosingFrame(createNewEnv.getFrame(), parentEnv.getFrame());
             createNewEnv.setParent(parentEnv);

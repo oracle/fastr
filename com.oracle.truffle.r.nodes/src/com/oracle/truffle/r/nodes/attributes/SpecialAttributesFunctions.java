@@ -421,11 +421,10 @@ public final class SpecialAttributesFunctions {
             RPairList pl = x.getPairListInternal();
             if (pairListProfile.profile(pl == null)) {
                 /*
-                 * "names" for a language object is a special case, that is applicable to calls and
-                 * returns the names of the actual arguments, if any. E.g. f(x=1, 3) would return
-                 * c("", "x", ""). GnuR defines it as returning the "tag" values on the pairlist
-                 * that represents the call. Well, we don't have a pairlist, (we could get one by
-                 * serializing the expression), so we do it by AST walking.
+                 * "names" for a language object is a special case, that is applicable to calls and returns the
+                 * names of the actual arguments, if any. E.g. f(x=1, 3) would return c("", "x", ""). GnuR defines
+                 * it as returning the "tag" values on the pairlist that represents the call. Well, we don't have a
+                 * pairlist, (we could get one by serializing the expression), so we do it by AST walking.
                  */
                 RStringVector names = RContext.getRRuntimeASTAccess().getNames(x);
                 return names;
@@ -990,8 +989,10 @@ public final class SpecialAttributesFunctions {
         public abstract void execute(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames);
 
         @Specialization
-        protected void initContainerAttributes(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames,
+        protected void initContainerAttributes(RAbstractContainer x, int[] dimensions, RStringVector initialNames, RList initialDimNames,
                         @Cached("create()") ShareObjectNode shareObjectNode) {
+            RStringVector names = initialNames;
+            RList dimNames = initialDimNames;
             assert names != x;
             assert dimNames != x;
             DynamicObject attrs = x.getAttributes();

@@ -185,7 +185,7 @@ public abstract class RBaseNode extends Node {
         return getRSyntaxNode().getSourceSection();
     }
 
-    public boolean hasTag(Class<? extends Tag> tag) {
+    public boolean hasTag(@SuppressWarnings("unused") Class<? extends Tag> tag) {
         // RNode, which is instrumentable, overrides this to actually check if the node has the tag
         return false;
     }

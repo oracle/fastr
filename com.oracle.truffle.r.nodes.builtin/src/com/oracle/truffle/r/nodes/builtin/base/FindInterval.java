@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2002--2016, The R Core Team
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -81,7 +81,7 @@ public abstract class FindInterval extends RBuiltinNode.Arg5 {
 
     // transcribed from appl/interv.c
 
-    private int findInterval2(VectorAccess xtAccess, RandomIterator xtIter, double x, boolean right, boolean inside, boolean leftOpen, int iloIn) {
+    private static int findInterval2(VectorAccess xtAccess, RandomIterator xtIter, double x, boolean right, boolean inside, boolean leftOpen, int iloIn) {
         int n = xtAccess.getLength(xtIter);
         if (n == 0) {
             return 0;

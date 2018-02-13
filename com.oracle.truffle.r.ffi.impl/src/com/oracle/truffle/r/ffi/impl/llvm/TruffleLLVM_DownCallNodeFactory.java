@@ -50,8 +50,8 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     @Override
-    public DownCallNode createDownCallNode(NativeFunction function) {
-        return new DownCallNode(function) {
+    public DownCallNode createDownCallNode(NativeFunction f) {
+        return new DownCallNode(f) {
             @Override
             protected TruffleObject getTarget(NativeFunction function) {
                 CompilerAsserts.neverPartOfCompilation();

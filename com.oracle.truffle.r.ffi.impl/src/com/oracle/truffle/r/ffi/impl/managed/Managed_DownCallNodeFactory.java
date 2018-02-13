@@ -31,7 +31,6 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 import com.oracle.truffle.api.CallTarget;
@@ -56,8 +55,8 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     @Override
-    public DownCallNode createDownCallNode(NativeFunction function) {
-        return new DownCallNode(function) {
+    public DownCallNode createDownCallNode(NativeFunction f) {
+        return new DownCallNode(f) {
             @Override
             protected TruffleObject getTarget(NativeFunction function) {
                 if (function == NativeFunction.getpid) {
@@ -121,9 +120,8 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     /**
-     * Implements simplified version of the {@code mkdtemp} from {@code stdlib}. The reason why we
-     * do not use only Java version is that the real {@code mkdtemp} seems to be more reliable and
-     * secure.
+     * Implements simplified version of the {@code mkdtemp} from {@code stdlib}. The reason why we do
+     * not use only Java version is that the real {@code mkdtemp} seems to be more reliable and secure.
      */
     private static final class Mkdtemp implements TruffleObject {
         private static final FileAttribute<Set<PosixFilePermission>> irwxuPermissions = PosixFilePermissions.asFileAttribute(
@@ -177,8 +175,8 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     /**
-     * Gives the current working directory. For some reasons, this is not exactly equivalent to
-     * calling the C function, which manifests itself during codetools package installation.
+     * Gives the current working directory. For some reasons, this is not exactly equivalent to calling
+     * the C function, which manifests itself during codetools package installation.
      */
     private static final class Getwd implements TruffleObject {
         @Override

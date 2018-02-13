@@ -253,7 +253,7 @@ public abstract class AbstractMRTest {
         });
     }
 
-    private void testKeys(TruffleObject obj) throws UnknownIdentifierException, UnsupportedMessageException {
+    private void testKeys(TruffleObject obj) throws UnknownIdentifierException {
         try {
             TruffleObject keysObj = ForeignAccess.sendKeys(Message.KEYS.createNode(), obj);
 

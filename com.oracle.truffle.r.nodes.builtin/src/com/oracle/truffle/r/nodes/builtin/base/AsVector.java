@@ -277,7 +277,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Specialization(guards = "pairList.getAttributes() != null")
-            protected Object drop(Object original, RPairList pairList) {
+            protected Object drop(@SuppressWarnings("unused") Object original, RPairList pairList) {
                 // dropping already done in the cast node CastPairListNode below
                 return pairList;
             }
@@ -296,7 +296,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Fallback
-            protected Object drop(Object original, Object o) {
+            protected Object drop(@SuppressWarnings("unused") Object original, Object o) {
                 // includes RExpression, RSymbol
                 return o;
             }
@@ -352,7 +352,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @TruffleBoundary
-            private Object fromVectorWithAttributes(RAbstractContainer x, RemoveNamesAttributeNode removeNamesAttributeNode) {
+            private static Object fromVectorWithAttributes(RAbstractContainer x, RemoveNamesAttributeNode removeNamesAttributeNode) {
                 if (x.getLength() == 0) {
                     return RNull.instance;
                 } else {

@@ -80,7 +80,7 @@ public class OptionsFunctions {
             Object[] data = new Object[optionSettings.size()];
             String[] names = new String[data.length];
 
-            @SuppressWarnings({"unchecked", "rawtypes"})
+            @SuppressWarnings("unchecked")
             Map.Entry<String, Object>[] entries = optionSettings.toArray(new Map.Entry[optionSettings.size()]);
             Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
             Collator collator = locale == Locale.ROOT || locale == null ? null : RLocale.getOrderCollator(locale);

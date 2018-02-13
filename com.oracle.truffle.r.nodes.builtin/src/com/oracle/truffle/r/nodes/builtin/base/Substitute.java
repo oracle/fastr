@@ -58,7 +58,7 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object doSubstitute(VirtualFrame frame, @SuppressWarnings("unused") RMissing exprMissing, @SuppressWarnings("unused") RMissing envMissing) {
+    protected Object doSubstitute(@SuppressWarnings("unused") RMissing exprMissing, @SuppressWarnings("unused") RMissing envMissing) {
         return RSymbol.MISSING;
     }
 
@@ -90,16 +90,16 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
 
     /**
      * Handles all above specializations. Transforms an AST into another AST, with the appropriate
-     * substitutions. The incoming AST will either denote a symbol, constant or function call
-     * (because in R everything else is a call). So in general, both the input and output is a call(
-     * language element). E.g. {@link IfNode} is a special case because it is not (currently)
-     * represented as a function, as are several other nodes.
+     * substitutions. The incoming AST will either denote a symbol, constant or function call (because
+     * in R everything else is a call). So in general, both the input and output is a call( language
+     * element). E.g. {@link IfNode} is a special case because it is not (currently) represented as a
+     * function, as are several other nodes.
      *
      * @param expr
      * @param env {@code null} if the {@code env} argument was {@code RMissing} to avoid always
      *            materializing the current frame.
-     * @return in general an {@link RLanguage} instance, but simple cases could be a constant value
-     *         or {@link RSymbol}
+     * @return in general an {@link RLanguage} instance, but simple cases could be a constant value or
+     *         {@link RSymbol}
      */
     private Object doSubstituteWithEnv(RPromise expr, REnvironment env) {
         // In the global environment, substitute behaves like quote

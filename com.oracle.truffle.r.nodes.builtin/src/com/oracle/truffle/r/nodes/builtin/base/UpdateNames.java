@@ -95,6 +95,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
         return result;
     }
 
+    @SuppressWarnings("unused")
     @Fallback
     protected Object doOthers(Object target, Object names) {
         throw error(Message.NAMES_NONVECTOR);

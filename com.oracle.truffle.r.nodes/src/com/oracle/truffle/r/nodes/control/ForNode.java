@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -80,9 +80,9 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     @Specialization(guards = "!isForeignObject(range)")
     protected Object iterate(VirtualFrame frame, Object range,
-                    @Cached("createIndexName()") String indexName,
-                    @Cached("createRangeName()") String rangeName,
-                    @Cached("createLengthName()") String lengthName,
+                    @Cached("createIndexName()") @SuppressWarnings("unused") String indexName,
+                    @Cached("createRangeName()") @SuppressWarnings("unused") String rangeName,
+                    @Cached("createLengthName()") @SuppressWarnings("unused") String lengthName,
                     @Cached("createWriteVariable(indexName)") WriteVariableNode writeIndexNode,
                     @Cached("createWriteVariable(rangeName)") WriteVariableNode writeRangeNode,
                     @Cached("createWriteVariable(lengthName)") WriteVariableNode writeLengthNode,
@@ -107,13 +107,13 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     @Cached("createWriteVariable(lengthName)") WriteVariableNode writeLengthNode,
                     @Cached("create()") RLengthNode length,
                     @Cached("createForIndexLoopNode(indexName, lengthName, rangeName)") LoopNode l,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize) {
+                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSize) {
         return iterate(frame, range, indexName, rangeName, lengthName, writeIndexNode, writeRangeNode, writeLengthNode, length, l);
     }
 
     @Specialization(guards = "isJavaIterable(range)")
     protected Object iterateForeignArray(VirtualFrame frame, Object range,
-                    @Cached("createIteratorName()") String iteratorName,
+                    @Cached("createIteratorName()") @SuppressWarnings("unused") String iteratorName,
                     @Cached("createWriteVariable(iteratorName)") WriteVariableNode writeIteratorNode,
                     @Cached("createForIterableLoopNode(iteratorName)") LoopNode l,
                     @Cached("READ.createNode()") Node readNode,
@@ -129,18 +129,18 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, hasSizeNode)", "!isJavaIterable(range)"})
     protected Object iterateKeys(VirtualFrame frame, Object range,
-                    @Cached("createIndexName()") String indexName,
-                    @Cached("createPositionName()") String positionName,
-                    @Cached("createRangeName()") String rangeName,
-                    @Cached("createKeysName()") String keysName,
-                    @Cached("createLengthName()") String lengthName,
+                    @Cached("createIndexName()") @SuppressWarnings("unused") String indexName,
+                    @Cached("createPositionName()") @SuppressWarnings("unused") String positionName,
+                    @Cached("createRangeName()") @SuppressWarnings("unused") String rangeName,
+                    @Cached("createKeysName()") @SuppressWarnings("unused") String keysName,
+                    @Cached("createLengthName()") @SuppressWarnings("unused") String lengthName,
                     @Cached("createWriteVariable(indexName)") WriteVariableNode writeIndexNode,
                     @Cached("createWriteVariable(rangeName)") WriteVariableNode writeRangeNode,
                     @Cached("createWriteVariable(keysName)") WriteVariableNode writeKeysNode,
                     @Cached("createWriteVariable(lengthName)") WriteVariableNode writeLengthNode,
                     @Cached("createForKeysLoopNode(indexName, positionName, lengthName, rangeName, keysName)") LoopNode l,
                     @Cached("KEYS.createNode()") Node keysNode,
-                    @Cached("HAS_SIZE.createNode()") Node hasSizeNode,
+                    @Cached("HAS_SIZE.createNode()") @SuppressWarnings("unused") Node hasSizeNode,
                     @Cached("GET_SIZE.createNode()") Node sizeNode) {
         try {
             TruffleObject keys = ForeignAccess.sendKeys(keysNode, (TruffleObject) range);

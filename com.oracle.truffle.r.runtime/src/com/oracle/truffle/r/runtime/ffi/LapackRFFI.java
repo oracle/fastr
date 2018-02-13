@@ -26,7 +26,7 @@ package com.oracle.truffle.r.runtime.ffi;
  * Collection of statically typed Lapack methods that are used in the {@code base} package. The
  * signatures match the Fortran definition with the exception that the "info" value is returned as
  * the result of the call.
- * 
+ *
  * The documentation for individual functions can be found in the
  * <a href="http://www.netlib.org/lapack/explore-html">spec</a>.
  */
@@ -47,7 +47,7 @@ public final class LapackRFFI {
         }
 
         public void execute(int[] version) {
-            call((Object) version);
+            call(version);
         }
     }
 

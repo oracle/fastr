@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -92,7 +92,6 @@ public abstract class Filter<T, R extends T> {
         private final Class<?> type2;
         private final Predicate<R> extraCondition;
 
-        @SuppressWarnings("rawtypes")
         public TypeFilter(Class<R> type) {
             assert type != null;
             this.type1 = type;
@@ -100,7 +99,6 @@ public abstract class Filter<T, R extends T> {
             this.extraCondition = null;
         }
 
-        @SuppressWarnings({"unchecked", "rawtypes"})
         public TypeFilter(Class<R> type, Predicate<R> extraCondition) {
             assert type != null;
             this.type1 = type;
@@ -108,7 +106,6 @@ public abstract class Filter<T, R extends T> {
             this.extraCondition = extraCondition;
         }
 
-        @SuppressWarnings("rawtypes")
         public TypeFilter(Class<?> type1, Class<?> type2) {
             assert type1 != null && type2 != null;
             assert type1 != Object.class && type2 != Object.class;
@@ -566,8 +563,7 @@ public abstract class Filter<T, R extends T> {
 
     /**
      * This is an enumeration of possible fixed outcomes of a filter's test method for a given input
-     * value. It is used now only in connection with {@link RNull} and {@link RMissing} as input
-     * values.
+     * value. It is used now only in connection with {@link RNull} and {@link RMissing} as input values.
      * <P>
      * The <code>FALSE</code>, resp. <code>TRUE</code>, indicates that the filter will always return
      * <code>false</code>, resp. <code>true</code>, for the given input value.

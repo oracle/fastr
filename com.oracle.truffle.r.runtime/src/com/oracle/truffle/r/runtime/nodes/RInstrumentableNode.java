@@ -22,12 +22,8 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.instrumentation.InstrumentableNode.WrapperNode;
 import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Some additional support for instrumentable nodes.

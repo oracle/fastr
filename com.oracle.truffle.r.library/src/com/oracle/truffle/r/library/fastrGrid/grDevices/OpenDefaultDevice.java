@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.library.fastrGrid.GridContext;
  * directly through .Call/.External interface.
  */
 public final class OpenDefaultDevice extends Node {
+    @SuppressWarnings("static-method")
     @TruffleBoundary
     public void execute() {
         // if no device has been opened yet, open the default one and make it current

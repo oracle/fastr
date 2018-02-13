@@ -22,20 +22,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
-import com.oracle.truffle.r.runtime.ffi.DLL.RFindSymbolNode;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
-import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.EmbeddedSuicideNode;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class RSuicide {
     private RSuicide() {
@@ -58,7 +50,8 @@ public abstract class RSuicide {
         throw rSuicideDefault(msg);
     }
 
-    public static RuntimeException rSuicide(RContext ctx, Throwable cause, String msg) {
+    public static RuntimeException rSuicide(RContext ctx, @SuppressWarnings("unused") Throwable cause, String msg) {
+        // TODO: output "cause"
         invokeUserDefinedSuicide(ctx, msg);
         throw rSuicideDefault(msg);
     }

@@ -61,13 +61,12 @@ public abstract class FormatInfo extends RBuiltinNode.Arg3 {
     }
 
     @Specialization
-    protected int doInt(int n, @SuppressWarnings("unused") int digits, @SuppressWarnings("unused") int nsmall,
-                    @Cached("create()") VectorFactory factory) {
+    protected int doInt(int n, @SuppressWarnings("unused") int digits, @SuppressWarnings("unused") int nsmall) {
         return (n == RRuntime.INT_NA) ? 2 : intLength(n);
     }
 
     @Specialization
-    protected int doString(String s, int digits, int nsmall) {
+    protected int doString(String s, @SuppressWarnings("unused") int digits, @SuppressWarnings("unused") int nsmall) {
         return s.length();
     }
 

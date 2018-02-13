@@ -168,7 +168,7 @@ public abstract class PrecedenceNode extends RBaseNode {
         return doListRecursiveInternal(val, precedenceNode, recursive);
     }
 
-    private int doListRecursiveInternal(RAbstractListVector val, PrecedenceNode precedenceNode, boolean recursive) {
+    private static int doListRecursiveInternal(RAbstractListVector val, PrecedenceNode precedenceNode, boolean recursive) {
         int precedence = -1;
         for (int i = 0; i < val.getLength(); i++) {
             precedence = Math.max(precedence, precedenceNode.executeInteger(val.getDataAt(i), recursive));

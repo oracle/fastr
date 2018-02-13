@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,28 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
-@ImportStatic({ForeignArray2R.class})
-public abstract class CastForeignNode extends CastNode {
+public final class CastForeignNode extends CastNode {
 
-    protected CastForeignNode() {
-    }
+    @Child private ForeignArray2R foreignArray2R = ForeignArray2R.create();
 
-    @Specialization(guards = {"foreignArray2R.isForeignVector(obj)"})
-    protected Object castForeign(TruffleObject obj,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
-        return foreignArray2R.convert(obj);
-    }
+    private final ConditionProfile isForeign = ConditionProfile.createBinaryProfile();
 
-    @Specialization(guards = {"!foreignArray2R.isForeignVector(obj)"})
-    protected Object passThrough(Object obj,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
-        return obj;
+    @Override
+    protected Object execute(Object obj) {
+        if (isForeign.profile(foreignArray2R.isForeignVector(obj))) {
+            return foreignArray2R.convert(obj);
+        } else {
+            return obj;
+        }
     }
 }

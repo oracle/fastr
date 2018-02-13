@@ -89,9 +89,9 @@ public class RStartParams {
         this.slave = options.getBoolean(SLAVE);
 
         /*
-         * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
-         * --interactive} never applies to {@code -e/-f}, only to console input that has been
-         * redirected from a pipe/file etc.
+         * GnuR behavior differs from the manual entry for {@code interactive} in that {@code --interactive}
+         * never applies to {@code -e/-f}, only to console input that has been redirected from a pipe/file
+         * etc.
          */
         String file = options.getString(FILE);
         List<String> expressions = options.getStringList(EXPR);
@@ -133,7 +133,7 @@ public class RStartParams {
      * Used for R embedding, allows to alter some of the values.
      */
     public void setParams(boolean quietA, boolean slaveA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
-                    boolean loadInitFileA, boolean debugInitFileA, int restoreActionA, int saveActionA, boolean noRenvironA) {
+                    boolean loadInitFileA, boolean debugInitFileA, @SuppressWarnings("unused") int restoreActionA, @SuppressWarnings("unused") int saveActionA, boolean noRenvironA) {
         quiet = quietA;
         slave = slaveA;
         interactive = interactiveA;

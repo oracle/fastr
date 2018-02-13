@@ -26,8 +26,6 @@ import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_ENVIRONME
 import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_FUNCTION;
 import static com.oracle.truffle.r.runtime.RError.Message.UNKNOWN_OBJECT;
 
-import org.graalvm.polyglot.Value;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;

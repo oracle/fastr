@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.ArrayList;
-import java.util.IdentityHashMap;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
@@ -70,8 +69,6 @@ import com.oracle.truffle.r.runtime.Utils.DebugExitException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
-import com.oracle.truffle.r.runtime.data.Closure;
-import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;

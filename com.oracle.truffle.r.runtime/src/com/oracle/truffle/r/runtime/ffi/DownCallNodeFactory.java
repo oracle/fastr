@@ -88,13 +88,13 @@ public abstract class DownCallNodeFactory {
          * Should return a {@link TruffleObject} that will invoke the given function upon the
          * {@code EXECUTE} message.
          */
-        protected abstract TruffleObject getTarget(NativeFunction function);
+        protected abstract TruffleObject getTarget(NativeFunction f);
 
         /**
          * Allows to transform the arguments before the execute message is sent to the result of
          * {@link #getTarget(NativeFunction)}.
          */
-        protected abstract long beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args);
+        protected abstract long beforeCall(NativeFunction nativeFunction, TruffleObject f, Object[] args);
 
         /**
          * Allows to post-process the arguments after the execute message was sent to the result of
@@ -102,6 +102,6 @@ public abstract class DownCallNodeFactory {
          * {@link #beforeCall(NativeFunction, TruffleObject, Object[])} was not successfull, the
          * {@code before} parameter will have value {@code -1}.
          */
-        protected abstract void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args);
+        protected abstract void afterCall(long before, NativeFunction f, TruffleObject t, Object[] args);
     }
 }

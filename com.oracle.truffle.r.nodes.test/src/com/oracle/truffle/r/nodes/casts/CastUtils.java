@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -255,13 +255,11 @@ public class CastUtils {
             };
 
             /**
-             * It transforms this type coverage into another one that would be returned in the
-             * situation when the source and the target type were either positive or negative, as
-             * determined by the <code>sourcePositive</code> and <code>targetPositive</code>
-             * arguments.
+             * It transforms this type coverage into another one that would be returned in the situation when
+             * the source and the target type were either positive or negative, as determined by the
+             * <code>sourcePositive</code> and <code>targetPositive</code> arguments.
              * <p>
-             * N.B. It is assumed that this coverage is obtained for the positive source anb target
-             * types.
+             * N.B. It is assumed that this coverage is obtained for the positive source anb target types.
              */
             public abstract Coverage transpose(Type sourceType, Type targetType, boolean sourcePositive, boolean targetPositive);
 
@@ -564,7 +562,6 @@ public class CastUtils {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     public static Class<?>[] rTypeToClasses(RType type) {
         switch (type) {
             case Integer:
@@ -773,7 +770,6 @@ public class CastUtils {
         return Arrays.stream(classes).flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
     }
 
-    @SuppressWarnings("rawtypes")
     public static Set<?> sampleValuesForClass(Class<?> cls) {
         return sampleValuesForClasses(new Class[]{cls});
     }

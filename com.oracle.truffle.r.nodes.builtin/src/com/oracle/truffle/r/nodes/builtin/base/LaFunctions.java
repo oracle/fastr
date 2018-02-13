@@ -56,7 +56,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNames
 import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNodeGen;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
@@ -399,7 +398,6 @@ public class LaFunctions {
                         @Cached("create()") ExtractListElement extractTauElement,
                         @Cached("create()") GetDimAttributeNode getQDimAttribute,
                         @Cached("create()") GetDimAttributeNode getBDimAttribute,
-                        @Cached("create()") CastComplexNode bAsComplex,
                         @Cached("create()") VectorFactory resultVectorFactory) {
             RAbstractComplexVector qr = (RAbstractComplexVector) extractQrElement.execute(q, 0);
             RAbstractComplexVector tau = (RAbstractComplexVector) extractTauElement.execute(q, 2);

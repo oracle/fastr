@@ -12,7 +12,6 @@ package com.oracle.truffle.r.test.builtins;
 
 import org.junit.Test;
 
-import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.TestRBase;
 
 // Checkstyle: stop line length check
@@ -484,7 +483,7 @@ public class TestBuiltin_asvector extends TestRBase {
                     "as.environment(list(a=3,b=4,x=5))",
     };
 
-    private final String[] otherValues = new String[]{
+    @SuppressWarnings("unused") private final String[] otherValues = new String[]{
                     "NULL",
     };
 

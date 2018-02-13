@@ -54,11 +54,9 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * Rf_mainloop();
  * </pre>
  *
- * {@code Rf_initialize_R} invokes {@link #initializeR(String[], boolean)}, which creates new
+ * {@code Rf_initialize_R} invokes {@link #initializeR(String[],boolean)}, which creates new
  * polyglot {@link Context}. The call to {@code R_SetParams} adjusts the values stored in the
- * {@link RStartParams} object and then {@code Rf_mainloop}, which calls {@code #setupRmainloop()}
- * and then {@link #runRmainloop()}, which will complete the FastR initialization and enter the
- * read-eval-print loop.
+ * {@link RStartParams} object.
  */
 public class REmbedded {
 
@@ -66,10 +64,10 @@ public class REmbedded {
     private static Context context;
 
     /**
-     * Creates the {@link Engine} and initializes it. Called from native code when FastR is
-     * embedded. Corresponds to FFI method {@code Rf_initialize_R}. N.B. This does not completely
-     * initialize FastR as we cannot do that until the embedding system has had a chance to adjust
-     * the {@link RStartParams}, which happens after this call returns.
+     * Creates the {@link Engine} and initializes it. Called from native code when FastR is embedded.
+     * Corresponds to FFI method {@code Rf_initialize_R}. N.B. This does not completely initialize FastR
+     * as we cannot do that until the embedding system has had a chance to adjust the
+     * {@link RStartParams}, which happens after this call returns.
      */
     private static void initializeR(String[] args, boolean initMainLoop) {
         assert context == null;
@@ -97,10 +95,10 @@ public class REmbedded {
     }
 
     /**
-     * Adjusts the values stored in {@link RStartParams}. Invoked from the native embedding code,
-     * i.e. not from a down-call, so the callbacks native array is not set-up properly. Moreover,
-     * this call is made during R initialization, so it not entirely clear if the FFI implementation
-     * has been fully initialized yet.
+     * Adjusts the values stored in {@link RStartParams}. Invoked from the native embedding code, i.e.
+     * not from a down-call, so the callbacks native array is not set-up properly. Moreover, this call
+     * is made during R initialization, so it not entirely clear if the FFI implementation has been
+     * fully initialized yet.
      */
     @SuppressWarnings("unused")
     private static void setParams(boolean quietA, boolean slaveA, boolean interactiveA, boolean verboseA, boolean loadSiteFileA,
@@ -112,9 +110,9 @@ public class REmbedded {
     }
 
     /**
-     * N.B. This expression cannot contain any R functions, e.g. "invisible", because at the time it
-     * is evaluated the R builtins have not been installed, see {@link #initializeR}. The
-     * suppression of printing is handled a a special case based on {@link Internal#INIT_EMBEDDED}.
+     * N.B. This expression cannot contain any R functions, e.g. "invisible", because at the time it is
+     * evaluated the R builtins have not been installed, see {@link #initializeR}. The suppression of
+     * printing is handled a a special case based on {@link Internal#INIT_EMBEDDED}.
      */
     private static final Source INIT = Source.newBuilder("R", "1", "<embedded>").buildLiteral();
 
@@ -153,9 +151,8 @@ public class REmbedded {
 
     /**
      * Upcalled from embedded mode via JNI to (really) commit suicide. This provides the default
-     * implementation of the {@code R_Suicide} function in the {@code Rinterface} API. If an
-     * embeddee overrides it, it typically will save this value and invoke it after its own
-     * customization.
+     * implementation of the {@code R_Suicide} function in the {@code Rinterface} API. If an embeddee
+     * overrides it, it typically will save this value and invoke it after its own customization.
      */
     @SuppressWarnings("unused")
     private static void R_Suicide(String msg) {

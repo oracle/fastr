@@ -35,8 +35,8 @@ public final class GridColorUtils {
     }
 
     /**
-     * Converts given object into {@link GridColor}. The object may be a vector, in which case the
-     * index modulo its size is used to select element of that vector.
+     * Converts given object into {@link GridColor}. The object may be a vector, in which case the index
+     * modulo its size is used to select element of that vector.
      */
     public static GridColor getColor(Object value, int index) {
         GridColor color = GridColorUtils.getPaletteColor(value, index);
@@ -61,10 +61,9 @@ public final class GridColorUtils {
     }
 
     /**
-     * Converts the representation of color used within R, e.g. as value for
-     * {@code gpar(col='value')}, to our internal representation that grid device should understand.
-     * The acceptable color formats are: name of known color, HTML style hex value, and HTML style
-     * hex value including alpha.
+     * Converts the representation of color used within R, e.g. as value for {@code gpar(col='value')},
+     * to our internal representation that grid device should understand. The acceptable color formats
+     * are: name of known color, HTML style hex value, and HTML style hex value including alpha.
      */
     public static GridColor gridColorFromString(String value) {
         if (value.startsWith("#") && (value.length() == 7 || value.length() == 9)) {
@@ -130,7 +129,7 @@ public final class GridColorUtils {
         } else if (colorId instanceof String && !RRuntime.isNA((String) colorId)) {
             paletteIdx = paletteIdxFromString((String) colorId);
         } else if (colorId instanceof Byte && !RRuntime.isNA((byte) colorId)) {
-            paletteIdx = (int) (byte) colorId;
+            paletteIdx = (byte) colorId;
         }
         if (RRuntime.isNA(paletteIdx)) {
             return null;

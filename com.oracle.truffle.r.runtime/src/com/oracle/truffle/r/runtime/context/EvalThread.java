@@ -103,7 +103,7 @@ public class EvalThread extends Thread {
             Engine rEngine = RContext.getEngine();
             // Object eval = rEngine.eval(rEngine.parse(source), rEngine.getGlobalFrame());
             Object evalResult = rEngine.parseAndEval(source, rEngine.getGlobalFrame(), false);
-            result = createEvalResult(evalResult == null ? RNull.instance : evalResult, false);
+            result = RDataFactory.createList(new Object[]{evalResult == null ? RNull.instance : evalResult});
         } catch (ParseException e) {
             e.report(info.getStdout());
             result = createErrorResult(e.getMessage());
@@ -122,16 +122,6 @@ public class EvalThread extends Thread {
             truffleContext.close();
         }
         return result;
-    }
-
-    /**
-     * The result is an {@link RList} contain the value, plus an "error" attribute if the evaluation
-     * resulted in an error.
-     */
-    @TruffleBoundary
-    private static RList createEvalResult(Object result, boolean usePolyglot) {
-        assert result != null;
-        return RDataFactory.createList(new Object[]{result});
     }
 
     @TruffleBoundary

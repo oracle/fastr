@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
@@ -66,9 +65,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
-import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.SymbolClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -87,7 +84,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX, splitCaller = true)
 public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSyntaxNodeChildren {
@@ -145,8 +141,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         /**
-         * Because the underlying AST in {@link RExplicitCallNode} may cache frame slots, i.e.
-         * expect the {@link FrameDescriptor} to never change, we're caching this AST and also
+         * Because the underlying AST in {@link RExplicitCallNode} may cache frame slots, i.e. expect the
+         * {@link FrameDescriptor} to never change, we're caching this AST and also
          * {@link GetVisibilityNode} for each {@link FrameDescriptor} we encounter.
          */
         @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "20")
@@ -167,8 +163,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         /**
-         * Slow-path version avoids the problem by creating {@link RExplicitCallNode} for every call
-         * again and again and putting it behind truffle boundary to avoid deoptimization.
+         * Slow-path version avoids the problem by creating {@link RExplicitCallNode} for every call again
+         * and again and putting it behind truffle boundary to avoid deoptimization.
          */
         @Specialization(replaces = "doFastPath")
         public Object doSlowPath(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
@@ -186,27 +182,26 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         /**
-         * The contract is that the function call will be evaluated in the given environment, but at
-         * the same time some primitives expect to see {@code do.call(foo, ...)} as the caller, so
-         * we create a frame the fakes caller, but otherwise delegates to the frame backing the
-         * explicitly given environment.
+         * The contract is that the function call will be evaluated in the given environment, but at the
+         * same time some primitives expect to see {@code do.call(foo, ...)} as the caller, so we create a
+         * frame the fakes caller, but otherwise delegates to the frame backing the explicitly given
+         * environment.
          */
-        private MaterializedFrame getEvalFrame(VirtualFrame virtualFrame, MaterializedFrame envFrame) {
+        private static MaterializedFrame getEvalFrame(VirtualFrame virtualFrame, MaterializedFrame envFrame) {
             return VirtualEvalFrame.create(envFrame, RArguments.getFunction(virtualFrame), RArguments.getCall(virtualFrame));
         }
 
         /**
          * If the call leads to actual call via
-         * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new
-         * frame and new set of arguments for it, then for this new arguments we explicitly provide
-         * a caller that looks like the function was called from the explicitly given environment
-         * (it will be its parent call), but at the same time its depth is one above the do.call
-         * function that actually invoked it.
+         * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new frame and
+         * new set of arguments for it, then for this new arguments we explicitly provide a caller that
+         * looks like the function was called from the explicitly given environment (it will be its parent
+         * call), but at the same time its depth is one above the do.call function that actually invoked it.
          *
          * @see RCaller
          * @see RArguments
          */
-        private RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, String funcName, RFunction func, RArgsValuesAndNames args) {
+        private static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, String funcName, RFunction func, RArgsValuesAndNames args) {
             Supplier<RSyntaxElement> callerSyntax;
             if (funcName != null) {
                 callerSyntax = RCallerHelper.createFromArguments(funcName, args);

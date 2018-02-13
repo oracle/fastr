@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.instrument.memprof.MemAllocProfilerPaths;
 
 @RBuiltin(name = ".fastr.profmem.source", visibility = OFF, kind = PRIMITIVE, parameterNames = {"id", "view", "snapshot"}, behavior = IO)
 public abstract class FastRprofmemSource extends RBuiltinNode.Arg3 {

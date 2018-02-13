@@ -106,8 +106,7 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
             }
             return result;
         } catch (Exception ex) {
-            RSuicide.rSuicide(RContext.getInstance(), ex, "Could not load R files from resources. Details: " + ex.getMessage());
-            return null;
+            throw RSuicide.rSuicide(RContext.getInstance(), ex, "Could not load R files from resources. Details: " + ex.getMessage());
         }
     }
 }

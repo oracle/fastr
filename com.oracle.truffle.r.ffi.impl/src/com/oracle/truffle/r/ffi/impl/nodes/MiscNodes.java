@@ -52,7 +52,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.S
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;

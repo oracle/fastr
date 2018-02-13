@@ -299,8 +299,10 @@ public class RSerialize {
     /**
      * Supports the saving of deparsed lazily loaded package functions for instrumentation access.
      */
-    public static void setSaveDeparse(boolean status) {
+    public static void setSaveDeparse(@SuppressWarnings("unused") boolean status) {
+        @SuppressWarnings("unused")
         ContextStateImpl serializeContextState = getContextState();
+        // TODO: reenable this functionality
     }
 
     @TruffleBoundary

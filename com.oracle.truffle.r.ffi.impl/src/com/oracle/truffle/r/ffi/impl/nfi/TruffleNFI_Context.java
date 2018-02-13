@@ -106,9 +106,9 @@ final class TruffleNFI_Context extends RFFIContext {
     private RuntimeException lastException;
 
     /**
-     * Memory allocated using Rf_alloc, which should be reclaimed at every down-call exit. Note:
-     * this is less efficient than GNUR's version, we may need to implement it properly should the
-     * performance be a problem.
+     * Memory allocated using Rf_alloc, which should be reclaimed at every down-call exit. Note: this is
+     * less efficient than GNUR's version, we may need to implement it properly should the performance
+     * be a problem.
      */
     public final ArrayList<Long> transientAllocations = new ArrayList<>();
 
@@ -203,7 +203,7 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     @TruffleBoundary
-    private long initCallbacksAddress() {
+    private static long initCallbacksAddress() {
         // get the address of the native thread local
         try {
             Node bind = Message.createInvoke(1).createNode();

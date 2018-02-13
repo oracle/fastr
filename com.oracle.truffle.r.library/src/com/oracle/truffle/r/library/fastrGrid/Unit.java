@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -379,27 +379,27 @@ public final class Unit {
             return visit(unit, null);
         }
 
-        protected T visitListUnit(RList unit) {
+        protected T visitListUnit(@SuppressWarnings("unused") RList unit) {
             throw RInternalError.shouldNotReachHere();
         }
 
-        protected T visitArithmeticUnit(ArithmeticUnit unit) {
+        protected T visitArithmeticUnit(@SuppressWarnings("unused") ArithmeticUnit unit) {
             throw RInternalError.shouldNotReachHere();
         }
 
-        protected T visitSimpleUnit(RAbstractVector unit) {
+        protected T visitSimpleUnit(@SuppressWarnings("unused") RAbstractVector unit) {
             throw RInternalError.shouldNotReachHere();
         }
 
-        protected T visitListUnit(RList unit, R arg) {
+        protected T visitListUnit(RList unit, @SuppressWarnings("unused") R arg) {
             return visitListUnit(unit);
         }
 
-        protected T visitArithmeticUnit(ArithmeticUnit unit, R arg) {
+        protected T visitArithmeticUnit(ArithmeticUnit unit, @SuppressWarnings("unused") R arg) {
             return visitArithmeticUnit(unit);
         }
 
-        protected T visitSimpleUnit(RAbstractVector unit, R arg) {
+        protected T visitSimpleUnit(RAbstractVector unit, @SuppressWarnings("unused") R arg) {
             return visitSimpleUnit(unit);
         }
     }
@@ -426,16 +426,16 @@ public final class Unit {
 
     /**
      * Arithmetic unit objects can represent 'vectorized' expressions, e.g.
-     * {@code 3*c(unit(1,'cm'), unit(2,'mm'))}, in such case the 'length' is not simply the length
-     * of the underlying vector/list.
+     * {@code 3*c(unit(1,'cm'), unit(2,'mm'))}, in such case the 'length' is not simply the length of
+     * the underlying vector/list.
      */
     public static int getLength(RAbstractContainer unit) {
         return UnitLengthVisitor.INSTANCE.visit(unit);
     }
 
     /**
-     * Returns {@code true} if the given unit object represents a unit without actual unit type,
-     * i.e. the unit type is {@link #NULL}. Such units are used internally for layouting, and the
+     * Returns {@code true} if the given unit object represents a unit without actual unit type, i.e.
+     * the unit type is {@link #NULL}. Such units are used internally for layouting, and the
      * interpretation is to take-up all the left space (evenly if there are more such units).
      */
     public static boolean isRelativeUnit(GridContext ctx, Object unit, int index) {
@@ -447,9 +447,9 @@ public final class Unit {
     }
 
     /**
-     * Used to discriminate between x axis, y axis, width, and height when doing unit conversions.
-     * The order should be the same as used in e.g. {@code L_convert}, which is 0 means x, 1 means
-     * y, 2 means width, 3 means height.
+     * Used to discriminate between x axis, y axis, width, and height when doing unit conversions. The
+     * order should be the same as used in e.g. {@code L_convert}, which is 0 means x, 1 means y, 2
+     * means width, 3 means height.
      */
     public enum AxisOrDimension {
         X,
@@ -476,8 +476,7 @@ public final class Unit {
     /**
      * Wraps the data necessary for converting a unit to another unit. Note: {@code nullLMode} and
      * {@code nullAMode} is only used for converting 'NULL' units and is only explicitly set when
-     * calculating layout. When e.g. drawing or calculating bounds, both should have default zero
-     * value.
+     * calculating layout. When e.g. drawing or calculating bounds, both should have default zero value.
      */
     public static final class UnitConversionContext {
         public final Size viewPortSize;
@@ -639,8 +638,8 @@ public final class Unit {
         Object updatedGrob = ctx.evalInternalRFunction("grobConversionPreDraw", grob);
 
         /*
-         * The call to preDraw may have pushed viewports and/or enforced gpar settings, SO we need
-         * to re-establish the current viewport and gpar settings before evaluating the width unit.
+         * The call to preDraw may have pushed viewports and/or enforced gpar settings, SO we need to
+         * re-establish the current viewport and gpar settings before evaluating the width unit.
          */
         currentVP = ctx.getGridState().getViewPort();
         RList currentGP = ctx.getGridState().getGpar();
