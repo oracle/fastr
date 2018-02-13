@@ -188,46 +188,13 @@ R_HOME_DIR="$( dirname "$r_bin" )"
         rscript_launcher = join(self.subject.dir, 'src', 'Rscript_launcher')
         self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
 
-class FastRNativeRecommendedProject(mx.NativeProject):
-    '''
-    This finesses an ordering problem on installing the recommended R packages.
-    These must be installed by FastR using bin/R CMD INSTALL. That will invoke a
-    nested 'mx R' invocation which requires the FASTR distribution to be available.
-    However, this dependency cannot be specified in the suite.py file so we achieve
-    it here by ensuring that it is built prior to the native.recommended project.
-    '''
-    def __init__(self, suite, name, deps, workingSets, theLicense, **args):
-        mx.NativeProject.__init__(self, suite, name, None, [], deps, workingSets, None, None, join(suite.dir, name), theLicense)
-
-    def getBuildTask(self, args):
-        return NativeRecommendedBuildTask(self, args)
-
-class NativeRecommendedBuildTask(mx.NativeBuildTask):
-    def __init__(self, project, args):
-        mx.NativeBuildTask.__init__(self, args, project)
-
-    def build(self):
-        # must archive FASTR before build so that nested mx R CMD INSTALL can execute
-        mx.archive(['@FASTR'])
-        mx.NativeBuildTask.build(self)
-
 
 class FastRArchiveParticipant:
     def __init__(self, dist):
         self.dist = dist
 
     def __opened__(self, arc, srcArc, services):
-            # The release project states dependencies on the java projects in order
-            # to ensure they are built first. Therefore, the JarDistribution code
-            # will include all their class files at the top-level of the jar by default.
-            # Since we have already encapsulated the class files in 'fastr_jars/fastr.jar' we
-            # suppress their inclusion here by resetting the deps field. A bit of a hack.
-        if "FASTR_RELEASE" in self.dist.name:
-            assert isinstance(self.dist.deps[0], FastRReleaseProject)
-            self.release_project = self.dist.deps[0]
-            self.dist.deps[0].deps = []
-            if hasattr(self.dist, '.archived_deps'):
-                delattr(self.dist, '.archived_deps')
+        pass
 
     def __add__(self, arcname, contents):
         return False
@@ -236,11 +203,13 @@ class FastRArchiveParticipant:
         return False
 
     def __closing__(self):
-        if "FASTR_RELEASE" in self.dist.name and os.environ.has_key('FASTR_RELEASE'):
-            # the files copied  in can be confused as source files by
-            # e.g., mx copyright, so delete them, specifically thne
+        if "FASTR_RELEASE" in self.dist.name and 'FASTR_RELEASE' in os.environ:
+            assert isinstance(self.dist.deps[0], FastRReleaseProject)
+            release_project = self.dist.deps[0]
+            # the files copied in can be confused as source files by
+            # e.g., mx copyright, so delete them, specifically the
             # include dir
-            include_dir = join(self.release_project.dir, 'include')
+            include_dir = join(release_project.dir, 'include')
             shutil.rmtree(include_dir)
 
 def mx_post_parse_cmd_line(opts):

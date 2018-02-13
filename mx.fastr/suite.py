@@ -1,5 +1,5 @@
 suite = {
-  "mxversion" : "5.60.0",
+  "mxversion" : "5.141.1",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
@@ -297,7 +297,7 @@ suite = {
 
     "com.oracle.truffle.r.release" : {
       "sourceDirs" : ["src"],
-      "dependencies" : ["com.oracle.truffle.r.native.recommended"],
+      "buildDependencies" : ["com.oracle.truffle.r.native.recommended"],
       "class" : "FastRReleaseProject",
       "output" : "com.oracle.truffle.r.release"
     },
@@ -308,9 +308,9 @@ suite = {
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl"
       ],
-      "class" : "FastRNativeRecommendedProject",
       "native" : True,
       "workingSets" : "FastR",
+      "buildDependencies" : ["FASTR"],
     },
 
     "com.oracle.truffle.r.test.tck" : {

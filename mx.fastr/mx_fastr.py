@@ -27,7 +27,7 @@ import mx
 import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
-from mx_fastr_dists import FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
+from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_edinclude
 import mx_unittest
