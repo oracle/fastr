@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -34,6 +34,8 @@ public class TestBuiltin_t extends TestBase {
 
         assertEval("{ t(1:3) }");
         assertEval("{ t(t(t(1:3))) }");
+        assertEval("{ x <- 1:3; names(x) <- c('a', 'b'); t(x) }");
+
         assertEval("{ t(matrix(1:6, nrow=2)) }");
         assertEval("{ t(t(matrix(1:6, nrow=2))) }");
         assertEval("{ t(matrix(1:4, nrow=2)) }");
