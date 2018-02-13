@@ -116,14 +116,15 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
         // Note: if the function is in fact a promise, we are evaluating it here slightly earlier
         // than GNU R. It should not a be a problem.
-        RFunction func = (RFunction) getNode.execute(frame, what.getDataAt(0), env, RType.Function.getName(), true);
-        return doCall(frame, func, argsAsList, quote, env, internal);
+        String funcName = what.getDataAt(0);
+        RFunction func = (RFunction) getNode.execute(frame, funcName, env, RType.Function.getName(), true);
+        return internal.execute(frame, funcName, func, argsAsList, quote, env);
     }
 
     @Specialization
-    protected Object doCall(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+    protected Object doCall(VirtualFrame frame, RFunction func, RList argsAsList, boolean quote, REnvironment env,
                     @Cached("create()") DoCallInternal internal) {
-        return internal.execute(virtualFrame, func, argsAsList, quote, env);
+        return internal.execute(frame, null, func, argsAsList, quote, env);
     }
 
     protected abstract static class DoCallInternal extends Node {
@@ -137,7 +138,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             return DoCallInternalNodeGen.create();
         }
 
-        public abstract Object execute(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env);
+        public abstract Object execute(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env);
 
         protected FrameDescriptor getFrameDescriptor(REnvironment env) {
             return env.getFrame(frameAccessProfile).getFrameDescriptor();
@@ -149,7 +150,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * {@link GetVisibilityNode} for each {@link FrameDescriptor} we encounter.
          */
         @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "20")
-        public Object doFastPath(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+        public Object doFastPath(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
                         @Cached("getFrameDescriptor(env)") @SuppressWarnings("unused") FrameDescriptor fd,
                         @Cached("create()") RExplicitCallNode explicitCallNode,
                         @Cached("create()") GetVisibilityNode getVisibilityNode,
@@ -157,7 +158,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
             RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
-            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, func, args);
+            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, funcName, func, args);
             MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
 
             Object resultValue = explicitCallNode.execute(evalFrame, func, args, caller);
@@ -170,13 +171,13 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * again and again and putting it behind truffle boundary to avoid deoptimization.
          */
         @Specialization(replaces = "doFastPath")
-        public Object doSlowPath(VirtualFrame virtualFrame, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+        public Object doSlowPath(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
                         @Cached("create()") SlowPathExplicitCall slowPathExplicitCall,
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
             RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
-            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, func, args);
+            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, funcName, func, args);
             MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
 
             Object resultValue = slowPathExplicitCall.execute(evalFrame, caller, func, args);
@@ -205,8 +206,13 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * @see RCaller
          * @see RArguments
          */
-        private RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, RFunction func, RArgsValuesAndNames args) {
-            Supplier<RSyntaxElement> callerSyntax = RCallerHelper.createFromArguments(func, args);
+        private RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, String funcName, RFunction func, RArgsValuesAndNames args) {
+            Supplier<RSyntaxElement> callerSyntax;
+            if (funcName != null) {
+                callerSyntax = RCallerHelper.createFromArguments(funcName, args);
+            } else {
+                callerSyntax = RCallerHelper.createFromArguments(func, args);
+            }
             return RCaller.create(RArguments.getDepth(virtualFrame) + 1, RArguments.getCall(envFrame), callerSyntax);
         }
 
