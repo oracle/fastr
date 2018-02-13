@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,7 @@ import mx
 import mx_gate
 import mx_fastr_pkgs
 import mx_fastr_dists
-from mx_fastr_dists import FastRReleaseProject, FastRNativeRecommendedProject #pylint: disable=unused-import
+from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
 import mx_copylib
 import mx_fastr_edinclude
 import mx_unittest
@@ -530,6 +530,11 @@ def nativebuild(args):
 
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
+    if _mx_sulong:
+        # native.recommended runs FastR, it already has a build dependency to the FASTR distribution
+        # if we are running with sulong we also need the SULONG distribution
+        rec = mx.project('com.oracle.truffle.r.native.recommended')
+        rec.buildDependencies += [mx.distribution('SULONG')]
 
 mx_unittest.add_config_participant(_unittest_config_participant)
 
