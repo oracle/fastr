@@ -60,6 +60,7 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode.CallMatcherGenericNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
@@ -504,8 +505,9 @@ final class REngine implements Engine, Engine.Timings {
                 actualFrame = current.materialize();
             }
         }
+        ArgumentsSignature argsSignature = names == null ? ArgumentsSignature.empty(args.length) : names;
         RArgsValuesAndNames reorderedArgs = CallMatcherGenericNode.reorderArguments(args, func,
-                        names == null ? ArgumentsSignature.empty(args.length) : names, RError.NO_CALLER);
+                        argsSignature, RError.NO_CALLER);
         Object[] newArgs = reorderedArgs.getArguments();
         if (evalPromises) {
             for (int i = 0; i < newArgs.length; i++) {
@@ -515,7 +517,8 @@ final class REngine implements Engine, Engine.Timings {
                 }
             }
         }
-        return CallRFunctionNode.executeSlowpath(func, caller == null ? RArguments.getCall(actualFrame) : caller, actualFrame, newArgs, reorderedArgs.getSignature(), null);
+        RCaller rCaller = caller == null ? RCaller.create(actualFrame, RCallerHelper.createFromArguments(func, new RArgsValuesAndNames(args, argsSignature))) : caller;
+        return CallRFunctionNode.executeSlowpath(func, rCaller, actualFrame, newArgs, reorderedArgs.getSignature(), null);
     }
 
     private Object evalNode(RSyntaxElement exprRep, REnvironment envir, RCaller caller) {

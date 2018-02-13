@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,6 +62,13 @@ public class TestConditionHandling extends TestRBase {
         assertEval("withRestarts(findRestart(\"noSuchRestart\"),\n foo=function(a,b) c(a,b))");
         assertEval("withRestarts(findRestart(\"foo\"),\n foo=function(a,b) c(a,b))");
         assertEval("withRestarts(computeRestarts(),\n foo=function(a,b) c(a,b))");
+        // FIXME: visibility is not properly transformed
+        assertEval(Ignored.ImplementationError, "{ boo <- function() invisible(\"hello world\"); foo <- function(expr) expr; foo(boo()); }");
+        // TODO: once visibility is fixed, the invisible can be removed
+        assertEval("invisible(withCallingHandlers(warning('warn'), warning=function(...) { print(sys.call()[[1]]); invokeRestart('muffleWarning'); }))");
+        // FIXME: the "arg" is not properly constructed by FastR, it has arg$message (correct) and
+        // arg$call -- which in FastR is NULL unlike in GNUR
+        assertEval(Ignored.ImplementationError, "invisible(withCallingHandlers(warning('warn'), warning=function(arg) { print(unclass(arg)); invokeRestart('muffleWarning'); }))");
     }
 
     @Test
