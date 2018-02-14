@@ -35,6 +35,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
  * when fun asks for parent, it should get 'envir', moreover, when evaluating promises parent frame
  * and frame with number one less are typically also not the same frames. See also builtins in
  * {@code FrameFunctions} for more details.
+ *
+ * NOTE: It is important to create new caller instances for each stack frame, so that
+ * {@link ReturnException#getTarget()} can uniquely identify the target frame.
  * 
  * @see RArguments
  */

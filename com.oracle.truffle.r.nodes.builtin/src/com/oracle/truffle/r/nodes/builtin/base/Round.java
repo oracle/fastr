@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -101,7 +101,9 @@ public abstract class Round extends RBuiltinNode.Arg2 {
             byte val = x.getDataAt(i);
             data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
         }
-        return RDataFactory.createDoubleVector(data, check.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(data, check.neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
     }
 
     @Specialization
@@ -112,7 +114,9 @@ public abstract class Round extends RBuiltinNode.Arg2 {
             int val = x.getDataAt(i);
             data[i] = check.check(val) ? RRuntime.DOUBLE_NA : val;
         }
-        return RDataFactory.createDoubleVector(data, check.neverSeenNA());
+        RDoubleVector ret = RDataFactory.createDoubleVector(data, check.neverSeenNA());
+        ret.copyAttributesFrom(x);
+        return ret;
     }
 
     protected double roundDigits(double x, int digits) {

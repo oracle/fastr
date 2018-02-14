@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -73,6 +73,8 @@ public class ConditionFunctions {
             }
             try {
                 if (!frame.isObject(handlerFrameSlot) || FrameSlotChangeMonitor.getObject(handlerFrameSlot, frame) == null) {
+                    // We save the original condition handlers to a frame slot, so that
+                    // FunctionDefinitionNode can restore them on function exit
                     FrameSlotChangeMonitor.setObject(frame, handlerFrameSlot, RErrorHandling.getHandlerStack());
                 }
             } catch (FrameSlotTypeException e) {
