@@ -325,7 +325,7 @@ public final class RASTUtils {
 
             // Store formal arguments
             argumentNames[i] = argName;
-            defaultValues[i] = defaultValue.asRNode();
+            defaultValues[i] = defaultValue == null ? null : defaultValue.asRNode();
             current = ((RPairList) current).cdr();
             i++;
         }

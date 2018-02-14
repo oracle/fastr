@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -69,6 +69,13 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
         return str.append(snippet);
     }
 
+    private static StringBuilder append(String source, StringBuilder sb) {
+        if (sb == null) {
+            return new StringBuilder(source.length() * 2).append(source);
+        }
+        return sb.append(source);
+    }
+
     @TruffleBoundary
     private static String encodeString(String value, char quote) {
         StringBuilder str = null;
@@ -120,12 +127,12 @@ public abstract class EncodeString extends RBuiltinNode.Arg5 {
                     break;
                 default:
                     if (codepoint < 32 || codepoint == 0x7f) {
-                        str.append("\\").append(codepoint >>> 6).append((codepoint >>> 3) & 0x7).append(codepoint & 0x7);
+                        str = append("\\", str).append(codepoint >>> 6).append((codepoint >>> 3) & 0x7).append(codepoint & 0x7);
                     } else if (codepoint > 64967) { // determined by experimentation
                         if (codepoint < 0x10000) {
-                            str.append("\\u").append(String.format("%04x", codepoint));
+                            str = append("\\u", str).append(String.format("%04x", codepoint));
                         } else {
-                            str.append("\\U").append(String.format("%08x", codepoint));
+                            str = append("\\U", str).append(String.format("%08x", codepoint));
                         }
                     } else {
                         if (str != null) {
