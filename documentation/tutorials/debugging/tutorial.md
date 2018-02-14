@@ -150,8 +150,8 @@ It is also possible to cross language boundaries during stepping when using the 
 
 ### Inter-language Debugging 
 
-File `Main.java` creates a `PolyglotEngine` object that can execute R code. This is basically the FastR engine. 
-The engine object can now run R code by creating a source object (representing R code) and submitting the source to the engine. 
+File `Main.java` creates a `Context` object that can execute R code. This is basically the FastR engine. 
+The engine object can now run R code by creating a source object (representing R code) and submitting the source to the context object. 
 The expression `fromString("print('Hello, World! (from string)')")` creates a source code from a string. 
 Expression `fromFile("R/main.r")` creates source code from file *R/main.r*. 
 

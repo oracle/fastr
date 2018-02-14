@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,8 +27,8 @@
  */
 package com.oracle.truffle.r;
 
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
+import  org.graalvm.polyglot.Context;
+import  org.graalvm.polyglot.Source;
 import java.io.File;
 import java.io.IOException;
 
@@ -41,17 +41,14 @@ public class Main {
      * @throws java.io.IOException
      */
     public static void main(String[] args) throws IOException {
-        PolyglotEngine newVM = PolyglotEngine.newBuilder().config(R_MIME_TYPE, "debugContext", null).build();
-        newVM.eval(fromString("print('Hello, World! (from string)')"));
-        newVM.eval(fromFile("R/main.r"));
+        Context context = Context.create();
+        context.eval("R", "print('Hello, World! (from string)')");
+        context.eval(fromFile("R/main.r"));
     }
-    
-    private static Source fromString(String code) {
-        return Source.newBuilder(code).name("<shell_input>").mimeType(R_MIME_TYPE).interactive().build();
-    }
+
     
     private static Source fromFile(String path) throws IOException {
-        return Source.newBuilder(new File(path)).mimeType(R_MIME_TYPE).build();
+        return Source.newBuilder("R", new File(path)).build();
     }
     
 }

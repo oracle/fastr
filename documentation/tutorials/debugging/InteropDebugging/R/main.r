@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,6 @@ clazz <- new.java.class("com.oracle.truffle.r.JavaMessage")
 obj <- new.external(clazz, "Hi there")
 print(obj$getMessage())
 
-JS_MIME_TYPE <- "application/javascript"
-eval.external(JS_MIME_TYPE, source='var s = "Hello from Javascript"; print(s)')
-eval.external(JS_MIME_TYPE, path="JS/main.js")
+eval.external('js', source='var s = "Hello from Javascript"; print(s)')
+eval.external('js', path="JS/main.js")
 
