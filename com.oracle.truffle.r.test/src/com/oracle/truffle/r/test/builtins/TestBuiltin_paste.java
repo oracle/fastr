@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -84,6 +84,12 @@ public class TestBuiltin_paste extends TestBase {
         assertEval("{ paste(NA) }");
         assertEval("{ paste(c(1,NA)) }");
         assertEval("{ s<-c('1',NA); paste(s); s; }");
+
+        assertEval("{ paste(1:3, sep='.') }");
+        assertEval("{ paste('a', 1:3, sep='.') }");
+        assertEval("{ paste(1:3, 'b', sep='.') }");
+        assertEval("{ paste('a', 1:3, 'b', sep='.') }");
+        assertEval("{ paste('a', 'a', 1:3, 'b', 'b', sep='.') }");
     }
 
     @Test
