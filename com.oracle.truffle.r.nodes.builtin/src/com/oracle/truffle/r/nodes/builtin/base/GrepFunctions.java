@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -468,9 +468,10 @@ public class GrepFunctions {
                     String value;
                     if (fixed) {
                         if (gsub) {
-                            value = input.replace(pattern, replacement);
+                            value = Pattern.compile(pattern, Pattern.LITERAL).matcher(input).replaceAll(replacement);
                         } else {
                             int ix = input.indexOf(pattern);
+                            replacement = replacement.replace("\\\\", "\\");
                             value = ix < 0 ? input : input.substring(0, ix) + replacement + input.substring(ix + pattern.length());
                         }
                     } else if (perl) {

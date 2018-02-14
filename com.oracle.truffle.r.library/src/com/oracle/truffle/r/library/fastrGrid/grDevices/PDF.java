@@ -26,8 +26,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.device.NullDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -43,13 +43,8 @@ public class PDF extends RExternalBuiltinNode {
             throw error(Message.ARGUMENTS_REQUIRED_COUNT, args.getLength(), "PDF", 1);
         }
 
-        String filename = RRuntime.asString(args.getArgument(0));
-        if (filename == null) {
-            GridContext.getContext().setCurrentDevice("null", new NullDevice());
-        }
-
-        // TODO: only a null PDF device "supported"
-
+        GridContext.getContext().setCurrentDevice("null", new NullDevice());
+        RError.warning(this, RError.Message.GENERIC, "PDF device not supported. Using a dummy device.");
         return RNull.instance;
     }
 }

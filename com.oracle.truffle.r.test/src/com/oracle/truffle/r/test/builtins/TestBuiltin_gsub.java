@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -204,6 +204,8 @@ public class TestBuiltin_gsub extends TestBase {
         assertEval("{ gsub('.*X', '', 'a\nXb', perl = FALSE) }");
         // the dot matches the new line in a Perl regexp
         assertEval("{ gsub('.*X', '', 'a\nXb', perl = TRUE) }");
+
+        assertEval("{ gsub('~', '\\\\\\\\X', '~') }");
 
         // Expected output: [1] "xaxbx"
         // FastR output: [1] "axxxxxb"

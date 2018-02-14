@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -68,7 +68,12 @@ eval(expression({
     recordPlot <- function() {
 		dl <- grid:::grid.Call(grid:::C_getDisplayList)
 		dl.idx <- grid:::grid.Call(grid:::C_getDLindex)
-		list(dl = dl, dl.idx = dl.idx)
+		# The dummy elements and the class 'recordedplot' make the display list look 
+		# like the GNUR one, which enables its use in the 'evaluate' package
+		# (used in knitr, for instance).
+		pl <- list(list(list("dummyCallX",list(list("dummyCallY")))), dl = dl, dl.idx = dl.idx)
+		class(pl) <- "recordedplot"
+		pl
 	}
 
     # When replaying, the argument DL must be one produced by the overridden function recordPlot.

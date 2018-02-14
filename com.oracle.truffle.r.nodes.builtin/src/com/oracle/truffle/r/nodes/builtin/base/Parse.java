@@ -64,9 +64,11 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -539,7 +541,10 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             List<OctetNode> children = new ArrayList<>();
             RSyntaxElement[] args = element.getSyntaxArguments();
             for (int i = from; i < Math.min(args.length, to); i++) {
-                children.add(accept(args[i]));
+                OctetNode argOctet = accept(args[i]);
+                if (argOctet != null) {
+                    children.add(argOctet);
+                }
             }
             return children;
         }
@@ -554,8 +559,10 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 tt = TokenType.NUM_CONST;
             } else if (value instanceof String) {
                 tt = TokenType.STR_CONST;
+            } else if (value == REmpty.instance || value == RMissing.instance) {
+                return null;    // ignored
             } else {
-                throw RInternalError.shouldNotReachHere();
+                throw RInternalError.shouldNotReachHere("Unknown RSyntaxConstant in ParseDataVisitor " + (value == null ? "null" : value.getClass().getSimpleName()));
             }
 
             OctetNode constChild = newOctet(element, tt, element.getSourceSection().getCharacters().toString(), OctetNode.NO_CHILDREN);
