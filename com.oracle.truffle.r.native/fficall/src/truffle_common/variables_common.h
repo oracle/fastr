@@ -21,6 +21,7 @@
  * questions.
  */
 #define NO_FASTR_REDEFINE
+#include <stdlib.h>
 #include <string.h>
 #include <Rinterface.h>
 #include <trufflenfi.h>
