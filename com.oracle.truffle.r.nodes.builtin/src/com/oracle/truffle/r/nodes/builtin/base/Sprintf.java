@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -598,6 +598,13 @@ public abstract class Sprintf extends RBuiltinNode.Arg2 {
         if (c == 'i') {
             // they seem to be equivalent but 'i' is not handled correctly by the java formatter
             fi.conversion = 'd';
+        }
+        // if precision specified for integer decimal, do instead zero padding
+        // e.g. '%.2d' -> '%02f'
+        if (fi.precision > 0 && fi.conversion == 'd') {
+            fi.padZero = true;
+            fi.width = fi.precision;
+            fi.precision = -1;
         }
         fi.nextChar = j + 1;
         if (fi.numArg == 0 && c != '%') {

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -150,6 +150,10 @@ public class TestBuiltin_sprintf extends TestBase {
         assertEval("{ sprintf('plot_%02g', 3L) }");
         assertEval("{ sprintf(c('hello', 'world'), NULL) }");
         assertEval("{ sprintf('%s', list('hello world')) }");
+
+        assertEval("{ sprintf('%.3d', 4.0) }");
+        assertEval("{ sprintf('%.3i', 4.0) }");
+
         // Note: we save the result to variable to avoid diff because of different formatting,
         // however, at least we test that the format expression is not causing any problems to
         // FastR.
