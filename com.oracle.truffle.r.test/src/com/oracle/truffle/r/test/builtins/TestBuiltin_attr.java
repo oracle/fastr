@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -241,7 +241,7 @@ public class TestBuiltin_attr extends TestBase {
     @Test
     public void testExactMatch() {
         assertEval("x <- c(1, 3); attr(x, 'abc') <- 42; attr(x, 'ab', exact=TRUE)");
-        assertEval(Ignored.Unimplemented, "x <- c(1,2); attr(x, 'row.namess') <- 42; attr(x, 'row.names')");
+        assertEval("x <- c(1,2); attr(x, 'row.namess') <- 42; attr(x, 'row.names')");
     }
 
     @Test
