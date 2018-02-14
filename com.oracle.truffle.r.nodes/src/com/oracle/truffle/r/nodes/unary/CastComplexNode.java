@@ -36,8 +36,10 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -263,6 +265,11 @@ public abstract class CastComplexNode extends CastBaseNode {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
+    }
+
+    @Specialization
+    protected RComplexVector doPairList(RPairList pairList) {
+        return doList(pairList.toRList());
     }
 
     public static CastComplexNode create() {

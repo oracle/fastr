@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -13,9 +13,15 @@ package com.oracle.truffle.r.test.builtins;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.TestRBase;
 
 // Checkstyle: stop line length check
-public class TestBuiltin_asvector extends TestBase {
+public class TestBuiltin_asvector extends TestRBase {
+
+    @Override
+    protected String getTestDir() {
+        return "asvector";
+    }
 
     @Test
     public void testasvector1() {
@@ -445,6 +451,10 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("as.vector(NULL, mode='pairlist')");
         assertEval("{ as.vector.cls <- function(x, mode) 42; as.vector(structure(c(1,2), class='cls')); }");
         assertEval("as.pairlist(as.pairlist(c(1,2,3)))");
+        assertEval("as.pairlist(mtcars[,1:3])");
+        assertEval("as.pairlist(structure(1:3, myattr=42))");
+        assertEval("as.vector(as.pairlist(structure(list(1,2,3), myattr=42)), 'list')");
+
     }
 
     @Test
@@ -454,5 +464,52 @@ public class TestBuiltin_asvector extends TestBase {
         assertEval("{ as.symbol(as.symbol(123)) }");
         assertEval("{ as.symbol(as.raw(16)) }");
         assertEval("{ as.symbol(3+2i) }");
+    }
+
+    private final String[] valuesNameableAttributable = new String[]{
+                    "list(1,2,4)",
+                    "as.pairlist(c(1,2,3))",
+                    "c(1L, 2L, 4L)",
+                    "c(1, 2, 4)",
+                    "as.raw(c(1, 2, 4))",
+                    "c('1', '2', '4')",
+                    "c(T, F, T)",
+                    "c(1+i, 2+i, 4+i)",
+                    "parse(text='x; y; z')",
+                    // TODO: "parse(text='x+y')[[1]]", -- problem with UpdateNames and RLanguage...
+                    // TODO: "function() 42",
+    };
+
+    private final String[] valuesAttributable = new String[]{
+                    // TODO: "as.symbol('a')", -- attributes dropping/not dropping is not correct
+                    "as.environment(list(a=3,b=4,x=5))",
+    };
+
+    private final String[] otherValues = new String[]{
+                    "NULL",
+    };
+
+    private final String[] modes = new String[]{
+                    "integer",
+                    "numeric",
+                    "double",
+                    "raw",
+                    "logical",
+                    "complex",
+                    "character",
+                    "list",
+                    "pairlist",
+                    // TODO: "expression", -- too many differences in deparsing
+                    "symbol",
+                    "name",
+                    // TODO: "closure",
+                    // TODO: "function",
+                    "any"
+    };
+
+    @Test
+    public void allCombinations() {
+        assertEval(Output.IgnoreErrorMessage, template("{ x <- %0; names(x) <- c('a','b','c'); attr(x,'myattr') <- 42; as.vector(x, mode='%1'); }", valuesNameableAttributable, modes));
+        assertEval(Output.IgnoreErrorMessage, template("{ x <- %0; attr(x,'myattr') <- 42; as.vector(x, mode='%1'); }", valuesAttributable, modes));
     }
 }

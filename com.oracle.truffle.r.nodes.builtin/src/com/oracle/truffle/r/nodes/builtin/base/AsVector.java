@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,7 +36,10 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.AsVectorInternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.AsVectorNodeGen.AsVectorInternalNodeGen.CastPairListNodeGen;
@@ -46,6 +49,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
+import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.unary.CastComplexNode;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastExpressionNode;
@@ -63,15 +67,22 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -126,6 +137,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
 
         public abstract Object execute(Object x, String mode);
 
+        @Child private GetS4DataSlot getS4DataSlotNode;
         private final ConditionProfile indirectMatchProfile = ConditionProfile.createBinaryProfile();
 
         protected static CastNode createCast(RType type) {
@@ -142,6 +154,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                     case Expression:
                         return CastExpressionNode.createNonPreserving();
                     case Function:
+                    case Closure:
                         throw RInternalError.unimplemented("as.vector cast to 'function'");
                     case Integer:
                         return CastIntegerNode.createNonPreserving();
@@ -164,14 +177,21 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             return mode == cachedMode || indirectMatchProfile.profile(cachedMode.equals(mode));
         }
 
+        @TruffleBoundary
+        @Specialization
+        protected Object asVector(@SuppressWarnings("unused") REnvironment x, String mode) {
+            RType type = RType.fromMode(mode);
+            throw RError.error(RError.SHOW_CALLER, Message.CANNOT_COERCE, RType.Environment.getName(), type != null ? type.getName() : mode);
+        }
+
         // there should never be more than ~12 specializations
         @SuppressWarnings("unused")
-        @Specialization(limit = "99", guards = "matchesMode(mode, cachedMode)")
+        @Specialization(limit = "99", guards = {"!isEnv(x)", "matchesMode(mode, cachedMode)"})
         protected Object asVector(Object x, String mode,
                         @Cached("mode") String cachedMode,
                         @Cached("fromMode(cachedMode)") RType type,
                         @Cached("createCast(type)") CastNode cast,
-                        @Cached("create()") DropAttributesNode drop,
+                        @Cached("create(type)") DropAttributesNode drop,
                         @Cached("create()") ForeignArray2R foreignArray2R) {
             if (RRuntime.isForeignObject(x)) {
                 Object o = foreignArray2R.convert(x);
@@ -184,15 +204,37 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                     throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
                 }
             }
-            return drop.execute(cast == null ? x : cast.doCast(x));
+            Object result = x;
+            if (x instanceof RS4Object) {
+                result = getS4DataSlot((RS4Object) x);
+            }
+            return drop.execute(result, cast == null ? x : cast.doCast(result));
+        }
+
+        static boolean isEnv(Object x) {
+            return x instanceof REnvironment;
+        }
+
+        private Object getS4DataSlot(RS4Object o) {
+            if (getS4DataSlotNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getS4DataSlotNode = insert(GetS4DataSlot.create(RType.Any));
+            }
+            return getS4DataSlotNode.executeObject(o);
         }
 
         public abstract static class DropAttributesNode extends RBaseNode {
 
-            public abstract Object execute(Object o);
+            private final RType targetType;
 
-            public static DropAttributesNode create() {
-                return DropAttributesNodeGen.create();
+            protected DropAttributesNode(RType targetType) {
+                this.targetType = targetType;
+            }
+
+            public abstract Object execute(Object original, Object o);
+
+            public static DropAttributesNode create(RType targetType) {
+                return DropAttributesNodeGen.create(targetType);
             }
 
             protected static boolean hasAttributes(Class<? extends RAbstractAtomicVector> clazz, RAbstractAtomicVector o) {
@@ -200,60 +242,90 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Specialization(guards = "o.getAttributes() == null")
-            protected static RSharingAttributeStorage drop(RSharingAttributeStorage o) {
+            protected static RSharingAttributeStorage drop(@SuppressWarnings("unused") Object original, RSharingAttributeStorage o) {
                 // quickly reject any RSharingAttributeStorage without attributes
                 return o;
             }
 
-            @Specialization(guards = "o.getClass() == oClass")
-            protected RAbstractVector dropCached(RAbstractAtomicVector o,
+            @Specialization(guards = {"o.getClass() == oClass", "o.getAttributes() != null"})
+            protected RAbstractVector dropCached(@SuppressWarnings("unused") Object original, RAbstractAtomicVector o,
                             @Cached("o.getClass()") Class<? extends RAbstractAtomicVector> oClass,
                             @Cached("createBinaryProfile()") ConditionProfile profile) {
                 return profile.profile(hasAttributes(oClass, o)) ? oClass.cast(o).copyDropAttributes() : o;
             }
 
-            @Specialization(replaces = "dropCached")
-            protected RAbstractVector drop(RAbstractAtomicVector o,
+            @Specialization(replaces = "dropCached", guards = "o.getAttributes() != null")
+            protected RAbstractVector drop(@SuppressWarnings("unused") Object original, RAbstractAtomicVector o,
                             @Cached("createBinaryProfile()") ConditionProfile profile) {
                 return profile.profile(o.getAttributes() != null) ? o.copyDropAttributes() : o;
             }
 
             @Specialization(guards = "o.getAttributes() != null")
-            protected static RLanguage drop(RLanguage o) {
+            protected RLanguage drop(@SuppressWarnings("unused") Object original, RLanguage o) {
+                switch (targetType) {
+                    case Any:
+                    case PairList:
+                    case List:
+                        return o;
+                }
                 return RDataFactory.createLanguage(o.getClosure());
             }
 
             @Specialization(guards = "o.getAttributes() != null")
-            protected static RSymbol drop(RSymbol o) {
-                return RDataFactory.createSymbol(o.getName());
+            protected static RSymbol drop(@SuppressWarnings("unused") Object original, RSymbol o) {
+                return original == o ? o : RDataFactory.createSymbol(o.getName());
+            }
+
+            @Specialization(guards = "pairList.getAttributes() != null")
+            protected Object drop(Object original, RPairList pairList) {
+                // dropping already done in the cast node CastPairListNode below
+                return pairList;
+            }
+
+            @Specialization(guards = "list.getAttributes() != null")
+            protected Object drop(Object original, RAbstractListVector list,
+                            @Cached("create()") UnaryCopyAttributesNode copyAttributesNode,
+                            @Cached("createBinaryProfile()") ConditionProfile originalIsAtomic) {
+                if (originalIsAtomic.profile(getRType(original).isAtomic())) {
+                    return list;
+                }
+                if (original instanceof RAbstractVector) {
+                    copyAttributesNode.execute(list, (RAbstractVector) original);
+                }
+                return list;
             }
 
             @Fallback
-            protected Object drop(Object o) {
-                // includes RAbstractListVector, RExpression, RPairList
+            protected Object drop(Object original, Object o) {
+                // includes RExpression, RSymbol
                 return o;
+            }
+
+            private static RType getRType(Object original) {
+                return original instanceof RTypedValue ? ((RTypedValue) original).getRType() : RType.Any;
             }
         }
 
+        // NOTE: this cast takes care of attributes dropping too. Names are never dropped, and other
+        // attrs copied only in the case of list, pairlist and expressions (all of them are
+        // RAbstractListVector).
         protected abstract static class CastPairListNode extends CastNode {
 
             @Specialization
-            @TruffleBoundary
-            protected Object castPairlist(RAbstractVector x) {
-                // TODO implement non-empty element list conversion; this is a placeholder for type
-                // test
-                if (x.getLength() == 0) {
-                    return RNull.instance;
-                } else {
-                    Object list = RNull.instance;
-                    RStringVector names = x.getNames();
-                    for (int i = x.getLength() - 1; i >= 0; i--) {
-                        Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
-                        Object data = x.getDataAtAsObject(i);
-                        list = RDataFactory.createPairList(data, list, name);
-                    }
-                    return list;
-                }
+            protected Object castPairlist(RExpression x,
+                            @Cached("create()") RemoveNamesAttributeNode removeNamesAttributeNode) {
+                return fromVectorWithAttributes(x, removeNamesAttributeNode);
+            }
+
+            @Specialization
+            protected Object castPairlist(RAbstractListVector x,
+                            @Cached("create()") RemoveNamesAttributeNode removeNamesAttributeNode) {
+                return fromVectorWithAttributes(x, removeNamesAttributeNode);
+            }
+
+            @Specialization
+            protected Object castPairlist(RAbstractAtomicVector x) {
+                return x.getLength() == 0 ? RNull.instance : fromVector(x);
             }
 
             @Specialization
@@ -267,9 +339,44 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                 return list.copy();
             }
 
+            @Specialization
+            protected Object doRLanguage(RLanguage language) {
+                // GNUR just let's language be language...
+                return language;
+            }
+
             @Fallback
             protected Object castPairlist(Object x) {
-                throw RInternalError.unimplemented("non-list casts to pairlist for " + x.getClass().getSimpleName());
+                String name = x instanceof RTypedValue ? ((RTypedValue) x).getRType().getName() : x.getClass().getSimpleName();
+                throw error(Message.CANNOT_COERCE, name, RType.PairList.getName());
+            }
+
+            @TruffleBoundary
+            private Object fromVectorWithAttributes(RAbstractContainer x, RemoveNamesAttributeNode removeNamesAttributeNode) {
+                if (x.getLength() == 0) {
+                    return RNull.instance;
+                } else {
+                    Object list = fromVector(x);
+                    DynamicObject attributes = x.getAttributes();
+                    if (attributes != null) {
+                        ((RPairList) list).initAttributes(RAttributesLayout.copy(attributes));
+                        // names are part of the list already
+                        removeNamesAttributeNode.execute(list);
+                    }
+                    return list;
+                }
+            }
+
+            @TruffleBoundary
+            private static RPairList fromVector(RAbstractContainer x) {
+                Object list = RNull.instance;
+                RStringVector names = x.getNames();
+                for (int i = x.getLength() - 1; i >= 0; i--) {
+                    Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
+                    Object data = x.getDataAtAsObject(i);
+                    list = RDataFactory.createPairList(data, list, name);
+                }
+                return (RPairList) list;
             }
         }
     }

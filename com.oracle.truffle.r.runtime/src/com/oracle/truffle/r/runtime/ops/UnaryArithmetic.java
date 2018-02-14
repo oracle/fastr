@@ -7,7 +7,7 @@
  * Copyright (c) 1998, Ross Ihaka
  * Copyright (c) 1998-2012, The R Core Team
  * Copyright (c) 2005, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -15,9 +15,11 @@ package com.oracle.truffle.r.runtime.ops;
 
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Base class for the implementation of unary arithmetic operations. This covers functions like "+",
@@ -71,6 +73,16 @@ public abstract class UnaryArithmetic extends Operation {
     public RComplex op(double re, double im) {
         // default: perform operation on real and imaginary part
         return RDataFactory.createComplex(op(re), op(im));
+    }
+
+    /**
+     * Allows to override the default checking of NA, where NA in either im or re results into NA.
+     */
+    public double opdChecked(NACheck naCheck, double re, double im) {
+        if (naCheck.check(re) || naCheck.check(im)) {
+            return RRuntime.DOUBLE_NA;
+        }
+        return opd(re, im);
     }
 
     public double opd(@SuppressWarnings("unused") double re, @SuppressWarnings("unused") double im) {

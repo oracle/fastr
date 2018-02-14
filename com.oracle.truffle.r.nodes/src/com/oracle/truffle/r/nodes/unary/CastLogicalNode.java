@@ -33,10 +33,12 @@ import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -186,6 +188,11 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
             ret.copyRegAttributesFrom(list);
         }
         return ret;
+    }
+
+    @Specialization
+    protected RLogicalVector doPairList(RPairList pairList) {
+        return doList(pairList.toRList());
     }
 
     @Specialization

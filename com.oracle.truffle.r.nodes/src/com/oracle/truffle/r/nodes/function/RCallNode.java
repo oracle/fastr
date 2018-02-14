@@ -142,8 +142,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return this;
     }
 
-    public abstract RNode getFunction();
-
     private final RSyntaxNode[] arguments;
     private final int[] varArgIndexes;
     private final ArgumentsSignature signature;
@@ -211,6 +209,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return varArgsSymbolIndicesArr;
     }
 
+    @Override
     public Arguments<RSyntaxNode> getArguments() {
         return Arguments.create(arguments, signature);
     }

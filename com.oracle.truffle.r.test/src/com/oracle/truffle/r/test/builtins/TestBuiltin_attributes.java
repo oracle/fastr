@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -195,5 +195,10 @@ public class TestBuiltin_attributes extends TestBase {
 
         assertEval("{ e <- new.env(); attributes(e) <- list(a=1); attributes(e) }");
         assertEval("{ e <- new.env(); attributes(e) <- list(class=\"srcfile\"); attributes(e) }");
+
+        assertEval("attributes(pairlist(a=1, b=2))");
+        assertEval("attributes(pairlist(1,2,3))");
+        assertEval("attributes(structure(pairlist(1,2,3), myattr=42))");
+        assertEval("attributes(structure(pairlist(a=1,b=2,c=3), myattr=42))");
     }
 }

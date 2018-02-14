@@ -29,6 +29,8 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.Arguments;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class RCallBaseNodeWrapperFactory implements InstrumentableFactory<RCallBaseNode> {
@@ -42,6 +44,16 @@ public class RCallBaseNodeWrapperFactory implements InstrumentableFactory<RCallB
             assert delegate != null;
             this.delegate = delegate;
             this.probeNode = probeNode;
+        }
+
+        @Override
+        public Arguments<RSyntaxNode> getArguments() {
+            return delegate.getArguments();
+        }
+
+        @Override
+        public RNode getFunction() {
+            return delegate.getFunction();
         }
 
         @Override

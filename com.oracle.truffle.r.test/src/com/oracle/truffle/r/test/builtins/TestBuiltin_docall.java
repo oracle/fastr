@@ -50,5 +50,6 @@ public class TestBuiltin_docall extends TestBase {
         assertEval("{ f1 <- function(a) ls(parent.frame(2)); f2 <- function(b) f1(b); f3 <- function(c) f2(c); f4 <- function(d) do.call('f3', list(d)); f4(42); }");
 
         assertEval("do.call('c', list())");
+        assertEval("{ f <- function() typeof(sys.call(0)[[1]]); do.call('f', list()); }");
     }
 }

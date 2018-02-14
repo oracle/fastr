@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -65,14 +68,30 @@ public abstract class GetAttributesNode extends RBaseNode {
 
     public abstract Object execute(RAttributable attributable);
 
-    @Specialization
+    @Specialization(guards = "!isPairList(container)")
     protected Object attributesNull(RAbstractContainer container,
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile) {
         if (hasAttributesProfile.profile(hasAttributes(container))) {
-            return createResult(container, container instanceof RLanguage);
+            return createResult(container, container instanceof RLanguage, null);
         } else {
             return RNull.instance;
         }
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected Object attributesPairList(RPairList pairList) {
+        RStringVector names = pairList.getNames();
+        if (hasAttributes(pairList)) {
+            return createResult(pairList, false, names);
+        } else if (names != null) {
+            return RDataFactory.createList(new Object[]{names}, RDataFactory.createStringVector(RRuntime.NAMES_ATTR_KEY));
+        }
+        return RNull.instance;
+    }
+
+    protected static boolean isPairList(RAbstractContainer x) {
+        return x instanceof RPairList;
     }
 
     /**
@@ -84,7 +103,7 @@ public abstract class GetAttributesNode extends RBaseNode {
     @TruffleBoundary
     protected Object attributes(RAttributable object) {
         if (hasAttributes(object)) {
-            return createResult(object, false);
+            return createResult(object, false, null);
         } else {
             return RNull.instance;
         }
@@ -107,12 +126,17 @@ public abstract class GetAttributesNode extends RBaseNode {
     /**
      * {@code language} objects behave differently regarding "names"; they don't get included.
      */
-    private Object createResult(RAttributable attributable, boolean ignoreNames) {
+    private Object createResult(RAttributable attributable, boolean ignoreNames, RStringVector explicitNames) {
         DynamicObject attributes = attributable.getAttributes();
-        int size = attributes.size();
+        int size = attributes.size() + (explicitNames == null ? 0 : 1);
         String[] names = new String[size];
         Object[] values = new Object[size];
         int z = 0;
+        if (explicitNames != null) {
+            values[0] = explicitNames;
+            names[0] = RRuntime.NAMES_ATTR_KEY;
+            z = 1;
+        }
         for (RAttributesLayout.RAttribute attr : arrayAttrAccess.execute(attributes)) {
             String name = attr.getName();
             if (ignoreNames && name.equals(RRuntime.NAMES_ATTR_KEY)) {

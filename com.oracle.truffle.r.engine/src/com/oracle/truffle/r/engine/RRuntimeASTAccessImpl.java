@@ -58,6 +58,7 @@ import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.Arguments;
@@ -353,8 +354,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @TruffleBoundary
     public void setNames(RLanguage rl, RStringVector names) {
         RNode node = (RNode) rl.getRep();
-        if (node instanceof RCallNode) {
-            RCallNode call = (RCallNode) node;
+        if (node instanceof RCallBaseNode) {
+            RCallBaseNode call = (RCallBaseNode) node;
             Arguments<RSyntaxNode> args = call.getArguments();
             ArgumentsSignature sig = args.getSignature();
             String[] newNames = new String[sig.getLength()];
@@ -366,7 +367,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 newNames[i] = names.getDataAt(j);
             }
             // copying is already handled by RShareable
-            RCallNode newCall = RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallNode) node).getFunction(), ArgumentsSignature.get(newNames), args.getArguments());
+            RCallNode newCall = RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallBaseNode) node).getFunction(), ArgumentsSignature.get(newNames), args.getArguments());
             rl.setClosure(Closure.createLanguageClosure(newCall));
         } else {
             throw RInternalError.shouldNotReachHere();
