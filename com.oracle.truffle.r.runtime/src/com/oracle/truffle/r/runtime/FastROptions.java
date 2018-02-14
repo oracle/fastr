@@ -60,7 +60,6 @@ public enum FastROptions {
     EmitTmpSource("Write deparsed source code to temporary files for better debugging.", true),
     EmitTmpDir("The directory where to allocate temporary files with deparsed source code.", null, true),
     EmitTmpHashed("Use an SHA-256 hash as file name to reduce temporary file creation.", true),
-    SpawnUsesPolyglot("use PolyglotEngine for .fastr.context.spawn", false),
     SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
     ForeignObjectWrappers("use wrappers for foreign objects (as opposed to full conversion)", false),
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,10 +38,9 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.RCmdOptions;
-import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
@@ -201,7 +200,7 @@ public final class REnvVars implements RContext.ContextState {
 
     /**
      * In the case where {@code R_HOME} is not set, which should only occur when FastR is invoked
-     * from a {@link PolyglotEngine} created by another language, we try to locate the
+     * from a {@link org.graalvm.polyglot.Engine} created by another language, we try to locate the
      * {@code R_HOME} dynamically by using the location of this class. The logic varies depending on
      * whether this class was stored in a {@code .jar} file or in a {@code .class} file in a
      * directory.

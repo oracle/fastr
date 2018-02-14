@@ -68,7 +68,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
@@ -113,9 +112,9 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  * implementation <b>must</b> go through this class. There can be multiple instances
  * (multiple-tenancy) active within a single process/Java-VM.
  *
- * Contexts are created during construction of the {@link PolyglotEngine} instance. In case a
- * context needs to be configured, the PolyglotEngine needs to be created via the
- * {@code RContextFactory} class, which takes a {@link ChildContextInfo} object for configuration.
+ * FastR contexts are created during construction of the {@link org.graalvm.polyglot.Context}
+ * instance. In case a FastR context needs to be configured, a {@link ChildContextInfo} instance
+ * should be passed in {@link Env} configuration under {@link ChildContextInfo#CONFIG_KEY} key.
  *
  * The context provides a so-called {@link Engine} (accessed via {@link #getEngine()}), which
  * provides basic parsing and execution functionality .
@@ -251,7 +250,6 @@ public final class RContext {
     private final int id;
     private final int multiSlotIndex;
     private TruffleContext truffleContext;
-    private PolyglotEngine vm;
 
     public Executor executor;
 
@@ -763,7 +761,7 @@ public final class RContext {
 
     /**
      * Allows another thread to schedule some code to be run in this context's thread. The action
-     * can be scheduled only if PolyglotEngine was created with an Executor.
+     * can be scheduled only if this context was created with an Executor.
      */
     public void schedule(Runnable action) {
         assert hasExecutor() : "Cannot run RContext#schedule() when there is no executor.";
@@ -795,10 +793,6 @@ public final class RContext {
 
     public TruffleContext getTruffleContext() {
         return truffleContext;
-    }
-
-    public PolyglotEngine getVM() {
-        return vm;
     }
 
     public boolean isInitial() {

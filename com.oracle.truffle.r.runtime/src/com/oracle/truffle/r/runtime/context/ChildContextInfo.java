@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,12 +27,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
 import java.util.concurrent.Executor;
-import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.TruffleContext;
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.api.vm.PolyglotEngine.Builder;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
@@ -60,9 +57,6 @@ final class ConsoleHandlerOutputStream extends OutputStream {
  * for the initial context, whether created by the {@code R/RScript} command or whether invoked from
  * another language.
  *
- * There are some legacy functions that still use {@link PolyglotEngine} but the new way is to use
- * {@link TruffleContext}.
- *
  */
 public final class ChildContextInfo {
     static final String CONFIG_KEY = "fastrContextInfo";
@@ -85,7 +79,6 @@ public final class ChildContextInfo {
     private final int id;
     private final int multiSlotInd;
     private TruffleContext truffleContext;
-    private PolyglotEngine vm;
     public Executor executor;
 
     private ChildContextInfo(RStartParams startParams, Map<String, String> env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr,
@@ -115,30 +108,13 @@ public final class ChildContextInfo {
     }
 
     public TruffleContext createTruffleContext() {
-        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config("parentContext", parent.getVM()).config(CONFIG_KEY, this).build();
+        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config(CONFIG_KEY, this).build();
         return this.truffleContext;
     }
 
     public TruffleContext createVM(@SuppressWarnings("unused") ChildContextInfo childContextInfo) {
-        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config("parentContext", parent.getVM()).config(CONFIG_KEY, this).build();
+        this.truffleContext = RContext.getInstance().getEnv().newContextBuilder().config(CONFIG_KEY, this).build();
         return this.truffleContext;
-    }
-
-    public PolyglotEngine createVM() {
-        Builder builder = PolyglotEngine.newBuilder();
-        if (startParams.isInteractive()) {
-            this.executor = Executors.newSingleThreadExecutor();
-            builder = builder.executor(executor);
-        }
-        PolyglotEngine newVM = builder.config("application/x-r", CONFIG_KEY, this).setIn(stdin).setOut(stdout).setErr(stderr).build();
-        this.vm = newVM;
-        return newVM;
-    }
-
-    public PolyglotEngine createVM(PolyglotEngine.Builder builder) {
-        PolyglotEngine newVM = builder.config("application/x-r", CONFIG_KEY, this).setIn(stdin).setOut(stdout).setErr(stderr).build();
-        this.vm = newVM;
-        return newVM;
     }
 
     /**
@@ -203,11 +179,6 @@ public final class ChildContextInfo {
 
     public TruffleContext getTruffleContext() {
         return truffleContext;
-    }
-
-    @Deprecated
-    public PolyglotEngine getVM() {
-        return vm;
     }
 
     public InputStream getStdin() {
