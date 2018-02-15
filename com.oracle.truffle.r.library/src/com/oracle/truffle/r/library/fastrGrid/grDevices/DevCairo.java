@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.library.fastrGrid.grDevices;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.device.NullDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -44,6 +45,11 @@ public class DevCairo extends RExternalBuiltinNode {
         }
 
         String filename = RRuntime.asString(args.getArgument(0));
+        if (filename == null) {
+            GridContext.getContext().setCurrentDevice("null", new NullDevice());
+            return RNull.instance;
+        }
+
         int witdh = RRuntime.asInteger(args.getArgument(2));
         int height = RRuntime.asInteger(args.getArgument(3));
         if (RRuntime.isNA(witdh) || RRuntime.isNA(height) || RRuntime.isNA(filename) || filename.isEmpty()) {

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -468,9 +468,10 @@ public class GrepFunctions {
                     String value;
                     if (fixed) {
                         if (gsub) {
-                            value = input.replace(pattern, replacement);
+                            value = Pattern.compile(pattern, Pattern.LITERAL).matcher(input).replaceAll(replacement);
                         } else {
                             int ix = input.indexOf(pattern);
+                            replacement = replacement.replace("\\\\", "\\");
                             value = ix < 0 ? input : input.substring(0, ix) + replacement + input.substring(ix + pattern.length());
                         }
                     } else if (perl) {
@@ -535,10 +536,11 @@ public class GrepFunctions {
                     } else {
                         replacement = convertGroups(replacement);
 
+                        Matcher matcher = Pattern.compile(pattern, Pattern.DOTALL).matcher(input);
                         if (gsub) {
-                            value = input.replaceAll(pattern, replacement);
+                            value = matcher.replaceAll(replacement);
                         } else {
-                            value = input.replaceFirst(pattern, replacement);
+                            value = matcher.replaceFirst(replacement);
                         }
                     }
                     result[i] = value;
@@ -958,7 +960,7 @@ public class GrepFunctions {
             if (pattern.length() > 0 && pattern.charAt(0) == '*') {
                 actualPattern = pattern.substring(1);
             }
-            return Pattern.compile(actualPattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
+            return Pattern.compile(actualPattern, Pattern.DOTALL | (ignoreCase ? Pattern.CASE_INSENSITIVE : 0)).matcher(text);
         }
     }
 
@@ -1069,7 +1071,7 @@ public class GrepFunctions {
 
         @TruffleBoundary
         private static Matcher getPatternMatcher(String pattern, String text, boolean ignoreCase) {
-            return Pattern.compile(pattern, ignoreCase ? Pattern.CASE_INSENSITIVE : 0).matcher(text);
+            return Pattern.compile(pattern, Pattern.DOTALL | (ignoreCase ? Pattern.CASE_INSENSITIVE : 0)).matcher(text);
         }
     }
 

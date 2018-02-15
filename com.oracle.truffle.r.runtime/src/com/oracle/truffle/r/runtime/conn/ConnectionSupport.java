@@ -222,7 +222,7 @@ public class ConnectionSupport {
     enum AbstractOpenMode {
         Lazy(new String[]{""}, true, true, true),
         Read(new String[]{"r", "rt"}, true, true, false),
-        Write(new String[]{"w", "wt"}, true, false, true),
+        Write(new String[]{"w", "wt", "wr"}, true, false, true),
         Append(new String[]{"a", "at"}, true, false, true),
         ReadBinary(new String[]{"rb"}, false, true, false),
         WriteBinary(new String[]{"wb"}, false, false, true),

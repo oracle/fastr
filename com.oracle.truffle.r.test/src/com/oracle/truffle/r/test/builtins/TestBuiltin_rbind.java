@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -65,6 +65,10 @@ public class TestBuiltin_rbind extends TestBase {
         assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(c('a', 'b'), NULL)), z=c(8,9)) }");
         assertEval("{ rbind(matrix(1:4, nrow=2, dimnames=list(NULL, c('x', 'y'))), c(m=8,n=9)) }");
         assertEval("{ rbind(matrix(1:4, nrow=2), z=c(m=8,n=9)) }");
+
+        assertEval("{ rbind(logical(0),matrix(character(0),0,0)) }");
+        assertEval("{ rbind(integer(0), NULL, matrix(integer(0),0,1)) }");
+        assertEval("{ rbind(integer(0), NULL, matrix(integer(0),1,0)) }");
 
         assertEval("{ info <- c(\"print\", \"AES\", \"print.AES\") ; ns <- integer(0) ; rbind(info, ns) }");
 

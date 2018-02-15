@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -149,6 +149,8 @@ public class TestBuiltin_sub extends TestBase {
         assertEval("{ .Internal(sub(\"7\", 42, \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(sub(\"7\", character(), \"7\", F, F, F, F)) }");
         assertEval("{ .Internal(sub(\"7\", \"42\", 7, F, F, F, F)) }");
+
+        assertEval("{ sub('~', '\\\\\\\\X', '~') }");
 
         assertEval("{ sub('\\\\s*$', '', 'Ä', perl=TRUE) }");
 
