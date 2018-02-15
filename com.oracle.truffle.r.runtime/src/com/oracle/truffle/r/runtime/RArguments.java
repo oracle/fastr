@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -344,7 +344,7 @@ public final class RArguments {
 
     /**
      * An arguments array length of 1 is indicative of a substituted frame. See
-     * {@code SubstituteVirtualFrame}.
+     * {@code com.oracle.truffle.r.runtime.VirtualEvalFrame}.
      */
     public static Frame unwrap(Frame frame) {
         Object[] arguments = frame.getArguments();
@@ -353,8 +353,8 @@ public final class RArguments {
 
     /**
      * Checks {@code frame} corresponds to an R evaluation. Note that a
-     * {@code SubstituteVirtualFrame} will not return {@code true} to this call but it will if
-     * {@link #unwrap} is called first.
+     * {@code com.oracle.truffle.r.runtime.VirtualEvalFrame} will not return {@code true} to this
+     * call but it will if {@link #unwrap} is called first.
      */
     public static boolean isRFrame(Frame frame) {
         Object[] arguments = frame.getArguments();

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
-import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -253,7 +252,7 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
-                        return callCache.execute(SubstituteVirtualFrame.create(frame), envhook, RCaller.create(frame, getOriginalCall()), new Object[]{arg}, null);
+                        return callCache.execute(frame, envhook, RCaller.create(frame, getOriginalCall()), new Object[]{arg}, null);
                     }
                 };
                 String functionName = ReadVariableNode.getSlowPathEvaluationName();
@@ -385,7 +384,7 @@ public class HiddenInternalFunctions {
             RSerialize.CallHook callHook = new RSerialize.CallHook() {
                 @Override
                 public Object eval(Object arg) {
-                    return callCache.execute(SubstituteVirtualFrame.create(frame), hook, RCaller.create(frame, getOriginalCall()), new Object[]{arg}, null);
+                    return callCache.execute(frame, hook, RCaller.create(frame, getOriginalCall()), new Object[]{arg}, null);
                 }
             };
 

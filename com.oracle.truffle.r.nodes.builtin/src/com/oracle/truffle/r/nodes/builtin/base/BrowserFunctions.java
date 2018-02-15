@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,7 +45,6 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.SubstituteVirtualFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -96,7 +95,7 @@ public class BrowserFunctions {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
                             getCallerFrame = insert(new GetCallerFrameNode());
                         }
-                        actualFrame = SubstituteVirtualFrame.create(getCallerFrame.execute(mFrame));
+                        actualFrame = getCallerFrame.execute(mFrame);
                         caller = caller.getParent();
                     }
                     doPrint(caller);
