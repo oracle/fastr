@@ -20,7 +20,7 @@
 # The structure of the implementation somewhat reflects GnuR so that
 # it is easier to update this code, should the code in GnuR be changed.
 #
-# Please run tests in modelTests.R when updating this file!
+# Please run in GnuR the tests in modelTests.R when updating this file!
 #
 
 # ================================================================
@@ -35,9 +35,15 @@ isLanguage <- function(x) {
     is.null(x) || typeof(x) == "language"
 }
 
+# as in Rf_isVector which works differently to is.vector
+isVector <- function(x) {
+    typeof(x) %in% c("logical", "integer", "numeric", 
+                     "double", "complex", "character", "raw", "expression")
+}
+
 nrows <- function(x) {
-    plain <- unclass(x) # this is necessary because of 'AsIs' class: e.g. I(var+4)
-    if (is.factor(x) || is.vector(plain) || is.list(plain) || is.matrix(plain)) {
+    plain <- unclass(x) # this is necessary because of 'AsIs' class: e.g. I(var+4)  
+    if (is.factor(x) || isVector(plain) || is.list(plain)) {
         dims <- dim(plain);
         if (is.null(dims)) {
             return(length(plain))
@@ -51,7 +57,7 @@ nrows <- function(x) {
 
 ncols <- function(x) {
     plain <- unclass(x)
-    if (is.factor(x) || is.vector(plain) || is.list(plain) || is.matrix(plain)) {
+    if (is.factor(x) || isVector(plain) || is.list(plain)) {
         dims <- dim(plain);
         if (is.null(dims)) {
             return(1L);
@@ -88,7 +94,7 @@ isZeroOne <- function(x) {
 }
 
 MatchVar <- function(var1, var2) {
-    if (is.vector(var1) && is.vector(var2) && var1 == var2) {
+    if (isVector(var1) && isVector(var2) && var1 == var2) {
         return(TRUE)
     } else if (is.null(var1) && is.null(var2)) {
         return(TRUE)
@@ -783,7 +789,7 @@ modelframe <- function(formula, rownames, variables, varnames, dots, dotnames, s
         data <- variables
         dataNames <- varnames
     }
-    
+
     names(data) <- dataNames
     
     # Note, the following steps up to running na.action could be simplified to: 
