@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -49,7 +47,6 @@ public class EvalThread extends Thread {
     private final Source source;
     private final ChildContextInfo info;
     private final TruffleContext truffleContext;
-    private final boolean usePolyglot;
     private RList evalResult;
     private Semaphore init = new Semaphore(0);
 
@@ -61,27 +58,21 @@ public class EvalThread extends Thread {
     /** We use a separate counter for threads since ConcurrentHashMap.size() is not reliable. */
     public static final AtomicInteger threadCnt = new AtomicInteger(0);
 
-    public EvalThread(Map<Integer, Thread> threadMap, ChildContextInfo info, Source source, boolean usePolyglot) {
+    public EvalThread(Map<Integer, Thread> threadMap, ChildContextInfo info, Source source) {
         this.threadMap = threadMap;
         this.info = info;
         this.source = source;
         threadCnt.incrementAndGet();
         threadMap.put(info.getId(), this);
         idToMultiSlotTable.put(info.getId(), info.getMultiSlotInd());
-        this.usePolyglot = usePolyglot;
-        this.truffleContext = usePolyglot ? null : info.createTruffleContext();
+        this.truffleContext = info.createTruffleContext();
     }
 
     @Override
     public void run() {
         init.release();
         try {
-            if (usePolyglot) {
-                PolyglotEngine vm = info.createVM(PolyglotEngine.newBuilder());
-                evalResult = run(vm, info, source);
-            } else {
-                evalResult = run(truffleContext, info, source);
-            }
+            evalResult = run(truffleContext, info, source);
         } finally {
             threadMap.remove(info.getId());
             threadCnt.decrementAndGet();
@@ -133,30 +124,6 @@ public class EvalThread extends Thread {
         return result;
     }
 
-    public static RList run(PolyglotEngine vm, ChildContextInfo info, Source source) {
-        RList evalResult;
-        try {
-            PolyglotEngine.Value resultValue = vm.eval(source);
-            evalResult = createEvalResult(resultValue, true);
-        } catch (ParseException e) {
-            e.report(info.getStdout());
-            evalResult = createErrorResult(e.getMessage());
-        } catch (ExitException e) {
-            // termination, treat this as "success"
-            evalResult = RDataFactory.createList(new Object[]{e.getStatus()});
-        } catch (RError e) {
-            // nothing to do
-            evalResult = RDataFactory.createList(new Object[]{RNull.instance});
-        } catch (Throwable t) {
-            // some internal error
-            RInternalError.reportErrorAndConsoleLog(t, info.getId());
-            evalResult = createErrorResult(t.getClass().getSimpleName());
-        } finally {
-            vm.dispose();
-        }
-        return evalResult;
-    }
-
     /**
      * The result is an {@link RList} contain the value, plus an "error" attribute if the evaluation
      * resulted in an error.
@@ -164,13 +131,7 @@ public class EvalThread extends Thread {
     @TruffleBoundary
     private static RList createEvalResult(Object result, boolean usePolyglot) {
         assert result != null;
-        Object listResult = result;
-        if (usePolyglot && result instanceof TruffleObject) {
-            listResult = ((PolyglotEngine.Value) result).as(Object.class);
-        } else {
-            listResult = result;
-        }
-        return RDataFactory.createList(new Object[]{listResult});
+        return RDataFactory.createList(new Object[]{result});
     }
 
     @TruffleBoundary

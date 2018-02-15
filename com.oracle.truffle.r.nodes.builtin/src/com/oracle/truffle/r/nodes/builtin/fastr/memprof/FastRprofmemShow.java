@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -59,27 +60,16 @@ public abstract class FastRprofmemShow extends RBuiltinNode.Arg6 {
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     public Object doProfMem(int levels, boolean desc, @SuppressWarnings("unused") RNull n, boolean printParents, String view, TruffleObject snapshot) {
-        return show(levels, desc, null, printParents, view, snapshot);
+        // TODO: port to new instrumentation API, original code can be found in git history
+        throw error(Message.GENERIC, ".fastr.profmem.show is not available.");
     }
 
     @Specialization
+    @SuppressWarnings("unused")
     public Object doProfMem(int levels, boolean desc, int entryId, boolean printParents, String view, TruffleObject snapshot) {
-        return show(levels, desc, entryId, printParents, view, snapshot);
-    }
-
-    @TruffleBoundary
-    private static Object show(int levels, boolean desc, Integer entryId, boolean printParents, String view, TruffleObject snapshotTO) {
-        MemAllocProfilerPaths snapshot = MemAllocProfilerPaths.fromTruffleObject(snapshotTO);
-        return show(levels, desc, entryId, printParents, view, snapshot);
-    }
-
-    private static Object show(int levels, boolean desc, Integer entryId, boolean printParents, String view, MemAllocProfilerPaths snapshot) {
-        MemAllocProfilerPaths usedSnapshot = snapshot;
-        if (FastRprofmem.HOTSPOTS_VIEW.equals(view)) {
-            usedSnapshot = usedSnapshot.toHS();
-        }
-        FastRprofmem.getProfilerPrinter().show(usedSnapshot, entryId, levels, desc, printParents);
-        return RNull.instance;
+        // TODO: port to new instrumentation API, original code can be found in git history
+        throw error(Message.GENERIC, ".fastr.profmem.show is not available.");
     }
 }

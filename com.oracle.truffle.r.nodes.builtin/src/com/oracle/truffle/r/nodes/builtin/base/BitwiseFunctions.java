@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2015, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -21,6 +21,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
@@ -248,12 +249,15 @@ public class BitwiseFunctions {
         }
 
         @Specialization
-        protected Object bitwNot(RAbstractIntVector a) {
+        protected Object bitwNot(RAbstractIntVector a,
+                        @Cached("create()") NACheck naCheck) {
             int[] ans = new int[a.getLength()];
+            naCheck.enable(a);
             for (int i = 0; i < a.getLength(); i++) {
-                ans[i] = ~a.getDataAt(i);
+                int val = a.getDataAt(i);
+                ans[i] = naCheck.check(val) ? RRuntime.INT_NA : ~val;
             }
-            return RDataFactory.createIntVector(ans, RDataFactory.COMPLETE_VECTOR);
+            return RDataFactory.createIntVector(ans, naCheck.neverSeenNA());
         }
     }
 }

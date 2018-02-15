@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.instrument.memprof.MemAllocProfilerInstrument;
-import com.oracle.truffle.api.vm.PolyglotEngine;
-import com.oracle.truffle.api.vm.PolyglotRuntime.Instrument;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = ".fastr.profmem", visibility = OFF, kind = PRIMITIVE, parameterNames = {"on"}, behavior = IO)
@@ -62,33 +58,8 @@ public abstract class FastRprofmem extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    public Object doProfMem(boolean on) {
-        PolyglotEngine vm = RContext.getInstance().getVM();
-        if (vm != null) {
-            Instrument profilerInstr = vm.getRuntime().getInstruments().get(MemAllocProfilerInstrument.ID);
-            if (profilerInstr != null && profilerInstr.isEnabled() != on) {
-                profilerInstr.setEnabled(on);
-            }
-        } else {
-            throw error(RError.Message.GENERIC, "No context VM found");
-        }
-        return RNull.instance;
-    }
-
-    static MemAllocProfilerPrinter getProfilerPrinter() {
-        PolyglotEngine vm = RContext.getInstance().getVM();
-        MemAllocProfilerPrinter profPrinter = null;
-        if (vm != null) {
-            Instrument profilerInstr = vm.getRuntime().getInstruments().get(MemAllocProfilerInstrument.ID);
-            if (profilerInstr != null && profilerInstr.isEnabled()) {
-                profPrinter = profilerInstr.lookup(MemAllocProfilerPrinter.class);
-            }
-        }
-
-        if (profPrinter == null) {
-            profPrinter = new MemAllocProfilerPrinter(System.out);
-        }
-
-        return profPrinter;
+    public Object doProfMem(@SuppressWarnings("unused") boolean on) {
+        // TODO: port to new instrumentation API, original code can be found in git history
+        throw error(Message.GENERIC, ".fastr.profmem is not available.");
     }
 }

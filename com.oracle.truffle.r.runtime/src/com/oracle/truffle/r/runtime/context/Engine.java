@@ -35,7 +35,6 @@ import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -173,9 +172,9 @@ public interface Engine {
     RExpression parse(Source source) throws ParseException;
 
     /**
-     * This is the external interface from {@link PolyglotEngine#eval(Source)}. It is required to
-     * return a {@link CallTarget} which may be cached for future use, and the
-     * {@link PolyglotEngine} is responsible for actually invoking the call target.
+     * This is the external interface from {@link org.graalvm.polyglot.Context#eval(Source)}. It is
+     * required to return a {@link CallTarget} which may be cached for future use, and the
+     * {@link org.graalvm.polyglot.Context} is responsible for actually invoking the call target.
      */
     CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException;
 

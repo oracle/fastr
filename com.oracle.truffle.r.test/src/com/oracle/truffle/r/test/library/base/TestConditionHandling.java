@@ -74,7 +74,7 @@ public class TestConditionHandling extends TestRBase {
     @Test
     public void testWithCallingHandlers() {
         assertEval(Output.IgnoreWarningContext, "withCallingHandlers({warning(\"foo\");123L},\n warning=function(e) {cat(\"<warn>\")})");
-        assertEval(Ignored.ImplementationError, "withCallingHandlers({warning(\"foo\");123L},\n warning=function(e) {\n cat(\"<warn>\")\n invokeRestart(\"muffleWarning\")\n })");
+        assertEval("withCallingHandlers({warning(\"foo\");123L},\n warning=function(e) {\n cat(\"<warn>\")\n invokeRestart(\"muffleWarning\")\n })");
         assertEval("withCallingHandlers({message(\"foo\");123L},\n message=function(e) {cat(\"<msg>\")})");
         assertEval("withCallingHandlers({message(\"foo\");123L},\n message=function(e) {\n cat(\"<msg>\")\n invokeRestart(\"muffleMessage\")\n })");
         assertEval("withCallingHandlers({message(\"foo\");packageStartupMessage(\"bar\");123L},\n packageStartupMessage=function(e) {\n cat(\"<msg>\")\n invokeRestart(\"muffleMessage\")\n })");

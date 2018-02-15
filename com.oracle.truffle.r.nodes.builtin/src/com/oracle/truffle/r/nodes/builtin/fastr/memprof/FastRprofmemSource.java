@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -55,19 +56,9 @@ public abstract class FastRprofmemSource extends RBuiltinNode.Arg3 {
 
     @Specialization
     @TruffleBoundary
+    @SuppressWarnings("unused")
     public Object showSource(int entryId, String view, TruffleObject snapshotTO) {
-        MemAllocProfilerPaths paths = MemAllocProfilerPaths.fromTruffleObject(snapshotTO);
-        return showSource(entryId, view, paths);
-    }
-
-    private static Object showSource(int entryId, String view, MemAllocProfilerPaths snap) {
-        MemAllocProfilerPaths snapshot = snap;
-        if (FastRprofmem.HOTSPOTS_VIEW.equals(view)) {
-            snapshot = snapshot.toHS();
-        }
-
-        FastRprofmem.getProfilerPrinter().source(snapshot, entryId);
-
-        return RNull.instance;
+        // TODO: port to new instrumentation API, original code can be found in git history
+        throw error(Message.GENERIC, ".fastr.profmem.source is not available.");
     }
 }

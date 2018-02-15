@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,7 +39,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.vm.PolyglotEngine;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -157,8 +156,7 @@ public class FastRContext {
             // create eval threads which may already set values to shared slots
             for (int i = 0; i < length; i++) {
                 threads[i] = new EvalThread(RContext.getInstance().threads, childContextInfos[i],
-                                RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL),
-                                FastROptions.SpawnUsesPolyglot.getBooleanValue());
+                                RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
             }
             for (int i = 0; i < length; i++) {
                 threads[i].start();
@@ -216,10 +214,10 @@ public class FastRContext {
      * for completion of all the sub-contexts. {@code args} provides the command line arguments to
      * the contexts - this is the same for all.
      *
-     * Each evaluation is run in a new {@link RContext}/{@link PolyglotEngine}. The result is a list
-     * of lists. The top level list has the same number of entries as the number of contexts. The
-     * sublist contains the result of the evaluation with name "result". It may also have an
-     * attribute "error" if the evaluation threw an exception, in which case the result will be NA.
+     * Each evaluation is run in a new {@link RContext}. The result is a list of lists. The top
+     * level list has the same number of entries as the number of contexts. The sublist contains the
+     * result of the evaluation with name "result". It may also have an attribute "error" if the
+     * evaluation threw an exception, in which case the result will be NA.
      */
     @RBuiltin(name = ".fastr.context.eval", kind = PRIMITIVE, parameterNames = {"exprs", "kind"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg2 {
@@ -255,7 +253,7 @@ public class FastRContext {
                 int[] multiSlotIndices = new int[length];
                 for (int i = 0; i < length; i++) {
                     ChildContextInfo info = createContextInfo(contextKind);
-                    threads[i] = new EvalThread(RContext.getInstance().threads, info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL), false);
+                    threads[i] = new EvalThread(RContext.getInstance().threads, info, RSource.fromTextInternalInvisible(exprs.getDataAt(i % exprs.getLength()), RSource.Internal.CONTEXT_EVAL));
                     multiSlotIndices[i] = info.getMultiSlotInd();
                 }
                 if (contextKind == ContextKind.SHARE_ALL) {

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -60,7 +61,7 @@ public abstract class RExplicitCallNode extends Node {
 
     @Specialization
     protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller,
-                    @Cached("createExplicitCall()") RCallNode call) {
+                    @Cached("createExplicitCall()") RCallBaseNode call) {
         if (argsFrameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
@@ -79,7 +80,7 @@ public abstract class RExplicitCallNode extends Node {
         }
     }
 
-    protected RCallNode createExplicitCall() {
+    protected RCallBaseNode createExplicitCall() {
         return RCallNode.createExplicitCall(argsIdentifier, callerIdentifier);
     }
 }
