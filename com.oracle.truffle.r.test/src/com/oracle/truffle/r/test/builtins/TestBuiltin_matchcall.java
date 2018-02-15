@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -77,6 +77,20 @@ public class TestBuiltin_matchcall extends TestBase {
         assertEval("fn3 <- function(...) { (function(...) match.call(cat, call(\"cat\", \"abc\", p=3,as.symbol(\"...\")), expand.dots = TRUE))(...) }; fn3(sep=x,lab=\"b\",fill=13)");
 
         assertEval("{ foo<-function(...) match.call(expand.dots=F); bar<-function(x) x; y<-42; foo(bar(y), 7) }");
+
+        assertEval("{ f <- function(a, ...) { UseMethod('f1', a) };" +
+                        "f1.default <- function(a, b=2, c=3, d=4, e=5, ...) { match.call() };" +
+                        // fill up signature cache
+                        "f(a=1); f(a=1, b=2); f(a=1, b=2, c=3);f(a=1, b=2, d=4);" +
+                        // this should be ok as well
+                        "f(a=1, c=3, d=4, e=5) }");
+
+        assertEval("{ f <- function(a, b, c, d, e) { UseMethod('f1', a) };" +
+                        "f1.default <- function(a, b=2, c=3, d=4, e=5) { match.call() };" +
+                        // fill up signature cache
+                        "f(a=1); f(a=1, b=2); f(a=1, b=2, c=3);f(a=1, b=2, d=4);" +
+                        // this should be ok as well
+                        "f(a=1, c=3, d=4, e=5) }");
 
         // TODO add tests that pass "definition" and "call" explicitly
     }
