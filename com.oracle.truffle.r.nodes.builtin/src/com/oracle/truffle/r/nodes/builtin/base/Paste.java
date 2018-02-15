@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -312,8 +312,14 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         }
         RIntSequence seq = (RIntSequence) values.getDataAt(seqPos);
         StringBuilder suffix = new StringBuilder();
-        for (int i = seqPos + 1; i < length; i++) {
-            suffix.append(values.getDataAt(i)).append(sep);
+        if (seqPos + 1 < length) {
+            suffix.append(sep);
+            for (int i = seqPos + 1; i < length; i++) {
+                suffix.append(values.getDataAt(i));
+                if (i < length - 1) {
+                    suffix.append(sep);
+                }
+            }
         }
         return RDataFactory.createStringSequence(prefix.toString(), suffix.toString(), seq.getStart(), seq.getStride(), seq.getLength());
     }
