@@ -444,7 +444,7 @@ public class FrameFunctions {
             }
 
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
-            deoptFrameNode.deoptimizeFrame(result.getFrame());
+            deoptFrameNode.deoptimizeFrame(RArguments.getArguments(result.getFrame()));
             return result;
         }
     }
@@ -465,7 +465,7 @@ public class FrameFunctions {
                 RPairList next = result;
                 for (int i = 1; i < depth; i++) {
                     MaterializedFrame mf = helper.getNumberedFrame(frame, i).materialize();
-                    deoptFrameNode.deoptimizeFrame(mf);
+                    deoptFrameNode.deoptimizeFrame(RArguments.getArguments(mf));
                     next.setCar(REnvironment.frameToEnvironment(mf));
                     if (i != depth - 1) {
                         RPairList pl = RDataFactory.createPairList();
