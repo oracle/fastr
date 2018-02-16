@@ -127,6 +127,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         @Child private GetNamesAttributeNode getNamesNode;
         @Child private SetVisibilityNode setVisibilityNode;
         private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
+        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
         private final RNodeClosureCache languagesClosureCache = new RNodeClosureCache();
         private final SymbolClosureCache symbolsClosureCache = new SymbolClosureCache();
 
@@ -137,7 +138,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         public abstract Object execute(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env);
 
         protected FrameDescriptor getFrameDescriptor(REnvironment env) {
-            return env.getFrame(frameAccessProfile).getFrameDescriptor();
+            return frameProfile.profile(env.getFrame(frameAccessProfile)).getFrameDescriptor();
         }
 
         /**
@@ -152,7 +153,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         @Cached("create()") GetVisibilityNode getVisibilityNode,
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
-            MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
+            MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
             RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
             RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, funcName, func, args);
             MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);

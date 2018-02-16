@@ -72,6 +72,8 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
 
     private final BranchProfile noGenFunFound = BranchProfile.create();
     private final ConditionProfile sameNamesProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isBuiltinProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isDeferredProfile = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(StandardGeneric.class);
@@ -83,9 +85,9 @@ public abstract class StandardGeneric extends RBuiltinNode.Arg2 {
 
     private Object stdGenericInternal(VirtualFrame frame, String fname, RFunction fdef) {
         RFunction def = fdef;
-        if (def.isBuiltin()) {
+        if (isBuiltinProfile.profile(def.isBuiltin())) {
             def = RContext.getInstance().getPrimitiveMethodsInfo().getPrimGeneric(def.getRBuiltin().getPrimMethodIndex());
-            if (def == null) {
+            if (isDeferredProfile.profile(def == null)) {
                 return RRuntime.DEFERRED_DEFAULT_MARKER;
             }
         }

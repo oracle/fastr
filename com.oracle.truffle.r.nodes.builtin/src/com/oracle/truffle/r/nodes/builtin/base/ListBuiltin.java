@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 
 @RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."}, behavior = PURE)
 public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
@@ -48,6 +49,7 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
     protected static final int CACHE_LIMIT = 2;
     protected static final int MAX_SHARE_OBJECT_NODES = 16;
 
+    @Child private VectorFactory factory = VectorFactory.create();
     @Children private final ShareObjectNode[] shareObjectNodes = new ShareObjectNode[MAX_SHARE_OBJECT_NODES];
     private final ConditionProfile namesNull = ConditionProfile.createBinaryProfile();
 
@@ -78,8 +80,7 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
             String orgName = signature.getName(i);
             names[i] = (orgName == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : orgName);
         }
-        RStringVector result = RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
-        return result;
+        return factory.createStringVector(names, RDataFactory.COMPLETE_VECTOR);
     }
 
     /**
@@ -99,7 +100,7 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
         for (int i = 0; i < cachedLength; i++) {
             getShareObjectNode(i).execute(argArray[i]);
         }
-        return RDataFactory.createList(argArray, cachedArgNames);
+        return factory.createList(argArray, cachedArgNames);
     }
 
     @Specialization(guards = "!args.isEmpty()")
@@ -109,7 +110,7 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
         for (int i = 0; i < argArray.length; i++) {
             shareObjectNode.execute(argArray[i]);
         }
-        return RDataFactory.createList(argArray, argNameVector(args.getSignature()));
+        return factory.createList(argArray, argNameVector(args.getSignature()));
     }
 
     @Specialization(guards = "args.isEmpty()")
@@ -119,7 +120,7 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
 
     @Specialization
     protected RList listMissing(@SuppressWarnings("unused") RMissing missing) {
-        return RDataFactory.createList(new Object[]{});
+        return factory.createList(new Object[]{});
     }
 
     @Specialization(guards = {"!isRArgsValuesAndNames(value)", "!isRMissing(value)"})
@@ -130,7 +131,7 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             suppliedSignatureArgNames = argNameVector(ArgumentsSignature.empty(1));
         }
-        return RDataFactory.createList(new Object[]{value}, suppliedSignatureArgNames);
+        return factory.createList(new Object[]{value}, suppliedSignatureArgNames);
     }
 
     private ShareObjectNode getShareObjectNode(int index) {
