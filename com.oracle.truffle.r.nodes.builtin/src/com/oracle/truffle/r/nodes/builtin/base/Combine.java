@@ -70,13 +70,18 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
@@ -112,7 +117,15 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     public abstract Object executeCombine(Object value, Object recursive);
 
     protected boolean isSimpleArguments(RArgsValuesAndNames args) {
-        return !signatureHasNames(args.getSignature()) && args.getLength() == 1 && !(args.getArgument(0) instanceof RAbstractVector) && !RRuntime.isForeignObject(args.getArgument(0));
+        return !signatureHasNames(args.getSignature()) &&
+                        args.getLength() == 1 &&
+                        !(args.getArgument(0) instanceof RAbstractVector) &&
+                        !(args.getArgument(0) instanceof REnvironment) &&
+                        !(args.getArgument(0) instanceof RFunction) &&
+                        !(args.getArgument(0) instanceof RLanguage) &&
+                        !(args.getArgument(0) instanceof RSymbol) &&
+                        !(args.getArgument(0) instanceof RS4Object) &&
+                        !RRuntime.isForeignObject(args.getArgument(0));
     }
 
     @Specialization(guards = {"isSimpleArguments(args)", "!recursive"})
