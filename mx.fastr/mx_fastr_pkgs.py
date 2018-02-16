@@ -556,9 +556,9 @@ def handle_output_file(file, test_output_file_contents):
         if "testthat results" in test_output_file_contents[i]:
             mx.log("Detected testthat summary in {!s}".format(file))
             return _parse_testthat_result(test_output_file_contents, i)
-
-        # TODO parse RUnit test protocol
-
+        elif "RUNIT TEST PROTOCOL" in test_output_file_contents[i]:
+            mx.log("Detected RUNIT test protocol in {!s}".format(file))
+            return _parse_runit_result(test_output_file_contents, i)
     # if this test did not use one of the known test frameworks, take the report from the fuzzy compare
     return None, None, None
 
@@ -578,6 +578,20 @@ def _parse_testthat_result(lines, i):
             failed_part = result_line[idx_failed:]
             return (_testthat_parse_part(ok_part), _testthat_parse_part(skipped_part), _testthat_parse_part(failed_part))
         raise Exception("Could not parse testthat status line {0}".format(result_line))
+
+
+def _parse_runit_result(lines, i):
+    '''
+    RUNIT TEST PROTOCOL -- Thu Feb 08 10:54:42 2018
+    ***********************************************
+    Number of test functions: 20
+    Number of errors: 0
+    Number of failures: 0
+    :param lines:
+    :param i:
+    :return:
+    '''
+
 
 def _testthat_parse_part(part):
     '''
