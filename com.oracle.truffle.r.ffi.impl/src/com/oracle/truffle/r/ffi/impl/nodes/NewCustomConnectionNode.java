@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.data.NativeDataAccess.readNativeStrin
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -45,6 +46,7 @@ public abstract class NewCustomConnectionNode extends FFIUpCallNode.Arg4 {
     }
 
     @Specialization
+    @TruffleBoundary
     Object handleStrings(String description, String mode, String className, RExternalPtr connAddr) {
         try {
             return new NativeRConnection(description, mode, className, connAddr).asVector();
@@ -58,6 +60,7 @@ public abstract class NewCustomConnectionNode extends FFIUpCallNode.Arg4 {
     }
 
     @Specialization
+    @TruffleBoundary
     Object handleAddresses(TruffleObject description, TruffleObject mode, TruffleObject className, RExternalPtr connAddr,
                     @Cached("createAsPointerNode()") Node descriptionAsPtrNode, @Cached("createAsPointerNode()") Node modeAsPtrNode, @Cached("createAsPointerNode()") Node classNameAsPtrNode) {
         try {

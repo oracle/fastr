@@ -172,8 +172,9 @@ public interface Engine {
     RExpression parse(Source source) throws ParseException;
 
     /**
-     * This is the external interface from {@link org.graalvm.polyglot.Context#eval(Source)}. It is
-     * required to return a {@link CallTarget} which may be cached for future use, and the
+     * This is the external interface from
+     * {@link org.graalvm.polyglot.Context#eval(org.graalvm.polyglot.Source)}. It is required to
+     * return a {@link CallTarget} which may be cached for future use, and the
      * {@link org.graalvm.polyglot.Context} is responsible for actually invoking the call target.
      */
     CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException;
