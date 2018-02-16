@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
@@ -39,9 +40,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.MatchArgNodeGen.MatchArgInternalNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.MatchArgFastPathNodeGen.MatchArgInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -59,20 +58,12 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "match.arg", kind = SUBSTITUTE, parameterNames = {"arg", "choices", "several.ok"}, nonEvalArgs = {0}, behavior = COMPLEX)
-public abstract class MatchArg extends RBuiltinNode.Arg3 {
-
-    static {
-        Casts.noCasts(MatchArg.class);
-    }
-
-    @Override
-    public Object[] getDefaultParameterValues() {
-        return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
-    }
+public abstract class MatchArgFastPath extends RFastPathNode {
 
     @TypeSystemReference(RTypes.class)
     protected abstract static class MatchArgInternal extends Node {
@@ -225,7 +216,7 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
     @Specialization(limit = "1", guards = "cache.choicesValue.isSupported(frame, arg)")
     protected Object matchArg(VirtualFrame frame, RPromise arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
                     @Cached("new(frame, arg)") MatchArgNode cache) {
-        return cache.internal.castAndExecute(cache.promiseHelper.evaluate(frame, arg), cache.choicesValue.execute(frame), severalOK);
+        return cache.internal.castAndExecute(cache.promiseHelper.evaluate(frame, arg), cache.choicesValue.execute(frame), severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
     }
 
     public static final class MatchArgNode extends Node {
@@ -248,7 +239,7 @@ public abstract class MatchArg extends RBuiltinNode.Arg3 {
     protected Object matchArg(VirtualFrame frame, RPromise arg, Object choices, Object severalOK,
                     @Cached("createInternal()") MatchArgInternal internal,
                     @Cached("new()") PromiseHelperNode promiseHelper) {
-        return internal.castAndExecute(promiseHelper.evaluate(frame, arg), choices, severalOK);
+        return internal.castAndExecute(promiseHelper.evaluate(frame, arg), choices, severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
     }
 
     @SuppressWarnings("unused")
