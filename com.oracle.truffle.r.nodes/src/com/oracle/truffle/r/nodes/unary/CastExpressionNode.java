@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -98,14 +97,14 @@ public abstract class CastExpressionNode extends CastBaseNode {
         if (obj instanceof RList) {
             RList list = (RList) obj;
             // TODO other attributes
-            return RDataFactory.createExpression(data, getNamesNode.getNames(list));
+            return factory().createExpression(data, getNamesNode.getNames(list));
         } else {
-            return RDataFactory.createExpression(data);
+            return factory().createExpression(data);
         }
     }
 
-    private static RExpression create(Object obj) {
-        return RDataFactory.createExpression(new Object[]{obj});
+    private RExpression create(Object obj) {
+        return factory().createExpression(new Object[]{obj});
     }
 
     /**

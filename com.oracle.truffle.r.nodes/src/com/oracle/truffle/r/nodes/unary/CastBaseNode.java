@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,13 +32,13 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -50,15 +50,16 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class CastBaseNode extends CastNode {
 
     private final BranchProfile listCoercionErrorBranch = BranchProfile.create();
-    private final ConditionProfile hasDimNamesProfile = ConditionProfile.createBinaryProfile();
     private final NullProfile hasDimensionsProfile = NullProfile.create();
     private final NullProfile hasNamesProfile = NullProfile.create();
+    private final NullProfile hasDimNamesProfile = NullProfile.create();
     private final ValueProfile reuseClassProfile;
 
     @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
     @Child private GetDimAttributeNode getDimNode;
-    @Child private SetDimNamesAttributeNode setDimNamesNode;
     @Child private GetDimNamesAttributeNode getDimNamesNode;
+
+    @Child private VectorFactory factory;
 
     private final boolean preserveNames;
     private final boolean preserveDimensions;
@@ -87,11 +88,16 @@ public abstract class CastBaseNode extends CastNode {
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
         this.forRFFI = forRFFI;
-        if (preserveDimensions) {
-            getDimNamesNode = GetDimNamesAttributeNode.create();
-        }
         this.useClosure = useClosure;
         reuseClassProfile = useClosure ? ValueProfile.createClassProfile() : null;
+    }
+
+    protected final VectorFactory factory() {
+        if (factory == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            factory = insert(VectorFactory.create());
+        }
+        return factory;
     }
 
     public final boolean preserveNames() {
@@ -135,22 +141,25 @@ public abstract class CastBaseNode extends CastNode {
 
     protected RStringVector getPreservedNames(RAbstractContainer operand) {
         if (preserveNames()) {
+            if (getNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getNamesNode = insert(GetNamesAttributeNode.create());
+            }
             return hasNamesProfile.profile(getNamesNode.getNames(operand));
         } else {
             return null;
         }
     }
 
-    protected void preserveDimensionNames(RAbstractContainer operand, RAbstractContainer ret) {
+    protected RList getPreservedDimNames(RAbstractContainer operand) {
         if (preserveDimensions()) {
-            RList dimNames = getDimNamesNode.getDimNames(operand);
-            if (hasDimNamesProfile.profile(dimNames != null)) {
-                if (setDimNamesNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    setDimNamesNode = insert(SetDimNamesAttributeNode.create());
-                }
-                setDimNamesNode.setDimNames(ret, (RList) dimNames.copy());
+            if (getDimNamesNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getDimNamesNode = insert(GetDimNamesAttributeNode.create());
             }
+            return hasDimNamesProfile.profile(getDimNamesNode.getDimNames(operand));
+        } else {
+            return null;
         }
     }
 

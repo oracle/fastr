@@ -31,7 +31,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -97,9 +96,9 @@ public abstract class CastRawNode extends CastBaseNode {
     private RRaw checkOutOfRange(int operand, int intResult) {
         if (intResult != operand) {
             warning(RError.Message.OUT_OF_RANGE);
-            return RDataFactory.createRaw((byte) 0);
+            return factory().createRaw((byte) 0);
         }
-        return RDataFactory.createRaw((byte) intResult);
+        return factory().createRaw((byte) intResult);
     }
 
     @Specialization
@@ -157,8 +156,7 @@ public abstract class CastRawNode extends CastBaseNode {
     }
 
     private RRawVector vectorCopy(RAbstractVector operand, byte[] bdata) {
-        RRawVector ret = RDataFactory.createRawVector(bdata, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RRawVector ret = factory().createRawVector(bdata, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -307,7 +305,7 @@ public abstract class CastRawNode extends CastBaseNode {
         for (int i = 0; i < length; i++) {
             data[i] = ((RRaw) castRawRecursive(value.getDataAt(i))).getValue();
         }
-        RRawVector result = RDataFactory.createRawVector(data, getPreservedDimensions(value), getPreservedNames(value));
+        RRawVector result = factory().createRawVector(data, getPreservedDimensions(value), getPreservedNames(value), null);
         if (preserveRegAttributes()) {
             result.copyRegAttributesFrom(value);
         }

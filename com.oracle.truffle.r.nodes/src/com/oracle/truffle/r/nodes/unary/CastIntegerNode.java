@@ -34,7 +34,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -82,12 +81,11 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     @Specialization
     protected RIntSequence doDoubleSequence(RDoubleSequence operand) {
         // start and stride cannot be NA so no point checking
-        return RDataFactory.createIntSequence(RRuntime.double2intNoCheck(operand.getStart()), RRuntime.double2intNoCheck(operand.getStride()), operand.getLength());
+        return factory().createIntSequence(RRuntime.double2intNoCheck(operand.getStart()), RRuntime.double2intNoCheck(operand.getStride()), operand.getLength());
     }
 
     private RIntVector vectorCopy(RAbstractVector operand, int[] idata, boolean isComplete) {
-        RIntVector ret = RDataFactory.createIntVector(idata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RIntVector ret = factory().createIntVector(idata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -224,7 +222,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
                 }
             }
         }
-        RIntVector ret = RDataFactory.createIntVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
+        RIntVector ret = factory().createIntVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list), null);
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }

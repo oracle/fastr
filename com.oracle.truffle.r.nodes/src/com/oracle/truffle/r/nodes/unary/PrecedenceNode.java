@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray;
+import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isJavaIterable;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -61,8 +64,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isJavaIterable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class, Foreign2R.class})

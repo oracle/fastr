@@ -30,7 +30,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -64,17 +63,17 @@ public abstract class CastListNode extends CastBaseNode {
 
     @Specialization
     protected RList doNull(@SuppressWarnings("unused") RNull operand) {
-        return RDataFactory.createList();
+        return factory().createList(new Object[0]);
     }
 
     @Specialization
     protected RList doDouble(double operand) {
-        return RDataFactory.createList(new Object[]{operand});
+        return factory().createList(new Object[]{operand});
     }
 
     @Specialization
     protected RList doInt(int operand) {
-        return RDataFactory.createList(new Object[]{operand});
+        return factory().createList(new Object[]{operand});
     }
 
     @Specialization
@@ -85,8 +84,7 @@ public abstract class CastListNode extends CastBaseNode {
         for (int i = 0; i < data.length; i++) {
             data[i] = profiledOperand.getDataAtAsObject(i);
         }
-        RList ret = RDataFactory.createList(data, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RList ret = factory().createList(data, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -100,27 +98,27 @@ public abstract class CastListNode extends CastBaseNode {
 
     @Specialization
     protected RList doFunction(RFunction func) {
-        return RDataFactory.createList(new Object[]{func});
+        return factory().createList(new Object[]{func});
     }
 
     @Specialization
     protected RList doEnvironment(REnvironment env) {
-        return RDataFactory.createList(new Object[]{env});
+        return factory().createList(new Object[]{env});
     }
 
     @Specialization
     protected RList doS4Object(RS4Object o) {
-        return RDataFactory.createList(new Object[]{o});
+        return factory().createList(new Object[]{o});
     }
 
     @Specialization
     protected RList doRSymbol(RSymbol s) {
-        return RDataFactory.createList(new Object[]{s});
+        return factory().createList(new Object[]{s});
     }
 
     @Specialization
     protected RList doRInterop(RInteropScalar ri) {
-        return RDataFactory.createList(new Object[]{ri});
+        return factory().createList(new Object[]{ri});
     }
 
     @Specialization(guards = {"isForeignObject(obj)"})
@@ -134,7 +132,7 @@ public abstract class CastListNode extends CastBaseNode {
             }
             return (RList) execute(o);
         }
-        return RDataFactory.createList(new Object[]{obj});
+        return factory().createList(new Object[]{obj});
     }
 
     public static CastListNode create() {
