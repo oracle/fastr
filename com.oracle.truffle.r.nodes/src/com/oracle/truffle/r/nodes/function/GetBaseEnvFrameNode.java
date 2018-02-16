@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  */
 public final class GetBaseEnvFrameNode extends Node {
     private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
+    private final ValueProfile frameProfile = ValueProfile.createClassProfile();
     private final ValueProfile baseEnvProfile = ValueProfile.createIdentityProfile();
 
     public static GetBaseEnvFrameNode create() {
@@ -41,6 +42,6 @@ public final class GetBaseEnvFrameNode extends Node {
 
     public MaterializedFrame execute() {
         REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv());
-        return baseEnv.getFrame(frameAccessProfile);
+        return frameProfile.profile(baseEnv.getFrame(frameAccessProfile));
     }
 }

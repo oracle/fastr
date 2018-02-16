@@ -38,6 +38,7 @@ public abstract class DispatchGeneric extends RBaseNode {
     public abstract Object executeObject(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname);
 
     private final ConditionProfile singleStringProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isDeferredProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile equalsMethodRequired = BranchProfile.create();
     @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
     @Child private ExecuteMethod executeMethod = new ExecuteMethod();
@@ -78,7 +79,7 @@ public abstract class DispatchGeneric extends RBaseNode {
             RFunction currentFunction = ReadVariableNode.lookupFunction(".InheritForDispatch", methodsEnv.getFrame(), true, true);
             method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, RASTUtils.getOriginalCall(this)), true, null, classes, fdef, mtable);
         }
-        if (method.isBuiltin() || getInheritsInternalDispatchCheckNode().execute(method)) {
+        if (isDeferredProfile.profile(method.isBuiltin() || getInheritsInternalDispatchCheckNode().execute(method))) {
             return RRuntime.DEFERRED_DEFAULT_MARKER;
         }
         method = loadMethod.executeRFunction(frame, method, fname);
