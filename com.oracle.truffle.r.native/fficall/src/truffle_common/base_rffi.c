@@ -108,13 +108,9 @@ void call_base_strtol(void (*call_setresult)(long result, int cerrno), char *s, 
 	call_setresult(rc, errno);
 }
 
-#include <zlib.h>
-#include <bzlib.h>
-#ifdef HAVE_PCRE_PCRE_H
-# include <pcre/pcre.h>
-#else
-# include <pcre.h>
-#endif
+extern const char * pcre_version();
+extern const char * zlibVersion();
+
 void call_base_eSoftVersion(void (*call_eSoftVersion_setfields)(char *zlibVersion, char *pcreVersion)) {
 
     char sZlibVersion[256], sPcreVersion[256];
