@@ -51,6 +51,7 @@ public final class LocalReadVariableNode extends Node {
 
     private final Object identifier;
     private final boolean forceResult;
+    @CompilationFinal private boolean firstExecution = true;
 
     @CompilationFinal(dimensions = 1) private boolean[] seenValueKinds;
     @CompilationFinal private ValueProfile valueProfile;
@@ -144,6 +145,13 @@ public final class LocalReadVariableNode extends Node {
                 isPromiseProfile = ConditionProfile.createBinaryProfile();
             }
             if (isPromiseProfile.profile(result instanceof RPromise)) {
+                if (firstExecution) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    firstExecution = false;
+                    if (identifier instanceof String) {
+                        return ReadVariableNode.evalPromiseSlowPathWithName((String) identifier, frame, (RPromise) result);
+                    }
+                }
                 if (promiseHelper == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     promiseHelper = insert(new PromiseHelperNode());
