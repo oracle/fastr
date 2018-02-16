@@ -134,6 +134,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRStackTrace;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRStackTraceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTree;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSyntaxTreeNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTestsTry;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRTestsTryNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowIt;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRThrowItNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTrace;
@@ -142,8 +144,6 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRTree;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStats;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRTreeStatsNodeGen;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRTestsTry;
-import com.oracle.truffle.r.nodes.builtin.fastr.FastRTestsTryNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrls;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastrDqrlsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.memprof.FastRprofmem;
@@ -638,7 +638,6 @@ public class BasePackage extends RBuiltinPackage {
         add(MatMult.class, MatMult::create);
         add(Match.class, MatchNodeGen::create);
         add(MatchFun.class, MatchFunNodeGen::create);
-        add(MatchArg.class, MatchArgNodeGen::create);
         add(Matrix.class, MatrixNodeGen::create);
         add(Max.class, MaxNodeGen::create);
         add(Mean.class, MeanNodeGen::create);
@@ -876,6 +875,7 @@ public class BasePackage extends RBuiltinPackage {
         addFastPath(baseFrame, "rbind", FastPathFactory.FORCED_EAGER_ARGS);
         addFastPath(baseFrame, "seq.default", SeqFunctionsFactory.SeqDefaultFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "seq", SeqFunctionsFactory.SeqFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "match.arg", MatchArgFastPathNodeGen::create, MatchArgFastPath.class);
 
         setContainsDispatch(baseFrame, "eval", "[.data.frame", "[[.data.frame", "[<-.data.frame", "[[<-.data.frame");
     }
