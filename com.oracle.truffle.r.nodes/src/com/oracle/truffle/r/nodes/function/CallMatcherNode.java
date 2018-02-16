@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -343,9 +343,15 @@ public abstract class CallMatcherNode extends RBaseNode {
 
             RCaller parent = RArguments.getCall(frame).getParent();
             String genFunctionName = functionName == null ? function.getName() : functionName;
-            RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent)
-                            : RCaller.create(frame, RCallerHelper.createFromArguments(genFunctionName,
-                                            new RArgsValuesAndNames(reorderedArgs.getArguments(), ArgumentsSignature.empty(reorderedArgs.getLength()))));
+
+            RCaller caller;
+            if (genFunctionName == null) {
+                caller = RCaller.createInvalid(frame, parent);
+            } else {
+                Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, new RArgsValuesAndNames(suppliedArguments, suppliedSignature));
+                caller = RCaller.create(frame, parent, argsSupplier);
+            }
+
             MaterializedFrame callerFrame = (dispatchArgs instanceof S3Args) ? ((S3Args) dispatchArgs).callEnv : null;
             try {
                 return call.execute(frame, function, caller, callerFrame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
