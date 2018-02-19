@@ -350,7 +350,7 @@ public class RDeparse {
             }
         }
 
-        private static MessageDigest digest = null;
+        private static ThreadLocal<MessageDigest> digestTheadLocal = new ThreadLocal<>();
 
         private Path emitToFile(String qualifiedFunctionName, String deparsePath) throws IOException, NoSuchAlgorithmException {
             Path tmpDir = Paths.get(deparsePath);
@@ -358,8 +358,10 @@ public class RDeparse {
 
             Path path;
             if (FastROptions.EmitTmpHashed.getBooleanValue()) {
+                MessageDigest digest = digestTheadLocal.get();
                 if (digest == null) {
                     digest = MessageDigest.getInstance("SHA-256");
+                    digestTheadLocal.set(digest);
                 }
                 String printHexBinary = Utils.toHexString(digest.digest(sb.toString().getBytes()));
                 assert printHexBinary.length() > 10;
