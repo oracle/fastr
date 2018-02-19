@@ -212,3 +212,7 @@ rffi.isNAString <- function(x) {
 rffi.getBytes <- function(x) {
 	.Call('test_getBytes', x)
 }
+
+rffi.RFRandomFunctions <- function() {
+	.Call('test_RfRandomFunctions')
+}

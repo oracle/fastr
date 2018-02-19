@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -161,43 +161,35 @@ double Rf_rlnorm(double a, double b) {
 }
 
 double Rf_dchisq(double a, double b, int c) {
-    unimplemented("Rf_dchisq");
-    return 0;
+    return ((call_Rf_dchisq) callbacks[Rf_dchisq_x])(a, b, c);
 }
 
 double Rf_pchisq(double a, double b, int c, int d) {
-    unimplemented("Rf_pchisq");
-    return 0;
+    return ((call_Rf_pchisq) callbacks[Rf_pchisq_x])(a, b, c, d);
 }
 
 double Rf_qchisq(double a, double b, int c, int d) {
-    unimplemented("Rf_qchisq");
-    return 0;
+    return ((call_Rf_qchisq) callbacks[Rf_qchisq_x])(a, b, c, d);
 }
 
 double Rf_rchisq(double a) {
-    unimplemented("Rf_rchisq");
-    return 0;
+    return ((call_Rf_rchisq) callbacks[Rf_rchisq_x])(a);
 }
 
 double Rf_dnchisq(double a, double b, double c, int d) {
-    unimplemented("Rf_dnchisq");
-    return 0;
+    return ((call_Rf_dnchisq) callbacks[Rf_dnchisq_x])(a, b, c, d);
 }
 
 double Rf_pnchisq(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pnchisq");
-    return 0;
+    return ((call_Rf_pnchisq) callbacks[Rf_pnchisq_x])(a, b, c, d, e);
 }
 
 double Rf_qnchisq(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qnchisq");
-    return 0;
+    return ((call_Rf_qnchisq) callbacks[Rf_qnchisq_x])(a, b, c, d, e);
 }
 
 double Rf_rnchisq(double a, double b) {
-    unimplemented("Rf_rnchisq");
-    return 0;
+    return ((call_Rf_rnchisq) callbacks[Rf_rnchisq_x])(a, b);
 }
 
 double Rf_df(double a, double b, double c, int d) {

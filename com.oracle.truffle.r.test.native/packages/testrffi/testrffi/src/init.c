@@ -85,6 +85,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_isNAString, 1),
         CALLDEF(test_getBytes, 1),
         CALLDEF(test_setStringElt, 2),
+        CALLDEF(test_RfRandomFunctions, 0),
         {NULL, NULL, 0}
 };
 
