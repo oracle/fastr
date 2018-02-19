@@ -75,11 +75,16 @@ final class TruffleLLVM_Context extends RFFIContext {
     @Override
     public void initializeVariables(RContext context) {
         super.initializeVariables(context);
-
         callState.initializeVariables();
-        TruffleLLVM_PCRE.initialize();
-        TruffleLLVM_Lapack.initialize();
-        TruffleLLVM_Zip.initialize();
+
+        // Load dependencies that don't automatically get loaded:
+        TruffleLLVM_Lapack.load();
+
+        String pcrePath = LibPaths.getBuiltinLibPath("pcre");
+        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
+
+        String libzPath = LibPaths.getBuiltinLibPath("z");
+        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(libzPath, false, true);
     }
 
     @Override
