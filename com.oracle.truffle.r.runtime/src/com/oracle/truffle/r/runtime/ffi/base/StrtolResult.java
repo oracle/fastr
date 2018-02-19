@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.llvm;
+package com.oracle.truffle.r.runtime.ffi.base;
 
-import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
-final class TruffleLLVM_PCRE {
-    private TruffleLLVM_PCRE() {
+public final class StrtolResult implements RTruffleObject {
+    private long result;
+    private int errno;
+
+    public void setResult(long result, int errno) {
+        this.result = result;
+        this.errno = errno;
     }
 
-    static void initialize() {
-        // Need to ensure that the native pcre library is loaded
-        String pcrePath = LibPaths.getBuiltinLibPath("pcre");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
+    public long getResult() {
+        return result;
+    }
+
+    public int getErrno() {
+        return errno;
+    }
+
+    @Override
+    public ForeignAccess getForeignAccess() {
+        return StrtolResultMRForeign.ACCESS;
     }
 }

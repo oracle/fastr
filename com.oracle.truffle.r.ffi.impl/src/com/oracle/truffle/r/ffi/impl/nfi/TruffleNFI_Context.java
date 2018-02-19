@@ -50,13 +50,19 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
+import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
+import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 import sun.misc.Unsafe;
 
@@ -84,8 +90,9 @@ final class TruffleNFI_Context extends RFFIContext {
     private static ReentrantLock accessLock;
 
     TruffleNFI_Context() {
-        super(new TruffleNFI_C(), new TruffleNFI_Base(), new TruffleNFI_Call(), new TruffleNFI_DLL(), new TruffleNFI_UserRng(), new TruffleNFI_Zip(), new TruffleNFI_PCRE(), new TruffleNFI_Lapack(),
-                        new TruffleNFI_Stats(), new TruffleNFI_Tools(), new TruffleNFI_REmbed(), new TruffleNFI_Misc());
+        super(new TruffleNFI_C(), new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Call(), new TruffleNFI_DLL(), new TruffleNFI_UserRng(),
+                        new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
+                        new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Tools(), new TruffleNFI_REmbed(), new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
         // forward constructor
     }
 

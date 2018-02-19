@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,17 +20,27 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.llvm;
+package com.oracle.truffle.r.runtime.ffi.base;
 
-import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import java.util.HashMap;
+import java.util.Map;
 
-final class TruffleLLVM_PCRE {
-    private TruffleLLVM_PCRE() {
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
+
+public final class ESoftVersionResult implements RTruffleObject {
+    private final Map<String, String> paths = new HashMap<>();
+
+    public void putVersion(String libName, String version) {
+        paths.put(libName, version);
     }
 
-    static void initialize() {
-        // Need to ensure that the native pcre library is loaded
-        String pcrePath = LibPaths.getBuiltinLibPath("pcre");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
+    public Map<String, String> getVersions() {
+        return paths;
+    }
+
+    @Override
+    public ForeignAccess getForeignAccess() {
+        return ESoftVersionResultMRForeign.ACCESS;
     }
 }

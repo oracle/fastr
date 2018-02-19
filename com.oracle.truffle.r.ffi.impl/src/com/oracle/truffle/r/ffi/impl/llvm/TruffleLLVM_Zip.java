@@ -23,63 +23,14 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
-import com.oracle.truffle.r.ffi.impl.interop.NativeRawArray;
-import com.oracle.truffle.r.runtime.ffi.NativeFunction;
-import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
-public class TruffleLLVM_Zip implements ZipRFFI {
+final class TruffleLLVM_Zip {
+    private TruffleLLVM_Zip() {
+    }
 
-    void initialize() {
+    static void initialize() {
         // Need to ensure that the native libz library is loaded
         String libzPath = LibPaths.getBuiltinLibPath("z");
         TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(libzPath, false, true);
-    }
-
-    private static class TruffleLLVM_CompressNode extends TruffleLLVM_DownCallNode implements CompressNode {
-
-        @Override
-        protected NativeFunction getFunction() {
-            return NativeFunction.compress;
-        }
-
-        @Override
-        public int execute(byte[] dest, byte[] source) {
-            NativeRawArray nativeDest = new NativeRawArray(dest);
-            NativeRawArray nativeSource = new NativeRawArray(source);
-            try {
-                return (int) call(nativeDest, dest.length, nativeSource, source.length);
-            } finally {
-                nativeDest.getValue();
-            }
-        }
-    }
-
-    private static class TruffleLLVM_UncompressNode extends TruffleLLVM_DownCallNode implements UncompressNode {
-
-        @Override
-        protected NativeFunction getFunction() {
-            return NativeFunction.uncompress;
-        }
-
-        @Override
-        public int execute(byte[] dest, byte[] source) {
-            NativeRawArray nativeDest = new NativeRawArray(dest);
-            NativeRawArray nativeSource = new NativeRawArray(source);
-            try {
-                return (int) call(nativeDest, dest.length, nativeSource, source.length);
-            } finally {
-                nativeDest.getValue();
-            }
-        }
-    }
-
-    @Override
-    public CompressNode createCompressNode() {
-        return new TruffleLLVM_CompressNode();
-    }
-
-    @Override
-    public UncompressNode createUncompressNode() {
-        return new TruffleLLVM_UncompressNode();
     }
 }

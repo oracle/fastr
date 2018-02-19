@@ -28,12 +28,15 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
@@ -54,7 +57,7 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                 public InvokeCNode createInvokeCNode() {
                     throw unsupported("invoke");
                 }
-            }, new Managed_Base(), new CallRFFI() {
+            }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE), new CallRFFI() {
                 @Override
                 public InvokeCallNode createInvokeCallNode() {
                     throw unsupported("native code invocation");
@@ -104,51 +107,16 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                 public SeedsNode createSeedsNode() {
                     throw unsupported("user defined RNG");
                 }
-            }, new ZipRFFI() {
-                @Override
-                public CompressNode createCompressNode() {
-                    throw unsupported("zip compression");
-                }
-
-                @Override
-                public UncompressNode createUncompressNode() {
-                    throw unsupported("zip decompression");
-                }
-            }, new Managed_PCRERFFI(), new Managed_LapackRFFI(),
-                            new StatsRFFI() {
-                                @Override
-                                public FactorNode createFactorNode() {
-                                    throw unsupported("factor");
-                                }
-
-                                @Override
-                                public WorkNode createWorkNode() {
-                                    throw unsupported("work");
-                                }
-
-                                @Override
-                                public LminflNode createLminflNode() {
-                                    throw unsupported("lminfl");
-                                }
-                            }, new ToolsRFFI() {
+            }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
+                            new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI() {
                                 @Override
                                 public ParseRdNode createParseRdNode() {
                                     throw unsupported("parseRD");
                                 }
-                            }, new Managed_REmbedRFFI(), new MiscRFFI() {
-                                @Override
-                                public ExactSumNode createExactSumNode() {
-                                    throw unsupported("exactsum");
-                                }
-
-                                @Override
-                                public DqrlsNode createDqrlsNode() {
-                                    throw unsupported("dqrls");
-                                }
-                            });
+                            }, new Managed_REmbedRFFI(), new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
         }
 
-        static class IgnoreUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
+        private static class IgnoreUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
             @Override
             public void execute(Throwable ex) {
                 // nop

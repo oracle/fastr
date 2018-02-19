@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,41 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.NodeInterface;
+import java.nio.charset.StandardCharsets;
+
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
+import com.oracle.truffle.r.runtime.ffi.interop.pcre.CaptureNamesResult;
+import com.oracle.truffle.r.runtime.ffi.interop.pcre.CompileResult;
 
 /**
  * An interface to the <a href="http://www.pcre.org/original/doc/html/index.html">PCRE</a> library
  * for Perl regular expressions.
  */
-public interface PCRERFFI {
-    int NOTBOL = 0x00000080;
-    int CASELESS = 0x1;
+public final class PCRERFFI {
+    public static final int NOTBOL = 0x00000080;
+    public static final int CASELESS = 0x1;
+
+    private final DownCallNodeFactory downCallNodeFactory;
+
+    public PCRERFFI(DownCallNodeFactory downCallNodeFactory) {
+        this.downCallNodeFactory = downCallNodeFactory;
+    }
 
     /**
      * PCRE uses call by reference for error-related information, which we encapsulate and sanitize
      * in this class. The {@code result} value (which is typically an opaque pointer to an internal
      * C struct), is the actual result of the function as per the PCRE spec.
      */
-    class Result {
+    public static final class Result {
         public final long result;
         public final String errorMessage;
         public final int errOffset;
@@ -49,64 +68,142 @@ public interface PCRERFFI {
         }
     }
 
-    interface MaketablesNode extends NodeInterface {
-        long execute();
+    public static final class MaketablesNode extends NativeCallNode {
+        @Child private Node asPointerNode;
 
-        static MaketablesNode create() {
+        private MaketablesNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.maketables));
+        }
+
+        public long execute() {
+            Object result = call();
+            if (result instanceof Long) {
+                return (long) result;
+            }
+            assert result instanceof TruffleObject;
+            if (asPointerNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                asPointerNode = insert(Message.AS_POINTER.createNode());
+            }
+            try {
+                return ForeignAccess.sendAsPointer(asPointerNode, (TruffleObject) result);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere("PCRE function maketables should return long or TruffleObject that represents a pointer.");
+            }
+        }
+
+        public static MaketablesNode create() {
             return RFFIFactory.getPCRERFFI().createMaketablesNode();
         }
     }
 
-    interface CompileNode extends NodeInterface {
-        Result execute(String pattern, int options, long tables);
+    public static final class CompileNode extends NativeCallNode {
+        private CompileNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.compile));
+        }
 
-        static CompileNode create() {
+        public Result execute(String pattern, int options, long tables) {
+            CompileResult data = new CompileResult();
+            call(data, pattern, options, tables);
+            return data.getResult();
+        }
+
+        public static CompileNode create() {
             return RFFIFactory.getPCRERFFI().createCompileNode();
         }
     }
 
-    interface GetCaptureCountNode extends NodeInterface {
-        int execute(long code, long extra);
+    public static final class GetCaptureCountNode extends NativeCallNode {
+        private GetCaptureCountNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.getcapturecount));
+        }
 
-        static GetCaptureCountNode create() {
+        public int execute(long code, long extra) {
+            return (int) call(code, extra);
+        }
+
+        public static GetCaptureCountNode create() {
             return RFFIFactory.getPCRERFFI().createGetCaptureCountNode();
         }
     }
 
-    interface GetCaptureNamesNode extends NodeInterface {
-        String[] execute(long code, long extra, int captureCount);
+    public static final class GetCaptureNamesNode extends NativeCallNode {
+        private GetCaptureNamesNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.getcapturenames));
+        }
 
-        static GetCaptureNamesNode create() {
+        public String[] execute(long code, long extra, int captureCount) {
+            CaptureNamesResult data = new CaptureNamesResult(captureCount);
+            int result = (int) call(data, code, extra);
+            if (result < 0) {
+                CompilerDirectives.transferToInterpreter();
+                throw RError.error(RError.NO_CALLER, RError.Message.WRONG_PCRE_INFO, result);
+            } else {
+                return data.getCaptureNames();
+            }
+        }
+
+        public static GetCaptureNamesNode create() {
             return RFFIFactory.getPCRERFFI().createGetCaptureNamesNode();
         }
     }
 
-    interface StudyNode extends NodeInterface {
-        Result execute(long code, int options);
+    public static final class StudyNode extends NativeCallNode {
+        private StudyNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.study));
+        }
 
-        static StudyNode create() {
+        public Result execute(long code, int options) {
+            throw RInternalError.shouldNotReachHere("The factory method should throw unimplemented already");
+        }
+
+        public static StudyNode create() {
             return RFFIFactory.getPCRERFFI().createStudyNode();
         }
     }
 
-    interface ExecNode extends NodeInterface {
-        int execute(long code, long extra, String subject, int offset, int options, int[] ovector);
+    public static final class ExecNode extends NativeCallNode {
+        private ExecNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.exec));
+        }
 
-        static ExecNode create() {
+        public int execute(long code, long extra, String subject, int offset, int options, int[] ovector) {
+            byte[] subjectBytes = getBytes(subject);
+            NativeCharArray subjectChars = new NativeCharArray(subjectBytes);
+            return (int) call(code, extra, subjectChars, subjectBytes.length, offset, options, ovector, ovector.length);
+        }
+
+        @TruffleBoundary
+        private static byte[] getBytes(String subject) {
+            return subject.getBytes(StandardCharsets.UTF_8);
+        }
+
+        public static ExecNode create() {
             return RFFIFactory.getPCRERFFI().createExecNode();
         }
     }
 
-    MaketablesNode createMaketablesNode();
+    public MaketablesNode createMaketablesNode() {
+        return new MaketablesNode(downCallNodeFactory);
+    }
 
-    CompileNode createCompileNode();
+    public CompileNode createCompileNode() {
+        return new CompileNode(downCallNodeFactory);
+    }
 
-    GetCaptureCountNode createGetCaptureCountNode();
+    public GetCaptureCountNode createGetCaptureCountNode() {
+        return new GetCaptureCountNode(downCallNodeFactory);
+    }
 
-    GetCaptureNamesNode createGetCaptureNamesNode();
+    public GetCaptureNamesNode createGetCaptureNamesNode() {
+        return new GetCaptureNamesNode(downCallNodeFactory);
+    }
 
-    StudyNode createStudyNode();
+    public StudyNode createStudyNode() {
+        throw RInternalError.unimplemented("study function in PCRE");
+    }
 
-    ExecNode createExecNode();
-
+    public ExecNode createExecNode() {
+        return new ExecNode(downCallNodeFactory);
+    }
 }

@@ -26,9 +26,15 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
+import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
+import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
+import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 /**
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
@@ -36,13 +42,14 @@ import com.oracle.truffle.r.runtime.ffi.RFFIContext;
  */
 final class TruffleLLVM_Context extends RFFIContext {
 
-    final TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
+    private final TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
     final TruffleLLVM_Call.ContextStateImpl callState = new TruffleLLVM_Call.ContextStateImpl();
 
     TruffleLLVM_Context() {
-        super(new TruffleLLVM_C(), new TruffleLLVM_Base(), new TruffleLLVM_Call(), new TruffleLLVM_DLL(), new TruffleLLVM_UserRng(), new TruffleLLVM_Zip(), new TruffleLLVM_PCRE(),
-                        new TruffleLLVM_Lapack(), new TruffleLLVM_Stats(),
-                        new TruffleLLVM_Tools(), new TruffleLLVM_REmbed(), new TruffleLLVM_Misc());
+        super(new TruffleLLVM_C(), new BaseRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new TruffleLLVM_Call(), new TruffleLLVM_DLL(), new TruffleLLVM_UserRng(),
+                        new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
+                        new TruffleLLVM_Tools(), new TruffleLLVM_REmbed(), new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
     }
 
     static TruffleLLVM_Context getContextState() {
@@ -69,9 +76,9 @@ final class TruffleLLVM_Context extends RFFIContext {
         super.initializeVariables(context);
 
         callState.initializeVariables();
-        ((TruffleLLVM_PCRE) pcreRFFI).initialize();
-        ((TruffleLLVM_Lapack) lapackRFFI).initialize();
-        ((TruffleLLVM_Zip) zipRFFI).initialize();
+        TruffleLLVM_PCRE.initialize();
+        TruffleLLVM_Lapack.initialize();
+        TruffleLLVM_Zip.initialize();
     }
 
     @Override

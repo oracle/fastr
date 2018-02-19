@@ -20,17 +20,25 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.llvm;
+package com.oracle.truffle.r.runtime.ffi.interop;
 
-import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.nodes.Node;
 
-final class TruffleLLVM_PCRE {
-    private TruffleLLVM_PCRE() {
+@MessageResolution(receiverType = NativePointer.class)
+public class NativePointerMR {
+    @Resolve(message = "IS_POINTER")
+    public abstract static class AcceptIsPointer extends Node {
+        public Object access(@SuppressWarnings("unused") NativePointer object) {
+            return true;
+        }
     }
 
-    static void initialize() {
-        // Need to ensure that the native pcre library is loaded
-        String pcrePath = LibPaths.getBuiltinLibPath("pcre");
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(pcrePath, false, true);
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AcceptAsPointer extends Node {
+        public long access(NativePointer object) {
+            return object.asPointer();
+        }
     }
 }

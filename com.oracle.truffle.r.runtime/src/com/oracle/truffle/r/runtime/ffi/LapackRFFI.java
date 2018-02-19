@@ -22,232 +22,343 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.NodeInterface;
-
 /**
  * Collection of statically typed Lapack methods that are used in the {@code base} package. The
  * signatures match the Fortran definition with the exception that the "info" value is returned as
  * the result of the call.
+ * 
+ * The documentation for individual functions can be found in the
+ * <a href="http://www.netlib.org/lapack/explore-html">spec</a>.
  */
-public interface LapackRFFI {
-    interface IlaverNode extends NodeInterface {
-        /**
-         * Return version info, mjor, minor, patch, in {@code version}.
-         */
-        void execute(int[] version);
+public final class LapackRFFI {
+    private final DownCallNodeFactory downCallNodeFactory;
 
-        static IlaverNode create() {
+    public LapackRFFI(DownCallNodeFactory downCallNodeFactory) {
+        this.downCallNodeFactory = downCallNodeFactory;
+    }
+
+    public static final class IlaverNode extends NativeCallNode {
+        public static IlaverNode create() {
             return RFFIFactory.getLapackRFFI().createIlaverNode();
         }
+
+        private IlaverNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.ilaver));
+        }
+
+        public void execute(int[] version) {
+            call((Object) version);
+        }
     }
 
-    interface DgeevNode extends NodeInterface {
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/d9/d28/dgeev_8f.html">spec</a>.
-         */
-        int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork);
+    public static final class DgeevNode extends NativeCallNode {
 
-        static DgeevNode create() {
+        public static DgeevNode create() {
             return RFFIFactory.getLapackRFFI().createDgeevNode();
         }
+
+        private DgeevNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dgeev));
+        }
+
+        public int execute(char jobVL, char jobVR, int n, double[] a, int lda, double[] wr, double[] wi, double[] vl, int ldvl, double[] vr, int ldvr, double[] work, int lwork) {
+            return (int) call(jobVL, jobVR, n, a, lda, wr, wi, vl, ldvl, vr, ldvr, work, lwork);
+        }
     }
 
-    interface Dgeqp3Node extends NodeInterface {
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/db/de5/dgeqp3_8f.html">spec</a>.
-         */
-        int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork);
+    public static final class Dgeqp3Node extends NativeCallNode {
 
-        static Dgeqp3Node create() {
+        public static Dgeqp3Node create() {
             return RFFIFactory.getLapackRFFI().createDgeqp3Node();
         }
+
+        private Dgeqp3Node(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dgeqp3));
+        }
+
+        public int execute(int m, int n, double[] a, int lda, int[] jpvt, double[] tau, double[] work, int lwork) {
+            return (int) call(m, n, a, lda, jpvt, tau, work, lwork);
+        }
     }
 
-    interface DormqrNode extends NodeInterface {
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/da/d82/dormqr_8f.html">spec</a>.
-         */
-        int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork);
+    public static final class DormqrNode extends NativeCallNode {
 
-        static DormqrNode create() {
+        public static DormqrNode create() {
             return RFFIFactory.getLapackRFFI().createDormqrNode();
         }
+
+        private DormqrNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dormq));
+        }
+
+        public int execute(char side, char trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
+            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
+        }
     }
 
-    interface DtrtrsNode extends NodeInterface {
+    public static final class DtrtrsNode extends NativeCallNode {
 
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/d6/d6f/dtrtrs_8f.html">spec</a>.
-         */
-        int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb);
-
-        static DtrtrsNode create() {
+        public static DtrtrsNode create() {
             return RFFIFactory.getLapackRFFI().createDtrtrsNode();
         }
+
+        private DtrtrsNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dtrtrs));
+        }
+
+        public int execute(char uplo, char trans, char diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
+            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
+        }
     }
 
-    interface DgetrfNode extends NodeInterface {
+    public static final class DgetrfNode extends NativeCallNode {
 
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/d3/d6a/dgetrf_8f.html">spec</a>.
-         */
-        int execute(int m, int n, double[] a, int lda, int[] ipiv);
-
-        static DgetrfNode create() {
+        public static DgetrfNode create() {
             return RFFIFactory.getLapackRFFI().createDgetrfNode();
         }
+
+        private DgetrfNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dgetrf));
+        }
+
+        public int execute(int m, int n, double[] a, int lda, int[] ipiv) {
+            return (int) call(m, n, a, lda, ipiv);
+        }
     }
 
-    interface DpotrfNode extends NodeInterface {
+    public static final class DpotrfNode extends NativeCallNode {
 
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/d0/d8a/dpotrf_8f.html">spec</a>.
-         */
-        int execute(char uplo, int n, double[] a, int lda);
-
-        static DpotrfNode create() {
+        public static DpotrfNode create() {
             return RFFIFactory.getLapackRFFI().createDpotrfNode();
         }
+
+        private DpotrfNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dpotrf));
+        }
+
+        public int execute(char uplo, int n, double[] a, int lda) {
+            return (int) call(uplo, n, a, lda);
+        }
     }
 
-    interface DpotriNode extends NodeInterface {
+    public static final class DpotriNode extends NativeCallNode {
 
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/d0/d8a/dpotri_8f.html">spec</a>.
-         */
-        int execute(char uplo, int n, double[] a, int lda);
-
-        static DpotriNode create() {
+        public static DpotriNode create() {
             return RFFIFactory.getLapackRFFI().createDpotriNode();
         }
+
+        private DpotriNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dpotri));
+        }
+
+        public int execute(char uplo, int n, double[] a, int lda) {
+            return (int) call(uplo, n, a, lda);
+        }
     }
 
-    interface DpstrfNode extends NodeInterface {
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/dd/dad/dpstrf_8f.html">spec</a>.
-         */
-        int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work);
+    public static final class DpstrfNode extends NativeCallNode {
 
-        static DpstrfNode create() {
+        public static DpstrfNode create() {
             return RFFIFactory.getLapackRFFI().createDpstrfNode();
         }
+
+        private DpstrfNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dpstrf));
+        }
+
+        public int execute(char uplo, int n, double[] a, int lda, int[] piv, int[] rank, double tol, double[] work) {
+            return (int) call(uplo, n, a, lda, piv, rank, tol, work);
+        }
     }
 
-    interface DgesvNode extends NodeInterface {
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/d8/d72/dgesv_8f.html">spec</a>.
-         */
-        int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb);
+    public static final class DgesvNode extends NativeCallNode {
 
-        static DgesvNode create() {
+        public static DgesvNode create() {
             return RFFIFactory.getLapackRFFI().createDgesvNode();
         }
+
+        private DgesvNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dgesv));
+        }
+
+        public int execute(int n, int nrhs, double[] a, int lda, int[] ipiv, double[] b, int ldb) {
+            return (int) call(n, nrhs, a, lda, ipiv, b, ldb);
+        }
     }
 
-    interface DgesddNode extends NodeInterface {
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/db/db4/dgesdd_8f.html">spec</a>.
-         */
-        int execute(char jobz, int m, int n, double[] a, int lda, double[] s, double[] u, int ldu, double[] vt, int ldtv, double[] work, int lwork, int[] iwork);
+    public static final class DgesddNode extends NativeCallNode {
 
-        static DgesddNode create() {
+        public static DgesddNode create() {
             return RFFIFactory.getLapackRFFI().createDgesddNode();
         }
+
+        private DgesddNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dgesdd));
+        }
+
+        public int execute(char jobz, int m, int n, double[] a, int lda, double[] s, double[] u, int ldu, double[] vt, int ldtv, double[] work, int lwork, int[] iwork) {
+            return (int) call(jobz, m, n, a, lda, s, u, ldu, vt, ldtv, work, lwork, iwork);
+        }
     }
 
-    interface DlangeNode extends NodeInterface {
+    public static final class DlangeNode extends NativeCallNode {
 
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/dc/d09/dlange_8f.html">spec</a>.
-         */
-        double execute(char norm, int m, int n, double[] a, int lda, double[] work);
-
-        static DlangeNode create() {
+        public static DlangeNode create() {
             return RFFIFactory.getLapackRFFI().createDlangeNode();
         }
+
+        private DlangeNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dlange));
+        }
+
+        public double execute(char norm, int m, int n, double[] a, int lda, double[] work) {
+            return (double) call(norm, m, n, a, lda, work);
+        }
     }
 
-    interface DgeconNode extends NodeInterface {
+    public static final class DgeconNode extends NativeCallNode {
 
-        /**
-         * See <a href="http://www.netlib.org/lapack/explore-html/db/de4/dgecon_8f.html">spec</a>.
-         */
-        int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork);
-
-        static DgeconNode create() {
+        public static DgeconNode create() {
             return RFFIFactory.getLapackRFFI().createDgeconNode();
         }
+
+        private DgeconNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dgecon));
+        }
+
+        public int execute(char norm, int n, double[] a, int lda, double anorm, double[] rcond, double[] work, int[] iwork) {
+            return (int) call(norm, n, a, lda, anorm, rcond, work, iwork);
+        }
     }
 
-    interface DsyevrNode extends NodeInterface {
+    public static final class DsyevrNode extends NativeCallNode {
 
-        int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m, double[] w, double[] z, int ldz, int[] isuppz,
-                        double[] work, int lwork, int[] iwork, int liwork);
-
-        static DsyevrNode create() {
+        public static DsyevrNode create() {
             return RFFIFactory.getLapackRFFI().createDsyevrNode();
         }
+
+        private DsyevrNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dsyevr));
+        }
+
+        public int execute(char jobz, char range, char uplo, int n, double[] a, int lda, double vl, double vu, int il, int iu, double abstol, int[] m, double[] w, double[] z, int ldz, int[] isuppz,
+                        double[] work, int lwork, int[] iwork, int liwork) {
+            return (int) call(jobz, range, uplo, n, a, lda, vl, vu, il, iu, abstol, m, w, z, ldz, isuppz, work, lwork, iwork, liwork);
+        }
     }
 
-    interface ZunmqrNode extends NodeInterface {
+    public static final class ZunmqrNode extends NativeCallNode {
 
-        int execute(String side, String trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork);
-
-        static ZunmqrNode create() {
+        public static ZunmqrNode create() {
             return RFFIFactory.getLapackRFFI().createZunmqrNode();
         }
+
+        private ZunmqrNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.zunmqr));
+        }
+
+        public int execute(String side, String trans, int m, int n, int k, double[] a, int lda, double[] tau, double[] c, int ldc, double[] work, int lwork) {
+            return (int) call(side, trans, m, n, k, a, lda, tau, c, ldc, work, lwork);
+        }
+
     }
 
-    interface ZtrtrsNode extends NodeInterface {
+    public static final class ZtrtrsNode extends NativeCallNode {
 
-        int execute(String uplo, String trans, String diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb);
-
-        static ZtrtrsNode create() {
+        public static ZtrtrsNode create() {
             return RFFIFactory.getLapackRFFI().createZtrtrsNode();
         }
-    }
 
-    interface DtrsmNode extends NodeInterface {
+        private ZtrtrsNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.ztrtrs));
+        }
 
-        void execute(String side, String uplo, String transa, String diag, int m, int n, double alpha, double[] a, int lda, double[] b, int ldb);
-
-        static DtrsmNode create() {
-            return RFFIFactory.getLapackRFFI().createDtrsmNode();
+        public int execute(String uplo, String trans, String diag, int n, int nrhs, double[] a, int lda, double[] b, int ldb) {
+            return (int) call(uplo, trans, diag, n, nrhs, a, lda, b, ldb);
         }
     }
 
-    IlaverNode createIlaverNode();
+    public static final class DtrsmNode extends NativeCallNode {
 
-    DgeevNode createDgeevNode();
+        public static DtrsmNode create() {
+            return RFFIFactory.getLapackRFFI().createDtrsmNode();
+        }
 
-    Dgeqp3Node createDgeqp3Node();
+        private DtrsmNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dtrsm));
+        }
 
-    DormqrNode createDormqrNode();
+        public void execute(String side, String uplo, String transa, String diag, int m, int n, double alpha, double[] a, int lda, double[] b, int ldb) {
+            call(side, uplo, transa, diag, m, n, alpha, a, lda, b, ldb);
+        }
 
-    DtrtrsNode createDtrtrsNode();
+    }
 
-    DgetrfNode createDgetrfNode();
+    public IlaverNode createIlaverNode() {
+        return new IlaverNode(downCallNodeFactory);
+    }
 
-    DpotrfNode createDpotrfNode();
+    public DgeevNode createDgeevNode() {
+        return new DgeevNode(downCallNodeFactory);
+    }
 
-    DpotriNode createDpotriNode();
+    public Dgeqp3Node createDgeqp3Node() {
+        return new Dgeqp3Node(downCallNodeFactory);
+    }
 
-    DpstrfNode createDpstrfNode();
+    public DormqrNode createDormqrNode() {
+        return new DormqrNode(downCallNodeFactory);
+    }
 
-    DgesvNode createDgesvNode();
+    public DtrtrsNode createDtrtrsNode() {
+        return new DtrtrsNode(downCallNodeFactory);
+    }
 
-    DgesddNode createDgesddNode();
+    public DgetrfNode createDgetrfNode() {
+        return new DgetrfNode(downCallNodeFactory);
+    }
 
-    DlangeNode createDlangeNode();
+    public DpotrfNode createDpotrfNode() {
+        return new DpotrfNode(downCallNodeFactory);
+    }
 
-    DgeconNode createDgeconNode();
+    public DpotriNode createDpotriNode() {
+        return new DpotriNode(downCallNodeFactory);
+    }
 
-    DsyevrNode createDsyevrNode();
+    public DpstrfNode createDpstrfNode() {
+        return new DpstrfNode(downCallNodeFactory);
+    }
 
-    ZunmqrNode createZunmqrNode();
+    public DgesvNode createDgesvNode() {
+        return new DgesvNode(downCallNodeFactory);
+    }
 
-    ZtrtrsNode createZtrtrsNode();
+    public DgesddNode createDgesddNode() {
+        return new DgesddNode(downCallNodeFactory);
+    }
 
-    DtrsmNode createDtrsmNode();
+    public DlangeNode createDlangeNode() {
+        return new DlangeNode(downCallNodeFactory);
+    }
 
+    public DgeconNode createDgeconNode() {
+        return new DgeconNode(downCallNodeFactory);
+    }
+
+    public DsyevrNode createDsyevrNode() {
+        return new DsyevrNode(downCallNodeFactory);
+    }
+
+    public ZunmqrNode createZunmqrNode() {
+        return new ZunmqrNode(downCallNodeFactory);
+    }
+
+    public ZtrtrsNode createZtrtrsNode() {
+        return new ZtrtrsNode(downCallNodeFactory);
+    }
+
+    public DtrsmNode createDtrsmNode() {
+        return new DtrsmNode(downCallNodeFactory);
+    }
 }

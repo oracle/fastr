@@ -20,63 +20,64 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop;
+package com.oracle.truffle.r.runtime.ffi.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.ffi.interop.NativePointer;
 
-@MessageResolution(receiverType = NativeIntegerArray.class)
-public class NativeIntegerArrayMR {
-
+@MessageResolution(receiverType = NativeRawArray.class)
+public class NativeRawArrayMR {
     @Resolve(message = "READ")
-    public abstract static class NIAReadNode extends Node {
-        protected int access(NativeIntegerArray receiver, int index) {
-            return receiver.read(index);
+    public abstract static class NRAReadNode extends Node {
+        protected byte access(NativeRawArray receiver, int index) {
+            return receiver.bytes[index];
         }
     }
 
     @Resolve(message = "WRITE")
-    public abstract static class NIAWriteNode extends Node {
-        protected int access(NativeIntegerArray receiver, int index, int value) {
-            if (value == RRuntime.INT_NA) {
-                receiver.setIncomplete();
-            }
-            receiver.write(index, value);
+    public abstract static class NRAWriteNode extends Node {
+        protected Object access(NativeRawArray receiver, int index, byte value) {
+            receiver.bytes[index] = value;
             return value;
         }
     }
 
+    @Resolve(message = "GET_SIZE")
+    public abstract static class NRAGetSizeNode extends Node {
+        protected int access(NativeRawArray receiver) {
+            return receiver.bytes.length;
+        }
+    }
+
     @Resolve(message = "TO_NATIVE")
-    public abstract static class NIAToNativeNode extends Node {
-        protected Object access(NativeIntegerArray receiver) {
-            return new IntegerNativePointer(receiver);
+    public abstract static class NRAToNativeNode extends Node {
+        protected Object access(NativeRawArray receiver) {
+            return new RawNativePointer(receiver);
         }
     }
 
     @CanResolve
-    public abstract static class NIACheck extends Node {
+    public abstract static class NRACheck extends Node {
 
         protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof NativeIntegerArray;
+            return receiver instanceof NativeRawArray;
         }
     }
 
-    private static final class IntegerNativePointer extends NativePointer {
-        private final NativeIntegerArray nativeIntegerArray;
+    private static final class RawNativePointer extends NativePointer {
+        private final NativeRawArray nativeRawArray;
 
-        private IntegerNativePointer(NativeIntegerArray object) {
+        private RawNativePointer(NativeRawArray object) {
             super(object);
-            this.nativeIntegerArray = object;
+            this.nativeRawArray = object;
         }
 
         @Override
         protected long asPointerImpl() {
-            long result = nativeIntegerArray.convertToNative();
+            long result = nativeRawArray.convertToNative();
             return result;
         }
     }

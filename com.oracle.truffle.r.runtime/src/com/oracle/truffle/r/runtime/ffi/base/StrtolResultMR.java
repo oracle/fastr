@@ -20,27 +20,36 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.nfi;
+package com.oracle.truffle.r.runtime.ffi.base;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
-import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
-import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
-public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
-    @Child private DownCallNode setFlagNode = TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode(NativeFunction.set_exception_flag);
+@MessageResolution(receiverType = StrtolResult.class)
+public class StrtolResultMR {
+    @CanResolve
+    public abstract static class BaseStrtolResultCallbackCheck extends Node {
 
-    @Override
-    @TruffleBoundary
-    public void execute(Throwable originalEx) {
-        setFlagNode.call();
-        RuntimeException ex;
-        if (originalEx instanceof RuntimeException) {
-            ex = (RuntimeException) originalEx;
-        } else {
-            ex = new RuntimeException(originalEx);
+        protected static boolean test(TruffleObject receiver) {
+            return receiver instanceof StrtolResult;
         }
-        TruffleNFI_Context.getInstance().setLastUpCallException(ex);
+    }
+
+    @Resolve(message = "IS_EXECUTABLE")
+    public abstract static class StrolResultIsExecutable extends Node {
+        protected Object access(@SuppressWarnings("unused") StrtolResult receiver) {
+            return true;
+        }
+    }
+
+    @Resolve(message = "EXECUTE")
+    public abstract static class BaseStrtolResultCallbackExecute extends Node {
+        protected Object access(StrtolResult receiver, Object[] arguments) {
+            receiver.setResult((long) arguments[0], (int) arguments[1]);
+            return receiver;
+        }
     }
 }
