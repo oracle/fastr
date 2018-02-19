@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import java.nio.charset.StandardCharsets;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 /**
@@ -48,6 +49,7 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         this.contents = contents;
     }
 
+    @TruffleBoundary
     public String getContents() {
         if (this == NA) {
             // The NA string may have been moved to the native space if someone called R_CHAR on it,
@@ -58,10 +60,12 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         return NativeDataAccess.getData(this, contents);
     }
 
+    @TruffleBoundary
     public byte getByteAt(int index) {
         return NativeDataAccess.getDataAt(this, getBytes(), index);
     }
 
+    @TruffleBoundary
     public int getLength() {
         return NativeDataAccess.getDataLength(this, getBytes());
     }

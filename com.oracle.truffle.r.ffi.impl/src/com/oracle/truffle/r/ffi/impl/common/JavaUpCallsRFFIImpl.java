@@ -1714,31 +1714,37 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             public abstract long execute(Object vector);
 
             @Specialization
+            @TruffleBoundary
             protected static long get(RIntVector vector) {
                 return vector.allocateNativeContents();
             }
 
             @Specialization
+            @TruffleBoundary
             protected static long get(RLogicalVector vector) {
                 return vector.allocateNativeContents();
             }
 
             @Specialization
+            @TruffleBoundary
             protected static long get(RRawVector vector) {
                 return vector.allocateNativeContents();
             }
 
             @Specialization
+            @TruffleBoundary
             protected static long get(RDoubleVector vector) {
                 return vector.allocateNativeContents();
             }
 
             @Specialization
+            @TruffleBoundary
             protected static long get(RComplexVector vector) {
                 return vector.allocateNativeContents();
             }
 
             @Specialization
+            @TruffleBoundary
             protected static long get(CharSXPWrapper vector) {
                 return vector.allocateNativeContents();
             }
