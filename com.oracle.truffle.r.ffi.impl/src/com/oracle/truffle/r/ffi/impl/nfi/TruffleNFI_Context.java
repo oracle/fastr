@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
+import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 import sun.misc.Unsafe;
@@ -92,7 +93,7 @@ final class TruffleNFI_Context extends RFFIContext {
     TruffleNFI_Context() {
         super(new TruffleNFI_C(), new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Call(), new TruffleNFI_DLL(), new TruffleNFI_UserRng(),
                         new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
-                        new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Tools(), new TruffleNFI_REmbed(), new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
+                        new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new TruffleNFI_REmbed(), new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
         // forward constructor
     }
 

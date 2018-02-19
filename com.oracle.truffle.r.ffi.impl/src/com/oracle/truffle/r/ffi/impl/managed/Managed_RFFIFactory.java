@@ -108,12 +108,7 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                     throw unsupported("user defined RNG");
                 }
             }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
-                            new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI() {
-                                @Override
-                                public ParseRdNode createParseRdNode() {
-                                    throw unsupported("parseRD");
-                                }
-                            }, new Managed_REmbedRFFI(), new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
+                            new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new Managed_REmbedRFFI(), new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
         }
 
         private static class IgnoreUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {

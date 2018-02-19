@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
+import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 /**
@@ -49,7 +50,7 @@ final class TruffleLLVM_Context extends RFFIContext {
         super(new TruffleLLVM_C(), new BaseRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new TruffleLLVM_Call(), new TruffleLLVM_DLL(), new TruffleLLVM_UserRng(),
                         new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
                         new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
-                        new TruffleLLVM_Tools(), new TruffleLLVM_REmbed(), new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
+                        new ToolsRFFI(), new TruffleLLVM_REmbed(), new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
     }
 
     static TruffleLLVM_Context getContextState() {
