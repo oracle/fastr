@@ -175,7 +175,7 @@ public final class REnvVars implements RContext.ContextState {
                 rHomePath = Paths.get(rHome);
             }
             if (!validateRHome(rHomePath, markerFile())) {
-                Utils.rSuicide("R_HOME is not set correctly");
+                RSuicide.rSuicide("R_HOME is not set correctly");
             }
             rHome = rHomePath.toString();
         }

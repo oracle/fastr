@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.runtime;
 
 /**
- * Support for callbacks in embedded mode for certain VM operations.
+ * Support for callbacks in embedded mode for certain VM operations. If the embedding code overrides
+ * certain operation, the flag for that operation is updated here and when FastR is about to invoke
+ * one of those operations, normally implemented by default by FastR in Java, it checks the flag and
+ * eventually down-calls to the user provided handler.
  *
  */
 public enum RInterfaceCallbacks {

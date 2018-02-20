@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,29 +26,18 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 
 public class TruffleLLVM_REmbed implements REmbedRFFI {
-
     @Override
-    public void suicide(String x) {
-        throw RInternalError.unimplemented();
+    public ReadConsoleNode createReadConsoleNode() {
+        throw RInternalError.unimplemented("TODO");
     }
 
     @Override
-    public void cleanUp(int type, int x, int y) {
-        throw RInternalError.unimplemented();
+    public WriteConsoleNode createWriteConsoleNode() {
+        throw RInternalError.unimplemented("TODO");
     }
 
     @Override
-    public String readConsole(String prompt) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public void writeConsole(String x) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public void writeErrConsole(String x) {
-        throw RInternalError.unimplemented();
+    public WriteErrConsoleNode createWriteErrConsoleNode() {
+        throw RInternalError.unimplemented("TODO");
     }
 }

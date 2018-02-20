@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -68,7 +68,7 @@ public abstract class Quit extends RBuiltinNode.Arg3 {
             warning(RError.Message.QUIT_INVALID_RUNLAST);
             runLast = RRuntime.LOGICAL_FALSE;
         }
-        RCleanUp.cleanUp(ask, status, RRuntime.fromLogical(runLast));
+        RCleanUp.cleanUp(RContext.getInstance(), ask, status, RRuntime.fromLogical(runLast));
         throw RInternalError.shouldNotReachHere("cleanup returned");
     }
 }

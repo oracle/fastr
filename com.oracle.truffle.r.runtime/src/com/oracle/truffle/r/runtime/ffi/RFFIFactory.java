@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.r.runtime.FastRConfig;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 
@@ -71,7 +71,7 @@ public abstract class RFFIFactory {
         try {
             rffiFactory = (RFFIFactory) Class.forName(klassName).newInstance();
         } catch (Exception ex) {
-            throw Utils.rSuicide("Failed to instantiate class: " + klassName + ": " + ex);
+            throw RSuicide.rSuicide("Failed to instantiate class: " + klassName + ": " + ex);
         }
     }
 
@@ -83,7 +83,7 @@ public abstract class RFFIFactory {
         try {
             return Type.valueOf(prop.toUpperCase());
         } catch (IllegalArgumentException ex) {
-            throw Utils.rSuicide("No RFFI factory: " + prop);
+            throw RSuicide.rSuicide("No RFFI factory: " + prop);
         }
     }
 

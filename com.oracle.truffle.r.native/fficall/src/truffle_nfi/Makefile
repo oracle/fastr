@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -45,8 +45,9 @@ C_OBJECTS := $(LOCAL_C_OBJECTS) $(TRUFFLE_COMMON_C_OBJECTS)
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 #NFI_INCLUDES is set in environment (by mx)
 LOCAL_INCLUDES = -I . -I $(abspath ../include) -I $(abspath ../common)
+JNI_INCLUDES = -I $(JAVA_HOME)/include -I $(JAVA_HOME)/include/$(JDK_OS_DIR)
 
-INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(NFI_INCLUDES)
+INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(NFI_INCLUDES) $(JNI_INCLUDES)
 
 # uncomment to see exactly where headers are being read from
 #CFLAGS := $(CFLAGS) -H

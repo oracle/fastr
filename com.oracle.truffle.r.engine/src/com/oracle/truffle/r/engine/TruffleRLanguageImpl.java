@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -83,7 +83,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
              * Utils.rSuicide does. For now we catch it and exit the process.
              */
             try {
-                Utils.rSuicide("error during R language initialization");
+                RSuicide.rSuicide("error during R language initialization");
             } catch (ExitException ex) {
                 System.exit(ex.getStatus());
             }

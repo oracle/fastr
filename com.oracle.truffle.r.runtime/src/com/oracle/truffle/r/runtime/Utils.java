@@ -60,7 +60,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
@@ -139,7 +138,7 @@ public final class Utils {
             } catch (IOException ex) {
             }
         }
-        throw Utils.rSuicide("resource " + resourceName + " not found");
+        throw RSuicide.rSuicide("resource " + resourceName + " not found");
     }
 
     private static String getResourceAsString(InputStream is) throws IOException {
@@ -168,37 +167,6 @@ public final class Utils {
 
         private static final long serialVersionUID = 1L;
 
-    }
-
-    /**
-     * Called when the system encounters a fatal internal error and must commit suicide (i.e.
-     * terminate). It allows an embedded client to override the default (although they typically
-     * invoke the default eventually).
-     */
-    public static RuntimeException rSuicide(String msg) {
-        if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
-            RFFIFactory.getREmbedRFFI().suicide(msg);
-        }
-        throw rSuicideDefault(msg);
-    }
-
-    public static RuntimeException rSuicide(Throwable cause, String msg) {
-        cause.printStackTrace();
-        if (RInterfaceCallbacks.R_Suicide.isOverridden()) {
-            RFFIFactory.getREmbedRFFI().suicide(msg);
-        }
-        throw rSuicideDefault(msg);
-    }
-
-    /**
-     * The default, non-overrideable, suicide call. It prints the message and throws
-     * {@link ExitException}.
-     *
-     * @param msg
-     */
-    public static RuntimeException rSuicideDefault(String msg) {
-        System.err.println("FastR unexpected failure: " + msg);
-        throw new ExitException(2, false);
     }
 
     /**

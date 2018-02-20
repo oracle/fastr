@@ -45,8 +45,8 @@ import org.junit.runner.Result;
 
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
@@ -230,7 +230,7 @@ public class TestBase {
                     if (updated) {
                         if (expectedOutputManager.checkOnly) {
                             // fail fast
-                            Utils.rSuicideDefault("Test file:" + expectedOutputManager.outputFile + " is out of sync with unit tests");
+                            RSuicide.rSuicideDefault("Test file:" + expectedOutputManager.outputFile + " is out of sync with unit tests");
                         }
                         System.out.println("updating " + expectedOutputManager.outputFile);
                     }

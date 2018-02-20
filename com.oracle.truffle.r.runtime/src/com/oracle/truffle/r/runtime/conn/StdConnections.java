@@ -32,7 +32,7 @@ import java.util.EnumSet;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -70,7 +70,7 @@ public class StdConnections {
                 stdout = new StdoutConnection(console);
                 stderr = new StderrConnection(console);
             } catch (IOException ex) {
-                throw Utils.rSuicide("failed to open stdconnections:");
+                throw RSuicide.rSuicide("failed to open stdconnections:");
             }
             return this;
         }

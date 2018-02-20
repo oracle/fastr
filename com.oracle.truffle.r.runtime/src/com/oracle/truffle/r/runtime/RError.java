@@ -273,7 +273,7 @@ public final class RError extends RuntimeException implements TruffleException {
 
     /**
      * A temporary error that indicates an unimplemented feature where terminating the VM using
-     * {@link Utils#rSuicide(String)} would be inappropriate.
+     * {@link RSuicide#rSuicide(String)} would be inappropriate.
      */
     public static RError nyi(RBaseNode node, String msg) {
         CompilerDirectives.transferToInterpreter();

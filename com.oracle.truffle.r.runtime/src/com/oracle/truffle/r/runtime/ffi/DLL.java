@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -432,11 +433,20 @@ public class DLL {
     /**
      * Loads a the {@code libR} library. This is an implementation specific library.
      */
-    public static void loadLibR(String path) {
-        RContext context = RContext.getInstance();
-        Object handle = DLLRFFI.DLOpenRootNode.create(context).call(path, false, false);
+    public static void loadLibR(RContext context, String path) {
+        Object handle = null;
+        try {
+            handle = DLLRFFI.DLOpenRootNode.create(context).call(path, false, false);
+        } catch (UnsatisfiedLinkError ex) {
+            throw RSuicide.rSuicide(context, "error loading libR from: " + path + ".\n" +
+                            "If running on NFI backend, did you provide location of libtrufflenfi.so as value of system " +
+                            "property 'truffle.nfi.library'?\nThe current value is '" +
+                            System.getProperty("truffle.nfi.library") + "'. \nDetails: " + ex.getMessage());
+        } catch (Throwable ex) {
+            throw RSuicide.rSuicide(context, "error loading libR from: " + path + ". Details: " + ex.getMessage());
+        }
         if (handle == null) {
-            throw Utils.rSuicide("error loading libR from: " + path + "\n");
+            throw RSuicide.rSuicide(context, "error loading libR from: " + path + "\n");
         }
         ContextStateImpl dllContext = context.stateDLL;
         dllContext.addLibR(DLLInfo.create(libName(path), path, true, handle, false));
@@ -493,7 +503,7 @@ public class DLL {
                     if (RContext.isInitialContextInitialized()) {
                         throw new DLLException(ex, RError.Message.DLL_RINIT_ERROR);
                     } else {
-                        throw Utils.rSuicide(ex, RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
+                        throw RSuicide.rSuicide(RContext.getInstance(), ex, RError.Message.DLL_RINIT_ERROR.message + " on default package: " + path);
                     }
                 }
             } catch (UnsatisfiedLinkError ex) {
@@ -506,8 +516,8 @@ public class DLL {
          * There is no sense in throwing an RError if we fail to load/init a (default) package
          * during initial context initialization, as it is essentially fatal for any of the standard
          * packages and likely indicates a bug in the RFFI implementation. So we call
-         * {@link Utils#rSuicide(String)} instead. When the system is stable, we can undo this, so
-         * that errors loading (user) packages added to R_DEFAULT_PACKAGES do throw RErrors.
+         * {@link RSuicide#rSuicide(String)} instead. When the system is stable, we can undo this,
+         * so that errors loading (user) packages added to R_DEFAULT_PACKAGES do throw RErrors.
          */
         private synchronized DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
@@ -521,7 +531,7 @@ public class DLL {
                 if (RContext.isInitialContextInitialized()) {
                     throw new DLLException(ex, RError.Message.DLL_LOAD_ERROR, absPath, dlError);
                 } else {
-                    throw Utils.rSuicide(ex, "error loading default package: " + absPath + "\n" + dlError);
+                    throw RSuicide.rSuicide(RContext.getInstance(), ex, "error loading default package: " + absPath + "\n" + dlError);
                 }
             } finally {
                 stateRFFI.afterDowncall(before);

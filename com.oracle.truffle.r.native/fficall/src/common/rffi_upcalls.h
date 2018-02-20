@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -318,5 +318,16 @@ typedef void (*call_R_PreserveObject)(SEXP x);
 typedef void (*call_R_ReleaseObject)(SEXP x);
 
 typedef void* (*call_R_alloc)(int n, int size);
+
+// IDEs and Tools
+typedef void* (*call_R_getGlobalFunctionContext)();
+typedef void* (*call_R_getParentFunctionContext)(void* c);
+typedef void* (*call_R_getContextEnv)(void* c);
+typedef void* (*call_R_getContextFun)(void* c);
+typedef void* (*call_R_getContextCall)(void* c);
+typedef void* (*call_R_getContextSrcRef)(void* c);
+typedef int (*call_R_insideBrowser)();
+typedef int (*call_R_isGlobal)(void* c);
+typedef int (*call_R_isEqual)(void* x, void* y);
 
 #endif

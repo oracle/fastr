@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -286,7 +286,7 @@ public class TraceHandling {
             try {
                 fileWriter = new FileWriter("fastr_tracecalls.log");
             } catch (IOException e) {
-                Utils.rSuicide("failed to open 'fastr_tracecalls.log'" + e.getMessage());
+                RSuicide.rSuicide("failed to open 'fastr_tracecalls.log'" + e.getMessage());
             }
         }
 

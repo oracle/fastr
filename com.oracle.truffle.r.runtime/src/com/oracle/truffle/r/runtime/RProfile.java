@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,7 +96,7 @@ public final class RProfile implements RContext.ContextState {
         Path path = FileSystems.getDefault().getPath(REnvVars.rHome(), "library", "base", "R", "Rprofile");
         Source source = getProfile(path.toString(), true);
         if (source == null) {
-            Utils.rSuicide("can't find system profile");
+            RSuicide.rSuicide("can't find system profile");
         }
         return source;
     }
