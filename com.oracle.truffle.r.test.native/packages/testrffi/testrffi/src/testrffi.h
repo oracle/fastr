@@ -116,3 +116,5 @@ extern SEXP test_isNAString(SEXP vec);
 extern SEXP test_setStringElt(SEXP vec, SEXP elt);
 
 extern SEXP test_getBytes(SEXP vec);
+
+extern SEXP test_RfRandomFunctions();

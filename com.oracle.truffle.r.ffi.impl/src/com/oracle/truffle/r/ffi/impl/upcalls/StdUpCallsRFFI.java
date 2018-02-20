@@ -407,6 +407,30 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(RandFunctionsNodes.RunifNode.class)
     double Rf_runif(double a, double b);
 
+    @RFFIUpCallNode(RandFunctionsNodes.DChisqNode.class)
+    double Rf_dchisq(double a, double b, int c);
+
+    @RFFIUpCallNode(RandFunctionsNodes.PChisqNode.class)
+    double Rf_pchisq(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(RandFunctionsNodes.QChisqNode.class)
+    double Rf_qchisq(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(RandFunctionsNodes.RChisqNode.class)
+    double Rf_rchisq(double a);
+
+    @RFFIUpCallNode(RandFunctionsNodes.DNChisqNode.class)
+    double Rf_dnchisq(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(RandFunctionsNodes.PNChisqNode.class)
+    double Rf_pnchisq(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(RandFunctionsNodes.QNChisqNode.class)
+    double Rf_qnchisq(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(RandFunctionsNodes.RNChisqNode.class)
+    double Rf_rnchisq(double a, double b);
+
     @RFFIUpCallNode(MiscNodes.NamesGetsNode.class)
     Object Rf_namesgets(Object vec, Object val);
 

@@ -28,6 +28,7 @@
 #include <Rinterface.h>
 #include <Rinternals.h>
 #include <Rinterface.h>
+#include <Rmath.h>
 #include <R_ext/Connections.h>
 #include <R_ext/Parse.h>
 #include <string.h>
@@ -584,4 +585,24 @@ SEXP test_RfEvalWithPromiseInPairList() {
     SEXP result = Rf_eval(e, R_GlobalEnv);
     UNPROTECT(1);
     return result;
+}
+
+SEXP test_RfRandomFunctions() {
+    SEXP v;
+    PROTECT(v = allocVector(REALSXP, 12));
+    int n = 0;
+    REAL(v)[n++] = Rf_dunif(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_qunif(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_punif(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_runif(0, 1);
+    REAL(v)[n++] = Rf_dchisq(0, 1, FALSE);
+    REAL(v)[n++] = Rf_pchisq(0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qchisq(0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rchisq(1);
+    REAL(v)[n++] = Rf_dnchisq(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pnchisq(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qnchisq(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rnchisq(0, 1);
+    UNPROTECT(1);
+    return v;
 }

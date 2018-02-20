@@ -135,3 +135,7 @@ rffi.RfEvalWithPromiseInPairList()
 rffi.CAR(NULL)
 rffi.CDR(NULL)
 invisible(rffi.CAR(as.symbol('a'))) # TODO: printing CHARSEXP not implemented in FastR
+
+set.seed(42)
+rffi.RFRandomFunctions()
+

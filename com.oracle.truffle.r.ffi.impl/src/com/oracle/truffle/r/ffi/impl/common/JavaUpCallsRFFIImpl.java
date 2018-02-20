@@ -1612,6 +1612,46 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public double Rf_dchisq(double a, double b, int c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pchisq(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qchisq(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rchisq(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dnchisq(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pnchisq(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qnchisq(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rnchisq(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object Rf_namesgets(Object x, Object y) {
         throw implementedAsNode();
     }
