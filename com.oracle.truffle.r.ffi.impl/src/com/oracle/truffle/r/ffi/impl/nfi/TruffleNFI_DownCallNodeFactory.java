@@ -27,6 +27,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.ffi.impl.interop.NativeNACheck;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeUInt8Array;
@@ -49,7 +50,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
             @SuppressWarnings("cast")
             @Override
             @ExplodeLoop
-            protected void wrapArguments(TruffleObject function, Object[] args) {
+            protected long beforeCall(NativeFunction function, TruffleObject target, Object[] args) {
                 for (int i = 0; i < args.length; i++) {
                     Object obj = args[i];
                     if (obj instanceof double[]) {
@@ -71,6 +72,11 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                         args[i] = JavaInterop.asTruffleObject(data);
                     }
                 }
+
+                if (function.hasComplexInteraction()) {
+                    return ((TruffleNFI_Context) RContext.getInstance().getRFFI()).beforeDowncall();
+                }
+                return 0;
             }
 
             @TruffleBoundary
@@ -83,7 +89,11 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected void finishArguments(Object[] args) {
+            protected void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args) {
+                if (function.hasComplexInteraction()) {
+                    RContext.getInstance().getRFFI().afterDowncall(before);
+                }
+
                 for (Object obj : args) {
                     // TODO: can this ever happen in NFI?
                     if (obj instanceof NativeNACheck<?>) {

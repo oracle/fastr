@@ -65,6 +65,7 @@ public abstract class DownCallNodeFactory {
          * NFI where the array should be passed as Java array, not as Truffle Object.
          */
         public final Object call(Object... args) {
+            long before = -1;
             try {
                 if (message == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -74,12 +75,12 @@ public abstract class DownCallNodeFactory {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     target = getTarget(function);
                 }
-                wrapArguments(target, args);
+                before = beforeCall(function, target, args);
                 return ForeignAccess.sendExecute(message, target, args);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } finally {
-                finishArguments(args);
+                afterCall(before, function, target, args);
             }
         }
 
@@ -91,14 +92,16 @@ public abstract class DownCallNodeFactory {
 
         /**
          * Allows to transform the arguments before the execute message is sent to the result of
-         * {@link #getTarget(NativeFunction)}. Allways invoked even if {@code args.length == 0}.
+         * {@link #getTarget(NativeFunction)}.
          */
-        protected abstract void wrapArguments(TruffleObject function, Object[] args);
+        protected abstract long beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args);
 
         /**
          * Allows to post-process the arguments after the execute message was sent to the result of
-         * {@link #getTarget(NativeFunction)}.
+         * {@link #getTarget(NativeFunction)}. If the call to
+         * {@link #beforeCall(NativeFunction, TruffleObject, Object[])} was not successfull, the
+         * {@code before} parameter will have value {@code -1}.
          */
-        protected abstract void finishArguments(Object[] args);
+        protected abstract void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args);
     }
 }

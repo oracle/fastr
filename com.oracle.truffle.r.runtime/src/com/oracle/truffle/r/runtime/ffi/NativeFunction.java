@@ -82,11 +82,11 @@ public enum NativeFunction {
     // FastR helpers
     set_exception_flag("(): void"),
     // FastR internal helper for R embedded mode
-    rembedded_write_console("(string, sint32):void"),
-    rembedded_write_err_console("(string, sint32):void"),
-    rembedded_read_console("(string):string"),
-    rembedded_native_clean_up("(sint32, sint32, sint32):void"),
-    rembedded_native_suicide("(string):void"),
+    rembedded_write_console("(string, sint32):void", "", anyLibrary(), true),
+    rembedded_write_err_console("(string, sint32):void", "", anyLibrary(), true),
+    rembedded_read_console("(string):string", "", anyLibrary(), true),
+    rembedded_native_clean_up("(sint32, sint32, sint32):void", "", anyLibrary(), true),
+    rembedded_native_suicide("(string):void", "", anyLibrary(), true),
     // user-defined RNG
     unif_init("(sint32): void", "user_", anyLibrary()),
     norm_rand("(): pointer", "user_", anyLibrary()),
@@ -94,6 +94,7 @@ public enum NativeFunction {
     unif_nseed("(): pointer", "user_", anyLibrary()),
     unif_seedloc("(): pointer", "user_", anyLibrary()),
     // memory access helper functions
+    // TODO: these could use Unsafe instead
     read_pointer_int("(pointer): sint32", "caccess_"),
     read_array_int("(pointer, sint64): sint32", "caccess_"),
     read_pointer_double("(pointer): double", "caccess_"),
@@ -109,12 +110,18 @@ public enum NativeFunction {
     private final String signature;
     private final int argumentCount;
     private final String library;
+    private final boolean complexInteraction;
 
-    NativeFunction(String signature, String prefix, String library) {
+    NativeFunction(String signature, String prefix, String library, boolean complexInteraction) {
         this.callName = prefix + name();
         this.signature = signature;
         this.argumentCount = getArgCount(signature);
         this.library = library;
+        this.complexInteraction = complexInteraction;
+    }
+
+    NativeFunction(String signature, String prefix, String library) {
+        this(signature, prefix, library, false);
     }
 
     NativeFunction(String signature, String prefix) {
@@ -139,6 +146,15 @@ public enum NativeFunction {
 
     public String getLibrary() {
         return library;
+    }
+
+    /**
+     * Returns {@code true} if the function has complex interaction with its environment, including
+     * that it is not reentrant, uses R API (e.g. {@code allocVector}), or may invoke arbitrary user
+     * code.
+     */
+    public boolean hasComplexInteraction() {
+        return complexInteraction;
     }
 
     // Functions because the enum constants cannot refer to static final fields:

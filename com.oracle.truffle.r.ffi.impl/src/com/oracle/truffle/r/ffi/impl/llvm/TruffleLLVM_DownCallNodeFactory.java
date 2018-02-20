@@ -69,7 +69,7 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected void wrapArguments(TruffleObject function, Object[] args) {
+            protected long beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
                 for (int i = 0; i < args.length; i++) {
                     Object obj = args[i];
                     if (obj instanceof double[]) {
@@ -82,6 +82,7 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
                         args[i] = new NativeCharArray(getStringBytes((String) obj));
                     }
                 }
+                return 0;
             }
 
             @TruffleBoundary
@@ -91,7 +92,7 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected void finishArguments(Object[] args) {
+            protected void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args) {
                 for (Object obj : args) {
                     if (obj instanceof NativeNACheck<?>) {
                         ((NativeNACheck<?>) obj).close();

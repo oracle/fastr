@@ -70,7 +70,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
             }
 
             @Override
-            protected void wrapArguments(TruffleObject function, Object[] args) {
+            protected long beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
                 // Report unsupported functions at invocation time
                 if (function instanceof DummyFunctionObject) {
                     throw Managed_RFFIFactory.unsupported(((DummyFunctionObject) function).function.getCallName());
@@ -79,8 +79,8 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
             }
 
             @Override
-            protected void finishArguments(Object[] args) {
-                throw RInternalError.shouldNotReachHere();
+            protected void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args) {
+                // nop
             }
         };
     }
