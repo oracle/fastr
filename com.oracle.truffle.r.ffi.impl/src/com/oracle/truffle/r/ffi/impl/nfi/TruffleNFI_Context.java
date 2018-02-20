@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
@@ -93,7 +94,8 @@ final class TruffleNFI_Context extends RFFIContext {
     TruffleNFI_Context() {
         super(new TruffleNFI_C(), new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Call(), new TruffleNFI_DLL(), new TruffleNFI_UserRng(),
                         new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
-                        new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new TruffleNFI_REmbed(), new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
+                        new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
+                        new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
         // forward constructor
     }
 
@@ -345,6 +347,7 @@ final class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public long beforeDowncall() {
+        assert transientAllocations.size() == 0 : "transientAllocations should have been cleared in afterDowncall";
         super.beforeDowncall();
         if (hasAccessLock) {
             acquireLock();
@@ -354,6 +357,7 @@ final class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public void afterDowncall(long beforeValue) {
+        super.afterDowncall(beforeValue);
         popCallbacks(beforeValue);
         for (Long ptr : transientAllocations) {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
@@ -362,7 +366,12 @@ final class TruffleNFI_Context extends RFFIContext {
         if (hasAccessLock) {
             releaseLock();
         }
-        super.afterDowncall(beforeValue);
+        RuntimeException lastUpCallEx = getLastUpCallException();
+        if (lastUpCallEx != null) {
+            CompilerDirectives.transferToInterpreter();
+            setLastUpCallException(null);
+            throw lastUpCallEx;
+        }
     }
 
     public static TruffleNFI_Context getInstance() {

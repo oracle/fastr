@@ -37,6 +37,7 @@ import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
@@ -108,7 +109,8 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                     throw unsupported("user defined RNG");
                 }
             }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
-                            new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new Managed_REmbedRFFI(), new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
+                            new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(Managed_DownCallNodeFactory.INSTANCE),
+                            new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
         }
 
         private static class IgnoreUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {

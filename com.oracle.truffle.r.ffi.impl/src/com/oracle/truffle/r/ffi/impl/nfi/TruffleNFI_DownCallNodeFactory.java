@@ -91,7 +91,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
             @ExplodeLoop
             protected void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args) {
                 if (function.hasComplexInteraction()) {
-                    RContext.getInstance().getRFFI().afterDowncall(before);
+                    ((TruffleNFI_Context) RContext.getInstance().getRFFI()).afterDowncall(before);
                 }
 
                 for (Object obj : args) {

@@ -420,7 +420,7 @@ void uR_ProcessEvents(void) {
 }
 
 void uR_CleanUp(SA_TYPE x, int y, int z) {
-    return ((call_R_CleanUp) callbacks[R_CleanUp_x])(x, y, z);
+    ((call_R_CleanUp) callbacks[R_CleanUp_x])(x, y, z);
 }
 
 void (*ptr_R_Suicide)(const char *) = uR_Suicide;
@@ -505,11 +505,11 @@ void R_runHandlers(InputHandler *handlers, fd_set *mask) {
 // -----------------------------------------------------------------------------------------------
 // Downcalls from Java. We invoke these functions via REmbedRFFI
 
-void invokeCleanUp(int x, int y, int z) {
+void rembedded_cleanup(int x, int y, int z) {
     ptr_R_CleanUp(x, y, z);
 }
 
-void invokeSuicide(char* msg) {
+void rembedded_suicide(char* msg) {
     ptr_R_Suicide(msg);
 }
 
@@ -522,7 +522,7 @@ void rembedded_write_err_console(char *cbuf, int len) {
 }
 
 char* rembedded_read_console(const char* prompt) {
-    char* cbuf = malloc(sizeof(char) * 1024);
+    unsigned char* cbuf = malloc(sizeof(char) * 1024);
     int n = (*ptr_R_ReadConsole)(prompt, cbuf, 1024, 0);
     return cbuf;
 }

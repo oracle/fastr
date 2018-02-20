@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.RFindSymbolNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.EmbeddedSuicideNode;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 public abstract class RSuicide {
@@ -73,36 +74,25 @@ public abstract class RSuicide {
         throw new ExitException(2, false);
     }
 
-    private static RStringVector asVector(String value) {
-        return RDataFactory.createStringVector(value);
-    }
-
     private static void invokeUserDefinedSuicide(RContext ctx, String msg) {
         if (ctx != null && RInterfaceCallbacks.R_Suicide.isOverridden()) {
             RootCallTarget invokeUserCleanup = ctx.getOrCreateCachedCallTarget(UserDefinedSuicideRootNode.class, () -> new UserDefinedSuicideRootNode(ctx).getCallTarget());
-            invokeUserCleanup.call(new Object[]{asVector(msg)});
+            invokeUserCleanup.call(msg);
         }
     }
 
     private static final class UserDefinedSuicideRootNode extends RootNode {
         protected UserDefinedSuicideRootNode(RContext ctx) {
             super(null);
-            invokeCallNode = ctx.getRFFI().callRFFI.createInvokeCallNode();
+            suicideNode = ctx.getRFFI().embedRFFI.createEmbeddedSuicideNode();
             Truffle.getRuntime().createCallTarget(this);
         }
 
-        private static final String SYMBOL_NAME = "invokeSuicide";
-        @Child InvokeCallNode invokeCallNode;
-        @Child RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
+        @Child private EmbeddedSuicideNode suicideNode;
 
         @Override
         public Object execute(VirtualFrame frame) {
-            SymbolHandle invokeSuicide = findSymbolNode.execute(SYMBOL_NAME, null, null);
-            if (invokeSuicide == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw RInternalError.shouldNotReachHere("Cannot find " + SYMBOL_NAME + " symbol which should be declared in Rembedded.c");
-            }
-            invokeCallNode.dispatch(new NativeCallInfo(SYMBOL_NAME, invokeSuicide, null), frame.getArguments());
+            suicideNode.execute((String) frame.getArguments()[0]);
             return null;
         }
     }
