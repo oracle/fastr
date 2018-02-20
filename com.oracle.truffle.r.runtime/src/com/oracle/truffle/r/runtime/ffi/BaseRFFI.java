@@ -109,26 +109,6 @@ public final class BaseRFFI {
         }
     }
 
-    public static final class MkdirNode extends NativeCallNode {
-
-        private MkdirNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.mkdir));
-        }
-
-        /**
-         * Create directory with given mode. Exception is thrown on error.
-         */
-        public void execute(String dir, int mode) throws IOException {
-            if ((int) call(dir, mode) != 0) {
-                throw new IOException("mkdir " + dir + " failed");
-            }
-        }
-
-        public static MkdirNode create() {
-            return RFFIFactory.getBaseRFFI().createMkdirNode();
-        }
-    }
-
     public static final class ReadlinkNode extends NativeCallNode {
         private static final int EINVAL = 22;
 
@@ -189,24 +169,6 @@ public final class BaseRFFI {
 
         public static MkdtempNode create() {
             return RFFIFactory.getBaseRFFI().createMkdtempNode();
-        }
-    }
-
-    public static final class ChmodNode extends NativeCallNode {
-
-        private ChmodNode(DownCallNodeFactory parent) {
-            super(parent.createDownCallNode(NativeFunction.chmod));
-        }
-
-        /**
-         * Change the file mode of {@code path}.
-         */
-        public int execute(String path, int mode) {
-            return (int) call(path, mode);
-        }
-
-        public static ChmodNode create() {
-            return RFFIFactory.getBaseRFFI().createChmodNode();
         }
     }
 
@@ -317,20 +279,12 @@ public final class BaseRFFI {
         return new SetwdNode(downCallNodeFactory);
     }
 
-    public MkdirNode createMkdirNode() {
-        return new MkdirNode(downCallNodeFactory);
-    }
-
     public ReadlinkNode createReadlinkNode() {
         return new ReadlinkNode(downCallNodeFactory);
     }
 
     public MkdtempNode createMkdtempNode() {
         return new MkdtempNode(downCallNodeFactory);
-    }
-
-    public ChmodNode createChmodNode() {
-        return new ChmodNode(downCallNodeFactory);
     }
 
     public StrtolNode createStrtolNode() {

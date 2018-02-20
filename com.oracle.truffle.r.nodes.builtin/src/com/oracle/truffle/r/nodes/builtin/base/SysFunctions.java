@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,6 +53,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -300,8 +301,6 @@ public class SysFunctions {
             casts.arg("use_umask").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
-        @Child private BaseRFFI.ChmodNode chmodNode = BaseRFFI.ChmodNode.create();
-
         @Specialization
         @TruffleBoundary
         protected RLogicalVector sysChmod(RAbstractStringVector pathVec, RAbstractIntVector octmode, @SuppressWarnings("unused") boolean useUmask) {
@@ -311,7 +310,7 @@ public class SysFunctions {
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }
-                int result = chmodNode.execute(path, octmode.getDataAt(i % octmode.getLength()));
+                int result = FileSystemUtils.chmod(path, octmode.getDataAt(i % octmode.getLength()));
                 data[i] = RRuntime.asLogical(result == 0);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
