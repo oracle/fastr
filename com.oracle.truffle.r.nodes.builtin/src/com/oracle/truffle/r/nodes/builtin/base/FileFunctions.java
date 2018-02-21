@@ -63,6 +63,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClass
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -81,7 +82,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 // Much of this code was influences/transcribed from GnuR src/main/platform.c
 
@@ -1210,8 +1210,6 @@ public class FileFunctions {
             casts.arg("mode").asIntegerVector().findFirst().mapIf(intNA(), constant(0777));
         }
 
-        @Child private BaseRFFI.MkdirNode mkdirNode = BaseRFFI.MkdirNode.create();
-
         @Specialization
         @TruffleBoundary
         protected byte dirCreate(String pathIn, boolean showWarnings, boolean recursive, int octMode) {
@@ -1247,7 +1245,7 @@ public class FileFunctions {
 
         private boolean mkdir(String path, boolean showWarnings, int mode) {
             try {
-                mkdirNode.execute(path, mode);
+                FileSystemUtils.mkdir(path, mode);
                 return true;
             } catch (IOException ex) {
                 if (showWarnings) {

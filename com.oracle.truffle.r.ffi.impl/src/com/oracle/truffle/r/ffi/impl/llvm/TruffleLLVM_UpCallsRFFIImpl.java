@@ -29,7 +29,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
-import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -46,6 +45,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
 /**
  * (Incomplete) Variant of {@link JavaUpCallsRFFIImpl} for Truffle LLVM.

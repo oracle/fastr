@@ -26,60 +26,96 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Map;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeInterface;
+import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.r.runtime.ffi.base.ESoftVersionResult;
+import com.oracle.truffle.r.runtime.ffi.base.GlobResult;
+import com.oracle.truffle.r.runtime.ffi.base.ReadlinkResult;
+import com.oracle.truffle.r.runtime.ffi.base.StrtolResult;
+import com.oracle.truffle.r.runtime.ffi.base.UnameResult;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
 /**
  * A statically typed interface to exactly those native functions required by the R {@code base}
  * package, because the functionality is not provided by the JDK. These methods do not necessarily
  * map 1-1 to a native function, they may involve the invocation of several native functions.
  */
-public interface BaseRFFI {
+public final class BaseRFFI {
 
-    interface GetpidNode extends NodeInterface {
-        int execute();
+    private final DownCallNodeFactory downCallNodeFactory;
 
-        static GetpidNode create() {
+    public BaseRFFI(DownCallNodeFactory downCallNodeFactory) {
+        this.downCallNodeFactory = downCallNodeFactory;
+    }
+
+    public static final class GetpidNode extends NativeCallNode {
+
+        private GetpidNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.getpid));
+        }
+
+        public int execute() {
+            return (int) call();
+        }
+
+        public static GetpidNode create() {
             return RFFIFactory.getBaseRFFI().createGetpidNode();
         }
     }
 
-    interface GetwdNode extends NodeInterface {
+    public static final class GetwdNode extends NativeCallNode {
+        private static final int BUFFER_LEN = 4096;
+
+        private GetwdNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.getcwd));
+        }
+
         /**
          * Returns the current working directory, in the face of calls to {@code setwd}.
          */
-        String execute();
+        public String execute() {
+            NativeCharArray nativeBuf = NativeCharArray.crateOutputBuffer(BUFFER_LEN);
+            int result = (int) call(nativeBuf, BUFFER_LEN);
+            if (result == 0) {
+                return null;
+            } else {
+                return nativeBuf.getStringFromOutputBuffer();
+            }
+        }
 
-        static GetwdNode create() {
+        public static GetwdNode create() {
             return RFFIFactory.getBaseRFFI().createGetwdNode();
         }
     }
 
-    interface SetwdNode extends NodeInterface {
+    public static final class SetwdNode extends NativeCallNode {
+
+        private SetwdNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.chdir));
+        }
+
         /**
          * Sets the current working directory to {@code dir}. (cf. Unix {@code chdir}).
          *
          * @return 0 if successful.
          */
-        int execute(String dir);
+        public int execute(String dir) {
+            return (int) call(dir);
+        }
 
-        static SetwdNode create() {
+        public static SetwdNode create() {
             return RFFIFactory.getBaseRFFI().createSetwdNode();
         }
     }
 
-    interface MkdirNode extends NodeInterface {
-        /**
-         * Create directory with given mode. Exception is thrown on error.
-         */
-        void execute(String dir, int mode) throws IOException;
+    public static final class ReadlinkNode extends NativeCallNode {
+        private static final int EINVAL = 22;
 
-        static MkdirNode create() {
-            return RFFIFactory.getBaseRFFI().createMkdirNode();
+        private ReadlinkNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.readlink));
         }
-    }
 
-    interface ReadlinkNode extends NodeInterface {
         /**
          * Try to convert a symbolic link to it's target.
          *
@@ -87,43 +123,75 @@ public interface BaseRFFI {
          * @return the target if {@code path} is a link else {@code null}
          * @throws IOException for any other error except "not a link"
          */
-        String execute(String path) throws IOException;
+        public String execute(String path) throws IOException {
+            ReadlinkResult data = new ReadlinkResult();
+            call(data, path);
+            if (data.getLink() == null) {
+                if (data.getErrno() == EINVAL) {
+                    return path;
+                } else {
+                    // some other error
+                    throw new IOException("readlink failed: " + data.getErrno());
+                }
+            }
+            return data.getLink();
+        }
 
-        static ReadlinkNode create() {
+        public static ReadlinkNode create() {
             return RFFIFactory.getBaseRFFI().createReadlinkNode();
         }
     }
 
-    interface MkdtempNode extends NodeInterface {
+    public static final class MkdtempNode extends NativeCallNode {
+
+        private MkdtempNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.mkdtemp));
+        }
+
         /**
          * Creates a temporary directory using {@code template} and return the resulting path or
          * {@code null} if error.
          */
-        String execute(String template);
+        @TruffleBoundary
+        public String execute(String template) {
+            /*
+             * Not only must the (C) string end in XXXXXX it must also be null-terminated. Since it
+             * is modified by mkdtemp we must make a copy.
+             */
+            NativeCharArray nativeZtbytes = new NativeCharArray(template);
+            int result = (int) call(nativeZtbytes);
+            if (result == 0) {
+                return null;
+            } else {
+                return nativeZtbytes.getString();
+            }
+        }
 
-        static MkdtempNode create() {
+        public static MkdtempNode create() {
             return RFFIFactory.getBaseRFFI().createMkdtempNode();
         }
     }
 
-    interface ChmodNode extends NodeInterface {
-        /**
-         * Change the file mode of {@code path}.
-         */
-        int execute(String path, int mode);
+    public static final class StrtolNode extends NativeCallNode {
 
-        static ChmodNode create() {
-            return RFFIFactory.getBaseRFFI().createChmodNode();
+        private StrtolNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.strtol));
         }
-    }
 
-    interface StrtolNode extends NodeInterface {
         /**
          * Convert string to long.
          */
-        long execute(String s, int base) throws IllegalArgumentException;
+        public long execute(String s, int base) throws IllegalArgumentException {
+            StrtolResult data = new StrtolResult();
+            call(data, s, base);
+            if (data.getErrno() != 0) {
+                throw new IllegalArgumentException("strtol failure");
+            } else {
+                return data.getResult();
+            }
+        }
 
-        static StrtolNode create() {
+        public static StrtolNode create() {
             return RFFIFactory.getBaseRFFI().createStrtolNode();
         }
     }
@@ -140,71 +208,105 @@ public interface BaseRFFI {
         String nodename();
     }
 
-    interface UnameNode extends NodeInterface {
+    public static final class UnameNode extends NativeCallNode {
+
+        private UnameNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.uname));
+        }
+
         /**
          * Return {@code utsname} info.
          */
-        UtsName execute();
+        public UtsName execute() {
+            UnameResult data = new UnameResult();
+            call(data);
+            return data;
+        }
 
-        static UnameNode create() {
+        public static UnameNode create() {
             return RFFIFactory.getBaseRFFI().createUnameNode();
         }
     }
 
-    interface GlobNode extends NodeInterface {
+    public static final class GlobNode extends NativeCallNode {
+
+        private GlobNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.glob));
+        }
+
         /**
          * Returns an array of pathnames that match {@code pattern} using the OS glob function. This
          * is done in native code because it is very hard to write in Java in the face of
          * {@code setwd}.
          */
-        ArrayList<String> glob(String pattern);
+        public ArrayList<String> glob(String pattern) {
+            GlobResult data = new GlobResult();
+            call(data, pattern);
+            return data.getPaths();
+        }
 
-        static GlobNode create() {
+        public static GlobNode create() {
             return RFFIFactory.getBaseRFFI().createGlobNode();
         }
     }
 
-    interface ESoftVersionNode extends NodeInterface {
-        Map<String, String> eSoftVersion();
+    public static final class ESoftVersionNode extends NativeCallNode {
 
-        static ESoftVersionNode create() {
+        private ESoftVersionNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.eSoftVersion));
+        }
+
+        public Map<String, String> eSoftVersion() {
+            ESoftVersionResult result = new ESoftVersionResult();
+            call(result);
+            return result.getVersions();
+        }
+
+        public static ESoftVersionNode create() {
             return RFFIFactory.getBaseRFFI().createESoftVersionNode();
         }
     }
 
-    /*
-     * The RFFI implementation influences exactly what subclass of the above nodes is created. Each
-     * implementation must therefore, implement these methods that are called by the associated
-     * "public static create()" methods above.
-     */
+    public GetpidNode createGetpidNode() {
+        return new GetpidNode(downCallNodeFactory);
+    }
 
-    GetpidNode createGetpidNode();
+    public GetwdNode createGetwdNode() {
+        return new GetwdNode(downCallNodeFactory);
+    }
 
-    GetwdNode createGetwdNode();
+    public SetwdNode createSetwdNode() {
+        return new SetwdNode(downCallNodeFactory);
+    }
 
-    SetwdNode createSetwdNode();
+    public ReadlinkNode createReadlinkNode() {
+        return new ReadlinkNode(downCallNodeFactory);
+    }
 
-    MkdirNode createMkdirNode();
+    public MkdtempNode createMkdtempNode() {
+        return new MkdtempNode(downCallNodeFactory);
+    }
 
-    ReadlinkNode createReadlinkNode();
+    public StrtolNode createStrtolNode() {
+        return new StrtolNode(downCallNodeFactory);
+    }
 
-    MkdtempNode createMkdtempNode();
+    public UnameNode createUnameNode() {
+        return new UnameNode(downCallNodeFactory);
+    }
 
-    ChmodNode createChmodNode();
+    public GlobNode createGlobNode() {
+        return new GlobNode(downCallNodeFactory);
+    }
 
-    StrtolNode createStrtolNode();
-
-    UnameNode createUnameNode();
-
-    GlobNode createGlobNode();
-
-    ESoftVersionNode createESoftVersionNode();
+    public ESoftVersionNode createESoftVersionNode() {
+        return new ESoftVersionNode(downCallNodeFactory);
+    }
 
     /*
      * Some functions are called from non-Truffle contexts, which requires a RootNode
      */
-
-    final class GetpidRootNode extends RFFIRootNode<GetpidNode> {
+    public static final class GetpidRootNode extends RFFIRootNode<GetpidNode> {
 
         private GetpidRootNode() {
             super(RFFIFactory.getBaseRFFI().createGetpidNode());
@@ -220,7 +322,7 @@ public interface BaseRFFI {
         }
     }
 
-    final class GetwdRootNode extends RFFIRootNode<GetwdNode> {
+    public static final class GetwdRootNode extends RFFIRootNode<GetwdNode> {
 
         private GetwdRootNode() {
             super(RFFIFactory.getBaseRFFI().createGetwdNode());
@@ -236,7 +338,7 @@ public interface BaseRFFI {
         }
     }
 
-    final class MkdtempRootNode extends RFFIRootNode<MkdtempNode> {
+    public static final class MkdtempRootNode extends RFFIRootNode<MkdtempNode> {
 
         private MkdtempRootNode() {
             super(RFFIFactory.getBaseRFFI().createMkdtempNode());
@@ -253,7 +355,7 @@ public interface BaseRFFI {
         }
     }
 
-    final class UnameRootNode extends RFFIRootNode<UnameNode> {
+    public static final class UnameRootNode extends RFFIRootNode<UnameNode> {
 
         private UnameRootNode() {
             super(RFFIFactory.getBaseRFFI().createUnameNode());

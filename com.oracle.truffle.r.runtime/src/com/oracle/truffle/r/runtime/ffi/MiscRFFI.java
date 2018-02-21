@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,50 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.nodes.NodeInterface;
-
 /**
  * Miscellaneous methods implemented in native code.
  *
  */
-public interface MiscRFFI {
-    interface ExactSumNode extends NodeInterface {
-        double execute(double[] values, boolean hasNa, boolean naRm);
+public final class MiscRFFI {
+    private final DownCallNodeFactory downCallNodeFactory;
 
-        static ExactSumNode create() {
+    public MiscRFFI(DownCallNodeFactory downCallNodeFactory) {
+        this.downCallNodeFactory = downCallNodeFactory;
+    }
+
+    public static final class ExactSumNode extends NativeCallNode {
+        private ExactSumNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.exactSumFunc));
+        }
+
+        public double execute(double[] values, boolean hasNa, boolean naRm) {
+            return (double) call(values, values.length, hasNa ? 1 : 0, naRm ? 1 : 0);
+        }
+
+        public static ExactSumNode create() {
             return RFFIFactory.getMiscRFFI().createExactSumNode();
         }
     }
 
-    interface DqrlsNode extends NodeInterface {
-        void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work);
+    public static final class DqrlsNode extends NativeCallNode {
+        private DqrlsNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.dqrls));
+        }
 
-        static DqrlsNode create() {
+        public void execute(double[] x, int n, int p, double[] y, int ny, double tol, double[] b, double[] rsd, double[] qty, int[] k, int[] jpvt, double[] qraux, double[] work) {
+            call(x, n, p, y, ny, tol, b, rsd, qty, k, jpvt, qraux, work);
+        }
+
+        public static DqrlsNode create() {
             return RFFIFactory.getMiscRFFI().createDqrlsNode();
         }
     }
 
-    ExactSumNode createExactSumNode();
+    public ExactSumNode createExactSumNode() {
+        return new ExactSumNode(downCallNodeFactory);
+    }
 
-    DqrlsNode createDqrlsNode();
+    public DqrlsNode createDqrlsNode() {
+        return new DqrlsNode(downCallNodeFactory);
+    }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.nfi;
+package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
-import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
-import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
-public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
-    @Child private DownCallNode setFlagNode = TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode(NativeFunction.set_exception_flag);
+/**
+ * Convenient base class for nodes invoking
+ * {@link com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode}.
+ */
+public class NativeCallNode extends Node {
+    @Child private DownCallNodeFactory.DownCallNode downCallNode;
 
-    @Override
-    @TruffleBoundary
-    public void execute(Throwable originalEx) {
-        setFlagNode.call();
-        RuntimeException ex;
-        if (originalEx instanceof RuntimeException) {
-            ex = (RuntimeException) originalEx;
-        } else {
-            ex = new RuntimeException(originalEx);
-        }
-        TruffleNFI_Context.getInstance().setLastUpCallException(ex);
+    public NativeCallNode(DownCallNodeFactory.DownCallNode downCallNode) {
+        this.downCallNode = downCallNode;
+    }
+
+    protected Object call(Object... args) {
+        return downCallNode.call(args);
     }
 }

@@ -20,27 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.nfi;
+package com.oracle.truffle.r.runtime.ffi.interop.pcre;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
-import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
-import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
+import com.oracle.truffle.r.runtime.ffi.PCRERFFI.Result;
 
-public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
-    @Child private DownCallNode setFlagNode = TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode(NativeFunction.set_exception_flag);
+public final class CompileResult implements RTruffleObject {
+    private PCRERFFI.Result result;
+
+    public void set(long pcreResult, String errorMessage, int errOffset) {
+        result = new Result(pcreResult, errorMessage, errOffset);
+    }
+
+    public PCRERFFI.Result getResult() {
+        return result;
+    }
 
     @Override
-    @TruffleBoundary
-    public void execute(Throwable originalEx) {
-        setFlagNode.call();
-        RuntimeException ex;
-        if (originalEx instanceof RuntimeException) {
-            ex = (RuntimeException) originalEx;
-        } else {
-            ex = new RuntimeException(originalEx);
-        }
-        TruffleNFI_Context.getInstance().setLastUpCallException(ex);
+    public ForeignAccess getForeignAccess() {
+        return CompileResultMRForeign.ACCESS;
     }
 }

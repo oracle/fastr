@@ -52,7 +52,7 @@ public class CharSXPWrapperMR {
 
     @Resolve(message = "HAS_SIZE")
     public abstract static class NCAHasSizeNode extends Node {
-        protected boolean access(@SuppressWarnings("unused") NativeCharArray receiver) {
+        protected boolean access(@SuppressWarnings("unused") Object receiver) {
             return true;
         }
     }

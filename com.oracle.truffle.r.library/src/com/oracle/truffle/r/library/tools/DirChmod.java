@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,11 +27,11 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
@@ -45,8 +45,6 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
         casts.arg(0, "dir").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         casts.arg(1).asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
-
-    @Child private BaseRFFI.ChmodNode chmodNode = BaseRFFI.ChmodNode.create();
 
     @Specialization
     @TruffleBoundary
@@ -69,7 +67,7 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
                 int elementMode = Utils.intFilePermissions(pfa.permissions());
                 int newMode = Files.isDirectory(element) ? elementMode | dirMask : elementMode | fileMask;
                 // System.out.printf("path %s: old %o, new %o%n", element, elementMode, newMode);
-                chmodNode.execute(element.toString(), newMode);
+                FileSystemUtils.chmod(element.toString(), newMode);
             }
         } catch (IOException ex) {
             // ignore

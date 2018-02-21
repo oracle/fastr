@@ -24,43 +24,77 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeRawArray;
 
 /**
  * zip compression/uncompression.
  */
-public interface ZipRFFI {
+public final class ZipRFFI {
 
-    interface CompressNode extends NodeInterface {
+    private final DownCallNodeFactory downCallNodeFactory;
+
+    public ZipRFFI(DownCallNodeFactory downCallNodeFactory) {
+        this.downCallNodeFactory = downCallNodeFactory;
+    }
+
+    public static final class CompressNode extends NativeCallNode {
+        private CompressNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.compress));
+        }
+
         /**
          * compress {@code source} into {@code dest}.
          *
          * @return standard return code (0 ok)
          */
-        int execute(byte[] dest, byte[] source);
+        public int execute(byte[] dest, byte[] source) {
+            NativeRawArray nativeDest = new NativeRawArray(dest);
+            NativeRawArray nativeSource = new NativeRawArray(source);
+            try {
+                return (int) call(nativeDest, dest.length, nativeSource, source.length);
+            } finally {
+                nativeDest.getValue();
+            }
+        }
 
-        static CompressNode create() {
+        public static CompressNode create() {
             return RFFIFactory.getZipRFFI().createCompressNode();
         }
     }
 
-    interface UncompressNode extends NodeInterface {
+    public static final class UncompressNode extends NativeCallNode {
+        private UncompressNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.uncompress));
+        }
+
         /**
          * uncompress {@code source} into {@code dest}.
          *
          * @return standard return code (0 ok)
          */
-        int execute(byte[] dest, byte[] source);
+        public int execute(byte[] dest, byte[] source) {
+            NativeRawArray nativeDest = new NativeRawArray(dest);
+            NativeRawArray nativeSource = new NativeRawArray(source);
+            try {
+                return (int) call(nativeDest, dest.length, nativeSource, source.length);
+            } finally {
+                nativeDest.getValue();
+            }
+        }
     }
 
-    CompressNode createCompressNode();
+    public CompressNode createCompressNode() {
+        return new CompressNode(downCallNodeFactory);
+    }
 
-    UncompressNode createUncompressNode();
+    public UncompressNode createUncompressNode() {
+        return new UncompressNode(downCallNodeFactory);
+    }
 
     // RootNodes for calling when not in Truffle context
 
-    final class CompressRootNode extends RFFIRootNode<CompressNode> {
+    public static final class CompressRootNode extends RFFIRootNode<CompressNode> {
         protected CompressRootNode(CompressNode wrapped) {
             super(wrapped);
         }
@@ -76,7 +110,7 @@ public interface ZipRFFI {
         }
     }
 
-    final class UncompressRootNode extends RFFIRootNode<UncompressNode> {
+    public static final class UncompressRootNode extends RFFIRootNode<UncompressNode> {
         protected UncompressRootNode(UncompressNode wrapped) {
             super(wrapped);
         }

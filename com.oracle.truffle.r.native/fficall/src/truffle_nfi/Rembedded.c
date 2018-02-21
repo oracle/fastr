@@ -420,7 +420,7 @@ void uR_ProcessEvents(void) {
 }
 
 void uR_CleanUp(SA_TYPE x, int y, int z) {
-    return ((call_R_CleanUp) callbacks[R_CleanUp_x])(x, y, z);
+    ((call_R_CleanUp) callbacks[R_CleanUp_x])(x, y, z);
 }
 
 void (*ptr_R_Suicide)(const char *) = uR_Suicide;
@@ -503,22 +503,15 @@ void R_runHandlers(InputHandler *handlers, fd_set *mask) {
 
 // -----------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------
-// Downcalls from Java. We invoke these functions via .Call interface so that the callbacks
-// variable gets properly initialized and in general the R API is available. These functions
-// delegate to user provided C routines that may want to access the R API.
-// NOTE: those two functions are looked up by name!
+// Downcalls from Java. We invoke these functions via REmbedRFFI
 
-SEXP invokeCleanUp(SEXP x, SEXP y, SEXP z) {
-    ptr_R_CleanUp(Rf_asInteger(x), Rf_asInteger(y), Rf_asInteger(z));
-    return R_NilValue;
+void rembedded_cleanup(int x, int y, int z) {
+    ptr_R_CleanUp(x, y, z);
 }
 
-SEXP invokeSuicide(SEXP msg) {
-    ptr_R_Suicide(R_CHAR(STRING_ELT(msg, 0)));
-    return R_NilValue;
+void rembedded_suicide(char* msg) {
+    ptr_R_Suicide(msg);
 }
-
-// TODO: these 3 are not yet invoked via .Call
 
 void rembedded_write_console(char *cbuf, int len) {
     writeConsoleImpl(cbuf, len, 0);
@@ -529,7 +522,7 @@ void rembedded_write_err_console(char *cbuf, int len) {
 }
 
 char* rembedded_read_console(const char* prompt) {
-    char* cbuf = malloc(sizeof(char) * 1024);
+    unsigned char* cbuf = malloc(sizeof(char) * 1024);
     int n = (*ptr_R_ReadConsole)(prompt, cbuf, 1024, 0);
     return cbuf;
 }

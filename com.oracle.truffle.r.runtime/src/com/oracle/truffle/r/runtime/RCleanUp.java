@@ -27,6 +27,8 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.RFindSymbolNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.EmbeddedCleanUpNode;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState;
 
@@ -44,8 +46,7 @@ public abstract class RCleanUp {
     public static void cleanUp(RContext ctx, SA_TYPE saveType, int status, boolean runLast) {
         if (RInterfaceCallbacks.R_CleanUp.isOverridden()) {
             RootCallTarget invokeUserCleanup = ctx.getOrCreateCachedCallTarget(UserDefinedCleanUpRootNode.class, () -> new UserDefinedCleanUpRootNode(ctx).getCallTarget());
-            Object[] args = new Object[]{asVector(saveType.ordinal()), asVector(status), asVector(runLast ? 1 : 0)};
-            invokeUserCleanup.call(args);
+            invokeUserCleanup.call(saveType.ordinal(), status, runLast ? 1 : 0);
         } else {
             stdCleanUp(saveType, status, runLast);
         }
@@ -134,29 +135,18 @@ public abstract class RCleanUp {
         RContext.getEngine().checkAndRunStartupShutdownFunction(".Last.sys");
     }
 
-    private static RIntVector asVector(int value) {
-        return RDataFactory.createIntVectorFromScalar(value);
-    }
-
     private static final class UserDefinedCleanUpRootNode extends RootNode {
         protected UserDefinedCleanUpRootNode(RContext ctx) {
             super(null);
-            invokeCallNode = ctx.getRFFI().callRFFI.createInvokeCallNode();
+            cleanUpNode = ctx.getRFFI().embedRFFI.createEmbeddedCleanUpNode();
             Truffle.getRuntime().createCallTarget(this);
         }
 
-        private static final String SYMBOL_NAME = "invokeCleanUp";
-        @Child InvokeCallNode invokeCallNode;
-        @Child RFindSymbolNode findSymbolNode = RFindSymbolNode.create();
+        @Child private EmbeddedCleanUpNode cleanUpNode;
 
         @Override
         public Object execute(VirtualFrame frame) {
-            SymbolHandle invokeCleanUp = findSymbolNode.execute(SYMBOL_NAME, null, null);
-            if (invokeCleanUp == null) {
-                CompilerDirectives.transferToInterpreter();
-                throw RInternalError.shouldNotReachHere("Cannot find " + SYMBOL_NAME + " symbol which should be declared in Rembedded.c");
-            }
-            invokeCallNode.dispatch(new NativeCallInfo(SYMBOL_NAME, invokeCleanUp, null), frame.getArguments());
+            cleanUpNode.execute((int) frame.getArguments()[0], (int) frame.getArguments()[1], (int) frame.getArguments()[2]);
             return null;
         }
     }

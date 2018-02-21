@@ -185,13 +185,6 @@ public class TruffleNFI_Call implements CallRFFI {
         if (traceEnabled()) {
             traceDownCallReturn(name, result);
         }
-        TruffleNFI_Context nfiCtx = (TruffleNFI_Context) RContext.getInstance().getStateRFFI();
-        RuntimeException lastUpCallEx = nfiCtx.getLastUpCallException();
-        if (lastUpCallEx != null) {
-            CompilerDirectives.transferToInterpreter();
-            nfiCtx.setLastUpCallException(null);
-            throw lastUpCallEx;
-        }
     }
 
     @Override

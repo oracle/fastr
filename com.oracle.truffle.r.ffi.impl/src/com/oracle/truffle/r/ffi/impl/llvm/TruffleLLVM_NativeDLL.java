@@ -33,12 +33,12 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativeCharArray;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.RFFIRootNode;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
 /**
  * Direct access to native {@code dlopen} for libraries for which no LLVM code is available.

@@ -39,8 +39,11 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.launcher.DelegatingConsoleHandler;
 import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.ReadConsoleNode;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteConsoleBaseNode;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteConsoleNode;
+import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteErrConsoleNode;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
@@ -195,7 +198,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     private CallTarget getReadLineCallTarget() {
         if (readLineCallTarget == null) {
             readLineCallTarget = Truffle.getRuntime().createCallTarget(new RootNode(null) {
-                @Child private ReadConsoleNode readConsoleNode = RFFIFactory.getREmbedRFFI().createReadConsoleNode();
+                @Child private ReadConsoleNode readConsoleNode = ReadConsoleNode.create();
 
                 @Override
                 public Object execute(VirtualFrame frame) {
@@ -208,14 +211,14 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
 
     private CallTarget getWriteCallTarget() {
         if (writeCallTarget == null) {
-            writeCallTarget = createWriteCallTarget(RFFIFactory.getREmbedRFFI().createWriteConsoleNode());
+            writeCallTarget = createWriteCallTarget(WriteConsoleNode.create());
         }
         return writeCallTarget;
     }
 
     private CallTarget getWriteErrCallTarget() {
         if (writeErrCallTarget == null) {
-            writeErrCallTarget = createWriteCallTarget(RFFIFactory.getREmbedRFFI().createWriteErrConsoleNode());
+            writeErrCallTarget = createWriteCallTarget(WriteErrConsoleNode.create());
         }
         return writeErrCallTarget;
     }
