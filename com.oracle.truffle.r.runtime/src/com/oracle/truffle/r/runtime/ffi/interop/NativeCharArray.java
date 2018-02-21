@@ -58,6 +58,7 @@ public final class NativeCharArray extends NativeUInt8Array {
     /**
      * Finds the null terminator and creates the Java String accordingly.
      */
+    @TruffleBoundary
     public String getStringFromOutputBuffer() {
         assert !fakesNullTermination() : "create the buffer string via createOutputBuffer()";
         byte[] mbuf = getValue();

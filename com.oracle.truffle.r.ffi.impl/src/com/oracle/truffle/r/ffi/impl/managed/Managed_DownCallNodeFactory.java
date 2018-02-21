@@ -35,6 +35,7 @@ import java.util.List;
 import java.util.Set;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
@@ -140,6 +141,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
                 public CallTarget accessExecute(int argumentsLength) {
                     return Truffle.getRuntime().createCallTarget(new RootNode(null) {
                         @Override
+                        @TruffleBoundary
                         public Object execute(VirtualFrame frame) {
                             NativeCharArray templateBytes = (NativeCharArray) ForeignAccess.getArguments(frame).get(0);
                             String template = new String(templateBytes.getValue(), 0, templateBytes.getValue().length - 1);
@@ -191,6 +193,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
                 public CallTarget accessExecute(int argumentsLength) {
                     return Truffle.getRuntime().createCallTarget(new RootNode(null) {
                         @Override
+                        @TruffleBoundary
                         public Object execute(VirtualFrame frame) {
                             NativeCharArray buffer = (NativeCharArray) ForeignAccess.getArguments(frame).get(0);
                             byte[] bytes = Paths.get(".").toAbsolutePath().normalize().toString().getBytes();
