@@ -344,7 +344,11 @@ suite = {
 
     "FASTR" : {
       "description" : "class files for compiling against FastR in a separate suite",
-      "dependencies" : ["com.oracle.truffle.r.engine", "com.oracle.truffle.r.launcher", "com.oracle.truffle.r.ffi.impl"],
+      "dependencies" : [
+        "com.oracle.truffle.r.engine",
+        "com.oracle.truffle.r.launcher",
+        "com.oracle.truffle.r.ffi.impl"
+      ],
       "mainClass" : "com.oracle.truffle.r.launcher.RCommand",
       "exclude" : [
         "truffle:JLINE",

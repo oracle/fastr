@@ -23,7 +23,7 @@
 import mx
 import mx_fastr
 import os, string, shutil
-from os.path import join
+from os.path import join, basename, isfile
 
 class FastRProjectAdapter(mx.ArchivableProject):
     def __init__(self, suite, name, deps, workingSets, theLicense, **args):
@@ -104,8 +104,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
         copyrights_dir = join(fastr_dir, 'mx.fastr', 'copyrights')
         with open(join(output_dir, 'COPYRIGHT'), 'w') as outfile:
             for copyright_file in os.listdir(copyrights_dir):
-                basename = os.path.basename(copyright_file)
-                if basename.endswith('copyright.star'):
+                if basename(copyright_file).endswith('copyright.star'):
                     with open(join(copyrights_dir, copyright_file)) as infile:
                         data = infile.read()
                         outfile.write(data)
@@ -145,32 +144,16 @@ R_HOME_DIR="$( dirname "$r_bin" )"
         jars_dir = join(bin_dir, 'fastr_jars')
         if not os.path.exists(jars_dir):
             os.mkdir(jars_dir)
-        fastr_classfiles = dict()
 
-        # visitor to collect/copy all the classes/jar files needed by the launchers
-        def dep_visit(dep, edge):
-            if isinstance(dep, mx.JARDistribution):
-                shutil.copy(join(dep.suite.dir, dep.path), jars_dir)
-            elif isinstance(dep, mx.Library):
-                if not dep.name.lower() == 'jdk_tools':
-                    jar_name = dep.name.lower() + '.jar'
-                    shutil.copyfile(join(dep.suite.dir, dep.path), join(jars_dir, jar_name))
-            elif isinstance(dep, mx.JavaProject):
-                if 'com.oracle.truffle.r' in dep.name:
-                    classfiles_dir = dep.output_dir()
-                    for root, _, classfiles in os.walk(classfiles_dir):
-                        for classfile in classfiles:
-                            fastr_classfiles[os.path.relpath(join(root, classfile), classfiles_dir)] = join(root, classfile)
-
-        self.subject.walk_deps(visit=dep_visit)
-
-        # create the fastr.jar file
-        with mx.Archiver(join(jars_dir, 'fastr.jar')) as arc:
-            arc.zf.writestr("META-INF/MANIFEST.MF", "Manifest-Version: 1.0\n")
-            for arcname, path in fastr_classfiles.iteritems():
-                with open(path, 'r') as f:
-                    contents = f.read()
-                arc.zf.writestr(arcname, contents)
+        # Copy all the jar files needed by the launchers
+        for e in mx.classpath_entries('FASTR'):
+            source_path = e.classpath_repr()
+            if mx.is_cache_path(source_path):
+                target_file_name = e.name.lower().replace('_', '-') + '.jar'
+            else:
+                target_file_name = basename(source_path)
+            assert isfile(source_path)
+            shutil.copy(source_path, join(jars_dir, target_file_name))
 
         # create the classpath string
         classpath = []
