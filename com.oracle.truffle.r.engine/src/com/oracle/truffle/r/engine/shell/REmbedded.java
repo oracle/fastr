@@ -89,8 +89,9 @@ public class REmbedded {
 
         if (initMainLoop) {
             context.enter();
-            RContext.getInstance().completeEmbeddedInitialization();
-            // TODO: push callbacks
+            RContext ctx = RContext.getInstance();
+            ctx.completeEmbeddedInitialization();
+            ctx.getRFFI().initializeEmbedded(ctx);
             // stay in the context TODO should we?
         }
     }
@@ -129,7 +130,9 @@ public class REmbedded {
      */
     private static void runRmainloop() {
         context.enter();
-        RContext.getInstance().completeEmbeddedInitialization();
+        RContext ctx = RContext.getInstance();
+        ctx.completeEmbeddedInitialization();
+        ctx.getRFFI().initializeEmbedded(ctx);
         int status = RCommand.readEvalPrint(context, consoleHandler);
         context.leave();
         context.close();
