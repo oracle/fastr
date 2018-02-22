@@ -257,6 +257,16 @@ suite = {
       "jacoco" : "include",
     },
 
+    "com.oracle.truffle.r.ffi.codegen" : {
+      "sourceDirs" : ["src"],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "dependencies" : [
+        "com.oracle.truffle.r.runtime"
+      ],
+      "javaCompliance" : "1.8",
+      "workingSets" : "FastR",
+    },
+
     "com.oracle.truffle.r.ffi.processor" : {
       "sourceDirs" : ["src"],
       "checkstyle" : "com.oracle.truffle.r.runtime",

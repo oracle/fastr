@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -78,6 +79,7 @@ public class NativeCharArrayMR {
     @Resolve(message = "EXECUTE")
     public abstract static class NCAToStringNode extends Node {
 
+        @TruffleBoundary
         protected java.lang.Object access(NativeCharArray receiver, @SuppressWarnings("unused") Object[] arguments) {
             return new String(receiver.getValue());
         }
