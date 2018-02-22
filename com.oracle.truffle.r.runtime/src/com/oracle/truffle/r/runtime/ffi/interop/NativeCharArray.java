@@ -69,6 +69,7 @@ public final class NativeCharArray extends NativeUInt8Array {
         return new String(mbuf, 0, i);
     }
 
+    @TruffleBoundary
     public String getString() {
         byte[] val = getValue();
         return new String(val, 0, fakesNullTermination() ? val.length : val.length - 1);
