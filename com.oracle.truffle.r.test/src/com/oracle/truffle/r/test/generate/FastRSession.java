@@ -134,7 +134,7 @@ public final class FastRSession implements RSession {
         ChildContextInfo ctx = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
         RContext.childInfo = ctx;
 
-        return Context.newBuilder("R").engine(mainEngine).build();
+        return Context.newBuilder("R", "llvm").engine(mainEngine).build();
     }
 
     private FastRSession() {
@@ -154,7 +154,7 @@ public final class FastRSession implements RSession {
             ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
             RContext.childInfo = info;
             mainEngine = Engine.newBuilder().in(input).out(output).err(output).build();
-            mainContext = Context.newBuilder("R").engine(mainEngine).build();
+            mainContext = Context.newBuilder("R", "llvm").engine(mainEngine).build();
             mainRContext = mainContext.eval(GET_CONTEXT).asHostObject();
         } finally {
             try {

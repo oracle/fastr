@@ -31,7 +31,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -234,18 +233,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public Object R_getClassDef(String clazz) {
-        String name = "getClassDef";
-        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
-        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
+    public Object R_getClassDef(Object clazz) {
+        throw implementedAsNode();
     }
 
     @Override
     @TruffleBoundary
-    public Object R_do_MAKE_CLASS(String clazz) {
-        String name = "getClass";
-        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
-        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
+    public Object R_do_MAKE_CLASS(Object clazz) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1517,48 +1512,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         }
     }
 
-    private static HashMap<String, Integer> name2typeTable;
-
-    static {
-        name2typeTable = new HashMap<>(26);
-        name2typeTable.put("NULL", SEXPTYPE.NILSXP.code);
-        /* real types */
-        name2typeTable.put("symbol", SEXPTYPE.SYMSXP.code);
-        name2typeTable.put("pairlist", SEXPTYPE.LISTSXP.code);
-        name2typeTable.put("closure", SEXPTYPE.CLOSXP.code);
-        name2typeTable.put("environment", SEXPTYPE.ENVSXP.code);
-        name2typeTable.put("promise", SEXPTYPE.PROMSXP.code);
-        name2typeTable.put("language", SEXPTYPE.LANGSXP.code);
-        name2typeTable.put("special", SEXPTYPE.SPECIALSXP.code);
-        name2typeTable.put("builtin", SEXPTYPE.BUILTINSXP.code);
-        name2typeTable.put("char", SEXPTYPE.CHARSXP.code);
-        name2typeTable.put("logical", SEXPTYPE.LGLSXP.code);
-        name2typeTable.put("integer", SEXPTYPE.INTSXP.code);
-        name2typeTable.put("double", SEXPTYPE.REALSXP.code);
-        /*-  "real", for R <= 0.61.x */
-        name2typeTable.put("complex", SEXPTYPE.CPLXSXP.code);
-        name2typeTable.put("character", SEXPTYPE.STRSXP.code);
-        name2typeTable.put("...", SEXPTYPE.DOTSXP.code);
-        name2typeTable.put("any", SEXPTYPE.ANYSXP.code);
-        name2typeTable.put("expression", SEXPTYPE.EXPRSXP.code);
-        name2typeTable.put("list", SEXPTYPE.VECSXP.code);
-        name2typeTable.put("externalptr", SEXPTYPE.EXTPTRSXP.code);
-        name2typeTable.put("bytecode", SEXPTYPE.BCODESXP.code);
-        name2typeTable.put("weakref", SEXPTYPE.WEAKREFSXP.code);
-        name2typeTable.put("raw", SEXPTYPE.RAWSXP.code);
-        name2typeTable.put("S4", SEXPTYPE.S4SXP.code);
-        name2typeTable.put("numeric", SEXPTYPE.REALSXP.code);
-        name2typeTable.put("name", SEXPTYPE.SYMSXP.code);
-    }
-
     @Override
     @TruffleBoundary
-    public int Rf_str2type(String name) {
-        if (name == null) {
-            return -1;
-        }
-        Integer result = name2typeTable.get(name);
-        return result != null ? result : -1;
+    public int Rf_str2type(Object name) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1869,100 +1826,101 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 }
             });
         }
-    }
 
-    @MessageResolution(receiverType = VectorWrapper.class)
-    public static class VectorWrapperMR {
+        @MessageResolution(receiverType = VectorWrapper.class)
+        public static class VectorWrapperMR {
 
-        @Resolve(message = "IS_POINTER")
-        public abstract static class IntVectorWrapperNativeIsPointerNode extends Node {
-            protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
-                return false;
-            }
-        }
-
-        @Resolve(message = "TO_NATIVE")
-        public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
-            protected Object access(VectorWrapper receiver) {
-                return new VectorWrapperNativePointer(receiver.vector);
-            }
-        }
-
-        @Resolve(message = "HAS_SIZE")
-        public abstract static class VectorWrapperHasSizeNode extends Node {
-            protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
-                return true;
-            }
-        }
-
-        @Resolve(message = "GET_SIZE")
-        public abstract static class VectorWrapperGetSizeNode extends Node {
-            @Child private Node getSizeMsg = Message.GET_SIZE.createNode();
-
-            protected Object access(VectorWrapper receiver) {
-                try {
-                    return ForeignAccess.sendGetSize(getSizeMsg, receiver.vector);
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere(e);
+            @Resolve(message = "IS_POINTER")
+            public abstract static class IntVectorWrapperNativeIsPointerNode extends Node {
+                protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
+                    return false;
                 }
             }
-        }
 
-        @Resolve(message = "READ")
-        abstract static class VectorWrapperReadNode extends Node {
-            @Child private Node readMsg = Message.READ.createNode();
-
-            public Object access(VectorWrapper receiver, Object index) {
-                try {
-                    return ForeignAccess.sendRead(readMsg, receiver.vector, index);
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                    throw RInternalError.shouldNotReachHere(e);
+            @Resolve(message = "TO_NATIVE")
+            public abstract static class IntVectorWrapperNativeAsPointerNode extends Node {
+                protected Object access(VectorWrapper receiver) {
+                    return new VectorWrapperNativePointer(receiver.vector);
                 }
             }
-        }
 
-        @Resolve(message = "WRITE")
-        abstract static class VectorWrapperWriteNode extends Node {
-            @Child private Node writeMsg = Message.WRITE.createNode();
-
-            public Object access(VectorWrapper receiver, Object index, Object value) {
-                try {
-                    return ForeignAccess.sendWrite(writeMsg, receiver.vector, index, value);
-                } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException e) {
-                    throw RInternalError.shouldNotReachHere(e);
+            @Resolve(message = "HAS_SIZE")
+            public abstract static class VectorWrapperHasSizeNode extends Node {
+                protected Object access(@SuppressWarnings("unused") VectorWrapper receiver) {
+                    return true;
                 }
             }
-        }
 
-        @Resolve(message = "IS_EXECUTABLE")
-        abstract static class VectorWrapperIsExecutableNode extends Node {
-            @Child private Node isExecMsg = Message.IS_EXECUTABLE.createNode();
+            @Resolve(message = "GET_SIZE")
+            public abstract static class VectorWrapperGetSizeNode extends Node {
+                @Child private Node getSizeMsg = Message.GET_SIZE.createNode();
 
-            public Object access(VectorWrapper receiver) {
-                return ForeignAccess.sendIsExecutable(isExecMsg, receiver.vector);
-            }
-        }
-
-        @Resolve(message = "EXECUTE")
-        abstract static class VectorWrapperExecuteNode extends Node {
-            @Child private Node execMsg = Message.createExecute(0).createNode();
-
-            protected Object access(VectorWrapper receiver, Object[] arguments) {
-                try {
-                    // Currently, there is only one "executable" object, which is CharSXPWrapper.
-                    // See CharSXPWrapperMR for the EXECUTABLE message handler.
-                    assert arguments.length == 0 && receiver.vector instanceof CharSXPWrapper;
-                    return ForeignAccess.sendExecute(execMsg, receiver.vector);
-                } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
-                    throw RInternalError.shouldNotReachHere(e);
+                protected Object access(VectorWrapper receiver) {
+                    try {
+                        return ForeignAccess.sendGetSize(getSizeMsg, receiver.vector);
+                    } catch (UnsupportedMessageException e) {
+                        throw RInternalError.shouldNotReachHere(e);
+                    }
                 }
             }
-        }
 
-        @CanResolve
-        public abstract static class VectorWrapperCheck extends Node {
-            protected static boolean test(TruffleObject receiver) {
-                return receiver instanceof VectorWrapper;
+            @Resolve(message = "READ")
+            abstract static class VectorWrapperReadNode extends Node {
+                @Child private Node readMsg = Message.READ.createNode();
+
+                public Object access(VectorWrapper receiver, Object index) {
+                    try {
+                        return ForeignAccess.sendRead(readMsg, receiver.vector, index);
+                    } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                        throw RInternalError.shouldNotReachHere(e);
+                    }
+                }
+            }
+
+            @Resolve(message = "WRITE")
+            abstract static class VectorWrapperWriteNode extends Node {
+                @Child private Node writeMsg = Message.WRITE.createNode();
+
+                public Object access(VectorWrapper receiver, Object index, Object value) {
+                    try {
+                        return ForeignAccess.sendWrite(writeMsg, receiver.vector, index, value);
+                    } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException e) {
+                        throw RInternalError.shouldNotReachHere(e);
+                    }
+                }
+            }
+
+            @Resolve(message = "IS_EXECUTABLE")
+            abstract static class VectorWrapperIsExecutableNode extends Node {
+                @Child private Node isExecMsg = Message.IS_EXECUTABLE.createNode();
+
+                public Object access(VectorWrapper receiver) {
+                    return ForeignAccess.sendIsExecutable(isExecMsg, receiver.vector);
+                }
+            }
+
+            @Resolve(message = "EXECUTE")
+            abstract static class VectorWrapperExecuteNode extends Node {
+                @Child private Node execMsg = Message.createExecute(0).createNode();
+
+                protected Object access(VectorWrapper receiver, Object[] arguments) {
+                    try {
+                        // Currently, there is only one "executable" object, which is
+                        // CharSXPWrapper.
+                        // See CharSXPWrapperMR for the EXECUTABLE message handler.
+                        assert arguments.length == 0 && receiver.vector instanceof CharSXPWrapper;
+                        return ForeignAccess.sendExecute(execMsg, receiver.vector);
+                    } catch (UnsupportedMessageException | UnsupportedTypeException | ArityException e) {
+                        throw RInternalError.shouldNotReachHere(e);
+                    }
+                }
+            }
+
+            @CanResolve
+            public abstract static class VectorWrapperCheck extends Node {
+                protected static boolean test(TruffleObject receiver) {
+                    return receiver instanceof VectorWrapper;
+                }
             }
         }
     }
@@ -1973,6 +1931,20 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
         public VectorWrapper(TruffleObject vector) {
             this.vector = vector;
+            ((RObject) vector).setNativeWrapper(this);
+        }
+
+        static Object get(TruffleObject x) {
+            assert x instanceof RObject;
+            Object wrapper = ((RObject) x).getNativeWrapper();
+            if (wrapper != null) {
+                return wrapper;
+            } else {
+                wrapper = new VectorWrapper(x);
+                // Establish the 1-1 relationship between the object and its native wrapper
+                ((RObject) x).setNativeWrapper(wrapper);
+                return wrapper;
+            }
         }
 
         public TruffleObject getVector() {
@@ -1983,38 +1955,49 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         public ForeignAccess getForeignAccess() {
             return VectorWrapperMRForeign.ACCESS;
         }
+
+        @Override
+        public int hashCode() {
+            return vector.hashCode();
+        }
+
     }
 
     @Override
     public Object INTEGER(Object x) {
         // also handles LOGICAL
         assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
-        return new VectorWrapper(guaranteeVectorOrNull(x, RVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RVector.class));
     }
 
     @Override
     public Object LOGICAL(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RLogicalVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RLogicalVector.class));
     }
 
     @Override
     public Object REAL(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RDoubleVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RDoubleVector.class));
     }
 
     @Override
     public Object RAW(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RRawVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RRawVector.class));
     }
 
     @Override
     public Object COMPLEX(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RComplexVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RComplexVector.class));
     }
 
     @Override
     public Object R_CHAR(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, CharSXPWrapper.class));
+        TruffleObject xto = guaranteeVectorOrNull(x, CharSXPWrapper.class);
+        if (xto == RNull.instance) {
+            return xto;
+        }
+        CharSXPWrapper chw = (CharSXPWrapper) xto;
+        return VectorWrapper.get(chw);
     }
 
     @Override

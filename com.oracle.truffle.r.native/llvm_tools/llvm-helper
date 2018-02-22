@@ -69,19 +69,19 @@ function analyze_args() {
     case $1 in
       -o)
         shift
-	p=$1
-	f=`basename $p`
-	d=`dirname $p`
-	ext=${f##*.}
-	if [ $ext == 'so' ] || [ $ext == 'dylib' ]
-	then
-	  is_link=1
-	elif [ $ext == 'o' ]
-	then
-	  llvm_ir_file=${d}/${f%%.*}
-	  llvm_ir_file+=$llvm_file_ext
-	  llvm_args+="$llvm_ir_file "
-	fi
+		p=$1
+		f=`basename $p`
+		d=`dirname $p`
+		ext=${f##*.}
+		if [ $ext == 'so' ] || [ $ext == 'dylib' ]
+		then
+		  is_link=1
+		elif [ $ext == 'o' ]
+		then
+		  llvm_ir_file=${d}/${f%%.*}
+		  llvm_ir_file+=$llvm_file_ext
+		  llvm_args+="$llvm_ir_file "
+		fi
       ;;
      *)
      ;;
@@ -113,9 +113,10 @@ function get_llvm_tool() {
 
 
 function mem2reg_opt() {
-   llvm_tool="opt"
-   get_llvm_tool
-   runit ${llvm_tool_bin} -mem2reg $llvm_ir_file -o ${llvm_ir_file}.opt
+   #llvm_tool="opt"
+   #get_llvm_tool
+   #runit ${llvm_tool_bin} -mem2reg $llvm_ir_file -o ${llvm_ir_file}.opt
+   runit opt -mem2reg $llvm_ir_file -o ${llvm_ir_file}.opt
    rc=$?
    if [ $rc -eq 0 ]
    then
@@ -138,16 +139,19 @@ function create_bc_lib() {
     case $1 in
       -o)
         shift
-	lib=$1
+		lib=$1
+      ;;
+      -*)
+        # ignore options
       ;;
      *)
-        f=$1
+        f=$(basename $1)
      	ext=${f##*.}
-	if [ $ext == 'o' ]
-	then
-	  fn=${f%%.*}.bc
-	  bcfiles+="$fn "
-	fi
+		if [ $ext == 'o' ]
+		then
+	  		fn="$(dirname $1)/${f%%.*}.bc"
+			bcfiles+="$fn "
+		fi
      ;;
     esac
     shift
@@ -157,9 +161,68 @@ function create_bc_lib() {
 # it will be the pathname, which we will reduce to a module name on input in FastR
 
 # link the bitcode files into a single one using llvm-link before zipping it
-  llvm_tool=llvm-link
-  get_llvm_tool
-  runit $llvm_tool_bin $bcfiles -o $lib.bc
+  #llvm_tool=llvm-link
+  #get_llvm_tool
+  #runit $llvm_tool_bin $bcfiles -o $lib.bc
+  echo "Linking $lib.bc with $bcfiles"
+  runit llvm-link $bcfiles -o $lib.bc
   runit zip -r $lib $lib.bc
   rm $lib.bc
+}
+
+# It appends objects constituting a static library to the list of extra object files. 
+# This list is maintained in $R_PACKAGE_DIR/libobjects and is later read in llvm-cc and
+# llvm-c++ to append the object files from the list to other objects when making 
+# the package dynamic library. This mechanism is a workaround for the fact that the llvm 
+# linker does not support linking to static libraries, as the standard linker does 
+# through the -l and -L options.
+function create_bc_archive() {
+
+  # Create a CSV file containing all object files constituting the archive (i.e. the static library).
+  # The CSV has two columns: the object name in the archive and the full path of the object file.
+  # The object name columns serves as the join column when joining with the set of unique
+  # symbols objects (see below) to get the final list of objects to be linked with
+  # the package dynamic library in the end.
+  shift
+  archname=$1
+  arargs="rcs $archname "
+  shift
+  
+  archObjCSVtmp="archived_objects.tmp"
+  archObjCSV="archived_objects.csv"
+  exportedObjCSV="exported_objects.csv"
+  > $archObjCSV
+  
+  while [[ $# -gt 0 ]]
+  do
+    case $1 in
+     *)
+        f=$1
+     	ext=${f##*.}
+	if [ $ext == 'o' ]
+	then
+	  fullPath=`echo $(cd $(dirname $1) && pwd -P)/$(basename $1)`
+	  fn=${f%%.*}.bc
+	  arargs+="$fn "
+	  echo "$(basename $fn) $fullPath" >> $archObjCSVtmp
+	else
+	  arargs+="$1 "
+	fi
+     ;;
+    esac
+    shift
+  done
+
+  sort -d --field-separator=' ' --key=1 $archObjCSVtmp > $archObjCSV
+
+  # Create the archive (via llvm-ar) that is then used to read the symbol table via llvm-nm. 
+  # The symbol table allows for selecting a set of objects exporting unique symbols.
+  llvm-ar $arargs
+  
+  # This command extracts a set of objects from the archive that do not export duplicate symbols
+  llvm-nm -print-file-name $archname | grep "\-\-\-\-" | awk -F ' ' '{print $1" "$4}' | sort -d --field-separator=' ' --key=2 -u | awk -F ':' '{print $2}' | sort -d -u > $exportedObjCSV
+
+  # Join the archived objects CSV with the unique symbols objects CSV to get the list of objects to be statically linked to the package dynamic library.
+  # Append the result to the global list of extra object files.
+  join -t " " -1 1 -2 1 $archObjCSV $exportedObjCSV | awk -F ' ' '{print $2}' >> $R_PACKAGE_DIR/libobjects
 }

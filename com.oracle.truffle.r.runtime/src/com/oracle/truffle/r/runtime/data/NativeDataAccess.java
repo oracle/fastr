@@ -662,6 +662,7 @@ public final class NativeDataAccess {
         return mirror.dataAddress;
     }
 
+    @TruffleBoundary
     public static String readNativeString(long addr) {
         int len;
         for (len = 0; UnsafeAdapter.UNSAFE.getByte(addr + len) != 0; len++) {

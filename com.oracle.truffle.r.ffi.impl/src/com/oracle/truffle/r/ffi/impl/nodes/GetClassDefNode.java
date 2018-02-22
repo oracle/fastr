@@ -22,28 +22,26 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
-import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
-import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
-public abstract class NewCustomConnectionNode extends FFIUpCallNode.Arg4 {
+public abstract class GetClassDefNode extends FFIUpCallNode.Arg1 {
 
-    public static NewCustomConnectionNode create() {
-        return NewCustomConnectionNodeGen.create();
+    public static GetClassDefNode create() {
+        return GetClassDefNodeGen.create();
     }
 
     @Specialization
     @TruffleBoundary
-    Object handleStrings(Object description, Object mode, Object className, RExternalPtr connAddr, @Cached("create()") NativeStringCastNode nscn) {
-        try {
-            return new NativeRConnection(nscn.executeObject(description), nscn.executeObject(mode), nscn.executeObject(className), connAddr).asVector();
-        } catch (IOException e) {
-            return InvalidConnection.instance.asVector();
-        }
+    Object handleString(Object cls, @Cached("create()") NativeStringCastNode nscn) {
+        String clazz = nscn.executeObject(cls);
+        String name = "getClassDef";
+        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
+        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
     }
 }

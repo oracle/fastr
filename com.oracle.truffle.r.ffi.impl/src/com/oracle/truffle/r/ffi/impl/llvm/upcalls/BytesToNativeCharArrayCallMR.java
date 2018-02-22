@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 @MessageResolution(receiverType = BytesToNativeCharArrayCall.class)
 public class BytesToNativeCharArrayCallMR {
+
     @Resolve(message = "EXECUTE")
     public abstract static class BytesToNativeCharArrayCallExecute extends Node {
         protected java.lang.Object access(BytesToNativeCharArrayCall receiver, Object[] arguments) {
