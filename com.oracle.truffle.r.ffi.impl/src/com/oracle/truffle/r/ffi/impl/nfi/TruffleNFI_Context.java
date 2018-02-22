@@ -196,6 +196,11 @@ final class TruffleNFI_Context extends RFFIContext {
         }
     }
 
+    @Override
+    public void initializeEmbedded(RContext context) {
+        pushCallbacks();
+    }
+
     @TruffleBoundary
     private long initCallbacksAddress() {
         // get the address of the native thread local

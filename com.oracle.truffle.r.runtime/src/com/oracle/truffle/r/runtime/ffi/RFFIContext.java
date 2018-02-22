@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RObject;
 
@@ -99,6 +100,17 @@ public abstract class RFFIContext extends RFFI {
      * Invoked during RContext initialization, but after the global environment is set up.
      */
     public void initializeVariables(RContext context) {
+    }
+
+    /**
+     * Invoked as part of the R embedded initialization just before returning back to the C user
+     * code. Should do any set-up necessary for the RFFI to be fully functional even outside the
+     * context of a down-call. At the moment the assumption is that embedded code is always single
+     * threaded and always creates exactly one context. This method shall be invoked after
+     * {@link #initialize(RContext)} and {@link #initializeVariables(RContext)}.
+     */
+    public void initializeEmbedded(RContext context) {
+        throw RInternalError.unimplemented("R Embedding not supported with " + this.getClass().getSimpleName() + " RFFI backend.");
     }
 
     public long beforeDowncall() {

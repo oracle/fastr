@@ -71,7 +71,7 @@ public class REmbedded {
      * initialize FastR as we cannot do that until the embedding system has had a chance to adjust
      * the {@link RStartParams}, which happens after this call returns.
      */
-    private static void initializeR(String[] args) {
+    private static void initializeR(String[] args, boolean initMainLoop) {
         assert context == null;
         RContext.setEmbedded();
         RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
@@ -86,6 +86,14 @@ public class REmbedded {
         context = Context.newBuilder().allowHostAccess(true).arguments("R", options.getArguments()).in(input).out(stdOut).err(stdErr).build();
         consoleHandler.setContext(context);
         context.eval(INIT);
+
+        if (initMainLoop) {
+            context.enter();
+            RContext ctx = RContext.getInstance();
+            ctx.completeEmbeddedInitialization();
+            ctx.getRFFI().initializeEmbedded(ctx);
+            // stay in the context TODO should we?
+        }
     }
 
     /**
@@ -110,12 +118,10 @@ public class REmbedded {
      */
     private static final Source INIT = Source.newBuilder("R", "1", "<embedded>").buildLiteral();
 
-    /**
-     * GnuR distinguishes {@code setup_Rmainloop} and {@code run_Rmainloop}. Currently we don't have
-     * the equivalent separation in FastR.
-     */
-    private static void setupRmainloop() {
-        // nothing to do
+    private static void endRmainloop(int status) {
+        context.leave();
+        context.close();
+        Utils.systemExit(status);
     }
 
     /**
@@ -124,7 +130,9 @@ public class REmbedded {
      */
     private static void runRmainloop() {
         context.enter();
-        RContext.getInstance().completeEmbeddedInitialization();
+        RContext ctx = RContext.getInstance();
+        ctx.completeEmbeddedInitialization();
+        ctx.getRFFI().initializeEmbedded(ctx);
         int status = RCommand.readEvalPrint(context, consoleHandler);
         context.leave();
         context.close();
@@ -135,8 +143,7 @@ public class REmbedded {
      * Testing vehicle, emulates a native upcall.
      */
     public static void main(String[] args) {
-        initializeR(args);
-        setupRmainloop();
+        initializeR(args, false);
         runRmainloop();
     }
 
