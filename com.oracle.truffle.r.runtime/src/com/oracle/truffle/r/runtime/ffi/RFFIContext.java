@@ -126,7 +126,7 @@ public abstract class RFFIContext extends RFFI {
         cooperativeGc();
     }
 
-    public int getCallDepth() {
+    public final int getCallDepth() {
         return callDepth;
     }
 
