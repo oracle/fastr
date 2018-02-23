@@ -485,12 +485,15 @@ def _set_test_status(fastr_test_info):
             with open(fastr_testfile_status.abspath) as f:
                 fastr_content = f.readlines()
 
+            # parse custom filters from file
+            filters = _select_filters(_parse_filter_file(os.path.join(_packages_test_project_dir(), "test.output.filter")), pkg)
+
             # first, parse file and see if a known test framework has been used
             ok, skipped, failed = handle_output_file(fastr_testfile_status.abspath, fastr_content)
             if ok is not None:
                 fastr_testfile_status.report = ok, skipped, failed
             else:
-                result, n_tests_passed, n_tests_failed = _fuzzy_compare(gnur_content, fastr_content, gnur_testfile_status.abspath, fastr_testfile_status.abspath)
+                result, n_tests_passed, n_tests_failed = _fuzzy_compare(gnur_content, fastr_content, gnur_testfile_status.abspath, fastr_testfile_status.abspath, custom_filters=filters)
                 if result == -1:
                     print "{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath)
                     fastr_test_status.status = "INDETERMINATE"
@@ -644,21 +647,29 @@ def _find_line(gnur_line, fastr_content, fastr_i):
     return -1
 
 
-def _replace_engine_references(output):
-    for idx, val in enumerate(output):
-        if "RUNIT TEST PROTOCOL -- " in val:
-            # RUnit prints the current date and time
-            output[idx] = "RUNIT TEST PROTOCOL -- <date/time>"
-        else:
-            # ignore differences which come from test directory paths
-            output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
+def _preprocess_content(output, custom_filters):
+    # load file with replacement actions
+    filter_file = os.path.join(_packages_test_project(), "output.filter")
+    if custom_filters:
+        for f in custom_filters:
+            output = f.apply(output)
+    else:
+        # default builtin-filters
+        for idx, val in enumerate(output):
+            if "RUNIT TEST PROTOCOL -- " in val:
+                # RUnit prints the current date and time
+                output[idx] = "RUNIT TEST PROTOCOL -- <date_time>"
+            else:
+                # ignore differences which come from test directory paths
+                output[idx] = val.replace('fastr', '<engine>').replace('gnur', '<engine>')
+    return output
 
 
 def _is_ignored_function(fun_name, gnur_content, gnur_stmt, fastr_content, fastr_stmt):
     return gnur_stmt != -1 and fun_name in gnur_content[gnur_stmt] and fastr_stmt != -1 and fun_name in fastr_content[fastr_stmt]
 
 
-def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, verbose=False):
+def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, custom_filters=None, verbose=False):
     """
     Compares the test output of GnuR and FastR by ignoring implementation-specific differences like header, error,
     and warning messages.
@@ -667,8 +678,11 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, v
     statements passed and statements failed give the numbers on how many statements produced the same or a different
     output, respectively.
     """
-    _replace_engine_references(gnur_content)
-    _replace_engine_references(fastr_content)
+    if verbose:
+        print("Using custom filters:\n" + str(custom_filters))
+
+    gnur_content = _preprocess_content(gnur_content, custom_filters)
+    fastr_content = _preprocess_content(fastr_content, custom_filters)
     gnur_start = _find_start(gnur_content)
     gnur_end = _find_end(gnur_content)
     fastr_start = _find_start(fastr_content)
@@ -894,3 +908,100 @@ def computeApiChecksum(includeDir):
     hxdigest = m.hexdigest()
     mx.logv("Computed API version checksum {0}".format(hxdigest))
     return hxdigest
+
+
+class InvalidFilterException(Exception):
+    pass
+
+
+def _parse_filter(line):
+    arrow_idx = line.find("=>")
+    if arrow_idx < 0:
+        raise InvalidFilterException("cannot find separator '=>'")
+    pkg_pattern = line[:arrow_idx].strip()
+    action_str = line[arrow_idx+2:].strip()
+    action = action_str[0]
+    args = []
+    if action == "d" or action == "D":
+        # actions with one argument
+        slash_idx = action_str.find("/")
+        if slash_idx < 0:
+            raise InvalidFilterException("cannot find separator '/'")
+        args.append(action_str[slash_idx+1:])
+    elif action == "r" or action == "R":
+        # actions with two arguments
+        slash0_idx = action_str.find("/")
+        slash1_idx = action_str.find("/", slash0_idx+1)
+        if slash0_idx < 0:
+            raise InvalidFilterException("cannot find first separator '/'")
+        if slash1_idx < 0:
+            raise InvalidFilterException("cannot find second separator '/'")
+        args.append(action_str[slash0_idx + 1:slash1_idx])
+        args.append(action_str[slash1_idx + 1:])
+    return ContentFilter(pkg_pattern, action, args)
+
+
+def _parse_filter_file(file_path):
+    filters = []
+    if os.path.isfile(file_path):
+       with open(file_path) as f:
+           for linenr, line in enumerate(f.readlines()):
+               # ignore comment lines
+               if not line.startswith("#") and line.strip() != "":
+                   try:
+                       filters.append(_parse_filter(line))
+                   except InvalidFilterException as e:
+                       print("invalid filter at line {!s}: {!s}".format(linenr, e))
+
+    return filters
+
+
+class ContentFilter:
+    scope = "global"
+    pkg_pattern = "*"
+    action = "d"
+    args = []
+
+    def __init__(self, pkg_pattern, action, args):
+        self.pkg_pattern = pkg_pattern
+        self.pkg_prog = re.compile(pkg_pattern)
+        self.action = action
+        self.args = args
+
+    def _apply_to_lines(self, content, action):
+        if action is not None:
+            for idx, val in enumerate(content):
+                content[idx] = action(val)
+        return content
+
+    def apply(self, content):
+        filter_action = None
+        if self.action == "r":
+            filter_action = lambda l: l.replace(self.args[0], self.args[1])
+        elif self.action == "d":
+            filter_action = lambda l: l.replace(self.args[0], "")
+        elif self.action == "R":
+            filter_action = lambda l: self.args[1] if self.args[0] in l else l
+        elif self.action == "D":
+            filter_action = lambda l: "" if self.args[0] in l else l
+
+        return self._apply_to_lines(content, filter_action)
+
+    def applies_to_pkg(self, pkg_name):
+        return self.pkg_prog.match(pkg_name)
+
+    def __repr__(self):
+        fmt_str = "{!s} => {!s}"
+        fmt_args = [self.pkg_pattern, self.action]
+        for arg in self.args:
+            fmt_str = fmt_str + "/{!s}"
+            fmt_args.append(arg)
+        return fmt_str.format(*tuple(fmt_args))
+
+
+def _select_filters(filters, pkg):
+    pkg_filters = []
+    for f in filters:
+        if f.applies_to_pkg(pkg):
+            pkg_filters.append(f)
+    return pkg_filters
