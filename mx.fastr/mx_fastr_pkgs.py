@@ -649,7 +649,6 @@ def _find_line(gnur_line, fastr_content, fastr_i):
 
 def _preprocess_content(output, custom_filters):
     # load file with replacement actions
-    filter_file = os.path.join(_packages_test_project(), "output.filter")
     if custom_filters:
         for f in custom_filters:
             output = f.apply(output)
@@ -679,8 +678,7 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, c
     output, respectively.
     """
     if verbose:
-        print("Using custom filters:\n" + str(custom_filters))
-
+        mx.log("Using custom filters:\n" + str(custom_filters))
     gnur_content = _preprocess_content(gnur_content, custom_filters)
     fastr_content = _preprocess_content(fastr_content, custom_filters)
     gnur_start = _find_start(gnur_content)
@@ -944,14 +942,14 @@ def _parse_filter(line):
 def _parse_filter_file(file_path):
     filters = []
     if os.path.isfile(file_path):
-       with open(file_path) as f:
-           for linenr, line in enumerate(f.readlines()):
-               # ignore comment lines
-               if not line.startswith("#") and line.strip() != "":
-                   try:
-                       filters.append(_parse_filter(line))
-                   except InvalidFilterException as e:
-                       print("invalid filter at line {!s}: {!s}".format(linenr, e))
+        with open(file_path) as f:
+            for linenr, line in enumerate(f.readlines()):
+                # ignore comment lines
+                if not line.startswith("#") and line.strip() != "":
+                    try:
+                        filters.append(_parse_filter(line))
+                    except InvalidFilterException as e:
+                        print "invalid filter at line {!s}: {!s}".format(linenr, e
 
     return filters
 
