@@ -32,6 +32,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 /**
@@ -64,6 +65,11 @@ public final class FFIUnwrapNode extends Node {
                 }
                 try {
                     long address = ForeignAccess.sendAsPointer(asPointer, xTo);
+                    if (address == 0) {
+                        // Users are expected to use R_NULL, but at least when embedding, GNU R
+                        // seems to be tolerant to NULLs.
+                        return RNull.instance;
+                    }
                     return NativeDataAccess.lookup(address);
                 } catch (UnsupportedMessageException e) {
                     if (isPointerNode == null) {

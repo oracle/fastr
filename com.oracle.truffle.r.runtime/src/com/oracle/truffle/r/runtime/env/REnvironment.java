@@ -267,7 +267,14 @@ public abstract class REnvironment extends RAttributeStorage {
      * Value returned by {@code globalenv()}.
      */
     public static REnvironment globalEnv() {
-        return RContext.getInstance().stateREnvironment.getGlobalEnv();
+        return globalEnv(RContext.getInstance());
+    }
+
+    /**
+     * Value returned by {@code globalenv()}.
+     */
+    public static REnvironment globalEnv(RContext ctx) {
+        return ctx.stateREnvironment.getGlobalEnv();
     }
 
     /**
