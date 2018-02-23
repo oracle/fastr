@@ -99,20 +99,24 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     Object handlePairList(RPairList l, Object envArg,
                     @Cached("createBinaryProfile()") ConditionProfile isPromiseProfile,
                     @Cached("createBinaryProfile()") ConditionProfile noArgsProfile) {
+        REnvironment env = getEnv(envArg);
         Object car = l.car();
-        RFunction f;
+        RFunction f = null;
         if (isPromiseProfile.profile(car instanceof RPromise)) {
             car = getPromiseHelper().evaluate(null, (RPromise) car);
         }
 
         if (car instanceof RFunction) {
             f = (RFunction) car;
-        } else {
+        } else if (car instanceof RSymbol) {
+            f = ReadVariableNode.lookupFunction(((RSymbol) car).getName(), env.getFrame());
+        }
+
+        if (f == null) {
             throw RError.error(RError.NO_CALLER, ARGUMENT_NOT_FUNCTION);
         }
 
         Object args = l.cdr();
-        REnvironment env = getEnv(envArg);
         if (noArgsProfile.profile(args == RNull.instance)) {
             return evalFunction(f, env, null);
         } else {
