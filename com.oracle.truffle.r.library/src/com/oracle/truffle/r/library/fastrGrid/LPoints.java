@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2015, The R Core Team
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -62,7 +62,6 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
         RList currentVP = ctx.getGridState().getViewPort();
         RList gparList = ctx.getGridState().getGpar();
         GPar gpar = GPar.create(gparList);
-        double cex = GPar.getCex(gparList);
         ViewPortTransform vpTransform = ViewPortTransform.get(currentVP, dev);
         ViewPortContext vpContext = ViewPortContext.fromViewPort(currentVP);
         UnitConversionContext conversionCtx = new UnitConversionContext(vpTransform.size, vpContext, dev, gpar);
@@ -75,13 +74,13 @@ public abstract class LPoints extends RExternalBuiltinNode.Arg4 {
             double size = Unit.convertWidth(sizeVec, i, conversionCtx);
             if (loc.isFinite() && Double.isFinite(size)) {
                 contextCache = contextCache.from(gpar.getDrawingContext(i));
-                drawSymbol(contextCache, dev, cex, pchVec.getDataAt(i % pchVec.getLength()), size * SIZE_FACTOR, loc.x, loc.y);
+                drawSymbol(contextCache, dev, pchVec.getDataAt(i % pchVec.getLength()), size * SIZE_FACTOR, loc.x, loc.y);
             }
         }
         return RNull.instance;
     }
 
-    private static void drawSymbol(ContextCache ctxCache, GridDevice dev, double cex, int pch, double halfSize, double x, double y) {
+    private static void drawSymbol(ContextCache ctxCache, GridDevice dev, int pch, double halfSize, double x, double y) {
         // pch 0 - 25 are interpreted as geometrical shapes, pch from ascii code of ' ' are
         // interpreted as corresponding ascii character, which should be drawn
         // the coordinates should be interpreted as the center of the symbol

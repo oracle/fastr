@@ -141,8 +141,6 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
      */
     private final ConditionProfile returnTopLevelProfile = ConditionProfile.createBinaryProfile();
 
-    @CompilationFinal private IdentityHashMap<RNode, Closure> languageClosureCache;
-
     public static FunctionDefinitionNode create(TruffleRLanguage language, SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments,
                     RSyntaxNode body,
                     FormalArguments formals, String name, PostProcessArgumentsNode argPostProcess) {

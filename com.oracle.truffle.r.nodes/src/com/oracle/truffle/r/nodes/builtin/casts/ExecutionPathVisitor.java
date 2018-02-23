@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,7 +62,7 @@ public abstract class ExecutionPathVisitor<T> implements PipelineStepVisitor<T> 
 
     @Override
     public final T visit(MapIfStep<?, ?> step, T previous) {
-        boolean visitTrueBranch = bs == null ? false : bs.get(mapIfStepStatuses.get(step));
+        boolean visitTrueBranch;
         if (bs == null) {
             visitTrueBranch = false;
             mapIfStepStatuses.put(step, mapIfCounter++);

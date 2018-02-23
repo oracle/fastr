@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -177,15 +177,6 @@ public final class GridState {
             colors = new GridColor[colorNames.length];
             for (int i = 0; i < colorNames.length; i++) {
                 colors[i] = GridColorUtils.gridColorFromString(colorNames[i]);
-            }
-        }
-
-        public GridPalette(int[] colors) {
-            this.colors = new GridColor[colors.length];
-            colorNames = new String[colors.length];
-            for (int i = 0; i < colors.length; i++) {
-                this.colors[i] = GridColor.fromRawValue(colors[i]);
-                colorNames[i] = GridColorUtils.gridColorToRString(this.colors[i]);
             }
         }
     }

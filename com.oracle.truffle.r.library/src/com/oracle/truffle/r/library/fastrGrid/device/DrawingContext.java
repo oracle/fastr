@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -149,18 +149,4 @@ public interface DrawingContext {
      * The fill color of shapes.
      */
     GridColor getFillColor();
-
-    static boolean areSame(DrawingContext ctx1, DrawingContext ctx2) {
-        return ctx1 == ctx2 || (ctx1.getColor().equals(ctx2.getColor()) &&
-                        ctx1.getLineEnd() == ctx2.getLineEnd() &&
-                        ctx1.getLineJoin() == ctx2.getLineJoin() &&
-                        ctx1.getLineType() == ctx2.getLineType() &&
-                        ctx1.getLineHeight() == ctx2.getLineHeight() &&
-                        ctx1.getFontStyle() == ctx2.getFontStyle() &&
-                        ctx1.getFontSize() == ctx2.getFontSize() &&
-                        ctx1.getFontFamily().equals(ctx2.getFontFamily()) &&
-                        ctx1.getLineWidth() == ctx2.getLineWidth() &&
-                        ctx1.getLineMitre() == ctx2.getLineMitre() &&
-                        ctx1.getFillColor().equals(ctx2.getFillColor()));
-    }
 }

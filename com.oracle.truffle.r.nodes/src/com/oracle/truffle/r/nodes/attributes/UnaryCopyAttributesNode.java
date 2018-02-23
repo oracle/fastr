@@ -32,7 +32,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -128,7 +127,6 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
         if (hasDimNames.profile(newDimNames != null)) {
             updateRefCountNode.execute(updateChildRefCountNode.updateState(source, newDimNames));
             putDimNames.execute(result.getAttributes(), newDimNames);
-            newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
             return result;
         }
         return result;

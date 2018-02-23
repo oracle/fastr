@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
     @Child private SetFixedAttributeNode recursive;
-    @Child private SetSpecialAttributeNode setSpecialAttrNode;
 
     protected SetFixedAttributeNode(String name) {
         super(name);
@@ -85,7 +84,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
 
     public abstract void execute(Object attr, Object value);
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "CACHE_LIMIT", //
                     guards = {"shapeCheck(shape, attrs)", "location != null", "canSet(location, value)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     protected void setAttrCached(DynamicObject attrs, Object value,
@@ -98,7 +97,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         }
     }
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "CACHE_LIMIT", //
                     guards = {"shapeCheck(oldShape, attrs)", "oldLocation == null", "canStore(newLocation, value)"}, //
                     assumptions = {"oldShape.getValidAssumption()", "newShape.getValidAssumption()"})
     protected static void setNewAttrCached(DynamicObject attrs, Object value,

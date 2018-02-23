@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1997-2014, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -81,24 +81,6 @@ public final class GridColorUtils {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Invalid color '" + value + "'.");
         }
         return result;
-    }
-
-    public static String gridColorToRString(GridColor color) {
-        boolean isOpaque = color.getAlpha() == GridColor.OPAQUE_ALPHA;
-        int size = isOpaque ? 7 : 9;
-        char[] value = new char[size];
-        value[0] = '#';
-        value[1] = getHexDigit(color.getRed() >> 4);
-        value[2] = getHexDigit(color.getRed());
-        value[3] = getHexDigit(color.getGreen() >> 4);
-        value[4] = getHexDigit(color.getGreen());
-        value[5] = getHexDigit(color.getBlue() >> 4);
-        value[6] = getHexDigit(color.getBlue());
-        if (!isOpaque) {
-            value[7] = getHexDigit((color.getAlpha()) >> 4);
-            value[8] = getHexDigit(color.getAlpha());
-        }
-        return new String(value);
     }
 
     public static GridColor parseHex(String value) {

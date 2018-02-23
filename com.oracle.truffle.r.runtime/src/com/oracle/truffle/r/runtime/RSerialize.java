@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -201,11 +201,6 @@ public class RSerialize {
     }
 
     public static final class ContextStateImpl implements RContext.ContextState {
-        /**
-         * {@code true} iff we are saving the source from the deparse of an unserialized function
-         * (for debugging later).
-         */
-        boolean saveDeparse;
 
         /**
          * {@code ...getNamespace} in "namespace.R", used to callback to handle a
@@ -306,7 +301,6 @@ public class RSerialize {
      */
     public static void setSaveDeparse(boolean status) {
         ContextStateImpl serializeContextState = getContextState();
-        serializeContextState.saveDeparse = status;
     }
 
     @TruffleBoundary
@@ -579,7 +573,6 @@ public class RSerialize {
                              */
                             if (FastROptions.debugMatches("printUclosure")) {
                                 RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
-                                result = pairList;
                                 if (attrItem != RNull.instance) {
                                     setAttributes(pairList, attrItem);
                                 }

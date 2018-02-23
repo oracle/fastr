@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -251,7 +251,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, null, unsuccessfulReadsCaller, unsuccessfulReadsTable,
                             reads.methodsTableRead, reads.successfulRead, reads.successfulReadTable, result.function, result.clazz, result.targetFunctionName, result.groupMatch, next);
         } else {
-            RFunction builtin = next.throwsError ? builtin = RContext.getInstance().lookupBuiltin(genericName) : null;
+            RFunction builtin = next.throwsError ? RContext.getInstance().lookupBuiltin(genericName) : null;
             cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, builtin, unsuccessfulReadsCaller, unsuccessfulReadsTable,
                             reads.methodsTableRead, null, null, null, null, null, false, next);
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -335,14 +335,6 @@ public final class RCmdOptions {
 
     public void setArguments(String[] arguments) {
         this.arguments = arguments;
-    }
-
-    void printHelpAndVersion() {
-        if (getBoolean(HELP)) {
-            throw printHelpAndExit(RCmdOptions.Client.R);
-        } else if (getBoolean(VERSION)) {
-            throw printVersionAndExit();
-        }
     }
 
     static void printHelp(Client client) {

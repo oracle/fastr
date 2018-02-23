@@ -366,7 +366,6 @@ public class MethodsListDispatch {
 
         @Child private CastToVectorNode castToVector = CastToVectorNodeGen.create(false);
         @Child private ClassHierarchyScalarNode classHierarchyNode = ClassHierarchyScalarNodeGen.create();
-        @Child private PromiseHelperNode promiseHelper;
         @Child private GetFixedAttributeNode getGenericAttrNode = GetFixedAttributeNode.create(RRuntime.GENERIC_ATTR_KEY);
         @Child private GetFixedAttributeNode getPckgAttrNode = GetFixedAttributeNode.create(RRuntime.PCKG_ATTR_KEY);
 
@@ -446,7 +445,6 @@ public class MethodsListDispatch {
     public abstract static class R_nextMethodCall extends RExternalBuiltinNode.Arg2 {
 
         @Child private LocalReadVariableNode readDotNextMethod;
-        @Child private LocalReadVariableNode readDots;
 
         static {
             Casts.noCasts(R_nextMethodCall.class);
@@ -459,7 +457,7 @@ public class MethodsListDispatch {
             // leading to a problem if contains a different frame; should we finesse implementation
             // of LocalReadVariableNode to handle this?
             readDotNextMethod = insert(LocalReadVariableNode.create(RRuntime.R_DOT_NEXT_METHOD, false));
-            readDots = insert(LocalReadVariableNode.create("...", false));
+            // TODO: do we need to handle "..." here? Read it and forward it?
 
             RFunction op = (RFunction) readDotNextMethod.execute(null, ev.getFrame());
             if (op == null) {

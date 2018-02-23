@@ -87,8 +87,6 @@ public enum NativeFunction {
     rembedded_write_console("(string, sint32):void", "", baseLibrary(), true),
     rembedded_write_err_console("(string, sint32):void", "", baseLibrary(), true),
     rembedded_read_console("(string):string", "", baseLibrary(), true),
-    rembedded_native_clean_up("(sint32, sint32, sint32):void", "", baseLibrary(), true),
-    rembedded_native_suicide("(string):void", "", baseLibrary(), true),
     // user-defined RNG
     unif_init("(sint32): void", "user_", anyLibrary()),
     norm_rand("(): pointer", "user_", anyLibrary()),
