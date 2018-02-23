@@ -741,23 +741,11 @@ fastr_error_log_size <- function() {
 # installs a single package or retrieves it from the cache
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr_error_log_size()
-	if (run.mode == "system") {
-        tryCatch(
-                 system.install(pkgname)
-        , error = function(e) {
-            log.message(e$message)
-            1L
-        }, warning = function(e) {
-            log.message(e$message)
-            # According to the documentation of 'system2', a warning will provide a status field.
-            e$status
-        })
-	} else if (run.mode == "internal") {
-        pkg.cache.internal.install(pkg.cache.env=pkg.cache, pkgname=pkgname, lib.install=lib.install)
-	} else if (run.mode == "context") {
-		stop("context run-mode not implemented\n")
-	}
-	rc <- installed.ok(pkgname, error_log_size)
+    rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source")[[1]], lib.install)
+    if (rc == 0L) {
+        # be paranoid and also check file system and log
+	    rc <- installed.ok(pkgname, error_log_size)
+    }
 	names(rc) <- pkgname
 	install.status <<- append(install.status, rc)
 	return(rc)
