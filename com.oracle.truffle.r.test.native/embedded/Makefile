@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -53,16 +53,20 @@ C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 
 INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
-all: $(OBJ)/main Makefile
+all: $(OBJ)/main $(OBJ)/embedded Makefile
 
 $(OBJ)/main: | $(OBJ)
+$(OBJ)/embedded: | $(OBJ)
 
 $(OBJ):
 	mkdir -p $(OBJ)
 
-
 $(OBJ)/main: $(SRC)/main.c
 	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(OBJ)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+
+$(OBJ)/embedded: $(SRC)/embedded.c
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(OBJ)/embedded -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+	cp $(SRC)/*.R $(OBJ)
 
 clean:
 	rm -rf $(OBJ)
