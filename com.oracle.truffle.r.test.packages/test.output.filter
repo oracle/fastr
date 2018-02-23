@@ -19,13 +19,13 @@
 #
 
 
-# for all packages: delete string 'detaching ‘package:grid’'
+# for all packages: replace 'fastr' by '<engine>'
 .* => r/fastr/<engine>
 
-# for all packages: delete string 'detaching ‘package:grid’'
+# for all packages: replace 'gnur' by '<engine>'
 .* => r/gnur/<engine>
 
-# for all packages: delete string 'detaching ‘package:grid’'
+# for all packages: unify line containing 'RUNIT TEST PROTOCOL'
 .* => R/RUNIT TEST PROTOCOL -- /RUNIT TEST PROTOCOL -- <date_time>
 
 # for all packages: delete line containing 'Press return for next page...'
