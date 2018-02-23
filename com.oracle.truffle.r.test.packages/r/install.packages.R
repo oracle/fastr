@@ -788,21 +788,6 @@ gnu_rscript <- function() {
 	}
 }
 
-system.install <- function(pkgname) {
-	script <- normalizePath("com.oracle.truffle.r.test.packages/r/install.package.R")
-	if (is.fastr()) {
-		rscript = file.path(R.home(), "bin", "Rscript")
-	} else {
-		rscript = gnu_rscript()
-	}
-    args <- c(script, pkgname, paste0(contrib.url(getOption("repos"), "source"), collapse=","), lib.install, as.character(pkg.cache$enabled))
-    if (pkg.cache$enabled) {
-         args <- c(args, pkg.cache$version, pkg.cache$dir)
-    } 	
-    rc <- system2(rscript, args)
-	rc
-}
-
 check.create.dir <- function(name) {
 	if (!file.exists(name)) {
 		if (!dir.create(name)) {
