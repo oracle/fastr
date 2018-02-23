@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,4 +71,11 @@ public interface DLLUpCallsRFFI {
     @RFFICpointer
     Object getCCallable(@RFFICstring String pkgName, @RFFICstring String functionName);
 
+    /**
+     * Returns special {@link com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo} instance that is
+     * supposed to be used when registering symbols from within code embedding R, i.e. code that
+     * cannot have its init method called by R runtime and must call {@code R_registerRoutines}
+     * itself.
+     */
+    Object getEmbeddingDLLInfo();
 }

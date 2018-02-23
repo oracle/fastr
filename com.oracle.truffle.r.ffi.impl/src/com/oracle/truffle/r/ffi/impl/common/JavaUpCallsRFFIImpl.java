@@ -1589,6 +1589,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return new DotSymbol(name, new SymbolHandle(fun), numArgs);
     }
 
+    @Override
+    public Object getEmbeddingDLLInfo() {
+        return DLL.getEmbeddingDLLInfo();
+    }
+
     protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
 
     @Override

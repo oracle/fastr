@@ -181,17 +181,18 @@
 #define forceSymbols_x 176
 #define getCCallable_x 177
 #define getConnectionClassString_x 178
-#define getOpenModeString_x 179
-#define getSummaryDescription_x 180
-#define isSeekable_x 181
-#define octsize_x 182
-#define registerCCallable_x 183
-#define registerRoutines_x 184
-#define restoreHandlerStacks_x 185
-#define setDotSymbolValues_x 186
-#define unif_rand_x 187
-#define useDynamicSymbols_x 188
+#define getEmbeddingDLLInfo_x 179
+#define getOpenModeString_x 180
+#define getSummaryDescription_x 181
+#define isSeekable_x 182
+#define octsize_x 183
+#define registerCCallable_x 184
+#define registerRoutines_x 185
+#define restoreHandlerStacks_x 186
+#define setDotSymbolValues_x 187
+#define unif_rand_x 188
+#define useDynamicSymbols_x 189
 
-#define UPCALLS_TABLE_SIZE 189
+#define UPCALLS_TABLE_SIZE 190
 
 #endif // RFFI_UPCALLSINDEX_H

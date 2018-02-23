@@ -1664,6 +1664,13 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
     return 1;
 }
 
+DllInfo *R_getEmbeddingDllInfo() {
+    TRACE0();
+    DllInfo *result = ((call_getEmbeddingDLLInfo) callbacks[getEmbeddingDLLInfo_x])();
+    checkExitCall();
+    return result;
+}
+
 Rboolean R_useDynamicSymbols(DllInfo *dllInfo, Rboolean value) {
     TRACE0();
     Rboolean result = ((call_useDynamicSymbols) callbacks[useDynamicSymbols_x])(dllInfo, value);

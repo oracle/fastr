@@ -315,6 +315,7 @@ typedef void * (*call_setDotSymbolValues)(DllInfo *dllInfo, char *name, DL_FUNC 
 typedef int (*call_forceSymbols)(DllInfo *dllInfo, Rboolean value);
 typedef int (*call_registerCCallable)(const char *pkgname, const char *name, void *fun);
 typedef void* (*call_getCCallable)(const char *pkgname, const char *name);
+typedef DllInfo* (*call_getEmbeddingDLLInfo)(void);
 
 // memory
 
