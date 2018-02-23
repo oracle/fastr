@@ -771,19 +771,20 @@ SEXP SETCADR(SEXP x, SEXP y) {
 
 SEXP SETCADDR(SEXP x, SEXP y) {
     TRACE0();
-    unimplemented("SETCADDR");
+    // note: signature is same, we reuse call_SETCADR
+    SEXP result = ((call_SETCADR) callbacks[SETCADDR_x])(x, y);
     return NULL;
 }
 
 SEXP SETCADDDR(SEXP x, SEXP y) {
     TRACE0();
-    unimplemented("SETCADDDR");
+    SEXP result = ((call_SETCADR) callbacks[SETCADDDR_x])(x, y);
     return NULL;
 }
 
-SEXP SETCAD4R(SEXP e, SEXP y) {
+SEXP SETCAD4R(SEXP x, SEXP y) {
     TRACE0();
-    unimplemented("SETCAD4R");
+    SEXP result = ((call_SETCADR) callbacks[SETCAD4R_x])(x, y);
     return NULL;
 }
 

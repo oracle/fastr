@@ -45,6 +45,9 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCAD4RNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADDDRNode;
+import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
@@ -262,6 +265,15 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(SETCADRNode.class)
     Object SETCADR(Object x, Object y);
+
+    @RFFIUpCallNode(SETCADDRNode.class)
+    Object SETCADDR(Object x, Object y);
+
+    @RFFIUpCallNode(SETCADDDRNode.class)
+    Object SETCADDDR(Object x, Object y);
+
+    @RFFIUpCallNode(SETCAD4RNode.class)
+    Object SETCAD4R(Object x, Object y);
 
     Object SYMVALUE(Object x);
 

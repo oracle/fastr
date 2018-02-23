@@ -741,6 +741,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object SETCADDR(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object SETCADDDR(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object SETCAD4R(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
     @TruffleBoundary
     public Object SYMVALUE(Object x) {
         if (!(x instanceof RSymbol)) {
