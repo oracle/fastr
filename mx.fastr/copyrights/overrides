@@ -101,6 +101,7 @@ com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/ts.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/tools/src/tools_dummy.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/utils/src/utils_dummy.c,no.copyright
 com.oracle.truffle.r.native/run/R.sh,oracle_bash.copyright
+com.oracle.truffle.r.test.native/embedded/test.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rclasspath.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript_exec.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript.sh,oracle_bash.copyright
