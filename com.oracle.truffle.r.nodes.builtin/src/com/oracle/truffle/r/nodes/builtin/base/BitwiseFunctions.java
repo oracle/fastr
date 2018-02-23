@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
-import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -61,8 +60,8 @@ public class BitwiseFunctions {
         private final NACheck naCheckB = NACheck.create();
         private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
-        @Child private TypeofNode typeofA = TypeofNodeGen.create();
-        @Child private TypeofNode typeofB = TypeofNodeGen.create();
+        @Child private TypeofNode typeofA = TypeofNode.create();
+        @Child private TypeofNode typeofB = TypeofNode.create();
 
         protected Object basicBit(RAbstractIntVector aVec, RAbstractIntVector bVec, Operation op) {
             naCheckA.enable(aVec);

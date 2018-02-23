@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -21,7 +21,6 @@ import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
-import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -38,7 +37,7 @@ public final class GetS4DataSlot extends Node {
     @Child private CastToVectorNode castToVector;
     @Child private GetFixedAttributeNode dotDataAttrAccess;
     @Child private GetFixedAttributeNode dotXDataAttrAccess;
-    @Child private TypeofNode typeOf = TypeofNodeGen.create();
+    @Child private TypeofNode typeOf = TypeofNode.create();
     @Child private SetClassAttributeNode setClassAttrNode;
 
     private final BranchProfile shareable = BranchProfile.create();

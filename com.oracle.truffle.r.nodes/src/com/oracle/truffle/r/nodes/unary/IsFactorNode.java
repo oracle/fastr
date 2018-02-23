@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -24,7 +24,7 @@ public final class IsFactorNode extends UnaryNode {
     public boolean executeIsFactor(Object x) {
         if (typeofNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            typeofNode = insert(TypeofNodeGen.create());
+            typeofNode = insert(TypeofNode.create());
         }
         if (typeofNode.execute(x) != RType.Integer) {
             // Note: R does not allow to set class 'factor' to an arbitrary object, unlike with
