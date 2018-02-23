@@ -1,0 +1,2 @@
+-DR:+IgnoreGraphicsCalls
+-DR:-EmitTmpSource
