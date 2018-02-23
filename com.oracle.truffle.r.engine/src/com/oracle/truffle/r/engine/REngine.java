@@ -106,7 +106,6 @@ import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
-import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -616,7 +615,7 @@ final class REngine implements Engine, Engine.Timings {
                 if (printResult && result != null) {
                     assert topLevel;
                     if (visibility.execute(vf)) {
-                        printResultImpl(result);
+                        printResultImpl(RContext.getInstance(), result);
                     }
                 }
                 if (topLevel) {
@@ -684,19 +683,23 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    public void printResult(Object originalResult) {
-        printResultImpl(originalResult);
+    public void printResult(RContext ctx, Object originalResult) {
+        printResultImpl(ctx, originalResult);
     }
 
     @TruffleBoundary
-    static void printResultImpl(Object originalResult) {
+    static void printResultImpl(RContext ctx, Object originalResult) {
         Object result = evaluatePromise(originalResult);
         result = RRuntime.asAbstractVector(result);
+        MaterializedFrame callingFrame = REnvironment.globalEnv(ctx).getFrame();
+        printValue(ctx, callingFrame, result);
+    }
+
+    private static void printValue(RContext ctx, MaterializedFrame callingFrame, Object result) {
         if (result instanceof RTypedValue || result instanceof TruffleObject) {
             Object resultValue = ShareObjectNode.share(evaluatePromise(result));
-            MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
             if (result instanceof RAttributable && ((RAttributable) result).isS4()) {
-                Object printMethod = REnvironment.getRegisteredNamespace("methods").get("show");
+                Object printMethod = REnvironment.getRegisteredNamespace(ctx, "methods").get("show");
                 RFunction function = (RFunction) evaluatePromise(printMethod);
                 CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue}, null);
             } else {
@@ -717,27 +720,6 @@ final class REngine implements Engine, Engine.Timings {
             }
             RContext.getInstance().getConsole().println(str);
         }
-    }
-
-    /*
-     * This abstracts the calling convention, etc. behind the RASTBuilder, but creating large
-     * amounts of CallTargets during testing is too much overhead at the moment.
-     */
-    @SuppressWarnings("unused")
-    private void printAlternative(Object result) {
-        Object printFunction;
-        if (result instanceof RAttributable && ((RAttributable) result).isS4()) {
-            printFunction = REnvironment.getRegisteredNamespace("methods").get("show");
-        } else {
-            printFunction = REnvironment.getRegisteredNamespace("base").get("print");
-        }
-        RFunction function = (RFunction) evaluatePromise(printFunction);
-
-        MaterializedFrame callingFrame = REnvironment.globalEnv().getFrame();
-        // create a piece of AST to perform the call
-        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
-        RSyntaxNode call = builder.call(RSyntaxNode.LAZY_DEPARSE, builder.constant(RSyntaxNode.LAZY_DEPARSE, function), builder.constant(RSyntaxNode.LAZY_DEPARSE, result));
-        doMakeCallTarget(call.asRNode(), RSource.Internal.EVAL_WRAPPER.string, false, false).call(callingFrame);
     }
 
     private static Object evaluatePromise(Object value) {

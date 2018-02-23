@@ -455,4 +455,6 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(MiscNodes.OctSizeNode.class)
     Object octsize(Object size);
 
+    @RFFIUpCallNode(MiscNodes.RfPrintValueNode.class)
+    void Rf_PrintValue(Object value);
 }

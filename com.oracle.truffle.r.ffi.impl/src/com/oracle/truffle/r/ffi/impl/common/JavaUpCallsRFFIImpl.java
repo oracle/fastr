@@ -1997,6 +1997,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return new VectorWrapper(guaranteeVectorOrNull(x, CharSXPWrapper.class));
     }
 
+    @Override
+    public void Rf_PrintValue(Object value) {
+        throw implementedAsNode();
+    }
+
     private static TruffleObject guaranteeVectorOrNull(Object obj, Class<? extends TruffleObject> clazz) {
         if (obj == RNull.instance) {
             return RNull.instance;

@@ -490,7 +490,8 @@ Rboolean Rf_isObject(SEXP s) {
 
 void Rf_PrintValue(SEXP x) {
     TRACE0();
-    unimplemented("Rf_PrintValue");
+    ((call_Rf_PrintValue) callbacks[Rf_PrintValue_x])(x);
+    checkExitCall();
 }
 
 SEXP Rf_install(const char *name) {
