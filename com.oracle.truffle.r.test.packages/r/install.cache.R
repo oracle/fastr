@@ -26,9 +26,17 @@ is.fastr <- function() {
 }
 
 # A simple log function; to be replaced by a user of this file.
-log.message <- function(..., level=0) {
-    cat(..., "\n")
+log.message <- if(!exists("log.message")) {
+    function(..., level=0) {
+        if(level == 0 || verbose) {
+            cat(paste0(..., "\n"))
+        }
+    }
+} else {
+    log.message
 }
+
+
 
 pkg.cache.install <- function(pkg.cache.env, pkgname, pkg.version, lib.install, install.cmd) {
     pkg <- list(Package=pkgname, Version=pkg.version)

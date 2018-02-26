@@ -526,7 +526,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 	for (pkgname in pkgnames) {
 		if (log) {
 		    cat("BEGIN processing:", pkgname, "\n")
-            cat("timestamp: ", Sys.time(), "\n")
+            log.timestamp()
 		}
 		dependent.install.ok <- T
 		if (install.dependents.first && !dependents.install) {
@@ -576,7 +576,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 				}
 				if (should.install) {
 					cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
-                    cat("timestamp: ", Sys.time(), "\n")
+                    log.timestamp()
 					this.result <- install.pkg(pkgname)
 					result <- result && this.result
 					if (dependents.install && !this.result) {
@@ -686,7 +686,7 @@ do.it <- function() {
 
 	if (install) {
 		cat("BEGIN package installation\n")
-        cat("timestamp: ", Sys.time(), "\n")
+        log.timestamp()
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
 		show.install.status(test.pkgnames)
@@ -709,12 +709,12 @@ do.it <- function() {
 
 		# need to install the Suggests packages as they may be used
 		cat('BEGIN suggests install\n')
-        cat("timestamp: ", Sys.time(), "\n")
+        log.timestamp()
 		install.suggests(test.pkgnames)
 		cat('END suggests install\n')
 
 		cat("BEGIN package tests\n")
-        cat("timestamp: ", Sys.time(), "\n")
+        log.timestamp()
 		test.count = 1
 		test.total = length(test.pkgnames)
 		for (pkgname in test.pkgnames) {
@@ -755,13 +755,15 @@ fastr_error_log_size <- function() {
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr_error_log_size()
     rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source")[[1]], lib.install)
+    success <- FALSE
     if (rc == 0L) {
         # be paranoid and also check file system and log
-	    rc <- installed.ok(pkgname, error_log_size)
-    }
-	names(rc) <- pkgname
-	install.status <<- append(install.status, rc)
-	return(rc)
+	    success <- installed.ok(pkgname, error_log_size)
+    } 	
+    log.message(paste0("installation succeeded for ", pkgname, ": ", success), level=1)
+    names(success) <- pkgname
+	install.status <<- append(install.status, success)
+	return(success)
 }
 
 # when testing under graalvm, fastr is not built so we must use the (assumed) sibling gnur repo
@@ -989,7 +991,13 @@ cat.args <- function() {
 
 log.message <- function(..., level=0) {
     if(level == 0 || verbose) {
-        cat(..., "\n")
+        cat(paste0(..., "\n"))
+    }
+}
+
+log.timestamp <- function() {
+    if(!quiet) {
+        cat("timestamp:", as.character(Sys.time()), "\n")
     }
 }
 
