@@ -70,7 +70,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         return RError.SHOW_CALLER;
     }
 
-    @Specialization
+    @Specialization(guards = "probsAccess.supports(probs)")
     protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probs,
                     @Cached("probs.access()") VectorAccess probsAccess) {
         try (SequentialIterator probsIter = probsAccess.access(probs)) {
@@ -135,5 +135,10 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
             }
             return resultVec;
         }
+    }
+
+    @Specialization(replaces = "doMultinom")
+    protected RIntVector doMultinomGeneric(int n, int size, RAbstractDoubleVector probs) {
+        return doMultinom(n, size, probs, VectorAccess.createSlowPath(probs));
     }
 }
