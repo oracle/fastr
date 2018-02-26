@@ -188,6 +188,7 @@ static int initializeFastR(int argc, char *argv[], int setupRmainloop) {
         fprintf(stderr, "unsupported OS: %s\n", utsname.sysname);
         exit(1);
     }
+
     void *vm_handle = dlopen_jvmlib(jvmlib_path);
     JNI_CreateJavaVMFunc createJavaVMFunc = (JNI_CreateJavaVMFunc) dlsym(vm_handle, "JNI_CreateJavaVM");
     if (createJavaVMFunc == NULL) {
