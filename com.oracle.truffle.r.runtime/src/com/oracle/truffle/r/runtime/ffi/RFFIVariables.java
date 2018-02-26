@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * Note: regenerate the C glue code upon any change in this enum, use {@link #main(String[])}.
  */
 public enum RFFIVariables {
-    R_Home(REnvVars.rHome()),
+    R_Home("dummy string"),
     R_TempDir("dummy string"), // Set later
     R_GlobalEnv(null), // Set later
     R_BaseEnv(null), // Set later
@@ -120,6 +120,7 @@ public enum RFFIVariables {
      * Sets {@link #R_TempDir} for the initial context.
      */
     public static RFFIVariables[] initialize(RContext context) {
+        R_Home.value = REnvVars.rHome();
         R_TempDir.value = TempPathName.tempDirPath();
         R_GlobalEnv.value = RContext.getInstance().stateREnvironment.getGlobalEnv();
         R_BaseEnv.value = RContext.getInstance().stateREnvironment.getBaseEnv();
