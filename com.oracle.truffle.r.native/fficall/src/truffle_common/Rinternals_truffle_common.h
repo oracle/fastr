@@ -490,7 +490,8 @@ Rboolean Rf_isObject(SEXP s) {
 
 void Rf_PrintValue(SEXP x) {
     TRACE0();
-    unimplemented("Rf_PrintValue");
+    ((call_Rf_PrintValue) callbacks[Rf_PrintValue_x])(x);
+    checkExitCall();
 }
 
 SEXP Rf_install(const char *name) {
@@ -770,19 +771,20 @@ SEXP SETCADR(SEXP x, SEXP y) {
 
 SEXP SETCADDR(SEXP x, SEXP y) {
     TRACE0();
-    unimplemented("SETCADDR");
+    // note: signature is same, we reuse call_SETCADR
+    SEXP result = ((call_SETCADR) callbacks[SETCADDR_x])(x, y);
     return NULL;
 }
 
 SEXP SETCADDDR(SEXP x, SEXP y) {
     TRACE0();
-    unimplemented("SETCADDDR");
+    SEXP result = ((call_SETCADR) callbacks[SETCADDDR_x])(x, y);
     return NULL;
 }
 
-SEXP SETCAD4R(SEXP e, SEXP y) {
+SEXP SETCAD4R(SEXP x, SEXP y) {
     TRACE0();
-    unimplemented("SETCAD4R");
+    SEXP result = ((call_SETCADR) callbacks[SETCAD4R_x])(x, y);
     return NULL;
 }
 
@@ -1661,6 +1663,13 @@ R_registerRoutines(DllInfo *info, const R_CMethodDef * const croutines,
         ((call_registerRoutines) callbacks[registerRoutines_x])(info, EXTERNAL_NATIVE_TYPE, num, externalRoutines);
     }
     return 1;
+}
+
+DllInfo *R_getEmbeddingDllInfo() {
+    TRACE0();
+    DllInfo *result = ((call_getEmbeddingDLLInfo) callbacks[getEmbeddingDLLInfo_x])();
+    checkExitCall();
+    return result;
 }
 
 Rboolean R_useDynamicSymbols(DllInfo *dllInfo, Rboolean value) {

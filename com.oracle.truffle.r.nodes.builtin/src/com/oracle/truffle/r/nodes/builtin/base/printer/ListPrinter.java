@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -203,7 +203,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                 out.println(tagbuf);
                 Object si = s.getDataAt(i);
                 if (si instanceof RAttributable && ((RAttributable) si).isObject()) {
-                    RContext.getEngine().printResult(si);
+                    RContext.getEngine().printResult(RContext.getInstance(), si);
                 } else {
                     ValuePrinters.INSTANCE.print(si, printCtx);
                     ValuePrinters.printNewLine(printCtx);

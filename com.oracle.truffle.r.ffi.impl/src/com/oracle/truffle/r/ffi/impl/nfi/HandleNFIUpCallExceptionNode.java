@@ -24,16 +24,22 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
 public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
     @Child private DownCallNode setFlagNode = TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode(NativeFunction.set_exception_flag);
+    private final ConditionProfile isEmbeddedTopLevel = ConditionProfile.createBinaryProfile();
 
     @Override
     @TruffleBoundary
     public void execute(Throwable originalEx) {
+        if (isEmbeddedTopLevel.profile(RContext.isEmbedded() && isTopLevel())) {
+            return;
+        }
         setFlagNode.call();
         RuntimeException ex;
         if (originalEx instanceof RuntimeException) {
@@ -42,5 +48,9 @@ public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallEx
             ex = new RuntimeException(originalEx);
         }
         TruffleNFI_Context.getInstance().setLastUpCallException(ex);
+    }
+
+    private static boolean isTopLevel() {
+        return ((TruffleNFI_Context) RContext.getInstance().getRFFI()).getCallDepth() == 0;
     }
 }

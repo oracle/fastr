@@ -741,6 +741,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object SETCADDR(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object SETCADDDR(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object SETCAD4R(Object x, Object y) {
+        throw implementedAsNode();
+    }
+
+    @Override
     @TruffleBoundary
     public Object SYMVALUE(Object x) {
         if (!(x instanceof RSymbol)) {
@@ -1589,6 +1604,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return new DotSymbol(name, new SymbolHandle(fun), numArgs);
     }
 
+    @Override
+    public Object getEmbeddingDLLInfo() {
+        return DLL.getEmbeddingDLLInfo();
+    }
+
     protected abstract Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index);
 
     @Override
@@ -1995,6 +2015,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object R_CHAR(Object x) {
         return new VectorWrapper(guaranteeVectorOrNull(x, CharSXPWrapper.class));
+    }
+
+    @Override
+    public void Rf_PrintValue(Object value) {
+        throw implementedAsNode();
     }
 
     private static TruffleObject guaranteeVectorOrNull(Object obj, Class<? extends TruffleObject> clazz) {

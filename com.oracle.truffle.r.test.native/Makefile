@@ -37,7 +37,10 @@ all:
 	$(MAKE) -C urand
 	$(MAKE) -C packages
 ifneq ($(OSNAME), SunOS)
-ifeq ($(FASTR_RFFI),jni)
+ifeq ($(FASTR_RFFI),nfi)
+	$(MAKE) -C embedded
+endif
+ifeq ($(FASTR_RFFI),)
 	$(MAKE) -C embedded
 endif
 endif
@@ -46,7 +49,10 @@ clean:
 	$(MAKE) -C urand clean
 	$(MAKE) -C packages clean
 ifneq ($(OSNAME), SunOS)
-ifeq ($(FASTR_RFFI),jni)
+ifeq ($(FASTR_RFFI),nfi)
+	$(MAKE) -C embedded clean
+endif
+ifeq ($(FASTR_RFFI),)
 	$(MAKE) -C embedded clean
 endif
 endif

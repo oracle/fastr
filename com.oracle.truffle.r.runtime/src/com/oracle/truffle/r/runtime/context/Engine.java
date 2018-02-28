@@ -256,7 +256,7 @@ public interface Engine {
      * Used by Truffle debugger; invokes the internal "print" support in R for {@code value}.
      * Essentially this is equivalent to {@link #evalFunction} using the {@code "print"} function.
      */
-    void printResult(Object value);
+    void printResult(RContext ctx, Object value);
 
     /**
      * Return the "global" frame for this {@link Engine}, aka {@code globalEnv}.

@@ -22,35 +22,67 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.RErrorHandling;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RNull;
 
 public final class TryRfEvalNode extends FFIUpCallNode.Arg4 {
-    @Child RfEvalNode rfEvalNode = RfEvalNode.create();
-    @Child Node writeErrorFlagNode = Message.WRITE.createNode();
+    @Child private RfEvalNode rfEvalNode = RfEvalNode.create();
+    @Child private Node isNullNode = Message.IS_NULL.createNode();
+    @Child private Node writeErrorFlagNode;
+    @Child private Node isPointerNode;
+    @Child private Node asPointerNode;
 
     @Override
     public Object executeObject(Object expr, Object env, Object errorFlag, Object silent) {
         Object handlerStack = RErrorHandling.getHandlerStack();
         Object restartStack = RErrorHandling.getRestartStack();
+        boolean ok = true;
+        Object result = RNull.instance;
         try {
             // TODO handle silent
             RErrorHandling.resetStacks();
-            return rfEvalNode.executeObject(expr, env);
+            result = rfEvalNode.executeObject(expr, env);
         } catch (Throwable t) {
-            try {
-                ForeignAccess.sendWrite(writeErrorFlagNode, (TruffleObject) errorFlag, 0, 1);
-            } catch (InteropException e) {
-                // Ignore it, when using NFI, e.g., the errorFlag TO does not support the WRITE
-                // message
-            }
-            return null;
+            ok = false;
+            result = RNull.instance;
         } finally {
             RErrorHandling.restoreStacks(handlerStack, restartStack);
         }
+        TruffleObject errorFlagTO = (TruffleObject) errorFlag;
+        if (!ForeignAccess.sendIsNull(isNullNode, errorFlagTO)) {
+            if (isPointerNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                isPointerNode = insert(Message.IS_POINTER.createNode());
+            }
+            if (ForeignAccess.sendIsPointer(isPointerNode, errorFlagTO)) {
+                if (asPointerNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    asPointerNode = insert(Message.AS_POINTER.createNode());
+                }
+                long errorFlagPtr;
+                try {
+                    errorFlagPtr = ForeignAccess.sendAsPointer(asPointerNode, errorFlagTO);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
+                }
+                UnsafeAdapter.UNSAFE.putInt(errorFlagPtr, ok ? 0 : 1);
+            } else {
+                try {
+                    ForeignAccess.sendWrite(writeErrorFlagNode, errorFlagTO, 0, 1);
+                } catch (InteropException e) {
+                    throw RInternalError.shouldNotReachHere("Rf_tryEval errorFlag should be either pointer or support WRITE message");
+                }
+            }
+        }
+        return result;
     }
 }

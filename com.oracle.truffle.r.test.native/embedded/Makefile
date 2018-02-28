@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -45,24 +45,28 @@ FASTR_LIB_DIR = $(abspath ../../lib)
 
 .PHONY: all clean
 
-OBJ = lib
+BIN = bin
 SRC = src
 C_SOURCES := $(wildcard $(SRC)/*.c)
-C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
+C_OBJECTS := $(subst $(SRC),$(BIN),$(C_SOURCES:.c=.o))
 
 
 INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
-all: $(OBJ)/main Makefile
+all: $(BIN)/main $(BIN)/embedded Makefile
 
-$(OBJ)/main: | $(OBJ)
+$(BIN)/main: | $(BIN)
+$(BIN)/embedded: | $(BIN)
 
-$(OBJ):
-	mkdir -p $(OBJ)
+$(BIN):
+	mkdir -p $(BIN)
 
+$(BIN)/main: $(SRC)/main.c
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
 
-$(OBJ)/main: $(SRC)/main.c
-	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(OBJ)/main -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+$(BIN)/embedded: $(SRC)/embedded.c
+	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) $< -o $(BIN)/embedded -L $(FASTR_LIB_DIR) -ldl -lR $(LD_FLAGS) -Wl,-rpath,$(FASTR_LIB_DIR)
+	cp $(SRC)/*.R $(BIN)
 
 clean:
-	rm -rf $(OBJ)
+	rm -rf $(BIN)

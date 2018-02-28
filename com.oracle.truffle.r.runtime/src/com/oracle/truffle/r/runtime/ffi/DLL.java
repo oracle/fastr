@@ -217,6 +217,14 @@ public class DLL {
             return result;
         }
 
+        /**
+         * Embedding {@link DLLInfo} is just a placeholder. It does not represent any concrete dll
+         * and thus we e.g. cannot find any symbols in it.
+         */
+        public boolean isEmbeddingDllInfo() {
+            return handle == null;
+        }
+
         public void setNativeSymbols(int nstOrd, DotSymbol[] symbols) {
             nativeSymbols[nstOrd] = symbols;
         }
@@ -758,6 +766,7 @@ public class DLL {
      */
     public static SymbolHandle findSymbol(String name, DLLInfo dllInfo) {
         if (dllInfo != null) {
+            assert !dllInfo.isEmbeddingDllInfo() : "Dynamic symbols lookup is not supported for the embedding DLLInfo";
             return (SymbolHandle) DLLRFFI.DLSymRootNode.create(RContext.getInstance()).call(dllInfo.handle, name);
         } else {
             return (SymbolHandle) RFindSymbolRootNode.create(RContext.getInstance()).call(name, null, RegisteredNativeSymbol.any());

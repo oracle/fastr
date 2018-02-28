@@ -290,6 +290,7 @@ typedef SEXP (*call_R_ParseVector)(SEXP text, int n, SEXP srcFile);
 typedef SEXPTYPE (*call_Rf_str2type)(const char *s);
 typedef SEXP (*call_CLOENV)(SEXP closure);
 typedef SEXP (*call_octsize)(SEXP size);
+typedef void (*call_Rf_PrintValue)(SEXP x);
 
 // connections
 
@@ -314,6 +315,7 @@ typedef void * (*call_setDotSymbolValues)(DllInfo *dllInfo, char *name, DL_FUNC 
 typedef int (*call_forceSymbols)(DllInfo *dllInfo, Rboolean value);
 typedef int (*call_registerCCallable)(const char *pkgname, const char *name, void *fun);
 typedef void* (*call_getCCallable)(const char *pkgname, const char *name);
+typedef DllInfo* (*call_getEmbeddingDLLInfo)(void);
 
 // memory
 

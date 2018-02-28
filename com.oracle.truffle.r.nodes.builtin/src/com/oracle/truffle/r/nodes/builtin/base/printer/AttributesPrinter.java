@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -94,12 +94,13 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
             int origLen = buff.length();
             buff.append(tag);
 
-            if (RContext.getInstance().isMethodTableDispatchOn() && utils.isS4(a.getValue())) {
+            RContext ctx = RContext.getInstance();
+            if (ctx.isMethodTableDispatchOn() && utils.isS4(a.getValue())) {
                 S4ObjectPrinter.printS4(printCtx, a.getValue());
                 // throw new UnsupportedOperationException("TODO");
             } else {
                 if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject()) {
-                    RContext.getEngine().printResult(a.getValue());
+                    RContext.getEngine().printResult(ctx, a.getValue());
                 } else {
                     ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
                 }

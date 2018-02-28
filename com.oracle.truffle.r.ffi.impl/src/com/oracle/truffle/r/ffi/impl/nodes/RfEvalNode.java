@@ -26,12 +26,15 @@ import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_ENVIRONME
 import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_FUNCTION;
 import static com.oracle.truffle.r.runtime.RError.Message.UNKNOWN_OBJECT;
 
+import org.graalvm.polyglot.Value;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -51,9 +54,16 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @Child private PromiseHelperNode promiseHelper;
+    private final ConditionProfile envIsNullProfile = ConditionProfile.createBinaryProfile();
 
     public static RfEvalNode create() {
         return RfEvalNodeGen.create();
+    }
+
+    @Specialization
+    @TruffleBoundary
+    Object handlePromise(RPromise expr, @SuppressWarnings("unused") RNull nulLEnv) {
+        return getPromiseHelper().evaluate(null, expr);
     }
 
     @Specialization
@@ -64,20 +74,21 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    Object handleExpression(RExpression expr, REnvironment env) {
-        return RContext.getEngine().eval(expr, env, null);
+    Object handleExpression(RExpression expr, Object envArg) {
+        return RContext.getEngine().eval(expr, getEnv(envArg), null);
     }
 
     @Specialization
     @TruffleBoundary
-    Object handleLanguage(RLanguage expr, REnvironment env) {
-        return RContext.getEngine().eval(expr, env, null);
+    Object handleLanguage(RLanguage expr, Object envArg) {
+        return RContext.getEngine().eval(expr, getEnv(envArg), null);
     }
 
     @Specialization
     @TruffleBoundary
-    Object handleSymbol(RSymbol expr, REnvironment env) {
-        Object result = ReadVariableNode.lookupAny(expr.getName(), env.getFrame(), false);
+    Object handleSymbol(RSymbol expr, Object envArg,
+                    @Cached("createClassProfile()") ValueProfile accessProfile) {
+        Object result = ReadVariableNode.lookupAny(expr.getName(), getEnv(envArg).getFrame(accessProfile), false);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, UNKNOWN_OBJECT, expr.getName());
         }
@@ -85,18 +96,23 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     }
 
     @Specialization
-    Object handlePairList(RPairList l, REnvironment env,
+    Object handlePairList(RPairList l, Object envArg,
                     @Cached("createBinaryProfile()") ConditionProfile isPromiseProfile,
                     @Cached("createBinaryProfile()") ConditionProfile noArgsProfile) {
+        REnvironment env = getEnv(envArg);
         Object car = l.car();
-        RFunction f;
+        RFunction f = null;
         if (isPromiseProfile.profile(car instanceof RPromise)) {
             car = getPromiseHelper().evaluate(null, (RPromise) car);
         }
 
         if (car instanceof RFunction) {
             f = (RFunction) car;
-        } else {
+        } else if (car instanceof RSymbol) {
+            f = ReadVariableNode.lookupFunction(((RSymbol) car).getName(), env.getFrame());
+        }
+
+        if (f == null) {
             throw RError.error(RError.NO_CALLER, ARGUMENT_NOT_FUNCTION);
         }
 
@@ -119,8 +135,19 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         if (env instanceof REnvironment) {
             return expr;
         } else {
+            CompilerDirectives.transferToInterpreter();
             throw RError.error(RError.NO_CALLER, ARGUMENT_NOT_ENVIRONMENT);
         }
+    }
+
+    private REnvironment getEnv(Object envArg) {
+        if (envIsNullProfile.profile(envArg == RNull.instance)) {
+            return REnvironment.globalEnv(RContext.getInstance());
+        } else if (envArg instanceof REnvironment) {
+            return (REnvironment) envArg;
+        }
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(RError.NO_CALLER, ARGUMENT_NOT_ENVIRONMENT);
     }
 
     private PromiseHelperNode getPromiseHelper() {

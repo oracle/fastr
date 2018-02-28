@@ -245,7 +245,24 @@ def rrepl(args, nonZeroIsFatal=True, extraVmArgs=None):
     run_r(args, 'rrepl')
 
 def rembed(args, nonZeroIsFatal=True, extraVmArgs=None):
+    '''
+    Runs pure Java program that simulates the embedding scenario doing the same up-calls as embedded would call.
+    '''
     run_r(args, 'rembed')
+
+def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
+    '''
+    Runs simple R embedding API tests located in com.oracle.truffle.r.test.native/embedded.
+    The tests should be compiled by mx build before they can be run.
+    Each test (native application) is run and its output compared to the expected output
+    file located next to the source file.
+    '''
+    env = os.environ.copy()
+    env['R_HOME'] = _fastr_suite.dir
+    so_suffix = '.dylib' if platform.system().lower() == 'darwin' else '.so'
+    env['NFI_LIB'] = join(mx.suite('truffle').get_output_root(platformDependent=True), 'truffle-nfi-native/bin/libtrufflenfi' + so_suffix)
+    tests_script = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/embedded/test.sh')
+    return mx.run([tests_script], env=env, nonZeroIsFatal=nonZeroIsFatal)
 
 def _fastr_gate_runner(args, tasks):
     '''
@@ -276,6 +293,11 @@ def _fastr_gate_runner(args, tasks):
     with mx_gate.Task('UnitTests: apps', tasks) as t:
         if t:
             mx_unittest.unittest(_apps_unit_tests())
+
+    with mx_gate.Task('Rembedded', tasks) as t:
+        if t:
+            if rembedtest([]) != 0:
+                t.abort("Rembedded tests failed")
 
 mx_gate.add_gate_runner(_fastr_suite, _fastr_gate_runner)
 
@@ -553,6 +575,7 @@ _commands = {
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],
     'rrepl' : [rrepl, '[options]'],
     'rembed' : [rembed, '[options]'],
+    'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
     'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
     'pkgtest-cmp' : [mx_fastr_pkgs.pkgtest_cmp, ['gnur_path fastr_path']],

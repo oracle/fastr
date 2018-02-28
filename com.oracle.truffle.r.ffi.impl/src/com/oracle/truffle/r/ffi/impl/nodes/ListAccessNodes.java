@@ -173,6 +173,52 @@ public final class ListAccessNodes {
     }
 
     @TypeSystemReference(RTypes.class)
+    public static final class SETCADDRNode extends FFIUpCallNode.Arg2 {
+        @Child CDDRNode cddr = CDDRNode.create();
+        @Child SETCARNode setcarNode = SETCARNode.create();
+
+        @Override
+        public Object executeObject(Object x, Object val) {
+            return setcarNode.executeObject(cddr.executeObject(x), val);
+        }
+
+        public static SETCADDRNode create() {
+            return new SETCADDRNode();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public static final class SETCADDDRNode extends FFIUpCallNode.Arg2 {
+        @Child CDDDRNode cdddr = CDDDRNode.create();
+        @Child SETCARNode setcarNode = SETCARNode.create();
+
+        @Override
+        public Object executeObject(Object x, Object val) {
+            return setcarNode.executeObject(cdddr.executeObject(x), val);
+        }
+
+        public static SETCADDDRNode create() {
+            return new SETCADDDRNode();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public static final class SETCAD4RNode extends FFIUpCallNode.Arg2 {
+        @Child CDDDRNode cdddr = CDDDRNode.create();
+        @Child CDRNode cdr = CDRNode.create();
+        @Child SETCARNode setcarNode = SETCARNode.create();
+
+        @Override
+        public Object executeObject(Object x, Object val) {
+            return setcarNode.executeObject(cdddr.executeObject(cdr.executeObject(x)), val);
+        }
+
+        public static SETCAD4RNode create() {
+            return new SETCAD4RNode();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
     public abstract static class SETCARNode extends FFIUpCallNode.Arg2 {
         public static SETCARNode create() {
             return SETCARNodeGen.create();

@@ -36,6 +36,8 @@ logfiles : [
     "libdownloads/R-*/gnur_make.log"
     "libdownloads/R-*/Makeconf"
     "com.oracle.truffle.r.native/gnur/tests/log/all.diff"
+    "com.oracle.truffle.r.test.native/embedded/*.output"
+    "com.oracle.truffle.r.test.native/embedded/src/*.output"
     "*-tests/*.Rout"
   ]
 
@@ -93,7 +95,7 @@ gateCmd : ["mx", "--strict-compliance", "rgate", "--strict-mode", "-t"]
 
 gateTestCommon : ${common} {
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: with specials"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: with specials,Rembedded"]
   ]
 }
 

@@ -52,11 +52,13 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.S
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.SizeToOctalRawNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -358,6 +360,14 @@ public final class MiscNodes {
 
         public static OctSizeNode create() {
             return OctSizeNodeGen.create();
+        }
+    }
+
+    public static final class RfPrintValueNode extends FFIUpCallNode.Arg1 {
+        @Override
+        public Object executeObject(Object value) {
+            RContext.getEngine().printResult(RContext.getInstance(), value);
+            return RNull.instance;
         }
     }
 }
