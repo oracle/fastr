@@ -24,9 +24,8 @@
  * A collection of types and {@link com.oracle.truffle.api.interop.MessageResolution} classes that
  * support the implementations.
  *
- * See {@link com.oracle.truffle.r.ffi.impl.interop.base} and
- * {@link com.oracle.truffle.r.ffi.impl.interop.pcre} for similar classes specific to the
- * {@link com.oracle.truffle.r.runtime.ffi.BaseRFFI} and
+ * See com.oracle.truffle.r.ffi.impl.interop.base and com.oracle.truffle.r.ffi.impl.interop.pcre for
+ * similar classes specific to the {@link com.oracle.truffle.r.runtime.ffi.BaseRFFI} and
  * {@link com.oracle.truffle.r.runtime.ffi.PCRERFFI} interfaces.
  */
 package com.oracle.truffle.r.ffi.impl.interop;

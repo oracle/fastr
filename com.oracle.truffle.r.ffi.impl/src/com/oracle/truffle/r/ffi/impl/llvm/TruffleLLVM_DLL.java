@@ -65,10 +65,10 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 public class TruffleLLVM_DLL implements DLLRFFI {
     static class ContextStateImpl implements RContext.ContextState {
         /**
-         * When a new {@link RContext} is created we have to re-parse the libR modules,
-         * unfortunately, as there is no way to propagate the LLVM state created in the initial
-         * context. TODO when do we really need to do this? This is certainly too early for contexts
-         * that will not invoke LLVM code (e.g. most unit tests)
+         * When a new {@link RContext} is created we have to re-parse the libR modules, unfortunately, as
+         * there is no way to propagate the LLVM state created in the initial context. TODO when do we
+         * really need to do this? This is certainly too early for contexts that will not invoke LLVM code
+         * (e.g. most unit tests)
          */
         @Override
         public ContextState initialize(RContext context) {
@@ -167,10 +167,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         @Child private TruffleLLVM_NativeDLL.TruffleLLVM_NativeDLOpen nativeDLLOpenNode;
 
         /**
-         * If a library is enabled for LLVM, the IR for all the modules is retrieved and analyzed.
-         * Every exported symbol in the module added to the parseStatus map for the current
-         * {@link RContext}. This allows {@code dlsym} to definitively locate any symbol, even if
-         * the IR has not been parsed yet.
+         * If a library is enabled for LLVM, the IR for all the modules is retrieved and analyzed. Every
+         * exported symbol in the module added to the parseStatus map for the current {@link RContext}. This
+         * allows {@code dlsym} to definitively locate any symbol, even if the IR has not been parsed yet.
          */
         @Override
         public Object execute(String path, boolean local, boolean now) {
@@ -199,6 +198,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     sb.append(t.getMessage());
                     t = t.getCause();
                 }
+                ex.printStackTrace();
                 throw new UnsatisfiedLinkError(sb.toString());
             }
         }

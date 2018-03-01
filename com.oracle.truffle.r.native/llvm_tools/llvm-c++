@@ -38,12 +38,13 @@ then
   create_bc_lib $@ $extraObj
 else
   llvm_tool=clang++
-  #get_llvm_tool
-  #runit $llvm_tool_bin $llvm_args
-  echo "Clang args: $llvm_args"
-  clang --version
-  clang $llvm_args
-  
+  get_llvm_tool
+  unamestr=`uname`
+  if [[ "$unamestr" == 'Linux' ]]; then
+    llvm_args="-stdlib=libc++ -I/usr/include/libcxxabi $llvm_args"
+  fi
+  runit $llvm_tool_bin $llvm_args
+
   # the llvm_ir_file is empty if the result is sent to stdout
   if [ -n "$llvm_ir_file" ]; then
     mem2reg_opt

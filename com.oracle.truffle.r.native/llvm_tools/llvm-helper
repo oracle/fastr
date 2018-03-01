@@ -62,7 +62,7 @@ function analyze_args() {
 
   is_link=0
   llvm_ir_file=""
-  
+
   while [[ $# -gt 0 ]]
   do
     llvm_args+="$1 "
@@ -96,9 +96,9 @@ function analyze_args() {
 # path to tool (defaults to plain ${llvm_tool}, assumed to be on the PATH)
 
 function get_llvm_tool() {
-  if [ -n "${FASTR_LLVM_HOME}" ]
+  if [ -n "${FASTR_LLVM_TOOLS}" ]
   then
-    llvm_tool_bin=${FASTR_LLVM_HOME}/${llvm_tool}
+    llvm_tool_bin=${FASTR_LLVM_TOOLS}/${llvm_tool}
   else
     llvm_tool_uc=`echo ${llvm_tool} | tr /a-z/ /A-Z/ | tr /+/ /P/`
     x=FASTR_LLVM_${llvm_tool_uc}
@@ -111,12 +111,10 @@ function get_llvm_tool() {
   fi
 }
 
-
 function mem2reg_opt() {
-   #llvm_tool="opt"
-   #get_llvm_tool
-   #runit ${llvm_tool_bin} -mem2reg $llvm_ir_file -o ${llvm_ir_file}.opt
-   runit opt -mem2reg $llvm_ir_file -o ${llvm_ir_file}.opt
+   llvm_tool="opt"
+   get_llvm_tool
+   runit ${llvm_tool_bin} -mem2reg $llvm_ir_file -o ${llvm_ir_file}.opt
    rc=$?
    if [ $rc -eq 0 ]
    then
@@ -127,7 +125,7 @@ function mem2reg_opt() {
 function fake_obj() {
   f=`basename $llvm_ir_file`
   d=`dirname $llvm_ir_file`
-  runit touch ${d}/${f%%.*}.o 
+  runit touch ${d}/${f%%.*}.o
 }
 
 # Input: all the arguments to the original command line
@@ -161,20 +159,18 @@ function create_bc_lib() {
 # it will be the pathname, which we will reduce to a module name on input in FastR
 
 # link the bitcode files into a single one using llvm-link before zipping it
-  #llvm_tool=llvm-link
-  #get_llvm_tool
-  #runit $llvm_tool_bin $bcfiles -o $lib.bc
-  echo "Linking $lib.bc with $bcfiles"
-  runit llvm-link $bcfiles -o $lib.bc
+  llvm_tool=llvm-link
+  get_llvm_tool
+  runit $llvm_tool_bin $bcfiles -o $lib.bc
   runit zip -r $lib $lib.bc
   rm $lib.bc
 }
 
-# It appends objects constituting a static library to the list of extra object files. 
+# It appends objects constituting a static library to the list of extra object files.
 # This list is maintained in $R_PACKAGE_DIR/libobjects and is later read in llvm-cc and
-# llvm-c++ to append the object files from the list to other objects when making 
-# the package dynamic library. This mechanism is a workaround for the fact that the llvm 
-# linker does not support linking to static libraries, as the standard linker does 
+# llvm-c++ to append the object files from the list to other objects when making
+# the package dynamic library. This mechanism is a workaround for the fact that the llvm
+# linker does not support linking to static libraries, as the standard linker does
 # through the -l and -L options.
 function create_bc_archive() {
 
@@ -187,12 +183,12 @@ function create_bc_archive() {
   archname=$1
   arargs="rcs $archname "
   shift
-  
+
   archObjCSVtmp="archived_objects.tmp"
   archObjCSV="archived_objects.csv"
   exportedObjCSV="exported_objects.csv"
   > $archObjCSV
-  
+
   while [[ $# -gt 0 ]]
   do
     case $1 in
@@ -215,10 +211,10 @@ function create_bc_archive() {
 
   sort -d --field-separator=' ' --key=1 $archObjCSVtmp > $archObjCSV
 
-  # Create the archive (via llvm-ar) that is then used to read the symbol table via llvm-nm. 
+  # Create the archive (via llvm-ar) that is then used to read the symbol table via llvm-nm.
   # The symbol table allows for selecting a set of objects exporting unique symbols.
   llvm-ar $arargs
-  
+
   # This command extracts a set of objects from the archive that do not export duplicate symbols
   llvm-nm -print-file-name $archname | grep "\-\-\-\-" | awk -F ' ' '{print $1" "$4}' | sort -d --field-separator=' ' --key=2 -u | awk -F ':' '{print $2}' | sort -d -u > $exportedObjCSV
 

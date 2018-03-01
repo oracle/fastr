@@ -37,10 +37,9 @@ then
   fi
   create_bc_lib $@ $extraObj
 else
-  #llvm_tool=clang
-  #get_llvm_tool
-  #runit $llvm_tool_bin $llvm_args
-  runit clang $llvm_args
+  llvm_tool=clang
+  get_llvm_tool
+  runit $llvm_tool_bin $llvm_args
   # the llvm_ir_file is empty if the result is sent to stdout
   if [ -n "$llvm_ir_file" ]; then
     mem2reg_opt

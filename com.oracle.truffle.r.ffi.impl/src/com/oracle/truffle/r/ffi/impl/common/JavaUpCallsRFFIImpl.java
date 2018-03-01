@@ -906,9 +906,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     /**
-     * Helper function for {@code R_TopLevelExec} which is similar to {@code R_TryEval} except that
-     * a C function is invoked (in the native layer) instead of an R expression. assert: this is
-     * ONLY called from R_TopLevelExec prior to calling C function.
+     * Helper function for {@code R_TopLevelExec} which is similar to {@code R_TryEval} except that a C
+     * function is invoked (in the native layer) instead of an R expression. assert: this is ONLY called
+     * from R_TopLevelExec prior to calling C function.
      */
     @Override
     @TruffleBoundary
@@ -1966,8 +1966,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object INTEGER(Object x) {
         // also handles LOGICAL
-        assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
-        return VectorWrapper.get(guaranteeVectorOrNull(x, RVector.class));
+        assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance || x instanceof RUnboundValue : "" + x + ":" + x.getClass();
+        if (x instanceof RUnboundValue) {
+            return VectorWrapper.get((RUnboundValue) x);
+        } else {
+            return VectorWrapper.get(guaranteeVectorOrNull(x, RVector.class));
+        }
     }
 
     @Override

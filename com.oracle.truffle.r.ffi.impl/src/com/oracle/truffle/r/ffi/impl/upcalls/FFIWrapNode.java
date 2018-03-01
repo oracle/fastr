@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
+import com.oracle.truffle.r.runtime.data.RString;
 
 public abstract class FFIWrapNode extends Node {
 
@@ -61,6 +62,11 @@ public abstract class FFIWrapNode extends Node {
     @Specialization
     protected static Object wrap(String value) {
         return wrap(RDataFactory.createStringVectorFromScalar(value));
+    }
+
+    @Specialization
+    protected static Object wrap(RString value) {
+        return wrap(RDataFactory.createStringVectorFromScalar(value.getValue()));
     }
 
     @Specialization
