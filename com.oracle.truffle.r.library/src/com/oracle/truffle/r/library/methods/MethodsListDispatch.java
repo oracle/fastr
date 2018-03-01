@@ -146,7 +146,10 @@ public class MethodsListDispatch {
                         @Cached("create()") GetFromEnvironment get,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode klassPckgAttrAccess,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode valPckgAttrAccess) {
-            String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
+            if (klass.getLength() == 0) {
+                return RNull.instance;
+            }
+            String klassString = klass.getDataAt(0);
 
             if (klassString.length() == 0) {
                 throw error(RError.Message.ZERO_LENGTH_VARIABLE);
@@ -174,6 +177,11 @@ public class MethodsListDispatch {
         @Specialization
         protected RS4Object callGetClassFromCache(RS4Object klass, @SuppressWarnings("unused") REnvironment table) {
             return klass;
+        }
+
+        @Fallback
+        protected RS4Object callGetClassFromCache(@SuppressWarnings("unused") Object klass, @SuppressWarnings("unused") Object table) {
+            throw error(Message.GENERIC, "class should be either a character-string name or a class definition");
         }
     }
 
