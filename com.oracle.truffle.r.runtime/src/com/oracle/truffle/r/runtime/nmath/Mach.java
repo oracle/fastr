@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2014, The R Core Team
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -18,7 +18,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 
 public final class Mach {
-    public Mach() {
+    private Mach() {
         // only static members
     }
 

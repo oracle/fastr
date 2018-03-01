@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,8 +38,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * A {@link BlockNode} represents a sequence of statements created by "{ ... }" in source code.
  */
 public final class BlockNode extends OperatorNode {
-
-    public static final RNode[] EMPTY_BLOCK = new RNode[0];
 
     @Children protected final RNode[] sequence;
     @Child private SetVisibilityNode visibility;

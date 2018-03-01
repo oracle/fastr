@@ -98,10 +98,6 @@ public final class NativeDataAccess {
 
     private static final long EMPTY_DATA_ADDRESS = 0xBAD;
 
-    public static boolean isNativeMirror(Object o) {
-        return o instanceof NativeMirror;
-    }
-
     private static final class NativeMirror {
         /**
          * ID of the mirror, this will be used as the value for SEXP. When native up-calls to Java,

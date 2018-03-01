@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
-import com.oracle.truffle.r.runtime.nmath.distr.RMultinom;
 import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -71,7 +70,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         return RError.SHOW_CALLER;
     }
 
-    @Specialization
+    @Specialization(guards = "probsAccess.supports(probs)")
     protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probs,
                     @Cached("probs.access()") VectorAccess probsAccess) {
         try (SequentialIterator probsIter = probsAccess.access(probs)) {
@@ -136,5 +135,10 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
             }
             return resultVec;
         }
+    }
+
+    @Specialization(replaces = "doMultinom")
+    protected RIntVector doMultinomGeneric(int n, int size, RAbstractDoubleVector probs) {
+        return doMultinom(n, size, probs, VectorAccess.createSlowPath(probs));
     }
 }

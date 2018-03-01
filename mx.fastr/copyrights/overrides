@@ -260,7 +260,6 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Rbinom
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Rf.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/RGamma.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/RHyper.java,gnu_r_ihaka.copyright
-com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/RMultinom.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/RNBinom.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/RNchisq.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Rnorm.java,gnu_r.copyright

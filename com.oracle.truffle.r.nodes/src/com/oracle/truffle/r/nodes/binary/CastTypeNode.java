@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,7 +28,6 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
-import com.oracle.truffle.r.nodes.unary.TypeofNodeGen;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -41,7 +40,7 @@ public abstract class CastTypeNode extends RBaseNode {
 
     protected static final int NUMBER_OF_TYPES = RType.values().length;
 
-    @Child protected TypeofNode typeof = TypeofNodeGen.create();
+    @Child protected TypeofNode typeof = TypeofNode.create();
 
     public abstract Object execute(Object value, RType type);
 

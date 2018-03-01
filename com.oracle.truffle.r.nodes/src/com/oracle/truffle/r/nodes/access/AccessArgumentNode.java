@@ -57,8 +57,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
  */
 public final class AccessArgumentNode extends RNode {
 
-    @Child private PromiseHelperNode promiseHelper;
-
     /**
      * The formal index of this argument.
      */

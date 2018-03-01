@@ -126,7 +126,6 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  */
 public final class RContext {
 
-    public static final int CONSOLE_WIDTH = 80;
     public static ChildContextInfo childInfo;
 
     public enum ContextKind {
@@ -169,8 +168,6 @@ public final class RContext {
          * Shares all environments on the search path.
          */
         SHARE_ALL;
-
-        public static final ContextKind[] VALUES = values();
     }
 
     /**

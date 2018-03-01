@@ -262,7 +262,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R documentation
                 // for "names" function)
                 RList newDimNames = RDataFactory.createList(new Object[]{newNames});
-                newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
                 putAttribute(RRuntime.DIMNAMES_ATTR_KEY, newDimNames);
             } else {
                 putAttribute(RRuntime.NAMES_ATTR_KEY, newNames);
@@ -342,7 +341,6 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
                 }
             }
             putAttribute(RRuntime.DIMNAMES_ATTR_KEY, resDimNames);
-            resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
         }
     }
 

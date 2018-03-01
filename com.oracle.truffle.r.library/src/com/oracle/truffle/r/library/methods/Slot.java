@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2013, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -91,7 +91,6 @@ public class Slot {
     public abstract static class R_hasSlot extends RExternalBuiltinNode.Arg2 {
 
         @Child private HasSlotNode hasSlotNode;
-        @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         static {
             Casts casts = new Casts(R_hasSlot.class);

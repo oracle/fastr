@@ -110,10 +110,6 @@ public final class REmbedRFFI {
         public void execute(String message) {
             call(message);
         }
-
-        public static EmbeddedSuicideNode create() {
-            return RFFIFactory.getREmbedRFFI().createEmbeddedSuicideNode();
-        }
     }
 
     public static final class EmbeddedCleanUpNode extends NativeCallNode {
@@ -123,10 +119,6 @@ public final class REmbedRFFI {
 
         public void execute(int x, int y, int z) {
             call(x, y, z);
-        }
-
-        public static EmbeddedCleanUpNode create() {
-            return RFFIFactory.getREmbedRFFI().createEmbeddedCleanUpNode();
         }
     }
 

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1997-2014, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -84,17 +84,6 @@ public abstract class RGB extends RExternalBuiltinNode.Arg6 {
 
     @TypeSystemReference(RTypes.class)
     abstract static class RGBBase extends RBaseNode {
-
-        protected static int addColor(boolean alpha, int[] result, int start, GridColor color) {
-            int pos = start;
-            result[pos++] = color.getRed();
-            result[pos++] = color.getGreen();
-            result[pos++] = color.getBlue();
-            if (alpha) {
-                result[pos++] = color.getAlpha();
-            }
-            return pos;
-        }
 
         private static final char[] HexDigits = "0123456789ABCDEF".toCharArray();
 

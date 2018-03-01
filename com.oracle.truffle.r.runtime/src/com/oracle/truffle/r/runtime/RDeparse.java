@@ -1182,7 +1182,7 @@ public class RDeparse {
         }
         int i = 1;
         ch = safeCharAt(name, i);
-        while ((ch != '?' && Character.isAlphabetic(ch)) || Character.isDigit(ch) || ch == '.' | ch == '_') {
+        while ((ch != '?' && Character.isAlphabetic(ch)) || Character.isDigit(ch) || ch == '.' || ch == '_') {
             i++;
             ch = safeCharAt(name, i);
         }

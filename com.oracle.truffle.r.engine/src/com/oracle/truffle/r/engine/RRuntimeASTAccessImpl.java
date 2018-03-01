@@ -686,7 +686,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 arg = null;
             } else if (arg.startsWith(">")) {
                 assert !intern;
-                arg = null;
                 throw RError.nyi(RError.NO_CALLER, "stdout redirect");
             }
             if (arg != null) {

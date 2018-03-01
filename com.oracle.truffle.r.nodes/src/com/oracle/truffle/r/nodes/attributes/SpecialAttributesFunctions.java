@@ -345,7 +345,6 @@ public final class SpecialAttributesFunctions {
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R
                 // documentation for "names" function)
                 RList newDimNames = RDataFactory.createList(new Object[]{newNames});
-                newDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
                 setDimNamesNode.setDimNames(xProfiled, newDimNames);
             } else {
                 assert newNames != xProfiled;
@@ -836,7 +835,6 @@ public final class SpecialAttributesFunctions {
                     resDimNames.updateDataAt(i, RNull.instance, null);
                 }
             }
-            resDimNames.elementNamePrefix = RRuntime.DIMNAMES_LIST_ELEMENT_NAME_PREFIX;
 
             if (x.getAttributes() == null) {
                 attrNullProfile.enter();

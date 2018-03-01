@@ -118,6 +118,8 @@ public class REmbedded {
      */
     private static final Source INIT = Source.newBuilder("R", "1", "<embedded>").buildLiteral();
 
+    // TODO: to be invoked from native
+    @SuppressWarnings("unused")
     private static void endRmainloop(int status) {
         context.leave();
         context.close();
