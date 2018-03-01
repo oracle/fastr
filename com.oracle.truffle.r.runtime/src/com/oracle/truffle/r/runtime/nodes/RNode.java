@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RTypesGen;
-import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapperFactory.RNodeWrapper;
+import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapper;
 
 @TypeSystemReference(RTypes.class)
 public abstract class RNode extends RBaseNode implements RInstrumentableNode {
