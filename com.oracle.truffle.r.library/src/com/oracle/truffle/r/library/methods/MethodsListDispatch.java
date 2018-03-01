@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.helpers.GetFromEnvironment;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -140,8 +141,8 @@ public class MethodsListDispatch {
         }
 
         @Specialization
-        @TruffleBoundary
         protected Object callGetClassFromCache(RAbstractStringVector klass, REnvironment table,
+                        @Cached("create()") GetFromEnvironment get,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode klassPckgAttrAccess,
                         @Cached("createPckgAttrAccess()") GetFixedAttributeNode valPckgAttrAccess) {
             String klassString = klass.getLength() == 0 ? RRuntime.STRING_NA : klass.getDataAt(0);
@@ -150,7 +151,7 @@ public class MethodsListDispatch {
                 throw error(RError.Message.ZERO_LENGTH_VARIABLE);
             }
 
-            Object value = table.get(klassString);
+            Object value = get.execute(null, table, klassString);
             if (value == null) {
                 return RNull.instance;
             } else {
