@@ -23,7 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.InstrumentableFactory;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode.WrapperNode;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -33,10 +33,10 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public class RCallBaseNodeWrapperFactory implements InstrumentableFactory<RCallBaseNode> {
+public class RCallBaseNodeWrapperFactory {
 
     @NodeInfo(cost = NodeCost.NONE)
-    public static final class RCallBaseNodeWrapper extends RCallBaseNode implements InstrumentableFactory.WrapperNode {
+    public static final class RCallBaseNodeWrapper extends RCallBaseNode implements WrapperNode {
         @Child private RCallBaseNode delegate;
         @Child private ProbeNode probeNode;
 
@@ -150,10 +150,5 @@ public class RCallBaseNodeWrapperFactory implements InstrumentableFactory<RCallB
         public SourceSection getSourceSection() {
             return delegate.getSourceSection();
         }
-    }
-
-    @Override
-    public InstrumentableFactory.WrapperNode createWrapper(RCallBaseNode node, ProbeNode probe) {
-        return new RCallBaseNodeWrapper(node, probe);
     }
 }

@@ -24,7 +24,8 @@ package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.Instrumentable;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.r.nodes.function.RCallBaseNodeWrapperFactory.RCallBaseNodeWrapper;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
@@ -32,8 +33,12 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @TypeSystemReference(RTypes.class)
-@Instrumentable(factory = com.oracle.truffle.r.nodes.function.RCallBaseNodeWrapperFactory.class)
 public abstract class RCallBaseNode extends RNode implements RInstrumentableNode {
+
+    @Override
+    public WrapperNode createWrapper(ProbeNode probe) {
+        return new RCallBaseNodeWrapper(this, probe);
+    }
 
     public abstract Object execute(VirtualFrame frame, Object function);
 

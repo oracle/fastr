@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
@@ -184,9 +185,9 @@ public abstract class RBaseNode extends Node {
         return getRSyntaxNode().getSourceSection();
     }
 
-    @Override
-    public boolean isTaggedWith(Class<?> tag) {
-        return RContext.getRRuntimeASTAccess().isTaggedWith(this, tag);
+    public boolean hasTag(Class<? extends Tag> tag) {
+        // RNode, which is instrumentable, overrides this to actually check if the node has the tag
+        return false;
     }
 
     private static final long WORK_SCALE_FACTOR = 100;

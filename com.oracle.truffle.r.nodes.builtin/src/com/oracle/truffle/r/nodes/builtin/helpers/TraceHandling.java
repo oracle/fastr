@@ -90,7 +90,7 @@ public class TraceHandling {
             SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
             builder.tagIs(StandardTags.RootTag.class);
             SourceSectionFilter filter = builder.build();
-            RInstrumentation.getInstrumenter().attachListener(filter, fser);
+            RInstrumentation.getInstrumenter().attachExecutionEventListener(filter, fser);
             setOutputHandler();
         }
     }
@@ -105,7 +105,7 @@ public class TraceHandling {
         if (at == RMissing.instance) {
             // simple case
             TracerFunctionEntryEventListener listener = new TracerFunctionEntryEventListener(tracer, print);
-            binding = RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), listener);
+            binding = RInstrumentation.getInstrumenter().attachExecutionEventListener(RInstrumentation.createFunctionStartFilter(func).build(), listener);
             setOutputHandler();
             RContext.getInstance().stateInstrumentation.putTraceBinding(RInstrumentation.getSourceSection(func), binding);
         }
@@ -114,7 +114,7 @@ public class TraceHandling {
 
     private static void attachPrimitiveTraceHandler(RFunction func) {
         PrimitiveFunctionEntryEventListener fser = new PrimitiveFunctionEntryEventListener();
-        EventBinding<TraceEventListener> binding = RInstrumentation.getInstrumenter().attachListener(RInstrumentation.createFunctionStartFilter(func).build(), fser);
+        EventBinding<TraceEventListener> binding = RInstrumentation.getInstrumenter().attachExecutionEventListener(RInstrumentation.createFunctionStartFilter(func).build(), fser);
         setOutputHandler();
         RContext.getInstance().stateInstrumentation.putTraceBinding(RInstrumentation.getSourceSection(func), binding);
     }

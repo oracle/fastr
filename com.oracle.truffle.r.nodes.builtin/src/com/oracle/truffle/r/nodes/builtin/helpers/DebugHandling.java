@@ -169,7 +169,7 @@ public class DebugHandling {
         SourceSection lineSourceSection = fdn.createSection(line);
         SourceSectionFilter.Builder functionBuilder = RInstrumentation.createLineFilter(fdn, line, StandardTags.StatementTag.class);
         LineBreakpointEventListener listener = new LineBreakpointEventListener(lineSourceSection);
-        listener.setBinding(instrumenter.attachListener(functionBuilder.build(), listener));
+        listener.setBinding(instrumenter.attachExecutionEventListener(functionBuilder.build(), listener));
         RContext.getInstance().stateInstrumentation.putDebugListener(lineSourceSection, listener);
     }
 
@@ -317,7 +317,7 @@ public class DebugHandling {
         @TruffleBoundary
         private void attachStepInto() {
             FunctionStatementsEventListener parentListener = getFunctionStatementsEventListener(functionDefinitionNode);
-            parentListener.stepIntoInstrument = RInstrumentation.getInstrumenter().attachListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
+            parentListener.stepIntoInstrument = RInstrumentation.getInstrumenter().attachExecutionEventListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
                             new StepIntoInstrumentListener(parentListener));
 
         }
@@ -400,7 +400,7 @@ public class DebugHandling {
                 SourceSectionFilter.Builder statementBuilder = RInstrumentation.createFunctionStatementFilter(functionDefinitionNode);
                 statementBuilder.tagIsNot(RSyntaxTags.LoopTag.class);
                 Instrumenter instrumenter = RInstrumentation.getInstrumenter();
-                statementListener.setBinding(instrumenter.attachListener(statementBuilder.build(), statementListener));
+                statementListener.setBinding(instrumenter.attachExecutionEventListener(statementBuilder.build(), statementListener));
             }
         }
 
@@ -408,7 +408,7 @@ public class DebugHandling {
             LoopStatementEventListener lser = new LoopStatementEventListener(functionDefinitionNode, text, condition, loopNode, this);
             loopStatementListeners.add(lser);
             Instrumenter instrumenter = RInstrumentation.getInstrumenter();
-            lser.setBinding(instrumenter.attachListener(ssf, lser));
+            lser.setBinding(instrumenter.attachExecutionEventListener(ssf, lser));
             return lser;
         }
 
@@ -432,7 +432,7 @@ public class DebugHandling {
 
             Instrumenter instrumenter = RInstrumentation.getInstrumenter();
             SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(functionDefinitionNode, StandardTags.RootTag.class);
-            setBinding(instrumenter.attachListener(functionBuilder.build(), this));
+            setBinding(instrumenter.attachExecutionEventListener(functionBuilder.build(), this));
 
             // Next attach statement handler to all STATEMENTs except LOOPs
             attachStatementListener();
@@ -621,7 +621,7 @@ public class DebugHandling {
                 // in case we did a step into that never called a function
                 clearStepInstrument();
                 RBaseNode node = (RBaseNode) context.getInstrumentedNode();
-                if (node.isTaggedWith(StandardTags.RootTag.class)) {
+                if (node.hasTag(StandardTags.RootTag.class)) {
                     // already handled
                     return;
                 }

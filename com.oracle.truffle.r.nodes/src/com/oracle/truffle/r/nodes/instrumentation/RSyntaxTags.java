@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,16 @@
 package com.oracle.truffle.r.nodes.instrumentation;
 
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.instrumentation.Tag;
 
 public class RSyntaxTags {
 
-    public final class LoopTag {
+    public final class LoopTag extends Tag {
         private LoopTag() {
 
         }
     }
 
-    public static final Class<?>[] ALL_TAGS = new Class<?>[]{StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class};
+    @SuppressWarnings("unchecked") public static final Class<? extends Tag>[] ALL_TAGS = (Class<? extends Tag>[]) new Class<?>[]{StandardTags.CallTag.class, StandardTags.StatementTag.class,
+                    StandardTags.RootTag.class, LoopTag.class};
 }

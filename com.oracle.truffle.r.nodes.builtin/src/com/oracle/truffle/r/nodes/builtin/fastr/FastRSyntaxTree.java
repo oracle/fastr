@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.source.SourceSection;
@@ -226,8 +227,8 @@ public abstract class FastRSyntaxTree extends RBuiltinNode.Arg4 {
     private static void printTags(RNode node) {
         writeString(" # tags [ ", false);
         for (int i = 0; i < RSyntaxTags.ALL_TAGS.length; i++) {
-            Class<?> tag = RSyntaxTags.ALL_TAGS[i];
-            if (node.isTaggedWith(tag)) {
+            Class<? extends Tag> tag = RSyntaxTags.ALL_TAGS[i];
+            if (node.hasTag(tag)) {
                 writeString(tag.getSimpleName(), false);
                 writeString(" ", false);
             }
