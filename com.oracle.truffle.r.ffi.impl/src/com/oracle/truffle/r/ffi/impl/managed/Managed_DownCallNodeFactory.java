@@ -144,7 +144,7 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
                         @TruffleBoundary
                         public Object execute(VirtualFrame frame) {
                             NativeCharArray templateBytes = (NativeCharArray) ForeignAccess.getArguments(frame).get(0);
-                            String template = new String(templateBytes.getValue(), 0, templateBytes.getValue().length - 1);
+                            String template = templateBytes.getString();
                             if (!template.endsWith("XXXXXX")) {
                                 throw new IllegalArgumentException("template must end with XXXXXX");
                             }
