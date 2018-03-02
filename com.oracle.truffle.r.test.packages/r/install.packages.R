@@ -164,6 +164,19 @@ choice.depends <- function(pkg, choice=c("direct","suggests")) {
 	unname(all.deps)
 }
 
+# provides JVM args when running the tests
+fastr.test.jvm.args <- function() {
+    mx.args.file <- "com.oracle.truffle.r.test.packages/test.mx.args"
+    tryCatch({
+        if (file.exists(mx.args.file)) {
+            opts <- paste0('"', paste0("--Ja @", readLines(mx.args.file), collapse=" "), '"')
+            log.message(paste0("MX_R_GLOBAL_ARGS=", opts), level=1)
+            return (opts)
+	    }
+    })
+    return ("'--Ja @-DR:+IgnoreGraphicsCalls'")
+}
+
 # returns a vector of package names that are the direct dependents of pkg
 direct.depends <- function(pkg) {
 	choice.depends(pkg, "direct")
@@ -513,7 +526,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 	for (pkgname in pkgnames) {
 		if (log) {
 		    cat("BEGIN processing:", pkgname, "\n")
-            cat("timestamp: ", Sys.time(), "\n")
+            log.timestamp()
 		}
 		dependent.install.ok <- T
 		if (install.dependents.first && !dependents.install) {
@@ -563,7 +576,7 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 				}
 				if (should.install) {
 					cat("installing:", pkgname, "(", install.count, "of", install.total, ")", "\n")
-                    cat("timestamp: ", Sys.time(), "\n")
+                    log.timestamp()
 					this.result <- install.pkg(pkgname)
 					result <- result && this.result
 					if (dependents.install && !this.result) {
@@ -673,7 +686,7 @@ do.it <- function() {
 
 	if (install) {
 		cat("BEGIN package installation\n")
-        cat("timestamp: ", Sys.time(), "\n")
+        log.timestamp()
 		install.pkgs(test.pkgnames)
 		cat("END package installation\n")
 		show.install.status(test.pkgnames)
@@ -696,12 +709,12 @@ do.it <- function() {
 
 		# need to install the Suggests packages as they may be used
 		cat('BEGIN suggests install\n')
-        cat("timestamp: ", Sys.time(), "\n")
+        log.timestamp()
 		install.suggests(test.pkgnames)
 		cat('END suggests install\n')
 
 		cat("BEGIN package tests\n")
-        cat("timestamp: ", Sys.time(), "\n")
+        log.timestamp()
 		test.count = 1
 		test.total = length(test.pkgnames)
 		for (pkgname in test.pkgnames) {
@@ -741,26 +754,16 @@ fastr_error_log_size <- function() {
 # installs a single package or retrieves it from the cache
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr_error_log_size()
-	if (run.mode == "system") {
-        tryCatch(
-                 system.install(pkgname)
-        , error = function(e) {
-            log.message(e$message)
-            1L
-        }, warning = function(e) {
-            log.message(e$message)
-            # According to the documentation of 'system2', a warning will provide a status field.
-            e$status
-        })
-	} else if (run.mode == "internal") {
-        pkg.cache.internal.install(pkg.cache.env=pkg.cache, pkgname=pkgname, lib.install=lib.install)
-	} else if (run.mode == "context") {
-		stop("context run-mode not implemented\n")
-	}
-	rc <- installed.ok(pkgname, error_log_size)
-	names(rc) <- pkgname
-	install.status <<- append(install.status, rc)
-	return(rc)
+    rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source")[[1]], lib.install)
+    success <- FALSE
+    if (rc == 0L) {
+        # be paranoid and also check file system and log
+	    success <- installed.ok(pkgname, error_log_size)
+    } 	
+    log.message(paste0("installation succeeded for ", pkgname, ": ", success), level=1)
+    names(success) <- pkgname
+	install.status <<- append(install.status, success)
+	return(success)
 }
 
 # when testing under graalvm, fastr is not built so we must use the (assumed) sibling gnur repo
@@ -785,21 +788,6 @@ gnu_rscript <- function() {
 		}
 		file.path(gnurHome, dirv, 'bin', 'Rscript')
 	}
-}
-
-system.install <- function(pkgname) {
-	script <- normalizePath("com.oracle.truffle.r.test.packages/r/install.package.R")
-	if (is.fastr()) {
-		rscript = file.path(R.home(), "bin", "Rscript")
-	} else {
-		rscript = gnu_rscript()
-	}
-    args <- c(script, pkgname, paste0(contrib.url(getOption("repos"), "source"), collapse=","), lib.install, as.character(pkg.cache$enabled))
-    if (pkg.cache$enabled) {
-         args <- c(args, pkg.cache$version, pkg.cache$dir)
-    } 	
-    rc <- system2(rscript, args)
-	rc
 }
 
 check.create.dir <- function(name) {
@@ -849,7 +837,12 @@ system.test <- function(pkgname) {
 	# we want to stop tests that hang, but some packages have many tests
 	# each of which spawns a sub-process (over which we have no control)
 	# so we time out the entire set after 20 minutes.
-	rc <- system2(rscript, args, env=c("FASTR_PROCESS_TIMEOUT=20", paste0("R_LIBS_USER=",shQuote(lib.install)),"R_LIBS="))
+    env <- c("FASTR_PROCESS_TIMEOUT=20", 
+             paste0("R_LIBS_USER=", shQuote(lib.install)),
+             "R_LIBS=",
+             paste0("MX_R_GLOBAL_ARGS=", fastr.test.jvm.args())
+            )
+	rc <- system2(rscript, args, env=env)
 	rc
 }
 
@@ -998,7 +991,13 @@ cat.args <- function() {
 
 log.message <- function(..., level=0) {
     if(level == 0 || verbose) {
-        cat(..., "\n")
+        cat(paste0(..., "\n"))
+    }
+}
+
+log.timestamp <- function() {
+    if(!quiet) {
+        cat("timestamp:", as.character(Sys.time()), "\n")
     }
 }
 
