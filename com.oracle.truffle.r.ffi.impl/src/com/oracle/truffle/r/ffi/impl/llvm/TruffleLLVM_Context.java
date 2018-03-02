@@ -86,10 +86,6 @@ final class TruffleLLVM_Context extends RFFIContext {
 
         String libzPath = LibPaths.getBuiltinLibPath("z");
         TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(libzPath, false, true);
-
-        // String curlPath = LibPaths.getBuiltinLibPath("curl.4");
-        String curlPath = "libcurl.so";
-        TruffleLLVM_NativeDLL.NativeDLOpenRootNode.create().getCallTarget().call(curlPath, false, true);
     }
 
     @Override

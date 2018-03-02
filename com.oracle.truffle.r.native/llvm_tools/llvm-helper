@@ -132,25 +132,39 @@ function fake_obj() {
 function create_bc_lib() {
   bcfiles=""
   lib=""
+  statlibs="$R_PACKAGE_DIR/statlibs"
+  linkedLibs="LIBS"
+  > $linkedLibs
   while [[ $# -gt 0 ]]
   do
     case $1 in
       -o)
         shift
-		lib=$1
-      ;;
+		    lib=$1
+        ;;
+      -l*)
+		    linkedLib=`echo $1 | cut -c 3-`
+        statLibFound='0'
+        if [ -f "$statlibs" ]; then
+          statLibFound=`cat "$statlibs" | grep "lib${linkedLib}.a" | wc -l`
+        fi
+        if [ $statLibFound == '0' ]
+		    then
+          echo $linkedLib >> $linkedLibs
+		    fi
+        ;;
       -*)
-        # ignore options
-      ;;
-     *)
+        # ignore other options
+        ;;
+      *)
         f=$(basename $1)
-     	ext=${f##*.}
-		if [ $ext == 'o' ]
-		then
-	  		fn="$(dirname $1)/${f%%.*}.bc"
-			bcfiles+="$fn "
-		fi
-     ;;
+     	  ext=${f##*.}
+		    if [ $ext == 'o' ]
+		    then
+	  		   fn="$(dirname $1)/${f%%.*}.bc"
+			     bcfiles+="$fn "
+		    fi
+        ;;
     esac
     shift
   done
@@ -161,8 +175,9 @@ function create_bc_lib() {
 # link the bitcode files into a single one using llvm-link before zipping it
   llvm_tool=llvm-link
   get_llvm_tool
+  echo "Linking $lib.bc from LLVM modules: $bcfiles"
   runit $llvm_tool_bin $bcfiles -o $lib.bc
-  runit zip -r $lib $lib.bc
+  runit zip -r $lib $lib.bc $linkedLibs
   rm $lib.bc
 }
 
@@ -220,5 +235,8 @@ function create_bc_archive() {
 
   # Join the archived objects CSV with the unique symbols objects CSV to get the list of objects to be statically linked to the package dynamic library.
   # Append the result to the global list of extra object files.
-  join -t " " -1 1 -2 1 $archObjCSV $exportedObjCSV | awk -F ' ' '{print $2}' >> $R_PACKAGE_DIR/libobjects
+  join -t " " -1 1 -2 1 $archObjCSV $exportedObjCSV | awk -F ' ' '{print $2}' >> "$R_PACKAGE_DIR/libobjects"
+
+  # Record the archive (static library) name to distinguish between LLVM static libs and native libs when linking (via -l)
+  echo $archname >> "$R_PACKAGE_DIR/statlibs"
 }

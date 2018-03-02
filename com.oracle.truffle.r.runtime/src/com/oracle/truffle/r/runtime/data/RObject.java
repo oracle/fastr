@@ -25,15 +25,6 @@ package com.oracle.truffle.r.runtime.data;
 public abstract class RObject {
 
     private Object nativeMirror;
-    /**
-     * It maintains the <code>1-?</code> relationship between this object and its native wrapper
-     * through which the native code accesses it. For instance, Sulong implements the "pointer"
-     * equality of two objects that are not pointers (i.e. <code>IS_POINTER</code> returns
-     * <code>false</code>) as the reference equality of the objects. It follows that the pointer
-     * comparison would fail if the same <code>RObject</code> instance were wrapped by two different
-     * native wrappers.
-     */
-    private Object nativeWrapper;
 
     public final void setNativeMirror(Object mirror) {
         this.nativeMirror = mirror;
@@ -43,11 +34,4 @@ public abstract class RObject {
         return nativeMirror;
     }
 
-    public void setNativeWrapper(Object wrapper) {
-        this.nativeWrapper = wrapper;
-    }
-
-    public Object getNativeWrapper() {
-        return this.nativeWrapper;
-    }
 }

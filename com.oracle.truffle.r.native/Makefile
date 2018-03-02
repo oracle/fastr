@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,7 +21,7 @@
 # questions.
 #
 
-.PHONY: all clean 
+.PHONY: all clean
 
 export TOPDIR = $(CURDIR)
 export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
@@ -29,6 +29,15 @@ export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 export FASTR_NATIVE_DIR = $(TOPDIR)
 export R_VERSION = 3.4.0
 export GNUR_HOME = $(TOPDIR)/gnur/patch-build
+
+ifeq ($(FASTR_RFFI),llvm)
+ifndef FASTR_LLVM_TOOLS
+ifdef FASTR_LLVM_FOR_DRAGONEGG_HOME
+export FASTR_LLVM_TOOLS = $(FASTR_LLVM_FOR_DRAGONEGG_HOME)/bin
+$(info FASTR_LLVM_TOOLS set to $(FASTR_LLVM_TOOLS))
+endif
+endif
+endif
 
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
@@ -43,7 +52,7 @@ $(info GNUR_HOME_BINARY not set. Assuming the default location at $(GNUR_HOME_BI
 endif
 
 # Completely accurate dependency analysis is very difficult for this project, so use a version number
-# to force a clean build, and elsewhere use sentinels to avoid rebuilding when we can't compute the 
+# to force a clean build, and elsewhere use sentinels to avoid rebuilding when we can't compute the
 # dependencies accurately.
 
 all: checkversion
@@ -54,7 +63,7 @@ all: checkversion
 	$(MAKE) -C run
 	cp version.source version.built
 
-clean: 
+clean:
 	$(MAKE) -C include clean
 	$(MAKE) -C fficall clean
 	$(MAKE) -C run clean

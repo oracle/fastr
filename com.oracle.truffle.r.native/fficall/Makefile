@@ -80,12 +80,7 @@ fficall.done: common.done
 
 else
 ifeq ($(FASTR_RFFI),llvm)
-ifndef FASTR_LLVM_TOOLS
-ifdef FASTR_LLVM_FOR_DRAGONEGG_HOME
-export FASTR_LLVM_TOOLS = $(FASTR_LLVM_FOR_DRAGONEGG_HOME)/bin
-$(info FASTR_LLVM_TOOLS set to $(FASTR_LLVM_TOOLS))
-endif
-endif
+export R_PACKAGE_DIR="lib"
 fficall.done: common.done
 	$(MAKE) -C src/truffle_llvm all
 	touch fficall.done

@@ -48,8 +48,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     private Object car = RNull.instance;
     private Object cdr = RNull.instance;
     /**
-     * Externally, i.e., when serialized, this is either a SYMSXP ({@link RSymbol}) or an {@link RNull}.
-     * Internally it may take on other, non-null, values.
+     * Externally, i.e., when serialized, this is either a SYMSXP ({@link RSymbol}) or an
+     * {@link RNull}. Internally it may take on other, non-null, values.
      */
     private Object tag = RNull.instance;
 
