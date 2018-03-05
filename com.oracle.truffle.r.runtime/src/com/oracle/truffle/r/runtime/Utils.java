@@ -37,6 +37,7 @@ import java.util.function.Function;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleRuntime;
@@ -57,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -676,6 +678,21 @@ public final class Utils {
     @TruffleBoundary
     public static String stringFormat(String format, Object... objects) {
         return String.format(format, objects);
+    }
+
+    /**
+     * Makes the best effort to create end user understandable String representation of the type of
+     * the parameter. When the parameter is null, returns "null".
+     */
+    public static String getTypeName(Object value) {
+        // Typically part of error reporting. The whole error reporting should be behind TB.
+        CompilerAsserts.neverPartOfCompilation();
+        if (value == null) {
+            return "null";
+        } else if (value instanceof RTypedValue) {
+            return ((RTypedValue) value).getRType().getName();
+        }
+        return value.getClass().getSimpleName();
     }
 
     private static boolean isWriteableDirectory(String path) {

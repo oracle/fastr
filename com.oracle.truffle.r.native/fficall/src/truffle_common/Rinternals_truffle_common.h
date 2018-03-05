@@ -448,6 +448,13 @@ R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
     return result;
 }
 
+R_xlen_t Rf_any_duplicated3(SEXP x, SEXP incomp, Rboolean from_last) {
+    TRACE0();
+    R_xlen_t result = (R_xlen_t) ((call_Rf_any_duplicated3) callbacks[Rf_any_duplicated3_x])(x, incomp, from_last);
+    checkExitCall();
+    return result;
+}
+
 SEXP Rf_duplicated(SEXP x, Rboolean y) {
     TRACE0();
     unimplemented("Rf_duplicated");

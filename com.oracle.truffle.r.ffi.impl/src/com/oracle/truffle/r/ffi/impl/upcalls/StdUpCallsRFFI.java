@@ -34,9 +34,11 @@ import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
-import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated3;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
+import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAD4RNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDDRNode;
@@ -206,7 +208,11 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(DuplicateNodes.DuplicateNode.class)
     Object Rf_duplicate(Object x, int deep);
 
+    @RFFIUpCallNode(RfAnyDuplicated.class)
     long Rf_any_duplicated(Object x, int fromLast);
+
+    @RFFIUpCallNode(RfAnyDuplicated3.class)
+    long Rf_any_duplicated3(Object x, Object incomparables, int fromLast);
 
     Object PRINTNAME(Object x);
 

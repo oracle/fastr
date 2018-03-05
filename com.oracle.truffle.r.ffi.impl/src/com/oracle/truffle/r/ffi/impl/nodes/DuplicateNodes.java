@@ -23,14 +23,21 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.DuplicateNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicated3NodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicatedNodeGen;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
 
 public final class DuplicateNodes {
 
@@ -58,6 +65,11 @@ public final class DuplicateNodes {
             return val;
         }
 
+        @Fallback
+        public Object doOther(Object x, Object y) {
+            throw unsupportedTypes("Rf_duplicate", x, y);
+        }
+
         protected static boolean isReusableForDuplicate(Object o) {
             return o == RNull.instance || o instanceof REnvironment || o instanceof RSymbol;
         }
@@ -67,4 +79,45 @@ public final class DuplicateNodes {
         }
     }
 
+    public abstract static class RfAnyDuplicated extends FFIUpCallNode.Arg2 {
+        @Specialization
+        public int doDuplicate(RAbstractVector vec, int fromLast,
+                        @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile) {
+            if (isEmptyProfile.profile(vec.getLength() <= 1)) {
+                return 0;
+            } else {
+                return DuplicationHelper.analyze(vec, null, true, fromLast != 0).getIndex();
+            }
+        }
+
+        @Fallback
+        public Object doOthers(Object vec, Object fromLast) {
+            throw unsupportedTypes("Rf_any_duplicated", vec, fromLast);
+        }
+
+        public static RfAnyDuplicated create() {
+            return RfAnyDuplicatedNodeGen.create();
+        }
+    }
+
+    public abstract static class RfAnyDuplicated3 extends FFIUpCallNode.Arg3 {
+        @Specialization
+        public int doDuplicate(RAbstractVector vec, RAbstractVector incomparables, int fromLast,
+                        @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile) {
+            if (isEmptyProfile.profile(vec.getLength() <= 1)) {
+                return 0;
+            } else {
+                return DuplicationHelper.analyze(vec, incomparables, true, fromLast != 0).getIndex();
+            }
+        }
+
+        @Fallback
+        public Object doOthers(Object vec, Object incomparables, Object fromLast) {
+            throw unsupportedTypes("Rf_any_duplicated3", vec, incomparables, fromLast);
+        }
+
+        public static RfAnyDuplicated3 create() {
+            return RfAnyDuplicated3NodeGen.create();
+        }
+    }
 }

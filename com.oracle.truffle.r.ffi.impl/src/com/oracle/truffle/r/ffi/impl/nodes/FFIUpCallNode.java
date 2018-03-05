@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,25 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.Utils;
 
 public abstract class FFIUpCallNode extends Node {
     protected abstract int numArgs();
+
+    @TruffleBoundary
+    protected final RError unsupportedTypes(String name, Object... args) {
+        assert args.length > 0;
+        StringBuilder sb = new StringBuilder(args.length * 15);
+        sb.append("wrong argument types provided to Rf_duplicated: ").append(Utils.getTypeName(args[0]));
+        for (int i = 1; i < args.length; i++) {
+            sb.append(',').append(Utils.getTypeName(args[i]));
+        }
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, sb);
+    }
 
     public abstract static class Arg0 extends FFIUpCallNode {
         public abstract Object executeObject();
