@@ -25,11 +25,14 @@ lock.file.name <- ".lock"
 
 pkg.cache.max.retries <- 3L
 
-pkg.cache.lock <- function(version.dir) {
+pkg.cache.lock <- function(pkg.cache.env, version.dir) {
+    if (!as.logical(pkg.cache.env$sync)) {
+        return (TRUE)
+    }
+
     tries <- 0L
     version.lock.file <- file.path(version.dir, lock.file.name)
     while (file.exists(version.lock.file)) {
-        # wait for 1 second
         Sys.sleep(1)
         tries <- tries + 1L
 
@@ -37,12 +40,17 @@ pkg.cache.lock <- function(version.dir) {
             return (FALSE)
         }
     }
-    log.message("CREATING LOCK FILE", version.lock.file)
+    log.message("locking: ", version.lock.file, level=1)
     tryCatch(file.create(version.lock.file), error=function(e) return (FALSE), warning=function(e) return (FALSE))
 }
 
-pkg.cache.unlock <- function(version.dir) {
+pkg.cache.unlock <- function(pkg.cache.env, version.dir) {
+    if (!as.logical(pkg.cache.env$sync)) {
+        return (TRUE)
+    }
+
     version.lock.file <- file.path(version.dir, lock.file.name)
+    log.message("releasing: ", version.lock.file, level=1)
     tryCatch(file.remove(version.lock.file))
 }
 
@@ -85,7 +93,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
     }
 
     # lock version directory
-    if (!pkg.cache.lock(version.dir)) {
+    if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
         log.message("could not lock version dir ", version.dir, level=1)
         return (FALSE)
     }
@@ -111,7 +119,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
         }, error = function(e) {
             log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
             return (FALSE)
-        }, finally = pkg.cache.unlock(version.dir) )
+        }, finally = pkg.cache.unlock(pkg.cache.env, version.dir) )
     } 
     log.message("cache miss for package ", pkgname, level=1)
     
@@ -132,7 +140,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         }
 
         # lock version directory
-        if (!pkg.cache.lock(version.dir)) {
+        if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
             log.message("could not insert: version dir ", version.dir, " is locked", level=1)
             return (FALSE)
         }
@@ -172,7 +180,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         return (TRUE)
     }, error = function(e) {
         log.message("could not insert package '", pkgname, "' because: ", e$message)
-    }, finally = pkg.cache.unlock(version.dir) )
+    }, finally = pkg.cache.unlock(pkg.cache.env, version.dir) )
     FALSE
 }
 
@@ -194,7 +202,7 @@ pkg.cache.check <- function(pkg.cache.env) {
     }
 
     # get version sub-directory
-    version.dir <- pkg.cache.get.version(pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
+    version.dir <- pkg.cache.get.version(pkg.cache.env, pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
     if (is.null(version.dir)) {
         log.message("cannot access or create version subdir for ", as.character(pkg.cache.env$version), level=1)
     }
@@ -291,7 +299,7 @@ pkg.cache.create.version <- function(cache.dir, version, table.file.name, cache.
     rbind(version.table, data.frame(version=version,dir=version.subdir,ctime=as.double(Sys.time())))
 }
 
-pkg.cache.get.version <- function(cache.dir, cache.version, table.file.name, cache.size) {
+pkg.cache.get.version <- function(pkg.cache.env, cache.dir, cache.version, table.file.name, cache.size) {
     if (is.null(cache.version)) {
         return (NULL)
     }
@@ -311,13 +319,13 @@ pkg.cache.get.version <- function(cache.dir, cache.version, table.file.name, cac
         }
         if (!is.null(updated.version.table)) {
             version.subdir <- as.character(updated.version.table[updated.version.table$version == cache.version, "dir"])
-            if (!pkg.cache.lock(cache.dir)) {
+            if (!pkg.cache.lock(pkg.cache.env, cache.dir)) {
                 return (NULL)
             }
 
             try({
                 write.csv(updated.version.table, version.table.name, row.names=FALSE)
-            }, finally=pkg.cache.unlock(cache.dir))
+            }, finally=pkg.cache.unlock(pkg.cache.env, cache.dir))
         }
 
         # return the version directory
