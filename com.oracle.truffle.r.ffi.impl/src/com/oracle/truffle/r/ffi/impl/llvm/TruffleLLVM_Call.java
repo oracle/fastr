@@ -53,12 +53,13 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
 final class TruffleLLVM_Call implements CallRFFI {
 
     TruffleLLVM_Call() {
-        RFFIUtils.initializeTracing();
+        RFFILog.initializeTracing();
     }
 
     static final class ContextStateImpl implements RContext.ContextState {

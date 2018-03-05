@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,22 +22,25 @@
  */
 package com.oracle.truffle.r.ffi.impl.common;
 
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.nio.file.Path;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFILog;
 
 /**
  * Mostly support for tracing R FFI up/down calls. Currently tracing of the arguments to calls is
@@ -49,58 +52,22 @@ import com.oracle.truffle.r.runtime.ffi.RFFIContext;
  * that launches RStudio.) and sets the cwd to "/", which is not writeable.
  */
 public class RFFIUtils {
-    /**
-     * Set this to {@code true} when it is not possible to set {@link FastROptions}.
-     */
-    private static boolean alwaysTrace;
-    /**
-     * Is set by initialization and caches whether we are tracing.
-     */
-    @CompilationFinal public static boolean traceEnabled;
 
-    public static boolean traceInitialized;
-
-    /**
-     * Always trace to a file because stdout is problematic for embedded mode.
-     */
-    private static final String TRACEFILE = "fastr_trace_nativecalls.log";
-    private static FileOutputStream traceStream;
-
-    /**
-     * Handles the initialization of the RFFI downcalls/upcall tracing implementation.
-     */
-    public static synchronized void initializeTracing() {
-        if (!traceInitialized) {
-            traceInitialized = true;
-            traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
-            if (traceEnabled) {
-                if (traceStream == null) {
-                    initTraceStream();
-                }
-            }
-        }
-    }
-
-    private static void initTraceStream() {
-        Path tracePath = Utils.getLogPath(TRACEFILE);
-        try {
-            traceStream = new FileOutputStream(tracePath.toString());
-        } catch (IOException ex) {
-            System.err.println(ex.getMessage());
-            System.exit(1);
-        }
-    }
+    private static Node isPointerNode;
+    private static Node asPointerNode;
 
     private enum CallMode {
-        UP("U"),
-        UP_RETURN("UR"),
-        DOWN("D"),
-        DOWN_RETURN("DR");
+        UP("U", true),
+        UP_RETURN("UR", false),
+        DOWN("D", false),
+        DOWN_RETURN("DR", true);
 
         private final String printName;
+        private final boolean logNativeMirror;
 
-        CallMode(String printName) {
+        CallMode(String printName, boolean logNativeMirror) {
             this.printName = printName;
+            this.logNativeMirror = logNativeMirror;
         }
     }
 
@@ -125,11 +92,11 @@ public class RFFIUtils {
     }
 
     public static boolean traceEnabled() {
-        return traceEnabled;
+        return RFFILog.traceEnabled();
     }
 
     private static void traceCall(CallMode mode, String name, int depthValue, Object... args) {
-        if (traceEnabled) {
+        if (traceEnabled()) {
             StringBuilder sb = new StringBuilder();
             sb.append("CallRFFI[");
             sb.append(mode.printName);
@@ -138,21 +105,13 @@ public class RFFIUtils {
             sb.append(']');
             sb.append(name);
             sb.append('(');
-            printArgs(sb, args);
+            printArgs(mode, sb, args);
             sb.append(')');
-            sb.append(" [ctx:").append(System.identityHashCode(RContext.getInstance()));
-            sb.append(",thread:").append(Thread.currentThread().getId()).append(']');
-            try {
-                traceStream.write(sb.toString().getBytes());
-                traceStream.write('\n');
-                traceStream.flush();
-            } catch (IOException ex) {
-                // ignore
-            }
+            RFFILog.write(sb.toString());
         }
     }
 
-    private static void printArgs(StringBuilder sb, Object[] args) {
+    private static void printArgs(CallMode mode, StringBuilder sb, Object[] args) {
         boolean first = true;
         for (Object arg : args) {
             if (first) {
@@ -160,14 +119,38 @@ public class RFFIUtils {
             } else {
                 sb.append(", ");
             }
-            sb.append(arg == null ? "" : arg.getClass().getSimpleName());
-            if (arg instanceof RSymbol) {
-                RSymbol symbol = (RSymbol) arg;
-                sb.append("(\"" + symbol.getName() + "\")");
+            if (arg == null) {
+                sb.append("null");
+                continue;
             }
-            if (!(arg instanceof RTypedValue)) {
-                sb.append("(" + arg + ")");
+            sb.append(arg.getClass().getSimpleName()).append('(').append(arg.hashCode());
+            if (arg instanceof TruffleObject && ForeignAccess.sendIsPointer(getIsPointerNode(), (TruffleObject) arg)) {
+                try {
+                    sb.append(";ptr:").append(String.valueOf(ForeignAccess.sendAsPointer(getAsPointerNode(), (TruffleObject) arg)));
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            } else if (arg instanceof RSymbol) {
+                sb.append(';').append("\"" + arg.toString() + "\"");
+            } else if (arg instanceof RAbstractVector) {
+                RAbstractVector vec = (RAbstractVector) arg;
+                if (vec.getLength() == 0) {
+                    sb.append(";empty");
+                } else {
+                    sb.append(";len:" + vec.getLength() + ";data:");
+                    for (int i = 0; i < Math.min(3, vec.getLength()); i++) {
+                        String str = ((RAbstractVector) arg).getDataAtAsObject(0).toString();
+                        str = str.length() > 30 ? str.substring(0, 27) + "..." : str;
+                        sb.append(',').append(str);
+                    }
+                }
             }
+            // Note: it makes sense to include native mirrors only once they have been create
+            // already
+            if (mode.logNativeMirror && arg instanceof RObject) {
+                sb.append(";" + ((RObject) arg).getNativeMirror());
+            }
+            sb.append(')');
         }
     }
 
@@ -179,6 +162,10 @@ public class RFFIUtils {
 
     static RuntimeException unimplemented(String message) {
         CompilerDirectives.transferToInterpreter();
+        if (traceEnabled()) {
+            RFFILog.printf("Error: unimplemented %s", message);
+            RFFILog.printStackTrace();
+        }
         throw RInternalError.unimplemented(message);
     }
 
@@ -196,15 +183,44 @@ public class RFFIUtils {
     public static <T> T guaranteeInstanceOf(Object x, Class<T> clazz) {
         if (x == null) {
             CompilerDirectives.transferToInterpreter();
+            if (traceEnabled()) {
+                RFFILog.printf("Error: unexpected type: null instead of " + clazz.getSimpleName());
+                RFFILog.printStackTrace();
+            }
             unimplemented("unexpected type: null instead of " + clazz.getSimpleName());
         } else if (!clazz.isInstance(x)) {
             CompilerDirectives.transferToInterpreter();
+            if (traceEnabled()) {
+                RFFILog.printf("Error: unexpected type: %s is %s instead of %s", x, x.getClass().getSimpleName(), clazz.getSimpleName());
+                RFFILog.printStackTrace();
+            }
             unimplemented("unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
         }
         return clazz.cast(x);
     }
 
+    public static void logException(Throwable ex) {
+        if (traceEnabled()) {
+            RFFILog.printf("Error: %s, Message: %s", ex.getClass().getSimpleName(), ex.getMessage());
+            RFFILog.printStackTrace();
+        }
+    }
+
     private static RFFIContext getContext() {
         return RContext.getInstance().getRFFI();
+    }
+
+    private static Node getIsPointerNode() {
+        if (isPointerNode == null) {
+            isPointerNode = Message.IS_POINTER.createNode();
+        }
+        return isPointerNode;
+    }
+
+    private static Node getAsPointerNode() {
+        if (asPointerNode == null) {
+            asPointerNode = Message.AS_POINTER.createNode();
+        }
+        return asPointerNode;
     }
 }

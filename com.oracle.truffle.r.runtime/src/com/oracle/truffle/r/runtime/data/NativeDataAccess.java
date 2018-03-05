@@ -42,6 +42,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 import sun.misc.Unsafe;
@@ -179,6 +180,11 @@ public final class NativeDataAccess {
                 assert (dataAddress = 0xbadbad) != 0;
             }
         }
+
+        @Override
+        public String toString() {
+            return "mirror:" + dataAddress;
+        }
     }
 
     private static final AtomicLong counter = new AtomicLong(0xdef000000000000L);
@@ -234,6 +240,9 @@ public final class NativeDataAccess {
         nativeMirrors.put(newMirror.id, new WeakReference<>(obj));
         if (TRACE_MIRROR_ALLOCATION_SITES) {
             registerAllocationSite(arg, newMirror);
+        }
+        if (RFFILog.traceEnabled()) {
+            RFFILog.printf("NativeMirror:" + newMirror.id + "->" + obj.getClass().getSimpleName() + ',' + obj.hashCode());
         }
         return newMirror;
     }
