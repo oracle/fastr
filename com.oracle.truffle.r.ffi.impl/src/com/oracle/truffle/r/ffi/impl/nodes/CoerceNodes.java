@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -75,7 +76,7 @@ public final class CoerceNodes {
             for (int i = 0; i < v.getLength(); i++) {
                 Object element = v.getDataAtAsObject(i);
                 adjustSharing(v, element);
-                RPairList cur = RDataFactory.createPairList(element, RNull.instance, names != null ? names.getDataAt(i) : RNull.instance, gnurType);
+                RPairList cur = RDataFactory.createPairList(element, RNull.instance, names != null ? RDataFactory.createSymbol(names.getDataAt(i)) : RNull.instance, gnurType);
 
                 if (prev == null) {
                     assert head == null;
