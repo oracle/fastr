@@ -369,13 +369,13 @@ final class TruffleNFI_Context extends RFFIContext {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
         }
         transientAllocations.clear();
+        RuntimeException lastUpCallEx = getLastUpCallException();
+        setLastUpCallException(null);
         if (hasAccessLock) {
             releaseLock();
         }
-        RuntimeException lastUpCallEx = getLastUpCallException();
         if (lastUpCallEx != null) {
             CompilerDirectives.transferToInterpreter();
-            setLastUpCallException(null);
             throw lastUpCallEx;
         }
     }
