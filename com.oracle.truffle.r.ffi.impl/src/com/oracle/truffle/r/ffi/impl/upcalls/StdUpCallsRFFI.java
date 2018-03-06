@@ -152,7 +152,7 @@ public interface StdUpCallsRFFI {
 
     Object Rf_ScalarLogical(int value);
 
-    Object Rf_ScalarDouble(double value);
+    Object Rf_ScalarReal(double value);
 
     Object Rf_ScalarString(Object value);
 
@@ -242,14 +242,19 @@ public interface StdUpCallsRFFI {
 
     void SET_VECTOR_ELT(Object x, long i, Object v);
 
+    @RFFICpointer
     Object RAW(Object x);
 
+    @RFFICpointer
     Object LOGICAL(Object x);
 
+    @RFFICpointer
     Object INTEGER(Object x);
 
+    @RFFICpointer
     Object REAL(Object x);
 
+    @RFFICpointer
     Object COMPLEX(Object x);
 
     Object STRING_ELT(Object x, long i);
@@ -258,7 +263,7 @@ public interface StdUpCallsRFFI {
 
     int NAMED(Object x);
 
-    Object SET_NAMED_FASTR(Object x, int v);
+    void SET_NAMED_FASTR(Object x, int v);
 
     Object SET_TYPEOF_FASTR(Object x, int v);
 
@@ -310,7 +315,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(CDDDRNode.class)
     Object CDDDR(Object e);
 
-    Object SET_TAG(Object x, Object y);
+    void SET_TAG(Object x, Object y);
 
     @RFFIUpCallNode(SETCARNode.class)
     Object SETCAR(Object x, Object y);
@@ -385,8 +390,6 @@ public interface StdUpCallsRFFI {
 
     Object R_ToplevelExec();
 
-    void restoreHandlerStacks(Object savedHandlerStack);
-
     int RDEBUG(Object x);
 
     void SET_RDEBUG(Object x, int v);
@@ -448,6 +451,7 @@ public interface StdUpCallsRFFI {
 
     Object PRCODE(Object x);
 
+    @RFFICpointer
     Object R_CHAR(Object x);
 
     @RFFIUpCallNode(NewCustomConnectionNode.class)
@@ -459,26 +463,14 @@ public interface StdUpCallsRFFI {
 
     Object R_GetConnection(int fd);
 
-    Object getSummaryDescription(Object x);
-
-    Object getConnectionClassString(Object x);
-
-    Object getOpenModeString(Object x);
-
-    boolean isSeekable(Object x);
-
     @RFFIUpCallNode(MiscNodes.RDoSlotNode.class)
     Object R_do_slot(Object o, Object name);
 
     @RFFIUpCallNode(MiscNodes.RDoSlotAssignNode.class)
     Object R_do_slot_assign(Object o, Object name, Object value);
 
-    Object R_MethodsNamespace();
-
     @RFFIUpCallNode(Str2TypeNode.class)
     int Rf_str2type(@RFFICstring(convert = false) Object name);
-
-    int FASTR_getConnectionChar(Object obj);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Unif.DUnif.class)
     double Rf_dunif(double a, double b, double c, int d);
@@ -517,13 +509,13 @@ public interface StdUpCallsRFFI {
     double Rf_rnchisq(double a, double b);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DNorm.class)
-    double Rf_dnorm(double a, double b, double c, int d);
+    double Rf_dnorm4(double a, double b, double c, int d);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Pnorm.class)
-    double Rf_pnorm(double a, double b, double c, int d, int e);
+    double Rf_pnorm5(double a, double b, double c, int d, int e);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Qnorm.class)
-    double Rf_qnorm(double a, double b, double c, int d, int e);
+    double Rf_qnorm5(double a, double b, double c, int d, int e);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Rnorm.class)
     double Rf_rnorm(double a, double b);
@@ -789,7 +781,7 @@ public interface StdUpCallsRFFI {
     Object Rf_match(Object itables, Object ix, int nmatch);
 
     @RFFIUpCallNode(MatchNodes.NonNullStringMatchNode.class)
-    Object Rf_NonNullStringMatch(Object s, Object t);
+    boolean Rf_NonNullStringMatch(Object s, Object t);
 
     @RFFIUpCallNode(MiscNodes.RHasSlotNode.class)
     int R_has_slot(Object container, Object name);

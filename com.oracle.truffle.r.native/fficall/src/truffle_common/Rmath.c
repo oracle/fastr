@@ -24,7 +24,7 @@
 #include "rffi_upcalls.h"
 
 double Rf_dnorm(double a, double b, double c, int d) {
-    return ((call_Rf_dnorm) callbacks[Rf_dnorm_x])(a, b, c, d);
+    return ((call_Rf_dnorm) callbacks[Rf_dnorm4_x])(a, b, c, d);
 }
 
 double Rf_dnorm4(double a, double b, double c, int d) {
@@ -32,7 +32,7 @@ double Rf_dnorm4(double a, double b, double c, int d) {
 }
 
 double Rf_pnorm(double a, double b, double c, int d, int e) {
-    return ((call_Rf_pnorm) callbacks[Rf_pnorm_x])(a, b, c, d, e);
+    return ((call_Rf_pnorm) callbacks[Rf_pnorm5_x])(a, b, c, d, e);
 }
 
 double Rf_pnorm5(double a, double b, double c, int d, int e) {
@@ -40,7 +40,7 @@ double Rf_pnorm5(double a, double b, double c, int d, int e) {
 }
 
 double Rf_qnorm(double a, double b, double c, int d, int e) {
-    return ((call_Rf_qnorm) callbacks[Rf_qnorm_x])(a, b, c, d, e);
+    return ((call_Rf_qnorm) callbacks[Rf_qnorm5_x])(a, b, c, d, e);
 }
 
 double Rf_qnorm5(double a, double b, double c, int d, int e) {

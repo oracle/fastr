@@ -309,7 +309,7 @@ SEXP Rf_ScalarInteger(int value) {
 
 SEXP Rf_ScalarReal(double value) {
     TRACE0();
-    SEXP result = ((call_Rf_ScalarReal) callbacks[Rf_ScalarDouble_x])(value);
+    SEXP result = ((call_Rf_ScalarReal) callbacks[Rf_ScalarReal_x])(value);
     checkExitCall();
     return result;
 }

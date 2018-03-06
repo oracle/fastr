@@ -95,9 +95,9 @@
 #define Rf_NonNullStringMatch_x 90
 #define Rf_PairToVectorList_x 91
 #define Rf_PrintValue_x 92
-#define Rf_ScalarDouble_x 93
-#define Rf_ScalarInteger_x 94
-#define Rf_ScalarLogical_x 95
+#define Rf_ScalarInteger_x 93
+#define Rf_ScalarLogical_x 94
+#define Rf_ScalarReal_x 95
 #define Rf_ScalarString_x 96
 #define Rf_VectorToPairList_x 97
 #define Rf_allocArray_x 98
@@ -133,7 +133,7 @@
 #define Rf_dnbinom_mu_x 128
 #define Rf_dnchisq_x 129
 #define Rf_dnf_x 130
-#define Rf_dnorm_x 131
+#define Rf_dnorm4_x 131
 #define Rf_dnt_x 132
 #define Rf_dpois_x 133
 #define Rf_dsignrank_x 134
@@ -179,7 +179,7 @@
 #define Rf_pnbinom_mu_x 174
 #define Rf_pnchisq_x 175
 #define Rf_pnf_x 176
-#define Rf_pnorm_x 177
+#define Rf_pnorm5_x 177
 #define Rf_pnt_x 178
 #define Rf_ppois_x 179
 #define Rf_protect_x 180
@@ -205,7 +205,7 @@
 #define Rf_qnbinom_mu_x 200
 #define Rf_qnchisq_x 201
 #define Rf_qnf_x 202
-#define Rf_qnorm_x 203
+#define Rf_qnorm5_x 203
 #define Rf_qnt_x 204
 #define Rf_qpois_x 205
 #define Rf_qsignrank_x 206

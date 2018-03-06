@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,23 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
-import com.oracle.truffle.r.ffi.processor.RFFIUpCallRoot;
-
 /**
- * Aggregation of all the FFI upcall interfaces.
+ * Up-calls specific to FastR used in FastR native code and not exported as part of any API.
  */
-@RFFIUpCallRoot
-public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpCallsRFFI, DLLUpCallsRFFI, MemoryUpCallsRFFI, FastRUpCalls {
+public interface FastRUpCalls {
+    // Checkstyle: stop method name check
 
+    Object R_MethodsNamespace();
+
+    int FASTR_getConnectionChar(Object obj);
+
+    Object getSummaryDescription(Object x);
+
+    Object getConnectionClassString(Object x);
+
+    Object getOpenModeString(Object x);
+
+    boolean isSeekable(Object x);
+
+    void restoreHandlerStacks(Object savedHandlerStack);
 }
