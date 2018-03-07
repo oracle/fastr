@@ -21,6 +21,7 @@
  * questions.
  */
 
+#define NO_FASTR_REDEFINE
 #include <Rinterface.h>
 #include <rffiutils.h>
 #include <Rinternals_common.h>

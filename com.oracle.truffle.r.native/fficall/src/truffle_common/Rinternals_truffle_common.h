@@ -68,6 +68,7 @@
 
 #define UNIMPLEMENTED unimplemented(__FUNCTION__)
 
+#define NO_FASTR_REDEFINE
 #include <rffiutils.h>
 
 // these two functions are here just to handle casting void* to void function pointers...
@@ -1252,7 +1253,7 @@ void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
     TRACE0();
     unimplemented("R_BadLongVector");
-    return (R_len_t) 0;
+    // "no return" function
 }
 
 int IS_S4_OBJECT(SEXP x) {

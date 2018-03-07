@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,14 @@ use_internals_end = '''#endif
 
 '''
 
+set_typeof_rewrite = '''#ifdef FASTR
+SEXP SET_TYPEOF_FASTR(SEXP x, int v);
+#ifndef NO_FASTR_REDEFINE
+#define SET_TYPEOF(X,Y) X=SET_TYPEOF_FASTR(X,Y)
+#endif
+#endif
+'''
+
 def ed_r_internals(gnu_dir):
     r_internals_h = join(gnu_dir, 'Rinternals.h')
     with open(r_internals_h) as f:
@@ -105,6 +113,9 @@ def ed_r_internals(gnu_dir):
                     rewrite_var(f, var, line)
                 else:
                     f.write(line)
+            elif 'SET_TYPEOF' in line and '(SEXP' in line:
+                f.write(line)
+                f.write(set_typeof_rewrite)
             else:
                 f.write(line)
 
