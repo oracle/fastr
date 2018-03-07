@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.infix.FunctionBuiltin;
+import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -79,30 +81,13 @@ public abstract class Call extends RBuiltinNode.Arg2 {
     @TruffleBoundary
     public static RLanguage makeCall(TruffleRLanguage language, RSyntaxNode target, Object[] arguments, ArgumentsSignature signature) {
         assert arguments.length == signature.getLength();
-        if (target instanceof RSyntaxLookup && "function".equals(((RSyntaxLookup) target).getIdentifier())) {
-            return makeFunction(language, arguments);
+        if (target instanceof RSyntaxLookup && "function".equals(((RSyntaxLookup) target).getIdentifier()) && arguments.length == 2) {
+            // this optimization is not strictly necessary, `function` builtin is functional too.
+            FunctionExpressionNode function = FunctionBuiltin.createFunctionExpressionNode(language, arguments[0], arguments[1]);
+            return RDataFactory.createLanguage(Closure.createLanguageClosure(function.asRNode()));
         } else {
             return makeCall0(target, arguments, signature);
         }
-    }
-
-    private static RLanguage makeFunction(TruffleRLanguage language, Object[] arguments) {
-        CompilerAsserts.neverPartOfCompilation();
-        Object body = arguments.length <= 1 ? RNull.instance : arguments[1];
-        Object argList = arguments.length == 0 ? RNull.instance : arguments[0];
-        ArrayList<RCodeBuilder.Argument<RSyntaxNode>> finalArgs = new ArrayList<>();
-        while (argList != RNull.instance) {
-            if (!(argList instanceof RPairList)) {
-                throw RError.error(RError.SHOW_CALLER, Message.BAD_FUNCTION_EXPR);
-            }
-            RPairList pl = (RPairList) argList;
-            String name = ((RSymbol) pl.getTag()).getName();
-            RSyntaxNode value = RASTUtils.createNodeForValue(pl.car()).asRSyntaxNode();
-            finalArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, name, value));
-            argList = pl.cdr();
-        }
-        RSyntaxNode function = RContext.getASTBuilder().function(language, RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null);
-        return RDataFactory.createLanguage(Closure.createLanguageClosure(function.asRNode()));
     }
 
     @TruffleBoundary

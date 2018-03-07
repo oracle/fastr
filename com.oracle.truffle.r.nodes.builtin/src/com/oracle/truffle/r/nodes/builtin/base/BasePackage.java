@@ -72,7 +72,6 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.BreakBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.ForBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.infix.ForBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.FunctionBuiltin;
-import com.oracle.truffle.r.nodes.builtin.base.infix.FunctionBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.IfBuiltin;
 import com.oracle.truffle.r.nodes.builtin.base.infix.IfBuiltinNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.infix.NextBuiltin;
@@ -798,7 +797,7 @@ public class BasePackage extends RBuiltinPackage {
         add(BraceBuiltin.class, BraceBuiltinNodeGen::create);
         add(BreakBuiltin.class, BreakBuiltinNodeGen::create);
         add(ForBuiltin.class, ForBuiltinNodeGen::create);
-        add(FunctionBuiltin.class, FunctionBuiltinNodeGen::create);
+        add(FunctionBuiltin.class, FunctionBuiltin::create);
         add(IfBuiltin.class, IfBuiltinNodeGen::create);
         add(NextBuiltin.class, NextBuiltinNodeGen::create);
         add(ParenBuiltin.class, ParenBuiltin::new, ParenBuiltin::special);

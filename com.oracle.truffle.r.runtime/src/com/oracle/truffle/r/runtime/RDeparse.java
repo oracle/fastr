@@ -28,6 +28,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Iterator;
+import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -35,6 +36,7 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -67,6 +69,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.interop.TruffleObjectConverter;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -521,6 +525,9 @@ public class RDeparse {
                 RSyntaxElement[] args = call.getSyntaxArguments();
                 if (lhs instanceof RSyntaxLookup) {
                     String symbol = ((RSyntaxLookup) lhs).getIdentifier();
+                    if ("function".equals(symbol)) {
+                        return visitFunctionFunction(args);
+                    }
                     RDeparse.Func func = RDeparse.getFunc(symbol);
                     if (func != null) {
                         PPInfo info = func.info;
@@ -675,10 +682,34 @@ public class RDeparse {
 
             @Override
             protected Void visit(RSyntaxFunction function) {
+                return visitFunctionExpr(function.getSyntaxSignature(), function.getSyntaxArgumentDefaults(), function.getSyntaxBody());
+            }
+
+            private Void visitFunctionExpr(ArgumentsSignature signature, RSyntaxElement[] argsDefaults, RSyntaxElement body) {
                 append("function(");
-                appendArgs(function.getSyntaxSignature(), function.getSyntaxArgumentDefaults(), 0, true);
+                appendArgs(signature, argsDefaults, 0, true);
                 append(") ");
-                appendFunctionBody(function.getSyntaxBody());
+                appendFunctionBody(body);
+                return null;
+            }
+
+            private Void visitFunctionFunction(RSyntaxElement[] args) {
+                if (args.length > 0 && !(args[0] instanceof RSyntaxConstant)) {
+                    throw RError.error(RError.SHOW_CALLER2, Message.BAD_FUNCTION_EXPR);
+                }
+                Object funArgsValue = args.length > 0 ? ((RSyntaxConstant) args[0]).getValue() : RNull.instance;
+                List<Argument<RSyntaxNode>> syntaxArgs = RContext.getASTBuilder().getFunctionExprArgs(funArgsValue);
+                String[] names = new String[syntaxArgs.size()];
+                RSyntaxNode[] values = new RSyntaxNode[syntaxArgs.size()];
+                for (int i = 0; i < syntaxArgs.size(); i++) {
+                    names[i] = syntaxArgs.get(i).name;
+                    values[i] = syntaxArgs.get(i).value;
+                }
+                Object body = args.length <= 1 ? RNull.instance : args[1];
+                if (!(body instanceof RSyntaxElement)) {
+                    body = RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, body);
+                }
+                visitFunctionExpr(ArgumentsSignature.get(names), values, (RSyntaxElement) body);
                 return null;
             }
         }

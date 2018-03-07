@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes;
 
+import java.util.ArrayList;
 import java.util.List;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -53,12 +55,17 @@ import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.nodes.function.signature.QuoteNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
@@ -188,6 +195,27 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         String description = getFunctionDescription(source, assignedTo);
         RootCallTarget callTarget = rootFunction(language, source, params, body, description);
         return FunctionExpressionNode.create(source, callTarget);
+    }
+
+    @Override
+    public ArrayList<Argument<RSyntaxNode>> getFunctionExprArgs(Object args) {
+        CompilerAsserts.neverPartOfCompilation();
+        if (!(args instanceof RPairList || args == RNull.instance)) {
+            throw RError.error(RError.SHOW_CALLER, Message.INVALID_FORMAL_ARG_LIST, "function");
+        }
+        ArrayList<Argument<RSyntaxNode>> finalArgs = new ArrayList<>();
+        Object argList = args;
+        while (argList != RNull.instance) {
+            if (!(argList instanceof RPairList)) {
+                throw RError.error(RError.SHOW_CALLER, Message.INVALID_FORMAL_ARG_LIST, "function");
+            }
+            RPairList pl = (RPairList) argList;
+            String name = ((RSymbol) pl.getTag()).getName();
+            RSyntaxNode value = RASTUtils.createNodeForValue(pl.car()).asRSyntaxNode();
+            finalArgs.add(RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, name, value));
+            argList = pl.cdr();
+        }
+        return finalArgs;
     }
 
     @Override
