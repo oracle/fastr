@@ -126,7 +126,7 @@ public final class NativeDataAccess {
         private Object nativeWrapper;
 
         NativeMirror() {
-            this.id = counter.incrementAndGet();
+            this.id = counter.addAndGet(2);
         }
 
         /**
@@ -187,7 +187,9 @@ public final class NativeDataAccess {
         }
     }
 
-    private static final AtomicLong counter = new AtomicLong(0xdef000000000000L);
+    // The counter is initialized to invalid address and incremented by 2 to always get invalid
+    // address value
+    private static final AtomicLong counter = new AtomicLong(0xdef000000000001L);
     private static final ConcurrentHashMap<Long, WeakReference<RObject>> nativeMirrors = new ConcurrentHashMap<>();
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = new ConcurrentHashMap<>();
 
