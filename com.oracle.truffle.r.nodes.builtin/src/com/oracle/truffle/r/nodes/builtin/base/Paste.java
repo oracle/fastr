@@ -271,7 +271,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
     private CastNode getAsCharacterNode() {
         if (asCharacterNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            asCharacterNode = insert(newCastBuilder().returnIf(nullValue(), emptyStringVector()).asStringVector().buildCastNode());
+            asCharacterNode = insert(newCastBuilder().castForeignObjects(true).returnIf(nullValue(), emptyStringVector()).asStringVector().buildCastNode());
         }
         return asCharacterNode;
     }

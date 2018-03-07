@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
 public final class CastForeignNode extends CastNode {
@@ -31,13 +32,20 @@ public final class CastForeignNode extends CastNode {
     @Child private ForeignArray2R foreignArray2R = ForeignArray2R.create();
 
     private final ConditionProfile isForeign = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isInteropScalar = ConditionProfile.createBinaryProfile();
 
     @Override
     protected Object execute(Object obj) {
         if (isForeign.profile(foreignArray2R.isForeignVector(obj))) {
             return foreignArray2R.convert(obj);
+        } else if (isInteropScalar.profile(isInteropScalar(obj))) {
+            return ((RInteropScalar) obj).getRValue();
         } else {
             return obj;
         }
+    }
+
+    protected boolean isInteropScalar(Object obj) {
+        return obj instanceof RInteropScalar;
     }
 }
