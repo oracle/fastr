@@ -1935,7 +1935,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             NativeDataAccess.setNativeWrapper((RObject) vector, this);
         }
 
-        static Object get(TruffleObject x) {
+        public static Object get(TruffleObject x) {
             assert x instanceof RObject;
             Object wrapper = NativeDataAccess.getNativeWrapper((RObject) x);
             if (wrapper != null) {

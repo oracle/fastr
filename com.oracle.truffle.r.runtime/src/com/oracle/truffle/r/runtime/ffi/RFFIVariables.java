@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.util.Arrays;
-import java.util.stream.Stream;
-
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.TempPathName;
@@ -33,12 +30,11 @@ import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
- * Note: regenerate the C glue code upon any change in this enum, use {@link #main(String[])}.
+ * Note: regenerate the C glue code upon any change in this enum.
  */
 public enum RFFIVariables {
     R_Home("dummy string"),

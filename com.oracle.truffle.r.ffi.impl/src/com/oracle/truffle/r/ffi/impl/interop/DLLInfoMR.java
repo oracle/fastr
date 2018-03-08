@@ -27,6 +27,8 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl.VectorWrapper;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
@@ -45,6 +47,27 @@ public class DLLInfoMR {
     public abstract static class AsPointerNode extends Node {
         protected Object access(Object receiver) {
             return new RObjectNativeWrapper((DLLInfo) receiver);
+        }
+    }
+
+    @Resolve(message = "READ")
+    public abstract static class ReadNode extends Node {
+        public Object access(Object receiver, Object index) {
+            DLLInfo dllInfo = (DLLInfo) receiver;
+            int i = ((Number) index).intValue();
+            CharSXPWrapper res;
+            switch (i) {
+                case 0:
+                    res = dllInfo.pathSXP;
+                    break;
+                case 1:
+                    res = dllInfo.nameSXP;
+                    break;
+                default:
+                    throw new IndexOutOfBoundsException("Index can be 0 or 1");
+            }
+
+            return VectorWrapper.get(res);
         }
     }
 }

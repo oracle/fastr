@@ -163,12 +163,12 @@ final class TruffleLLVM_Call implements CallRFFI {
 
         @Specialization
         protected static Object convert(int value) {
-            return RDataFactory.createIntVector(new int[]{value}, !RRuntime.isNA(value));
+            return RDataFactory.createIntVectorFromScalar(value);
         }
 
         @Specialization
         protected static Object convert(double value) {
-            return RDataFactory.createDoubleVector(new double[]{value}, !RRuntime.isNA(value));
+            return RDataFactory.createDoubleVectorFromScalar(value);
         }
 
         @Specialization
@@ -183,12 +183,12 @@ final class TruffleLLVM_Call implements CallRFFI {
 
         @Specialization
         protected static Object convert(byte value) {
-            return RDataFactory.createLogicalVector(new byte[]{value}, !RRuntime.isNA(value));
+            return RDataFactory.createLogicalVectorFromScalar(value);
         }
 
         @Specialization
         protected static Object convert(String value) {
-            return RDataFactory.createStringVector(new String[]{value}, !RRuntime.isNA(value));
+            return RDataFactory.createStringVectorFromScalar(value).makeSharedPermanent();
         }
 
         @Fallback

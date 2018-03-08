@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
 
 /**
- * Implements the vectorization of {@link RMultinom}.
+ * Implements the vectorization of {@link RMultinomNode}.
  */
 public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
 
