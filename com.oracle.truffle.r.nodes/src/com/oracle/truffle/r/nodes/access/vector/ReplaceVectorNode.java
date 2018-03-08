@@ -36,7 +36,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.AccessElementNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ExtractSingleName;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ReadElementNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
@@ -44,7 +44,6 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -61,10 +60,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
@@ -304,48 +300,38 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         return new WriteElementNode();
     }
 
-    static final class WriteElementNode extends RBaseNode {
+    static final class WriteElementNode extends AccessElementNode {
 
-        @Child private Node keyInfoNode = com.oracle.truffle.api.interop.Message.KEY_INFO.createNode();
-        @Child private Node hasSizeNode = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
+        @Child private Node keyInfoNode;
         @Child private Node foreignWrite = com.oracle.truffle.api.interop.Message.WRITE.createNode();
+        @Child private Node classForeignWrite;
         @Child private R2Foreign r2Foreign = R2Foreign.create();
-        @Child private CastStringNode castNode = CastStringNode.create();
-        @Child private FirstStringNode firstString = ExtractVectorNode.createFirstString();
-
-        private final ConditionProfile isIntProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isDoubleProfile = ConditionProfile.createBinaryProfile();
 
         private void execute(Object position, TruffleObject object, Object writtenValue) throws InteropException {
-            Object pos = position;
-            if (isIntProfile.profile(pos instanceof Integer)) {
-                pos = ((int) pos) - 1;
-            } else if (isDoubleProfile.profile(pos instanceof Double)) {
-                pos = ((double) pos) - 1;
-            } else if (pos instanceof RAbstractDoubleVector) {
-                pos = ((RAbstractDoubleVector) pos).getDataAt(0) - 1;
-            } else if (pos instanceof RAbstractIntVector) {
-                pos = ((RAbstractIntVector) pos).getDataAt(0) - 1;
-            } else if (pos instanceof RAbstractStringVector) {
-                String string = firstString.executeString(castNode.doCast(pos));
-                pos = string;
-            } else if (!(pos instanceof String)) {
-                throw error(RError.Message.GENERIC, "invalid index during foreign access");
-            }
-
-            int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
-            if (KeyInfo.isWritable(info) || ForeignAccess.sendHasSize(hasSizeNode, object) ||
-                            (pos instanceof String && !JavaInterop.isJavaObject(Object.class, object))) {
-                ForeignAccess.sendWrite(foreignWrite, object, pos, r2Foreign.execute(writtenValue));
-                return;
-            } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
-                TruffleObject clazz = toJavaClass(object);
-                info = ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos);
-                if (KeyInfo.isWritable(info)) {
-                    ForeignAccess.sendWrite(foreignWrite, clazz, pos, r2Foreign.execute(writtenValue));
+            Object pos = extractPosition(position);
+            Object value = r2Foreign.execute(writtenValue);
+            if (keyInfoNode == null) {
+                try {
+                    ForeignAccess.sendWrite(foreignWrite, object, pos, value);
                     return;
+                } catch (InteropException e) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    keyInfoNode = insert(com.oracle.truffle.api.interop.Message.KEY_INFO.createNode());
                 }
             }
+            int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
+            if (KeyInfo.isWritable(info) || hasSize(object)) {
+                ForeignAccess.sendWrite(foreignWrite, object, pos, value);
+                return;
+            } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(Object.class, object)) {
+                if (classForeignWrite == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    classForeignWrite = insert(com.oracle.truffle.api.interop.Message.WRITE.createNode());
+                }
+                ForeignAccess.sendWrite(classForeignWrite, toJavaClass(object), pos, value);
+                return;
+            }
+            CompilerDirectives.transferToInterpreter();
             throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
         }
     }
