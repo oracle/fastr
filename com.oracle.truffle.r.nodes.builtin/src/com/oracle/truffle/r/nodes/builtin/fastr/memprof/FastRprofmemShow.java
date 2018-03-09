@@ -59,7 +59,7 @@ public abstract class FastRprofmemShow extends RBuiltinNode.Arg6 {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object doProfMem(int levels, boolean desc, @SuppressWarnings("unused") RNull n, boolean printParents, String view, TruffleObject snapshot) {
+    public Object doProfMem(int levels, boolean desc, RNull n, boolean printParents, String view, TruffleObject snapshot) {
         // TODO: port to new instrumentation API, original code can be found in git history
         throw error(Message.GENERIC, ".fastr.profmem.show is not available.");
     }

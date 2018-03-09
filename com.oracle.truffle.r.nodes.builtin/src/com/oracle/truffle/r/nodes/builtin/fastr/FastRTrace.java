@@ -181,7 +181,7 @@ public class FastRTrace {
             } else {
                 throw error(RError.Message.GENERIC, "tracer is unexpected type");
             }
-            TraceHandling.enableStatementTrace(func, tracer, exit, at, print);
+            TraceHandling.enableStatementTrace(func, tracer, at, print);
         }
     }
 

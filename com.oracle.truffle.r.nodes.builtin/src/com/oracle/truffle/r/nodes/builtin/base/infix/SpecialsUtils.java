@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -84,9 +84,9 @@ class SpecialsUtils {
         }
 
         /**
-         * Checks if the value is single element that can be put into a list or vector as is,
-         * because in the case of vectors on the LSH of update we take each element and put it into
-         * the RHS of the update function.
+         * Checks if the value is single element that can be put into a list or vector as is, because in the
+         * case of vectors on the LSH of update we take each element and put it into the RHS of the update
+         * function.
          */
         protected static boolean isSingleElement(Object value) {
             return value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof String;
@@ -132,10 +132,10 @@ class SpecialsUtils {
             int intValue = (int) value;
             if (intValue <= 0) {
                 /*
-                 * Conversion from double to an index differs in subscript and subset for values in
-                 * the ]0..1[ range (subscript interprets 0.1 as 1, whereas subset treats it as 0).
-                 * We avoid this special case by simply going to the more generic case for this
-                 * range. Additionally, (int) Double.NaN is 0, which is also caught by this case.
+                 * Conversion from double to an index differs in subscript and subset for values in the ]0..1[ range
+                 * (subscript interprets 0.1 as 1, whereas subset treats it as 0). We avoid this special case by
+                 * simply going to the more generic case for this range. Additionally, (int) Double.NaN is 0, which
+                 * is also caught by this case.
                  */
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw new IllegalArgumentException();
@@ -183,8 +183,8 @@ class SpecialsUtils {
 
         @Specialization(replaces = "convertIntVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
         protected static int convertIntVectorGeneric(RAbstractIntVector value,
-                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
-                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode) {
+                        @Cached("create()") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") HasAttributesNode hasAttrsNode) {
             return convertIntVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());
         }
 
@@ -200,8 +200,8 @@ class SpecialsUtils {
 
         @Specialization(replaces = "convertDoubleVector", guards = {"value.getLength() == 1", "hierarchyNode.execute(value) == null", "hasAttrsNode.execute(value)"})
         protected static double convertDoubleVectorGeneric(RAbstractDoubleVector value,
-                        @Cached("create()") @SuppressWarnings("unused") ClassHierarchyNode hierarchyNode,
-                        @Cached("create()") @SuppressWarnings("unused") HasAttributesNode hasAttrsNode) {
+                        @Cached("create()") ClassHierarchyNode hierarchyNode,
+                        @Cached("create()") HasAttributesNode hasAttrsNode) {
             return convertDoubleVector(value, hierarchyNode, hasAttrsNode, value.slowPathAccess());
         }
 

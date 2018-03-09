@@ -272,7 +272,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Specialization(guards = "o.getAttributes() != null")
-            protected static RSymbol drop(@SuppressWarnings("unused") Object original, RSymbol o) {
+            protected static RSymbol drop(Object original, RSymbol o) {
                 return original == o ? o : RDataFactory.createSymbol(o.getName());
             }
 
