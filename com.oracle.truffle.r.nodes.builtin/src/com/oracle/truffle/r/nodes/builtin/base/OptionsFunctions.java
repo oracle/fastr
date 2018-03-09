@@ -30,7 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.text.Collator;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Locale;
 import java.util.Map;
@@ -80,11 +80,10 @@ public class OptionsFunctions {
             Object[] data = new Object[optionSettings.size()];
             String[] names = new String[data.length];
 
-            @SuppressWarnings("unchecked")
-            Map.Entry<String, Object>[] entries = optionSettings.toArray(new Map.Entry[optionSettings.size()]);
+            ArrayList<Map.Entry<String, Object>> entries = new ArrayList<>(optionSettings);
             Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
             Collator collator = locale == Locale.ROOT || locale == null ? null : RLocale.getOrderCollator(locale);
-            Arrays.sort(entries, new Comparator<Map.Entry<String, Object>>() {
+            Collections.sort(entries, new Comparator<Map.Entry<String, Object>>() {
                 @Override
                 public int compare(Map.Entry<String, Object> o1, Map.Entry<String, Object> o2) {
                     return RLocale.compare(collator, o1.getKey(), o2.getKey());
