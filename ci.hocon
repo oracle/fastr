@@ -8,6 +8,7 @@ java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
 java8 : {name : labsjdk, version : "8u161-jvmci-0.41", platformspecific: true}
 java9 : {name : labsjdk, version : "9-ea+168", platformspecific: true}
+jdt : {name : "ecj", version : "4.5.1", platformspecific : false}
 
 java8Downloads : {
   downloads : {
@@ -15,6 +16,7 @@ java8Downloads : {
       ${java7}
     ]}
     JAVA_HOME : ${java8}
+    JDT : ${jdt}
   }
 }
 
@@ -89,7 +91,7 @@ common : ${java8Downloads} ${packagesLinux}  {
 
 gateCmd : ["mx", "--strict-compliance", "rgate", "--strict-mode", "-t"]
 
-# currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
+# currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check
 
 # The standard set of gate tasks: the actual executable tests are in the "UnitTests" task.
 
@@ -221,7 +223,7 @@ gateStyle : ${common} {
     ECLIPSE_EXE : "$ECLIPSE/eclipse"
   }
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithEcj,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
   ]
 }
 
