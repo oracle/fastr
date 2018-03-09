@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.RRuntime;
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject {
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
-
     private String contents;
     private byte[] bytes;
 

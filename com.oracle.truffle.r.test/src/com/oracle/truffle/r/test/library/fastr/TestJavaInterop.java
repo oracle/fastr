@@ -557,7 +557,7 @@ public class TestJavaInterop extends TestBase {
     public void testNamesForForeignObject() {
         assertEvalFastR("tc <- new.java.class('" + TestNamesClassNoMembers.class.getName() + "'); t <- new.external(tc); names(t)", "NULL");
         assertEvalFastR("tc <- new.java.class('" + TestNamesClassNoPublicMembers.class.getName() + "'); t <- new.external(tc); names(t)", "NULL");
-        assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); sort(names(tc))", "c('staticField', 'staticMethod')");
+        assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); c('staticField', 'staticMethod') %in% names(tc)", "c(TRUE, TRUE)");
         assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticField)", "NULL");
         assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticMethod)", "NULL");
         assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); t <- new.external(tc); sort(names(t))", "c('field', 'method', 'staticField', 'staticMethod')");

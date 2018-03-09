@@ -31,7 +31,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
@@ -234,18 +233,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
-    public Object R_getClassDef(String clazz) {
-        String name = "getClassDef";
-        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
-        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
+    public Object R_getClassDef(Object clazz) {
+        throw implementedAsNode();
     }
 
     @Override
     @TruffleBoundary
-    public Object R_do_MAKE_CLASS(String clazz) {
-        String name = "getClass";
-        RFunction getClass = (RFunction) RContext.getRRuntimeASTAccess().forcePromise(name, REnvironment.getRegisteredNamespace("methods").get(name));
-        return RContext.getEngine().evalFunction(getClass, null, RCaller.createInvalid(null), true, null, clazz);
+    public Object R_do_MAKE_CLASS(Object clazz) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1517,48 +1512,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         }
     }
 
-    private static HashMap<String, Integer> name2typeTable;
-
-    static {
-        name2typeTable = new HashMap<>(26);
-        name2typeTable.put("NULL", SEXPTYPE.NILSXP.code);
-        /* real types */
-        name2typeTable.put("symbol", SEXPTYPE.SYMSXP.code);
-        name2typeTable.put("pairlist", SEXPTYPE.LISTSXP.code);
-        name2typeTable.put("closure", SEXPTYPE.CLOSXP.code);
-        name2typeTable.put("environment", SEXPTYPE.ENVSXP.code);
-        name2typeTable.put("promise", SEXPTYPE.PROMSXP.code);
-        name2typeTable.put("language", SEXPTYPE.LANGSXP.code);
-        name2typeTable.put("special", SEXPTYPE.SPECIALSXP.code);
-        name2typeTable.put("builtin", SEXPTYPE.BUILTINSXP.code);
-        name2typeTable.put("char", SEXPTYPE.CHARSXP.code);
-        name2typeTable.put("logical", SEXPTYPE.LGLSXP.code);
-        name2typeTable.put("integer", SEXPTYPE.INTSXP.code);
-        name2typeTable.put("double", SEXPTYPE.REALSXP.code);
-        /*-  "real", for R <= 0.61.x */
-        name2typeTable.put("complex", SEXPTYPE.CPLXSXP.code);
-        name2typeTable.put("character", SEXPTYPE.STRSXP.code);
-        name2typeTable.put("...", SEXPTYPE.DOTSXP.code);
-        name2typeTable.put("any", SEXPTYPE.ANYSXP.code);
-        name2typeTable.put("expression", SEXPTYPE.EXPRSXP.code);
-        name2typeTable.put("list", SEXPTYPE.VECSXP.code);
-        name2typeTable.put("externalptr", SEXPTYPE.EXTPTRSXP.code);
-        name2typeTable.put("bytecode", SEXPTYPE.BCODESXP.code);
-        name2typeTable.put("weakref", SEXPTYPE.WEAKREFSXP.code);
-        name2typeTable.put("raw", SEXPTYPE.RAWSXP.code);
-        name2typeTable.put("S4", SEXPTYPE.S4SXP.code);
-        name2typeTable.put("numeric", SEXPTYPE.REALSXP.code);
-        name2typeTable.put("name", SEXPTYPE.SYMSXP.code);
-    }
-
     @Override
     @TruffleBoundary
-    public int Rf_str2type(String name) {
-        if (name == null) {
-            return -1;
-        }
-        Integer result = name2typeTable.get(name);
-        return result != null ? result : -1;
+    public int Rf_str2type(Object name) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1949,7 +1906,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
             protected Object access(VectorWrapper receiver, Object[] arguments) {
                 try {
-                    // Currently, there is only one "executable" object, which is CharSXPWrapper.
+                    // Currently, there is only one "executable" object, which is
+                    // CharSXPWrapper.
                     // See CharSXPWrapperMR for the EXECUTABLE message handler.
                     assert arguments.length == 0 && receiver.vector instanceof CharSXPWrapper;
                     return ForeignAccess.sendExecute(execMsg, receiver.vector);
@@ -1972,7 +1930,22 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         private final TruffleObject vector;
 
         public VectorWrapper(TruffleObject vector) {
+            assert vector instanceof RObject;
             this.vector = vector;
+            NativeDataAccess.setNativeWrapper((RObject) vector, this);
+        }
+
+        static Object get(TruffleObject x) {
+            assert x instanceof RObject;
+            Object wrapper = NativeDataAccess.getNativeWrapper((RObject) x);
+            if (wrapper != null) {
+                return wrapper;
+            } else {
+                wrapper = new VectorWrapper(x);
+                // Establish the 1-1 relationship between the object and its native wrapper
+                NativeDataAccess.setNativeWrapper((RObject) x, wrapper);
+                return wrapper;
+            }
         }
 
         public TruffleObject getVector() {
@@ -1983,38 +1956,44 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         public ForeignAccess getForeignAccess() {
             return VectorWrapperMRForeign.ACCESS;
         }
+
+        @Override
+        public int hashCode() {
+            return vector.hashCode();
+        }
+
     }
 
     @Override
     public Object INTEGER(Object x) {
         // also handles LOGICAL
         assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
-        return new VectorWrapper(guaranteeVectorOrNull(x, RVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RVector.class));
     }
 
     @Override
     public Object LOGICAL(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RLogicalVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RLogicalVector.class));
     }
 
     @Override
     public Object REAL(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RDoubleVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RDoubleVector.class));
     }
 
     @Override
     public Object RAW(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RRawVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RRawVector.class));
     }
 
     @Override
     public Object COMPLEX(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, RComplexVector.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, RComplexVector.class));
     }
 
     @Override
     public Object R_CHAR(Object x) {
-        return new VectorWrapper(guaranteeVectorOrNull(x, CharSXPWrapper.class));
+        return VectorWrapper.get(guaranteeVectorOrNull(x, CharSXPWrapper.class));
     }
 
     @Override

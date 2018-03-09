@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,22 +19,25 @@
 // The table of transient objects that have been allocated dur the current FFI call
 static void **tMemTable;
 // hwm of tMemTable
-static int tMemTableIndex;
+static int tMemTableIndex = -1;
 static int tMemTableLength;
 
 void *R_chk_calloc(size_t nelem, size_t elsize);
 
 // Memory that is auto-reclaimed across FFI calls
 char *R_alloc(size_t n, int size) {
+	tMemTableIndex++;
     void *p = R_chk_calloc(n, size);
     if (tMemTableIndex >= tMemTableLength) {
-	int newLength = 2 * tMemTableLength;
+	int newLength = tMemTableLength == 0 ? 1 : 2 * tMemTableLength;
 	void *newtMemTable = malloc(sizeof(void*) * newLength);
 	if (newtMemTable == NULL) {
 	    fatalError("malloc failure");
 	}
-	memcpy(newtMemTable, tMemTable, tMemTableLength * sizeof(void*));
-	free(tMemTable);
+	if (tMemTableLength > 0) {
+		memcpy(newtMemTable, tMemTable, tMemTableLength * sizeof(void*));
+		free(tMemTable);
+	}
 	tMemTable = newtMemTable;
 	tMemTableLength = newLength;
     }
@@ -54,9 +57,10 @@ char* S_realloc(char *p, long a, long b, int size) {
 
 void allocExit() {
     int i;
-    for (i = 0; i < tMemTableIndex; i++) {
+    for (i = 0; i <= tMemTableIndex; i++) {
 	free(tMemTable[i]);
     }
+    tMemTableIndex = 0;
 }
 
 void *R_chk_calloc(size_t nelem, size_t elsize) {
@@ -116,4 +120,3 @@ SEXP Rf_allocS4Object() {
 	unimplemented("Rf_allocS4Object unimplemented");
 	return NULL;
 }
-

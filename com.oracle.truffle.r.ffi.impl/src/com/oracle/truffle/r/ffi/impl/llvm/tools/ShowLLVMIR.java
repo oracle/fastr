@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import java.io.OutputStream;
 
 import com.oracle.truffle.r.ffi.impl.llvm.LLVM_IR;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL;
+import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVMArchive;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 
 public class ShowLLVMIR {
@@ -64,7 +65,8 @@ public class ShowLLVMIR {
             usage();
         }
         try {
-            LLVM_IR[] irs = TruffleLLVM_DLL.getZipLLVMIR(objPath);
+            LLVMArchive ar = TruffleLLVM_DLL.getZipLLVMIR(objPath);
+            LLVM_IR[] irs = ar.irs;
             if (irs == null) {
                 System.out.printf("no llvm ir in %s\n", objPath);
                 System.exit(1);

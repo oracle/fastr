@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.api.nodes.Node;
 
 @MessageResolution(receiverType = BytesToNativeCharArrayCall.class)
 public class BytesToNativeCharArrayCallMR {
+
     @Resolve(message = "EXECUTE")
     public abstract static class BytesToNativeCharArrayCallExecute extends Node {
         protected java.lang.Object access(BytesToNativeCharArrayCall receiver, Object[] arguments) {

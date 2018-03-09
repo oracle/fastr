@@ -65,7 +65,7 @@ FastR necessarily provides very fine control over the versions of the llvm tools
 
 The tools needed to build FastR and to install packages containing native code are `clang`, `clang++` and `opt`. Precisely which versions of these tools are used can be controlled in two ways.
 
-1. Set `FASTR_LLVM_HOME` to a directory containing the tools, named as above. N.B. Since MacPorts uses names of the form `clang-mp-3.8` this requires using symbolic links. E.g. create a directory called, say, `llvm-3.8` and symlink to the MacPorts binary, e.g., `clang-mp-3.8` and name it as `clang`. Then set `FASTR_LLVM_HOME` to that directory.
+1. Set `FASTR_LLVM_TOOLS` to a directory containing the tools, named as above. N.B. Since MacPorts uses names of the form `clang-mp-3.8` this requires using symbolic links. E.g. create a directory called, say, `llvm-3.8` and symlink to the MacPorts binary, e.g., `clang-mp-3.8` and name it as `clang`. Then set `FASTR_LLVM_TOOLS` to that directory.
 2. Set `FASTR_LLVM_CLANG`, `FASTR_LLVM_CLANGPP` and `FASTR_LLVM_OPT` to the actual binary images, e.g., `export FASTR_LLVM_CLANG=/opt/local/bin/clang-mp-3.8`.
 
 Not all versions of the llvm tools can compile FastR. `clang-3.2` that is downloaded as part of the DragonEgg build is known to work. This currently is placed in `sulong/cache/tools/llvm/bin` by the DragonEgg build and, again, can be copied to a shared location. `clang-3.8` and `clang-4.0` are known not to work, but `clang-3.9` does.

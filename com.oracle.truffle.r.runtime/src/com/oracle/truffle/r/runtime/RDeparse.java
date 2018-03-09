@@ -15,6 +15,7 @@ import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static java.nio.file.StandardOpenOption.WRITE;
 
 import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.nio.file.AccessDeniedException;
 import java.nio.file.FileAlreadyExistsException;
@@ -368,7 +369,7 @@ public class RDeparse {
 
                 // just use the first 10 hex digits to have a nicer file name
                 if (qualifiedFunctionName != null && !qualifiedFunctionName.isEmpty() && !qualifiedFunctionName.equals("<no source>")) {
-                    path = tmpDir.resolve(qualifiedFunctionName + "-" + printHexBinary.substring(0, 10) + ".r");
+                    path = tmpDir.resolve(qualifiedFunctionName.replace(File.separatorChar, '_') + "-" + printHexBinary.substring(0, 10) + ".r");
                 } else {
                     path = tmpDir.resolve(printHexBinary.substring(0, 10) + ".r");
                 }

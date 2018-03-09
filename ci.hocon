@@ -6,7 +6,7 @@
 # java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
-java8 : {name : labsjdk, version : "8-jvmci-latest", platformspecific: true}
+java8 : {name : labsjdk, version : "8u161-jvmci-0.41", platformspecific: true}
 java9 : {name : labsjdk, version : "9-ea+168", platformspecific: true}
 
 java8Downloads : {
@@ -146,7 +146,7 @@ gateTestLinuxLLVM : ${common} ${requireGCC} {
   environment :  {
       TZDIR: "/usr/share/zoneinfo"
       FASTR_RFFI : "llvm"
-      FASTR_LLVM_HOME : "$DRAGONEGG_LLVM/bin"
+      FASTR_LLVM_TOOLS : "$DRAGONEGG_LLVM/bin"
       FASTR_LLVM_GFORTRAN_LLVM_AS : "$DRAGONEGG_LLVM/bin/llvm-as"
       FASTR_LLVM_GFORTRAN : "$DRAGONEGG_GCC/bin/gfortran"
       FASTR_LLVM_DRAGONEGG : "$DRAGONEGG_GCC/lib/dragonegg.so"
@@ -192,7 +192,7 @@ gateTestDarwinLLVM: ${common} ${darwinEnvironment} ${requireGCC} {
 
   environment :  {
       FASTR_RFFI : "llvm"
-      FASTR_LLVM_HOME : "$DRAGONEGG_LLVM/bin"
+      FASTR_LLVM_TOOLS : "$DRAGONEGG_LLVM/bin"
       FASTR_LLVM_GFORTRAN_LLVM_AS : "$DRAGONEGG_LLVM/bin/llvm-as"
       FASTR_LLVM_GFORTRAN : "$DRAGONEGG_GCC/bin/gfortran"
       FASTR_LLVM_DRAGONEGG : "$DRAGONEGG_GCC/lib/dragonegg.so"

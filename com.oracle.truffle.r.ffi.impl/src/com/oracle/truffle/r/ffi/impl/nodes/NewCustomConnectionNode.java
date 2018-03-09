@@ -22,19 +22,11 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import static com.oracle.truffle.r.runtime.data.NativeDataAccess.readNativeString;
-
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.InvalidConnection;
 import com.oracle.truffle.r.runtime.conn.NativeConnections.NativeRConnection;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -47,36 +39,11 @@ public abstract class NewCustomConnectionNode extends FFIUpCallNode.Arg4 {
 
     @Specialization
     @TruffleBoundary
-    Object handleStrings(String description, String mode, String className, RExternalPtr connAddr) {
+    Object handleStrings(Object description, Object mode, Object className, RExternalPtr connAddr, @Cached("create()") NativeStringCastNode nscn) {
         try {
-            return new NativeRConnection(description, mode, className, connAddr).asVector();
+            return new NativeRConnection(nscn.executeObject(description), nscn.executeObject(mode), nscn.executeObject(className), connAddr).asVector();
         } catch (IOException e) {
             return InvalidConnection.instance.asVector();
         }
     }
-
-    protected static Node createAsPointerNode() {
-        return Message.AS_POINTER.createNode();
-    }
-
-    @Specialization
-    @TruffleBoundary
-    Object handleAddresses(TruffleObject description, TruffleObject mode, TruffleObject className, RExternalPtr connAddr,
-                    @Cached("createAsPointerNode()") Node descriptionAsPtrNode, @Cached("createAsPointerNode()") Node modeAsPtrNode, @Cached("createAsPointerNode()") Node classNameAsPtrNode) {
-        try {
-            return handleAddresses(ForeignAccess.sendAsPointer(descriptionAsPtrNode, description), ForeignAccess.sendAsPointer(modeAsPtrNode, mode),
-                            ForeignAccess.sendAsPointer(classNameAsPtrNode, className), connAddr);
-        } catch (UnsupportedMessageException e) {
-            throw RInternalError.shouldNotReachHere(e);
-        }
-    }
-
-    private static Object handleAddresses(long description, long mode, long className, RExternalPtr connAddr) {
-        try {
-            return new NativeRConnection(readNativeString(description), readNativeString(mode), readNativeString(className), connAddr).asVector();
-        } catch (IOException e) {
-            return InvalidConnection.instance.asVector();
-        }
-    }
-
 }

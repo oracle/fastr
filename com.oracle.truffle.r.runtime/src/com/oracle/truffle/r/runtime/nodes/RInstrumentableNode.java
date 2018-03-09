@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,17 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
-import com.oracle.truffle.api.instrumentation.InstrumentableFactory.WrapperNode;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode.WrapperNode;
+import com.oracle.truffle.api.instrumentation.InstrumentableNode;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Some additional support for instrumentable nodes.
  */
-public interface RInstrumentableNode {
+public interface RInstrumentableNode extends InstrumentableNode {
 
     /**
      * Unwrap a (potentially) wrapped node, returning the child. Since an AST may contain wrapper

@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RScalar;
+import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
@@ -108,6 +109,8 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
             return RInteger.valueOf((int) x);
         } else if (x instanceof Byte) {
             return RLogical.valueOf((byte) x);
+        } else if (x instanceof String) {
+            return RString.valueOf((String) x);
         } else {
             throw RInternalError.shouldNotReachHere();
         }

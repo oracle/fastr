@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,16 +25,32 @@ package com.oracle.truffle.r.runtime.nodes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.Instrumentable;
+import com.oracle.truffle.api.instrumentation.ProbeNode;
+import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RTypesGen;
-import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapperFactory;
+import com.oracle.truffle.r.runtime.nodes.instrumentation.RNodeWrapper;
 
 @TypeSystemReference(RTypes.class)
-@Instrumentable(factory = RNodeWrapperFactory.class)
 public abstract class RNode extends RBaseNode implements RInstrumentableNode {
+
+    @Override
+    public boolean isInstrumentable() {
+        return true;
+    }
+
+    @Override
+    public boolean hasTag(Class<? extends Tag> tag) {
+        return RContext.getRRuntimeASTAccess().isTaggedWith(this, tag);
+    }
+
+    @Override
+    public WrapperNode createWrapper(ProbeNode probe) {
+        return new RNodeWrapper(this, probe);
+    }
 
     /**
      * Normal execute function that is called when the return value, but not its visibility is

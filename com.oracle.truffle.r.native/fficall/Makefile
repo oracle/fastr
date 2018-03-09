@@ -57,7 +57,7 @@ ifeq ($(FASTR_RFFI),managed)
 else
 ifeq ($(OS_NAME),Darwin)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
-ifneq ($(FASTR_RFFI),llvm)	
+ifneq ($(FASTR_RFFI),llvm)
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
@@ -80,6 +80,7 @@ fficall.done: common.done
 
 else
 ifeq ($(FASTR_RFFI),llvm)
+export R_PACKAGE_DIR="lib"
 fficall.done: common.done
 	$(MAKE) -C src/truffle_llvm all
 	touch fficall.done
@@ -90,7 +91,7 @@ endif #nfi
 endif #managed
 
 common.done:
-	$(MAKE) -C src/common all	
+	$(MAKE) -C src/common all
 	touch common.done
 
 clean:
@@ -109,4 +110,3 @@ endif
 	rm -rf $(R_LIB)
 	rm -rf fficall.done
 	rm -rf common.done
-

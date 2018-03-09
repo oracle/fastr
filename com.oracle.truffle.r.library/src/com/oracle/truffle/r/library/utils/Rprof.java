@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -208,7 +208,7 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
             SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
             builder.tagIs(StandardTags.StatementTag.class);
             SourceSectionFilter filter = builder.build();
-            RInstrumentation.getInstrumenter().attachListener(filter, this);
+            RInstrumentation.getInstrumenter().attachExecutionEventListener(filter, this);
         }
 
         private void intervalElapsed() {
