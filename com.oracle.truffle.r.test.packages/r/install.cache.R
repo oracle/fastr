@@ -21,6 +21,39 @@
 # questions.
 #
 
+lock.file.name <- ".lock"
+
+pkg.cache.max.retries <- 3L
+
+pkg.cache.lock <- function(pkg.cache.env, version.dir) {
+    if (!as.logical(pkg.cache.env$sync)) {
+        return (TRUE)
+    }
+
+    tries <- 0L
+    version.lock.file <- file.path(version.dir, lock.file.name)
+    while (file.exists(version.lock.file)) {
+        Sys.sleep(1)
+        tries <- tries + 1L
+
+        if (tries >= pkg.cache.max.retries) {
+            return (FALSE)
+        }
+    }
+    log.message("locking: ", version.lock.file, level=1)
+    tryCatch(file.create(version.lock.file), error=function(e) return (FALSE), warning=function(e) return (FALSE))
+}
+
+pkg.cache.unlock <- function(pkg.cache.env, version.dir) {
+    if (!as.logical(pkg.cache.env$sync)) {
+        return (TRUE)
+    }
+
+    version.lock.file <- file.path(version.dir, lock.file.name)
+    log.message("releasing: ", version.lock.file, level=1)
+    tryCatch(file.remove(version.lock.file))
+}
+
 is.fastr <- function() {
     length(grep('FastR', R.Version()$version.string))
 }
@@ -35,8 +68,6 @@ log.message <- if(!exists("log.message")) {
 } else {
     log.message
 }
-
-
 
 pkg.cache.install <- function(pkg.cache.env, pkgname, pkg.version, lib.install, install.cmd) {
     pkg <- list(Package=pkgname, Version=pkg.version)
@@ -61,6 +92,12 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
         return (FALSE)
     }
 
+    # lock version directory
+    if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
+        log.message("could not lock version dir ", version.dir, level=1)
+        return (FALSE)
+    }
+
     pkgname <- as.character(pkg["Package"])
     pkg.version <- as.character(pkg["Version"])
 
@@ -82,7 +119,7 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
         }, error = function(e) {
             log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
             return (FALSE)
-        })
+        }, finally = pkg.cache.unlock(pkg.cache.env, version.dir) )
     } 
     log.message("cache miss for package ", pkgname, level=1)
     
@@ -102,6 +139,16 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
             dir.create(version.dir)
         }
 
+        # lock version directory
+        if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
+            log.message("could not insert: version dir ", version.dir, " is locked", level=1)
+            return (FALSE)
+        }
+    }, error = function(e) {
+        log.message("could not insert package '", pkgname, "' because: ", e$message)
+    })
+
+    tryCatch({
         pkgname <- as.character(pkg["Package"])
         pkg.version <- as.character(pkg["Version"])
         fromPath <- file.path(lib, pkgname)
@@ -133,7 +180,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         return (TRUE)
     }, error = function(e) {
         log.message("could not insert package '", pkgname, "' because: ", e$message)
-    })
+    }, finally = pkg.cache.unlock(pkg.cache.env, version.dir) )
     FALSE
 }
 
@@ -155,7 +202,7 @@ pkg.cache.check <- function(pkg.cache.env) {
     }
 
     # get version sub-directory
-    version.dir <- pkg.cache.get.version(pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
+    version.dir <- pkg.cache.get.version(pkg.cache.env, pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
     if (is.null(version.dir)) {
         log.message("cannot access or create version subdir for ", as.character(pkg.cache.env$version), level=1)
     }
@@ -252,7 +299,7 @@ pkg.cache.create.version <- function(cache.dir, version, table.file.name, cache.
     rbind(version.table, data.frame(version=version,dir=version.subdir,ctime=as.double(Sys.time())))
 }
 
-pkg.cache.get.version <- function(cache.dir, cache.version, table.file.name, cache.size) {
+pkg.cache.get.version <- function(pkg.cache.env, cache.dir, cache.version, table.file.name, cache.size) {
     if (is.null(cache.version)) {
         return (NULL)
     }
@@ -272,7 +319,13 @@ pkg.cache.get.version <- function(cache.dir, cache.version, table.file.name, cac
         }
         if (!is.null(updated.version.table)) {
             version.subdir <- as.character(updated.version.table[updated.version.table$version == cache.version, "dir"])
-            write.csv(updated.version.table, version.table.name, row.names=FALSE)
+            if (!pkg.cache.lock(pkg.cache.env, cache.dir)) {
+                return (NULL)
+            }
+
+            try({
+                write.csv(updated.version.table, version.table.name, row.names=FALSE)
+            }, finally=pkg.cache.unlock(pkg.cache.env, cache.dir))
         }
 
         # return the version directory
@@ -376,7 +429,6 @@ pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.i
             pkg.list <- as.data.frame(available.packages(contriburl=contriburl), stringAsFactors=FALSE)
 
             # query version of the package
-            #pkg.version <- as.character(pkg.list[pkg.list$Package == pkgname, "Version"])
             pkg <- pkg.list[pkgname, c("Package", "Version")]
 
             # compute transitive dependencies of the package to install
