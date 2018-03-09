@@ -265,7 +265,6 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         return true;
     }
 
-    @SuppressWarnings({"rawtypes", "unchecked"})
     private List<Samples<?>> createSamples() {
         DefaultArgsExtractor defArgExt = new DefaultArgsExtractor(diagSuite.fastRSession, msg -> print(1, msg));
         Map<String, Samples<?>> defaultArgs = defArgExt.extractDefaultArgs(builtinName);
@@ -274,7 +273,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
         List<Samples<?>> as = new ArrayList<>();
         for (int i = 0; i < argLength; i++) {
-            Samples samples;
+            Samples<?> samples;
 
             if (diagSuite.diagConfig.missingAndNullSamplesOnly) {
                 samples = Samples.anything(RNull.instance).or(Samples.anything(RMissing.instance));
@@ -296,7 +295,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
                     throw new RuntimeException("Error in sample generation from argument " + i, e);
                 }
 
-                Samples defArgSamples = defaultArgs.get(parameterNames[i]);
+                Samples<?> defArgSamples = defaultArgs.get(parameterNames[i]);
                 samples = defArgSamples == null ? samples : samples.and(defArgSamples);
             }
 
@@ -308,9 +307,8 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     }
 
     /**
-     * Checks whether the argument samples are correct by passing them to the argument's pipeline.
-     * The positive samples should pass without any error, while the negative ones should cause an
-     * error.
+     * Checks whether the argument samples are correct by passing them to the argument's pipeline. The
+     * positive samples should pass without any error, while the negative ones should cause an error.
      *
      * @param i
      */

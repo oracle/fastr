@@ -223,7 +223,7 @@ public class SamplesCollector extends ExecutionPathVisitor<Consumer<Object>>
 
     @Override
     public Consumer<Object> visit(TypeFilter<?, ?> filter, Consumer<Object> previous) {
-        Class<?>[] filterTypes = new Class[]{filter.getType1(), filter.getType2()};
+        Class<?>[] filterTypes = new Class<?>[]{filter.getType1(), filter.getType2()};
         Set<?> samples = CastUtils.sampleValuesForClasses(filterTypes);
         for (Object s : samples) {
             previous.accept(s);
