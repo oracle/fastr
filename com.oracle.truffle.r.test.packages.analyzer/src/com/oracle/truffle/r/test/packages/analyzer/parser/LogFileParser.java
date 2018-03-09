@@ -80,7 +80,7 @@ public class LogFileParser {
 
     public void addDetector(Token hook, LineDetector detector) {
         Objects.requireNonNull(detector);
-        Collection<LineDetector> registered = this.detectorsTable.get(hook);
+        Collection<LineDetector> registered = this.detectorsTable.get(hook.name());
         if (registered == null) {
             registered = new LinkedList<>();
             this.detectorsTable.put(hook.name(), registered);

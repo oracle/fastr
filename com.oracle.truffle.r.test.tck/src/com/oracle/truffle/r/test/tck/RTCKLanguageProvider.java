@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -262,14 +262,14 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         }
     }
 
-    private Snippet createValueConstructor(
+    private static Snippet createValueConstructor(
                     Context context,
                     String value,
                     TypeDescriptor type) {
         return Snippet.newBuilder(value, eval(context, String.format(PATTERN_VALUE_FNC, value)), type).build();
     }
 
-    private Snippet createBinaryOperator(
+    private static Snippet createBinaryOperator(
                     Context context,
                     String operator,
                     TypeDescriptor type,
@@ -281,7 +281,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         return opb.build();
     }
 
-    private Snippet createPrefixOperator(
+    private static Snippet createPrefixOperator(
                     Context context,
                     String operator,
                     TypeDescriptor type,
@@ -292,7 +292,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         return opb.build();
     }
 
-    private Snippet createStatement(
+    private static Snippet createStatement(
                     Context context,
                     String name,
                     String expression,
@@ -301,7 +301,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         return createStatement(context, name, expression, null, type, paramTypes);
     }
 
-    private Snippet createStatement(
+    private static Snippet createStatement(
                     Context context,
                     String name,
                     String expression,
@@ -320,7 +320,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         return opb.build();
     }
 
-    private Snippet loadScript(
+    private static Snippet loadScript(
                     Context context,
                     String resourceName,
                     TypeDescriptor type,
@@ -340,7 +340,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         return Source.newBuilder(ID, in, scriptName).build();
     }
 
-    private Value eval(Context context, String statement) {
+    private static Value eval(Context context, String statement) {
         return context.eval(ID, statement);
     }
 
@@ -386,9 +386,9 @@ public final class RTCKLanguageProvider implements LanguageProvider {
             }
 
             /**
-             * Enables result verifier to handle empty arrays. Use this for R expressions,
-             * statements which accept array but not an empty array
-             * 
+             * Enables result verifier to handle empty arrays. Use this for R expressions, statements which
+             * accept array but not an empty array
+             *
              * @return the Builder
              */
             Builder emptyArrayCheck() {
