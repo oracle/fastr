@@ -828,11 +828,29 @@ public final class RContext {
         }
     };
 
-    public Class<?> loadClass(String className) throws ClassNotFoundException {
-        if (FastRConfig.InternalGridAwtSupport) {
-            return interopClassLoader.loadClass(className);
+    private final HashMap<String, Class<?>> classCache = new HashMap<>();
+
+    /**
+     * This function also takes class names with '/' instead of '.'. A null return value means that
+     * the class was not found.
+     */
+    public Class<?> loadClass(String className) {
+        if (classCache.containsKey(className)) {
+            return classCache.get(className);
         }
-        return Class.forName(className);
+        String demangled = className.replaceAll("/", ".");
+        Class<?> result;
+        try {
+            if (FastRConfig.InternalGridAwtSupport) {
+                result = interopClassLoader.loadClass(demangled);
+            } else {
+                result = Class.forName(demangled);
+            }
+        } catch (ClassNotFoundException e) {
+            result = null;
+        }
+        classCache.put(className, result);
+        return result;
     }
 
     /**
@@ -849,6 +867,29 @@ public final class RContext {
             urls[i] = Paths.get(entries[i]).toUri().toURL();
         }
         interopClassLoader = URLClassLoader.newInstance(urls, interopClassLoader);
+        classCache.clear();
+    }
+
+    /**
+     * Returns all entries in the Java interop class loader.
+     * 
+     * @return the CP entries
+     */
+    public String[] getInteropClasspathEntries() {
+        if (!FastRConfig.InternalGridAwtSupport) {
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Custom class loading not supported.");
+        }
+        if (interopClassLoader instanceof URLClassLoader) {
+            URL[] urls = ((URLClassLoader) interopClassLoader).getURLs();
+            if (urls != null) {
+                String[] ret = new String[urls.length];
+                for (int i = 0; i < urls.length; i++) {
+                    ret[i] = urls[i].getPath();
+                }
+                return ret;
+            }
+        }
+        return new String[0];
     }
 
     public final class ConsoleIO {
