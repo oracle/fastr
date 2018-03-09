@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -286,7 +287,7 @@ final class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public ContextState initialize(RContext context) {
-        RFFIUtils.initializeTracing();
+        RFFILog.initializeTracing();
         initializeLock();
         if (traceEnabled()) {
             traceDownCall("initialize");
@@ -368,13 +369,13 @@ final class TruffleNFI_Context extends RFFIContext {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
         }
         transientAllocations.clear();
+        RuntimeException lastUpCallEx = getLastUpCallException();
+        setLastUpCallException(null);
         if (hasAccessLock) {
             releaseLock();
         }
-        RuntimeException lastUpCallEx = getLastUpCallException();
         if (lastUpCallEx != null) {
             CompilerDirectives.transferToInterpreter();
-            setLastUpCallException(null);
             throw lastUpCallEx;
         }
     }

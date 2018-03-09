@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,23 +22,78 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import java.util.ArrayList;
+import java.util.List;
 
-@RBuiltin(name = "function", kind = PRIMITIVE, parameterNames = {"x"}, behavior = READS_FRAME)
-public abstract class FunctionBuiltin extends RBuiltinNode.Arg1 {
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.RASTUtils;
+import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.Closure;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+
+@RBuiltin(name = "function", kind = PRIMITIVE, nonEvalArgs = 1, parameterNames = {"args", "body"}, behavior = COMPLEX)
+public final class FunctionBuiltin extends RBuiltinNode.Arg2 {
 
     static {
         Casts.noCasts(FunctionBuiltin.class);
     }
 
-    @Specialization
-    protected Object doIt(@SuppressWarnings("unused") Object x) {
-        throw RInternalError.unimplemented();
+    @Child private CreateAndExecuteFunctionExpr createFunNode;
+
+    @Override
+    public Object execute(VirtualFrame frame, Object args, Object body) {
+        if (createFunNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            createFunNode = insert(new CreateAndExecuteFunctionExpr());
+        }
+        return createFunNode.execute(frame.materialize(), getRLanguage(), args, body);
+    }
+
+    public static FunctionBuiltin create() {
+        return new FunctionBuiltin();
+    }
+
+    protected static final class CreateAndExecuteFunctionExpr extends TruffleBoundaryNode {
+        @Child private FunctionExpressionNode funExprNode;
+
+        @TruffleBoundary
+        public Object execute(MaterializedFrame frame, TruffleRLanguage language, Object args, Object body) {
+            funExprNode = insert(createFunctionExpressionNode(getRLanguage(), args, body));
+            return funExprNode.execute(frame);
+        }
+    }
+
+    public static FunctionExpressionNode createFunctionExpressionNode(TruffleRLanguage language, Object args, Object body) {
+        List<Argument<RSyntaxNode>> finalArgs = RContext.getASTBuilder().getFunctionExprArgs(args);
+        return (FunctionExpressionNode) RContext.getASTBuilder().function(language, RSyntaxNode.LAZY_DEPARSE, finalArgs, RASTUtils.createNodeForValue(body).asRSyntaxNode(), null);
     }
 }

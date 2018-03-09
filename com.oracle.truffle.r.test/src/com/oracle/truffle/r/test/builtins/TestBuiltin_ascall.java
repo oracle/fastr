@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -68,7 +68,9 @@ public class TestBuiltin_ascall extends TestBase {
         assertEval(Output.IgnoreWhitespace, "e <- expression(function(a) b); as.call(list(e[[1]][[1]]))");
         assertEval("e <- expression(function(a) b); as.call(list(e[[1]][[2]]))");
         assertEval("call('foo')");
-        assertEval(Output.IgnoreWhitespace, "call('function', 'a')");
+        // Note: call('function', 'a') should not cause the exception, it should be the printing
+        assertEval(Output.IgnoreWhitespace, "invisible(call('function', 'a'))");
+        assertEval(Output.IgnoreWhitespace, "length(call('function', 'a'))");
         assertEval(Output.IgnoreWhitespace, "call('function', pairlist(a=1))");
         assertEval(Output.IgnoreWhitespace, "call('function', pairlist(a=1), 3)");
         assertEval(Output.IgnoreWhitespace, "call('function', pairlist(a=1), 5,3)");

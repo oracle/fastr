@@ -20,6 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
+#define NO_FASTR_REDEFINE
 #include <Rinterface.h>
 #include <rffiutils.h>
 #include <Rinternals_common.h>

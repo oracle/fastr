@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -108,7 +108,7 @@ public final class RArgsValuesAndNames extends RObject implements RTypedValue {
         assert signature.getLength() == getLength();
         for (int i = 0; i < getLength(); i++) {
             String name = signature.getName(i);
-            RPairList cur = RDataFactory.createPairList(getArgument(i), RNull.instance, name != null ? name : RNull.instance, SEXPTYPE.DOTSXP);
+            RPairList cur = RDataFactory.createPairList(getArgument(i), RNull.instance, name != null ? RDataFactory.createSymbol(name) : RNull.instance, SEXPTYPE.DOTSXP);
 
             if (head == null) {
                 head = cur;

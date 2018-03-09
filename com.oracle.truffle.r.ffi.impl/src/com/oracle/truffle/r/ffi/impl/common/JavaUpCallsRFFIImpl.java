@@ -635,18 +635,20 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public long Rf_any_duplicated(Object x, int fromLast) {
-        RAbstractVector vec = (RAbstractVector) x;
-        if (vec.getLength() <= 1) {
-            return 0;
-        } else {
-            return DuplicationHelper.analyze(vec, null, true, fromLast != 0).getIndex();
-        }
+        throw implementedAsNode();
+    }
+
+    @Override
+    public long Rf_any_duplicated3(Object x, Object incomparables, int fromLast) {
+        throw implementedAsNode();
     }
 
     @Override
     public Object PRINTNAME(Object x) {
+        if (x == RNull.instance) {
+            return x;
+        }
         guaranteeInstanceOf(x, RSymbol.class);
         return CharSXPWrapper.create(((RSymbol) x).getName());
     }

@@ -45,7 +45,13 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
  * {@code null} is never allowed as a value for the tag, car or cdr, only the type.
  */
 public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
+    /**
+     * Data of the current pair list cell.
+     */
     private Object car = RNull.instance;
+    /**
+     * Link to the next {@link RPairList} cell or {@link RNull} if last.
+     */
     private Object cdr = RNull.instance;
     /**
      * Externally, i.e., when serialized, this is either a SYMSXP ({@link RSymbol}) or an
@@ -336,9 +342,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         int i = 0;
         while (true) {
             data[i] = Utils.toString(pl.tag);
-            if (pl.tag == RRuntime.STRING_NA) {
-                complete = false;
-            }
+            complete &= data[i] != RRuntime.STRING_NA;
             if (isNull(pl.cdr)) {
                 break;
             }
@@ -353,7 +357,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         Object p = this;
         for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
             RPairList pList = (RPairList) p;
-            pList.tag = newNames.getDataAt(i);
+            pList.tag = RDataFactory.createSymbol(newNames.getDataAt(i));
             p = pList.cdr;
         }
     }

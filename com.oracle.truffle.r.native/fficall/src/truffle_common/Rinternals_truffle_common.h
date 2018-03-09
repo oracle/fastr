@@ -68,6 +68,7 @@
 
 #define UNIMPLEMENTED unimplemented(__FUNCTION__)
 
+#define NO_FASTR_REDEFINE
 #include <rffiutils.h>
 
 // these two functions are here just to handle casting void* to void function pointers...
@@ -444,6 +445,13 @@ SEXP Rf_shallow_duplicate(SEXP x) {
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
     TRACE0();
     R_xlen_t result = (R_xlen_t) ((call_Rf_any_duplicated) callbacks[Rf_any_duplicated_x])(x, from_last);
+    checkExitCall();
+    return result;
+}
+
+R_xlen_t Rf_any_duplicated3(SEXP x, SEXP incomp, Rboolean from_last) {
+    TRACE0();
+    R_xlen_t result = (R_xlen_t) ((call_Rf_any_duplicated3) callbacks[Rf_any_duplicated3_x])(x, incomp, from_last);
     checkExitCall();
     return result;
 }
@@ -1245,7 +1253,7 @@ void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
     TRACE0();
     unimplemented("R_BadLongVector");
-    return (R_len_t) 0;
+    // "no return" function
 }
 
 int IS_S4_OBJECT(SEXP x) {
