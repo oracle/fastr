@@ -41,6 +41,7 @@ import com.oracle.truffle.r.ffi.impl.llvm.upcalls.BytesToNativeCharArrayCall;
 import com.oracle.truffle.r.ffi.impl.llvm.upcalls.CharSXPToNativeArrayCall;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -162,12 +163,12 @@ final class TruffleLLVM_Call implements CallRFFI {
 
         @Specialization
         protected static Object convert(int value) {
-            return RDataFactory.createIntVector(new int[]{value}, RRuntime.isNA(value));
+            return RDataFactory.createIntVector(new int[]{value}, !RRuntime.isNA(value));
         }
 
         @Specialization
         protected static Object convert(double value) {
-            return RDataFactory.createDoubleVector(new double[]{value}, RRuntime.isNA(value));
+            return RDataFactory.createDoubleVector(new double[]{value}, !RRuntime.isNA(value));
         }
 
         @Specialization
@@ -182,12 +183,12 @@ final class TruffleLLVM_Call implements CallRFFI {
 
         @Specialization
         protected static Object convert(byte value) {
-            return RDataFactory.createLogicalVector(new byte[]{value}, RRuntime.isNA(value));
+            return RDataFactory.createLogicalVector(new byte[]{value}, !RRuntime.isNA(value));
         }
 
         @Specialization
         protected static Object convert(String value) {
-            return RDataFactory.createStringVector(new String[]{value}, RRuntime.isNA(value));
+            return RDataFactory.createStringVector(new String[]{value}, !RRuntime.isNA(value));
         }
 
         @Fallback
@@ -259,6 +260,14 @@ final class TruffleLLVM_Call implements CallRFFI {
                 return result;
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
+            } catch (Exception ex) {
+                if (ex.getCause() instanceof RError) {
+                    // Sulong wraps an error having occurred in an upcall, so let's propagate the
+                    // wrapped one instead of the Sulong one.
+                    throw (RError) ex.getCause();
+                } else {
+                    throw ex;
+                }
             } finally {
                 RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
             }

@@ -32,7 +32,9 @@ import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.GetAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
+import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
@@ -57,6 +59,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
+import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
@@ -111,9 +114,11 @@ public interface StdUpCallsRFFI {
 
     void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
-    Object R_getClassDef(@RFFICstring String clazz);
+    @RFFIUpCallNode(GetClassDefNode.class)
+    Object R_getClassDef(@RFFICstring(convert = false) Object clazz);
 
-    Object R_do_MAKE_CLASS(@RFFICstring String clazz);
+    @RFFIUpCallNode(DoMakeClassNode.class)
+    Object R_do_MAKE_CLASS(@RFFICstring(convert = false) Object clazz);
 
     @RFFIUpCallNode(MiscNodes.RDoNewObjectNode.class)
     Object R_do_new_object(Object classDef);
@@ -403,7 +408,8 @@ public interface StdUpCallsRFFI {
 
     Object R_MethodsNamespace();
 
-    int Rf_str2type(@RFFICstring String name);
+    @RFFIUpCallNode(Str2TypeNode.class)
+    int Rf_str2type(@RFFICstring(convert = false) Object name);
 
     int FASTR_getConnectionChar(Object obj);
 

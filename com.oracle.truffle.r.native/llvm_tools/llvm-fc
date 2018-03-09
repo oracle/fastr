@@ -59,5 +59,8 @@ ll_to_bc
 runit $FASTR_LLVM_GFORTRAN_LLVM_AS $llvm_ir_file -o $llvm_ir_bc_file
 runit rm $llvm_ir_file
 llvm_ir_file=$llvm_ir_bc_file
-mem2reg_opt
-fake_obj
+# the llvm_ir_file is empty if the result is sent to stdout
+if [ -n "$llvm_ir_file" ]; then
+  mem2reg_opt
+  fake_obj
+fi

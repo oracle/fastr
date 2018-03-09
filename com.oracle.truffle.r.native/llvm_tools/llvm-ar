@@ -25,13 +25,6 @@
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
-while [[ $# -gt 0 ]]
-do
-	f=`basename $1`
-	ext=${f##*.}
-	if [ $ext == 'o' ]
-	then
-		echo $1 >> $R_PACKAGE_DIR/libobjects
-	fi
-	shift
-done
+. $DIR/llvm-helper
+
+create_bc_archive $@

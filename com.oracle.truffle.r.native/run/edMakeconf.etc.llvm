@@ -8,6 +8,11 @@ d
 i
 CXX = $(R_HOME)/bin/llvm-c++
 .
+/^CXX11 =/
+d
+i
+CXX11 = $(R_HOME)/bin/llvm-c++
+.
 /^FC =/
 d
 i

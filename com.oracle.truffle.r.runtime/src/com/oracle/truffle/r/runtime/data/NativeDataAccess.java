@@ -114,6 +114,16 @@ public final class NativeDataAccess {
          */
         private long length;
 
+        /**
+         * It maintains the <code>1-?</code> relationship between this object and its native wrapper
+         * through which the native code accesses it. For instance, Sulong implements the "pointer"
+         * equality of two objects that are not pointers (i.e. <code>IS_POINTER</code> returns
+         * <code>false</code>) as the reference equality of the objects. It follows that the pointer
+         * comparison would fail if the same <code>RObject</code> instance were wrapped by two
+         * different native wrappers.
+         */
+        private Object nativeWrapper;
+
         NativeMirror() {
             this.id = counter.incrementAndGet();
         }
@@ -204,8 +214,8 @@ public final class NativeDataAccess {
         if (arg instanceof RObject) {
             RObject obj = (RObject) arg;
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
-            if (mirror == null) {
-                mirror = putMirrorObject(arg, obj);
+            if (mirror == null || mirror.id == 0) {
+                mirror = putMirrorObject(arg, obj, mirror);
             }
             return mirror.id;
         }
@@ -213,16 +223,19 @@ public final class NativeDataAccess {
     }
 
     @TruffleBoundary
-    private static NativeMirror putMirrorObject(Object arg, RObject obj) {
-        NativeMirror mirror;
-        obj.setNativeMirror(mirror = arg instanceof CustomNativeMirror ? new NativeMirror(((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror());
+    private static NativeMirror putMirrorObject(Object arg, RObject obj, NativeMirror oldMirror) {
+        NativeMirror newMirror;
+        obj.setNativeMirror(newMirror = arg instanceof CustomNativeMirror ? new NativeMirror(((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror());
+        if (oldMirror != null) {
+            newMirror.nativeWrapper = oldMirror.nativeWrapper;
+        }
         // System.out.println(String.format("adding %16x = %s", mirror.id,
         // obj.getClass().getSimpleName()));
-        nativeMirrors.put(mirror.id, new WeakReference<>(obj));
+        nativeMirrors.put(newMirror.id, new WeakReference<>(obj));
         if (TRACE_MIRROR_ALLOCATION_SITES) {
-            registerAllocationSite(arg, mirror);
+            registerAllocationSite(arg, newMirror);
         }
-        return mirror;
+        return newMirror;
     }
 
     @TruffleBoundary
@@ -662,6 +675,7 @@ public final class NativeDataAccess {
         return mirror.dataAddress;
     }
 
+    @TruffleBoundary
     public static String readNativeString(long addr) {
         int len;
         for (len = 0; UnsafeAdapter.UNSAFE.getByte(addr + len) != 0; len++) {
@@ -691,4 +705,23 @@ public final class NativeDataAccess {
         mirror.length = length;
 
     }
+
+    public static void setNativeWrapper(RObject obj, Object wrapper) {
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        if (mirror == null) {
+            mirror = new NativeMirror(0);
+            obj.setNativeMirror(mirror);
+        }
+        mirror.nativeWrapper = wrapper;
+    }
+
+    public static Object getNativeWrapper(RObject obj) {
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        if (mirror == null) {
+            return null;
+        } else {
+            return mirror.nativeWrapper;
+        }
+    }
+
 }

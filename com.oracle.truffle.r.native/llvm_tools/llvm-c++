@@ -31,12 +31,23 @@ analyze_args "$@"
 
 if [ $is_link -eq 1 ]
 then
-  extraObj=`cat $R_PACKAGE_DIR/libobjects`
+  extraObj=""
+  if [ -f "$R_PACKAGE_DIR/libobjects" ]; then
+     extraObj=`cat "$R_PACKAGE_DIR/libobjects"`
+  fi
   create_bc_lib $@ $extraObj
 else
   llvm_tool=clang++
   get_llvm_tool
+  unamestr=`uname`
+  if [[ "$unamestr" == 'Linux' ]]; then
+    llvm_args="-stdlib=libc++ -I/usr/include/libcxxabi $llvm_args"
+  fi
   runit $llvm_tool_bin $llvm_args
-  mem2reg_opt
-  fake_obj
+
+  # the llvm_ir_file is empty if the result is sent to stdout
+  if [ -n "$llvm_ir_file" ]; then
+    mem2reg_opt
+    fake_obj
+  fi
 fi

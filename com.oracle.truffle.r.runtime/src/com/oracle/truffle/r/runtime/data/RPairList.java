@@ -390,6 +390,9 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
             @Override
             public RPairList next() {
+                if (plt instanceof RLanguage) {
+                    plt = ((RLanguage) plt).getPairList();
+                }
                 assert plt instanceof RPairList;
                 RPairList curr = (RPairList) plt;
                 plt = curr.cdr;

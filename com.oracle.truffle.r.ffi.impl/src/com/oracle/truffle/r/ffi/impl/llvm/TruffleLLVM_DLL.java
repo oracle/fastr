@@ -23,14 +23,22 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import java.io.BufferedInputStream;
+import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.io.PrintStream;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Set;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -39,6 +47,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RPlatform;
+import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -63,6 +73,18 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
  *
  */
 public class TruffleLLVM_DLL implements DLLRFFI {
+    /*
+     * The LIBS file, which is included in the LLVM archive, enumerates native dynamic libraries to
+     * be linked with the LLVM library in the archive.
+     */
+    private static final String LIBS = "LIBS";
+
+    private static final Set<String> ignoredNativeLibs = new HashSet<>();
+    static {
+        ignoredNativeLibs.add("Rblas");
+        ignoredNativeLibs.add("Rlapack");
+    }
+
     static class ContextStateImpl implements RContext.ContextState {
         /**
          * When a new {@link RContext} is created we have to re-parse the libR modules,
@@ -121,7 +143,19 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         boolean match(String name);
     }
 
-    public static LLVM_IR[] getZipLLVMIR(String path) {
+    public static final class LLVMArchive {
+        public final LLVM_IR[] irs;
+        public final List<String> nativeLibs;
+
+        private LLVMArchive(LLVM_IR[] irs, List<String> nativeLibs) {
+            super();
+            this.irs = irs;
+            this.nativeLibs = nativeLibs;
+        }
+    }
+
+    public static LLVMArchive getZipLLVMIR(String path) {
+        List<String> nativeLibs = Collections.emptyList();
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(path)))) {
             ArrayList<LLVM_IR> irList = new ArrayList<>();
             while (true) {
@@ -130,11 +164,15 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     break;
                 }
                 int size = (int) entry.getSize();
-                byte[] bc = new byte[size];
+                byte[] bytes = new byte[size];
                 int n;
                 int totalRead = 0;
-                while (totalRead < size && (n = zis.read(bc, totalRead, size - totalRead)) != -1) {
+                while (totalRead < size && (n = zis.read(bytes, totalRead, size - totalRead)) != -1) {
                     totalRead += n;
+                }
+                if (LIBS.equals(entry.getName())) {
+                    nativeLibs = getNativeLibs(bytes);
+                    continue;
                 }
                 Path zipName = Paths.get(entry.getName());
                 String name = zipName.getFileName().toString();
@@ -142,12 +180,12 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 if (ix > 0) {
                     name = name.substring(0, ix);
                 }
-                LLVM_IR.Binary ir = new LLVM_IR.Binary(name, bc);
+                LLVM_IR.Binary ir = new LLVM_IR.Binary(name, bytes);
                 irList.add(ir);
                 // debugging
                 if (System.getenv("FASTR_LLVM_DEBUG") != null) {
                     try (FileOutputStream bs = new FileOutputStream(Paths.get("tmpzip", name).toString())) {
-                        bs.write(bc);
+                        bs.write(bytes);
                     }
                     try (PrintStream bs = new PrintStream(new FileOutputStream(Paths.get("tmpb64", name).toString()))) {
                         bs.print(ir.base64);
@@ -156,11 +194,22 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             }
             LLVM_IR[] result = new LLVM_IR[irList.size()];
             irList.toArray(result);
-            return result;
+            return new LLVMArchive(result, nativeLibs);
         } catch (IOException ex) {
             // not a zip file
             return null;
         }
+    }
+
+    private static List<String> getNativeLibs(byte[] bytes) throws IOException {
+        List<String> libs = new LinkedList<>();
+        try (BufferedReader libReader = new BufferedReader(new InputStreamReader(new ByteArrayInputStream(bytes)))) {
+            String lib = null;
+            while ((lib = libReader.readLine()) != null) {
+                libs.add(lib);
+            }
+        }
+        return libs;
     }
 
     private static class TruffleLLVM_DLOpenNode extends Node implements DLOpenNode {
@@ -175,7 +224,8 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         @Override
         public Object execute(String path, boolean local, boolean now) {
             try {
-                LLVM_IR[] irs = getZipLLVMIR(path);
+                LLVMArchive ar = getZipLLVMIR(path);
+                LLVM_IR[] irs = ar.irs;
                 if (irs == null) {
                     return tryOpenNative(path, local, now);
                 }
@@ -183,6 +233,8 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 if (libName.equals("libR")) {
                     // save for new RContexts
                     truffleDLL.libRModules = irs;
+                } else {
+                    loadNativeLibs(ar.nativeLibs);
                 }
                 for (LLVM_IR ir : irs) {
                     parseLLVM(libName, ir);
@@ -199,7 +251,19 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     sb.append(t.getMessage());
                     t = t.getCause();
                 }
+                ex.printStackTrace();
                 throw new UnsatisfiedLinkError(sb.toString());
+            }
+        }
+
+        private void loadNativeLibs(List<String> nativeLibs) {
+            OSInfo osInfo = RPlatform.getOSInfo();
+            for (String nativeLib : nativeLibs) {
+                if (ignoredNativeLibs.contains(nativeLib)) {
+                    continue;
+                }
+                String nativeLibName = "lib" + nativeLib + "." + osInfo.libExt;
+                tryOpenNative(nativeLibName, false, true);
             }
         }
 
