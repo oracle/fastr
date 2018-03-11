@@ -278,6 +278,7 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/Mach.java,gn
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/MathConstants.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/RMath.java,gnu_r_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/RMathError.java,gnu_r.core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/RMultinom.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/TOMS708.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nodes/DuplicationHelper.java,purdue.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ops/BinaryArithmetic.java,gnu_r_purdue.copyright

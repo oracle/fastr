@@ -24,8 +24,7 @@
 #include "rffi_upcalls.h"
 
 double Rf_dnorm(double a, double b, double c, int d) {
-    unimplemented("Rf_dnorm");
-    return 0;
+    return ((call_Rf_dnorm) callbacks[Rf_dnorm_x])(a, b, c, d);
 }
 
 double Rf_dnorm4(double a, double b, double c, int d) {
@@ -33,8 +32,7 @@ double Rf_dnorm4(double a, double b, double c, int d) {
 }
 
 double Rf_pnorm(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pnorm");
-    return 0;
+    return ((call_Rf_pnorm) callbacks[Rf_pnorm_x])(a, b, c, d, e);
 }
 
 double Rf_pnorm5(double a, double b, double c, int d, int e) {
@@ -42,8 +40,7 @@ double Rf_pnorm5(double a, double b, double c, int d, int e) {
 }
 
 double Rf_qnorm(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qnorm");
-    return 0;
+    return ((call_Rf_qnorm) callbacks[Rf_qnorm_x])(a, b, c, d, e);
 }
 
 double Rf_qnorm5(double a, double b, double c, int d, int e) {
@@ -51,48 +48,44 @@ double Rf_qnorm5(double a, double b, double c, int d, int e) {
 }
 
 double Rf_rnorm(double a, double b) {
-    unimplemented("Rf_rnorm");
-    return 0;
+    return ((call_Rf_rnorm) callbacks[Rf_rnorm_x])(a, b);
 }
 
 void Rf_pnorm_both(double a, double * b, double * c, int d, int e) {
-    unimplemented("Rf_pnorm_both");
+    unimplemented("Rf_rnorm");
+//    return ((call_Rf_pnorm_both) callbacks[Rf_pnorm_both_x])(a, b, c, d, e);
 }
 
 double Rf_dunif(double a, double b, double c, int d) {
-	return ((call_Rf_dunif) callbacks[Rf_dunif_x])(a, b, c, d);
+    return ((call_Rf_dunif) callbacks[Rf_dunif_x])(a, b, c, d);
 }
 
 double Rf_punif(double a, double b, double c, int d, int e) {
-	return ((call_Rf_punif) callbacks[Rf_punif_x])(a, b, c, d, e);
+    return ((call_Rf_punif) callbacks[Rf_punif_x])(a, b, c, d, e);
 }
 
 double Rf_qunif(double a, double b, double c, int d, int e) {
-	return ((call_Rf_qunif) callbacks[Rf_qunif_x])(a, b, c, d, e);
+    return ((call_Rf_qunif) callbacks[Rf_qunif_x])(a, b, c, d, e);
 }
 
 double Rf_runif(double a, double b) {
-	return ((call_Rf_runif) callbacks[Rf_runif_x])(a, b);
+    return ((call_Rf_runif) callbacks[Rf_runif_x])(a, b);
 }
 
 double Rf_dgamma(double a, double b, double c, int d) {
-    unimplemented("Rf_dgamma");
-    return 0;
+    return ((call_Rf_dgamma) callbacks[Rf_dgamma_x])(a, b, c, d);
 }
 
 double Rf_pgamma(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pgamma");
-    return 0;
+    return ((call_Rf_pgamma) callbacks[Rf_pgamma_x])(a, b, c, d, e);
 }
 
 double Rf_qgamma(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qgamma");
-    return 0;
+    return ((call_Rf_qgamma) callbacks[Rf_qgamma_x])(a, b, c, d, e);
 }
 
 double Rf_rgamma(double a, double b) {
-    unimplemented("Rf_rgamma");
-    return 0;
+    return ((call_Rf_rgamma) callbacks[Rf_rgamma_x])(a, b);
 }
 
 double Rf_log1pmx(double a) {
@@ -121,43 +114,35 @@ double Rf_logspace_sub(double a, double b) {
 }
 
 double Rf_dbeta(double a, double b, double c, int d) {
-    unimplemented("Rf_dbeta");
-    return 0;
+    return ((call_Rf_dbeta) callbacks[Rf_dbeta_x])(a, b, c, d);
 }
 
 double Rf_pbeta(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pbeta");
-    return 0;
+    return ((call_Rf_pbeta) callbacks[Rf_pbeta_x])(a, b, c, d, e);
 }
 
 double Rf_qbeta(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qbeta");
-    return 0;
+    return ((call_Rf_qbeta) callbacks[Rf_qbeta_x])(a, b, c, d, e);
 }
 
 double Rf_rbeta(double a, double b) {
-    unimplemented("Rf_rbeta");
-    return 0;
+    return ((call_Rf_rbeta) callbacks[Rf_rbeta_x])(a, b);
 }
 
 double Rf_dlnorm(double a, double b, double c, int d) {
-    unimplemented("Rf_dlnorm");
-    return 0;
+    return ((call_Rf_dlnorm) callbacks[Rf_dlnorm_x])(a, b, c, d);
 }
 
 double Rf_plnorm(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_plnorm");
-    return 0;
+    return ((call_Rf_plnorm) callbacks[Rf_plnorm_x])(a, b, c, d, e);
 }
 
 double Rf_qlnorm(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qlnorm");
-    return 0;
+    return ((call_Rf_qlnorm) callbacks[Rf_qlnorm_x])(a, b, c, d, e);
 }
 
 double Rf_rlnorm(double a, double b) {
-    unimplemented("Rf_rlnorm");
-    return 0;
+    return ((call_Rf_rlnorm) callbacks[Rf_rlnorm_x])(a, b);
 }
 
 double Rf_dchisq(double a, double b, int c) {
@@ -193,262 +178,211 @@ double Rf_rnchisq(double a, double b) {
 }
 
 double Rf_df(double a, double b, double c, int d) {
-    unimplemented("Rf_df");
-    return 0;
+    return ((call_Rf_df) callbacks[Rf_df_x])(a, b, c, d);
 }
 
 double Rf_pf(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pf");
-    return 0;
+    return ((call_Rf_pf) callbacks[Rf_pf_x])(a, b, c, d, e);
 }
 
 double Rf_qf(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qf");
-    return 0;
+    return ((call_Rf_qf) callbacks[Rf_qf_x])(a, b, c, d, e);
 }
 
 double Rf_rf(double a, double b) {
-    unimplemented("Rf_rf");
-    return 0;
+    return ((call_Rf_rf) callbacks[Rf_rf_x])(a, b);
 }
 
 double Rf_dt(double a, double b, int c) {
-    unimplemented("Rf_dt");
-    return 0;
+    return ((call_Rf_dt) callbacks[Rf_dt_x])(a, b, c);
 }
 
 double Rf_pt(double a, double b, int c, int d) {
-    unimplemented("Rf_pt");
-    return 0;
+    return ((call_Rf_pt) callbacks[Rf_pt_x])(a, b, c, d);
 }
 
 double Rf_qt(double a, double b, int c, int d) {
-    unimplemented("Rf_qt");
-    return 0;
+    return ((call_Rf_qt) callbacks[Rf_qt_x])(a, b, c, d);
 }
 
 double Rf_rt(double a) {
-    unimplemented("Rf_rt");
-    return 0;
+    return ((call_Rf_rt) callbacks[Rf_rt_x])(a);
 }
 
 double Rf_dbinom(double a, double b, double c, int d) {
-    unimplemented("Rf_dbinom");
-    return 0;
+    return ((call_Rf_dbinom) callbacks[Rf_dbinom_x])(a, b, c, d);
 }
 
 double Rf_pbinom(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pbinom");
-    return 0;
+    return ((call_Rf_pbinom) callbacks[Rf_pbinom_x])(a, b, c, d, e);
 }
 
 double Rf_qbinom(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qbinom");
-    return 0;
+    return ((call_Rf_qbinom) callbacks[Rf_qbinom_x])(a, b, c, d, e);
 }
 
 double Rf_rbinom(double a, double b) {
-    unimplemented("Rf_rbinom");
-    return 0;
+    return ((call_Rf_rbinom) callbacks[Rf_rbinom_x])(a, b);
 }
 
 void Rf_rmultinom(int a, double* b, int c, int* d) {
-    unimplemented("Rf_rmultinom");
+    ((call_Rf_rmultinom) callbacks[Rf_rmultinom_x])(a, b, c, d);
 }
 
 double Rf_dcauchy(double a, double b, double c, int d) {
-    unimplemented("Rf_dcauchy");
-    return 0;
+    return ((call_Rf_dcauchy) callbacks[Rf_dcauchy_x])(a, b, c, d);
 }
 
 double Rf_pcauchy(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pcauchy");
-    return 0;
+    return ((call_Rf_pcauchy) callbacks[Rf_pcauchy_x])(a, b, c, d, e);
 }
 
 double Rf_qcauchy(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qcauchy");
-    return 0;
+    return ((call_Rf_qcauchy) callbacks[Rf_qcauchy_x])(a, b, c, d, e);
 }
 
 double Rf_rcauchy(double a, double b) {
-    unimplemented("Rf_rcauchy");
-    return 0;
+    return ((call_Rf_rcauchy) callbacks[Rf_rcauchy_x])(a, b);
 }
 
 double Rf_dexp(double a, double b, int c) {
-    unimplemented("Rf_dexp");
-    return 0;
+    return ((call_Rf_dexp) callbacks[Rf_dexp_x])(a, b, c);
 }
 
 double Rf_pexp(double a, double b, int c, int d) {
-    unimplemented("Rf_pexp");
-    return 0;
+    return ((call_Rf_pexp) callbacks[Rf_pexp_x])(a, b, c, d);
 }
 
 double Rf_qexp(double a, double b, int c, int d) {
-    unimplemented("Rf_qexp");
-    return 0;
+    return ((call_Rf_qexp) callbacks[Rf_qexp_x])(a, b, c, d);
 }
 
 double Rf_rexp(double a) {
-    unimplemented("Rf_rexp");
-    return 0;
+    return ((call_Rf_rexp) callbacks[Rf_rexp_x])(a);
 }
 
 double Rf_dgeom(double a, double b, int c) {
-    unimplemented("Rf_dgeom");
-    return 0;
+    return ((call_Rf_dgeom) callbacks[Rf_dgeom_x])(a, b, c);
 }
 
 double Rf_pgeom(double a, double b, int c, int d) {
-    unimplemented("Rf_pgeom");
-    return 0;
+    return ((call_Rf_pgeom) callbacks[Rf_pgeom_x])(a, b, c, d);
 }
 
 double Rf_qgeom(double a, double b, int c, int d) {
-    unimplemented("Rf_qgeom");
-    return 0;
+    return ((call_Rf_qgeom) callbacks[Rf_qgeom_x])(a, b, c, d);
 }
 
 double Rf_rgeom(double a) {
-    unimplemented("Rf_rgeom");
-    return 0;
+    return ((call_Rf_rgeom) callbacks[Rf_rgeom_x])(a);
 }
 
 double Rf_dhyper(double a, double b, double c, double d, int e) {
-    unimplemented("Rf_dhyper");
-    return 0;
+    return ((call_Rf_dhyper) callbacks[Rf_dhyper_x])(a, b, c, d, e);
 }
 
 double Rf_phyper(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_phyper");
-    return 0;
+    return ((call_Rf_phyper) callbacks[Rf_phyper_x])(a, b, c, d, e, f);
 }
 
 double Rf_qhyper(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_qhyper");
-    return 0;
+    return ((call_Rf_qhyper) callbacks[Rf_qhyper_x])(a, b, c, d, e, f);
 }
 
 double Rf_rhyper(double a, double b, double c) {
-    unimplemented("Rf_rhyper");
-    return 0;
+    return ((call_Rf_rhyper) callbacks[Rf_rhyper_x])(a, b, c);
 }
 
 double Rf_dnbinom(double a, double b, double c, int d) {
-    unimplemented("Rf_dnbinom");
-    return 0;
+    return ((call_Rf_dnbinom) callbacks[Rf_dnbinom_x])(a, b, c, d);
 }
 
 double Rf_pnbinom(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pnbinom");
-    return 0;
+    return ((call_Rf_pnbinom) callbacks[Rf_pnbinom_x])(a, b, c, d, e);
 }
 
 double Rf_qnbinom(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qnbinom");
-    return 0;
+    return ((call_Rf_qnbinom) callbacks[Rf_qnbinom_x])(a, b, c, d, e);
 }
 
 double Rf_rnbinom(double a, double b) {
-    unimplemented("Rf_rnbinom");
-    return 0;
+    return ((call_Rf_rnbinom) callbacks[Rf_rnbinom_x])(a, b);
 }
 
 double Rf_dnbinom_mu(double a, double b, double c, int d) {
-    unimplemented("Rf_dnbinom_mu");
-    return 0;
+    return ((call_Rf_dnbinom_mu) callbacks[Rf_dnbinom_mu_x])(a, b, c, d);
 }
 
 double Rf_pnbinom_mu(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pnbinom_mu");
-    return 0;
+    return ((call_Rf_pnbinom_mu) callbacks[Rf_pnbinom_mu_x])(a, b, c, d, e);
 }
 
 double Rf_qnbinom_mu(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qnbinom_mu");
-    return 0;
+    return ((call_Rf_qnbinom_mu) callbacks[Rf_qnbinom_mu_x])(a, b, c, d, e);
 }
 
 double Rf_rnbinom_mu(double a, double b) {
-    unimplemented("Rf_rnbinom_mu");
-    return 0;
+    return ((call_Rf_rnbinom_mu) callbacks[Rf_rnbinom_mu_x])(a, b);
 }
 
 double Rf_dpois(double a, double b, int c) {
-    unimplemented("Rf_dpois");
-    return 0;
+    return ((call_Rf_dpois) callbacks[Rf_dpois_x])(a, b, c);
 }
 
 double Rf_ppois(double a, double b, int c, int d) {
-    unimplemented("Rf_ppois");
-    return 0;
+    return ((call_Rf_ppois) callbacks[Rf_ppois_x])(a, b, c, d);
 }
 
 double Rf_qpois(double a, double b, int c, int d) {
-    unimplemented("Rf_qpois");
-    return 0;
+    return ((call_Rf_qpois) callbacks[Rf_qpois_x])(a, b, c, d);
 }
 
 double Rf_rpois(double a) {
-    unimplemented("Rf_rpois");
-    return 0;
+    return ((call_Rf_rpois) callbacks[Rf_rpois_x])(a);
 }
 
 double Rf_dweibull(double a, double b, double c, int d) {
-    unimplemented("Rf_dweibull");
-    return 0;
+    return ((call_Rf_dweibull) callbacks[Rf_dweibull_x])(a, b, c, d);
 }
 
 double Rf_pweibull(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pweibull");
-    return 0;
+    return ((call_Rf_pweibull) callbacks[Rf_pweibull_x])(a, b, c, d, e);
 }
 
 double Rf_qweibull(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qweibull");
-    return 0;
+    return ((call_Rf_qweibull) callbacks[Rf_qweibull_x])(a, b, c, d, e);
 }
 
 double Rf_rweibull(double a, double b) {
-    unimplemented("Rf_rweibull");
-    return 0;
+    return ((call_Rf_rweibull) callbacks[Rf_rweibull_x])(a, b);
 }
 
 double Rf_dlogis(double a, double b, double c, int d) {
-    unimplemented("Rf_dlogis");
-    return 0;
+    return ((call_Rf_dlogis) callbacks[Rf_dlogis_x])(a, b, c, d);
 }
 
 double Rf_plogis(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_plogis");
-    return 0;
+    return ((call_Rf_plogis) callbacks[Rf_plogis_x])(a, b, c, d, e);
 }
 
 double Rf_qlogis(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qlogis");
-    return 0;
+    return ((call_Rf_qlogis) callbacks[Rf_qlogis_x])(a, b, c, d, e);
 }
 
 double Rf_rlogis(double a, double b) {
-    unimplemented("Rf_rlogis");
-    return 0;
+    return ((call_Rf_rlogis) callbacks[Rf_rlogis_x])(a, b);
 }
 
 double Rf_dnbeta(double a, double b, double c, double d, int e) {
-    unimplemented("Rf_dnbeta");
-    return 0;
+    return ((call_Rf_dnbeta) callbacks[Rf_dnbeta_x])(a, b, c, d, e);
 }
 
 double Rf_pnbeta(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_pnbeta");
-    return 0;
+    return ((call_Rf_pnbeta) callbacks[Rf_pnbeta_x])(a, b, c, d, e, f);
 }
 
 double Rf_qnbeta(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_qnbeta");
-    return 0;
+    return ((call_Rf_qnbeta) callbacks[Rf_qnbeta_x])(a, b, c, d, e, f);
 }
 
 double Rf_rnbeta(double a, double b, double c) {
@@ -457,83 +391,67 @@ double Rf_rnbeta(double a, double b, double c) {
 }
 
 double Rf_dnf(double a, double b, double c, double d, int e) {
-    unimplemented("Rf_dnf");
-    return 0;
+    return ((call_Rf_dnf) callbacks[Rf_dnf_x])(a, b, c, d, e);
 }
 
 double Rf_pnf(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_pnf");
-    return 0;
+    return ((call_Rf_pnf) callbacks[Rf_pnf_x])(a, b, c, d, e, f);
 }
 
 double Rf_qnf(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_qnf");
-    return 0;
+    return ((call_Rf_qnf) callbacks[Rf_qnf_x])(a, b, c, d, e, f);
 }
 
 double Rf_dnt(double a, double b, double c, int d) {
-    unimplemented("Rf_dnt");
-    return 0;
+    return ((call_Rf_dnt) callbacks[Rf_dnt_x])(a, b, c, d);
 }
 
 double Rf_pnt(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pnt");
-    return 0;
+    return ((call_Rf_pnt) callbacks[Rf_pnt_x])(a, b, c, d, e);
 }
 
 double Rf_qnt(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qnt");
-    return 0;
+    return ((call_Rf_qnt) callbacks[Rf_qnt_x])(a, b, c, d, e);
 }
 
 double Rf_ptukey(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_ptukey");
-    return 0;
+    return ((call_Rf_ptukey) callbacks[Rf_ptukey_x])(a, b, c, d, e, f);
 }
 
 double Rf_qtukey(double a, double b, double c, double d, int e, int f) {
-    unimplemented("Rf_qtukey");
-    return 0;
+    return ((call_Rf_qtukey) callbacks[Rf_qtukey_x])(a, b, c, d, e, f);
 }
 
 double Rf_dwilcox(double a, double b, double c, int d) {
-    unimplemented("Rf_dwilcox");
-    return 0;
+    return ((call_Rf_dwilcox) callbacks[Rf_dwilcox_x])(a, b, c, d);
 }
 
 double Rf_pwilcox(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_pwilcox");
-    return 0;
+    return ((call_Rf_pwilcox) callbacks[Rf_pwilcox_x])(a, b, c, d, e);
 }
 
 double Rf_qwilcox(double a, double b, double c, int d, int e) {
-    unimplemented("Rf_qwilcox");
-    return 0;
+    return ((call_Rf_qwilcox) callbacks[Rf_qwilcox_x])(a, b, c, d, e);
 }
 
 double Rf_rwilcox(double a, double b) {
-    unimplemented("Rf_rwilcox");
-    return 0;
+    return ((call_Rf_rwilcox) callbacks[Rf_rwilcox_x])(a, b);
 }
 
 double Rf_dsignrank(double a, double b, int c) {
-    unimplemented("Rf_dsignrank");
-    return 0;
+    return ((call_Rf_dsignrank) callbacks[Rf_dsignrank_x])(a, b, c);
 }
 
 double Rf_psignrank(double a, double b, int c, int d) {
-    unimplemented("Rf_psignrank");
-    return 0;
+    return ((call_Rf_psignrank) callbacks[Rf_psignrank_x])(a, b, c, d);
 }
 
 double Rf_qsignrank(double a, double b, int c, int d) {
-    unimplemented("Rf_qsignrank");
-    return 0;
+    return ((call_Rf_qsignrank) callbacks[Rf_qsignrank_x])(a, b, c, d);
 }
 
 double Rf_rsignrank(double a) {
-    unimplemented("Rf_rsignrank");
-    return 0;
+    return ((call_Rf_rsignrank) callbacks[Rf_rsignrank_x])(a);
 }
 
 double Rf_gammafn(double a) {
@@ -675,8 +593,7 @@ double Rf_fsign(double a, double b) {
 }
 
 double Rf_ftrunc(double a) {
-    unimplemented("Rf_ftrunc");
-    return 0;
+    return ((call_Rf_ftrunc) callbacks[Rf_ftrunc_x])(a);
 }
 
 double Rf_cospi(double a) {

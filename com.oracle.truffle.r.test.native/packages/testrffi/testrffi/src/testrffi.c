@@ -34,6 +34,8 @@
 #include <string.h>
 #include "testrffi.h"
 
+#define K_RMULTINOM 4
+
 void dotCModifiedArguments(int* len, int* idata, double* rdata, int* ldata, char** cdata) {
     for (int i = 0; i < len[0]; i++) {
 	idata[i] ++;
@@ -589,7 +591,7 @@ SEXP test_RfEvalWithPromiseInPairList() {
 
 SEXP test_RfRandomFunctions() {
     SEXP v;
-    PROTECT(v = allocVector(REALSXP, 12));
+    PROTECT(v = allocVector(REALSXP, 95));
     int n = 0;
     REAL(v)[n++] = Rf_dunif(1, 0, 1, FALSE);
     REAL(v)[n++] = Rf_qunif(1, 0, 1, TRUE, FALSE);
@@ -603,6 +605,115 @@ SEXP test_RfRandomFunctions() {
     REAL(v)[n++] = Rf_pnchisq(1, 0, 1, TRUE, FALSE);
     REAL(v)[n++] = Rf_qnchisq(1, 0, 1, TRUE, FALSE);
     REAL(v)[n++] = Rf_rnchisq(0, 1);
+    REAL(v)[n++] = Rf_dnorm4(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pnorm5(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qnorm5(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rnorm(1, 0);
+    REAL(v)[n++] = Rf_dlnorm(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_plnorm(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qlnorm(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rlnorm(1, 0);
+    REAL(v)[n++] = Rf_dgamma(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pgamma(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qgamma(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rgamma(1, 0);
+    REAL(v)[n++] = Rf_dbeta(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pbeta(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qbeta(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rbeta(1, 0);
+    REAL(v)[n++] = Rf_df(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pf(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qf(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rf(1, 0);
+    REAL(v)[n++] = Rf_dt(1, 0, FALSE);
+    REAL(v)[n++] = Rf_pt(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qt(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rt(1);
+    REAL(v)[n++] = Rf_dbinom(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pbinom(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qbinom(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rbinom(1, 0);
+    REAL(v)[n++] = Rf_dcauchy(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pcauchy(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qcauchy(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rcauchy(1, 0);
+    REAL(v)[n++] = Rf_dexp(1, 0, FALSE);
+    REAL(v)[n++] = Rf_pexp(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qexp(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rexp(1);
+    REAL(v)[n++] = Rf_dgeom(1, 0, FALSE);
+    REAL(v)[n++] = Rf_pgeom(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qgeom(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rgeom(1);
+    REAL(v)[n++] = Rf_dhyper(1, 0, 1, 0, FALSE);
+    REAL(v)[n++] = Rf_phyper(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qhyper(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rhyper(1, 0, 1);
+    REAL(v)[n++] = Rf_dnbinom(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pnbinom(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qnbinom(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rnbinom(1, 0);
+    REAL(v)[n++] = Rf_dnbinom_mu(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pnbinom_mu(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qnbinom_mu(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rnbinom_mu(1, 0);
+    REAL(v)[n++] = Rf_dpois(1, 0, FALSE);
+    REAL(v)[n++] = Rf_ppois(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qpois(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rpois(1);
+    REAL(v)[n++] = Rf_dweibull(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pweibull(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qweibull(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rweibull(1, 0);
+    REAL(v)[n++] = Rf_dlogis(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_plogis(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qlogis(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rlogis(1, 0);
+    REAL(v)[n++] = Rf_dnbeta(1, 0, 1, 0, FALSE);
+    REAL(v)[n++] = Rf_pnbeta(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qnbeta(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_dnf(1, 0, 1, 0, FALSE);
+    REAL(v)[n++] = Rf_pnf(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qnf(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_dnt(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pnt(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qnt(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_ptukey(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qtukey(1, 0, 1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_dwilcox(1, 0, 1, FALSE);
+    REAL(v)[n++] = Rf_pwilcox(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qwilcox(1, 0, 1, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rwilcox(1, 0);
+    REAL(v)[n++] = Rf_dsignrank(1, 0, FALSE);
+    REAL(v)[n++] = Rf_psignrank(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_qsignrank(1, 0, TRUE, FALSE);
+    REAL(v)[n++] = Rf_rsignrank(1);
     UNPROTECT(1);
     return v;
 }
+
+SEXP test_RfRMultinom() {
+    SEXP v;
+    PROTECT(v = allocVector(REALSXP, K_RMULTINOM));
+    double prob[K_RMULTINOM] = {0.1, 0.3, 0.5, 0.1};
+    int rN[K_RMULTINOM] = {0, 0, 0, 0};
+    Rf_rmultinom(10, prob, K_RMULTINOM, rN);
+    for (int i = 0; i < K_RMULTINOM; i++) {
+        REAL(v)[i] = rN[i];
+    }
+    UNPROTECT(1);
+    return v;
+}
+
+SEXP test_RfFunctions() {
+    SEXP v;
+    PROTECT(v = allocVector(REALSXP, 4));
+    int n = 0;
+    REAL(v)[n++] = Rf_ftrunc(2.6);
+    REAL(v)[n++] = Rf_ftrunc(5.3);
+    REAL(v)[n++] = Rf_ftrunc(-2.6);
+    REAL(v)[n++] = Rf_ftrunc(-5.3);
+    UNPROTECT(1);
+    return v;
+}
+

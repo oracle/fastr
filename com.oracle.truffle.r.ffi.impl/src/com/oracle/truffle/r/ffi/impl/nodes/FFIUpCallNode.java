@@ -95,4 +95,13 @@ public abstract class FFIUpCallNode extends Node {
             return 5;
         }
     }
+
+    public abstract static class Arg6 extends FFIUpCallNode {
+        public abstract Object executeObject(Object arg0, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
+
+        @Override
+        protected int numArgs() {
+            return 6;
+        }
+    }
 }

@@ -213,6 +213,14 @@ rffi.getBytes <- function(x) {
 	.Call('test_getBytes', x)
 }
 
-rffi.RFRandomFunctions <- function() {
+rffi.RfRandomFunctions <- function() {
 	.Call('test_RfRandomFunctions')
+}
+
+rffi.RfRMultinom <- function() {
+	.Call('test_RfRMultinom')
+}
+
+rffi.RfFunctions <- function() {
+	.Call('test_RfFunctions')
 }

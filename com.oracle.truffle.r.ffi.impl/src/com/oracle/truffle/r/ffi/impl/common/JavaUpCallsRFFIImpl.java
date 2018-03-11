@@ -1631,6 +1631,440 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public double Rf_dnorm(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pnorm(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qnorm(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rnorm(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dlnorm(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_plnorm(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qlnorm(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rlnorm(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dgamma(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pgamma(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qgamma(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rgamma(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dbeta(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pbeta(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qbeta(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rbeta(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_df(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pf(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qf(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rf(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dt(double a, double b, int c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pt(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qt(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rt(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dbinom(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pbinom(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qbinom(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rbinom(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dcauchy(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pcauchy(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qcauchy(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rcauchy(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dexp(double a, double b, int c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pexp(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qexp(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rexp(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dgeom(double a, double b, int c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pgeom(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qgeom(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rgeom(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dhyper(double a, double b, double c, double d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_phyper(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qhyper(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rhyper(double a, double b, double c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dnbinom(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pnbinom(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qnbinom(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rnbinom(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dnbinom_mu(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pnbinom_mu(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qnbinom_mu(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rnbinom_mu(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public void Rf_rmultinom(int a, Object b, int c, Object d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dpois(double a, double b, int c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_ppois(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qpois(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rpois(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dweibull(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pweibull(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qweibull(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rweibull(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dlogis(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_plogis(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qlogis(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rlogis(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dnbeta(double a, double b, double c, double d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pnbeta(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qnbeta(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    // @Override
+    // public double Rf_rnbeta(double a, double b, double c) {
+    // throw implementedAsNode();
+    // }
+
+    @Override
+    public double Rf_dnf(double a, double b, double c, double d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pnf(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qnf(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dnt(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pnt(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qnt(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_ptukey(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qtukey(double a, double b, double c, double d, int e, int f) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dwilcox(double a, double b, double c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pwilcox(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qwilcox(double a, double b, double c, int d, int e) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rwilcox(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_dsignrank(double a, double b, int c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_psignrank(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_qsignrank(double a, double b, int c, int d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_rsignrank(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_ftrunc(double a) {
+        if (a > 0) {
+            return Math.floor(a);
+        } else {
+            return Math.ceil(a);
+        }
+    }
+
+    @Override
     public Object Rf_namesgets(Object x, Object y) {
         throw implementedAsNode();
     }

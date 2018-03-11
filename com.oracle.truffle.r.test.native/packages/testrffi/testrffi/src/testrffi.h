@@ -118,3 +118,7 @@ extern SEXP test_setStringElt(SEXP vec, SEXP elt);
 extern SEXP test_getBytes(SEXP vec);
 
 extern SEXP test_RfRandomFunctions();
+
+extern SEXP test_RfRMultinom();
+
+extern SEXP test_RfFunctions();

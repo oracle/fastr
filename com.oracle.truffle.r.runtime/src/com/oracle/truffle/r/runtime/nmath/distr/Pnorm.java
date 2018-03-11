@@ -6,7 +6,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 2000--2013, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -76,7 +76,8 @@ public final class Pnorm implements Function3_2 {
         return (lowerTail ? pnormBoth.cum : pnormBoth.ccum);
     }
 
-    private static final class PnormBoth {
+    public static final class PnormBoth {
+
         private double cum;
         private double ccum;
 

@@ -67,6 +67,67 @@ import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
+import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
+import com.oracle.truffle.r.runtime.nmath.distr.Chisq;
+import com.oracle.truffle.r.runtime.nmath.distr.DBeta;
+import com.oracle.truffle.r.runtime.nmath.distr.DGamma;
+import com.oracle.truffle.r.runtime.nmath.distr.DHyper;
+import com.oracle.truffle.r.runtime.nmath.distr.DNBeta;
+import com.oracle.truffle.r.runtime.nmath.distr.DNBinom;
+import com.oracle.truffle.r.runtime.nmath.distr.DNChisq;
+import com.oracle.truffle.r.runtime.nmath.distr.DNorm;
+import com.oracle.truffle.r.runtime.nmath.distr.DPois;
+import com.oracle.truffle.r.runtime.nmath.distr.Dbinom;
+import com.oracle.truffle.r.runtime.nmath.distr.Df;
+import com.oracle.truffle.r.runtime.nmath.distr.Dnf;
+import com.oracle.truffle.r.runtime.nmath.distr.Dnt;
+import com.oracle.truffle.r.runtime.nmath.distr.Dt;
+import com.oracle.truffle.r.runtime.nmath.distr.Exp;
+import com.oracle.truffle.r.runtime.nmath.distr.Geom;
+import com.oracle.truffle.r.runtime.nmath.distr.LogNormal;
+import com.oracle.truffle.r.runtime.nmath.distr.Logis;
+import com.oracle.truffle.r.runtime.nmath.distr.PGamma;
+import com.oracle.truffle.r.runtime.nmath.distr.PHyper;
+import com.oracle.truffle.r.runtime.nmath.distr.PNBeta;
+import com.oracle.truffle.r.runtime.nmath.distr.PNBinom;
+import com.oracle.truffle.r.runtime.nmath.distr.PNChisq;
+import com.oracle.truffle.r.runtime.nmath.distr.PPois;
+import com.oracle.truffle.r.runtime.nmath.distr.PTukey;
+import com.oracle.truffle.r.runtime.nmath.distr.Pbeta;
+import com.oracle.truffle.r.runtime.nmath.distr.Pbinom;
+import com.oracle.truffle.r.runtime.nmath.distr.Pf;
+import com.oracle.truffle.r.runtime.nmath.distr.Pnf;
+import com.oracle.truffle.r.runtime.nmath.distr.Pnorm;
+import com.oracle.truffle.r.runtime.nmath.distr.Pnt;
+import com.oracle.truffle.r.runtime.nmath.distr.Pt;
+import com.oracle.truffle.r.runtime.nmath.distr.QBeta;
+import com.oracle.truffle.r.runtime.nmath.distr.QGamma;
+import com.oracle.truffle.r.runtime.nmath.distr.QHyper;
+import com.oracle.truffle.r.runtime.nmath.distr.QNBeta;
+import com.oracle.truffle.r.runtime.nmath.distr.QNBinom;
+import com.oracle.truffle.r.runtime.nmath.distr.QNChisq;
+import com.oracle.truffle.r.runtime.nmath.distr.QPois;
+import com.oracle.truffle.r.runtime.nmath.distr.QTukey;
+import com.oracle.truffle.r.runtime.nmath.distr.Qbinom;
+import com.oracle.truffle.r.runtime.nmath.distr.Qf;
+import com.oracle.truffle.r.runtime.nmath.distr.Qnf;
+import com.oracle.truffle.r.runtime.nmath.distr.Qnorm;
+import com.oracle.truffle.r.runtime.nmath.distr.Qnt;
+import com.oracle.truffle.r.runtime.nmath.distr.Qt;
+import com.oracle.truffle.r.runtime.nmath.distr.RBeta;
+import com.oracle.truffle.r.runtime.nmath.distr.RGamma;
+import com.oracle.truffle.r.runtime.nmath.distr.RHyper;
+import com.oracle.truffle.r.runtime.nmath.distr.RNBinom;
+import com.oracle.truffle.r.runtime.nmath.distr.RNchisq;
+import com.oracle.truffle.r.runtime.nmath.distr.RPois;
+import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
+import com.oracle.truffle.r.runtime.nmath.distr.Rf;
+import com.oracle.truffle.r.runtime.nmath.distr.Rnorm;
+import com.oracle.truffle.r.runtime.nmath.distr.Rt;
+import com.oracle.truffle.r.runtime.nmath.distr.Signrank;
+import com.oracle.truffle.r.runtime.nmath.distr.Unif;
+import com.oracle.truffle.r.runtime.nmath.distr.Weibull;
+import com.oracle.truffle.r.runtime.nmath.distr.Wilcox;
 
 /**
  * This class defines methods that match the functionality of the macro/function definitions in the
@@ -419,41 +480,298 @@ public interface StdUpCallsRFFI {
 
     int FASTR_getConnectionChar(Object obj);
 
-    @RFFIUpCallNode(RandFunctionsNodes.DunifNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Unif.DUnif.class)
     double Rf_dunif(double a, double b, double c, int d);
 
-    @RFFIUpCallNode(RandFunctionsNodes.QunifNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Unif.QUnif.class)
     double Rf_qunif(double a, double b, double c, int d, int e);
 
-    @RFFIUpCallNode(RandFunctionsNodes.PunifNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Unif.PUnif.class)
     double Rf_punif(double a, double b, double c, int d, int e);
 
-    @RFFIUpCallNode(RandFunctionsNodes.RunifNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Unif.Runif.class)
     double Rf_runif(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.DChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_1Node.class, functionClass = Chisq.DChisq.class)
     double Rf_dchisq(double a, double b, int c);
 
-    @RFFIUpCallNode(RandFunctionsNodes.PChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Chisq.PChisq.class)
     double Rf_pchisq(double a, double b, int c, int d);
 
-    @RFFIUpCallNode(RandFunctionsNodes.QChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Chisq.QChisq.class)
     double Rf_qchisq(double a, double b, int c, int d);
 
-    @RFFIUpCallNode(RandFunctionsNodes.RChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction1Node.class, functionClass = Chisq.RChisq.class)
     double Rf_rchisq(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.DNChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DNChisq.class)
     double Rf_dnchisq(double a, double b, double c, int d);
 
-    @RFFIUpCallNode(RandFunctionsNodes.PNChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = PNChisq.class)
     double Rf_pnchisq(double a, double b, double c, int d, int e);
 
-    @RFFIUpCallNode(RandFunctionsNodes.QNChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = QNChisq.class)
     double Rf_qnchisq(double a, double b, double c, int d, int e);
 
-    @RFFIUpCallNode(RandFunctionsNodes.RNChisqNode.class)
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = RNchisq.class)
     double Rf_rnchisq(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DNorm.class)
+    double Rf_dnorm(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Pnorm.class)
+    double Rf_pnorm(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Qnorm.class)
+    double Rf_qnorm(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Rnorm.class)
+    double Rf_rnorm(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = LogNormal.DLNorm.class)
+    double Rf_dlnorm(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = LogNormal.PLNorm.class)
+    double Rf_plnorm(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = LogNormal.QLNorm.class)
+    double Rf_qlnorm(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = LogNormal.RLNorm.class)
+    double Rf_rlnorm(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DGamma.class)
+    double Rf_dgamma(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = PGamma.class)
+    double Rf_pgamma(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = QGamma.class)
+    double Rf_qgamma(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = RGamma.class)
+    double Rf_rgamma(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DBeta.class)
+    double Rf_dbeta(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Pbeta.class)
+    double Rf_pbeta(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = QBeta.class)
+    double Rf_qbeta(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = RBeta.class)
+    double Rf_rbeta(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Df.class)
+    double Rf_df(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Pf.class)
+    double Rf_pf(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Qf.class)
+    double Rf_qf(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Rf.class)
+    double Rf_rf(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_1Node.class, functionClass = Dt.class)
+    double Rf_dt(double a, double b, int c);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Pt.class)
+    double Rf_pt(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Qt.class)
+    double Rf_qt(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction1Node.class, functionClass = Rt.class)
+    double Rf_rt(double a);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Dbinom.class)
+    double Rf_dbinom(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Pbinom.class)
+    double Rf_pbinom(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Qbinom.class)
+    double Rf_qbinom(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Rbinom.class)
+    double Rf_rbinom(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Cauchy.DCauchy.class)
+    double Rf_dcauchy(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Cauchy.PCauchy.class)
+    double Rf_pcauchy(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Cauchy.QCauchy.class)
+    double Rf_qcauchy(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Cauchy.RCauchy.class)
+    double Rf_rcauchy(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_1Node.class, functionClass = Exp.DExp.class)
+    double Rf_dexp(double a, double b, int c);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Exp.PExp.class)
+    double Rf_pexp(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Exp.QExp.class)
+    double Rf_qexp(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction1Node.class, functionClass = Exp.RExp.class)
+    double Rf_rexp(double a);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_1Node.class, functionClass = Geom.DGeom.class)
+    double Rf_dgeom(double a, double b, int c);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Geom.PGeom.class)
+    double Rf_pgeom(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Geom.QGeom.class)
+    double Rf_qgeom(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction1Node.class, functionClass = Geom.RGeom.class)
+    double Rf_rgeom(double a);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_1Node.class, functionClass = DHyper.class)
+    double Rf_dhyper(double a, double b, double c, double d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = PHyper.class)
+    double Rf_phyper(double a, double b, double c, double d, int e, int f);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = QHyper.class)
+    double Rf_qhyper(double a, double b, double c, double d, int e, int f);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3Node.class, functionClass = RHyper.class)
+    double Rf_rhyper(double a, double b, double c);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DNBinom.DNBinomFunc.class)
+    double Rf_dnbinom(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = PNBinom.PNBinomFunc.class)
+    double Rf_pnbinom(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = QNBinom.QNBinomFunc.class)
+    double Rf_qnbinom(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = RNBinom.RNBinomFunc.class)
+    double Rf_rnbinom(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DNBinom.DNBinomMu.class)
+    double Rf_dnbinom_mu(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = PNBinom.PNBinomMu.class)
+    double Rf_pnbinom_mu(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = QNBinom.QNBinomMu.class)
+    double Rf_qnbinom_mu(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = RNBinom.RNBinomMu.class)
+    double Rf_rnbinom_mu(double a, double b);
+
+    @RFFIRunGC
+    @RFFIUpCallNode(value = RandFunctionsNodes.RfRMultinomNode.class)
+    void Rf_rmultinom(int a, @RFFICpointer Object b, int c, @RFFICpointer Object d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_1Node.class, functionClass = DPois.class)
+    double Rf_dpois(double a, double b, int c);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = PPois.class)
+    double Rf_ppois(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = QPois.class)
+    double Rf_qpois(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction1Node.class, functionClass = RPois.class)
+    double Rf_rpois(double a);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Weibull.DWeibull.class)
+    double Rf_dweibull(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Weibull.PWeibull.class)
+    double Rf_pweibull(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Weibull.QWeibull.class)
+    double Rf_qweibull(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Weibull.RWeibull.class)
+    double Rf_rweibull(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Logis.DLogis.class)
+    double Rf_dlogis(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Logis.PLogis.class)
+    double Rf_plogis(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Logis.QLogis.class)
+    double Rf_qlogis(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Logis.RLogis.class)
+    double Rf_rlogis(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_1Node.class, functionClass = DNBeta.class)
+    double Rf_dnbeta(double a, double b, double c, double d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = PNBeta.class)
+    double Rf_pnbeta(double a, double b, double c, double d, int e, int f);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = QNBeta.class)
+    double Rf_qnbeta(double a, double b, double c, double d, int e, int f);
+
+    // double Rf_rnbeta(double a, double b, double c);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_1Node.class, functionClass = Dnf.class)
+    double Rf_dnf(double a, double b, double c, double d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = Pnf.class)
+    double Rf_pnf(double a, double b, double c, double d, int e, int f);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = Qnf.class)
+    double Rf_qnf(double a, double b, double c, double d, int e, int f);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Dnt.class)
+    double Rf_dnt(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Pnt.class)
+    double Rf_pnt(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Qnt.class)
+    double Rf_qnt(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = PTukey.class)
+    double Rf_ptukey(double a, double b, double c, double d, int e, int f);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction4_2Node.class, functionClass = QTukey.class)
+    double Rf_qtukey(double a, double b, double c, double d, int e, int f);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = Wilcox.DWilcox.class)
+    double Rf_dwilcox(double a, double b, double c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Wilcox.PWilcox.class)
+    double Rf_pwilcox(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_2Node.class, functionClass = Wilcox.QWilcox.class)
+    double Rf_qwilcox(double a, double b, double c, int d, int e);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Wilcox.RWilcox.class)
+    double Rf_rwilcox(double a, double b);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_1Node.class, functionClass = Signrank.DSignrank.class)
+    double Rf_dsignrank(double a, double b, int c);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Signrank.PSignrank.class)
+    double Rf_psignrank(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2_2Node.class, functionClass = Signrank.QSignrank.class)
+    double Rf_qsignrank(double a, double b, int c, int d);
+
+    @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction1Node.class, functionClass = Signrank.RSignrank.class)
+    double Rf_rsignrank(double a);
+
+    double Rf_ftrunc(double a);
 
     @RFFIUpCallNode(MiscNodes.NamesGetsNode.class)
     Object Rf_namesgets(Object vec, Object val);

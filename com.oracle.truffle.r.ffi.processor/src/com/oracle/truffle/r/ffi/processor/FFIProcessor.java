@@ -170,12 +170,20 @@ public final class FFIProcessor extends AbstractProcessor {
         String canRunGc = m.getAnnotation(RFFIRunGC.class) == null ? "false" : "true";
         String nodeClassName = null;
         TypeElement nodeClass = null;
+        String functionClassName = null;
+        TypeElement functionClass = null;
         if (nodeAnnotation != null) {
             try {
                 nodeAnnotation.value();
             } catch (MirroredTypeException e) {
                 nodeClass = (TypeElement) processingEnv.getTypeUtils().asElement(e.getTypeMirror());
                 nodeClassName = nodeClass.getQualifiedName().toString();
+            }
+            try {
+                nodeAnnotation.functionClass();
+            } catch (MirroredTypeException e) {
+                functionClass = (TypeElement) processingEnv.getTypeUtils().asElement(e.getTypeMirror());
+                functionClassName = functionClass.getQualifiedName().toString();
             }
         }
         // process arguments first to see if unwrap is necessary
@@ -284,12 +292,20 @@ public final class FFIProcessor extends AbstractProcessor {
                 }
             }
             if (createFunction) {
-                w.append("                @Child private " + nodeClassName + " node = " + nodeClassName + ".create();\n");
+                if (!Void.class.getName().equals(functionClassName)) {
+                    w.append("                @Child private " + nodeClassName + " node = " + nodeClassName + ".create(new " + functionClassName + "());\n");
+                } else {
+                    w.append("                @Child private " + nodeClassName + " node = " + nodeClassName + ".create();\n");
+                }
             } else if (nodeClass.getModifiers().contains(Modifier.ABSTRACT)) {
                 w.append("                @Child private " + nodeClassName + " node;\n");
                 processingEnv.getMessager().printMessage(Kind.ERROR, "Need static create for abstract classes", m);
             } else {
-                w.append("                @Child private " + nodeClassName + " node = new " + nodeClassName + "();\n");
+                if (!Void.class.getName().equals(functionClassName)) {
+                    w.append("                @Child private " + nodeClassName + " node = new " + nodeClassName + "(new " + functionClassName + "());\n");
+                } else {
+                    w.append("                @Child private " + nodeClassName + " node = new " + nodeClassName + "();\n");
+                }
             }
 
         }

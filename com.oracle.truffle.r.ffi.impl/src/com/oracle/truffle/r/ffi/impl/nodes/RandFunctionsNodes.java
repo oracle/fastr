@@ -22,27 +22,40 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
-import com.oracle.truffle.r.runtime.nmath.RandomFunctions;
+import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_1;
+import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function4_2;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction1_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction2_Double;
+import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandFunction3_Double;
 import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
-import com.oracle.truffle.r.runtime.nmath.distr.Chisq;
-import com.oracle.truffle.r.runtime.nmath.distr.DNChisq;
-import com.oracle.truffle.r.runtime.nmath.distr.PNChisq;
-import com.oracle.truffle.r.runtime.nmath.distr.QNChisq;
-import com.oracle.truffle.r.runtime.nmath.distr.RNchisq;
-import com.oracle.truffle.r.runtime.nmath.distr.Unif;
+import com.oracle.truffle.r.runtime.nmath.RMultinom;
+import com.oracle.truffle.r.runtime.nmath.distr.Rbinom;
 
 public final class RandFunctionsNodes {
 
-    abstract static class RandFunction3_2Node extends FFIUpCallNode.Arg5 {
-        private final MathFunctions.Function3_2 inner;
+    public abstract static class RandFunction3_2Node extends FFIUpCallNode.Arg5 {
+        private final Function3_2 inner;
 
         protected RandFunction3_2Node(MathFunctions.Function3_2 inner) {
             this.inner = inner;
@@ -52,10 +65,15 @@ public final class RandFunctionsNodes {
         protected double evaluate(double a, double b, double c, int d, int e) {
             return inner.evaluate(a, b, c, d != 0, e != 0);
         }
+
+        public static RandFunction3_2Node create(Function3_2 inner) {
+            return RandFunctionsNodesFactory.RandFunction3_2NodeGen.create(inner);
+        }
+
     }
 
-    abstract static class RandFunction3_1Node extends FFIUpCallNode.Arg4 {
-        private final MathFunctions.Function3_1 inner;
+    public abstract static class RandFunction3_1Node extends FFIUpCallNode.Arg4 {
+        private final Function3_1 inner;
 
         protected RandFunction3_1Node(MathFunctions.Function3_1 inner) {
             this.inner = inner;
@@ -65,10 +83,31 @@ public final class RandFunctionsNodes {
         protected double evaluate(double a, double b, double c, int d) {
             return inner.evaluate(a, b, c, d != 0);
         }
+
+        public static RandFunction3_1Node create(Function3_1 inner) {
+            return RandFunctionsNodesFactory.RandFunction3_1NodeGen.create(inner);
+        }
     }
 
-    abstract static class RandFunction2Node extends FFIUpCallNode.Arg2 {
-        @Child private RandomFunctions.RandFunction2_Double inner;
+    public abstract static class RandFunction3Node extends FFIUpCallNode.Arg3 {
+        @Child private RandFunction3_Double inner;
+
+        protected RandFunction3Node(RandFunction3_Double inner) {
+            this.inner = inner;
+        }
+
+        @Specialization
+        protected double evaluate(double a, double b, double c) {
+            return inner.execute(a, b, c, RandomNumberProvider.fromCurrentRNG());
+        }
+
+        public static RandFunction3Node create(RandFunction3_Double inner) {
+            return RandFunctionsNodesFactory.RandFunction3NodeGen.create(inner);
+        }
+    }
+
+    public abstract static class RandFunction2Node extends FFIUpCallNode.Arg2 {
+        @Child private RandFunction2_Double inner;
 
         protected RandFunction2Node(RandFunction2_Double inner) {
             this.inner = inner;
@@ -78,9 +117,13 @@ public final class RandFunctionsNodes {
         protected double evaluate(double a, double b) {
             return inner.execute(a, b, RandomNumberProvider.fromCurrentRNG());
         }
+
+        public static RandFunction2Node create(RandFunction2_Double inner) {
+            return RandFunctionsNodesFactory.RandFunction2NodeGen.create(inner);
+        }
     }
 
-    abstract static class RandFunction1Node extends FFIUpCallNode.Arg1 {
+    public abstract static class RandFunction1Node extends FFIUpCallNode.Arg1 {
         @Child private RandFunction1_Double inner;
 
         protected RandFunction1Node(RandFunction1_Double inner) {
@@ -91,10 +134,14 @@ public final class RandFunctionsNodes {
         protected double evaluate(double a) {
             return inner.execute(a, RandomNumberProvider.fromCurrentRNG());
         }
+
+        public static RandFunction1Node create(RandFunction1_Double inner) {
+            return RandFunctionsNodesFactory.RandFunction1NodeGen.create(inner);
+        }
     }
 
-    abstract static class RandFunction2_1Node extends FFIUpCallNode.Arg3 {
-        private final MathFunctions.Function2_1 inner;
+    public abstract static class RandFunction2_1Node extends FFIUpCallNode.Arg3 {
+        private final Function2_1 inner;
 
         protected RandFunction2_1Node(MathFunctions.Function2_1 inner) {
             this.inner = inner;
@@ -104,10 +151,14 @@ public final class RandFunctionsNodes {
         protected double evaluate(double a, double b, int c) {
             return inner.evaluate(a, b, c != 0);
         }
+
+        public static RandFunction2_1Node create(Function2_1 inner) {
+            return RandFunctionsNodesFactory.RandFunction2_1NodeGen.create(inner);
+        }
     }
 
-    abstract static class RandFunction2_2Node extends FFIUpCallNode.Arg4 {
-        private final MathFunctions.Function2_2 inner;
+    public abstract static class RandFunction2_2Node extends FFIUpCallNode.Arg4 {
+        private final Function2_2 inner;
 
         protected RandFunction2_2Node(MathFunctions.Function2_2 inner) {
             this.inner = inner;
@@ -117,148 +168,134 @@ public final class RandFunctionsNodes {
         protected double evaluate(double a, double b, int c, int d) {
             return inner.evaluate(a, b, c != 0, d != 0);
         }
+
+        public static RandFunction2_2Node create(Function2_2 inner) {
+            return RandFunctionsNodesFactory.RandFunction2_2NodeGen.create(inner);
+        }
     }
 
-    public abstract static class RunifNode extends RandFunction2Node {
+    public abstract static class RandFunction4_1Node extends FFIUpCallNode.Arg5 {
+        private final Function4_1 inner;
 
-        protected RunifNode(RandFunction2_Double inner) {
-            super(inner);
+        protected RandFunction4_1Node(MathFunctions.Function4_1 inner) {
+            this.inner = inner;
         }
 
-        public static RunifNode create() {
-            return RandFunctionsNodesFactory.RunifNodeGen.create(new Unif.Runif());
+        @Specialization
+        protected double evaluate(double a, double b, double c, double d, int e) {
+            return inner.evaluate(a, b, c, d, e != 0);
         }
 
+        public static RandFunction4_1Node create(Function4_1 inner) {
+            return RandFunctionsNodesFactory.RandFunction4_1NodeGen.create(inner);
+        }
     }
 
-    public abstract static class DunifNode extends RandFunction3_1Node {
+    public abstract static class RandFunction4_2Node extends FFIUpCallNode.Arg6 {
+        private final Function4_2 inner;
 
-        protected DunifNode(Function3_1 inner) {
-            super(inner);
+        protected RandFunction4_2Node(MathFunctions.Function4_2 inner) {
+            this.inner = inner;
         }
 
-        public static DunifNode create() {
-            return RandFunctionsNodesFactory.DunifNodeGen.create(new Unif.DUnif());
+        @Specialization
+        protected double evaluate(double a, double b, double c, double d, int e, int f) {
+            return inner.evaluate(a, b, c, d, e != 0, f != 0);
         }
 
+        public static RandFunction4_2Node create(Function4_2 inner) {
+            return RandFunctionsNodesFactory.RandFunction4_2NodeGen.create(inner);
+        }
     }
 
-    public abstract static class QunifNode extends RandFunction3_2Node {
+    public abstract static class RfRMultinomNode extends FFIUpCallNode.Arg4 {
 
-        protected QunifNode(Function3_2 inner) {
-            super(inner);
+        @Child private Node probIsPointerNode = Message.IS_POINTER.createNode();
+        @Child private Node probAsPointerNode;
+        @Child private Node rNIsPointerNode = Message.IS_POINTER.createNode();
+        @Child private Node rNAsPointerNode;
+        @Child private ForeignArray2R probForeignArray2R;
+        @Child private ForeignArray2R rNForeignArray2R;
+        @Child private DoRMultinomNode doRMultinomNode = RandFunctionsNodesFactory.DoRMultinomNodeGen.create();
+
+        @Specialization
+        protected Object evaluate(int n, Object prob, int k, Object rN) {
+            // prob is double* and rN is int*
+            // Return a vector data in rN rN[1:K] {K := length(prob)}
+            RAbstractDoubleVector probVector;
+            TruffleObject probTO = (TruffleObject) prob;
+            if (ForeignAccess.sendIsPointer(probIsPointerNode, probTO)) {
+                if (probAsPointerNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    probAsPointerNode = insert(Message.AS_POINTER.createNode());
+                }
+                long addr;
+                try {
+                    addr = ForeignAccess.sendAsPointer(probAsPointerNode, probTO);
+                    probVector = RDataFactory.createDoubleVectorFromNative(addr, k);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
+                }
+            } else {
+                if (probForeignArray2R == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    probForeignArray2R = ForeignArray2R.create();
+                }
+                probVector = (RAbstractDoubleVector) probForeignArray2R.convert(prob);
+            }
+
+            RAbstractIntVector rNVector;
+            TruffleObject rNTO = (TruffleObject) rN;
+            if (ForeignAccess.sendIsPointer(rNIsPointerNode, rNTO)) {
+                if (rNAsPointerNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    rNAsPointerNode = insert(Message.AS_POINTER.createNode());
+                }
+                long addr;
+                try {
+                    addr = ForeignAccess.sendAsPointer(rNAsPointerNode, rNTO);
+                    rNVector = RDataFactory.createIntVectorFromNative(addr, k);
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
+                }
+            } else {
+                if (rNForeignArray2R == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    rNForeignArray2R = ForeignArray2R.create();
+                }
+                rNVector = (RAbstractIntVector) probForeignArray2R.convert(prob);
+            }
+
+            doRMultinomNode.execute(n, probVector, k, rNVector);
+            return RNull.instance;
         }
 
-        public static QunifNode create() {
-            return RandFunctionsNodesFactory.QunifNodeGen.create(new Unif.QUnif());
+        public static RfRMultinomNode create() {
+            return RandFunctionsNodesFactory.RfRMultinomNodeGen.create();
         }
-
     }
 
-    public abstract static class PunifNode extends RandFunction3_2Node {
+    abstract static class DoRMultinomNode extends Node {
 
-        protected PunifNode(Function3_2 inner) {
-            super(inner);
+        public abstract void execute(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN);
+
+        @Specialization(guards = {"probAccess.supports(prob)", "rNAccess.supports(rN)"})
+        protected void doRMultinom(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN,
+                        @Cached("prob.access()") VectorAccess probAccess,
+                        @Cached("rN.access()") VectorAccess rNAccess,
+                        @Cached("new()") Rbinom rbinom) {
+            int[] rNArr = new int[k];
+            RMultinom.rmultinom(n, probAccess.access(prob), probAccess, 1d, rNArr, 0, RandomNumberProvider.fromCurrentRNG(), rbinom);
+            int i = 0;
+            for (SequentialIterator rNIter = rNAccess.access(rN); rNAccess.next(rNIter);) {
+                rNAccess.setInt(rNIter, rNArr[i++]);
+            }
         }
 
-        public static PunifNode create() {
-            return RandFunctionsNodesFactory.PunifNodeGen.create(new Unif.PUnif());
-        }
-
-    }
-
-    public abstract static class DChisqNode extends RandFunction2_1Node {
-
-        protected DChisqNode(Function2_1 inner) {
-            super(inner);
-        }
-
-        public static DChisqNode create() {
-            return RandFunctionsNodesFactory.DChisqNodeGen.create(new Chisq.DChisq());
-        }
-
-    }
-
-    public abstract static class PChisqNode extends RandFunction2_2Node {
-
-        protected PChisqNode(Function2_2 inner) {
-            super(inner);
-        }
-
-        public static PChisqNode create() {
-            return RandFunctionsNodesFactory.PChisqNodeGen.create(new Chisq.PChisq());
-        }
-
-    }
-
-    public abstract static class QChisqNode extends RandFunction2_2Node {
-
-        protected QChisqNode(Function2_2 inner) {
-            super(inner);
-        }
-
-        public static QChisqNode create() {
-            return RandFunctionsNodesFactory.QChisqNodeGen.create(new Chisq.QChisq());
-        }
-
-    }
-
-    public abstract static class RChisqNode extends RandFunction1Node {
-
-        protected RChisqNode(RandFunction1_Double inner) {
-            super(inner);
-        }
-
-        public static RChisqNode create() {
-            return RandFunctionsNodesFactory.RChisqNodeGen.create(new Chisq.RChisq());
-        }
-
-    }
-
-    public abstract static class DNChisqNode extends RandFunction3_1Node {
-
-        protected DNChisqNode(Function3_1 inner) {
-            super(inner);
-        }
-
-        public static DNChisqNode create() {
-            return RandFunctionsNodesFactory.DNChisqNodeGen.create(new DNChisq());
-        }
-
-    }
-
-    public abstract static class PNChisqNode extends RandFunction3_2Node {
-
-        protected PNChisqNode(Function3_2 inner) {
-            super(inner);
-        }
-
-        public static PNChisqNode create() {
-            return RandFunctionsNodesFactory.PNChisqNodeGen.create(new PNChisq());
-        }
-
-    }
-
-    public abstract static class QNChisqNode extends RandFunction3_2Node {
-
-        protected QNChisqNode(Function3_2 inner) {
-            super(inner);
-        }
-
-        public static QNChisqNode create() {
-            return RandFunctionsNodesFactory.QNChisqNodeGen.create(new QNChisq());
-        }
-
-    }
-
-    public abstract static class RNChisqNode extends RandFunction2Node {
-
-        protected RNChisqNode(RandFunction2_Double inner) {
-            super(inner);
-        }
-
-        public static RNChisqNode create() {
-            return RandFunctionsNodesFactory.RNChisqNodeGen.create(new RNchisq());
+        @Specialization(replaces = "doRMultinom")
+        protected void doGeneric(int n, RAbstractDoubleVector prob, int k, RAbstractIntVector rN,
+                        @Cached("new()") Rbinom rbinom) {
+            doRMultinom(n, prob, k, rN, prob.slowPathAccess(), rN.slowPathAccess(), rbinom);
         }
 
     }
