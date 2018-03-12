@@ -1241,7 +1241,7 @@ void SET_NAMED(SEXP x, int v) {
 
 void SET_ATTRIB(SEXP x, SEXP v) {
     TRACE0();
-    unimplemented("SET_ATTRIB");
+    ((call_SET_ATTRIB) callbacks[SET_ATTRIB_x])(x, v);
 }
 
 void DUPLICATE_ATTRIB(SEXP to, SEXP from) {

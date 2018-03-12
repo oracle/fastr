@@ -141,3 +141,8 @@ rffi.RfRandomFunctions()
 
 rffi.RfRMultinom()
 rffi.RfFunctions()
+
+setAttrTarget <- c(1,2,3)
+attr(setAttrTarget, 'myattr2') <- 'some value';
+api.SET_ATTRIB(setAttrTarget, as.pairlist(list(myattr=42)))
+setAttrTarget

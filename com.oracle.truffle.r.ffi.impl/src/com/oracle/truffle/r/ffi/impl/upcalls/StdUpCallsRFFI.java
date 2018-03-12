@@ -29,6 +29,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.ATTRIB;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.GetAttrib;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.SetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
@@ -241,6 +242,9 @@ public interface StdUpCallsRFFI {
     void SET_STRING_ELT(Object x, long i, Object v);
 
     void SET_VECTOR_ELT(Object x, long i, Object v);
+
+    @RFFIUpCallNode(SetAttribNode.class)
+    void SET_ATTRIB(Object target, Object attributes);
 
     @RFFICpointer
     Object RAW(Object x);
