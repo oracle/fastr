@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeRawArray;
 
 class TruffleLLVM_C implements CRFFI {
-    private static class TruffleLLVM_InvokeCNode extends InvokeCNode {
+    private static final class TruffleLLVM_InvokeCNode extends InvokeCNode {
 
         @Child private Node messageNode;
         private int numArgs;
@@ -58,7 +58,7 @@ class TruffleLLVM_C implements CRFFI {
             }
         }
 
-        Object[] wrap(Object[] args) {
+        static Object[] wrap(Object[] args) {
             Object[] nargs = new Object[args.length];
             for (int i = 0; i < args.length; i++) {
                 Object arg = args[i];

@@ -30,7 +30,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
-import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -43,9 +42,11 @@ import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
 /**
@@ -74,8 +75,8 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object Rf_mkCharLenCE(Object obj, int len, int encoding) {
-        if (obj instanceof VectorWrapper) {
-            Object wrappedCharSXP = ((VectorWrapper) obj).getVector();
+        if (obj instanceof VectorRFFIWrapper) {
+            Object wrappedCharSXP = ((VectorRFFIWrapper) obj).getVector();
             assert wrappedCharSXP instanceof CharSXPWrapper;
             return wrappedCharSXP;
         } else if (obj instanceof NativeCharArray) {

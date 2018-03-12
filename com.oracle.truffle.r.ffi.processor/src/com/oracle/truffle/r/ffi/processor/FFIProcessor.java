@@ -253,6 +253,8 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
+        w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
+        w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;\n");
         w.append("\n");
         w.append("// Checkstyle: stop method name check\n");
         w.append("\n");

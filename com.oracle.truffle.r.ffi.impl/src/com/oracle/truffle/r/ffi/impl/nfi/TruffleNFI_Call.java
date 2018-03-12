@@ -39,12 +39,12 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CallFactory.TruffleNFI_InvokeCallNodeGen;
-import com.oracle.truffle.r.ffi.impl.upcalls.FFIUnwrapNode;
-import com.oracle.truffle.r.ffi.impl.upcalls.FFIWrapNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
+import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class TruffleNFI_Call implements CallRFFI {

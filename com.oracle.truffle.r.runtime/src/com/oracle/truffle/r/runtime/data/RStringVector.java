@@ -40,10 +40,11 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RStringVector extends RVector<String[]> implements RAbstractStringVector {
 
-    private final String[] data;
+    private String[] data;
 
     RStringVector(String[] data, boolean complete) {
         super(complete);
+        assert data != null;
         this.data = data;
         assert RAbstractVector.verify(this);
     }
@@ -96,6 +97,18 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     @Override
     public int getLength() {
         return data.length;
+    }
+
+    public long allocateNativeContents() {
+        return NativeDataAccess.allocateNativeContents(this, data);
+    }
+
+    public RStringVector copyBackFromNative() {
+        String[] contents = NativeDataAccess.copyBackFromNative(this, data);
+        if (contents != data) {
+            data = contents;
+        }
+        return this;
     }
 
     @Override

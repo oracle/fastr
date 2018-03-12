@@ -27,9 +27,9 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl.VectorWrapper;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
@@ -67,7 +67,7 @@ public class DLLInfoMR {
                     throw new IndexOutOfBoundsException("Index can be 0 or 1");
             }
 
-            return VectorWrapper.get(res);
+            return VectorRFFIWrapper.get(res);
         }
     }
 }

@@ -166,6 +166,37 @@ public final class NativeDataAccess {
             assert this.length == 0 || dataAddress != EMPTY_DATA_ADDRESS;
         }
 
+        @TruffleBoundary
+        void allocateNativeStringArray(String[] data) {
+            assert dataAddress == 0;
+            // We allocate contiguous memory that we'll use to store both the array of pointers
+            // (char**)
+            // and the arrays of characters (char*). Given vector of size N, we allocate memory for
+            // N
+            // addresses (long) and after those we put individual strings character by character,
+            // the
+            // pointers from the first segment of this memory will be pointing to the starts of
+            // those
+            // strings.
+            length = data.length;
+            int size = data.length * Long.BYTES;
+            byte[][] bytes = new byte[data.length][];
+            for (int i = 0; i < length; i++) {
+                String element = data[i];
+                bytes[i] = element.getBytes(StandardCharsets.US_ASCII);
+                size += bytes[i].length + 1;
+            }
+            dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(size);
+            long ptr = dataAddress + length * Long.BYTES; // start of the actual character data
+            for (int i = 0; i < length; i++) {
+                UnsafeAdapter.UNSAFE.putLong(dataAddress + i * 8, ptr);
+                UnsafeAdapter.UNSAFE.copyMemory(bytes[i], Unsafe.ARRAY_BYTE_BASE_OFFSET, null, ptr, bytes[i].length);
+                ptr += bytes[i].length;
+                UnsafeAdapter.UNSAFE.putByte(ptr++, (byte) 0);
+            }
+            assert ptr == dataAddress + size : "should have filled everything";
+        }
+
         // TODO: turn this into reference queues
         @Override
         protected void finalize() throws Throwable {
@@ -402,6 +433,7 @@ public final class NativeDataAccess {
         return data;
     }
 
+    @TruffleBoundary
     public static byte[] copyByteNativeData(Object mirrorObj) {
         NativeMirror mirror = (NativeMirror) mirrorObj;
         long address = mirror.dataAddress;
@@ -409,6 +441,29 @@ public final class NativeDataAccess {
         byte[] data = new byte[(int) mirror.length];
         UnsafeAdapter.UNSAFE.copyMemory(null, address, data, Unsafe.ARRAY_BYTE_BASE_OFFSET, data.length * Unsafe.ARRAY_BYTE_INDEX_SCALE);
         return data;
+    }
+
+    @TruffleBoundary
+    public static String[] copyStringNativeData(Object mirrorObj) {
+        NativeMirror mirror = (NativeMirror) mirrorObj;
+        long address = mirror.dataAddress;
+        assert address != 0;
+        String[] data = new String[(int) mirror.length];
+        for (int i = 0; i < data.length; i++) {
+            long ptr = UnsafeAdapter.UNSAFE.getLong(address + i * 8);
+            data[i] = readNativeString(ptr);
+        }
+        return data;
+    }
+
+    @TruffleBoundary
+    public static String readNativeString(long addr) {
+        int len;
+        for (len = 0; UnsafeAdapter.UNSAFE.getByte(addr + len) != 0; len++) {
+        }
+        byte[] bytes = new byte[len];
+        UnsafeAdapter.UNSAFE.copyMemory(null, addr, bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, len);
+        return new String(bytes, StandardCharsets.US_ASCII);
     }
 
     // methods operating on vectors that may have a native mirror assigned:
@@ -419,6 +474,7 @@ public final class NativeDataAccess {
     private static final Assumption noComplexNative = Truffle.getRuntime().createAssumption();
     private static final Assumption noRawNative = Truffle.getRuntime().createAssumption();
     private static final Assumption noCharSXPNative = Truffle.getRuntime().createAssumption();
+    private static final Assumption noStringArrayNative = Truffle.getRuntime().createAssumption();
 
     static int getData(RIntVector vector, int[] data, int index) {
         if (noIntNative.isValid() || data != null) {
@@ -616,6 +672,25 @@ public final class NativeDataAccess {
         }
     }
 
+    static String[] copyBackFromNative(RStringVector vector, String[] data) {
+        if (noStringArrayNative.isValid()) {
+            return data;
+        } else {
+            NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+            assert mirror != null;
+            if (mirror.dataAddress == 0) {
+                return data;
+            } else {
+                try {
+                    return copyStringNativeData(mirror);
+                } finally {
+                    // Forget the mirror
+                    vector.setNativeMirror(null);
+                }
+            }
+        }
+    }
+
     static long allocateNativeContents(RLogicalVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
@@ -686,16 +761,15 @@ public final class NativeDataAccess {
         return mirror.dataAddress;
     }
 
-    @TruffleBoundary
-    public static String readNativeString(long addr) {
-        int len;
-        for (len = 0; UnsafeAdapter.UNSAFE.getByte(addr + len) != 0; len++) {
+    static long allocateNativeContents(RStringVector vector, String[] data) {
+        NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+        assert mirror != null;
+        assert mirror.dataAddress == 0 ^ data == null;
+        if (mirror.dataAddress == 0) {
+            noStringArrayNative.invalidate();
+            mirror.allocateNativeStringArray(data);
         }
-        byte[] bytes = new byte[len];
-        for (int i = 0; i < len; i++) {
-            bytes[i] = UnsafeAdapter.UNSAFE.getByte(addr + i);
-        }
-        return new String(bytes);
+        return mirror.dataAddress;
     }
 
     public static void setNativeContents(RObject obj, long address, int length) {
