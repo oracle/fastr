@@ -1,0 +1,8 @@
+#!/bin/sh
+
+VER=`awk -v ORS= '/rJava v/ { print substr($6,2) }' src/rJava.h`
+if test "$1" == "-f"; then 
+    echo "rJava_${VER}.tar.gz"
+else
+    echo "${VER}"
+fi

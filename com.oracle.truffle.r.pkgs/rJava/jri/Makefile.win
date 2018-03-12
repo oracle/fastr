@@ -1,0 +1,15 @@
+# Windows-specific part of the Makefile
+
+include src/Makefile.wconf
+include Makevars.win
+
+windows.all: all run.bat
+
+$(RHOME)/src/gnuwin32/libR.a:
+	make -C $(RHOME)/src/gnuwin32 libR.a
+
+run.bat: jri.dll
+	echo "set PATH=%PATH%;$(RHOME)\\bin;$(RHOME)\\lib" > run.bat
+	echo "$(JAVA_PROG) -cp .;examples;JRI.jar;src/JRI.jar rtest \$$*" >> run.bat
+
+include Makefile.all

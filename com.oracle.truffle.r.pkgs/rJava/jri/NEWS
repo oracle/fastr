@@ -1,0 +1,154 @@
+ NEWS/ChangeLog for JRI
+--------------------------
+
+0.5-5	(under development)
+    o	fix compilation in parallel using the -j switch for GNU Make
+    o	some more Win64 fixes
+
+0.5-4	2010-09-17
+    o	added more options to rniStop() on unix and changed the
+	default to use interrupt flags instead of signals since
+	signals cause problems in some JVM implmentations. The
+	previous behavior can be achieved by rniStop(1).
+
+0.5-3	2010-09-02
+    o	fixed changed by the Win64 support which broke some other OSes by
+	using sign extension when converting to long storage.
+
+    o	avoid the use of the sign of pointers for signaling. Note
+	that rniEval() now returns 0 on error and not -1 or -2. The
+	old behavior was undocumented (and dangerous) and thus should
+	not be relied upon. (fixes #172)
+
+0.5-2	2010-04-28
+    o	fixed handling of NAs in strings - they are now correctly
+	converted to <null>s on the Java side.
+
+	IMPORTANT: previously NAs would come as the string "NA"
+	from R which is incorrect since it is not distinguishable from
+	a literal "NA" string. Code that deals with NAs must be prepared
+	to receive nulls in string arrays (note that nulls where
+	correctly converted to NA string, it's just that incoming
+	string were not converted).
+
+	(Thanks to Stephan Wahlbrink for pointing out the inconsistency)
+
+    o	multiple fixes to Windows support: common command line
+	arguments are now correctly processed, sub-architectures are
+	supported, Win64 is now also supported
+
+0.5-1	2010-03-16
+   o	API 1.10: rniAssign now returns boolean to denote success/failure
+
+   o	numerous bug fixes and additions
+
+0.5-0	2009-08-22
+    o	API 1.9: added rniPreserve, rniRelease, rniParentEnv, rniFindVar,
+	         rniListEnv, rniSpecialObject, rniPrintValue,
+		 rniGetRawArray, rniPutRawArray, rniGetAttrNames methods
+		 added jriLoaded field (boolean)
+
+    o	new REngine-based API (org.rosuda.REngine.JRI.JRIEngine)
+	has been created - this allows the same code to interface
+	JRI or Rserve without re-compilation
+
+	Note: the JAR files are currently shipped separately from the JRI
+	installation and can be obtained from
+	http://rforge.net/JRI/files/
+
+    o	proxy references are now preserved until finalized
+
+    o	if jri.ignore.ule=yes property is set, JRI will not abort on
+	failing to load the JRI library (UnsatisfiedLinkException).
+	This can be used by GUIs to display a more meaningful message
+	instead of abort. The jriLoaded flag is false in that case.
+
+
+0.4-2
+    o	declare string encoding as UTF-8 and convert incoming strings
+	to UTF-8 if possible (R >= 2.7.0 required).
+
+0.4-1	(part of rJava 0.5-1 and later)
+    o	fixed configuration to work with multi-arch builds
+
+0.4-0	2007-08-22 (part of rJava 0.5-0)
+    o	adapt to changes in R-devel
+
+    o	add -I. to CFLAGS for compatibility (thanks to BDR)
+
+    o	added RConsoleOuputStream class
+
+    o	API 1.8: added rniPrint, added int oType parameter to the
+	rWriteConsole callback
+
+    o	work around broken MinGW runtimes
+
+    o	allow JRI to hook into a running R process (and thusly provide
+	rJava with callbacks)
+
+    o	added: inMainRThread(), isStandAlone()
+
+    o	include configure in SVN and don't rebuild it on mkdist
+
+0.3-7	2006-01-14
+    o	make sure rniJavaToXref creates a global reference
+
+    o	API 1.7: rniCons can accept two new arguments: tag and lang
+	rniLCons was added
+
+    o	assign now supports raw REXPs (XT_NONE)
+
+    o	createRJavaRef was added to create jobjRef R objects from
+	Java objects
+
+0.3-6	2006-11-29
+    o	adapted to API change in R-devel
+
+    o	fixed double-inclusion of JFLAGS which throws off GIJ
+
+0.3-5	2006-10-06
+    o	remove variadic macros to be compatible with compilers
+	that don't support C99
+
+0.3-4	2006-09-14
+    o	updated Makefiles to force 1.4 target and sources
+
+0.3-3	2006-09-12
+    o	fixed API version in Java sources and added version check
+	to examples
+
+0.3-2	2006-09-11
+    o	New API (1.6): add handling of boolean type
+
+0.3-1	2006-08-31
+
+0.3-0	2006-05-31
+    o	New API (1.5) entries: rniGetTAG, rniInherits,
+	rniGetSymbolName, rniInstallName
+	allows handling of symbols, named lists and inheritance
+
+    o	fixed/improved REXP, RList and RFactor
+
+0.2-5	2006-05-08
+    o	Use configure to detect CStackXXX and R_SignalHandlers
+	set the latter to 0 if present (solves threading issues)
+
+0.2-4	2006-05-03
+    o	added support for pre-configuration passed from rJava
+
+0.2-3	2006-04-20
+    o	fix warnings and issues with R 2.3.0
+
+0.2-2	2006-04-11
+    o	licensed under LGPL
+
+0.2-1	2006-03-07
+    o	fixed Java detection, fixed eval double-unlock,
+	use R shlib flags, added FreeBSD support
+
+0.2-0	2005-12-19
+    o	switched to autoconf process for configuration/installation 
+
+0.1-0
+    o	First JRI release
+

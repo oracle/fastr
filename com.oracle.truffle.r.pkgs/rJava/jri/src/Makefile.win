@@ -1,0 +1,6 @@
+# Windows-specific part of the Makefile
+
+include $(R_HOME)/etc$(R_ARCH)/Makeconf
+include Makefile.wconf
+include ../Makevars.win
+include Makefile.all

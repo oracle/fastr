@@ -1,11 +1,11 @@
 Package: rJava
-Type: Package
-Title: FastR rJava compatibility layer
-Version: 1.0
-Date: 2017-05-18
-Author: Tomas Stupka
-Maintainer: Tomas Stupka <tomas.stupka@oracle.com>
-Description: Provides rJava R interface backed by FastR interoperability builtins.
+Version: (populated by mkdist!)
+Title: Low-Level R to Java Interface
+Author: Simon Urbanek <simon.urbanek@r-project.org>
+Maintainer: Simon Urbanek <simon.urbanek@r-project.org>
+Depends: R (>= 2.5.0), methods
+Description: Low-level interface to Java VM very much like .C/.Call and friends. Allows creation of objects, calling methods and accessing fields.
 License: GPL-2
-Suggests: testthat
-RoxygenNote: 6.0.1
+URL: http://www.rforge.net/rJava/
+SystemRequirements: Java JDK 1.2 or higher (for JRI/REngine JDK 1.4 or higher), GNU make
+BugReports: https://github.com/s-u/rJava/issues

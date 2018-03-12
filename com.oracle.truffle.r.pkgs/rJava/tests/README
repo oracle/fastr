@@ -1,0 +1,6 @@
+This directory contains off-line tests, i.e. they are not included
+in the package, but can be used to test the rJava functionality.
+At some point we will create a proper test suite that is included
+in the package, but we're not there yet ...
+
+Run via make (default is retest which does clean-tests + test)
