@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -191,8 +192,16 @@ public class DLL {
         private static final String DLLINFO_CLASS = "DLLInfo";
 
         private final int id;
+
         public final String name;
         public final String path;
+        /**
+         * The CharSXPWrapper fields maintain the wrapped strings that are returned as a response to
+         * the READ message sent to this Truffle object. See {@code DLLInfoMR}.
+         */
+        public final CharSXPWrapper nameSXP;
+        public final CharSXPWrapper pathSXP;
+
         public final Object handle;
         private boolean dynamicLookup;
         private boolean forceSymbols;
@@ -203,7 +212,9 @@ public class DLL {
         private DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
             this.id = ID.getAndIncrement();
             this.name = name;
+            this.nameSXP = CharSXPWrapper.create(name);
             this.path = path;
+            this.pathSXP = CharSXPWrapper.create(path);
             this.dynamicLookup = dynamicLookup;
             this.handle = handle;
         }

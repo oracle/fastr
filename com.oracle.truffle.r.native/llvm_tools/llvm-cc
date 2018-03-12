@@ -40,9 +40,22 @@ else
   llvm_tool=clang
   get_llvm_tool
   runit $llvm_tool_bin $llvm_args
+  ecode=$?
+  if [[ $ecode -ne 0 ]]; then
+    exit $ecode
+  fi
+
   # the llvm_ir_file is empty if the result is sent to stdout
   if [ -n "$llvm_ir_file" ]; then
     mem2reg_opt
+    ecode=$?
+    if [[ $ecode -ne 0 ]]; then
+      exit $ecode
+    fi
     fake_obj
+    ecode=$?
+    if [[ $ecode -ne 0 ]]; then
+      exit $ecode
+    fi
   fi
 fi

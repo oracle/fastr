@@ -53,41 +53,66 @@ function analyze_args() {
   llvm_args="-g "
   if [ $fortran -eq 1 ]
   then
-    llvm_args+='-S '
     llvm_file_ext='.ll'
   else
     llvm_file_ext='.bc'
-    llvm_args+='-emit-llvm '
   fi
 
   is_link=0
+  out_file_opt=""
   llvm_ir_file=""
+  llvm_ir_file_opt=""
+  c_opt_found=0
 
   while [[ $# -gt 0 ]]
   do
-    llvm_args+="$1 "
     case $1 in
+      -c)
+        c_opt_found=1
+        llvm_args+="$1 "
+      ;;
       -o)
         shift
-		p=$1
-		f=`basename $p`
-		d=`dirname $p`
-		ext=${f##*.}
-		if [ $ext == 'so' ] || [ $ext == 'dylib' ]
-		then
-		  is_link=1
-		elif [ $ext == 'o' ]
-		then
-		  llvm_ir_file=${d}/${f%%.*}
-		  llvm_ir_file+=$llvm_file_ext
-		  llvm_args+="$llvm_ir_file "
-		fi
+        p=$1
+        f=`basename $p`
+        d=`dirname $p`
+        ext=${f##*.}
+        if [ $ext == 'so' ] || [ $ext == 'dylib' ]
+        then
+          is_link=1
+        elif [ $ext == 'o' ]
+		    then
+		      llvm_ir_file=${d}/${f%%.*}
+		      llvm_ir_file="${llvm_ir_file}${llvm_file_ext}"
+          llvm_ir_file_opt="-o ${llvm_ir_file}"
+        else
+          out_file_opt="-o $p"
+        fi
       ;;
-     *)
-     ;;
+      *)
+        llvm_args+="$1 "
+      ;;
     esac
     shift
   done
+
+  if [ $fortran -eq 1 ]
+  then
+    if [ $c_opt_found -eq 1 ]
+    then
+      llvm_args="-S $llvm_ir_file_opt $llvm_args "
+    else
+      llvm_args="$out_file_opt $llvm_args "
+    fi
+  else
+    if [ $c_opt_found -eq 1 ]
+    then
+      llvm_args="-emit-llvm $llvm_ir_file_opt $llvm_args "
+    else
+      llvm_args="$out_file_opt $llvm_args "
+    fi
+  fi
+
 }
 
 # Input arguments:

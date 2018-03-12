@@ -54,9 +54,9 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * Rf_mainloop();
  * </pre>
  *
- * {@code Rf_initialize_R} invokes {@link #initializeR(String[])}, which creates new polyglot
- * {@link Context}. The call to {@code R_SetParams} adjusts the values stored in the
- * {@link RStartParams} object and then {@code Rf_mainloop}, which calls {@link #setupRmainloop()}
+ * {@code Rf_initialize_R} invokes {@link #initializeR(String[], boolean)}, which creates new
+ * polyglot {@link Context}. The call to {@code R_SetParams} adjusts the values stored in the
+ * {@link RStartParams} object and then {@code Rf_mainloop}, which calls {@code #setupRmainloop()}
  * and then {@link #runRmainloop()}, which will complete the FastR initialization and enter the
  * read-eval-print loop.
  */
