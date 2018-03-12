@@ -82,28 +82,35 @@
 .jrcall <- function(o, method, ..., simplify=TRUE) {
   if (!is.character(method) | length(method) != 1)
     stop("Invalid method name - must be exactly one character string.")
-  if (inherits(o, "jobjRef") || inherits(o, "jarrayRef"))
-    cl <- .jcall(o, "Ljava/lang/Class;", "getClass")
-  else
-    cl <- .jfindClass(o)
-  if (is.null(cl))
-    stop("Cannot find class of the object.")
+  # FASTR <<<<<
+  # bypassing invokeMethod reflection call
   
-  # p is a list of parameters that are formed solely by valid Java objects
-  p <- ._java_valid_objects_list(...)
+  # if (inherits(o, "jobjRef") || inherits(o, "jarrayRef"))
+  #   cl <- .jcall(o, "Ljava/lang/Class;", "getClass")
+  # else
+  #   cl <- .jfindClass(o)
+  # if (is.null(cl))
+  #   stop("Cannot find class of the object.")
   
-  # list of classes
-  pc <- ._java_class_list( p )
+  # # p is a list of parameters that are formed solely by valid Java objects
+  # p <- ._java_valid_objects_list(...)
   
-  # invoke the method directly from the RJavaTools class
-  # ( this throws the actual exception instead of an InvocationTargetException ) 
-  j_p  <- .jarray(p, "java/lang/Object" , dispatch = FALSE )
-  j_pc <- .jarray(pc, "java/lang/Class" , dispatch = FALSE )
-  r <- .jcall( "RJavaTools", "Ljava/lang/Object;", "invokeMethod",
-  	cl, .jcast(if(inherits(o,"jobjRef") || inherits(o, "jarrayRef")) o else cl, "java/lang/Object"), 
-  	.jnew( "java/lang/String", method), 
-  	j_p, j_pc, use.true.class = TRUE, evalString = simplify, evalArray = FALSE )
+  # # list of classes
+  # pc <- ._java_class_list( p )
   
+  # # invoke the method directly from the RJavaTools class
+  # # ( this throws the actual exception instead of an InvocationTargetException ) 
+  # j_p  <- .jarray(p, "java/lang/Object" , dispatch = FALSE )
+  # j_pc <- .jarray(pc, "java/lang/Class" , dispatch = FALSE )
+
+  # r <- .jcall( "RJavaTools", "Ljava/lang/Object;", "invokeMethod",
+  # 	cl, .jcast(if(inherits(o,"jobjRef") || inherits(o, "jarrayRef")) o else cl, "java/lang/Object"), 
+  # 	.jnew( "java/lang/String", method), 
+  # 	j_p, j_pc, use.true.class = TRUE, evalString = simplify, evalArray = FALSE )
+  
+  r <- .jcall( o, "Ljava/lang/Object;", method, ..., use.true.class = TRUE, evalString = simplify, evalArray = FALSE )
+  # FASTR >>>>>
+
   # null is returned when the return type of the method is void
   # TODO[romain]: not sure how to distinguish when the result is null but the 
   #       return type is not null

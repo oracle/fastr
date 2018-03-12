@@ -94,7 +94,8 @@
 	simplify=FALSE, use.true.class = FALSE) {
   if (check) .jcheck()
   iaddr <- .env[[interface]]
-  interface <- if (is.null(iaddr)) getNativeSymbolInfo(interface, "rJava", TRUE, FALSE)$address else iaddr
+  # TODO
+  #interface <- if (is.null(iaddr)) getNativeSymbolInfo(interface, "rJava", TRUE, FALSE)$address else iaddr
   r<-NULL
   # S is a shortcut for Ljava/lang/String;
   if (returnSig=="S")
@@ -109,14 +110,49 @@
     r<-.External(interface, obj@jobj, returnSig, method, ...)
   else
     r<-.External(interface, as.character(obj), returnSig, method, ...)
-  if (returnSig=="V") return(invisible(NULL))
-  
+
+  if (returnSig=="V") {
+    # FASTR <<<<<
+    # FIX check for exceptions before return; like in other cases in this function
+    if (check) {
+      .jcheck()
+    }
+    # FASTR >>>>>
+    return(invisible(NULL))
+  }  
+
   if( use.true.class && !is.null( r ) ){
   	  if( ! ( isPrimitiveTypeName(returnSig) || isArraySignature(returnSig) ) ){
-  	  	  # avoid calling .jcall since we work on external pointers directly here
-  	  	  clazz     <- .External(interface, r    , "Ljava/lang/Class;", "getClass")
-  	  	  clazzname <- .External(interface, clazz, "Ljava/lang/String;", "getName")
-  	  	  clazzname <- .External(RgetStringValue, clazzname)
+          # FASTR <<<<<    
+          # retrieve the clazzname via fastr interop
+
+          # avoid calling .jcall since we work on external pointers directly here
+          #clazz     <- .External(interface, r    , "Ljava/lang/Class;", "getClass")
+          #clazzname <- .External(interface, clazz, "Ljava/lang/String;", "getName")
+          #clazzname <- .External("RgetStringValue", clazzname)
+          o <- r
+          if(inherits(r, "externalptr")) {
+              o <- attr(r, "external.object")
+          }
+          clazzname <- attr(r, "external.classname")
+          if(is.null(clazzname)) {
+              # returnSig is not primitive, but we might have an unboxed primitive value              
+              # typicaly, this can happen when called from .jrcall (in cases like rJavaObject$someMethodReturningInt())
+              # and .jrcall for now always simplyfies the return value and dumps the class name anyway
+              # so lets retrieve it "just in case"
+              if (is.character(o)) {
+                  clazzname <- "java.lang.String"
+              } else if (is.integer(o)) {
+                  clazzname <- "java.lang.Integer"
+              } else if (is.double(o)) {
+                  clazzname <- "java.lang.Double"
+              } else if (is.logical(o)) {
+                  clazzname <- "java.lang.Boolean"
+              } else {
+                  clazzname <- java.class(o, getClassName = TRUE)
+              }
+          }
+          # FASTR >>>>>>
   	  	  returnSig <- tojniSignature( clazzname ) 
   	  }
   }
@@ -313,6 +349,7 @@ is.jnull <- function(x) {
 # return class object for a given class name; silent determines whether
 # an error should be thrown on failure (FALSE) or just null reference (TRUE)
 .jfindClass <- function(cl, silent=FALSE) {
+  # FASTR TODO check all usecases, some of them might try to do e.g. newInstance, getMethods (if methods are a problem too?) etc
   if (inherits(cl, "jclassName")) return(cl@jobj)
   if (!is.character(cl) || length(cl)!=1)
     stop("invalid class name")
@@ -323,7 +360,11 @@ is.jnull <- function(x) {
   else
     try(a <- .jcall("java/lang/Class","Ljava/lang/Class;","forName",cl,check=FALSE))
   # this is really .jcheck but we don't want it to appear on the call stack
-  .C(RJavaCheckExceptions, silent, FALSE, PACKAGE = "rJava")
+  
+  # FASTR TODO seems the fastr .C impl meant to invoke R replacements for c functions 
+  # has a problem to accept additional .C args
+  #.C(RJavaCheckExceptions, silent, FALSE, PACKAGE = "rJava")
+  .C(RJavaCheckExceptions, silent)
   if (!silent && is.jnull(a)) stop("class not found")
   a
 }

@@ -27,7 +27,13 @@ setMethod("$", c(x="jclassName"), function(x, name) {
 		stop("no static field, method or inner class called `", name, "' in `", x@name, "'")
 	}
 })
-setMethod("$<-", c(x="jclassName"), function(x, name, value) .jfield(x@name, name) <- value)
+setMethod("$<-", c(x="jclassName"), function(x, name, value) {    
+    .jfield(x@jobj, name) <- value
+    # FASTR <<<<<
+    # Fix: return x, otherwise LHS of $<- is overriden with 
+    # the result of .jfield(x@jobj, name) <- value which is the field value
+    x
+})
 setMethod("show", c(object="jclassName"), function(object) invisible(show(paste("Java-Class-Name:",object@name))))
 setMethod("as.character", c(x="jclassName"), function(x, ...) x@name)
 

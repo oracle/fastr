@@ -5,8 +5,9 @@ tojni <- function( cl = "java.lang.Object" ){
 
 tojniSignature <- function( cl ){
 	sig <- tojni( cl )
-	
-	if( isPrimitiveTypeName(sig) || isPrimitiveArraySignature(sig) ){
+
+        # TODO FASTR how comes that sig %in% c("boolean", "byte", "char", "double", "float", "int", "long", "short")
+	if( isPrimitiveTypeName(sig) || isPrimitiveArraySignature(sig) || sig %in% c("boolean", "byte", "char", "double", "float", "int", "long", "short")){
 		return( sig ) 
 	}
 	

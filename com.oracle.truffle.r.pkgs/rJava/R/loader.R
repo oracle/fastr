@@ -1,25 +1,33 @@
 .jaddClassPath <- function(path) {
     if (!length(path)) return(invisible(NULL))
-    if (!is.jnull(.rJava.class.loader))
-        invisible(.jcall(.rJava.class.loader,"V","addClassPath",as.character(path)))
-    else {
-        cpr <- try(.jmergeClassPath(paste(path,collapse=.Platform$path.sep)), silent=TRUE)
-        invisible(!inherits(cpr, "try-error"))
-    }
+    # FASTR <<<<<
+    # if (!is.jnull(.rJava.class.loader))
+    #    invisible(.jcall(.rJava.class.loader,"V","addClassPath",as.character(path)))
+    # else {
+    #    cpr <- try(.jmergeClassPath(paste(path,collapse=.Platform$path.sep)), silent=TRUE)
+    #    invisible(!inherits(cpr, "try-error"))
+    #}
+    invisible(java.addToClasspath(path))
+    # FASTR >>>>>
 }
 
 .jclassPath <- function() {
-    if (is.jnull(.rJava.class.loader)) {
-        cp <- .jcall("java/lang/System", "S", "getProperty", "java.class.path")
-        unlist(strsplit(cp, .Platform$path.sep))
-    } else {
-        .jcall(.rJava.class.loader,"[Ljava/lang/String;","getClassPath")
-    }
+    # FASTR <<<<<
+    # if (is.jnull(.rJava.class.loader)) {
+    #     cp <- .jcall("java/lang/System", "S", "getProperty", "java.class.path")
+    #     unlist(strsplit(cp, .Platform$path.sep))
+    # } else {
+    #     .jcall(.rJava.class.loader,"[Ljava/lang/String;","getClassPath")
+    # }
+    java.classpath()
+    # FASTR >>>>>
 }
 
 .jaddLibrary <- function(name, path) {
-    if (!is.jnull(.rJava.class.loader))
-        invisible(.jcall(.rJava.class.loader, "V", "addRLibrary", as.character(name)[1], as.character(path)[1]))
+    # FASTR TODO 
+    stop(".jaddLibrary overriden but not yet implemented")
+    # if (!is.jnull(.rJava.class.loader))
+    #     invisible(.jcall(.rJava.class.loader, "V", "addRLibrary", as.character(name)[1], as.character(path)[1]))
 }
 
 .jrmLibrary <- function(name) {
@@ -27,7 +35,9 @@
 }
 
 .jclassLoader <- function() {
-    .rJava.class.loader
+    # FASTR TODO 
+    stop(".jclassLoader overriden but not yet implemented")
+    #.rJava.class.loader
 }
 
 .jpackage <- function(name, jars='*', morePaths='', nativeLibrary=FALSE, lib.loc=NULL) {

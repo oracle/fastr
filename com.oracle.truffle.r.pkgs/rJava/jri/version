@@ -1,8 +1,0 @@
-#!/bin/sh
-
-VER=`awk -v ORS= '/JRI v/ { print substr($6,2) }' src/jri.h`
-if test "$1" == "-f"; then 
-    echo "JRI_${VER}.tar.gz"
-else
-    echo "${VER}"
-fi

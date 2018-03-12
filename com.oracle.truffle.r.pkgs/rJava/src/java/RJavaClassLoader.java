@@ -560,14 +560,13 @@ public class RJavaClassLoader extends URLClassLoader {
 	/**
 	 * main method
 	 * 
-	 * <p>This uses the system properties: 
+	 * This uses the system properties: 
 	 * <ul>
 	 * <li><code>rjava.path</code> : path of the rJava package</li>
 	 * <li><code>rjava.lib</code>  : lib sub directory of the rJava package</li>
 	 * <li><code>main.class</code> : main class to "boot", assumes Main if not specified</li>
 	 * <li><code>rjava.class.path</code> : set of paths to populate the initiate the class path</li>
 	 * </ul>
-	 * </p>
 	 *
 	 * <p>and boots the "main" method of the specified <code>main.class</code>, 
 	 * passing the args down to the booted class</p>

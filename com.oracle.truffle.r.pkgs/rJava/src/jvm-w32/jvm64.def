@@ -1,6 +1,0 @@
-LIBRARY     JVM.DLL
-
-EXPORTS
-    JNI_CreateJavaVM
-    JNI_GetCreatedJavaVMs
-    JNI_GetDefaultJavaVMInitArgs
