@@ -8,8 +8,3 @@
  *
  * All rights reserved.
  */
-public class ArrayDimensionException extends Exception{
-	public ArrayDimensionException(String message){
-		super( message ) ; 
-	}
-}

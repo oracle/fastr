@@ -1,3 +1,14 @@
+##
+ # This material is distributed under the GNU General Public License
+ # Version 2. You may review the terms of this license at
+ # http://www.gnu.org/licenses/gpl-2.0.html
+ #
+ # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
+ # Copyright (c) 2018, Oracle and/or its affiliates
+ #
+ # All rights reserved.
+##
+
 setClass("jclassName", representation(name="character", jobj="jobjRef"))
 jclassName <- function(class){
 	if( is( class, "jobjRef" ) && .jinherits(class, "java/lang/Class" ) ){
@@ -27,7 +38,13 @@ setMethod("$", c(x="jclassName"), function(x, name) {
 		stop("no static field, method or inner class called `", name, "' in `", x@name, "'")
 	}
 })
-setMethod("$<-", c(x="jclassName"), function(x, name, value) .jfield(x@name, name) <- value)
+setMethod("$<-", c(x="jclassName"), function(x, name, value) {    
+    .jfield(x@jobj, name) <- value
+    # FASTR <<<<<
+    # Fix: return x, otherwise LHS of $<- is overriden with 
+    # the result of .jfield(x@jobj, name) <- value which is the field value
+    x
+})
 setMethod("show", c(object="jclassName"), function(object) invisible(show(paste("Java-Class-Name:",object@name))))
 setMethod("as.character", c(x="jclassName"), function(x, ...) x@name)
 

@@ -1,3 +1,14 @@
+##
+ # This material is distributed under the GNU General Public License
+ # Version 2. You may review the terms of this license at
+ # http://www.gnu.org/licenses/gpl-2.0.html
+ #
+ # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
+ # Copyright (c) 2018, Oracle and/or its affiliates
+ #
+ # All rights reserved.
+##
+
 ## This file is part of the rJava package - low-level R/Java interface
 ## (C)2006 Simon Urbanek <simon.urbanek@r-project.org>
 ## For license terms see DESCRIPTION and/or LICENSE
@@ -85,71 +96,83 @@
   assign(".jclassClass", .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Class"), .env)
   assign(".jclassString", .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.String"), .env)
 
-  ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Integer")
-  f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
-  assign(".jclass.int", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
-  ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Double")
-  f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
-  assign(".jclass.double", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
-  ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Float")
-  f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
-  assign(".jclass.float", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
-  ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Boolean")
-  f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
-  assign(".jclass.boolean", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
-  ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Void")
-  f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
-  assign(".jclass.void", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
+  # copied from bellow, need the RJavaTools to invoke $getField("TYPE") instead of not working .jcall
+  .Call( initRJavaTools)   
+  .jaddClassPath(file.path(.rJava.base.path,"java"))
+  # FASTR <<<<<
+  # ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Integer")
+  # # TODO .jcall does not work because in RcallMethod we do javaObejct[getField]("TYPE") and truffle does not allow it?
+  # # on the other hand ic$getField() is routed via the reflective RJavaTools.invokeMethod()
+  # #f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
+  # f <- ic$getField("TYPE")
+  # assign(".jclass.int", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
+  # ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Double")
+  # # f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
+  # f <- ic$getField("TYPE")
+  # assign(".jclass.double", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
+  # ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Float")
+  # # f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
+  # f <- ic$getField("TYPE")
+  # assign(".jclass.float", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
+  # ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Boolean")
+  # # f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
+  # f <- ic$getField("TYPE")
+  # assign(".jclass.boolean", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
+  # ic <- .jcall("java/lang/Class","Ljava/lang/Class;","forName","java.lang.Void")
+  # # f<-.jcall(ic,"Ljava/lang/reflect/Field;","getField", "TYPE")
+  # f <- ic$getField("TYPE")
+  # assign(".jclass.void", .jcast(.jcall(f,"Ljava/lang/Object;","get",.jcast(ic,"java/lang/Object")),"java/lang/Class"), .env)
 
   ## if NOAWT is set, set AWT to headless
-  if (nzchar(Sys.getenv("NOAWT"))) .jcall("java/lang/System","S","setProperty","java.awt.headless","true")
+  #if (nzchar(Sys.getenv("NOAWT"))) .jcall("java/lang/System","S","setProperty","java.awt.headless","true")
 
-  lib <- "libs"
-  if (nchar(.Platform$r_arch)) lib <- file.path("libs", .Platform$r_arch)
+  #lib <- "libs"
+  #if (nchar(.Platform$r_arch)) lib <- file.path("libs", .Platform$r_arch)
 
-  rjcl <- NULL
-  if (xr==1) { # && nchar(classpath)>0) {
-    # ok, so we're attached to some other JVM - now we need to make sure that
-    # we can load our class loader. If we can't then we have to use our bad hack
-    # to be able to squeeze our loader in
+  # TODO classloader stuff, ignore for now, maybe forever
+  # rjcl <- NULL
+  # if (xr==1) { # && nchar(classpath)>0) {
+  #   # ok, so we're attached to some other JVM - now we need to make sure that
+  #   # we can load our class loader. If we can't then we have to use our bad hack
+  #   # to be able to squeeze our loader in
 
-    # first, see if this is actually JRIBootstrap so we have a loader already
-    rjcl <- .Call(RJava_primary_class_loader)
-    if (is.null(rjcl) || .jidenticalRef(rjcl,.jzeroRef)) rjcl <- NULL
-    else rjcl <- new("jobjRef", jobj=rjcl, jclass="RJavaClassLoader")
-    if (is.jnull(rjcl))
-      rjcl <- .jnew("RJavaClassLoader", .rJava.base.path,
-                                      file.path(.rJava.base.path, lib), check=FALSE)
-    .jcheck(silent=TRUE)
-    if (is.jnull(rjcl)) {
-      ## it's a hack, so we run it in try(..) in case BadThings(TM) happen ...
-      cpr <- try(.jmergeClassPath(boot.classpath), silent=TRUE)
-      if (inherits(cpr, "try-error")) {
-        .jcheck(silent=TRUE)
-        if (!silent) warning("Another VM is running already and the VM did not allow me to append paths to the class path.")
-        assign(".jinit.merge.error", cpr, .env)
-      }
-      if (length(parameters)>0 && any(parameters!=getOption("java.parameters")) && !silent)
-        warning("Cannot set VM parameters, because VM is running already.")
-    }
-  }
+  #   # first, see if this is actually JRIBootstrap so we have a loader already
+  #   rjcl <- .Call(RJava_primary_class_loader)
+  #   if (is.null(rjcl) || .jidenticalRef(rjcl,.jzeroRef)) rjcl <- NULL
+  #   else rjcl <- new("jobjRef", jobj=rjcl, jclass="RJavaClassLoader")
+  #   if (is.jnull(rjcl))
+  #     rjcl <- .jnew("RJavaClassLoader", .rJava.base.path,
+  #                                     file.path(.rJava.base.path, lib), check=FALSE)
+  #   .jcheck(silent=TRUE)
+  #   if (is.jnull(rjcl)) {
+  #     ## it's a hack, so we run it in try(..) in case BadThings(TM) happen ...
+  #     cpr <- try(.jmergeClassPath(boot.classpath), silent=TRUE)
+  #     if (inherits(cpr, "try-error")) {
+  #       .jcheck(silent=TRUE)
+  #       if (!silent) warning("Another VM is running already and the VM did not allow me to append paths to the class path.")
+  #       assign(".jinit.merge.error", cpr, .env)
+  #     }
+  #     if (length(parameters)>0 && any(parameters!=getOption("java.parameters")) && !silent)
+  #       warning("Cannot set VM parameters, because VM is running already.")
+  #   }
+  # }
 
-  if (is.jnull(rjcl))
-    rjcl <- .jnew("RJavaClassLoader", .rJava.base.path,
-                  file.path(.rJava.base.path, lib), check=FALSE )
+  # if (is.jnull(rjcl))
+  #   rjcl <- .jnew("RJavaClassLoader", .rJava.base.path,
+  #                 file.path(.rJava.base.path, lib), check=FALSE )
 
-  if (!is.jnull(rjcl)) {
-    ## init class loader
-    assign(".rJava.class.loader", rjcl, .env)
+  # if (!is.jnull(rjcl)) {
+  #   ## init class loader
+  #   assign(".rJava.class.loader", rjcl, .env)
 
-    ##-- set the class for native code
-    .Call(RJava_set_class_loader, .env$.rJava.class.loader@jobj)
+  #   ##-- set the class for native code
+  #   .Call(RJava_set_class_loader, .env$.rJava.class.loader@jobj)
 
-    ## now it's time to add any additional class paths
+  #   ## now it's time to add any additional class paths
     cpc <- unique(strsplit(classpath, .Platform$path.sep)[[1]])
     if (length(cpc)) .jaddClassPath(cpc)
-  } else stop("Unable to create a Java class loader.")
-  
+  # } else stop("Unable to create a Java class loader.")
+  # FASTR >>>>>  
   ##.Call(RJava_new_class_loader, .rJava.base.path, file.path(.rJava.base.path, lib))
 
   ## lock namespace bindings

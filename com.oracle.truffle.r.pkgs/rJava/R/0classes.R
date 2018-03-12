@@ -1,3 +1,14 @@
+##
+ # This material is distributed under the GNU General Public License
+ # Version 2. You may review the terms of this license at
+ # http://www.gnu.org/licenses/gpl-2.0.html
+ #
+ # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
+ # Copyright (c) 2018 Oracle and/or its affiliates
+ #
+ # All rights reserved.
+##
+
 ## S4 classes (jobjRef is re-defined in .First.lib to contain valid jobj)                                                                                                  
 #' java object reference
 setClass("jobjRef", representation(jobj="externalptr", jclass="character"), 

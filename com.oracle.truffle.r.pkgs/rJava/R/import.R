@@ -1,3 +1,13 @@
+##
+ # This material is distributed under the GNU General Public License
+ # Version 2. You may review the terms of this license at
+ # http://www.gnu.org/licenses/gpl-2.0.html
+ #
+ # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
+ # Copyright (c) 2018, Oracle and/or its affiliates
+ #
+ # All rights reserved.
+##
 
 IMPORTER <- ".__rjava__import"
 
@@ -136,9 +146,11 @@ lookup <- function( name = "Object", ..., caller = sys.function(-1L) ){
 
 
 javaImport <- function( packages = "java.lang" ){
-	importer <- .jnew( "RJavaImport", .jcast( .rJava.class.loader, "java/lang/ClassLoader" ) )
-	.jcall( importer, "V", "importPackage", packages )
-	.Call( "newRJavaLookupTable" , importer, 
-		PACKAGE = "rJava" )
+    # FASTR TODO
+    stop("javaImport not yet implemented")
+        # importer <- .jnew( "RJavaImport", .jcast( .rJava.class.loader, "java/lang/ClassLoader" ) )
+	# .jcall( importer, "V", "importPackage", packages )
+	# .Call( "newRJavaLookupTable" , importer, 
+	#	PACKAGE = "rJava" )
 }
 

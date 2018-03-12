@@ -4,7 +4,7 @@ export( "%instanceof%" )
 
 export( clone )
 S3method( clone, default ) 
-export(is.jnull, .r2j, .rJava.base.path, toJava)
+export(is.jnull, .rJava.base.path)
 exportClasses(jobjRef, jarrayRef, jrectRef, jfloat, jlong, jbyte, jchar, jclassName)
 exportMethods(show, "$", "$<-", 
 	"==", "!=", "<", ">", "<=", ">=", 

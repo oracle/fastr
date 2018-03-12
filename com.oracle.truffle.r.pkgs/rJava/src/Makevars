@@ -1,17 +1,14 @@
-# we need to add JNI specific stuff here
-PKG_CPPFLAGS=-I. -I/Library/Java/JavaVirtualMachines/labsjdk1.8.0_121-jvmci-0.29//include -I/Library/Java/JavaVirtualMachines/labsjdk1.8.0_121-jvmci-0.29//include/darwin
-PKG_LIBS=-L/Library/Java/JavaVirtualMachines/labsjdk1.8.0_121-jvmci-0.29/jre/lib/server -ljvm
-JAVA_HOME=/Library/Java/JavaVirtualMachines/jdk1.8.0_122.jdk/Contents/Home/
-# make SHLIB believe that we know better what the objects are
-#OBJECTS=Rglue.o callJNI.o initJNI.o rJava.o jri.o jri_glue.o
+JAVA_SRC=$(wildcard java/*.java)
+JFLAGS=-source 1.6 -target 1.6
+JAVAC=javac
 
-all: $(SHLIB) # jri
+all: $(SHLIB)
+$(SHLIB): java
 
-.PHONY: all
+.PHONY: all java
 
-# this is a hack to force SHLIB to run our sub-make
-jri:
-	(cd ../jri && $(MAKE))
-	-@mkdir -p ../inst/jri
-	@(cp -r ../jri/src/JRI.jar ../jri/*jri.* ../jri/run ../jri/examples ../inst/jri/)
-
+java: $(JAVA_SRC)
+	$(JAVAC) $(JFLAGS) $(JAVA_SRC)
+	rm -rfv ../inst/java
+	mkdir -p ../inst/java
+	mv java/*.class ../inst/java

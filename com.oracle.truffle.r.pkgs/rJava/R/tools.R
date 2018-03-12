@@ -1,3 +1,14 @@
+##
+ # This material is distributed under the GNU General Public License
+ # Version 2. You may review the terms of this license at
+ # http://www.gnu.org/licenses/gpl-2.0.html
+ #
+ # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
+ # Copyright (c) 2018, Oracle and/or its affiliates
+ #
+ # All rights reserved.
+##
+
 #' converts a java class name to jni notation
 tojni <- function( cl = "java.lang.Object" ){
 	gsub( "[.]", "/", cl )
@@ -5,8 +16,9 @@ tojni <- function( cl = "java.lang.Object" ){
 
 tojniSignature <- function( cl ){
 	sig <- tojni( cl )
-	
-	if( isPrimitiveTypeName(sig) || isPrimitiveArraySignature(sig) ){
+
+        # TODO FASTR how comes that sig %in% c("boolean", "byte", "char", "double", "float", "int", "long", "short")
+	if( isPrimitiveTypeName(sig) || isPrimitiveArraySignature(sig) || sig %in% c("boolean", "byte", "char", "double", "float", "int", "long", "short")){
 		return( sig ) 
 	}
 	
