@@ -137,7 +137,6 @@ requireGCC: {
 }
 
 gateTestLinuxLLVM : ${common} ${requireGCC} {
-  capabilities: [linux, amd64]
 
   packages: {
       llvm: "==3.8"
@@ -166,16 +165,6 @@ gateTestLinuxLLVM : ${common} ${requireGCC} {
   ]
 }
 
-gateTestManagedLinux: ${common} {
-  environment :  {
-      FASTR_RFFI : "managed"
-      TZDIR: "/usr/share/zoneinfo"
-  }
-  run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
-  ]
-}
-
 gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
   downloads : {
     JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
@@ -184,8 +173,6 @@ gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
 }
 
 gateTestDarwinLLVM: ${common} ${darwinEnvironment} ${requireGCC} {
-  capabilities: [darwin_sierra, amd64]
-
   packages : ${packagesDarwin} {
     llvm: "==4.0.1"
   }
@@ -272,10 +259,9 @@ builds = [
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
   ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate], name: "gate-rbcheck-linux-amd64"}
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
-  #${gateTestManagedLinux}     {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-managed-linux-amd64"}
   ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}
   ${gnurTests}                {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-gnur-tests"}
   # disabled because of spurious dragonegg problems
-  #${gateTestLinuxLLVM}        { targets : [gate], name: "gate-test-llvm-linux-amd64" }
-  ${gateTestDarwinLLVM}        { targets : [gate], name: "gate-test-llvm-darwin-amd64" }
+  #${gateTestLinuxLLVM}        {capabilities: [linux, amd64], targets : [gate], name: "gate-test-llvm-linux-amd64" }
+  ${gateTestDarwinLLVM}        {capabilities: [darwin_sierra, amd64], targets : [gate], name: "gate-test-llvm-darwin-amd64" }
 ]
