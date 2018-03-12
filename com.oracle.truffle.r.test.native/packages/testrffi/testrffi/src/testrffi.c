@@ -32,6 +32,7 @@
 #include <R_ext/Connections.h>
 #include <R_ext/Parse.h>
 #include <string.h>
+#include <stdint.h>
 #include "testrffi.h"
 
 #define K_RMULTINOM 4
@@ -95,7 +96,7 @@ SEXP createExternalPtr(SEXP addr, SEXP tag, SEXP prot) {
 }
 
 SEXP getExternalPtrAddr(SEXP eptr) {
-	return ScalarInteger((int) R_ExternalPtrAddr(eptr));
+	return ScalarInteger((intptr_t) R_ExternalPtrAddr(eptr));
 }
 
 SEXP invoke_TYPEOF(SEXP x) {
@@ -374,7 +375,7 @@ SEXP test_isNAString(SEXP vec) {
 }
 
 SEXP test_getBytes(SEXP vec) {
-    char* bytes = R_CHAR(STRING_ELT(vec, 0));
+    const char* bytes = R_CHAR(STRING_ELT(vec, 0));
     SEXP result;
     PROTECT(result = allocVector(RAWSXP, Rf_length(STRING_ELT(vec, 0))));
     unsigned char* resData = RAW(result);

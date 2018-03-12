@@ -261,7 +261,7 @@ suite = {
       "sourceDirs" : ["src"],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "dependencies" : [
-        "com.oracle.truffle.r.runtime"
+        "com.oracle.truffle.r.ffi.impl"
       ],
       "javaCompliance" : "1.8",
       "workingSets" : "FastR",

@@ -172,7 +172,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public RDoubleVector Rf_ScalarDouble(double value) {
+    public RDoubleVector Rf_ScalarReal(double value) {
         return RDataFactory.createDoubleVectorFromScalar(value);
     }
 
@@ -569,7 +569,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object SET_NAMED_FASTR(Object x, int v) {
+    public void SET_NAMED_FASTR(Object x, int v) {
         // Note: In GNUR this is a macro that sets the sxpinfo.named regardless of whether it makes
         // sense to name the actual value, for compatibilty we simply ignore values that are not
         // RShareable, e.g. RSymbol. However we ignore and report attemps to decrease the ref-count,
@@ -579,19 +579,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             int actual = getNamed(r);
             if (v < actual) {
                 RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
-                return RNull.instance;
             }
             if (v == 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect
                 // it to never become non-shared again, which could happen in FastR
                 r.makeSharedPermanent();
-                return RNull.instance;
             }
             if (v == 1 && r.isTemporary()) {
                 r.incRefCount();
             }
         }
-        return RNull.instance;
     }
 
     private static int getNamed(RShareable r) {
@@ -709,7 +706,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object SET_TAG(Object x, Object y) {
+    public void SET_TAG(Object x, Object y) {
         if (x instanceof RPairList) {
             ((RPairList) x).setTag(y);
         } else {
@@ -717,7 +714,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             // at the moment, this can only be used to null out the pointer
             ((RExternalPtr) x).setTag(y);
         }
-        return y;
     }
 
     @Override
@@ -1631,17 +1627,17 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public double Rf_dnorm(double a, double b, double c, int d) {
+    public double Rf_dnorm4(double a, double b, double c, int d) {
         throw implementedAsNode();
     }
 
     @Override
-    public double Rf_pnorm(double a, double b, double c, int d, int e) {
+    public double Rf_pnorm5(double a, double b, double c, int d, int e) {
         throw implementedAsNode();
     }
 
     @Override
-    public double Rf_qnorm(double a, double b, double c, int d, int e) {
+    public double Rf_qnorm5(double a, double b, double c, int d, int e) {
         throw implementedAsNode();
     }
 
@@ -2094,7 +2090,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public Object Rf_NonNullStringMatch(Object s, Object t) {
+    public boolean Rf_NonNullStringMatch(Object s, Object t) {
         throw implementedAsNode();
     }
 

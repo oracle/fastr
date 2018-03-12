@@ -3,3 +3,4 @@ useDynLib(testrffi, .registration = TRUE, .fixes = "C_")
 
 ## and exported functions
 exportPattern("rffi\\..*")
+exportPattern("api\\..*")
