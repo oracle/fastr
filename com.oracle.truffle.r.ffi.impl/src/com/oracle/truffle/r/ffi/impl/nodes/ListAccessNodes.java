@@ -63,6 +63,9 @@ public final class ListAccessNodes {
 
         @Specialization
         protected Object car(RArgsValuesAndNames args) {
+            if (args.isEmpty()) {
+                return RNull.instance;
+            }
             return args.getArgument(0);
         }
 
