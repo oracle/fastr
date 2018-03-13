@@ -29,32 +29,43 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
-public abstract class WrapVectorNode extends Node {
+public abstract class CRFFIWrapVectorNode extends Node {
 
     @Child FFIWrapNode wrapNode = FFIWrapNode.create();
 
-    public abstract VectorRFFIWrapper execute(Object vector);
+    public abstract Object execute(Object vector);
 
-    public final VectorRFFIWrapper dispatch(Object vector) {
+    public final Object dispatch(Object vector) {
         return execute(wrapNode.execute(vector));
     }
 
     protected boolean isTemporary(Object vector) {
         // if the vector is temporary, we can re-use it. We turn it into native memory backed
         // vector, keep it so and reuse it as the result.
-        return (vector instanceof RVector<?> && ((RVector<?>) vector).isTemporary());
+        return vector instanceof RVector<?> && ((RVector<?>) vector).isTemporary();
     }
 
-    @Specialization(guards = "isTemporary(vector)")
-    protected VectorRFFIWrapper temporaryToNative(TruffleObject vector) {
+    protected static boolean isStringVector(Object vector) {
+        return vector instanceof RStringVector;
+    }
+
+    @Specialization
+    protected Object temporaryToNative(RStringVector vector) {
+        return new StringArrayWrapper(vector);
+    }
+
+    @Specialization(guards = {"isTemporary(vector)", "!isStringVector(vector)"})
+    protected Object temporaryToNative(TruffleObject vector) {
         return VectorRFFIWrapper.get(vector);
     }
 
-    @Specialization(guards = "!isTemporary(vector)")
-    protected VectorRFFIWrapper nonTemporaryToNative(RAbstractVector vector) {
+    @Specialization(guards = {"!isTemporary(vector)", "!isStringVector(vector)"})
+    protected Object nonTemporaryToNative(RAbstractVector vector) {
         return VectorRFFIWrapper.get(vector.copy());
     }
 
@@ -63,24 +74,24 @@ public abstract class WrapVectorNode extends Node {
         throw RInternalError.shouldNotReachHere("Unimplemented native conversion of argument");
     }
 
-    public abstract static class WrapVectorsNode extends Node {
+    public abstract static class CRFFIWrapVectorsNode extends Node {
 
-        public abstract VectorRFFIWrapper[] execute(Object[] vectors);
+        public abstract Object[] execute(Object[] vectors);
 
-        protected WrapVectorNode[] createWrapNodes(int length) {
-            WrapVectorNode[] nodes = new WrapVectorNode[length];
+        protected CRFFIWrapVectorNode[] createWrapNodes(int length) {
+            CRFFIWrapVectorNode[] nodes = new CRFFIWrapVectorNode[length];
             for (int i = 0; i < nodes.length; i++) {
-                nodes[i] = WrapVectorNodeGen.create();
+                nodes[i] = CRFFIWrapVectorNodeGen.create();
             }
             return nodes;
         }
 
         @Specialization(limit = "99", guards = "vectors.length == cachedLength")
         @ExplodeLoop
-        protected VectorRFFIWrapper[] wrapArray(Object[] vectors,
+        protected Object[] wrapArray(Object[] vectors,
                         @SuppressWarnings("unused") @Cached("vectors.length") int cachedLength,
-                        @Cached("createWrapNodes(vectors.length)") WrapVectorNode[] wrapNodes) {
-            VectorRFFIWrapper[] results = new VectorRFFIWrapper[wrapNodes.length];
+                        @Cached("createWrapNodes(vectors.length)") CRFFIWrapVectorNode[] wrapNodes) {
+            Object[] results = new Object[wrapNodes.length];
             for (int i = 0; i < wrapNodes.length; i++) {
                 results[i] = wrapNodes[i].dispatch(vectors[i]);
             }

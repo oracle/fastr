@@ -23,51 +23,42 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 
-public abstract class UnwrapVectorNode extends Node {
+public abstract class CRFFIUnwrapVectorNode extends Node {
 
-    public abstract Object execute(VectorRFFIWrapper arg);
+    public abstract Object execute(Object arg);
 
-    protected static boolean isRStringVector(VectorRFFIWrapper wrapper) {
-        return wrapper.getVector() instanceof RStringVector;
+    @Specialization
+    protected Object unwrapRStringVector(StringArrayWrapper wrapper) {
+        return wrapper.copyBackFromNative();
     }
 
-    @Specialization(guards = "isRStringVector(wrapper)")
-    protected Object unwrapRStringVector(VectorRFFIWrapper wrapper) {
-        return ((RStringVector) wrapper.getVector()).copyBackFromNative();
-    }
-
-    @Specialization(guards = "!isRStringVector(wrapper)")
+    @Specialization
     protected Object unwrapOthers(VectorRFFIWrapper wrapper) {
         return wrapper.getVector();
     }
 
-    public abstract static class UnwrapVectorsNode extends Node {
+    public abstract static class CRFFIUnwrapVectorsNode extends Node {
 
-        public abstract Object[] execute(VectorRFFIWrapper[] wrappers);
+        public abstract Object[] execute(Object[] wrappers);
 
-        protected UnwrapVectorNode[] createUnwrapNodes(int length) {
-            UnwrapVectorNode[] nodes = new UnwrapVectorNode[length];
+        protected CRFFIUnwrapVectorNode[] createUnwrapNodes(int length) {
+            CRFFIUnwrapVectorNode[] nodes = new CRFFIUnwrapVectorNode[length];
             for (int i = 0; i < nodes.length; i++) {
-                nodes[i] = UnwrapVectorNodeGen.create();
+                nodes[i] = CRFFIUnwrapVectorNodeGen.create();
             }
             return nodes;
         }
 
         @Specialization(limit = "99", guards = "wrappers.length == cachedLength")
         @ExplodeLoop
-        protected Object[] wrapArray(VectorRFFIWrapper[] wrappers,
+        protected Object[] wrapArray(Object[] wrappers,
                         @SuppressWarnings("unused") @Cached("wrappers.length") int cachedLength,
-                        @Cached("createUnwrapNodes(wrappers.length)") UnwrapVectorNode[] unwrapNodes) {
+                        @Cached("createUnwrapNodes(wrappers.length)") CRFFIUnwrapVectorNode[] unwrapNodes) {
             Object[] results = new Object[unwrapNodes.length];
             for (int i = 0; i < unwrapNodes.length; i++) {
                 results[i] = unwrapNodes[i].execute(wrappers[i]);

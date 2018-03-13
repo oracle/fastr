@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,11 +40,10 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RStringVector extends RVector<String[]> implements RAbstractStringVector {
 
-    private String[] data;
+    private final String[] data;
 
     RStringVector(String[] data, boolean complete) {
         super(complete);
-        assert data != null;
         this.data = data;
         assert RAbstractVector.verify(this);
     }
@@ -97,18 +96,6 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     @Override
     public int getLength() {
         return data.length;
-    }
-
-    public long allocateNativeContents() {
-        return NativeDataAccess.allocateNativeContents(this, data);
-    }
-
-    public RStringVector copyBackFromNative() {
-        String[] contents = NativeDataAccess.copyBackFromNative(this, data);
-        if (contents != data) {
-            data = contents;
-        }
-        return this;
     }
 
     @Override

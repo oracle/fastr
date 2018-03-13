@@ -52,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -149,12 +148,6 @@ public final class VectorRFFIWrapper implements TruffleObject {
             @Specialization
             @TruffleBoundary
             protected static long get(RComplexVector vector) {
-                return vector.allocateNativeContents();
-            }
-
-            @Specialization
-            @TruffleBoundary
-            protected static long get(RStringVector vector) {
                 return vector.allocateNativeContents();
             }
 

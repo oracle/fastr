@@ -22,19 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.ffi.UnwrapVectorNode.UnwrapVectorsNode;
-import com.oracle.truffle.r.runtime.ffi.UnwrapVectorNodeGen.UnwrapVectorsNodeGen;
-import com.oracle.truffle.r.runtime.ffi.WrapVectorNode.WrapVectorsNode;
-import com.oracle.truffle.r.runtime.ffi.WrapVectorNodeGen.WrapVectorsNodeGen;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-
 /**
  * Support for the {.C} and {.Fortran} calls. Arguments of these calls are only arrays of primitive
  * types, in the case character vectors, only the first string. The vectors coming from the R side
@@ -48,49 +35,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * seem necessary?
  */
 public interface CRFFI {
-
-    abstract class InvokeCNode extends RBaseNode {
-
-        @Child WrapVectorsNode argsWrapperNode = WrapVectorsNodeGen.create();
-        @Child UnwrapVectorsNode argsUnwrapperNode = UnwrapVectorsNodeGen.create();
-
-        /**
-         * Invoke the native method identified by {@code symbolInfo} passing it the arguments in
-         * {@code args}. The values in {@code args} should be support the IS_POINTER/AS_POINTER
-         * messages.
-         */
-        protected abstract void execute(NativeCallInfo nativeCallInfo, Object[] args);
-
-        public final RList dispatch(NativeCallInfo nativeCallInfo, byte naok, byte dup, RArgsValuesAndNames args) {
-            @SuppressWarnings("unused")
-            boolean dupArgs = RRuntime.fromLogical(dup);
-            @SuppressWarnings("unused")
-            boolean checkNA = RRuntime.fromLogical(naok);
-
-            VectorRFFIWrapper[] preparedArgs = argsWrapperNode.execute(args.getArguments());
-
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
-            try {
-                execute(nativeCallInfo, preparedArgs);
-                return RDataFactory.createList(argsUnwrapperNode.execute(preparedArgs), validateArgNames(preparedArgs.length, args.getSignature()));
-            } finally {
-                stateRFFI.afterDowncall(before);
-            }
-        }
-
-        private static RStringVector validateArgNames(int argsLength, ArgumentsSignature signature) {
-            String[] listArgNames = new String[argsLength];
-            for (int i = 0; i < argsLength; i++) {
-                String name = signature.getName(i);
-                if (name == null) {
-                    name = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                }
-                listArgNames[i] = name;
-            }
-            return RDataFactory.createStringVector(listArgNames, RDataFactory.COMPLETE_VECTOR);
-        }
-    }
 
     InvokeCNode createInvokeCNode();
 }

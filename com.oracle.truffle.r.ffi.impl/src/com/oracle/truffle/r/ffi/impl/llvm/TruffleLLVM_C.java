@@ -22,66 +22,23 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
-import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
-import com.oracle.truffle.r.runtime.ffi.interop.NativeRawArray;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNode.FunctionObjectGetter;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNodeGen;
 
-class TruffleLLVM_C implements CRFFI {
-    private static final class TruffleLLVM_InvokeCNode extends InvokeCNode {
+public class TruffleLLVM_C implements CRFFI {
 
-        @Child private Node messageNode;
-        private int numArgs;
-
+    static final class LLVMFunctionObjectGetter extends FunctionObjectGetter {
         @Override
-        public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
-            Object[] wargs = wrap(args);
-            try {
-                if (messageNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    // TODO: we assume that the number of args doesn't change, is that correct?
-                    messageNode = Message.createExecute(args.length).createNode();
-                    numArgs = args.length;
-                }
-                assert numArgs == args.length;
-                ForeignAccess.sendExecute(messageNode, nativeCallInfo.address.asTruffleObject(), wargs);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-
-        static Object[] wrap(Object[] args) {
-            Object[] nargs = new Object[args.length];
-            for (int i = 0; i < args.length; i++) {
-                Object arg = args[i];
-                Object narg;
-                if (arg instanceof int[]) {
-                    narg = new NativeIntegerArray((int[]) arg);
-                } else if (arg instanceof double[]) {
-                    narg = new NativeDoubleArray((double[]) arg);
-                } else if (arg instanceof byte[]) {
-                    narg = new NativeRawArray((byte[]) arg);
-                } else if (arg instanceof TruffleObject) {
-                    narg = arg;
-                } else {
-                    throw RInternalError.unimplemented(".C type: " + arg.getClass().getSimpleName());
-                }
-                nargs[i] = narg;
-            }
-            return nargs;
+        public TruffleObject execute(TruffleObject address, int arity) {
+            return address;
         }
     }
 
     @Override
     public InvokeCNode createInvokeCNode() {
-        return new TruffleLLVM_InvokeCNode();
+        return InvokeCNodeGen.create(new LLVMFunctionObjectGetter());
     }
 }

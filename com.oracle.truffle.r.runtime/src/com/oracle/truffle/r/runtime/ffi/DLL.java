@@ -49,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -315,8 +316,7 @@ public class DLL {
         @Override
         public long getCustomMirrorAddress() {
             RStringVector table = RDataFactory.createStringVector(new String[]{path, name}, true);
-            NativeDataAccess.asPointer(table);
-            return table.allocateNativeContents();
+            return new StringArrayWrapper(table).asPointer();
         }
     }
 

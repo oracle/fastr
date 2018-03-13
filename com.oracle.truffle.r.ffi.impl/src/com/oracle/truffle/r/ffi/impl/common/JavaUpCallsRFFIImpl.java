@@ -1360,7 +1360,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     private static VectorRFFIWrapper wrapString(String s) {
         CharSXPWrapper v = CharSXPWrapper.create(s);
         NativeDataAccess.asPointer(v);
-        return new VectorRFFIWrapper(v);
+        return VectorRFFIWrapper.get(v);
     }
 
     @Override
