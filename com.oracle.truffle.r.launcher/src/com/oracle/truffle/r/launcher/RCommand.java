@@ -285,7 +285,8 @@ public class RCommand {
                         try {
                             Source src;
                             if (srcFile != null) {
-                                src = Source.newBuilder("R", sb.toString(), srcFile.getName() + "#" + startLine).interactive(true).uri(srcFile.toURI()).buildLiteral();
+                                int endLine = consoleHandler.getCurrentLineIndex();
+                                src = Source.newBuilder("R", sb.toString(), srcFile.getName() + "#" + startLine + "-" + endLine).interactive(true).uri(srcFile.toURI()).buildLiteral();
                             } else {
                                 src = Source.newBuilder("R", sb.toString(), "<REPL>").interactive(true).buildLiteral();
                             }

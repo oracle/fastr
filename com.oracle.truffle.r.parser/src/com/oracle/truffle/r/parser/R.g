@@ -91,41 +91,53 @@ import com.oracle.truffle.r.runtime.RError;
     }
     
     private Source createFullSource(Source original) {
-        String originalName = original.getName();
+            String originalName = original.getName();
 
-        // check if source name is like 'path/to/source.R#45-54'
-        int hash_idx = originalName.lastIndexOf("#");
-        if (hash_idx == -1) {
+            // check if source name is like 'path/to/source.R#45-54'
+            int hash_idx = originalName.lastIndexOf("#");
+            if (hash_idx == -1) {
+                return original;
+            }
+
+            String fileName = originalName.substring(0, hash_idx);
+            String lineRange = originalName.substring(hash_idx + 1);
+
+            try {
+                // check for line range, e.g. '45-54'
+                int startLine = -1;
+                int endLine = -1;
+                int dashIdx = lineRange.indexOf('-');
+                if (dashIdx != -1) {
+                    startLine = Integer.parseInt(lineRange.substring(0, dashIdx));
+                    endLine = Integer.parseInt(lineRange.substring(dashIdx + 1));
+                } else {
+                    startLine = Integer.parseInt(lineRange);
+                    endLine = startLine;
+                }
+                Builder<IOException, RuntimeException, RuntimeException> newBuilder = Source.newBuilder(new File(fileName));
+                if (original.isInteractive()) {
+                    newBuilder.interactive();
+                }
+                Source fullSource = newBuilder.build();
+
+                // verify to avoid accidentally matching file names
+                for (int i = 0; i < endLine - startLine + 1; i++) {
+                    if (!original.getCharacters(i + 1).equals(fullSource.getCharacters(startLine + i))) {
+                        return original;
+                    }
+                }
+
+                fileStartOffset = -fullSource.getLineStartOffset(startLine);
+                return fullSource;
+            } catch (NumberFormatException e) {
+            	// invalid line number
+            } catch (IllegalArgumentException e) {
+            	// file name is accidentally named in the expected scheme
+            } catch (IOException e) {
+            } catch (RuntimeException e) {
+            }
             return original;
         }
-
-        String fileName = originalName.substring(0, hash_idx);
-        String lineRange = originalName.substring(hash_idx + 1);
-
-        try {
-            // check for line range, e.g. '45-54'
-            int startLine = -1;
-            int endLine = -1;
-            int dashIdx = lineRange.indexOf('-');
-            if (dashIdx != -1) {
-                startLine = Integer.parseInt(lineRange.substring(0, dashIdx));
-                endLine = Integer.parseInt(lineRange.substring(dashIdx + 1));
-            } else {
-                startLine = Integer.parseInt(lineRange);
-            }
-            Builder<IOException, RuntimeException, RuntimeException> newBuilder = Source.newBuilder(new File(fileName));
-            if (original.isInteractive()) {
-                newBuilder.interactive();
-            }
-            Source fullSource = newBuilder.build();
-            fileStartOffset = -fullSource.getLineStartOffset(startLine);
-            return fullSource;
-        } catch (NumberFormatException e) {
-        } catch (IOException e) {
-        } catch (RuntimeException e) {
-        }
-        return original;
-    }
     
     /**
      * Helper function that returns the last parsed token, usually used for building source sections.
