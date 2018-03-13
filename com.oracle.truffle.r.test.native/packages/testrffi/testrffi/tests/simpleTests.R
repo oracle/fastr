@@ -149,3 +149,27 @@ setAttrTarget
 
 typeof(api.ATTRIB(mtcars))
 api.ATTRIB(structure(c(1,2,3), myattr3 = 33))
+
+# SET_OBJECT
+# FastR does not fully support the SET_OBJECT fully,
+# the test is left here in case there is a need to actually implement it.
+x <- structure(3, class='abc')
+# just to make sure tirivial SET_OBJECT examples work
+api.SET_OBJECT(x, 1)
+api.SET_OBJECT(c(1,2,3), 0)
+
+## before SET_OBJECT(x,0), S3 dispatching works as expected:
+# foo <- function(x) UseMethod('foo')
+# foo.default <- function(x) cat("foo.default\n")
+# foo.abc <- function(x) cat("foo.abc\n")
+# as.character.abc <- function(...) "42"
+# paste(x) # "42"
+# foo(x) # "foo.abc"
+
+# api.SET_OBJECT(x, 0) # FastR throws error saying that this is not implemented
+
+## after SET_OBJECT(x,0), S3 dispatching does not work for internals
+# paste(x) # "3" -- as.character.abc not called
+# inherits(x, 'abc') # TRUE
+# foo(x) # "foo.abc"
+

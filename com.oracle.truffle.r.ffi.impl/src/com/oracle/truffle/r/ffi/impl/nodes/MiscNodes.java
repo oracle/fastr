@@ -41,12 +41,14 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RHasSlotNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionBodyNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionEnvironmentNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionFormalsNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetObjectNodeGen;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
 import com.oracle.truffle.r.nodes.access.HasSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
@@ -57,13 +59,17 @@ import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.SizeToOctalRawNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -367,6 +373,47 @@ public final class MiscNodes {
         public Object executeObject(Object value) {
             RContext.getEngine().printResult(RContext.getInstance(), value);
             return RNull.instance;
+        }
+    }
+
+    public abstract static class SetObjectNode extends FFIUpCallNode.Arg2 {
+        public static SetObjectNode create() {
+            return SetObjectNodeGen.create();
+        }
+
+        @Child private GetClassAttributeNode getClassAttributeNode;
+
+        @Specialization
+        protected Object doIt(RTypedValue target, int flag) {
+            // Note: "OBJECT" is an internal flag in SEXP that internal dispatching (in FastR
+            // INTERNAL_DISPATCH builtins) is checking first before even checking the attributes
+            // collection for presence of the "class" attribute. FastR always checks attributes and
+            // ignores the OBJECT flag. The only possible difference is hence if someone sets
+            // OBJECT flag to 0 for a SEXP that actually has some class, in which case in GNUR the
+            // internal dispatch builtins like 'as.character' will not dispatch to the S3 method
+            // even thought the object has S3 class and FastR would dispatch.
+            // See simpleTests.R in testrffi package for example.
+            if (flag == 0 && target instanceof RSharingAttributeStorage) {
+                RStringVector clazz = getClass((RSharingAttributeStorage) target);
+                if (clazz != null && clazz.getLength() != 0) {
+                    CompilerDirectives.transferToInterpreter();
+                    throw RError.error(RError.NO_CALLER, Message.GENERIC, String.format("SET_OBJECT(SEXP, 0) not implemented for SEXP with 'class' attribute"));
+                }
+            }
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected Object doOthers(Object value, Object flag) {
+            throw unsupportedTypes("SET_OBJECT", value, flag);
+        }
+
+        private RStringVector getClass(RSharingAttributeStorage value) {
+            if (getClassAttributeNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getClassAttributeNode = insert(GetClassAttributeNode.create());
+            }
+            return getClassAttributeNode.getClassAttr(value);
         }
     }
 }

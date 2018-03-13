@@ -228,6 +228,11 @@ SEXP api_NAMED(SEXP x) {
     return ScalarInteger(NAMED(x));
 }
 
+SEXP api_SET_OBJECT(SEXP x, SEXP flag) {
+    SET_OBJECT(x, INTEGER_VALUE(flag));
+    return R_NilValue;
+}
+
 SEXP api_SET_NAMED(SEXP x, SEXP v) {
     SET_NAMED(x, INTEGER_VALUE(v));
     return R_NilValue;

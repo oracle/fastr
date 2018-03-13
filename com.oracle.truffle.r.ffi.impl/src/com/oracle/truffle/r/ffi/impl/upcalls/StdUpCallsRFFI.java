@@ -58,6 +58,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
@@ -266,6 +267,9 @@ public interface StdUpCallsRFFI {
     Object VECTOR_ELT(Object x, long i);
 
     int NAMED(Object x);
+
+    @RFFIUpCallNode(SetObjectNode.class)
+    void SET_OBJECT(Object x, int flag);
 
     void SET_NAMED_FASTR(Object x, int v);
 

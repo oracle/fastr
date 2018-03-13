@@ -122,6 +122,8 @@ SEXP api_VECTOR_ELT(SEXP x, SEXP i);
 
 SEXP api_NAMED(SEXP x);
 
+SEXP api_SET_OBJECT(SEXP x, SEXP flag);
+
 SEXP api_SET_NAMED(SEXP x, SEXP v);
 
 SEXP api_TYPEOF(SEXP x);

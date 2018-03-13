@@ -556,6 +556,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public void SET_OBJECT(Object x, int flag) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public void SET_NAMED_FASTR(Object x, int v) {
         // Note: In GNUR this is a macro that sets the sxpinfo.named regardless of whether it makes
         // sense to name the actual value, for compatibilty we simply ignore values that are not
