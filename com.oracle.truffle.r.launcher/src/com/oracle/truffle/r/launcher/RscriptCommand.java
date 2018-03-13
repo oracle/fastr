@@ -142,7 +142,7 @@ public class RscriptCommand {
                         errStream).build()) {
             consoleHandler.setContext(context);
             String fileOption = options.getString(RCmdOption.FILE);
-            return RCommand.readEvalPrint(context, consoleHandler, new File(fileOption));
+            return RCommand.readEvalPrint(context, consoleHandler, fileOption != null ? new File(fileOption) : null);
         }
     }
 }
