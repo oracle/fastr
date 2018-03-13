@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 
 public class RPairListTests {
     @Test
@@ -48,7 +49,7 @@ public class RPairListTests {
 
     @Test
     public void testToList() {
-        RPairList pairList = RDataFactory.createPairList(1, RDataFactory.createPairList(2, RNull.instance, "name2"), "name1");
+        RPairList pairList = RDataFactory.createPairList(1, RDataFactory.createPairList(2, RNull.instance, sym("name2")), sym("name1"));
         RList result = pairList.toRList();
         assertArrayEquals(new String[]{"name1", "name2"}, result.getNames().getReadonlyData());
         assertArrayEquals(new Object[]{1, 2}, result.getDataWithoutCopying());
@@ -56,13 +57,17 @@ public class RPairListTests {
 
     @Test
     public void testCopy() {
-        RPairList pairList = RDataFactory.createPairList(1, RDataFactory.createPairList(2, RNull.instance, "name2"), "name1");
+        RPairList pairList = RDataFactory.createPairList(1, RDataFactory.createPairList(2, RNull.instance, sym("name2")), sym("name1"));
         RPairList copy = pairList.copy();
         assertEquals(2, copy.getLength());
-        assertEquals("name1", copy.getTag());
+        assertEquals("name1", copy.getTag().toString());
         assertEquals(1, copy.car());
-        assertEquals("name2", ((RPairList) copy.cdr()).getTag());
+        assertEquals("name2", ((RPairList) copy.cdr()).getTag().toString());
         assertEquals(2, ((RPairList) copy.cdr()).car());
         assertSame(RNull.instance, ((RPairList) copy.cdr()).cdr());
+    }
+
+    private static RSymbol sym(String name) {
+        return RDataFactory.createSymbol(name);
     }
 }

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Denotes the (rarely seen) {@code pairlist} type in R.
