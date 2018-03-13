@@ -39,7 +39,7 @@ public abstract class RNode extends RBaseNode implements RInstrumentableNode {
 
     @Override
     public boolean isInstrumentable() {
-        return true;
+        return (this instanceof RSyntaxElement && ((RSyntaxElement) this).getLazySourceSection() != null) || getSourceSection() != null;
     }
 
     @Override
