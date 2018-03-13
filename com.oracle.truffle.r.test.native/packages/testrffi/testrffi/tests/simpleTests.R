@@ -146,3 +146,6 @@ setAttrTarget <- c(1,2,3)
 attr(setAttrTarget, 'myattr2') <- 'some value';
 api.SET_ATTRIB(setAttrTarget, as.pairlist(list(myattr=42)))
 setAttrTarget
+
+typeof(api.ATTRIB(mtcars))
+api.ATTRIB(structure(c(1,2,3), myattr3 = 33))

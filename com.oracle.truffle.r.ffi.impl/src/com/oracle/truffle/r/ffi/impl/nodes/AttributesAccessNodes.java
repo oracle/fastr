@@ -101,7 +101,21 @@ public final class AttributesAccessNodes {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getAttributesNode = GetAttributesNode.create();
             }
-            return getAttributesNode.execute(obj);
+            Object resultObj = getAttributesNode.execute(obj);
+            if (resultObj == RNull.instance) {
+                return resultObj;
+            }
+            assert resultObj instanceof RList : "GetAttributesNode should return RList or RNull";
+            RList list = (RList) resultObj;
+            Object result = RNull.instance;
+            RStringVector names = list.getNames();
+            assert names.getLength() == list.getLength();
+            for (int i = list.getLength() - 1; i >= 0; i--) {
+                Object item = list.getDataAt(i);
+                RSymbol symbol = RDataFactory.createSymbol(names.getDataAt(i));
+                result = RDataFactory.createPairList(item, result, symbol);
+            }
+            return result;
         }
 
         @Fallback
