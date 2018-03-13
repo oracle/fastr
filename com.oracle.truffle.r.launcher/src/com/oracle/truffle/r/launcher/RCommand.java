@@ -262,7 +262,6 @@ public class RCommand {
      */
     public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile) {
         int lastStatus = 0;
-        int line = 0;
         try {
             while (true) { // processing inputs
                 boolean doEcho = doEcho(context);
@@ -272,7 +271,6 @@ public class RCommand {
                     if (input == null) {
                         throw new EOFException();
                     }
-                    line++;
                     String trInput = input.trim();
                     if (trInput.equals("") || trInput.charAt(0) == '#') {
                         // nothing to parse
@@ -281,12 +279,13 @@ public class RCommand {
 
                     String continuePrompt = null;
                     StringBuilder sb = new StringBuilder(input);
+                    int startLine = consoleHandler.getCurrentLineIndex();
                     while (true) { // processing subsequent lines while input is incomplete
                         lastStatus = 0;
                         try {
                             Source src;
                             if (srcFile != null) {
-                                src = Source.newBuilder("R", sb.toString(), srcFile.getName() + "#" + line).interactive(true).uri(srcFile.toURI()).buildLiteral();
+                                src = Source.newBuilder("R", sb.toString(), srcFile.getName() + "#" + startLine).interactive(true).uri(srcFile.toURI()).buildLiteral();
                             } else {
                                 src = Source.newBuilder("R", sb.toString(), "<REPL>").interactive(true).buildLiteral();
                             }

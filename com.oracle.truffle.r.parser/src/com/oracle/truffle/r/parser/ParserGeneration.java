@@ -96,6 +96,7 @@ public class ParserGeneration {
         "handle four and more dots as identifier",
         "allow greek characters in identifiers",
         "allow everything but newlines in %<ident>% operators",
-        "allow strings in :: and :::"
+        "allow strings in :: and :::",
+        "use file for interactive single-line source"
     };
 }

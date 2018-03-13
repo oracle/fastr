@@ -28,6 +28,7 @@ package com.oracle.truffle.r.parser;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -37,6 +38,7 @@ import java.net.URISyntaxException;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.api.source.Source.Builder;
 import com.oracle.truffle.api.source.SourceSection;
 
 import com.oracle.truffle.r.runtime.RError;
@@ -78,10 +80,51 @@ import com.oracle.truffle.r.runtime.RError;
     public RParser(Source source, RCodeBuilder<T> builder, TruffleRLanguage language) {
         super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCharacters().toString()))));
         assert source != null && builder != null;
-        this.source = source;
         this.initialSource = source;
         this.builder = builder;
         this.language = language;
+        if (source.getURI() != null && source.getName().contains("#")) {
+        	this.source = createFullSource(source);
+        } else {
+        	this.source = source;
+        }
+    }
+    
+    private Source createFullSource(Source original) {
+        String originalName = original.getName();
+
+        // check if source name is like 'path/to/source.R#45-54'
+        int hash_idx = originalName.lastIndexOf("#");
+        if (hash_idx == -1) {
+            return original;
+        }
+
+        String fileName = originalName.substring(0, hash_idx);
+        String lineRange = originalName.substring(hash_idx + 1);
+
+        try {
+            // check for line range, e.g. '45-54'
+            int startLine = -1;
+            int endLine = -1;
+            int dashIdx = lineRange.indexOf('-');
+            if (dashIdx != -1) {
+                startLine = Integer.parseInt(lineRange.substring(0, dashIdx));
+                endLine = Integer.parseInt(lineRange.substring(dashIdx + 1));
+            } else {
+                startLine = Integer.parseInt(lineRange);
+            }
+            Builder<IOException, RuntimeException, RuntimeException> newBuilder = Source.newBuilder(new File(fileName));
+            if (original.isInteractive()) {
+                newBuilder.interactive();
+            }
+            Source fullSource = newBuilder.build();
+            fileStartOffset = -fullSource.getLineStartOffset(startLine);
+            return fullSource;
+        } catch (NumberFormatException e) {
+        } catch (IOException e) {
+        } catch (RuntimeException e) {
+        }
+        return original;
     }
     
     /**

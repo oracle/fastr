@@ -35,6 +35,7 @@ public class DefaultConsoleHandler extends ConsoleHandler {
     private final BufferedReader in;
     private final PrintStream out;
     private String prompt;
+    private int currentLine;
 
     public DefaultConsoleHandler(InputStream in, OutputStream out, boolean interactive) {
         this.in = new BufferedReader(new InputStreamReader(in));
@@ -49,6 +50,7 @@ public class DefaultConsoleHandler extends ConsoleHandler {
                 out.print(prompt);
             }
             String line = in.readLine();
+            currentLine++;
             if ((line == null || "".equals(line.trim())) && prompt != null && !interactive) {
                 out.println();
             }
@@ -61,5 +63,10 @@ public class DefaultConsoleHandler extends ConsoleHandler {
     @Override
     public void setPrompt(String prompt) {
         this.prompt = prompt;
+    }
+
+    @Override
+    public int getCurrentLineIndex() {
+        return currentLine;
     }
 }

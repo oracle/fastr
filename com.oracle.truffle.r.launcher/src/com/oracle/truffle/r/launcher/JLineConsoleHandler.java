@@ -38,6 +38,7 @@ public class JLineConsoleHandler extends ConsoleHandler {
     private final ConsoleReader console;
     private final MemoryHistory history;
     private final boolean noPrompt;
+    private int currentLine;
 
     public JLineConsoleHandler(InputStream inStream, OutputStream outStream, boolean noPrompt) {
         this.noPrompt = noPrompt;
@@ -65,6 +66,7 @@ public class JLineConsoleHandler extends ConsoleHandler {
     public String readLine() {
         try {
             console.getTerminal().init();
+            currentLine++;
             return console.readLine();
         } catch (UserInterruptException e) {
             // interrupted by ctrl-c
@@ -93,5 +95,10 @@ public class JLineConsoleHandler extends ConsoleHandler {
             result[i] = history.get(i).toString();
         }
         return result;
+    }
+
+    @Override
+    public int getCurrentLineIndex() {
+        return currentLine;
     }
 }

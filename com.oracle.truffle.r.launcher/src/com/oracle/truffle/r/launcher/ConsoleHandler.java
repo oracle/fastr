@@ -40,6 +40,11 @@ public abstract class ConsoleHandler {
     public abstract String readLine();
 
     /**
+     * Return the current 1-based line number.
+     */
+    public abstract int getCurrentLineIndex();
+
+    /**
      * Set the R prompt.
      */
     public abstract void setPrompt(String prompt);

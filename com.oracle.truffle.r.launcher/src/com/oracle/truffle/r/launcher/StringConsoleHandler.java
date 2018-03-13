@@ -54,4 +54,9 @@ class StringConsoleHandler extends ConsoleHandler {
     public void setPrompt(String prompt) {
         this.prompt = prompt;
     }
+
+    @Override
+    public int getCurrentLineIndex() {
+        return currentLine;
+    }
 }
