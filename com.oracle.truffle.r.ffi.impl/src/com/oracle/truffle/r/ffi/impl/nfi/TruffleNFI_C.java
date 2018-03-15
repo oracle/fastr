@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,17 +24,16 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_CFactory.TruffleNFI_InvokeCNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
-import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNode.FunctionObjectGetter;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNodeGen;
 
 public class TruffleNFI_C implements CRFFI {
 
@@ -58,51 +57,25 @@ public class TruffleNFI_C implements CRFFI {
         }
     }
 
-    abstract static class TruffleNFI_InvokeCNode extends InvokeCNode {
+    static final class NFIFunctionObjectGetter extends FunctionObjectGetter {
 
         @Child private Node bindNode = Message.createInvoke(1).createNode();
 
+        @Override
         @TruffleBoundary
-        protected TruffleObject getFunction(TruffleObject address, int arity) {
+        public TruffleObject execute(TruffleObject address, int arity) {
             // cache signatures
             try {
-                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind", getSignatureForArity(arity));
+                return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind",
+                                getSignatureForArity(arity));
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }
-        }
-
-        @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
-        protected void invokeCallCached(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, Object[] args,
-                        @SuppressWarnings("unused") @Cached("args.length") int cachedArgsLength,
-                        @Cached("createExecute(cachedArgsLength)") Node executeNode,
-                        @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
-                        @Cached("getFunction(cachedAddress, cachedArgsLength)") TruffleObject cachedFunction) {
-            try {
-                ForeignAccess.sendExecute(executeNode, cachedFunction, args);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-
-        @Specialization(limit = "99", guards = "args.length == cachedArgsLength")
-        protected void invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
-                        @Cached("args.length") int cachedArgsLength,
-                        @Cached("createExecute(cachedArgsLength)") Node executeNode) {
-            try {
-                ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
-            } catch (InteropException ex) {
-                throw RInternalError.shouldNotReachHere(ex);
-            }
-        }
-
-        public static Node createExecute(int n) {
-            return Message.createExecute(n).createNode();
         }
     }
 
     @Override
     public InvokeCNode createInvokeCNode() {
-        return TruffleNFI_InvokeCNodeGen.create();
+        return InvokeCNodeGen.create(new NFIFunctionObjectGetter());
     }
 }

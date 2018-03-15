@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;

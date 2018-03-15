@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -55,7 +56,7 @@ public class FortranAndCFunctions {
 
     protected abstract static class CRFFIAdapter extends RBuiltinNode.Arg6 {
 
-        @Child protected CRFFI.InvokeCNode invokeCNode = RFFIFactory.getCRFFI().createInvokeCNode();
+        @Child protected InvokeCNode invokeCNode = RFFIFactory.getCRFFI().createInvokeCNode();
 
         @Override
         public Object[] getDefaultParameterValues() {

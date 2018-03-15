@@ -38,8 +38,9 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
-import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -48,6 +49,7 @@ import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -313,7 +315,8 @@ public class DLL {
 
         @Override
         public long getCustomMirrorAddress() {
-            return StringWrapper.allocateNativeStringVector(RDataFactory.createStringVector(new String[]{path, name}, true));
+            RStringVector table = RDataFactory.createStringVector(new String[]{path, name}, true);
+            return new StringArrayWrapper(table).asPointer();
         }
     }
 
