@@ -354,7 +354,8 @@ public final class SeqFunctions {
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.create();
 
         static {
-            Casts.noCasts(SeqAlong.class);
+            Casts casts = new Casts(SeqAlong.class);
+            casts.arg(0).mustNotBeMissing(Message.ARGUMENTS_PASSED, 0, "'seq_along'", 1);
         }
 
         @Specialization(guards = "!hasClass(value)")

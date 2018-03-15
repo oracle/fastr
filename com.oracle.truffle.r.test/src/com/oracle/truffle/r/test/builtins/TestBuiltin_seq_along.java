@@ -141,5 +141,6 @@ public class TestBuiltin_seq_along extends TestBase {
         assertEval(Output.IgnoreWarningContext, Output.IgnoreErrorContext, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 'hello world'; seq_along(x) }");
         assertEval("{ length <- function(x) 42; seq_along(c(1,2,3)) }");
         assertEval("{ assign('length.myclass', function(...) 42, envir=.__S3MethodsTable__.); x <- 1; class(x) <- 'myclass'; res <- seq_along(x); rm('length.myclass', envir=.__S3MethodsTable__.); res }");
+        assertEval("seq_along()");
     }
 }
