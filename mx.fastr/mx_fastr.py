@@ -548,14 +548,11 @@ def nativebuild(args):
 
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
-    if mx.suite("sulong", fatalIfMissing=False):
+    if mx.suite("sulong", fatalIfMissing=False) and not _fastr_suite.isBinarySuite():
         # native.recommended runs FastR, it already has a build dependency to the FASTR distribution
         # if we are running with sulong we also need the SULONG distribution
-        rec = mx.project('com.oracle.truffle.r.native.recommended', fatalIfMissing=False)
-        if rec:
-            rec.buildDependencies += [mx.distribution('SULONG')]
-        else:
-            assert _fastr_suite.isBinarySuite()
+        rec = mx.project('com.oracle.truffle.r.native.recommended')
+        rec.buildDependencies += [mx.distribution('SULONG')]
 
 mx_unittest.add_config_participant(_unittest_config_participant)
 
