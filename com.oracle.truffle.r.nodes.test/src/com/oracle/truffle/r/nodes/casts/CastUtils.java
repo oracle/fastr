@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -851,7 +851,7 @@ public class CastUtils {
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(1, 1)));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(-1, 1)));
             samples.add(RDataFactory.createComplexVector(new double[]{-Math.PI, 0, Math.PI,
-                            RRuntime.DOUBLE_NA, -Math.PI, 0, Math.PI, RRuntime.DOUBLE_NA}, true));
+                            RRuntime.DOUBLE_NA, -Math.PI, 0, Math.PI, RRuntime.DOUBLE_NA}, false));
             samples.add(RDataFactory.createComplexVector(new double[]{-Math.PI, 0, Math.PI,
                             RRuntime.DOUBLE_NA, -Math.PI, 0, Math.PI, RRuntime.DOUBLE_NA}, false));
             samples.add(RDataFactory.createComplexVector(new double[]{RRuntime.DOUBLE_NA, RRuntime.DOUBLE_NA}, false));

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,10 +88,13 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -114,7 +117,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsDoubleVector() {
         arg.asDoubleVector();
-        assertTypes(RNull.class, RMissing.class, double.class, RDoubleSequence.class, RDoubleVector.class);
+        assertTypes(RNull.class, RMissing.class, double.class, RAbstractDoubleVector.class, RDoubleVector.class);
     }
 
     @Test
@@ -126,25 +129,25 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testAsLogicalVector() {
         arg.asLogicalVector();
-        assertTypes(RNull.class, RMissing.class, byte.class, RLogicalVector.class);
+        assertTypes(RNull.class, RMissing.class, byte.class, RAbstractLogicalVector.class, RLogicalVector.class);
     }
 
     @Test
     public void testAsStringVector() {
         arg.asStringVector();
-        assertTypes(RNull.class, RMissing.class, String.class, RStringVector.class);
+        assertTypes(RNull.class, RMissing.class, String.class, RAbstractStringVector.class, RStringVector.class, RStringSequence.class);
     }
 
     @Test
     public void testAsRawVector() {
         arg.asRawVector();
-        assertTypes(RNull.class, RMissing.class, RRaw.class, RRawVector.class);
+        assertTypes(RNull.class, RMissing.class, RAbstractRawVector.class, RRaw.class, RRawVector.class);
     }
 
     @Test
     public void testAsComplexVector() {
         arg.asComplexVector();
-        assertTypes(RNull.class, RMissing.class, RComplex.class, RComplexVector.class);
+        assertTypes(RNull.class, RMissing.class, RAbstractComplexVector.class, RComplex.class, RComplexVector.class);
     }
 
     @Test
@@ -442,7 +445,7 @@ public class ResultTypesAnalyserTest {
     @Test
     public void testMustNotBeMissingAndBoxPrimitive() {
         arg.mustNotBeMissing().returnIf(nullValue(), nullConstant()).mustBe(stringValue()).boxPrimitive().asStringVector();
-        assertTypes(atom(RNull.class).or(atom(RStringVector.class)), true);
+        assertTypes(atom(RNull.class).or(atom(RStringVector.class).or(atom(RAbstractStringVector.class))), true);
     }
 
     @Test
