@@ -79,7 +79,7 @@ public final class UpperBoundsConjunction implements WildcardType, TypeAndInstan
 
     public static UpperBoundsConjunction create(Stream<? extends Type> typeStream) {
         Set<Type> upperBounds = typeStream.flatMap(t -> ((t instanceof UpperBoundsConjunction && !((UpperBoundsConjunction) t).isWildcard()) ? ((UpperBoundsConjunction) t).upperBounds
-                        : Collections.singleton(t)).stream()).collect(Collectors.toSet());
+                        : Collections.singleton((Type) t)).stream()).collect(Collectors.toSet());
         return new UpperBoundsConjunction(upperBounds, false, null);
     }
 

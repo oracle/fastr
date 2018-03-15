@@ -190,6 +190,7 @@ public final class FFIProcessor extends AbstractProcessor {
         List<? extends VariableElement> params = m.getParameters();
         StringBuilder arguments = new StringBuilder();
         StringBuilder unwrapNodes = new StringBuilder();
+        boolean needsUnwrapImport = false;
         for (int i = 0; i < params.size(); i++) {
             if (i != 0) {
                 arguments.append(", ");
@@ -209,6 +210,7 @@ public final class FFIProcessor extends AbstractProcessor {
             if (needCast) {
                 arguments.append('(').append(paramTypeName).append(") ");
             }
+            needsUnwrapImport |= needsUnwrap;
             if (needsUnwrap) {
                 arguments.append(paramName).append("Unwrap").append(".execute(");
                 unwrapNodes.append("                @Child private FFIUnwrapNode ").append(paramName).append("Unwrap").append(" = FFIUnwrapNode.create();\n");
@@ -253,8 +255,13 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
-        w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
-        w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;\n");
+
+        if (needsUnwrapImport) {
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
+        }
+        if (needsReturnWrap) {
+            w.append("import com.oracle.truffle.r.runtime.ffi.FFIWrapNode;\n");
+        }
         w.append("\n");
         w.append("// Checkstyle: stop method name check\n");
         w.append("\n");

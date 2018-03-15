@@ -32,10 +32,10 @@ public abstract class FFIUpCallNode extends Node {
     protected abstract int numArgs();
 
     @TruffleBoundary
-    protected final RError unsupportedTypes(String name, Object... args) {
+    protected static final RError unsupportedTypes(String name, Object... args) {
         assert args.length > 0;
         StringBuilder sb = new StringBuilder(args.length * 15);
-        sb.append("wrong argument types provided to Rf_duplicated: ").append(Utils.getTypeName(args[0]));
+        sb.append("wrong argument types provided to ").append(name).append(": ").append(Utils.getTypeName(args[0]));
         for (int i = 1; i < args.length; i++) {
             sb.append(',').append(Utils.getTypeName(args[i]));
         }
