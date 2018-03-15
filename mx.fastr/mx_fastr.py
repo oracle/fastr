@@ -44,11 +44,6 @@ was passed as an mx global option.
 '''
 
 _fastr_suite = mx.suite('fastr')
-'''
-If this is None, then we run under the standard VM in interpreted mode only.
-'''
-_mx_graal = mx.suite("compiler", fatalIfMissing=False)
-_mx_sulong = mx.suite("sulong", fatalIfMissing=False)
 
 _command_class_dict = {'r': "com.oracle.truffle.r.launcher.RCommand",
                        'rscript': "com.oracle.truffle.r.launcher.RscriptCommand",
@@ -64,7 +59,7 @@ def r_version():
     return 'R-3.4.0'
 
 def get_default_jdk():
-    if _mx_graal:
+    if mx.suite("compiler", fatalIfMissing=False):
         tag = 'jvmci'
     else:
         tag = None
@@ -92,7 +87,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
         jdk = get_default_jdk()
 
     dists = ['FASTR']
-    if _mx_sulong:
+    if mx.suite("sulong", fatalIfMissing=False):
         dists.append('SULONG')
 
     vmArgs = mx.get_runtime_jvm_args(dists, jdk=jdk)
@@ -141,15 +136,16 @@ def set_graal_options():
     '''
     If Graal is enabled, set some options specific to FastR
     '''
-    if _mx_graal:
+    if mx.suite("compiler", fatalIfMissing=False):
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         return result
     else:
         return []
 
 def _sulong_options():
-    if _mx_sulong:
-        return ['-Dpolyglot.llvm.libraryPath=' + _mx_sulong.dir + '/mxbuild/sulong-libs']
+    mx_sulong = mx.suite("sulong", fatalIfMissing=False)
+    if mx_sulong:
+        return ['-Dpolyglot.llvm.libraryPath=' + mx_sulong.dir + '/mxbuild/sulong-libs']
     else:
         return []
 
@@ -552,7 +548,7 @@ def nativebuild(args):
 
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
-    if _mx_sulong:
+    if mx.suite("sulong", fatalIfMissing=False) and not _fastr_suite.isBinarySuite():
         # native.recommended runs FastR, it already has a build dependency to the FASTR distribution
         # if we are running with sulong we also need the SULONG distribution
         rec = mx.project('com.oracle.truffle.r.native.recommended')
