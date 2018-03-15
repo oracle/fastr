@@ -414,7 +414,7 @@ public class RDeparse {
                         s.element.setSourceSection(source.createSection(s.start, s.length));
                     }
                 }
-            } catch (AccessDeniedException | FileAlreadyExistsException e) {
+            } catch (AccessDeniedException | FileAlreadyExistsException | IllegalArgumentException e) {
                 fixupSourcesTextInternal();
             } catch (IOException e) {
                 RInternalError.reportError(e);
