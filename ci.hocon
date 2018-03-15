@@ -8,7 +8,6 @@ java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
 java8 : {name : labsjdk, version : "8u161-jvmci-0.41", platformspecific: true}
 java9 : {name : labsjdk, version : "9-ea+168", platformspecific: true}
-jdt : {name : "ecj", version : "4.5.1", platformspecific : false}
 
 java8Downloads : {
   downloads : {
@@ -16,7 +15,6 @@ java8Downloads : {
       ${java7}
     ]}
     JAVA_HOME : ${java8}
-    JDT : ${jdt}
   }
 }
 
@@ -101,10 +99,10 @@ gateTestCommon : ${common} {
   ]
 }
 
-gateTestLinux : ${gateTestCommon} {
+gateTestLinux : ${gateTestCommon}  {
 }
 
-gateTestNoSpecialsLinux : ${common} {
+gateTestNoSpecialsLinux : ${common}  {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
   ]
@@ -120,11 +118,11 @@ darwinEnvironment : {
   }
 }
 
-gateTestDarwin : ${gateTestCommon} ${darwinEnvironment} {
+gateTestDarwin : ${gateTestCommon} ${darwinEnvironment}  {
   packages : ${packagesDarwin}
 }
 
-gateTestLinuxNFI : ${gateTestCommon} {
+gateTestLinuxNFI : ${gateTestCommon}  {
   environment :  {
       FASTR_RFFI : "nfi"
       TZDIR: "/usr/share/zoneinfo"
@@ -138,7 +136,7 @@ requireGCC: {
     }
 }
 
-gateTestLinuxLLVM : ${common} ${requireGCC} {
+gateTestLinuxLLVM : ${common} ${requireGCC}  {
 
   packages: {
       llvm: "==3.8"
@@ -174,7 +172,7 @@ gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
   }
 }
 
-gateTestDarwinLLVM: ${common} ${darwinEnvironment} ${requireGCC} {
+gateTestDarwinLLVM: ${common} ${darwinEnvironment} ${requireGCC}  {
   packages : ${packagesDarwin} {
     llvm: "==4.0.1"
   }
@@ -223,7 +221,7 @@ gateStyle : ${common} {
     ECLIPSE_EXE : "$ECLIPSE/eclipse"
   }
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithEcj,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithEcj,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check,BuildJavaWithEcj"]
   ]
 }
 
