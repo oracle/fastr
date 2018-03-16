@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.KeyInfo.Builder;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -476,9 +475,11 @@ public class ListMR {
         }
 
         private static int buildKeys(Object value) {
-            Builder builder = KeyInfo.newBuilder();
-            builder.setReadable(true).setWritable(true).setInvocable(value instanceof RFunction);
-            return builder.build();
+            int result = KeyInfo.READABLE | KeyInfo.MODIFIABLE;
+            if (value instanceof RFunction) {
+                result |= KeyInfo.INVOCABLE;
+            }
+            return result;
         }
 
         private void initExtractNode() {

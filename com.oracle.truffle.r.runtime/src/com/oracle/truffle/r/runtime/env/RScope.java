@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.KeyInfo.Builder;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -236,16 +235,14 @@ public final class RScope {
             public abstract static class VarMapsKeyInfoNode extends Node {
 
                 protected Object access(VariablesObject receiver, String identifier) {
-                    Builder builder = KeyInfo.newBuilder();
-                    builder.setReadable(true);
-
+                    int result = KeyInfo.READABLE;
                     if (!receiver.frameAccess.bindingIsLocked(identifier)) {
-                        builder.setWritable(true);
+                        result |= KeyInfo.MODIFIABLE;
                     }
                     if (receiver.frameAccess.get(identifier) instanceof RFunction) {
-                        builder.setInvocable(true);
+                        result |= KeyInfo.INVOCABLE;
                     }
-                    return builder.build();
+                    return result;
                 }
             }
 
@@ -356,8 +353,7 @@ public final class RScope {
             @Resolve(message = "HAS_SIZE")
             abstract static class ArgNamesHasSizeNode extends Node {
 
-                @SuppressWarnings("unused")
-                public Object access(ArgumentNamesObject varNames) {
+                public Object access(@SuppressWarnings("unused") ArgumentNamesObject varNames) {
                     return true;
                 }
             }

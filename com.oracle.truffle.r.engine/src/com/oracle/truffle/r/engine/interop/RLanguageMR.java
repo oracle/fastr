@@ -155,11 +155,8 @@ public class RLanguageMR {
             if (unknownIdentifier.profile(idx < 0 || idx >= receiver.getLength())) {
                 return 0;
             }
-
-            KeyInfo.Builder builder = KeyInfo.newBuilder();
-            builder.setReadable(true);
             // TODO what about writeble/invocable/...
-            return builder.build();
+            return KeyInfo.READABLE;
         }
 
         @Fallback

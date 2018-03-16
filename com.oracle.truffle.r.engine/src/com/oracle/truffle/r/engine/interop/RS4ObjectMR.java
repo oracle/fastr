@@ -28,7 +28,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.KeyInfo.Builder;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -233,10 +232,9 @@ public class RS4ObjectMR {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getAttributeNode = insert(GetAttributeNode.create());
             }
-            Builder builder = KeyInfo.newBuilder();
-            builder.setReadable(true).setWritable(!identifier.equals("class"));
-            builder.setInvocable(getAttributeNode.execute(receiver, identifier) instanceof RFunction);
-            return builder.build();
+            int writeable = !identifier.equals("class") ? KeyInfo.MODIFIABLE : 0;
+            int executable = getAttributeNode.execute(receiver, identifier) instanceof RFunction ? KeyInfo.INVOCABLE : 0;
+            return KeyInfo.READABLE | writeable | executable;
         }
 
         protected static ArrayAttributeNode createArrayAttributeNode() {
