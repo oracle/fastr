@@ -1218,11 +1218,12 @@ int REFCNT(SEXP x) {
 
 void SET_OBJECT(SEXP x, int v) {
     TRACE0();
-    unimplemented("SET_OBJECT");
+    ((call_SET_OBJECT) callbacks[SET_OBJECT_x])(x, v);
 }
 
 void SET_TYPEOF(SEXP x, int v) {
     TRACE0();
+    // TODO: we will be able to implement this for RLanguage <-> RPairList once they are unified in one Java class
     unimplemented("SET_TYPEOF");
 }
 
@@ -1241,7 +1242,7 @@ void SET_NAMED(SEXP x, int v) {
 
 void SET_ATTRIB(SEXP x, SEXP v) {
     TRACE0();
-    unimplemented("SET_ATTRIB");
+    ((call_SET_ATTRIB) callbacks[SET_ATTRIB_x])(x, v);
 }
 
 void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
@@ -1253,6 +1254,7 @@ void DUPLICATE_ATTRIB(SEXP to, SEXP from) {
 R_len_t R_BadLongVector(SEXP x, const char *y, int z) {
     TRACE0();
     unimplemented("R_BadLongVector");
+    exit(1);
     // "no return" function
 }
 

@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.nodes;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.runtime.RError.NO_CALLER;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -33,10 +34,12 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.ATTRIBNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMostAttribNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.SetAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.TAGNodeGen;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -45,14 +48,18 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 
@@ -94,7 +101,21 @@ public final class AttributesAccessNodes {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getAttributesNode = GetAttributesNode.create();
             }
-            return getAttributesNode.execute(obj);
+            Object resultObj = getAttributesNode.execute(obj);
+            if (resultObj == RNull.instance) {
+                return resultObj;
+            }
+            assert resultObj instanceof RList : "GetAttributesNode should return RList or RNull";
+            RList list = (RList) resultObj;
+            Object result = RNull.instance;
+            RStringVector names = list.getNames();
+            assert names.getLength() == list.getLength();
+            for (int i = list.getLength() - 1; i >= 0; i--) {
+                Object item = list.getDataAt(i);
+                RSymbol symbol = RDataFactory.createSymbol(names.getDataAt(i));
+                result = RDataFactory.createPairList(item, result, symbol);
+            }
+            return result;
         }
 
         @Fallback
@@ -104,7 +125,7 @@ public final class AttributesAccessNodes {
             } else {
                 CompilerDirectives.transferToInterpreter();
                 String type = obj == null ? "null" : obj.getClass().getSimpleName();
-                throw RError.error(RError.NO_CALLER, Message.GENERIC, "object of type '" + type + "' cannot be attributed");
+                throw RError.error(NO_CALLER, Message.GENERIC, "object of type '" + type + "' cannot be attributed");
             }
         }
 
@@ -184,6 +205,52 @@ public final class AttributesAccessNodes {
 
         public static CopyMostAttrib create() {
             return CopyMostAttribNodeGen.create();
+        }
+    }
+
+    public abstract static class SetAttribNode extends FFIUpCallNode.Arg2 {
+
+        public static SetAttribNode create() {
+            return SetAttribNodeGen.create();
+        }
+
+        @Specialization
+        protected Object doLanguage(RSharingAttributeStorage target, RLanguage attributes,
+                        @Cached("create()") SetAttributeNode setAttribNode) {
+            return doIt(target, getPairList(attributes), setAttribNode);
+        }
+
+        @Specialization
+        protected Object doIt(RSharingAttributeStorage target, RPairList attributes,
+                        @Cached("create()") SetAttributeNode setAttribNode) {
+            clearAttrs(target);
+            for (RPairList attr : attributes) {
+                Object tag = attr.getTag();
+                if (!(tag instanceof RSymbol)) {
+                    CompilerDirectives.transferToInterpreter();
+                    // GNUR seems to set the attr name to NULL and fails when printing
+                    // To be compatible we don't fail, but at least print warning...
+                    RError.warning(NO_CALLER, Message.GENERIC, String.format("SET_ATTRIB: tag in the attributes pairlist must be a symbol. %s given.", Utils.getTypeName(tag)));
+                    continue;
+                }
+                setAttribNode.execute(target, ((RSymbol) tag).getName(), attr.car());
+            }
+            return RNull.instance;
+        }
+
+        @Fallback
+        protected Object doOthers(Object target, Object attrs) {
+            throw unsupportedTypes("SET_ATTRIB", target, attrs);
+        }
+
+        @TruffleBoundary
+        private static void clearAttrs(RSharingAttributeStorage target) {
+            target.initAttributes(RAttributesLayout.createRAttributes());
+        }
+
+        @TruffleBoundary
+        private static RPairList getPairList(RLanguage attributes) {
+            return attributes.getPairList();
         }
     }
 }

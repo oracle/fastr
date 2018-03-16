@@ -526,6 +526,37 @@ def gnu_rtests(args, env=None):
     finally:
         shutil.rmtree(join(_fastr_suite.dir, 'deparse'), True)
 
+def run_codegen(main, args, **kwargs):
+    '''
+    Runs java with the com.oracle.truffle.r.ffi.codegen project on the class path and "main" as the entry point.
+    '''
+    jdk = get_default_jdk()
+    vmArgs = mx.get_runtime_jvm_args('com.oracle.truffle.r.ffi.codegen', jdk=jdk)
+    vmArgs += ['-ea', '-esa']
+    vmArgs = _sanitize_vmArgs(jdk, vmArgs)
+    vmArgs.append(main)
+    return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
+
+def run_testrfficodegen(args):
+    '''
+    Regenerates the generated code in com.oracle.truffle.r.test.native/packages/testrffi/testrffi package.
+    '''
+    testrffi_path = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/packages/testrffi/testrffi')
+    package = 'com.oracle.truffle.r.ffi.codegen.'
+    run_codegen(package + 'FFITestsCodeGen', [join(testrffi_path, 'src/rffiwrappers.c')])
+    run_codegen(package + 'FFITestsCodeGen', ['-h', join(testrffi_path, 'src/rffiwrappers.h')])
+    run_codegen(package + 'FFITestsCodeGen', ['-init', join(testrffi_path, 'src/init_api.h')])
+    run_codegen(package + 'FFITestsCodeGen', ['-r', join(testrffi_path, 'R/api.R')])
+
+def run_rfficodegen(args):
+    '''
+    Regenerates the generated code that glues together the Java and C part.
+    The generated files are located in in com.oracle.truffle.r.native/fficall/src.
+    '''
+    rffisrc_path = join(_fastr_suite.dir, 'com.oracle.truffle.r.native/fficall/src')
+    package = 'com.oracle.truffle.r.ffi.codegen.'
+    run_codegen(package + 'FFIUpCallsIndexCodeGen', [join(rffisrc_path, 'common/rffi_upcallsindex.h')])
+
 def nativebuild(args):
     '''
     force the build of part or all of the native project
@@ -586,6 +617,8 @@ _commands = {
     'gnu-rscript' : [gnu_rscript, '[]'],
     'gnu-rtests' : [gnu_rtests, '[]'],
     'nativebuild' : [nativebuild, '[]'],
+    'testrfficodegen' : [run_testrfficodegen, '[]'],
+    'rfficodegen' : [run_rfficodegen, '[]']
     }
 
 mx.update_commands(_fastr_suite, _commands)

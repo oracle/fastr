@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1998  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2015,  The R Core Team
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -354,7 +354,8 @@ public final class SeqFunctions {
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.create();
 
         static {
-            Casts.noCasts(SeqAlong.class);
+            Casts casts = new Casts(SeqAlong.class);
+            casts.arg(0).mustNotBeMissing(Message.ARGUMENTS_PASSED, 0, "'seq_along'", 1);
         }
 
         @Specialization(guards = "!hasClass(value)")

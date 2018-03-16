@@ -525,6 +525,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public void SET_ATTRIB(Object target, Object attributes) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public Object STRING_ELT(Object x, long i) {
         RAbstractStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractStringVector.class);
         return CharSXPWrapper.create(vector.getDataAt((int) i));
@@ -548,6 +553,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             // Note: it may be that we need to remember this for all types, GNUR does
             return 2;
         }
+    }
+
+    @Override
+    public void SET_OBJECT(Object x, int flag) {
+        throw implementedAsNode();
     }
 
     @Override

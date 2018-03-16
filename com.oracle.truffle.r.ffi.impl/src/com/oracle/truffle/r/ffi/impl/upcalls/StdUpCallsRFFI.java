@@ -29,6 +29,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.ATTRIB;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.GetAttrib;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.SetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
@@ -57,6 +58,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
@@ -242,6 +244,9 @@ public interface StdUpCallsRFFI {
 
     void SET_VECTOR_ELT(Object x, long i, Object v);
 
+    @RFFIUpCallNode(SetAttribNode.class)
+    void SET_ATTRIB(Object target, Object attributes);
+
     @RFFICpointer
     Object RAW(Object x);
 
@@ -262,6 +267,9 @@ public interface StdUpCallsRFFI {
     Object VECTOR_ELT(Object x, long i);
 
     int NAMED(Object x);
+
+    @RFFIUpCallNode(SetObjectNode.class)
+    void SET_OBJECT(Object x, int flag);
 
     void SET_NAMED_FASTR(Object x, int v);
 

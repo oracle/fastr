@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -141,5 +141,6 @@ public class TestBuiltin_seq_along extends TestBase {
         assertEval(Output.IgnoreWarningContext, Output.IgnoreErrorContext, "{ x <- c(1,2,3); class(x) <- 'myclass'; length.myclass <- function(w) 'hello world'; seq_along(x) }");
         assertEval("{ length <- function(x) 42; seq_along(c(1,2,3)) }");
         assertEval("{ assign('length.myclass', function(...) 42, envir=.__S3MethodsTable__.); x <- 1; class(x) <- 'myclass'; res <- seq_along(x); rm('length.myclass', envir=.__S3MethodsTable__.); res }");
+        assertEval("seq_along()");
     }
 }

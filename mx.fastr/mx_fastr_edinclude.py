@@ -74,6 +74,9 @@ use_internals_end = '''#endif
 
 '''
 
+# This rewrite is disabled, because it causes compilation error with Rcpp
+# The long term solution shall be to unify RPairList and RLanguage and
+# possibly RArgsValuesAndNames(?) to be able to change the type in place.
 set_typeof_rewrite = '''#ifdef FASTR
 SEXP SET_TYPEOF_FASTR(SEXP x, int v);
 #ifndef NO_FASTR_REDEFINE
@@ -113,9 +116,10 @@ def ed_r_internals(gnu_dir):
                     rewrite_var(f, var, line)
                 else:
                     f.write(line)
-            elif 'SET_TYPEOF' in line and '(SEXP' in line:
-                f.write(line)
-                f.write(set_typeof_rewrite)
+            # disabled because of compilations problems with Rcpp
+            # elif 'SET_TYPEOF' in line and '(SEXP' in line:
+            #     f.write(line)
+            #     f.write(set_typeof_rewrite)
             else:
                 f.write(line)
 
