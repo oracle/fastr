@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -655,7 +655,7 @@ public class CastBuilderTest {
     }
 
     @Test
-    public void testSampleNonNASequence() {
+    public void testMustNotBeNAOnIntSequence() {
         arg.mustNotBeNA(RError.Message.GENERIC, "Error");
         RIntSequence seq = RDataFactory.createIntSequence(1, 1, 1);
         Object res = cast(seq);
@@ -663,10 +663,9 @@ public class CastBuilderTest {
     }
 
     @Test
-    public void testSampleNAVector() {
+    public void testReplaceDoubleNA() {
         arg.replaceNA("REPLACEMENT");
-        RDoubleVector vec = RDataFactory.createDoubleVector(new double[]{0, 1, RRuntime.DOUBLE_NA, 3}, false);
-        Object res = cast(vec);
+        Object res = cast(RRuntime.DOUBLE_NA);
         Assert.assertEquals("REPLACEMENT", res);
     }
 

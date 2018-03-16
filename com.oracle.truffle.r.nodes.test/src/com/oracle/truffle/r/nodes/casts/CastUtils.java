@@ -849,7 +849,7 @@ public class CastUtils {
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(1, 1)));
             samples.add(RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(-1, 1)));
             samples.add(RDataFactory.createComplexVector(new double[]{-Math.PI, 0, Math.PI,
-                            RRuntime.DOUBLE_NA, -Math.PI, 0, Math.PI, RRuntime.DOUBLE_NA}, true));
+                            RRuntime.DOUBLE_NA, -Math.PI, 0, Math.PI, RRuntime.DOUBLE_NA}, false));
             samples.add(RDataFactory.createComplexVector(new double[]{-Math.PI, 0, Math.PI,
                             RRuntime.DOUBLE_NA, -Math.PI, 0, Math.PI, RRuntime.DOUBLE_NA}, false));
             samples.add(RDataFactory.createComplexVector(new double[]{RRuntime.DOUBLE_NA, RRuntime.DOUBLE_NA}, false));
