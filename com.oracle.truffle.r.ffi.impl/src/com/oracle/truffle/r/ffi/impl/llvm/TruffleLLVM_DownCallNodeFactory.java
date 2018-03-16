@@ -53,23 +53,23 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
     public DownCallNode createDownCallNode(NativeFunction f) {
         return new DownCallNode(f) {
             @Override
-            protected TruffleObject getTarget(NativeFunction function) {
+            protected TruffleObject getTarget(NativeFunction fn) {
                 CompilerAsserts.neverPartOfCompilation();
-                String library = function.getLibrary();
+                String library = fn.getLibrary();
                 DLLInfo dllInfo = null;
                 if (library != anyLibrary()) {
                     dllInfo = DLL.findLibrary(library);
                 }
-                SymbolHandle result = DLL.findSymbol(function.getCallName(), dllInfo);
+                SymbolHandle result = DLL.findSymbol(fn.getCallName(), dllInfo);
                 if (result == DLL.SYMBOL_NOT_FOUND) {
-                    throw RInternalError.shouldNotReachHere("Could not find function " + function.getCallName() + " in library " + library);
+                    throw RInternalError.shouldNotReachHere("Could not find function " + fn.getCallName() + " in library " + library);
                 }
                 return result.asTruffleObject();
             }
 
             @Override
             @ExplodeLoop
-            protected long beforeCall(NativeFunction nativeFunction, TruffleObject function, Object[] args) {
+            protected long beforeCall(NativeFunction nativeFunction, TruffleObject fn, Object[] args) {
                 for (int i = 0; i < args.length; i++) {
                     Object obj = args[i];
                     if (obj instanceof double[]) {
@@ -92,7 +92,7 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args) {
+            protected void afterCall(long before, NativeFunction fn, TruffleObject target, Object[] args) {
                 for (Object obj : args) {
                     if (obj instanceof NativeNACheck<?>) {
                         ((NativeNACheck<?>) obj).close();

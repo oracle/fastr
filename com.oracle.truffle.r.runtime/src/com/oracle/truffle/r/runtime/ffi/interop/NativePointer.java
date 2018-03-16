@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
  * Created when a {@link RTruffleObject} subclass has no meaningful native representation,
  * nevertheless a {@link Message#TO_NATIVE} message is sent to it.
  */
-public class NativePointer implements TruffleObject {
+public abstract class NativePointer implements TruffleObject {
 
     /**
      * This is used when an {@link RNull} is stored in memory (LLVM).
@@ -50,23 +50,9 @@ public class NativePointer implements TruffleObject {
 
     public static final NullNativePointer NULL_NATIVEPOINTER = new NullNativePointer();
 
-    private static Table[] table = new Table[16];
-    private static int tableHwm;
-
-    private static class Table {
-        // TODO: is this reference to object needed?
-        @SuppressWarnings("unused") private final RTruffleObject object;
-        private final long nativePointer;
-
-        Table(RTruffleObject object, long nativePointer) {
-            this.object = object;
-            this.nativePointer = nativePointer;
-        }
-    }
-
     final RTruffleObject object;
 
-    public NativePointer(RTruffleObject object) {
+    protected NativePointer(RTruffleObject object) {
         this.object = object;
     }
 
@@ -80,27 +66,8 @@ public class NativePointer implements TruffleObject {
     }
 
     final long asPointer() {
-        long result = asPointerImpl();
-        boolean newPointer = true;
-        for (int i = 0; i < tableHwm; i++) {
-            if (table[i].nativePointer == result) {
-                newPointer = false;
-                break;
-            }
-        }
-        if (newPointer) {
-            // System.out.printf("as_pointer: %x from %s\n", result, object.getClass().getName());
-            if (tableHwm >= table.length) {
-                Table[] newTable = new Table[table.length * 2];
-                System.arraycopy(table, 0, newTable, 0, table.length);
-                table = newTable;
-            }
-            table[tableHwm++] = new Table(object, result);
-        }
-        return result;
+        return asPointerImpl();
     }
 
-    protected long asPointerImpl() {
-        return System.identityHashCode(object);
-    }
+    protected abstract long asPointerImpl();
 }

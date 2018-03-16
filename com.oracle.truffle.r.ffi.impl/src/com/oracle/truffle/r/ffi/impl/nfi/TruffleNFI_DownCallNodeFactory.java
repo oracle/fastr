@@ -42,14 +42,14 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
     public DownCallNode createDownCallNode(NativeFunction f) {
         return new DownCallNode(f) {
             @Override
-            protected TruffleObject getTarget(NativeFunction function) {
+            protected TruffleObject getTarget(NativeFunction fn) {
                 // TODO: this lookupNativeFunction function can exist in all FFI Contexts
-                return TruffleNFI_Context.getInstance().lookupNativeFunction(function);
+                return TruffleNFI_Context.getInstance().lookupNativeFunction(fn);
             }
 
             @Override
             @ExplodeLoop
-            protected long beforeCall(NativeFunction function, TruffleObject target, Object[] args) {
+            protected long beforeCall(NativeFunction fn, TruffleObject target, Object[] args) {
                 for (int i = 0; i < args.length; i++) {
                     Object obj = args[i];
                     if (obj instanceof double[]) {
@@ -72,7 +72,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                     }
                 }
 
-                if (function.hasComplexInteraction()) {
+                if (fn.hasComplexInteraction()) {
                     return ((TruffleNFI_Context) RContext.getInstance().getRFFI()).beforeDowncall();
                 }
                 return 0;
@@ -88,8 +88,8 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
 
             @Override
             @ExplodeLoop
-            protected void afterCall(long before, NativeFunction function, TruffleObject target, Object[] args) {
-                if (function.hasComplexInteraction()) {
+            protected void afterCall(long before, NativeFunction fn, TruffleObject target, Object[] args) {
+                if (fn.hasComplexInteraction()) {
                     ((TruffleNFI_Context) RContext.getInstance().getRFFI()).afterDowncall(before);
                 }
 
