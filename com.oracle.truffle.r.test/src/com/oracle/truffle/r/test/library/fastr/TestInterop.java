@@ -148,6 +148,8 @@ public class TestInterop extends TestBase {
     private static final TestJavaObject[] testJavaObjects = new TestJavaObject[]{new TestJavaObject("testPOJO", new POJO()), new TestJavaObject("testIntArray", new int[]{1, -5, 199}),
                     new TestJavaObject("testStringArray", new String[]{"a", "", "foo"})};
 
+    // TODO: export/importSymbol
+    @SuppressWarnings("deprecation")
     @Override
     public void addPolyglotSymbols(org.graalvm.polyglot.Context context) {
         for (TestJavaObject t : TestInterop.testJavaObjects) {
