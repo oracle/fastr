@@ -22,14 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.codegen;
 
-import java.io.Writer;
 import java.lang.reflect.Method;
 import java.util.Arrays;
 import java.util.Comparator;
-
-import javax.lang.model.element.ExecutableElement;
-import javax.tools.FileObject;
-import javax.tools.StandardLocation;
 
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 

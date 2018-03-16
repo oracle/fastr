@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1998  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2015,  The R Core Team
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */

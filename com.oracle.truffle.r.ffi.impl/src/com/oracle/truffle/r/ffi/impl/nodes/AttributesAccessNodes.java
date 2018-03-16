@@ -249,7 +249,7 @@ public final class AttributesAccessNodes {
         }
 
         @TruffleBoundary
-        private RPairList getPairList(RLanguage attributes) {
+        private static RPairList getPairList(RLanguage attributes) {
             return attributes.getPairList();
         }
     }
