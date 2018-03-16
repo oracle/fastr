@@ -54,7 +54,8 @@ public class NativePointer implements TruffleObject {
     private static int tableHwm;
 
     private static class Table {
-        private final RTruffleObject object;
+        // TODO: is this reference to object needed?
+        @SuppressWarnings("unused") private final RTruffleObject object;
         private final long nativePointer;
 
         Table(RTruffleObject object, long nativePointer) {

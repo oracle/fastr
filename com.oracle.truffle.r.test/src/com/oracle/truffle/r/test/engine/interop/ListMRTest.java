@@ -55,12 +55,12 @@ public class ListMRTest extends AbstractMRTest {
     }
 
     @Test
-    public void testKeysReadWrite() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+    public void testKeysReadWrite() {
         testKeysReadWrite("list");
         testKeysReadWrite("pairlist");
     }
 
-    private void testKeysReadWrite(String createFun) throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
+    private void testKeysReadWrite(String createFun) {
         execInContext(() -> {
             RAbstractContainer l = create(createFun, testValues);
 

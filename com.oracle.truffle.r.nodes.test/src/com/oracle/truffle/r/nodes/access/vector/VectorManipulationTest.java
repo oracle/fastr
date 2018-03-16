@@ -141,7 +141,7 @@ public class VectorManipulationTest extends TestBase {
         });
     }
 
-    private <ArrayT> void assertDataContents(RVector<ArrayT> vec, ArrayT arr) {
+    private static <ArrayT> void assertDataContents(RVector<ArrayT> vec, ArrayT arr) {
         int len = vec.getLength();
         RType type = vec.getRType();
         for (int i = 0; i < len; i++) {

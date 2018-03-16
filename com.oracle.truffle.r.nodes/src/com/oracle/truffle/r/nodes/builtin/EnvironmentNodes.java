@@ -68,7 +68,7 @@ public final class EnvironmentNodes {
         }
 
         @TruffleBoundary
-        private REnvironment createNewEnv(String envName, REnvironment parentEnv) {
+        private static REnvironment createNewEnv(String envName, REnvironment parentEnv) {
             REnvironment createNewEnv = RDataFactory.createNewEnv(envName);
             RArguments.initializeEnclosingFrame(createNewEnv.getFrame(), parentEnv.getFrame());
             createNewEnv.setParent(parentEnv);

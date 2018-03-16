@@ -280,9 +280,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             if (unknownIdentifier.profile(idx < 0 || idx >= lengthNode.executeInteger(receiver))) {
                 return 0;
             }
-            KeyInfo.Builder builder = KeyInfo.newBuilder();
-            builder.setReadable(true).setWritable(true);
-            return builder.build();
+            return KeyInfo.READABLE | KeyInfo.MODIFIABLE;
         }
 
         @Fallback

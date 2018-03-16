@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -267,8 +267,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
                 return;
             }
             synchronized (JFrameDevice.this) {
-                Graphics2D graphics = (Graphics2D) g;
-                graphics.drawImage(toDraw, 0, 0, null);
+                ((Graphics2D) g).drawImage(toDraw, 0, 0, null);
             }
         }
 

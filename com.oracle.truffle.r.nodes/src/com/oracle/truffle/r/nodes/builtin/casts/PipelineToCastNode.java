@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -116,7 +116,7 @@ public final class PipelineToCastNode {
         boolean singleMapStep = firstStepIn.getNext() == null && firstStepIn instanceof MapIfStep;
         PipelineStep<?, ?> firstStep = singleMapStep ? ((MapIfStep<?, ?>) firstStepIn).withoutReturns() : firstStepIn;
 
-        CastNode firstCastNode = config.getCastForeign() ? CastForeignNodeGen.create() : null;
+        CastNode firstCastNode = config.getCastForeign() ? new CastForeignNode() : null;
         Supplier<CastNode> originalPipelineFactory = () -> convert(firstCastNode, firstStep,
                         new CastNodeFactory(config.getDefaultError(), config.getDefaultWarning(), config.getDefaultDefaultMessage()));
 

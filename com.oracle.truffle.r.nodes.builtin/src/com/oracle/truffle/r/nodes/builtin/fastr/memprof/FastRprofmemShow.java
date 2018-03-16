@@ -31,7 +31,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -39,7 +38,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.instrument.memprof.MemAllocProfilerPaths;
 
 @RBuiltin(name = ".fastr.profmem.show", visibility = OFF, kind = PRIMITIVE, parameterNames = {"levels", "desc", "id", "printParents", "view", "snapshot"}, behavior = IO)
 public abstract class FastRprofmemShow extends RBuiltinNode.Arg6 {
@@ -61,7 +59,7 @@ public abstract class FastRprofmemShow extends RBuiltinNode.Arg6 {
 
     @Specialization
     @SuppressWarnings("unused")
-    public Object doProfMem(int levels, boolean desc, @SuppressWarnings("unused") RNull n, boolean printParents, String view, TruffleObject snapshot) {
+    public Object doProfMem(int levels, boolean desc, RNull n, boolean printParents, String view, TruffleObject snapshot) {
         // TODO: port to new instrumentation API, original code can be found in git history
         throw error(Message.GENERIC, ".fastr.profmem.show is not available.");
     }

@@ -203,7 +203,7 @@ public class FrameFunctions {
         }
 
         @TruffleBoundary
-        private Object createCall(RCaller call) {
+        private static Object createCall(RCaller call) {
             assert call == null || !call.isPromise();
             if (call == null || !call.isValidCaller()) {
                 return RNull.instance;

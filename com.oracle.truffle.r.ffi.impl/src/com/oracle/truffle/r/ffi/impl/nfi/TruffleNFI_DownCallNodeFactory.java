@@ -39,15 +39,14 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     @Override
-    public DownCallNode createDownCallNode(NativeFunction function) {
-        return new DownCallNode(function) {
+    public DownCallNode createDownCallNode(NativeFunction f) {
+        return new DownCallNode(f) {
             @Override
             protected TruffleObject getTarget(NativeFunction function) {
                 // TODO: this lookupNativeFunction function can exist in all FFI Contexts
                 return TruffleNFI_Context.getInstance().lookupNativeFunction(function);
             }
 
-            @SuppressWarnings("cast")
             @Override
             @ExplodeLoop
             protected long beforeCall(NativeFunction function, TruffleObject target, Object[] args) {

@@ -990,8 +990,10 @@ public final class SpecialAttributesFunctions {
         public abstract void execute(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames);
 
         @Specialization
-        protected void initContainerAttributes(RAbstractContainer x, int[] dimensions, RStringVector names, RList dimNames,
+        protected void initContainerAttributes(RAbstractContainer x, int[] dimensions, RStringVector initialNames, RList initialDimNames,
                         @Cached("create()") ShareObjectNode shareObjectNode) {
+            RStringVector names = initialNames;
+            RList dimNames = initialDimNames;
             assert names != x;
             assert dimNames != x;
             DynamicObject attrs = x.getAttributes();

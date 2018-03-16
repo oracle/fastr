@@ -88,6 +88,7 @@ public abstract class RFFIContext extends RFFI {
      *            the list of preserved objects.
      */
     public void beforeUpcall(boolean canRunGc) {
+        // empty by default
     }
 
     public void afterUpcall(boolean canRunGc) {
@@ -99,7 +100,8 @@ public abstract class RFFIContext extends RFFI {
     /**
      * Invoked during RContext initialization, but after the global environment is set up.
      */
-    public void initializeVariables(RContext context) {
+    public void initializeVariables(@SuppressWarnings("unused") RContext context) {
+        // empty by default
     }
 
     /**
@@ -109,7 +111,7 @@ public abstract class RFFIContext extends RFFI {
      * threaded and always creates exactly one context. This method shall be invoked after
      * {@link #initialize(RContext)} and {@link #initializeVariables(RContext)}.
      */
-    public void initializeEmbedded(RContext context) {
+    public void initializeEmbedded(@SuppressWarnings("unused") RContext context) {
         throw RInternalError.unimplemented("R Embedding not supported with " + this.getClass().getSimpleName() + " RFFI backend.");
     }
 

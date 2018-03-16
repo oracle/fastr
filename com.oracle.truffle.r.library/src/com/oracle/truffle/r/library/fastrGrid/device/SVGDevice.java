@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,11 +119,11 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     }
 
     @Override
-    public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
+    public void drawRaster(double leftX, double bottomY, double w, double h, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
         byte[] bitmap = Bitmap.create(pixels, pixelsColumnsCount);
         String base64 = Base64.getEncoder().encodeToString(bitmap);
-        data.append("<image x='").append(round(leftX * COORD_FACTOR)).append("' y='").append(trRound(transY(bottomY + height)));
-        data.append("' width='").append(round(width * COORD_FACTOR)).append("' height='").append(trRound(height));
+        data.append("<image x='").append(round(leftX * COORD_FACTOR)).append("' y='").append(trRound(transY(bottomY + h)));
+        data.append("' width='").append(round(w * COORD_FACTOR)).append("' height='").append(trRound(h));
         data.append("' preserveAspectRatio='none' xlink:href='data:image/bmp;base64,").append(base64).append("'/>\n");
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
  */
 public class ExtBuiltinsList {
 
-    @SuppressWarnings("rawtypes") private static final Class[] builtins = {
+    private static final List<Class<? extends RExternalBuiltinNode>> builtins = Arrays.asList(
                     com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode.class,
                     com.oracle.truffle.r.nodes.objects.NewObjectNodeGen.class,
                     com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen.class,
@@ -90,11 +90,9 @@ public class ExtBuiltinsList {
                     com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_getGenericNodeGen.class,
                     com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_nextMethodCallNodeGen.class,
                     com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen.class,
-                    com.oracle.truffle.r.library.stats.deriv.DerivNodeGen.class,
-    };
+                    com.oracle.truffle.r.library.stats.deriv.DerivNodeGen.class);
 
-    @SuppressWarnings("unchecked")
     public static List<Class<? extends RExternalBuiltinNode>> getBuiltins() {
-        return Arrays.asList(builtins);
+        return builtins;
     }
 }

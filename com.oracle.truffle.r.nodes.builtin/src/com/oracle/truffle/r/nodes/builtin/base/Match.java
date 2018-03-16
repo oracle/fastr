@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -684,12 +684,12 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
-        protected RIntVector match(RAbstractRawVector x, RAbstractLogicalVector table, int nomatch) {
+        protected RIntVector match(RAbstractRawVector x, @SuppressWarnings("unused") RAbstractLogicalVector table, @SuppressWarnings("unused") int nomatch) {
             return RDataFactory.createIntVector(x.getLength(), true);
         }
 
         @Specialization
-        protected RIntVector match(RAbstractRawVector x, RAbstractComplexVector table, int nomatch) {
+        protected RIntVector match(RAbstractRawVector x, @SuppressWarnings("unused") RAbstractComplexVector table, @SuppressWarnings("unused") int nomatch) {
             return RDataFactory.createIntVector(x.getLength(), true);
         }
 
@@ -712,12 +712,12 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         @Specialization
-        protected RIntVector match(RAbstractLogicalVector x, RAbstractRawVector table, int nomatch) {
+        protected RIntVector match(RAbstractLogicalVector x, @SuppressWarnings("unused") RAbstractRawVector table, @SuppressWarnings("unused") int nomatch) {
             return RDataFactory.createIntVector(x.getLength(), true);
         }
 
         @Specialization
-        protected RIntVector match(RAbstractComplexVector x, RAbstractRawVector table, int nomatch) {
+        protected RIntVector match(RAbstractComplexVector x, @SuppressWarnings("unused") RAbstractRawVector table, @SuppressWarnings("unused") int nomatch) {
             return RDataFactory.createIntVector(x.getLength(), true);
         }
 

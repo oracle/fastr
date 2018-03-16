@@ -132,7 +132,7 @@ public final class ListAccessNodes {
 
         @Specialization
         protected RNull handleNull(@SuppressWarnings("unused") RNull rNull) {
-            return rNull;
+            return RNull.instance;
         }
 
         @Fallback

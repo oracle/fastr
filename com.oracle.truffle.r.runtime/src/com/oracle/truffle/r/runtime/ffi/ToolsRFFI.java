@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -75,7 +74,7 @@ public final class ToolsRFFI {
         }
     }
 
-    public ParseRdNode createParseRdNode() {
+    public static ParseRdNode createParseRdNode() {
         return new ParseRdNode();
     }
 }

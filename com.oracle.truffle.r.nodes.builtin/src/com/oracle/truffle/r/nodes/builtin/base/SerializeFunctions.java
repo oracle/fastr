@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -179,7 +179,7 @@ public class SerializeFunctions {
         }
 
         @Specialization
-        protected Object serialize(Object object, RNull conn, int type, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
+        protected Object serialize(Object object, @SuppressWarnings("unused") RNull conn, int type, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
             byte[] data = RSerialize.serialize(object, type, RSerialize.DEFAULT_VERSION, null);
             return RDataFactory.createRawVector(data);
         }

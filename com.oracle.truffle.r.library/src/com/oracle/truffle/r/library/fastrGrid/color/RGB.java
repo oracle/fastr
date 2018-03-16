@@ -17,7 +17,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.library.fastrGrid.color.RGBNodeGen.DoubleRGBNodeGen;
 import com.oracle.truffle.r.library.fastrGrid.color.RGBNodeGen.IntegerRGBNodeGen;
-import com.oracle.truffle.r.library.fastrGrid.device.GridColor;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.unary.CastDoubleNode;

@@ -39,12 +39,10 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.launcher.DelegatingConsoleHandler;
 import com.oracle.truffle.r.runtime.RInterfaceCallbacks;
-import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.ReadConsoleNode;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteConsoleBaseNode;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteConsoleNode;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI.WriteErrConsoleNode;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 
 /**
  * In embedded mode the console functions as defined in {@code Rinterface.h} can be overridden. This
@@ -138,11 +136,11 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
         return createOutputSteam(this::getWriteErrCallTarget, defaultValue);
     }
 
-    private OutputStream createOutputSteam(Supplier<CallTarget> writeCallTarget, OutputStream defaultStream) {
-        return new BufferedOutputStream(new EmbeddedConsoleOutputSteam(writeCallTarget, defaultStream), 128);
+    private OutputStream createOutputSteam(Supplier<CallTarget> writeCallTargetSupplier, OutputStream defaultStream) {
+        return new BufferedOutputStream(new EmbeddedConsoleOutputSteam(writeCallTargetSupplier, defaultStream), 128);
     }
 
-    private boolean isOverridden(String name) {
+    private static boolean isOverridden(String name) {
         RInterfaceCallbacks clbk = RInterfaceCallbacks.valueOf(name);
         return clbk.isOverridden();
     }
@@ -223,7 +221,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
         return writeErrCallTarget;
     }
 
-    private CallTarget createWriteCallTarget(WriteConsoleBaseNode writeConsoleNode) {
+    private static CallTarget createWriteCallTarget(WriteConsoleBaseNode writeConsoleNode) {
         return Truffle.getRuntime().createCallTarget(new WriteOutBaseRootNode(writeConsoleNode));
     }
 

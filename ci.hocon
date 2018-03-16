@@ -89,7 +89,7 @@ common : ${java8Downloads} ${packagesLinux}  {
 
 gateCmd : ["mx", "--strict-compliance", "rgate", "--strict-mode", "-t"]
 
-# currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check,BuildJavaWithEcj
+# currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check
 
 # The standard set of gate tasks: the actual executable tests are in the "UnitTests" task.
 
@@ -99,10 +99,10 @@ gateTestCommon : ${common} {
   ]
 }
 
-gateTestLinux : ${gateTestCommon} {
+gateTestLinux : ${gateTestCommon}  {
 }
 
-gateTestNoSpecialsLinux : ${common} {
+gateTestNoSpecialsLinux : ${common}  {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
   ]
@@ -118,11 +118,11 @@ darwinEnvironment : {
   }
 }
 
-gateTestDarwin : ${gateTestCommon} ${darwinEnvironment} {
+gateTestDarwin : ${gateTestCommon} ${darwinEnvironment}  {
   packages : ${packagesDarwin}
 }
 
-gateTestLinuxNFI : ${gateTestCommon} {
+gateTestLinuxNFI : ${gateTestCommon}  {
   environment :  {
       FASTR_RFFI : "nfi"
       TZDIR: "/usr/share/zoneinfo"
@@ -136,7 +136,7 @@ requireGCC: {
     }
 }
 
-gateTestLinuxLLVM : ${common} ${requireGCC} {
+gateTestLinuxLLVM : ${common} ${requireGCC}  {
 
   packages: {
       llvm: "==3.8"
@@ -172,7 +172,7 @@ gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
   }
 }
 
-gateTestDarwinLLVM: ${common} ${darwinEnvironment} ${requireGCC} {
+gateTestDarwinLLVM: ${common} ${darwinEnvironment} ${requireGCC}  {
   packages : ${packagesDarwin} {
     llvm: "==4.0.1"
   }
@@ -225,6 +225,22 @@ gateStyle : ${common} {
   ]
 }
 
+gateBuildWithEcj : ${common} {
+  # need pyhocon fix
+  downloads : {
+    JAVA_HOME : ${java8Downloads.downloads.JAVA_HOME}
+    EXTRA_JAVA_HOMES : ${java8Downloads.downloads.EXTRA_JAVA_HOMES}
+    JDT : {name: ecj, version: "4.5.1", platformspecific: false}
+    ECLIPSE : {name: eclipse, version: "4.5.2", platformspecific: true}
+  }
+  environment : {
+    ECLIPSE_EXE : "$ECLIPSE/eclipse"
+  }
+  run : [
+    ["mx", "build"]
+  ]
+}
+
 # This check runs diagnostics on the implementation of the R "builtins" in FastR, e.g., that the argument processing is sound.
 
 rbcheck : ${common} {
@@ -257,6 +273,7 @@ builds = [
   ${gateTestNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials"}
   ${gateTestDarwin}           {capabilities : [darwin_sierra, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
+  ${gateBuildWithEcj}         {capabilities : [linux, amd64],  targets : [gate], name: "gate-ecj-linux-amd64"}
   ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate], name: "gate-rbcheck-linux-amd64"}
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
   ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}

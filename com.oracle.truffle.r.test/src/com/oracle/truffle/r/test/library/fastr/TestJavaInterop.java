@@ -1558,18 +1558,6 @@ public class TestJavaInterop extends TestBase {
         return sb.toString();
     }
 
-    private String getRValuesAsString(Object... values) {
-        StringBuilder sb = new StringBuilder();
-        for (int i = 0; i < values.length; i++) {
-            Object v = values[i];
-            sb.append(getRValue(v));
-            if (i < values.length - 1) {
-                sb.append(",");
-            }
-        }
-        return sb.toString();
-    }
-
     private static String getBooleanPrefix(Object array, int i) {
         Object element = Array.get(array, i);
         if (element == null) {

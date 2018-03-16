@@ -193,9 +193,8 @@ public class RArgsValuesAndNamesMR {
         }
 
         private static Object createKeyInfo(RArgsValuesAndNames receiver, int idx) {
-            KeyInfo.Builder builder = KeyInfo.newBuilder();
-            builder.setReadable(true).setInvocable(receiver.getArgument(idx) instanceof RFunction);
-            return builder.build();
+            int invocable = receiver.getArgument(idx) instanceof RFunction ? KeyInfo.INVOCABLE : 0;
+            return KeyInfo.READABLE | invocable;
         }
 
         @Fallback

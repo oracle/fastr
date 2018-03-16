@@ -35,7 +35,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RNull;
 
 @RBuiltin(name = ".fastr.profmem", visibility = OFF, kind = PRIMITIVE, parameterNames = {"on"}, behavior = IO)
 public abstract class FastRprofmem extends RBuiltinNode.Arg1 {

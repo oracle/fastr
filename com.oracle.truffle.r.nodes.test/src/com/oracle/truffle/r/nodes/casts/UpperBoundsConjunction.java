@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,7 +79,7 @@ public final class UpperBoundsConjunction implements WildcardType, TypeAndInstan
 
     public static UpperBoundsConjunction create(Stream<? extends Type> typeStream) {
         Set<Type> upperBounds = typeStream.flatMap(t -> ((t instanceof UpperBoundsConjunction && !((UpperBoundsConjunction) t).isWildcard()) ? ((UpperBoundsConjunction) t).upperBounds
-                        : Collections.singleton(t)).stream()).collect(Collectors.toSet());
+                        : Collections.singleton((Type) t)).stream()).collect(Collectors.toSet());
         return new UpperBoundsConjunction(upperBounds, false, null);
     }
 

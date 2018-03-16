@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -195,7 +195,7 @@ abstract class SubscriptSpecial extends SubscriptSpecialBase {
     }
 
     @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
-    protected static Object access(RAbstractVector vector, Object index,
+    protected static Object accessObject(RAbstractVector vector, Object index,
                     @Cached("createAccess()") ExtractVectorNode extract) {
         return extract.apply(vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
     }

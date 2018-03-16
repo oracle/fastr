@@ -153,7 +153,7 @@ public final class AttributesAccessNodes {
         }
 
         @TruffleBoundary
-        private Object getSymbol(String name) {
+        private static Object getSymbol(String name) {
             return RDataFactory.createSymbol(name);
         }
 

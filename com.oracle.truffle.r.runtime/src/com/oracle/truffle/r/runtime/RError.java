@@ -192,7 +192,7 @@ public final class RError extends RuntimeException implements TruffleException {
     }
 
     @TruffleBoundary
-    public static RError handleInteropException(Node node, RuntimeException e, TruffleObject o) {
+    public static RError handleInteropException(Node node, RuntimeException e) {
         if (e instanceof TruffleException) {
             if (RContext.getInstance().stateInteropTry.isInTry()) {
                 // will be catched and handled in .fastr.interop.try builtin

@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.launcher;
 
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.HELP;
-import static com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption.VERSION;
-
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.List;
@@ -346,21 +343,9 @@ public final class RCmdOptions {
         System.out.println("\nFILE may contain spaces but not shell metacharacters.\n");
     }
 
-    private static RuntimeException printHelpAndExit(Client client) {
-        printHelp(client);
-        System.exit(0);
-        throw RCommand.fatal("should not reach here");
-    }
-
     static void printVersion() {
         System.out.print("FastR version ");
         System.out.println(RVersionNumber.FULL);
         System.out.println(RVersionNumber.LICENSE);
-    }
-
-    private static RuntimeException printVersionAndExit() {
-        printVersion();
-        System.exit(0);
-        throw RCommand.fatal("should not reach here");
     }
 }

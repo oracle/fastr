@@ -25,23 +25,20 @@ package com.oracle.truffle.r.test.engine.interop;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import org.junit.Test;
 
-import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
 
 public class RFunctionMRTest extends AbstractMRTest {
 
     @Test
-    public void testExecute() throws UnsupportedTypeException, ArityException, UnsupportedMessageException {
+    public void testExecute() {
         execInContext(() -> {
             RFunction f = create("function() {}");
             assertTrue(ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), f));

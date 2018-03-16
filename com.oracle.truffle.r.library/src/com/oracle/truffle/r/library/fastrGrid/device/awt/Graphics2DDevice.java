@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -161,12 +161,12 @@ public class Graphics2DDevice implements GridDevice {
     }
 
     @Override
-    public void drawRaster(double leftX, double bottomY, double width, double height, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
+    public void drawRaster(double leftX, double bottomY, double w, double h, int[] pixels, int pixelsColumnsCount, ImageInterpolation interpolation) {
         graphics.setRenderingHint(RenderingHints.KEY_INTERPOLATION, fromInterpolation(interpolation));
         Image image = Toolkit.getDefaultToolkit().createImage(new MemoryImageSource(pixelsColumnsCount, pixels.length / pixelsColumnsCount, pixels, 0, pixelsColumnsCount));
-        double yRel = transY(bottomY + height);
+        double yRel = transY(bottomY + h);
         double xRel = transX(leftX);
-        graphics.drawImage(image, iround(xRel), iround(yRel), transDim(width, xRel), transDim(height, yRel), null);
+        graphics.drawImage(image, iround(xRel), iround(yRel), transDim(w, xRel), transDim(h, yRel), null);
     }
 
     @Override
@@ -349,15 +349,15 @@ public class Graphics2DDevice implements GridDevice {
 
     private BasicStroke getStrokeFromCtx(DrawingContext ctx) {
         byte[] type = ctx.getLineType();
-        double width = ctx.getLineWidth();
+        double w = ctx.getLineWidth();
         int lineJoin = fromGridLineJoin(ctx.getLineJoin());
         float lineMitre = (float) ctx.getLineMitre();
         int endCap = fromGridLineEnd(ctx.getLineEnd());
         if (type == DrawingContext.GRID_LINE_BLANK) {
             return blankStroke;
         } else if (type == DrawingContext.GRID_LINE_SOLID) {
-            if (stokeCache == null || !areEqual(stokeCache, (float) width, endCap, lineJoin, lineMitre)) {
-                stokeCache = new BasicStroke((float) (width), endCap, lineJoin, lineMitre);
+            if (stokeCache == null || !areEqual(stokeCache, (float) w, endCap, lineJoin, lineMitre)) {
+                stokeCache = new BasicStroke((float) (w), endCap, lineJoin, lineMitre);
             }
             return stokeCache;
         }
@@ -365,7 +365,7 @@ public class Graphics2DDevice implements GridDevice {
         for (int i = 0; i < pattern.length; i++) {
             pattern[i] = type[i];
         }
-        return new BasicStroke((float) (width), endCap, lineJoin, lineMitre, pattern, 0f);
+        return new BasicStroke((float) (w), endCap, lineJoin, lineMitre, pattern, 0f);
     }
 
     private static int fromGridLineEnd(GridLineEnd lineEnd) {

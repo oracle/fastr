@@ -364,6 +364,8 @@ public final class FastRSession implements RSession {
         execInContext(context, c, (Class<?>) null);
     }
 
+    // TODO: export/importSymbol
+    @SuppressWarnings("deprecation")
     public static <E extends Exception> void execInContext(Context context, Callable<Object> c, Class<?>... acceptExceptions) {
         context.eval(FastRSession.GET_CONTEXT); // ping creation of TruffleRLanguage
         context.exportSymbol("testSymbol", (ProxyExecutable) (Value... args) -> {

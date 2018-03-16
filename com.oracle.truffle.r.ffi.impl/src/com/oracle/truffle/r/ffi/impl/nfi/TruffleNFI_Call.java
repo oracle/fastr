@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,11 +40,10 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 
 public abstract class C_ParseRd extends RExternalBuiltinNode.Arg9 {
-    @Child private ToolsRFFI.ParseRdNode parseRdNode = RFFIFactory.getToolsRFFI().createParseRdNode();
+    @Child private ToolsRFFI.ParseRdNode parseRdNode = ToolsRFFI.createParseRdNode();
 
     static {
         Casts casts = new Casts(C_ParseRd.class);

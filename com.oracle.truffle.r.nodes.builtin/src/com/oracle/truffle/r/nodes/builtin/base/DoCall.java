@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
@@ -66,9 +65,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
-import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.SymbolClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -87,7 +84,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX, splitCaller = true)
 public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSyntaxNodeChildren {
@@ -191,7 +187,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * we create a frame the fakes caller, but otherwise delegates to the frame backing the
          * explicitly given environment.
          */
-        private MaterializedFrame getEvalFrame(VirtualFrame virtualFrame, MaterializedFrame envFrame) {
+        private static MaterializedFrame getEvalFrame(VirtualFrame virtualFrame, MaterializedFrame envFrame) {
             return VirtualEvalFrame.create(envFrame, RArguments.getFunction(virtualFrame), RArguments.getCall(virtualFrame));
         }
 
@@ -206,7 +202,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * @see RCaller
          * @see RArguments
          */
-        private RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, String funcName, RFunction func, RArgsValuesAndNames args) {
+        private static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, String funcName, RFunction func, RArgsValuesAndNames args) {
             Supplier<RSyntaxElement> callerSyntax;
             if (funcName != null) {
                 callerSyntax = RCallerHelper.createFromArguments(funcName, args);

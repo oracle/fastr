@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.control;
 
 import com.oracle.truffle.api.CompilerAsserts;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode.WrapperNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RepeatingNode;
 import com.oracle.truffle.api.nodes.RootNode;

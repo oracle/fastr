@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -564,23 +564,22 @@ public class CastUtils {
         }
     }
 
-    @SuppressWarnings("rawtypes")
     public static Class<?>[] rTypeToClasses(RType type) {
         switch (type) {
             case Integer:
-                return new Class[]{Integer.class, RAbstractIntVector.class};
+                return new Class<?>[]{Integer.class, RAbstractIntVector.class};
             case Double:
-                return new Class[]{Double.class, RAbstractDoubleVector.class};
+                return new Class<?>[]{Double.class, RAbstractDoubleVector.class};
             case Logical:
-                return new Class[]{Byte.class, RAbstractLogicalVector.class};
+                return new Class<?>[]{Byte.class, RAbstractLogicalVector.class};
             case Character:
-                return new Class[]{String.class, RAbstractStringVector.class};
+                return new Class<?>[]{String.class, RAbstractStringVector.class};
             case Complex:
-                return new Class[]{RAbstractComplexVector.class};
+                return new Class<?>[]{RAbstractComplexVector.class};
             case Raw:
-                return new Class[]{RAbstractRawVector.class};
+                return new Class<?>[]{RAbstractRawVector.class};
             case Any:
-                return new Class[]{Object.class};
+                return new Class<?>[]{Object.class};
         }
         return null;
     }
@@ -773,9 +772,8 @@ public class CastUtils {
         return Arrays.stream(classes).flatMap(t -> CastUtils.sampleValuesForType(t).stream()).collect(Collectors.toSet());
     }
 
-    @SuppressWarnings("rawtypes")
     public static Set<?> sampleValuesForClass(Class<?> cls) {
-        return sampleValuesForClasses(new Class[]{cls});
+        return sampleValuesForClasses(new Class<?>[]{cls});
     }
 
     public static Set<?> sampleValuesForType(Type t) {

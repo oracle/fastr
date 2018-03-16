@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -222,9 +222,8 @@ public class SamplesCollector extends ExecutionPathVisitor<Consumer<Object>>
     // Filter visitor
 
     @Override
-    @SuppressWarnings("rawtypes")
     public Consumer<Object> visit(TypeFilter<?, ?> filter, Consumer<Object> previous) {
-        Class<?>[] filterTypes = new Class[]{filter.getType1(), filter.getType2()};
+        Class<?>[] filterTypes = new Class<?>[]{filter.getType1(), filter.getType2()};
         Set<?> samples = CastUtils.sampleValuesForClasses(filterTypes);
         for (Object s : samples) {
             previous.accept(s);

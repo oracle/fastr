@@ -42,7 +42,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
-import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.FastROptions;
@@ -203,7 +202,7 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     @TruffleBoundary
-    private long initCallbacksAddress() {
+    private static long initCallbacksAddress() {
         // get the address of the native thread local
         try {
             Node bind = Message.createInvoke(1).createNode();

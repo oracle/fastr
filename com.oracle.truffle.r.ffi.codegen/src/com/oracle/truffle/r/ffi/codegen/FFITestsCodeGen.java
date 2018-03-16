@@ -32,7 +32,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.oracle.truffle.r.ffi.impl.upcalls.StdUpCallsRFFI;
-import com.oracle.truffle.r.ffi.impl.upcalls.VariableUpCallsRFFI;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 

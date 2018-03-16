@@ -153,7 +153,8 @@ public final class PCRERFFI {
             super(factory.createDownCallNode(NativeFunction.study));
         }
 
-        public Result execute(long code, int options) {
+        @SuppressWarnings("unused")
+        public static Result execute(long code, int options) {
             throw RInternalError.shouldNotReachHere("The factory method should throw unimplemented already");
         }
 
@@ -199,6 +200,7 @@ public final class PCRERFFI {
         return new GetCaptureNamesNode(downCallNodeFactory);
     }
 
+    @SuppressWarnings("static-method")
     public StudyNode createStudyNode() {
         throw RInternalError.unimplemented("study function in PCRE");
     }

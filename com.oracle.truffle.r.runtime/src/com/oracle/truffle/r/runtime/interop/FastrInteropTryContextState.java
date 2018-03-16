@@ -27,7 +27,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 /**
  * Context-specific state relevant to the .fastr.interop.try builtins.
  */
-@SuppressWarnings("serial")
 public class FastrInteropTryContextState implements RContext.ContextState {
     /**
      * Values is either NULL or an RPairList, for {@code restarts}.

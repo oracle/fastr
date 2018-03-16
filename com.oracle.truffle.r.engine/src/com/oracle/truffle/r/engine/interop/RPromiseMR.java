@@ -172,9 +172,9 @@ public class RPromiseMR {
         @Specialization
         protected Object access(@SuppressWarnings("unused") RPromise receiver, String identifier) {
             if (PROP_EXPR.equals(identifier) || PROP_VALUE.equals(identifier)) {
-                return KeyInfo.newBuilder().setReadable(true).build();
+                return KeyInfo.READABLE;
             } else if (PROP_IS_EVALUATED.equals(identifier)) {
-                return KeyInfo.newBuilder().setReadable(true).setWritable(true).build();
+                return KeyInfo.READABLE | KeyInfo.MODIFIABLE;
             } else {
                 return 0;
             }

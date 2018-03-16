@@ -855,7 +855,7 @@ public class FastRInterop {
                 String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + e.getMessage();
                 throw error(RError.Message.GENERIC, msg);
             } catch (RuntimeException e) {
-                throw RError.handleInteropException(this, e, clazz);
+                throw RError.handleInteropException(this, e);
             }
         }
 

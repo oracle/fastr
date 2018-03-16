@@ -667,7 +667,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 RInternalError.reportError(e);
                 throw RError.interopError(RError.findParentRBase(this), e, function);
             } catch (RuntimeException e) {
-                throw RError.handleInteropException(this, e, function);
+                throw RError.handleInteropException(this, e);
             }
         }
 

@@ -31,7 +31,6 @@ import java.nio.file.attribute.FileAttribute;
 import java.nio.file.attribute.PosixFilePermission;
 import java.nio.file.attribute.PosixFilePermissions;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.Set;
 
 import com.oracle.truffle.api.CallTarget;
@@ -56,8 +55,8 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
     }
 
     @Override
-    public DownCallNode createDownCallNode(NativeFunction function) {
-        return new DownCallNode(function) {
+    public DownCallNode createDownCallNode(NativeFunction f) {
+        return new DownCallNode(f) {
             @Override
             protected TruffleObject getTarget(NativeFunction function) {
                 if (function == NativeFunction.getpid) {

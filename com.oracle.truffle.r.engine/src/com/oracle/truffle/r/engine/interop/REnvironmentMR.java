@@ -29,7 +29,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.KeyInfo;
-import com.oracle.truffle.api.interop.KeyInfo.Builder;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -212,13 +211,14 @@ public class REnvironmentMR {
             if (val == null) {
                 return 0;
             }
-            Builder builder = KeyInfo.newBuilder();
-            builder.setReadable(true);
+            int result = KeyInfo.READABLE;
             if (!receiver.isLocked() && !receiver.bindingIsLocked(identifier)) {
-                builder.setWritable(true);
+                result |= KeyInfo.MODIFIABLE;
             }
-            builder.setInvocable(val instanceof RFunction);
-            return builder.build();
+            if (val instanceof RFunction) {
+                result |= KeyInfo.INVOCABLE;
+            }
+            return result;
         }
 
         @Fallback

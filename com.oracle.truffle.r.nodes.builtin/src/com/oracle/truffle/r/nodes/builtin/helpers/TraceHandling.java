@@ -95,7 +95,7 @@ public class TraceHandling {
         }
     }
 
-    public static boolean enableStatementTrace(RFunction func, RLanguage tracer, @SuppressWarnings("unused") Object exit, Object at, boolean print) {
+    public static boolean enableStatementTrace(RFunction func, RLanguage tracer, Object at, boolean print) {
         @SuppressWarnings("unchecked")
         EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateInstrumentation.getTraceBinding(RInstrumentation.getSourceSection(func));
         if (binding != null) {

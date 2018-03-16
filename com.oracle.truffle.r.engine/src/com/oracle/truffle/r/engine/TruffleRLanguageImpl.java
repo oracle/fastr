@@ -217,12 +217,6 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         }
     }
 
-    @Override
-    protected Object getLanguageGlobal(RContext context) {
-        // TODO: what's the meaning of "language global" for R?
-        return null;
-    }
-
     public static RContext getCurrentContext() {
         return TruffleLanguage.getCurrentContext(TruffleRLanguage.class);
     }

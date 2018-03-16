@@ -633,7 +633,7 @@ public class FileFunctions {
             return doListFilesBody(vec, pattern, allFiles, fullNames, recursive, ignoreCase, includeDirs, noDotDot);
         }
 
-        private RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, boolean allFiles, boolean fullNames, boolean recursive,
+        private static RStringVector doListFilesBody(RAbstractStringVector vec, String patternString, boolean allFiles, boolean fullNames, boolean recursive,
                         boolean ignoreCase, boolean includeDirsIn, boolean noDotDot) {
             boolean includeDirs = !recursive || includeDirsIn;
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE : 0;

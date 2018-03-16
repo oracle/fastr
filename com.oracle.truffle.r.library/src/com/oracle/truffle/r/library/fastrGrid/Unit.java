@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -379,27 +379,27 @@ public final class Unit {
             return visit(unit, null);
         }
 
-        protected T visitListUnit(RList unit) {
+        protected T visitListUnit(@SuppressWarnings("unused") RList unit) {
             throw RInternalError.shouldNotReachHere();
         }
 
-        protected T visitArithmeticUnit(ArithmeticUnit unit) {
+        protected T visitArithmeticUnit(@SuppressWarnings("unused") ArithmeticUnit unit) {
             throw RInternalError.shouldNotReachHere();
         }
 
-        protected T visitSimpleUnit(RAbstractVector unit) {
+        protected T visitSimpleUnit(@SuppressWarnings("unused") RAbstractVector unit) {
             throw RInternalError.shouldNotReachHere();
         }
 
-        protected T visitListUnit(RList unit, R arg) {
+        protected T visitListUnit(RList unit, @SuppressWarnings("unused") R arg) {
             return visitListUnit(unit);
         }
 
-        protected T visitArithmeticUnit(ArithmeticUnit unit, R arg) {
+        protected T visitArithmeticUnit(ArithmeticUnit unit, @SuppressWarnings("unused") R arg) {
             return visitArithmeticUnit(unit);
         }
 
-        protected T visitSimpleUnit(RAbstractVector unit, R arg) {
+        protected T visitSimpleUnit(RAbstractVector unit, @SuppressWarnings("unused") R arg) {
             return visitSimpleUnit(unit);
         }
     }

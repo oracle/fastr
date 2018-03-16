@@ -58,7 +58,7 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object doSubstitute(VirtualFrame frame, @SuppressWarnings("unused") RMissing exprMissing, @SuppressWarnings("unused") RMissing envMissing) {
+    protected Object doSubstitute(@SuppressWarnings("unused") RMissing exprMissing, @SuppressWarnings("unused") RMissing envMissing) {
         return RSymbol.MISSING;
     }
 

@@ -130,7 +130,7 @@ public final class GridColorUtils {
         } else if (colorId instanceof String && !RRuntime.isNA((String) colorId)) {
             paletteIdx = paletteIdxFromString((String) colorId);
         } else if (colorId instanceof Byte && !RRuntime.isNA((byte) colorId)) {
-            paletteIdx = (int) (byte) colorId;
+            paletteIdx = (byte) colorId;
         }
         if (RRuntime.isNA(paletteIdx)) {
             return null;
