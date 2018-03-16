@@ -89,9 +89,9 @@ public class RStartParams {
         this.slave = options.getBoolean(SLAVE);
 
         /*
-         * GnuR behavior differs from the manual entry for {@code interactive} in that {@code --interactive}
-         * never applies to {@code -e/-f}, only to console input that has been redirected from a pipe/file
-         * etc.
+         * GnuR behavior differs from the manual entry for {@code interactive} in that {@code
+         * --interactive} never applies to {@code -e/-f}, only to console input that has been
+         * redirected from a pipe/file etc.
          */
         String file = options.getString(FILE);
         List<String> expressions = options.getStringList(EXPR);

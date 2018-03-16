@@ -256,16 +256,16 @@ public final class RCmdOptions {
     }
 
     /**
-     * Parse the arguments from the standard R/Rscript command line syntax, setting the corresponding
-     * values.
+     * Parse the arguments from the standard R/Rscript command line syntax, setting the
+     * corresponding values.
      *
      * R supports {@code --arg=value} or {@code -arg value} for string-valued options.
      *
-     * The spec for {@code commandArgs()} states that it returns the executable by which R was invoked
-     * in element 0, which is consistent with the C {@code main} function, but defines the exact form to
-     * be platform independent. Java does not provide the executable (for obvious reasons) so we use
-     * "FastR". However, embedded mode does pass the executable in {@code args[0]} and we do not want to
-     * parse that!
+     * The spec for {@code commandArgs()} states that it returns the executable by which R was
+     * invoked in element 0, which is consistent with the C {@code main} function, but defines the
+     * exact form to be platform independent. Java does not provide the executable (for obvious
+     * reasons) so we use "FastR". However, embedded mode does pass the executable in
+     * {@code args[0]} and we do not want to parse that!
      */
     public static RCmdOptions parseArguments(Client client, String[] args, boolean reparse) {
         EnumMap<RCmdOption, Object> options = new EnumMap<>(RCmdOption.class);

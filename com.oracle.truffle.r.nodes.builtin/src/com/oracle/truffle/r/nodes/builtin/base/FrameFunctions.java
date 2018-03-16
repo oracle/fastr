@@ -107,8 +107,8 @@ public class FrameFunctions {
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
 
         /**
-         * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that only use
-         * the frame internally should not materialize it, i.e., they should use
+         * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
+         * only use the frame internally should not materialize it, i.e., they should use
          * {@link FrameAccess#READ_ONLY} or {@link FrameAccess#READ_WRITE}.
          */
         private final FrameAccess access;
@@ -218,12 +218,13 @@ public class FrameFunctions {
      * unlike, {@code sys.call}, the {@code call} argument can be provided by the caller. "..." is a
      * significant complication for two reasons:
      * <ol>
-     * <li>If {@code expand.dots} is {@code false} the "..." args are wrapped in a {@code pairlist}</li>
-     * <li>One of the args might itself be "..." in which case the values have to be retrieved from the
-     * environment associated with caller of the function containing {@code match.call}.</li>
+     * <li>If {@code expand.dots} is {@code false} the "..." args are wrapped in a {@code pairlist}
+     * </li>
+     * <li>One of the args might itself be "..." in which case the values have to be retrieved from
+     * the environment associated with caller of the function containing {@code match.call}.</li>
      * </ol>
-     * In summary, although the simple cases are indeed simple, there are many possible variants using
-     * "..." that make the code a lot more complex that it seems it ought to be.
+     * In summary, although the simple cases are indeed simple, there are many possible variants
+     * using "..." that make the code a lot more complex that it seems it ought to be.
      */
     @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"}, behavior = COMPLEX)
     public abstract static class MatchCall extends RBuiltinNode.Arg4 {
@@ -241,8 +242,8 @@ public class FrameFunctions {
         @Specialization
         protected RLanguage matchCall(RFunction definition, Object callObj, byte expandDotsL, REnvironment env) {
             /*
-             * definition==null in the standard (default) case, in which case we get the RFunction from the
-             * calling frame
+             * definition==null in the standard (default) case, in which case we get the RFunction
+             * from the calling frame
              */
             RLanguage call = checkCall(callObj);
             if (expandDotsL == RRuntime.LOGICAL_NA) {
@@ -256,8 +257,9 @@ public class FrameFunctions {
         @TruffleBoundary
         private static RLanguage doMatchCall(MaterializedFrame cframe, RFunction definition, RLanguage call, boolean expandDots) {
             /*
-             * We have to ensure that all parameters are named, in the correct order, and deal with "...". This
-             * process has a lot in common with MatchArguments, which we use as a starting point
+             * We have to ensure that all parameters are named, in the correct order, and deal with
+             * "...". This process has a lot in common with MatchArguments, which we use as a
+             * starting point
              */
             RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
             CallArgumentsNode callArgs = callNode.createArguments(null, false, true);

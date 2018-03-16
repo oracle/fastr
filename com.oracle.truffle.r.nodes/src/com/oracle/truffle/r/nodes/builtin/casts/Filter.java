@@ -563,7 +563,8 @@ public abstract class Filter<T, R extends T> {
 
     /**
      * This is an enumeration of possible fixed outcomes of a filter's test method for a given input
-     * value. It is used now only in connection with {@link RNull} and {@link RMissing} as input values.
+     * value. It is used now only in connection with {@link RNull} and {@link RMissing} as input
+     * values.
      * <P>
      * The <code>FALSE</code>, resp. <code>TRUE</code>, indicates that the filter will always return
      * <code>false</code>, resp. <code>true</code>, for the given input value.

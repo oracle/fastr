@@ -386,8 +386,8 @@ public final class RTCKLanguageProvider implements LanguageProvider {
             }
 
             /**
-             * Enables result verifier to handle empty arrays. Use this for R expressions, statements which
-             * accept array but not an empty array
+             * Enables result verifier to handle empty arrays. Use this for R expressions,
+             * statements which accept array but not an empty array
              *
              * @return the Builder
              */

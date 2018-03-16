@@ -274,8 +274,8 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
     @Specialization(guards = "!indexes.isEmpty()")
     protected Object get(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop) {
         /*
-         * "drop" is not actually used by this builtin, but it needs to be in the argument list (because the
-         * "drop" argument needs to be skipped).
+         * "drop" is not actually used by this builtin, but it needs to be in the argument list
+         * (because the "drop" argument needs to be skipped).
          */
         return extractNode.apply(x, indexes.getArguments(), exact, RLogical.TRUE);
     }

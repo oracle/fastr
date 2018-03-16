@@ -55,8 +55,8 @@ public abstract class Detector<T> {
 
     /**
      * @param pkgTestRun The package test run any problems should be associated with.
-     * @param startLineLocation The location of the first line, i.e., of body[0], or <code>null</code>
-     *            if body is empty.
+     * @param startLineLocation The location of the first line, i.e., of body[0], or
+     *            <code>null</code> if body is empty.
      * @param body The content to analyze (e.g. a list of lines in a file).
      * @return A list of detected problems (must not be {@code null}).
      */

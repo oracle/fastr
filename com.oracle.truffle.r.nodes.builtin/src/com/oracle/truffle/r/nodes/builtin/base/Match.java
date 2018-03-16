@@ -875,8 +875,8 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         }
 
         /**
-         * Set the "complete" status. If {@code nomatch} is not NA (uncommon), then the result vector is
-         * always COMPLETE, otherwise it is INCOMPLETE unless everything matched.
+         * Set the "complete" status. If {@code nomatch} is not NA (uncommon), then the result
+         * vector is always COMPLETE, otherwise it is INCOMPLETE unless everything matched.
          */
         private static boolean setCompleteState(boolean matchAll, int nomatch) {
             return nomatch != RRuntime.INT_NA || matchAll ? RDataFactory.COMPLETE_VECTOR : RDataFactory.INCOMPLETE_VECTOR;

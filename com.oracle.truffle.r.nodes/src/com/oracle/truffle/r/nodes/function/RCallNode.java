@@ -260,9 +260,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     /**
-     * If there are no parameters, or the target function does not refer to a builtin, or the builtin
-     * has no special dispatching, then we know that we will just call the function with no special
-     * dispatch logic.
+     * If there are no parameters, or the target function does not refer to a builtin, or the
+     * builtin has no special dispatching, then we know that we will just call the function with no
+     * special dispatch logic.
      */
     protected boolean isDefaultDispatch(RFunction function) {
         return (signature != null && signature.isEmpty()) || nullBuiltinProfile.profile(function.getRBuiltin() == null) || function.getRBuiltin().getDispatch() == RDispatch.DEFAULT;
@@ -285,9 +285,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     /**
-     * If the target function refers to a builtin that requires internal generic dispatch and there are
-     * actual parameters to dispatch on, then we will do an internal generic dispatch on the first
-     * parameter.
+     * If the target function refers to a builtin that requires internal generic dispatch and there
+     * are actual parameters to dispatch on, then we will do an internal generic dispatch on the
+     * first parameter.
      */
     protected boolean isInternalGenericDispatch(RFunction function) {
         if (signature != null && signature.isEmpty()) {
@@ -751,8 +751,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     /**
-     * Creates a modified call in which the first N arguments are replaced by {@code replacementArgs}.
-     * This is only used to support {@code HiddenInternalFunctions.MakeLazy}.
+     * Creates a modified call in which the first N arguments are replaced by
+     * {@code replacementArgs}. This is only used to support
+     * {@code HiddenInternalFunctions.MakeLazy}.
      */
     @TruffleBoundary
     public static RCallNode createCloneReplacingArgs(RCallNode call, RSyntaxNode... replacementArgs) {
@@ -814,8 +815,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         /**
          * Note: s3DefaultArguments is intended to carry default arguments from
-         * {@link RCallNode#callGroupGeneric} if the R dispatch method has some. Currently this is only the
-         * case for 'summary' group so this argument is either null or set to
+         * {@link RCallNode#callGroupGeneric} if the R dispatch method has some. Currently this is
+         * only the case for 'summary' group so this argument is either null or set to
          * {@link RArguments#SUMMARY_GROUP_DEFAULT_VALUE_NA_RM}
          */
         public abstract Object execute(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments);
@@ -881,7 +882,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         /*
-         * Use a TruffleBoundaryNode to be able to switch child nodes without invalidating the whole method.
+         * Use a TruffleBoundaryNode to be able to switch child nodes without invalidating the whole
+         * method.
          */
         protected final class GenericCall extends TruffleBoundaryNode {
 

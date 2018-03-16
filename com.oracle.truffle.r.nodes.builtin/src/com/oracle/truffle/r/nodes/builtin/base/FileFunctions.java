@@ -136,12 +136,12 @@ public class FileFunctions {
         @TruffleBoundary
         protected RLogicalVector doFileAppend(RAbstractStringVector file1Vec, RAbstractStringVector file2Vec) {
             /*
-             * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more files to a
-             * single file (len1 == 1, len2 >= 1) 2. Append one file to one file for several files (len1 ==
-             * len2)
+             * There are two simple (non-trivial) cases and one tricky 1. 1. Append one or more
+             * files to a single file (len1 == 1, len2 >= 1) 2. Append one file to one file for
+             * several files (len1 == len2)
              *
-             * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case, this is
-             * really f1,f2,f1 <- g1,g2,g3
+             * The tricky case is when len1 > 1 && len2 > len1. E.g. f1,f2 <- g1,g2,g3 In this case,
+             * this is really f1,f2,f1 <- g1,g2,g3
              */
 
             int len1 = file1Vec.getLength();
@@ -277,14 +277,14 @@ public class FileFunctions {
         @TruffleBoundary
         protected RList doFileInfo(RAbstractStringVector vec, @SuppressWarnings("unused") Boolean extraCols) {
             /*
-             * Create a list, the elements of which are vectors of length vec.getLength() containing the
-             * information. The R closure that called the .Internal turns the result into a dataframe and sets
-             * the row.names attributes to the paths in vec. It also updates the mtime, ctime, atime fields
-             * using .POSIXct.
+             * Create a list, the elements of which are vectors of length vec.getLength() containing
+             * the information. The R closure that called the .Internal turns the result into a
+             * dataframe and sets the row.names attributes to the paths in vec. It also updates the
+             * mtime, ctime, atime fields using .POSIXct.
              *
-             * We try to use the JDK classes, even though they provide a more abstract interface than R. In
-             * particular there seems to be no way to get the uid/gid values. We might be better off justing
-             * using a native call.
+             * We try to use the JDK classes, even though they provide a more abstract interface
+             * than R. In particular there seems to be no way to get the uid/gid values. We might be
+             * better off justing using a native call.
              *
              * TODO implement extras_cols=FALSE
              */
@@ -616,8 +616,9 @@ public class FileFunctions {
                         boolean includeDirs,
                         boolean noDotDot) {
             /*
-             * Pattern in first element of vector, remaining elements are ignored (as per GnuR). N.B. The
-             * pattern matches file names not paths, which means we cannot just use the Java File path matcher.
+             * Pattern in first element of vector, remaining elements are ignored (as per GnuR).
+             * N.B. The pattern matches file names not paths, which means we cannot just use the
+             * Java File path matcher.
              */
 
             String pattern = null;
@@ -665,7 +666,8 @@ public class FileFunctions {
                         files.add(file.toString());
                     }
                     /*
-                     * Annoyingly "." and ".." are never visited by Files.find, so we have to process them manually.
+                     * Annoyingly "." and ".." are never visited by Files.find, so we have to
+                     * process them manually.
                      */
                     if (!noDotDot) {
                         if (pattern == null || pattern.matcher(DOT).find()) {
@@ -946,8 +948,8 @@ public class FileFunctions {
                             // copy to existing files is skipped unless overWrite
                             if (!Files.exists(toPath) || overwrite) {
                                 /*
-                                 * toB Be careful if toPath is a directory, if empty Java will replace it with a plain file,
-                                 * otherwise the copy will fail
+                                 * toB Be careful if toPath is a directory, if empty Java will
+                                 * replace it with a plain file, otherwise the copy will fail
                                  */
                                 Files.copy(fromPath, toPath, copyOptions);
                                 status[i] = RRuntime.LOGICAL_TRUE;

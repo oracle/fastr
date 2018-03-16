@@ -141,8 +141,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         /**
-         * Because the underlying AST in {@link RExplicitCallNode} may cache frame slots, i.e. expect the
-         * {@link FrameDescriptor} to never change, we're caching this AST and also
+         * Because the underlying AST in {@link RExplicitCallNode} may cache frame slots, i.e.
+         * expect the {@link FrameDescriptor} to never change, we're caching this AST and also
          * {@link GetVisibilityNode} for each {@link FrameDescriptor} we encounter.
          */
         @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "20")
@@ -163,8 +163,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         /**
-         * Slow-path version avoids the problem by creating {@link RExplicitCallNode} for every call again
-         * and again and putting it behind truffle boundary to avoid deoptimization.
+         * Slow-path version avoids the problem by creating {@link RExplicitCallNode} for every call
+         * again and again and putting it behind truffle boundary to avoid deoptimization.
          */
         @Specialization(replaces = "doFastPath")
         public Object doSlowPath(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
@@ -182,10 +182,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         /**
-         * The contract is that the function call will be evaluated in the given environment, but at the
-         * same time some primitives expect to see {@code do.call(foo, ...)} as the caller, so we create a
-         * frame the fakes caller, but otherwise delegates to the frame backing the explicitly given
-         * environment.
+         * The contract is that the function call will be evaluated in the given environment, but at
+         * the same time some primitives expect to see {@code do.call(foo, ...)} as the caller, so
+         * we create a frame the fakes caller, but otherwise delegates to the frame backing the
+         * explicitly given environment.
          */
         private static MaterializedFrame getEvalFrame(VirtualFrame virtualFrame, MaterializedFrame envFrame) {
             return VirtualEvalFrame.create(envFrame, RArguments.getFunction(virtualFrame), RArguments.getCall(virtualFrame));
@@ -193,10 +193,11 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
 
         /**
          * If the call leads to actual call via
-         * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new frame and
-         * new set of arguments for it, then for this new arguments we explicitly provide a caller that
-         * looks like the function was called from the explicitly given environment (it will be its parent
-         * call), but at the same time its depth is one above the do.call function that actually invoked it.
+         * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new
+         * frame and new set of arguments for it, then for this new arguments we explicitly provide
+         * a caller that looks like the function was called from the explicitly given environment
+         * (it will be its parent call), but at the same time its depth is one above the do.call
+         * function that actually invoked it.
          *
          * @see RCaller
          * @see RArguments

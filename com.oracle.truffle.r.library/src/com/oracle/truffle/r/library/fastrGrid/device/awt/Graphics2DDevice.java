@@ -74,8 +74,8 @@ public class Graphics2DDevice implements GridDevice {
      * @param graphics Object that should be used for the drawing.
      * @param width Width of the drawing area in AWT units.
      * @param height Height of the drawing area in AWT units.
-     * @param graphicsIsExclusive If the graphics object is exclusively used for drawing only by this
-     *            class, then it can optimize some things.
+     * @param graphicsIsExclusive If the graphics object is exclusively used for drawing only by
+     *            this class, then it can optimize some things.
      */
     public Graphics2DDevice(Graphics2D graphics, int width, int height, boolean graphicsIsExclusive) {
         setGraphics2D(graphics);

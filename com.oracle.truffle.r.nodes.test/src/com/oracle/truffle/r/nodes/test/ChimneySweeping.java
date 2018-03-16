@@ -307,8 +307,9 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     }
 
     /**
-     * Checks whether the argument samples are correct by passing them to the argument's pipeline. The
-     * positive samples should pass without any error, while the negative ones should cause an error.
+     * Checks whether the argument samples are correct by passing them to the argument's pipeline.
+     * The positive samples should pass without any error, while the negative ones should cause an
+     * error.
      *
      * @param i
      */

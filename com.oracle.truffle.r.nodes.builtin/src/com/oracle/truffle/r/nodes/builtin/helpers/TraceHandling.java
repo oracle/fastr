@@ -194,7 +194,8 @@ public class TraceHandling {
     }
 
     /**
-     * Event listener for the case where user provided an expression to be evaluated on function entry.
+     * Event listener for the case where user provided an expression to be evaluated on function
+     * entry.
      */
     private static class TracerFunctionEntryEventListener extends TraceEventListener {
         private final RLanguage tracer;
