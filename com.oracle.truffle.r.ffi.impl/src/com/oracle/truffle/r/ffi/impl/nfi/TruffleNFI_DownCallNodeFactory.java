@@ -26,10 +26,10 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.ffi.impl.interop.NativeNACheck;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeUInt8Array;
 
 public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
@@ -95,8 +95,8 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
 
                 for (Object obj : args) {
                     // TODO: can this ever happen in NFI?
-                    if (obj instanceof NativeNACheck<?>) {
-                        ((NativeNACheck<?>) obj).close();
+                    if (obj instanceof NativeArray<?>) {
+                        ((NativeArray<?>) obj).refresh();
                     }
                 }
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,7 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import java.nio.charset.StandardCharsets;
 
-import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
+import com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter;
 
 public class TruffleNFI_Utils {
     static String getString(long address, int len) {

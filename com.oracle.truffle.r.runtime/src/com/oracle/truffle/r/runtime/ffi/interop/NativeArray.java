@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,40 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop;
+package com.oracle.truffle.r.runtime.ffi.interop;
 
-import static com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter.UNSAFE;
+import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
 
-import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
-/**
- * Handles the {@code complete} flag in an {@link RVector} when an {@code NA} value is assigned in
- * native code.
- *
- */
-public abstract class NativeNACheck<T> implements AutoCloseable {
-
-    private final RVector<?> vec;
+public abstract class NativeArray<T> implements RTruffleObject {
 
     /**
      * If the array escapes the Truffle world via {@link #convertToNative()}, this value will be
      * non-zero and is used exclusively thereafter.
      */
     protected long nativeAddress;
+    protected T array;
+    @SuppressWarnings("unused") private NativeFinalizer finalizer;
 
-    protected NativeNACheck(Object x) {
-        if (x instanceof RVector<?>) {
-            vec = (RVector<?>) x;
-        } else {
-            // scalar (length 1) vector or no associated R object
-            vec = null;
-        }
-    }
-
-    public void setIncomplete() {
-        if (vec != null) {
-            vec.setComplete(false);
-        }
+    protected NativeArray(T array) {
+        this.array = array;
     }
 
     protected abstract void allocateNative();
@@ -62,15 +46,29 @@ public abstract class NativeNACheck<T> implements AutoCloseable {
 
     final long convertToNative() {
         if (nativeAddress == 0) {
-            allocateNative();
+            finalizer = new NativeFinalizer();
         }
         return nativeAddress;
     }
 
-    @Override
-    public final void close() {
+    public final T refresh() {
         if (nativeAddress != 0) {
             copyBackFromNative();
+        }
+        return array;
+    }
+
+    private final class NativeFinalizer {
+
+        {
+            allocateNative();
+            assert nativeAddress != 0;
+        }
+
+        @Override
+        protected void finalize() throws Throwable {
+            assert nativeAddress != 0;
+            super.finalize();
             UNSAFE.freeMemory(nativeAddress);
         }
     }

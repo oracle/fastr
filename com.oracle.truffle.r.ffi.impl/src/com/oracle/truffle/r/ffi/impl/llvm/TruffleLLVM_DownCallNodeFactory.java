@@ -30,16 +30,16 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
-import com.oracle.truffle.r.ffi.impl.interop.NativeDoubleArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeIntegerArray;
-import com.oracle.truffle.r.ffi.impl.interop.NativeNACheck;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeDoubleArray;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeIntegerArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativePointer;
 
 final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
@@ -93,9 +93,10 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
             @Override
             @ExplodeLoop
             protected void afterCall(long before, NativeFunction fn, TruffleObject target, Object[] args) {
-                for (Object obj : args) {
-                    if (obj instanceof NativeNACheck<?>) {
-                        ((NativeNACheck<?>) obj).close();
+                for (int i = 0; i < args.length; i++) {
+                    Object obj = args[i];
+                    if (obj instanceof NativeArray<?>) {
+                        ((NativeArray<?>) obj).refresh();
                     }
                 }
             }

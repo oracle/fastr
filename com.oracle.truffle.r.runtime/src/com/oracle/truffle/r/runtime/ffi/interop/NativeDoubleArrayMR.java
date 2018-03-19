@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,14 +20,13 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop;
+package com.oracle.truffle.r.runtime.ffi.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.RRuntime;
 
 @MessageResolution(receiverType = NativeDoubleArray.class)
 public class NativeDoubleArrayMR {
@@ -42,33 +41,15 @@ public class NativeDoubleArrayMR {
     @Resolve(message = "WRITE")
     public abstract static class NDAWriteNode extends Node {
         protected double access(NativeDoubleArray receiver, int index, double value) {
-            if (value == RRuntime.DOUBLE_NA) {
-                receiver.setIncomplete();
-            }
             receiver.write(index, value);
             return value;
         }
     }
 
-    @Resolve(message = "IS_POINTER")
-    public abstract static class NDAIsPointer extends Node {
-
-        public Object access(@SuppressWarnings("unused") NativeDoubleArray receiver) {
-            return true;
-        }
-    }
-
-    @Resolve(message = "AS_POINTER")
-    public abstract static class NDAAsPointerNode extends Node {
-        protected long access(NativeDoubleArray receiver) {
-            return receiver.convertToNative();
-        }
-    }
-
     @Resolve(message = "TO_NATIVE")
     public abstract static class NDAToNativeNode extends Node {
-        protected Object access(@SuppressWarnings("unused") NativeDoubleArray receiver) {
-            return this;
+        protected Object access(NativeDoubleArray receiver) {
+            return new DoubleNativePointer(receiver);
         }
     }
 
@@ -79,4 +60,20 @@ public class NativeDoubleArrayMR {
             return receiver instanceof NativeDoubleArray;
         }
     }
+
+    private static final class DoubleNativePointer extends NativePointer {
+        private final NativeDoubleArray nativeDoubleArray;
+
+        private DoubleNativePointer(NativeDoubleArray object) {
+            super(object);
+            this.nativeDoubleArray = object;
+        }
+
+        @Override
+        protected long asPointerImpl() {
+            long result = nativeDoubleArray.convertToNative();
+            return result;
+        }
+    }
+
 }
