@@ -945,7 +945,8 @@ public final class RError extends RuntimeException implements TruffleException {
         ATOMIC_VECTOR_ARGUMENTS_ONLY("atomic vector arguments only"),
         MUST_BE_COMPLEX_MATRIX("'%s' must be a complex matrix"),
         INVALID_FORMAL_ARG_LIST("invalid formal argument list for \"%s\""),
-        SINGULAR_BACKSOLVE("singular matrix in 'backsolve'. First zero in diagonal [%d]");
+        SINGULAR_BACKSOLVE("singular matrix in 'backsolve'. First zero in diagonal [%d]"),
+        EOF_AFTER_BACKSLASH("\\ followed by EOF");
 
         public final String message;
         final boolean hasArgs;
