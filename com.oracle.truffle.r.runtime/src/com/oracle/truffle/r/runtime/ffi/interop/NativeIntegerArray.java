@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,61 +20,53 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop;
+package com.oracle.truffle.r.runtime.ffi.interop;
 
-import static com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter.UNSAFE;
+import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 import sun.misc.Unsafe;
 
-public final class NativeDoubleArray extends NativeNACheck<double[]> implements RTruffleObject {
+public final class NativeIntegerArray extends NativeArray<int[]> {
 
-    public final double[] value;
-
-    public NativeDoubleArray(Object obj, double[] value) {
-        super(obj);
-        this.value = value;
+    public NativeIntegerArray(int[] value) {
+        super(value);
     }
 
-    public NativeDoubleArray(double[] value) {
-        this(null, value);
-    }
-
-    double read(int index) {
+    int read(int index) {
         if (nativeAddress != 0) {
-            return UNSAFE.getDouble(nativeAddress + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+            return UNSAFE.getInt(nativeAddress + index * Unsafe.ARRAY_INT_INDEX_SCALE);
         } else {
-            return value[index];
+            return array[index];
         }
     }
 
-    void write(int index, double nv) {
+    void write(int index, int nv) {
         if (nativeAddress != 0) {
-            UNSAFE.putDouble(nativeAddress + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, nv);
+            UNSAFE.putInt(nativeAddress + index * Unsafe.ARRAY_INT_INDEX_SCALE, nv);
         } else {
-            value[index] = nv;
+            array[index] = nv;
         }
     }
 
     @Override
     @TruffleBoundary
     protected void allocateNative() {
-        nativeAddress = UNSAFE.allocateMemory(value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
-        UNSAFE.copyMemory(value, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, null, nativeAddress, value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        nativeAddress = UNSAFE.allocateMemory(array.length * Unsafe.ARRAY_INT_INDEX_SCALE);
+        UNSAFE.copyMemory(array, Unsafe.ARRAY_INT_BASE_OFFSET, null, nativeAddress, array.length * Unsafe.ARRAY_INT_INDEX_SCALE);
     }
 
     @Override
     @TruffleBoundary
-    protected void copyBackFromNative() {
+    public void copyBackFromNative() {
         // copy back
-        UNSAFE.copyMemory(null, nativeAddress, value, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, value.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_INT_BASE_OFFSET, array.length * Unsafe.ARRAY_INT_INDEX_SCALE);
     }
 
     @Override
     public ForeignAccess getForeignAccess() {
-        return NativeDoubleArrayMRForeign.ACCESS;
+        return NativeIntegerArrayMRForeign.ACCESS;
     }
 }

@@ -33,14 +33,14 @@ public class NativeRawArrayMR {
     @Resolve(message = "READ")
     public abstract static class NRAReadNode extends Node {
         protected byte access(NativeRawArray receiver, int index) {
-            return receiver.bytes[index];
+            return receiver.array[index];
         }
     }
 
     @Resolve(message = "WRITE")
     public abstract static class NRAWriteNode extends Node {
         protected Object access(NativeRawArray receiver, int index, byte value) {
-            receiver.bytes[index] = value;
+            receiver.array[index] = value;
             return value;
         }
     }
@@ -48,7 +48,7 @@ public class NativeRawArrayMR {
     @Resolve(message = "GET_SIZE")
     public abstract static class NRAGetSizeNode extends Node {
         protected int access(NativeRawArray receiver) {
-            return receiver.bytes.length;
+            return receiver.array.length;
         }
     }
 

@@ -29,10 +29,10 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.interop.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter;
 
 public final class TryRfEvalNode extends FFIUpCallNode.Arg4 {
     @Child private RfEvalNode rfEvalNode = RfEvalNode.create();

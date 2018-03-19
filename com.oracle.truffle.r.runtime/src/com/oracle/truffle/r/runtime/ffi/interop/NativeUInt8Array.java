@@ -25,7 +25,6 @@ package com.oracle.truffle.r.runtime.ffi.interop;
 import static com.oracle.truffle.r.runtime.ffi.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 import sun.misc.Unsafe;
 
@@ -40,24 +39,17 @@ import sun.misc.Unsafe;
  * If {@link #fakesNullTermination()} is {@code true}, then {@link #read} returns 0, else it is an
  * error; similar for {@link #write}.
  */
-public abstract class NativeUInt8Array implements RTruffleObject {
+public abstract class NativeUInt8Array extends NativeArray<byte[]> {
 
-    public byte[] bytes;
-
-    /**
-     * If the array escapes the Truffle world via {@link #convertToNative()}, this value will be
-     * non-zero and is used exclusively thereafter.
-     */
-    protected long nativeAddress;
     private int effectiveLength;
 
-    protected NativeUInt8Array(byte[] bytes, boolean nullTerminate) {
-        this.bytes = bytes;
-        this.effectiveLength = bytes.length + (nullTerminate ? 1 : 0);
+    protected NativeUInt8Array(byte[] array, boolean nullTerminate) {
+        super(array);
+        this.effectiveLength = array.length + (nullTerminate ? 1 : 0);
     }
 
     public boolean fakesNullTermination() {
-        return bytes.length != effectiveLength;
+        return array.length != effectiveLength;
     }
 
     private void checkNativeIndex(int index) {
@@ -71,10 +63,10 @@ public abstract class NativeUInt8Array implements RTruffleObject {
             checkNativeIndex(index);
             UNSAFE.putByte(nativeAddress + index, value);
         } else {
-            if (index == bytes.length && fakesNullTermination()) {
+            if (index == array.length && fakesNullTermination()) {
                 // ignore
             } else {
-                bytes[index] = value;
+                array[index] = value;
             }
         }
     }
@@ -84,48 +76,44 @@ public abstract class NativeUInt8Array implements RTruffleObject {
             checkNativeIndex(index);
             return UNSAFE.getByte(nativeAddress + index);
         } else {
-            if (index == bytes.length && fakesNullTermination()) {
+            if (index == array.length && fakesNullTermination()) {
                 return (byte) 0;
             }
-            return bytes[index];
+            return array[index];
         }
     }
 
     int getSize() {
-        return bytes.length;
-    }
-
-    long convertToNative() {
-        if (nativeAddress == 0) {
-            allocateNative();
-        }
-        return nativeAddress;
+        return array.length;
     }
 
     @TruffleBoundary
-    private void allocateNative() {
+    @Override
+    protected final void allocateNative() {
         nativeAddress = UNSAFE.allocateMemory(effectiveLength);
-        UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, nativeAddress, bytes.length);
+        UNSAFE.copyMemory(array, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, nativeAddress, array.length);
         if (fakesNullTermination()) {
-            UNSAFE.putByte(nativeAddress + bytes.length, (byte) 0);
+            UNSAFE.putByte(nativeAddress + array.length, (byte) 0);
         }
     }
 
     public byte[] getValue() {
         if (nativeAddress != 0) {
-            copyBackFromNative(bytes);
+            copyBackFromNative();
         }
-        return bytes;
+        return array;
     }
 
     public void setValue(byte[] newBytes, boolean isNullTerminated) {
-        bytes = newBytes;
-        effectiveLength = isNullTerminated ? bytes.length + 1 : bytes.length;
+        array = newBytes;
+        effectiveLength = isNullTerminated ? array.length + 1 : array.length;
     }
 
     @TruffleBoundary
-    private void copyBackFromNative(byte[] target) {
+    @Override
+    public void copyBackFromNative() {
         // copy back
-        UNSAFE.copyMemory(null, nativeAddress, target, Unsafe.ARRAY_BYTE_BASE_OFFSET, bytes.length);
+        UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_BYTE_BASE_OFFSET, array.length);
     }
+
 }

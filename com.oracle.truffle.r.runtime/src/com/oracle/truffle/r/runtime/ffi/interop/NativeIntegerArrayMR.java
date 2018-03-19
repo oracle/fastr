@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.interop;
+package com.oracle.truffle.r.runtime.ffi.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
@@ -28,34 +28,51 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 
-@MessageResolution(receiverType = NativeLogicalArray.class)
-public class NativeLogicalArrayMR {
+@MessageResolution(receiverType = NativeIntegerArray.class)
+public class NativeIntegerArrayMR {
+
     @Resolve(message = "READ")
-    public abstract static class NLAReadNode extends Node {
-        protected int access(NativeLogicalArray receiver, int index) {
+    public abstract static class NIAReadNode extends Node {
+        protected int access(NativeIntegerArray receiver, int index) {
             return receiver.read(index);
         }
     }
 
     @Resolve(message = "WRITE")
-    public abstract static class NLAWriteNode extends Node {
-        protected Object access(NativeLogicalArray receiver, int index, int value) {
+    public abstract static class NIAWriteNode extends Node {
+        protected int access(NativeIntegerArray receiver, int index, int value) {
             receiver.write(index, value);
             return value;
         }
     }
 
-    @Resolve(message = "GET_SIZE")
-    public abstract static class NLAGetSizeNode extends Node {
-        protected int access(NativeLogicalArray receiver) {
-            return receiver.data.length;
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class NIAToNativeNode extends Node {
+        protected Object access(NativeIntegerArray receiver) {
+            return new IntegerNativePointer(receiver);
         }
     }
 
     @CanResolve
-    public abstract static class NLACheck extends Node {
+    public abstract static class NIACheck extends Node {
+
         protected static boolean test(TruffleObject receiver) {
-            return receiver instanceof NativeLogicalArray;
+            return receiver instanceof NativeIntegerArray;
+        }
+    }
+
+    private static final class IntegerNativePointer extends NativePointer {
+        private final NativeIntegerArray nativeIntegerArray;
+
+        private IntegerNativePointer(NativeIntegerArray object) {
+            super(object);
+            this.nativeIntegerArray = object;
+        }
+
+        @Override
+        protected long asPointerImpl() {
+            long result = nativeIntegerArray.convertToNative();
+            return result;
         }
     }
 }
