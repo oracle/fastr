@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,11 @@ final class ExternalPtrPrinter extends AbstractValuePrinter<RExternalPtr> {
     @Override
     @TruffleBoundary
     protected void printValue(RExternalPtr value, PrintContext printCtx) throws IOException {
-        printCtx.output().print("");
+        // like in RDeparse
+        if (value.getAddr().isLong()) {
+            printCtx.output().print(String.format("<pointer: %s>", Double.toHexString(value.getAddr().asAddress())));
+        } else {
+            printCtx.output().print(String.format("<pointer: external ptr 0x %s>", Long.toHexString(System.identityHashCode(value.getAddr().asTruffleObject()))));
+        }
     }
 }
