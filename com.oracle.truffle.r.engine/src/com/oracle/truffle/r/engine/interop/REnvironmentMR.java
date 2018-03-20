@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -39,10 +40,12 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentReadImplNodeGen;
+import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentRemoveImplNodeGen;
 import com.oracle.truffle.r.engine.interop.REnvironmentMRFactory.REnvironmentWriteImplNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
+import com.oracle.truffle.r.nodes.builtin.base.Rm;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -70,6 +73,15 @@ public class REnvironmentMR {
 
         protected Object access(VirtualFrame frame, REnvironment receiver, Object field, Object valueObj) {
             return writeNode.execute(frame, receiver, field, valueObj);
+        }
+    }
+
+    @Resolve(message = "REMOVE")
+    public abstract static class REnvironmentRemoveNode extends Node {
+        @Child private REnvironmentRemoveImplNode removeNode = REnvironmentRemoveImplNodeGen.create();
+
+        protected Object access(VirtualFrame frame, REnvironment receiver, Object identifier) {
+            return removeNode.execute(frame, receiver, identifier);
         }
     }
 
@@ -193,6 +205,41 @@ public class REnvironmentMR {
 
         @Fallback
         protected Object access(@SuppressWarnings("unused") TruffleObject receiver, Object identifier, @SuppressWarnings("unused") Object valueObj) {
+            throw UnknownIdentifierException.raise("" + identifier);
+        }
+
+        protected REnvironmentKeyInfoImplNode createKeyInfoNode() {
+            return REnvironmentKeyInfoImplNodeGen.create();
+        }
+    }
+
+    abstract static class REnvironmentRemoveImplNode extends Node {
+
+        private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
+
+        protected abstract Object execute(VirtualFrame frame, TruffleObject receiver, Object identifier);
+
+        @Specialization
+        protected Object access(VirtualFrame frame, REnvironment receiver, String identifier,
+                        @Cached("createKeyInfoNode()") REnvironmentKeyInfoImplNode keyInfo) {
+            int info = keyInfo.execute(receiver, identifier);
+            if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
+                throw UnknownIdentifierException.raise("" + identifier);
+            }
+            return remove(receiver, identifier);
+        }
+
+        @TruffleBoundary
+        private boolean remove(REnvironment receiver, String identifier) {
+            try {
+                return Rm.removeFromEnv(receiver, identifier, true);
+            } catch (REnvironment.PutException ex) {
+                return false;
+            }
+        }
+
+        @Fallback
+        protected Object access(@SuppressWarnings("unused") TruffleObject receiver, Object identifier) {
             throw UnknownIdentifierException.raise("" + identifier);
         }
 

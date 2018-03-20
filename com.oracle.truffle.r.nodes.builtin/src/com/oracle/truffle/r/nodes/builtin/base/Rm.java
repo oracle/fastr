@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -77,7 +77,7 @@ public abstract class Rm extends RBuiltinNode.Arg3 {
         return RNull.instance;
     }
 
-    private static boolean removeFromEnv(REnvironment envir, String key, boolean inherits) throws PutException {
+    public static boolean removeFromEnv(REnvironment envir, String key, boolean inherits) throws PutException {
         REnvironment curEnv = envir;
         while (curEnv != REnvironment.emptyEnv()) {
             try {

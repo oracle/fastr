@@ -128,6 +128,21 @@ public class REnvironmentMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isInternal(info));
     }
 
+    @Test
+    public void testRemove() throws Exception {
+        assertInteropException(() -> ForeignAccess.sendRemove(Message.REMOVE.createNode(), createEmptyTruffleObject(), "nnoonnee"), UnknownIdentifierException.class);
+
+        REnvironment e = (REnvironment) createTruffleObjects()[0];
+        assertInteropException(() -> ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "nnoonnee"), UnknownIdentifierException.class);
+
+        assertEquals("aaa", ForeignAccess.sendRead(Message.READ.createNode(), e, "s"));
+        assertEquals(true, ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "s"));
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, "s"), UnknownIdentifierException.class);
+
+        e.lock(true);
+        assertEquals(false, ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "i"));
+    }
+
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
         Source src = Source.newBuilder("R", "e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e",
