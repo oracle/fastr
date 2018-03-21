@@ -202,7 +202,7 @@ public class TestBuiltin_identical extends TestBase {
 
     @Test
     public void testAttrOrder() {
-        assertEval(Ignored.ImplementationError, "x <- 1; y <- 1; attr(x, \"f\") <- 2; attr(x, \"g\") <- 1; attr(y, \"g\") <- 1; attr(y, \"f\") <- 2; identical(x, y)");
+        assertEval("x <- 1; y <- 1; attr(x, \"f\") <- 2; attr(x, \"g\") <- 1; attr(y, \"g\") <- 1; attr(y, \"f\") <- 2; identical(x, y)");
     }
 
     @Test
@@ -258,6 +258,19 @@ public class TestBuiltin_identical extends TestBase {
 
         assertEval("{ f1 <- function() {}; f2 <- function() {}; identical(f1, f2) }");
         assertEval("{ identical(function() 42, function() 42) }");
+
+        // pairlists
+
+        assertEval("identical(pairlist(1, pairlist('foo')), pairlist(1, pairlist('bar')))");
+
+        // language
+
+        assertEval("a <- quote(a(100)); b <- quote(a(101)); identical(a,b)");
+        assertEval("a <- quote(a(100)); b <- quote(a(100)); identical(a,b)");
+        assertEval("a <- quote(a(100)); b <- quote(a(100)); attr(a[[2]], 'foo') <- 'bar'; identical(a,b)");
+        assertEval("a <- quote(a(100)); b <- quote(a(100)); attr(a[[2]], 'foo') <- 'bar'; b[[2]] <- a[[2]]; identical(a,b)");
+        assertEval("a <- quote(a(100)); b <- quote(a(100)); attr(b[[2]], 'foo') <- 'baz'; attr(a[[2]], 'foo') <- 'bar'; identical(a,b)");
+        assertEval("a <- quote(a(100)); b <- quote(a(100)); attr(b[[2]], 'foo') <- 'bar'; attr(a[[2]], 'foo') <- 'bar'; identical(a,b)");
     }
 
     @Test
