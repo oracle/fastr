@@ -303,6 +303,25 @@ public final class REnvVars implements RContext.ContextState {
         return TimeZone.getDefault();
     }
 
+    public static String getCRANMirror() {
+        String cranMirror = System.getenv("CRAN_MIRROR");
+        if (cranMirror == null) {
+            Path defCranMirrorPath = Paths.get(REnvVars.rHome()).resolve("etc").resolve("DEFAULT_CRAN_MIRROR");
+            if (!Files.exists(defCranMirrorPath)) {
+                throw RSuicide.rSuicide("Missing etc/DEFAULT_CRAN_MIRROR file");
+            }
+            List<String> cranMirrors;
+            try {
+                cranMirrors = Files.readAllLines(defCranMirrorPath);
+            } catch (IOException e) {
+                throw RSuicide.rSuicide("Invalid etc/DEFAULT_CRAN_MIRROR file");
+            }
+            assert !cranMirrors.isEmpty();
+            cranMirror = cranMirrors.get(0);
+        }
+        return cranMirror;
+    }
+
     private String expandParameters(String value) {
         StringBuilder result = new StringBuilder();
         int x = 0;

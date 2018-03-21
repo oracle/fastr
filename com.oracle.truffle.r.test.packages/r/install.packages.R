@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -304,6 +304,12 @@ set.repos <- function() {
 		} else if (name == "FASTR") {
 			# set the FastR internal repo
 			repos[["FASTR"]] <- paste0("file://", normalizePath("com.oracle.truffle.r.test.native/packages/repo"))
+		} else if (name == "SNAPSHOT") {
+			con <- file("etc/DEFAULT_CRAN_MIRROR", "r"); 
+			tryCatch({
+				cran.mirror <<- readLines(con)[[1]]
+			}, finally=function() close(con))
+			repos[["CRAN"]] <- cran.mirror
 		} else {
 			# User defined
 			repos[[name]] <- uri
