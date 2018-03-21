@@ -72,6 +72,8 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval("options(keep.source=FALSE); serialize(quote(if ({a}) {b} else {c}), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(while (a) b), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(repeat {b; if (c) next else break}), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(quote(xxxx(yyyy=1)), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(quote(b + xxxx(yyyy=1)), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(\"bar\"), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote('baz'), connection=NULL)");
