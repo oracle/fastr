@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,6 +23,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.library.fastrGrid.FastRGridExternalLookup;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_M_setPrimitiveMethodsNodeGen;
 import com.oracle.truffle.r.library.methods.MethodsListDispatchFactory.R_externalPtrPrototypeObjectNodeGen;
@@ -77,6 +78,7 @@ import com.oracle.truffle.r.library.utils.UnzipNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.CallAndExternalFunctions.DotExternal.CallNamedFunctionNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
@@ -91,11 +93,14 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
+import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
@@ -229,9 +234,8 @@ public class CallAndExternalFunctions {
      * could be invoked by a string but experimentally that situation has never been encountered.
      */
     @RBuiltin(name = ".Call", kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotCall extends LookupAdapter {
+    public abstract static class DotCall extends Dot {
 
-        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
         @Child private MaterializeNode materializeNode = MaterializeNode.create(true);
 
         static {
@@ -640,12 +644,17 @@ public class CallAndExternalFunctions {
          */
         @SuppressWarnings("unused")
         @Specialization(limit = "2", guards = {"cached == symbol", "builtin == null"})
-        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
-                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo) {
-            return callRFFINode.dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
+                        @Cached("extractSymbolInfo.execute(symbol)") NativeCallInfo nativeCallInfo,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+            if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
+                return explicitCall(frame, nativeCallInfo, args);
+            } else {
+                return dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
+            }
         }
 
         /**
@@ -653,24 +662,30 @@ public class CallAndExternalFunctions {
          * such cases there is this generic version.
          */
         @Specialization(replaces = {"callNamedFunction", "doExternal"})
-        protected Object callNamedFunctionGeneric(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
+        protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             RExternalBuiltinNode builtin = lookupBuiltin(symbol);
             if (builtin != null) {
                 throw RInternalError.shouldNotReachHere("Cache for .Calls with FastR reimplementation (lookupBuiltin(...) != null) exceeded the limit");
             }
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return callRFFINode.dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
+            if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
+                return explicitCall(frame, nativeCallInfo, args);
+            } else {
+                return dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
+            }
         }
 
         /**
          * {@code .NAME = string}, no package specified.
          */
         @Specialization
-        protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
+        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(symbol, args, null, rns, findSymbolNode);
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+            return callNamedFunctionWithPackage(frame, symbol, args, null, rns, findSymbolNode, registeredProfile);
         }
 
         /**
@@ -678,19 +693,29 @@ public class CallAndExternalFunctions {
          * define that symbol.
          */
         @Specialization
-        protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName,
+        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String symbol, RArgsValuesAndNames args, String packageName,
                         @Cached("createRegisteredNativeSymbol(CallNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "Call", packageName);
             }
-            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(args.getArguments()));
+            if (registeredProfile.profile(isRegisteredRFunction(func))) {
+                return explicitCall(frame, func, args);
+            } else {
+                return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(args.getArguments()));
+            }
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName) {
-            return callRFFINode.dispatch(new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(args.getArguments()));
+        protected Object callNamedFunctionWithPackage(VirtualFrame frame, RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+            if (registeredProfile.profile(isRegisteredRFunction(symbol))) {
+                return explicitCall(frame, symbol, args);
+            } else {
+                return dispatch(new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(args.getArguments()));
+            }
         }
 
         @SuppressWarnings("unused")
@@ -705,9 +730,9 @@ public class CallAndExternalFunctions {
      * {@link DotCall}.
      */
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = RBehavior.COMPLEX)
-    public abstract static class DotExternal extends LookupAdapter {
+    public abstract static class DotExternal extends Dot {
 
-        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @Child private RExplicitCallNode explicitCall;
 
         static {
             Casts.noCasts(DotExternal.class);
@@ -774,15 +799,20 @@ public class CallAndExternalFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached.symbol == symbol"})
-        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
-                        @Cached("new(symbol)") CallNamedFunctionNode cached) {
-            Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
-            return callRFFINode.dispatch(cached.nativeCallInfo, new Object[]{list});
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+                        @Cached("new(symbol)") CallNamedFunctionNode cached,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+            if (registeredProfile.profile(isRegisteredRFunction(cached.nativeCallInfo))) {
+                return explicitCall(frame, cached.nativeCallInfo, args);
+            } else {
+                Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
+                return dispatch(cached.nativeCallInfo, new Object[]{list});
+            }
         }
 
         public static class CallNamedFunctionNode extends Node {
             public final RList symbol;
-            final NativeCallInfo nativeCallInfo;
+            public final NativeCallInfo nativeCallInfo;
 
             public CallNamedFunctionNode(RList symbol) {
                 this.symbol = symbol;
@@ -792,22 +822,28 @@ public class CallAndExternalFunctions {
         }
 
         @Specialization
-        protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
+        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(symbol, args, null, rns, findSymbolNode);
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
+            return callNamedFunctionWithPackage(frame, symbol, args, null, rns, findSymbolNode, registeredProfile);
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName,
+        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String symbol, RArgsValuesAndNames args, String packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External", packageName);
             }
-            Object list = encodeArgumentPairList(args, symbol);
-            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
+            if (registeredProfile.profile(isRegisteredRFunction(func))) {
+                return explicitCall(frame, func, args);
+            } else {
+                Object list = encodeArgumentPairList(args, symbol);
+                return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
+            }
         }
 
         @Fallback
@@ -817,7 +853,7 @@ public class CallAndExternalFunctions {
     }
 
     @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
-    public abstract static class DotExternal2 extends LookupAdapter {
+    public abstract static class DotExternal2 extends Dot {
         private static final Object CALL = "call";
         private static final Object RHO = "rho";
         /**
@@ -829,8 +865,6 @@ public class CallAndExternalFunctions {
          * .External2, becuase functions exported as .External do not take the "op" argument.
          */
         @CompilationFinal private Object op = null;
-
-        @Child private CallRFFI.InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
 
         static {
             Casts.noCasts(DotExternal2.class);
@@ -883,7 +917,7 @@ public class CallAndExternalFunctions {
         protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("new(symbol)") CallNamedFunctionNode cached) {
             Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
-            return callRFFINode.dispatch(cached.nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
+            return dispatch(cached.nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
         }
 
         @Specialization
@@ -902,12 +936,51 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
-            return callRFFINode.dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, RHO});
+            return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, RHO});
         }
 
         @Fallback
         protected Object fallback(Object f, @SuppressWarnings("unused") Object args, @SuppressWarnings("unused") Object packageName) {
             throw fallback(this, f);
+        }
+    }
+
+    private abstract static class Dot extends LookupAdapter {
+        @Child private InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
+        @Child private RExplicitCallNode explicitCall;
+
+        protected Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
+            return callRFFINode.dispatch(nativeCallInfo, args);
+        }
+
+        protected Object explicitCall(VirtualFrame frame, NativeCallInfo nativeCallInfo, RArgsValuesAndNames args) {
+            return explicitCall(frame, nativeCallInfo.address, args);
+        }
+
+        protected Object explicitCall(VirtualFrame frame, RExternalPtr ptr, RArgsValuesAndNames args) {
+            return explicitCall(frame, ptr.getAddr(), args);
+        }
+
+        protected Object explicitCall(VirtualFrame frame, SymbolHandle symbolHandle, RArgsValuesAndNames args) {
+            if (explicitCall == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                explicitCall = insert(RExplicitCallNode.create());
+            }
+            RFunction function = (RFunction) symbolHandle.asTruffleObject();
+            return explicitCall.call(frame, function, args);
+        }
+
+        protected boolean isRegisteredRFunction(NativeCallInfo nativeCallInfo) {
+            return isRegisteredRFunction(nativeCallInfo.address);
+        }
+
+        protected boolean isRegisteredRFunction(RExternalPtr ptr) {
+            DLL.SymbolHandle addr = ptr.getAddr();
+            return !addr.isLong() && addr.asTruffleObject() instanceof RFunction;
+        }
+
+        protected static boolean isRegisteredRFunction(SymbolHandle handle) {
+            return !handle.isLong() && handle.asTruffleObject() instanceof RFunction;
         }
     }
 

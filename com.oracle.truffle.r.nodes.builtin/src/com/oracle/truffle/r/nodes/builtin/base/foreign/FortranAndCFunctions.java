@@ -11,6 +11,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.foreign;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -22,11 +23,13 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.FortranAndCFunctionsFactory.FortranResultNamesSetterNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.foreign.LookupAdapter.ExtractNativeCallInfoNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -34,10 +37,12 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
@@ -77,6 +82,8 @@ public class FortranAndCFunctions {
 
         @Child private FortranResultNamesSetter resNamesSetter = FortranResultNamesSetterNodeGen.create();
 
+        @Child private RExplicitCallNode explicitCall;
+
         @Override
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList symbol) {
@@ -85,34 +92,65 @@ public class FortranAndCFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached == symbol", "builtin != null"})
-        protected Object doExternal(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, @Cached("symbol") RList cached,
+        protected Object doFortran(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, RMissing encoding, @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin) {
             return resNamesSetter.execute(builtin.call(frame, args), args);
         }
 
         @Specialization(guards = "lookupBuiltin(symbol) == null")
-        protected RList c(RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
+        protected RList doFortran(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage,
+                        @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+            if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
+                if (explicitCall == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    explicitCall = insert(RExplicitCallNode.create());
+                }
+                RFunction function = (RFunction) nativeCallInfo.address.asTruffleObject();
+                Object result = explicitCall.call(frame, function, args);
+                return RDataFactory.createList(new Object[]{result});
+            } else {
+                return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+            }
         }
 
         @Specialization
-        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
+        protected RList doFortran(VirtualFrame frame, RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             String libName = LookupAdapter.checkPackageArg(rPackage);
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.Fortran, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(symbol.getDataAt(0), libName, rns);
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
             }
-            return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+            if (registeredProfile.profile(isRegisteredRFunction(func))) {
+                if (explicitCall == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    explicitCall = insert(RExplicitCallNode.create());
+                }
+                RFunction function = (RFunction) func.asTruffleObject();
+                Object result = explicitCall.call(frame, function, args);
+                return RDataFactory.createList(new Object[]{result});
+            } else {
+                return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+            }
         }
 
         @SuppressWarnings("unused")
         @Fallback
         protected Object fallback(Object symbol, Object args, Object naok, Object dup, Object rPackage, Object encoding) {
             throw LookupAdapter.fallback(this, symbol);
+        }
+
+        protected boolean isRegisteredRFunction(NativeCallInfo nativeCallInfo) {
+            return isRegisteredRFunction(nativeCallInfo.address);
+        }
+
+        private static boolean isRegisteredRFunction(SymbolHandle handle) {
+            return !handle.isLong() && handle.asTruffleObject() instanceof RFunction;
         }
     }
 
@@ -161,16 +199,30 @@ public class FortranAndCFunctions {
             Casts.noCasts(DotC.class);
         }
 
+        @Child private RExplicitCallNode explicitCall;
+
         @Specialization
-        protected RList c(RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding,
-                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
+        protected RList c(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, byte naok, byte dup, @SuppressWarnings("unused") Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+            if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
+                if (explicitCall == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    explicitCall = insert(RExplicitCallNode.create());
+                }
+                RFunction function = (RFunction) nativeCallInfo.address.asTruffleObject();
+                Object result = explicitCall.call(frame, function, args);
+                return RDataFactory.createList(new Object[]{result});
+            } else {
+                return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+            }
         }
 
         @Specialization
-        protected RList c(RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
-                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
+        protected RList c(VirtualFrame frame, RAbstractStringVector symbol, RArgsValuesAndNames args, byte naok, byte dup, Object rPackage, @SuppressWarnings("unused") RMissing encoding,
+                        @Cached("create()") DLL.RFindSymbolNode findSymbolNode,
+                        @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             String libName = null;
             if (!(rPackage instanceof RMissing)) {
                 libName = RRuntime.asString(rPackage);
@@ -183,7 +235,26 @@ public class FortranAndCFunctions {
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, symbol);
             }
-            return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+            if (registeredProfile.profile(isRegisteredRFunction(func))) {
+                if (explicitCall == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    explicitCall = insert(RExplicitCallNode.create());
+                }
+
+                RFunction function = (RFunction) func.asTruffleObject();
+                Object result = explicitCall.call(frame, function, args);
+                return RDataFactory.createList(new Object[]{result});
+            } else {
+                return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+            }
+        }
+
+        protected boolean isRegisteredRFunction(NativeCallInfo nativeCallInfo) {
+            return isRegisteredRFunction(nativeCallInfo.address);
+        }
+
+        private static boolean isRegisteredRFunction(SymbolHandle handle) {
+            return !handle.isLong() && handle.asTruffleObject() instanceof RFunction;
         }
     }
 }
