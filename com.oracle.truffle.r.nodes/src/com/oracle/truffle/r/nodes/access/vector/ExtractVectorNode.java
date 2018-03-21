@@ -49,7 +49,7 @@ import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -136,7 +136,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
     }
 
     private boolean isRecursiveSubscript(Object vector, Object[] positions) {
-        return !recursive && !ignoreRecursive && mode.isSubscript() && (vector instanceof RAbstractListVector || vector instanceof RLanguage) && positions.length == 1;
+        return !recursive && !ignoreRecursive && mode.isSubscript() && (vector instanceof RAbstractListVector || vector instanceof RPairList) && positions.length == 1;
     }
 
     @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})

@@ -35,7 +35,7 @@ import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.AccessElementNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ExtractSingleName;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ReadElementNode;
@@ -49,10 +49,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RLanguage.RepType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -212,24 +208,13 @@ public abstract class ReplaceVectorNode extends RBaseNode {
     }
 
     @Specialization
-    @TruffleBoundary
-    protected Object doReplacementLanguage(RLanguage vector, Object[] positions, Object value,
-                    @Cached("createForContainerTypes()") ReplaceVectorNode replace) {
-        RepType repType = RContext.getRRuntimeASTAccess().getRepType(vector);
-        RList result = RContext.getRRuntimeASTAccess().asList(vector);
-        DynamicObject attrs = vector.getAttributes();
-        if (attrs != null && !attrs.isEmpty()) {
-            result.initAttributes(RAttributesLayout.copy(attrs));
-        }
-        result = (RList) replace.execute(result, positions, value);
-        return RContext.getRRuntimeASTAccess().createLanguageFromList(result, repType);
-    }
-
-    @Specialization
-    @TruffleBoundary
     protected Object doReplacementPairList(RPairList vector, Object[] positions, Object value,
-                    @Cached("createForContainerTypes()") ReplaceVectorNode replace) {
-        return replace.execute(vector.toRList(), positions, value);
+                    @Cached("createForContainerTypes()") ReplaceVectorNode replace,
+                    @Cached("createBinaryProfile()") ConditionProfile isLanguage) {
+        RList result = vector.toRList();
+        result = (RList) replace.execute(result, positions, value);
+        // whether the result is list or pairlist depends on mode and the type of the pairlist
+        return mode != ElementAccessMode.SUBSET || isLanguage.profile(vector.isLanguage()) ? RPairList.asPairList(result, vector.getType()) : result;
     }
 
     protected static GenericVectorReplaceNode createGeneric() {
@@ -254,18 +239,20 @@ public abstract class ReplaceVectorNode extends RBaseNode {
 
         private RecursiveReplaceSubscriptNode getRecursive(ReplaceVectorNode node, Object vector, Object[] positions) {
             CompilerAsserts.neverPartOfCompilation();
-            if (cachedRecursive == null || !cachedRecursive.isSupported(vector, positions)) {
-                cachedRecursive = insert(node.createRecursiveCache(vector, positions));
+            RecursiveReplaceSubscriptNode current = cachedRecursive;
+            if (current == null || !current.isSupported(vector, positions)) {
+                return cachedRecursive = insert(node.createRecursiveCache(vector, positions));
             }
-            return cachedRecursive;
+            return current;
         }
 
         private CachedReplaceVectorNode get(ReplaceVectorNode node, RAbstractVector vector, Object[] positions, Object value) {
             CompilerAsserts.neverPartOfCompilation();
-            if (cached == null || !cached.isSupported(vector, positions, value)) {
-                cached = insert(node.createDefaultCached(vector, positions, value));
+            CachedReplaceVectorNode current = cached;
+            if (current == null || !current.isSupported(vector, positions, value)) {
+                return cached = insert(node.createDefaultCached(vector, positions, value));
             }
-            return cached;
+            return current;
         }
     }
 

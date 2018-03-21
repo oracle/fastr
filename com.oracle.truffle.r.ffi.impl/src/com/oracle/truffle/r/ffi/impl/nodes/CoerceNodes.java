@@ -236,7 +236,7 @@ public final class CoerceNodes {
                 case LISTSXP:
                     throw RInternalError.unimplemented("Rf_coerceVector unimplemented for PairLists.");
                 case LANGSXP:
-                    throw RInternalError.unimplemented("Rf_coerceVector unimplemented for RLanguage.");
+                    throw RInternalError.unimplemented("Rf_coerceVector unimplemented for RPairList.");
                 case ENVSXP:
                     return new EnvironmentCast();
                 case VECSXP:

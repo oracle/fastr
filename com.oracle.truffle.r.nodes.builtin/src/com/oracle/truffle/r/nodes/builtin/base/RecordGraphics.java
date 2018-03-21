@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -55,7 +55,7 @@ public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(RecordGraphics.class);
-        casts.arg("expr").mustBe(instanceOf(RLanguage.class).or(instanceOf(RExpression.class)));
+        casts.arg("expr").mustBe(instanceOf(RPairList.class).or(instanceOf(RExpression.class)));
         casts.arg("list").mustBe(instanceOf(RList.class));
         casts.arg("env").mustBe(instanceOf(REnvironment.class));
     }
@@ -64,8 +64,8 @@ public abstract class RecordGraphics extends RBuiltinNode.Arg3 {
         return RecordGraphicsNodeGen.create();
     }
 
-    @Specialization
-    protected Object doEval(VirtualFrame frame, RLanguage expr, RList list, REnvironment env) {
+    @Specialization(guards = "expr.isLanguage()")
+    protected Object doEval(VirtualFrame frame, RPairList expr, RList list, REnvironment env) {
         RCaller rCaller = RCaller.create(frame, getOriginalCall());
         try {
             return RContext.getEngine().eval(expr, createEnv(list, env), rCaller);

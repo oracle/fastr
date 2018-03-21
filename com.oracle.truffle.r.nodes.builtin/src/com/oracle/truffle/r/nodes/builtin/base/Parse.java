@@ -67,13 +67,12 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -260,9 +259,8 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         Object[] srcrefData = new Object[exprs.getLength()];
         for (int i = 0; i < srcrefData.length; i++) {
             Object data = exprs.getDataAt(i);
-            if (data instanceof RLanguage) {
-                RBaseNode node = ((RLanguage) data).getRep();
-                SourceSection ss = node.asRSyntaxNode().getSourceSection();
+            if ((data instanceof RPairList && ((RPairList) data).isLanguage())) {
+                SourceSection ss = ((RPairList) data).getSourceSection();
                 srcrefData[i] = RSrcref.createLloc(ss, srcFile);
             } else if (data instanceof RSymbol) {
                 srcrefData[i] = RNull.instance;
@@ -462,10 +460,9 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             List<OctetNode> rootOctets = new ArrayList<>();
             for (int i = 0; i < exprLen; i++) {
                 Object x = exprs.getDataAt(i);
-                if (x instanceof RLanguage) {
-                    RBaseNode rep = ((RLanguage) x).getRep();
-                    assert rep instanceof RSyntaxElement;
-                    rootOctets.add(accept((RSyntaxElement) rep));
+                if ((x instanceof RPairList && ((RPairList) x).isLanguage())) {
+                    RSyntaxElement rep = ((RPairList) x).getSyntaxElement();
+                    rootOctets.add(accept(rep));
                 } else if (x instanceof RSymbol) {
                     rootOctets.add(newOctet((RSymbol) x, OctetNode.NO_CHILDREN));
                 } else {
@@ -541,9 +538,11 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             List<OctetNode> children = new ArrayList<>();
             RSyntaxElement[] args = element.getSyntaxArguments();
             for (int i = from; i < Math.min(args.length, to); i++) {
-                OctetNode argOctet = accept(args[i]);
-                if (argOctet != null) {
-                    children.add(argOctet);
+                if (args[i] != null) {
+                    OctetNode argOctet = accept(args[i]);
+                    if (argOctet != null) {
+                        children.add(argOctet);
+                    }
                 }
             }
             return children;

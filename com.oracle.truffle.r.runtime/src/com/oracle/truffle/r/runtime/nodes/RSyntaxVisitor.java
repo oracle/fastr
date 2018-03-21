@@ -44,7 +44,7 @@ public abstract class RSyntaxVisitor<T> {
         } else if (element instanceof RSyntaxFunction) {
             return visit((RSyntaxFunction) element);
         } else {
-            throw RInternalError.shouldNotReachHere("unexpected RSyntaxElement: " + element.getClass().getCanonicalName());
+            throw RInternalError.shouldNotReachHere("unexpected RSyntaxElement: " + element == null ? "null" : element.getClass().getCanonicalName());
         }
     }
 

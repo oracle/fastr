@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,16 +49,13 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
@@ -97,7 +94,7 @@ public class IsTypeFunctions {
             return RRuntime.asLogical(isArrayProfile.profile(getDim.isArray(vector)));
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -173,11 +170,11 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(@SuppressWarnings("unused") RLanguage lang) {
-            return RRuntime.LOGICAL_TRUE;
+        protected byte isType(RPairList lang) {
+            return RRuntime.asLogical(lang.isLanguage());
         }
 
-        @Specialization(guards = {"!isRLanguage(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -195,11 +192,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected static boolean isAnyCharacter(Object value) {
-            return value instanceof String || value instanceof RAbstractStringVector;
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isAnyCharacter(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -217,11 +210,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected static boolean isAnyComplex(Object value) {
-            return value instanceof RComplex || value instanceof RAbstractComplexVector;
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isAnyComplex(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -239,11 +228,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected static boolean isAnyDouble(Object value) {
-            return value instanceof Double || value instanceof RAbstractDoubleVector;
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isAnyDouble(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -261,7 +246,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRExpression(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -279,7 +264,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRFunction(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -297,11 +282,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected static boolean isAnyInteger(Object value) {
-            return value instanceof Integer || value instanceof RAbstractIntVector;
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isAnyInteger(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -325,11 +306,11 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(@SuppressWarnings("unused") RLanguage value) {
-            return RRuntime.LOGICAL_TRUE;
+        protected byte isType(RPairList value) {
+            return RRuntime.asLogical(value.isLanguage());
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)", "!isRExpression(value)", "!isRLanguage(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -350,11 +331,11 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(@SuppressWarnings("unused") RPairList pl) {
-            return RRuntime.LOGICAL_TRUE;
+        protected byte isType(RPairList pl) {
+            return RRuntime.asLogical(!pl.isLanguage());
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRList(value)", "!isRPairList(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -372,11 +353,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected static boolean isAnyLogical(Object value) {
-            return value instanceof Byte || value instanceof RAbstractLogicalVector;
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isAnyLogical(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -397,7 +374,7 @@ public class IsTypeFunctions {
             return RRuntime.asLogical(isMatrixProfile.profile(getDim.isMatrix(vector)));
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRAbstractVector(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -415,7 +392,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRSymbol(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -434,23 +411,15 @@ public class IsTypeFunctions {
             return inheritsCheck.execute(o);
         }
 
-        @Specialization(guards = "!isFactor(value)")
-        protected byte isType(@SuppressWarnings("unused") RAbstractIntVector value) {
-            return RRuntime.LOGICAL_TRUE;
-        }
-
-        @Specialization(guards = "isFactor(value)")
-        protected byte isTypeFactor(@SuppressWarnings("unused") RAbstractIntVector value) {
-            return RRuntime.LOGICAL_FALSE;
+        @Specialization
+        protected byte isType(RAbstractIntVector value,
+                        @Cached("createBinaryProfile()") ConditionProfile profile) {
+            return RRuntime.asLogical(!profile.profile(isFactor(value)));
         }
 
         @Specialization
         protected byte isType(@SuppressWarnings("unused") RAbstractDoubleVector value) {
             return RRuntime.LOGICAL_TRUE;
-        }
-
-        protected static boolean isAnyNumeric(Object value) {
-            return value instanceof Integer || value instanceof Double || value instanceof RAbstractIntVector || value instanceof RAbstractDoubleVector;
         }
 
         @Fallback
@@ -471,7 +440,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -500,7 +469,7 @@ public class IsTypeFunctions {
             return RRuntime.asLogical(getClassNode.isObject(arg));
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRAttributable(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -519,11 +488,11 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(@SuppressWarnings("unused") RPairList value) {
-            return RRuntime.LOGICAL_TRUE;
+        protected byte isType(RPairList value) {
+            return RRuntime.asLogical(!value.isLanguage());
         }
 
-        @Specialization(guards = {"!isRMissing(value)", "!isRNull(value)", "!isRPairList(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -541,11 +510,7 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_TRUE;
         }
 
-        protected static boolean isAnyRaw(Object value) {
-            return value instanceof RRaw || value instanceof RAbstractRawVector;
-        }
-
-        @Specialization(guards = {"!isRMissing(value)", "!isAnyRaw(value)"})
+        @Fallback
         protected byte isType(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
         }

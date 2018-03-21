@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -186,12 +186,14 @@ public final class ReplacementDispatchNode extends OperatorNode {
      * Encapsulates check for the specific structure of replacements, to display the replacement
      * instead of the "internal" form (with *tmp*, etc.) of the update call.
      */
-    public static RLanguage getRLanguage(RLanguage language) {
-        RSyntaxNode sn = (RSyntaxNode) language.getRep();
-        Node parent = RASTUtils.unwrapParent(sn.asNode());
-        if (parent instanceof WriteVariableNode) {
-            WriteVariableNode wvn = (WriteVariableNode) parent;
-            return ReplacementNode.getLanguage(wvn);
+    public static RPairList getRLanguage(RPairList language) {
+        RSyntaxElement sn = language.getSyntaxElement();
+        if (sn instanceof Node) {
+            Node parent = RASTUtils.unwrapParent((Node) sn);
+            if (parent instanceof WriteVariableNode) {
+                WriteVariableNode wvn = (WriteVariableNode) parent;
+                return ReplacementNode.getLanguage(wvn);
+            }
         }
         return null;
     }

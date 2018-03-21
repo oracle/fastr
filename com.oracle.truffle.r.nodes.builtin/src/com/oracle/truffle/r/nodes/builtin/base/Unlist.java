@@ -48,10 +48,9 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -89,8 +88,8 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
 
         @Child private RLengthNode lengthNode;
 
-        @Specialization
-        protected int getLength(@SuppressWarnings("unused") RLanguage l) {
+        @Specialization(guards = "l.isLanguage()")
+        protected int getLength(@SuppressWarnings("unused") RPairList l) {
             // language object do not get expanded - as such their length for the purpose of unlist
             // is 1
             return 1;
@@ -131,8 +130,8 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
             return 0;
         }
 
-        @Specialization
-        protected int getLength(@SuppressWarnings("unused") RLanguage l) {
+        @Specialization(guards = "l.isLanguage()")
+        protected int getLength(@SuppressWarnings("unused") RPairList l) {
             // language object do not get expanded - as such their length for the purpose of unlist
             // is 1
             return 1;
@@ -167,7 +166,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
             return vector instanceof RList;
         }
 
-        @Specialization
+        @Specialization(guards = "!list.isLanguage()")
         protected int getLengthPairList(RPairList list) {
             int totalSize = 0;
             for (RPairList item : list) {
@@ -276,12 +275,6 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         return RNull.instance;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "isEmpty(list)")
-    protected RNull unlistEmptyList(RPairList list, boolean recursive, boolean useNames) {
-        return RNull.instance;
-    }
-
     // TODO: initially unlist was on the slow path - hence initial recursive implementation is on
     // the slow path as well; ultimately we may consider (non-recursive) optimization
     @Specialization(guards = "!isEmpty(list)")
@@ -305,8 +298,9 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
     }
 
-    @Specialization(guards = "!isEmpty(list)")
+    @Specialization(guards = "!list.isLanguage()")
     protected Object unlistPairList(RPairList list, boolean recursive, boolean useNames) {
+        assert !isEmpty(list) : "pairlist should never be empty";
         // TODO: unlist((pairlist(pairlist(1)), recursive=FALSE), see unit tests
         // Note: currently, we convert to list any pair-list that we encounter along the way, this
         // is sub-optimal, but the assumption is that pair-lists do not show up a lot
@@ -1054,6 +1048,6 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     private static Object handlePairList(Object o) {
-        return o instanceof RPairList ? ((RPairList) o).toRList() : o;
+        return (o instanceof RPairList && !((RPairList) o).isLanguage()) ? ((RPairList) o).toRList() : o;
     }
 }

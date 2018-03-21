@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -44,13 +43,12 @@ import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -180,7 +178,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
             switch (vectorType) {
                 case Language:
-                    return materializeLanguage(extractedVector);
+                case PairList:
+                    return ((RPairList) originalVector).isLanguage() ? RPairList.asPairList(extractedVector, ((RPairList) originalVector).getType()) : extractedVector;
                 default:
                     return trySubsetPrimitive(extractedVector);
             }
@@ -219,11 +218,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     private boolean isMissingSingleDimension() {
         return numberOfDimensions == 1 && positionsCheckNode.isMissing();
-    }
-
-    @TruffleBoundary
-    private static Object materializeLanguage(RAbstractVector extractedVector) {
-        return RContext.getRRuntimeASTAccess().createLanguageFromList((RList) extractedVector, RLanguage.RepType.CALL);
     }
 
     private Object extract(int dimensionIndex, RAbstractStringVector vector, Object pos, PositionProfile profile) {
@@ -435,7 +429,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 // usual case
                 container.initAttributes(RAttributesLayout.createNames(newNames1));
             } else {
-                // from an RLanguage extraction that set a name
+                // from an RPairList extraction that set a name
                 RStringVector oldNames = (RStringVector) namesAttrGetter.execute(container.getAttributes());
                 assert oldNames.getLength() == newNames.getLength();
                 assert oldNames.toString().equals(newNames1.toString());

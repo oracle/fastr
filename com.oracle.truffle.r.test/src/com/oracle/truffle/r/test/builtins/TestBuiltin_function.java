@@ -30,7 +30,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_function extends TestBase {
     @Test
     public void testFunctionFunction() {
-        assertEval(Output.IgnoreErrorContext, "eval(call('function', 1, expression(x + 1)[[1]]))");
+        assertEval("eval(call('function', 1, expression(x + 1)[[1]]))");
         assertEval("eval(call('function', as.pairlist(list(x=4)), expression(x + 1)[[1]]))");
         assertEval("do.call('function', list(as.pairlist(list(x=4)), expression(x + 1)[[1]]))");
     }

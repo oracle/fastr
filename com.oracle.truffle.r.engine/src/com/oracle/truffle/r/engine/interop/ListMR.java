@@ -338,7 +338,7 @@ public class ListMR {
                         @Cached("createKeyInfoNode()") ListKeyInfoImplNode keyInfo) {
             int info = keyInfo.execute(receiver, idx);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
-                throw UnknownIdentifierException.raise("" + idx);
+                throw UnknownIdentifierException.raise(String.valueOf(idx));
             }
             initExtractNode();
             // idx + 1 R is indexing from 1
@@ -355,7 +355,7 @@ public class ListMR {
             // let's be consistent at this place, the name should be known to the caller anyway
             int info = keyInfo.execute(receiver, field);
             if (unknownIdentifier.profile(!KeyInfo.isExisting(info))) {
-                throw UnknownIdentifierException.raise("" + field);
+                throw UnknownIdentifierException.raise(field);
             }
             initExtractNode();
             Object value = extract.applyAccessField(receiver, field);
@@ -365,7 +365,7 @@ public class ListMR {
 
         @Fallback
         protected Object read(@SuppressWarnings("unused") TruffleObject receiver, Object field) {
-            throw UnknownIdentifierException.raise("" + field);
+            throw UnknownIdentifierException.raise(String.valueOf(field));
         }
 
         protected ListKeyInfoImplNode createKeyInfoNode() {
@@ -426,23 +426,23 @@ public class ListMR {
     abstract static class ListKeyInfoImplNode extends Node {
         @Child private ExtractVectorNode extractNode;
 
-        private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
-
         abstract int execute(TruffleObject receiver, Object idx);
 
         @Specialization
         protected int keyInfo(TruffleObject receiver, int idx,
+                        @Cached("createBinaryProfile()") ConditionProfile outOfBounds,
                         @Cached("createLengthNode()") RLengthNode lenghtNode) {
-            return keyInfo(receiver, (double) idx, lenghtNode);
+            return keyInfo(receiver, (double) idx, outOfBounds, lenghtNode);
         }
 
         @Specialization
         protected int keyInfo(TruffleObject receiver, double idx,
+                        @Cached("createBinaryProfile()") ConditionProfile outOfBounds,
                         @Cached("createLengthNode()") RLengthNode lengthNode) {
 
             int length = lengthNode.executeInteger(receiver);
-            if (unknownIdentifier.profile(idx < 0 || idx >= length)) {
-                return 0;
+            if (outOfBounds.profile(idx < 0 || idx >= length)) {
+                return KeyInfo.NONE;
             }
             initExtractNode();
             return buildKeys(extractNode.apply(receiver, new Object[]{idx + 1}, RLogical.valueOf(false), RMissing.instance));
@@ -450,8 +450,13 @@ public class ListMR {
 
         @Specialization
         protected int keyInfo(TruffleObject receiver, String identifier,
+                        @Cached("createBinaryProfile()") ConditionProfile noNames,
+                        @Cached("createBinaryProfile()") ConditionProfile unknownIdentifier,
                         @Cached("createNamesNode()") GetNamesAttributeNode namesNode) {
             RStringVector names = namesNode.getNames(receiver);
+            if (noNames.profile(names == null)) {
+                return KeyInfo.NONE;
+            }
             boolean exists = false;
             for (int i = 0; i < names.getLength(); i++) {
                 if (identifier.equals(names.getDataAt(i))) {
@@ -460,7 +465,7 @@ public class ListMR {
                 }
             }
             if (unknownIdentifier.profile(!exists)) {
-                return 0;
+                return KeyInfo.NONE;
             }
             initExtractNode();
             return buildKeys(extractNode.applyAccessField(receiver, identifier));
@@ -491,7 +496,7 @@ public class ListMR {
 
         @Fallback
         protected int access(@SuppressWarnings("unused") TruffleObject receiver, @SuppressWarnings("unused") Object field) {
-            return 0;
+            return KeyInfo.NONE;
         }
     }
 

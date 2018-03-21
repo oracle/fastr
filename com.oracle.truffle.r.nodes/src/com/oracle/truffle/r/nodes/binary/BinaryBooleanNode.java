@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -146,7 +146,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     }
 
     protected static boolean isSymbolOrLang(Object obj) {
-        return obj instanceof RSymbol || obj instanceof RLanguage;
+        return obj instanceof RSymbol || (obj instanceof RPairList && ((RPairList) obj).isLanguage());
     }
 
     @Specialization(guards = {"isSymbolOrLang(left) || isSymbolOrLang(right)"})

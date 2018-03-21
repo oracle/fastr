@@ -49,7 +49,6 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
@@ -58,7 +57,6 @@ import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmen
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
@@ -75,10 +73,10 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -340,9 +338,6 @@ public class EnvFunctions {
     @RBuiltin(name = "environment", kind = INTERNAL, parameterNames = {"fun"}, behavior = COMPLEX)
     public abstract static class Environment extends RBuiltinNode.Arg1 {
 
-        private final ConditionProfile attributable = ConditionProfile.createBinaryProfile();
-        @Child private GetFixedAttributeNode getEnvAttrNode;
-
         static {
             Casts.noCasts(Environment.class);
         }
@@ -367,34 +362,21 @@ public class EnvFunctions {
             return getEnv.getEnvironment(fun);
         }
 
-        @Specialization
-        @TruffleBoundary
-        protected Object environmentLanguage(RLanguage value) {
-            if (ClassHierarchyNode.hasClass(value, RRuntime.FORMULA_CLASS)) {
-                if (getEnvAttrNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    getEnvAttrNode = insert(GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT));
-                }
-                Object result = getEnvAttrNode.execute(value);
-                return result == null ? RNull.instance : result;
-            } else {
-                return environment(value);
-            }
+        protected static GetFixedAttributeNode createDotEnv() {
+            return GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT);
         }
 
-        @Specialization(guards = {"!isRNull(value)", "!isRFunction(value)", "!isRLanguage(value)"})
-        protected Object environment(Object value) {
-            if (attributable.profile(value instanceof RAttributable)) {
-                if (getEnvAttrNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    getEnvAttrNode = insert(GetFixedAttributeNode.create(RRuntime.DOT_ENVIRONMENT));
-                }
-                Object attr = getEnvAttrNode.execute(value);
-                return attr == null ? RNull.instance : attr;
-            } else {
-                // Not an error according to GnuR
-                return RNull.instance;
-            }
+        @Specialization(guards = "!isRFunction(value)")
+        @TruffleBoundary
+        protected Object environmentLanguage(RAttributable value,
+                        @Cached("createDotEnv()") GetFixedAttributeNode getEnvAttrNode) {
+            Object result = getEnvAttrNode.execute(value);
+            return result == null ? RNull.instance : result;
+        }
+
+        @Fallback
+        protected Object environment(@SuppressWarnings("unused") Object value) {
+            return RNull.instance;
         }
     }
 
@@ -747,8 +729,8 @@ public class EnvFunctions {
             return v.copy();
         }
 
-        @Specialization
-        RLanguage copy(RLanguage l) {
+        @Specialization(guards = "l.isLanguage()")
+        RPairList copy(RPairList l) {
             return l.copy();
         }
 

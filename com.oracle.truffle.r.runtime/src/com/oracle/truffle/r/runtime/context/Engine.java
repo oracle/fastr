@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -207,7 +207,7 @@ public interface Engine {
      * Variant of {@link #eval(RExpression, REnvironment, RCaller)} for a single language element.
      * If the {@code caller} argument is null, it is taken from the environment's frame.
      */
-    Object eval(RLanguage expr, REnvironment envir, RCaller caller);
+    Object eval(RPairList expr, REnvironment envir, RCaller caller);
 
     /**
      * Evaluate {@code expr} in {@code frame}.
@@ -217,10 +217,10 @@ public interface Engine {
     /**
      * Variant of {@link #eval(RExpression, MaterializedFrame)} for a single language element.
      */
-    Object eval(RLanguage expr, MaterializedFrame frame);
+    Object eval(RPairList expr, MaterializedFrame frame);
 
     /**
-     * Variant of {@link #eval(RLanguage, MaterializedFrame)} where we already have the
+     * Variant of {@link #eval(RPairList, MaterializedFrame)} where we already have the
      * {@link RFunction} and the evaluated arguments. {@code frame} may be {@code null} in which
      * case the current frame is used). In many cases {@code frame} may not represent the current
      * call stack, for example many S4-related evaluations set {@code frame} to the {@code methods}

@@ -35,7 +35,6 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveNamesAttributeNode;
@@ -70,9 +69,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -133,7 +131,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
     }
 
     @ImportStatic(RRuntime.class)
-    public abstract static class AsVectorInternal extends Node {
+    public abstract static class AsVectorInternal extends RBaseNode {
 
         public abstract Object execute(Object x, String mode);
 
@@ -186,7 +184,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
 
         // there should never be more than ~12 specializations
         @SuppressWarnings("unused")
-        @Specialization(limit = "99", guards = {"!isEnv(x)", "matchesMode(mode, cachedMode)"})
+        @Specialization(limit = "99", guards = {"!isREnvironment(x)", "matchesMode(mode, cachedMode)"})
         protected Object asVector(Object x, String mode,
                         @Cached("mode") String cachedMode,
                         @Cached("fromMode(cachedMode)") RType type,
@@ -198,21 +196,13 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                 if (!RRuntime.isForeignObject(o)) {
                     return cast == null ? o : cast.doCast(o);
                 }
-                if (type == RType.List) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "list");
-                } else {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
-                }
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, type == RType.List ? "list" : "vector");
             }
             Object result = x;
             if (x instanceof RS4Object) {
                 result = getS4DataSlot((RS4Object) x);
             }
             return drop.execute(result, cast == null ? x : cast.doCast(result));
-        }
-
-        static boolean isEnv(Object x) {
-            return x instanceof REnvironment;
         }
 
         private Object getS4DataSlot(RS4Object o) {
@@ -260,8 +250,8 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                 return profile.profile(o.getAttributes() != null) ? o.copyDropAttributes() : o;
             }
 
-            @Specialization(guards = "o.getAttributes() != null")
-            protected RLanguage drop(@SuppressWarnings("unused") Object original, RLanguage o) {
+            @Specialization(guards = {"o.isLanguage()", "o.getAttributes() != null"})
+            protected RPairList drop(@SuppressWarnings("unused") Object original, RPairList o) {
                 switch (targetType) {
                     case Any:
                     case PairList:
@@ -277,7 +267,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Specialization(guards = "pairList.getAttributes() != null")
-            protected Object drop(@SuppressWarnings("unused") Object original, RPairList pairList) {
+            protected Object dropPairList(@SuppressWarnings("unused") Object original, RPairList pairList) {
                 // dropping already done in the cast node CastPairListNode below
                 return pairList;
             }
@@ -334,15 +324,8 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Specialization
-            @TruffleBoundary
-            protected Object doPairList(RPairList list) {
-                return list.copy();
-            }
-
-            @Specialization
-            protected Object doRLanguage(RLanguage language) {
-                // GNUR just let's language be language...
-                return language;
+            protected Object doRLanguage(RPairList pairlist) {
+                return pairlist;
             }
 
             @Fallback

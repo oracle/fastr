@@ -324,6 +324,9 @@ def ut_default(args):
 def ut_gate(args):
     return mx_unittest.unittest(args + _gate_unit_tests())
 
+def ut_gen(args):
+    return mx_unittest.unittest(args + _all_generated_unit_tests())
+
 def _test_package():
     return 'com.oracle.truffle.r.test'
 
@@ -597,6 +600,7 @@ _commands = {
     'rutsimple' : [ut_simple, ['options']],
     'rutdefault' : [ut_default, ['options']],
     'rutgate' : [ut_gate, ['options']],
+    'rutgen' : [ut_gen, ['options']],
     'rutnoapps' : [ut_noapps, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],

@@ -474,7 +474,7 @@ public class TestBuiltin_asvector extends TestRBase {
                     "c(T, F, T)",
                     "c(1+i, 2+i, 4+i)",
                     "parse(text='x; y; z')",
-                    // TODO: "parse(text='x+y')[[1]]", -- problem with UpdateNames and RLanguage...
+                    // TODO: "parse(text='x+y')[[1]]", -- problem with UpdateNames and RPairList...
                     // TODO: "function() 42",
     };
 

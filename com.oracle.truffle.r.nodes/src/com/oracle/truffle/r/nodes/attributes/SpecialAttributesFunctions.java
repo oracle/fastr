@@ -39,12 +39,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -308,18 +306,6 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setNamesInLanguage(RLanguage x, RStringVector newNames,
-                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile) {
-            RPairList pl = x.getPairListInternal();
-            if (pairListProfile.profile(pl == null)) {
-                /* See getNames */
-                RContext.getRRuntimeASTAccess().setNames(x, newNames);
-            } else {
-                pl.setNames(newNames);
-            }
-        }
-
-        @Specialization(insertBefore = "setAttrInAttributable")
         protected void resetDimNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("create()") RemoveNamesAttributeNode removeNamesAttrNode) {
             removeNamesAttrNode.execute(x);
@@ -413,25 +399,6 @@ public final class SpecialAttributesFunctions {
         @Specialization(insertBefore = "getAttrFromAttributable")
         protected Object getSequenceVectorNames(@SuppressWarnings("unused") RSequence x) {
             return null;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getLanguageNames(RLanguage x,
-                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile) {
-            RPairList pl = x.getPairListInternal();
-            if (pairListProfile.profile(pl == null)) {
-                /*
-                 * "names" for a language object is a special case, that is applicable to calls and
-                 * returns the names of the actual arguments, if any. E.g. f(x=1, 3) would return
-                 * c("", "x", ""). GnuR defines it as returning the "tag" values on the pairlist
-                 * that represents the call. Well, we don't have a pairlist, (we could get one by
-                 * serializing the expression), so we do it by AST walking.
-                 */
-                RStringVector names = RContext.getRRuntimeASTAccess().getNames(x);
-                return names;
-            } else {
-                return pl.getNames();
-            }
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
@@ -625,7 +592,6 @@ public final class SpecialAttributesFunctions {
 
     public abstract static class GetDimAttributeNode extends GetFixedAttributeNode {
 
-        private final BranchProfile isLanguageProfile = BranchProfile.create();
         private final BranchProfile isPairListProfile = BranchProfile.create();
         private final ConditionProfile nullDimsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nonEmptyDimsProfile = ConditionProfile.createBinaryProfile();
@@ -648,10 +614,6 @@ public final class SpecialAttributesFunctions {
         public final int[] getDimensions(Object x) {
             // Let's handle the following two types directly so as to avoid wrapping and unwrapping
             // RIntVector. The getContainerDims spec would be invoked otherwise.
-            if (x instanceof RLanguage) {
-                isLanguageProfile.enter();
-                return ((RLanguage) x).getDimensions();
-            }
             if (x instanceof RPairList) {
                 isPairListProfile.enter();
                 return ((RPairList) x).getDimensions();
@@ -780,19 +742,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setDimNamesInLanguage(RLanguage x, RAbstractVector newDimNames,
-                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile typeProfile,
-                        @Cached("create()") ShareObjectNode updateRefCountNode) {
-            RPairList pl = x.getPairListInternal();
-            RAttributable attr = pairListProfile.profile(pl == null) ? x : pl;
-            setAttrInAttributable(attr, newDimNames, attrNullProfile, attrStorageProfile, typeProfile, updateRefCountNode);
-        }
-
-        @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setDimNamesInVector(RVector<?> x, RList newDimNames,
+        protected void setDimNamesInVector(RAbstractContainer x, RList newDimNames,
                         @Cached("create()") GetDimAttributeNode getDimNode,
                         @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                         @Cached("create()") BranchProfile nullDimProfile,
@@ -850,14 +800,6 @@ public final class SpecialAttributesFunctions {
             int len = x.getLength();
             return len == 0 || len == expectedDim;
         }
-
-        @Specialization(insertBefore = "setAttrInAttributable")
-        @TruffleBoundary
-        protected void setDimNamesInContainer(RAbstractContainer x, RList dimNames,
-                        @Cached("createClassProfile()") ValueProfile contClassProfile) {
-            RAbstractContainer xProfiled = contClassProfile.profile(x);
-            xProfiled.setDimNames(dimNames);
-        }
     }
 
     public abstract static class RemoveDimNamesAttributeNode extends RemoveSpecialAttributeNode {
@@ -893,36 +835,11 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorDimNames(@SuppressWarnings("unused") RPairList x) {
-            return null;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getLanguageDimNames(RLanguage x,
-                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile nullRowNamesProfile) {
-            RPairList pl = x.getPairListInternal();
-            RAttributable attr = pairListProfile.profile(pl == null) ? x : pl;
-            Object res = super.getAttrFromAttributable(attr, attrNullProfile, attrStorageProfile, xTypeProfile);
-            return nullRowNamesProfile.profile(res == null) ? RNull.instance : res;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorDimNames(RAbstractVector x,
+        protected Object getVectorDimNames(RAbstractContainer x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             return super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable", guards = "!isRAbstractVector(x)")
-        @TruffleBoundary
-        protected Object getVectorDimNames(RAbstractContainer x,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-            return xTypeProfile.profile(x).getDimNames();
         }
     }
 
@@ -1083,19 +1000,7 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setRowNamesInLanguage(RLanguage x, RAbstractVector newRowNames,
-                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createClassProfile()") ValueProfile typeProfile,
-                        @Cached("create()") ShareObjectNode updateRefCountNode) {
-            RPairList pl = x.getPairListInternal();
-            RAttributable attr = pairListProfile.profile(pl == null) ? x : pl;
-            setAttrInAttributable(attr, newRowNames, attrNullProfile, attrStorageProfile, typeProfile, updateRefCountNode);
-        }
-
-        @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setRowNamesInVector(RAbstractVector x, RAbstractVector newRowNames,
+        protected void setRowNamesInVector(RAbstractContainer x, RAbstractVector newRowNames,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
@@ -1107,14 +1012,6 @@ public final class SpecialAttributesFunctions {
                 return;
             }
             setAttrInAttributable(x, newRowNames, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
-        }
-
-        @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
-        @TruffleBoundary
-        protected void setRowNamesInContainer(RAbstractContainer x, RAbstractVector rowNames,
-                        @Cached("createClassProfile()") ValueProfile contClassProfile) {
-            RAbstractContainer xProfiled = contClassProfile.profile(x);
-            xProfiled.setRowNames(rowNames);
         }
     }
 
@@ -1160,32 +1057,13 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getLanguageRowNames(RLanguage x,
-                        @Cached("createBinaryProfile()") ConditionProfile pairListProfile,
-                        @Cached("create()") BranchProfile attrNullProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile nullRowNamesProfile,
-                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
-            RPairList pl = x.getPairListInternal();
-            RAttributable attr = pairListProfile.profile(pl == null) ? x : pl;
-            Object res = super.getAttrFromAttributable(attr, attrNullProfile, attrStorageProfile, xTypeProfile);
-            return nullRowNamesProfile.profile(res == null) ? RNull.instance : res;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        protected Object getVectorRowNames(RAbstractVector x,
+        protected Object getVectorRowNames(RAbstractContainer x,
                         @Cached("create()") BranchProfile attrNullProfile,
                         @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                         @Cached("createBinaryProfile()") ConditionProfile nullRowNamesProfile,
                         @Cached("createClassProfile()") ValueProfile xTypeProfile) {
             Object res = super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
             return nullRowNamesProfile.profile(res == null) ? RNull.instance : res;
-        }
-
-        @Specialization(insertBefore = "getAttrFromAttributable")
-        @TruffleBoundary
-        protected Object getVectorRowNames(RAbstractContainer x) {
-            return x.getRowNames();
         }
     }
 

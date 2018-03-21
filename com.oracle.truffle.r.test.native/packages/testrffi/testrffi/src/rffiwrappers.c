@@ -43,6 +43,18 @@
 
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 
+SEXP api_OBJECT(SEXP x) {
+    return ScalarInteger(OBJECT(x));
+}
+
+SEXP api_ATTRIB(SEXP obj) {
+    return ATTRIB(obj);
+}
+
+SEXP api_Rf_cons(SEXP car, SEXP cdr) {
+    return Rf_cons(car, cdr);
+}
+
 SEXP api_Rf_ScalarInteger(SEXP value) {
     return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
@@ -83,10 +95,6 @@ SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding) {
     return Rf_mkCharLenCE(R_CHAR(STRING_ELT(bytes, 0)), INTEGER_VALUE(len), INTEGER_VALUE(encoding));
 }
 
-SEXP api_Rf_cons(SEXP car, SEXP cdr) {
-    return Rf_cons(car, cdr);
-}
-
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg) {
     Rf_defineVar(symbolArg, value, envArg);
     return R_NilValue;
@@ -114,10 +122,6 @@ SEXP api_Rf_findVarInFrame(SEXP envArg, SEXP symbolArg) {
 
 SEXP api_Rf_findVarInFrame3(SEXP envArg, SEXP symbolArg, SEXP doGet) {
     return Rf_findVarInFrame3(envArg, symbolArg, INTEGER_VALUE(doGet));
-}
-
-SEXP api_ATTRIB(SEXP obj) {
-    return ATTRIB(obj);
 }
 
 SEXP api_Rf_getAttrib(SEXP obj, SEXP name) {
@@ -235,6 +239,11 @@ SEXP api_SET_OBJECT(SEXP x, SEXP flag) {
 
 SEXP api_SET_NAMED(SEXP x, SEXP v) {
     SET_NAMED(x, INTEGER_VALUE(v));
+    return R_NilValue;
+}
+
+SEXP api_SET_TYPEOF(SEXP x, SEXP v) {
+    SET_TYPEOF(x, INTEGER_VALUE(v));
     return R_NilValue;
 }
 
@@ -975,10 +984,6 @@ SEXP api_R_has_slot(SEXP container, SEXP name) {
 SEXP api_Rf_PrintValue(SEXP value) {
     Rf_PrintValue(value);
     return R_NilValue;
-}
-
-SEXP api_OBJECT(SEXP x) {
-    return ScalarInteger(OBJECT(x));
 }
 
 #pragma GCC diagnostic pop

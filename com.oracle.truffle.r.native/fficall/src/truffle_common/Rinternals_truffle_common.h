@@ -1223,15 +1223,8 @@ void SET_OBJECT(SEXP x, int v) {
 
 void SET_TYPEOF(SEXP x, int v) {
     TRACE0();
-    // TODO: we will be able to implement this for RLanguage <-> RPairList once they are unified in one Java class
-    unimplemented("SET_TYPEOF");
-}
-
-SEXP SET_TYPEOF_FASTR(SEXP x, int v) {
-    TRACE0();
-    SEXP result = ((call_SET_TYPEOF_FASTR) callbacks[SET_TYPEOF_FASTR_x])(x, v);
+    ((call_SET_TYPEOF) callbacks[SET_TYPEOF_x])(x, v);
     checkExitCall();
-    return result;
 }
 
 void SET_NAMED(SEXP x, int v) {

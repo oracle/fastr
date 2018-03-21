@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -178,9 +178,6 @@ INLINE_FUN SEXP listAppend(SEXP s, SEXP t)
     return s;
 }
 
-
-SEXP SET_TYPEOF_FASTR(SEXP x, int v);
-
 /* Language based list constructs.  These are identical to the list */
 /* constructs, but the results can be evaluated. */
 
@@ -189,7 +186,8 @@ SEXP SET_TYPEOF_FASTR(SEXP x, int v);
 INLINE_FUN SEXP lcons(SEXP car, SEXP cdr)
 {
     SEXP e = cons(car, cdr);
-    return SET_TYPEOF_FASTR(e, LANGSXP);
+    SET_TYPEOF(e, LANGSXP);
+    return e;
 }
 
 INLINE_FUN SEXP lang1(SEXP s)

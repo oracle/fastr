@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,13 +33,16 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RootWithBody;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
 
 public class SpecialCallTest extends TestBase {
@@ -291,8 +294,9 @@ public class SpecialCallTest extends TestBase {
         RExpression testExpression = testVMContext.getThisEngine().parse(testSource);
         assert setupExpression.getLength() == 1;
         assert testExpression.getLength() == 1;
-        RootCallTarget setupCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(((RLanguage) setupExpression.getDataAt(0)).getRep().asRSyntaxNode().asRNode(), "test");
-        RootCallTarget testCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(((RLanguage) testExpression.getDataAt(0)).getRep().asRSyntaxNode().asRNode(), "test");
+        RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
+        RootCallTarget setupCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(builder.process(((RPairList) setupExpression.getDataAt(0)).getSyntaxElement()).asRNode(), "test");
+        RootCallTarget testCallTarget = testVMContext.getThisEngine().makePromiseCallTarget(builder.process(((RPairList) testExpression.getDataAt(0)).getSyntaxElement()).asRNode(), "test");
 
         try {
             CountCallsVisitor count1 = new CountCallsVisitor(testCallTarget);

@@ -629,8 +629,8 @@ public final class RDataFactory {
             return createSymbol(Utils.intern(name));
         }
 
-        public final RLanguage createLanguage(Closure closure) {
-            return traceDataCreated(new RLanguage(closure));
+        public final RPairList createLanguage(Closure closure) {
+            return traceDataCreated(new RPairList(closure));
         }
 
         public final RPromise createPromise(PromiseState state, Closure closure, MaterializedFrame env) {
@@ -662,19 +662,11 @@ public final class RDataFactory {
             return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1, execFrame));
         }
 
-        public final Object createLangPairList(int size) {
+        public final Object createPairList(int size, SEXPTYPE type) {
             if (size == 0) {
                 return RNull.instance;
             } else {
-                return traceDataCreated(RPairList.create(size, SEXPTYPE.LANGSXP));
-            }
-        }
-
-        public final Object createPairList(int size) {
-            if (size == 0) {
-                return RNull.instance;
-            } else {
-                return traceDataCreated(RPairList.create(size));
+                return traceDataCreated(RPairList.create(size, type));
             }
         }
 
@@ -683,7 +675,6 @@ public final class RDataFactory {
         }
 
         public final RPairList createPairList(Object car) {
-
             return traceDataCreated(new RPairList(car, RNull.instance, RNull.instance, null));
         }
 
@@ -1208,8 +1199,8 @@ public final class RDataFactory {
         return createSymbol(Utils.intern(name));
     }
 
-    public static RLanguage createLanguage(Closure closure) {
-        return traceDataCreated(new RLanguage(closure));
+    public static RPairList createLanguage(Closure closure) {
+        return traceDataCreated(new RPairList(closure));
     }
 
     public static RPromise createPromise(PromiseState state, Closure closure, MaterializedFrame env) {
@@ -1241,19 +1232,11 @@ public final class RDataFactory {
         return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1, execFrame));
     }
 
-    public static Object createLangPairList(int size) {
+    public static Object createPairList(int size, SEXPTYPE type) {
         if (size == 0) {
             return RNull.instance;
         } else {
-            return traceDataCreated(RPairList.create(size, SEXPTYPE.LANGSXP));
-        }
-    }
-
-    public static Object createPairList(int size) {
-        if (size == 0) {
-            return RNull.instance;
-        } else {
-            return traceDataCreated(RPairList.create(size));
+            return traceDataCreated(RPairList.create(size, type));
         }
     }
 
@@ -1262,7 +1245,6 @@ public final class RDataFactory {
     }
 
     public static RPairList createPairList(Object car) {
-
         return traceDataCreated(new RPairList(car, RNull.instance, RNull.instance, null));
     }
 

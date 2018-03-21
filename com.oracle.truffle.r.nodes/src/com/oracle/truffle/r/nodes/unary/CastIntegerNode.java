@@ -231,7 +231,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return ret;
     }
 
-    @Specialization
+    @Specialization(guards = "!pairList.isLanguage()")
     protected RIntVector doPairList(RPairList pairList) {
         return doList(pairList.toRList());
     }

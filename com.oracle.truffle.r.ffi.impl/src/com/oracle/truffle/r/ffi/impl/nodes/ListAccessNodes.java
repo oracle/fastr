@@ -35,10 +35,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
@@ -54,11 +53,6 @@ public final class ListAccessNodes {
         @Specialization
         protected Object car(RPairList pl) {
             return pl.car();
-        }
-
-        @Specialization
-        protected Object car(RLanguage lang) {
-            return lang.getDataAtAsObject(0);
         }
 
         @Specialization
@@ -99,12 +93,6 @@ public final class ListAccessNodes {
         @Specialization
         protected Object cdr(RPairList pl) {
             return pl.cdr();
-        }
-
-        @Specialization
-        protected Object cdr(RLanguage lang) {
-            RPairList l = lang.getPairList();
-            return l.cdr();
         }
 
         @Specialization
@@ -177,8 +165,8 @@ public final class ListAccessNodes {
 
     @TypeSystemReference(RTypes.class)
     public static final class SETCADDRNode extends FFIUpCallNode.Arg2 {
-        @Child CDDRNode cddr = CDDRNode.create();
-        @Child SETCARNode setcarNode = SETCARNode.create();
+        @Child private CDDRNode cddr = CDDRNode.create();
+        @Child private SETCARNode setcarNode = SETCARNode.create();
 
         @Override
         public Object executeObject(Object x, Object val) {
@@ -192,8 +180,8 @@ public final class ListAccessNodes {
 
     @TypeSystemReference(RTypes.class)
     public static final class SETCADDDRNode extends FFIUpCallNode.Arg2 {
-        @Child CDDDRNode cdddr = CDDDRNode.create();
-        @Child SETCARNode setcarNode = SETCARNode.create();
+        @Child private CDDDRNode cdddr = CDDDRNode.create();
+        @Child private SETCARNode setcarNode = SETCARNode.create();
 
         @Override
         public Object executeObject(Object x, Object val) {
@@ -207,9 +195,9 @@ public final class ListAccessNodes {
 
     @TypeSystemReference(RTypes.class)
     public static final class SETCAD4RNode extends FFIUpCallNode.Arg2 {
-        @Child CDDDRNode cdddr = CDDDRNode.create();
-        @Child CDRNode cdr = CDRNode.create();
-        @Child SETCARNode setcarNode = SETCARNode.create();
+        @Child private CDDDRNode cdddr = CDDDRNode.create();
+        @Child private CDRNode cdr = CDRNode.create();
+        @Child private SETCARNode setcarNode = SETCARNode.create();
 
         @Override
         public Object executeObject(Object x, Object val) {
@@ -225,12 +213,6 @@ public final class ListAccessNodes {
     public abstract static class SETCARNode extends FFIUpCallNode.Arg2 {
         public static SETCARNode create() {
             return SETCARNodeGen.create();
-        }
-
-        @Specialization
-        protected Object doRLang(RLanguage x, Object y) {
-            x.getPairList().setCar(y);
-            return y;
         }
 
         @Specialization
@@ -340,8 +322,8 @@ public final class ListAccessNodes {
 
     @TypeSystemReference(RTypes.class)
     public static final class CDDDRNode extends FFIUpCallNode.Arg1 {
-        @Child CDDRNode cddr = CDDRNode.create();
-        @Child CDRNode cdr = CDRNode.create();
+        @Child private CDDRNode cddr = CDDRNode.create();
+        @Child private CDRNode cdr = CDRNode.create();
 
         @Override
         public Object executeObject(Object x) {

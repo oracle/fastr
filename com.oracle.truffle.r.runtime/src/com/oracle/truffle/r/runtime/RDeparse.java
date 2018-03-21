@@ -48,11 +48,10 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -788,7 +787,7 @@ public class RDeparse {
                     append(") ");
                     appendFunctionBody(function.getSyntaxBody());
                 }
-            } else if (value instanceof RPairList) {
+            } else if ((value instanceof RPairList && !((RPairList) value).isLanguage())) {
                 RPairList arglist = (RPairList) value;
                 append("pairlist(");
                 int i = 0;
@@ -927,8 +926,8 @@ public class RDeparse {
                 RSyntaxElement element;
                 if (value instanceof RSymbol) {
                     element = RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, ((RSymbol) value).getName(), false);
-                } else if (value instanceof RLanguage) {
-                    element = ((RLanguage) value).getRep().asRSyntaxNode();
+                } else if ((value instanceof RPairList && ((RPairList) value).isLanguage())) {
+                    element = ((RPairList) value).getSyntaxElement();
                 } else if (value instanceof RMissing) {
                     element = RSyntaxLookup.createDummyLookup(null, "", false);
                 } else {

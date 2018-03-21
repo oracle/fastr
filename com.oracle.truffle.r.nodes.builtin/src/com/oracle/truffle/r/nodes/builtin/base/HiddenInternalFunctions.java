@@ -24,6 +24,7 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
+import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -33,8 +34,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
-import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -42,6 +41,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
@@ -56,9 +56,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -67,6 +67,11 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
@@ -103,9 +108,9 @@ public class HiddenInternalFunctions {
          * {@code names}. The value for the name stored as a {@link RPromise} to evaluate the
          * modified call in the {@code eenv} environment.
          */
-        @Specialization
+        @Specialization(guards = "expr.isLanguage()")
         @TruffleBoundary
-        protected RNull doMakeLazy(RAbstractStringVector names, RList values, RLanguage expr, REnvironment eenv, REnvironment aenv) {
+        protected RNull doMakeLazy(RAbstractStringVector names, RList values, RPairList expr, REnvironment eenv, REnvironment aenv) {
             initEval();
             for (int i = 0; i < names.getLength(); i++) {
                 String name = names.getDataAt(i);
@@ -113,9 +118,19 @@ public class HiddenInternalFunctions {
                 // GnuR does an eval but we short cut since intVec evaluates to itself.
                 // What happens next a pretty gross - we replace the "key" argument variable read
                 // in expr with a constant that is the value of intVec
-                RCallNode callNode = (RCallNode) RASTUtils.unwrap(expr.getRep());
-                ConstantNode vecNode = ConstantNode.create(intVec);
-                RCallNode expr0 = RCallNode.createCloneReplacingArgs(callNode, vecNode);
+
+                RSyntaxCall element = (RSyntaxCall) expr.getSyntaxElement();
+                RSyntaxElement[] arguments = element.getSyntaxArguments();
+                ArgumentsSignature signature = element.getSyntaxSignature();
+
+                RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
+                ArrayList<Argument<RSyntaxNode>> args = new ArrayList<>(arguments.length);
+                args.add(RCodeBuilder.argument(RSyntaxNode.INTERNAL, signature.getName(i), builder.constant(RSyntaxNode.INTERNAL, intVec)));
+                for (int j = 1; j < arguments.length; j++) {
+                    args.add(RCodeBuilder.argument(arguments[j] == null ? null : arguments[j].getLazySourceSection(), signature.getName(j),
+                                    arguments[j] == null ? null : builder.process(arguments[j])));
+                }
+                RCallNode expr0 = (RCallNode) builder.call(element.getLazySourceSection(), builder.process(element.getSyntaxLHS()), args).asRNode();
                 try {
                     // We want this call to have a SourceSection
                     aenv.put(name, RDataFactory.createPromise(PromiseState.Explicit, Closure.createPromiseClosure(expr0), eenv.getFrame()));

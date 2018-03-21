@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -95,7 +95,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         // conversions to character will not introduce new NAs
         for (int i = 0; i < operand.getLength(); i++) {
             Object o = operand.getDataAtAsObject(i);
-            if (isLanguageProfile.profile(o instanceof RLanguage)) {
+            if (isLanguageProfile.profile((o instanceof RPairList && ((RPairList) o).isLanguage()))) {
                 sdata[i] = RDeparse.deparse(o);
             } else {
                 sdata[i] = toString(o);

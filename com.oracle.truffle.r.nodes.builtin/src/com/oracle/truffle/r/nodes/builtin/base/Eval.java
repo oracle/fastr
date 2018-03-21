@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,11 +58,10 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -119,7 +118,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             return rList2EnvNode.execute(list, null, null, enclos);
         }
 
-        @Specialization
+        @Specialization(guards = "!list.isLanguage()")
         protected REnvironment cast(RPairList list, REnvironment enclos) {
             lazyCreateRList2EnvNode();
             return rList2EnvNode.execute(list.toRList(), null, null, enclos);
@@ -133,7 +132,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
             return rList2EnvNode.execute(list, null, null, REnvironment.baseEnv());
         }
 
-        @Specialization
+        @Specialization(guards = "!list.isLanguage()")
         protected REnvironment cast(RPairList list, @SuppressWarnings("unused") RNull enclos) {
             lazyCreateRList2EnvNode();
 
@@ -171,8 +170,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         casts.arg("enclos").allowNull().mustBe(REnvironment.class);
     }
 
-    @Specialization
-    protected Object doEval(VirtualFrame frame, RLanguage expr, Object envir, Object enclos) {
+    @Specialization(guards = "expr.isLanguage()")
+    protected Object doEval(VirtualFrame frame, RPairList expr, Object envir, Object enclos) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         RCaller rCaller = getCaller(frame, environment);
         try {

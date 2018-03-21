@@ -56,10 +56,9 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -206,24 +205,7 @@ public final class RASTUtils {
             }
             return RASTUtils.cloneNode(promiseRep);
         } else {
-            return createNodeForRValue(value);
-        }
-    }
-
-    @TruffleBoundary
-    public static RBaseNode createNodeForRValue(Object value) {
-        if (value instanceof RSymbol) {
-            RSymbol symbol = (RSymbol) value;
-            if (symbol.isMissing()) {
-                return RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, REmpty.instance).asRNode();
-            } else {
-                return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false).asRNode();
-            }
-        } else if (value instanceof RLanguage) {
-            return RASTUtils.cloneNode(((RLanguage) value).getRep());
-        } else {
-            assert value instanceof String || value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof TruffleObject;
-            return ConstantNode.create(value);
+            return createSyntaxNodeForRValue(value).asRNode();
         }
     }
 
@@ -236,11 +218,11 @@ public final class RASTUtils {
             } else {
                 return RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, symbol.getName(), false);
             }
-        } else if (value instanceof RLanguage) {
-            return RContext.getASTBuilder().process(((RLanguage) value).getSyntaxElement());
+        } else if ((value instanceof RPairList && ((RPairList) value).isLanguage())) {
+            return RContext.getASTBuilder().process(((RPairList) value).getSyntaxElement());
         } else {
             assert value instanceof String || value instanceof Integer || value instanceof Double || value instanceof Byte || value instanceof TruffleObject;
-            return ConstantNode.create(value);
+            return RContext.getASTBuilder().constant(RSyntaxNode.SOURCE_UNAVAILABLE, value);
         }
     }
 
@@ -303,7 +285,7 @@ public final class RASTUtils {
                 defaultValue = null;
             } else if (arg == RNull.instance) {
                 defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, RNull.instance);
-            } else if (arg instanceof RLanguage) {
+            } else if ((arg instanceof RPairList && ((RPairList) arg).isLanguage())) {
                 defaultValue = RASTUtils.createSyntaxNodeForRValue(arg);
             } else if (arg instanceof RSymbol) {
                 RSymbol symbol = (RSymbol) arg;

@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,7 +70,7 @@ public final class CompleteCases extends RExternalBuiltinNode {
             Object arg = args.getArgument(i);
             if (arg instanceof RNull) {
                 // nothing to do
-            } else if (arg instanceof RPairList) {
+            } else if ((arg instanceof RPairList && !((RPairList) arg).isLanguage())) {
                 for (Object t = ((RPairList) arg).car(); t != RNull.instance; t = ((RPairList) t).cdr()) {
                     len = checkAbstractVectorLength(len, ((RPairList) t).car());
                 }
@@ -103,7 +103,7 @@ public final class CompleteCases extends RExternalBuiltinNode {
 
         for (int i = 0; i < args.getLength(); i++) {
             Object arg = args.getArgument(i);
-            if (arg instanceof RPairList) {
+            if ((arg instanceof RPairList && !((RPairList) arg).isLanguage())) {
                 for (Object t = ((RPairList) arg).car(); t != RNull.instance; t = ((RPairList) t).cdr()) {
                     Object entry = ((RPairList) t).car();
                     iterateAbstractVectorContents(len, result, entry);

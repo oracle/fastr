@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,13 +33,12 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -67,8 +66,8 @@ public class RSubstitute {
         } else if (val instanceof RPromise) {
             RPromise promise = (RPromise) val;
             return substitutePromise(promise, builder);
-        } else if (val instanceof RLanguage) {
-            return ((RLanguage) val).getRep().asRSyntaxNode();
+        } else if ((val instanceof RPairList && ((RPairList) val).isLanguage())) {
+            return ((RPairList) val).getSyntaxElement();
         } else if (val instanceof RSymbol) {
             return RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) val).getName(), false);
         } else if (val instanceof RArgsValuesAndNames) {
@@ -216,7 +215,7 @@ public class RSubstitute {
     }
 
     @TruffleBoundary
-    public static RSyntaxNode substitute(REnvironment env, RBaseNode node, TruffleRLanguage language) {
-        return substitute(RContext.getASTBuilder(), node.asRSyntaxNode(), env, language);
+    public static RSyntaxNode substitute(REnvironment env, RSyntaxElement node, TruffleRLanguage language) {
+        return substitute(RContext.getASTBuilder(), node, env, language);
     }
 }

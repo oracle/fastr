@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -73,7 +73,7 @@ public class LoadSaveFunctions {
                     if (o == RNull.instance) {
                         return RDataFactory.createEmptyStringVector();
                     }
-                    if (!(o instanceof RPairList)) {
+                    if (!((o instanceof RPairList && !((RPairList) o).isLanguage()))) {
                         throw error(RError.Message.GENERIC, "loaded data is not in pair list form");
                     }
                     RPairList vars = (RPairList) o;

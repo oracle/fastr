@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -96,8 +96,8 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
                     defaultValue = null;
                 } else if (arg == RNull.instance) {
                     defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, RNull.instance).asRNode();
-                } else if (arg instanceof RLanguage) {
-                    defaultValue = (RNode) ((RLanguage) arg).getRep();
+                } else if ((arg instanceof RPairList && ((RPairList) arg).isLanguage())) {
+                    defaultValue = ((RPairList) arg).createNode().asRNode();
                 } else if (arg instanceof RSymbol) {
                     RSymbol symbol = (RSymbol) arg;
                     if (symbol.isMissing()) {
@@ -128,8 +128,8 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
 
         RBaseNode body;
         Object bodyObject = x.getDataAtAsObject(x.getLength() - 1);
-        if (bodyObject instanceof RLanguage) {
-            body = (RBaseNode) RContext.getASTBuilder().process(((RLanguage) x.getDataAtAsObject(x.getLength() - 1)).getRep().asRSyntaxNode());
+        if ((bodyObject instanceof RPairList && ((RPairList) bodyObject).isLanguage())) {
+            body = RContext.getASTBuilder().process(((RPairList) x.getDataAtAsObject(x.getLength() - 1)).getSyntaxElement()).asRNode();
         } else if (bodyObject instanceof RSymbol) {
             body = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) bodyObject).getName(), false).asRNode();
         } else {

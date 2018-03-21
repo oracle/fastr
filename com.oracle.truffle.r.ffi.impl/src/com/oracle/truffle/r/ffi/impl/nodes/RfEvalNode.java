@@ -41,10 +41,9 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -76,9 +75,9 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         return RContext.getEngine().eval(expr, getEnv(envArg), null);
     }
 
-    @Specialization
+    @Specialization(guards = "expr.isLanguage()")
     @TruffleBoundary
-    Object handleLanguage(RLanguage expr, Object envArg) {
+    Object handleLanguage(RPairList expr, Object envArg) {
         return RContext.getEngine().eval(expr, getEnv(envArg), null);
     }
 
@@ -93,7 +92,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         return result;
     }
 
-    @Specialization
+    @Specialization(guards = "!l.isLanguage()")
     Object handlePairList(RPairList l, Object envArg,
                     @Cached("createBinaryProfile()") ConditionProfile isPromiseProfile,
                     @Cached("createBinaryProfile()") ConditionProfile noArgsProfile) {

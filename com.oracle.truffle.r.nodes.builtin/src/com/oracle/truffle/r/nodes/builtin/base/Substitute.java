@@ -38,10 +38,10 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.runtime.RSubstitute;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -98,7 +98,7 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
      * @param expr
      * @param env {@code null} if the {@code env} argument was {@code RMissing} to avoid always
      *            materializing the current frame.
-     * @return in general an {@link RLanguage} instance, but simple cases could be a constant value
+     * @return in general an {@link RPairList} instance, but simple cases could be a constant value
      *         or {@link RSymbol}
      */
     private Object doSubstituteWithEnv(RPromise expr, REnvironment env) {
@@ -114,7 +114,7 @@ public abstract class Substitute extends RBuiltinNode.Arg2 {
 
         // The "expr" promise comes from the no-evalarg aspect of the builtin,
         // so get the actual expression (AST) from that
-        return RASTUtils.createLanguageElement(RSubstitute.substitute(env, expr.getRep(), getRLanguage()));
+        return RASTUtils.createLanguageElement(RSubstitute.substitute(env, expr.getClosure().getSyntaxElement(), getRLanguage()));
     }
 
     protected static RList2EnvNode createList2EnvNode() {

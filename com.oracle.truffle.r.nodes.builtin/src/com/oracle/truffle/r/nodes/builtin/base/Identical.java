@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,14 +46,14 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -204,14 +204,14 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
         return RRuntime.asLogical(x.getName() == y.getName());
     }
 
-    @Specialization
+    @Specialization(guards = {"x.isLanguage()", "y.isLanguage()"})
     @TruffleBoundary
-    protected byte doInternalIdentical(RLanguage x, RLanguage y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
+    protected byte doInternalIdentical(RPairList x, RPairList y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
         if (x == y) {
             return RRuntime.LOGICAL_TRUE;
         }
-        RSyntaxNode xNode = x.getRep().asRSyntaxNode();
-        RSyntaxNode yNode = y.getRep().asRSyntaxNode();
+        RSyntaxElement xNode = x.getSyntaxElement();
+        RSyntaxElement yNode = y.getSyntaxElement();
         if (!new IdenticalVisitor().accept(xNode, yNode)) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -299,7 +299,7 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
         return RRuntime.asLogical(x.getAddr() == y.getAddr());
     }
 
-    @Specialization
+    @Specialization(guards = {"!x.isLanguage()", "!y.isLanguage()"})
     protected byte doInternalIdenticalGeneric(RPairList x, RPairList y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
         if (identicalRecursive(x.car(), y.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref) == RRuntime.LOGICAL_FALSE) {
             return RRuntime.LOGICAL_FALSE;

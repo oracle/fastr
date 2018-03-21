@@ -37,16 +37,16 @@ import com.oracle.truffle.r.ffi.processor.RFFICstring;
 /**
  * Generates 1) C wrapper that calls each RFFI function and converts between SEXP and primitive
  * types, 2) sequence of calls to CALLDEF to register all those functions as ".Call" targets.
- * 
+ *
  * This creates R interface to all applicable RFFI functions. RFFI functions working with raw
  * pointers are excluded.
- * 
+ *
  * The generated code is to be used in testrffi package located in
  * "com.oracle.truffle.r.test.native/packages/testrffi/testrffi".
  */
 public final class FFITestsCodeGen extends CodeGenBase {
     private static final String FUN_PREFIX = "api_";
-    private static final HashSet<String> IGNORE_FUNS = new HashSet<>(Arrays.asList("Rf_duplicate", "SET_TYPEOF_FASTR", "R_ToplevelExec", "R_CleanUp", "R_ParseVector", "octsize", "R_NewHashedEnv"));
+    private static final HashSet<String> IGNORE_FUNS = new HashSet<>(Arrays.asList("Rf_duplicate", "R_ToplevelExec", "R_CleanUp", "R_ParseVector", "octsize", "R_NewHashedEnv"));
 
     public static void main(String[] args) {
         new FFITestsCodeGen().run(args);
