@@ -35,6 +35,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveNamesAttributeNode;
@@ -69,8 +70,8 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -131,7 +132,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
     }
 
     @ImportStatic(RRuntime.class)
-    public abstract static class AsVectorInternal extends RBaseNode {
+    public abstract static class AsVectorInternal extends Node {
 
         public abstract Object execute(Object x, String mode);
 
@@ -180,6 +181,10 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         protected Object asVector(@SuppressWarnings("unused") REnvironment x, String mode) {
             RType type = RType.fromMode(mode);
             throw RError.error(RError.SHOW_CALLER, Message.CANNOT_COERCE, RType.Environment.getName(), type != null ? type.getName() : mode);
+        }
+
+        protected static boolean isREnvironment(Object value) {
+            return value instanceof REnvironment;
         }
 
         // there should never be more than ~12 specializations
