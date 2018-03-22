@@ -188,7 +188,7 @@ int main(int argc, char **argv) {
     printf("Calling R_getEmbeddingDllInfo...\n");
     DllInfo *eDllInfo = R_getEmbeddingDllInfo();
     R_CallMethodDef CallEntries[] = {
-            CALLDEF(twice, 2),
+            CALLDEF(twice, 1),
             {NULL, NULL, 0}
     };
     R_registerRoutines(eDllInfo, NULL, CallEntries, NULL, NULL);

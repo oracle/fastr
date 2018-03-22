@@ -13,24 +13,12 @@ Caught an error calling sqrt(). Try again with a different argument.
 Sourcing 'foo.R'...
 Calling foo with named arguments...
 Printing the expression to be eval'ed...
-[[1]]
-function(...)
-{
+function (...) {
     args <- list(...)
     print(args)
     print(names(args))
     TRUE
-}
-
-$pch
-[1] "+"
-
-$id
-[1] 123
-
-[[4]]
-[1]  TRUE FALSE
-
+}(pch = "+", id = 123L, c(TRUE, FALSE))
 Eval'ing the expression...
 $pch
 [1] "+"
@@ -43,18 +31,7 @@ $id
 
 [1] "pch" "id"  ""   
 Printing the expression to be tryEval'ed...
-[[1]]
-foo
-
-$pch
-[1] "+"
-
-$id
-[1] 123
-
-[[4]]
-[1]  TRUE FALSE
-
+foo(pch = "+", id = 123L, c(TRUE, FALSE))
 TryEval'ing the expression...
 $pch
 [1] "+"
@@ -70,6 +47,6 @@ Calling R_getEmbeddingDllInfo...
 Sourcing 'embedding.R'...
 getDLLRegisteredRoutines('(embedding)'):
   .Call .Call.numParameters
-1 twice                   2
+1 twice                   1
 [1]  2  4  6  8 10
 DONE
