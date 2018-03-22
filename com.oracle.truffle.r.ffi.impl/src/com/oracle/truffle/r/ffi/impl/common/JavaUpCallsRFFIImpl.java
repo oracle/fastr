@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -230,7 +231,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_findVar(Object symbolArg, Object envArg) {
         return findVarInFrameHelper(envArg, symbolArg, true);
     }
@@ -247,6 +247,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return findVarInFrameHelper(envArg, symbolArg, false);
     }
 
+    @TruffleBoundary
     private static Object findVarInFrameHelper(Object envArg, Object symbolArg, boolean inherits) {
         if (envArg == RNull.instance) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.USE_NULL_ENV_DEFUNCT);
@@ -263,6 +264,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     // From the point of view of RFFI, optimized promises (i.e. promises with null
                     // env) should not show up
                     return ((RPromise) value).getRawValue();
+                }
+                if (value instanceof RArgsValuesAndNames) {
+                    return ((RArgsValuesAndNames) value).toPairlist();
                 }
                 return value;
             }

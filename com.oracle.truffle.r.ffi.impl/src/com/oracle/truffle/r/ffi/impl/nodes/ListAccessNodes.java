@@ -97,7 +97,8 @@ public final class ListAccessNodes {
 
         @Specialization
         protected Object cdr(RArgsValuesAndNames args) {
-            return args.toPairlist().cdr();
+            // TODO: this is too late - "..." should be converted to pairlist earlier
+            return ((RPairList) args.toPairlist()).cdr();
         }
 
         @Specialization
