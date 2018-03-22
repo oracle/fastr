@@ -266,7 +266,7 @@ public class FrameFunctions {
             RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
-            ArrayList<RNode> nodes = new ArrayList<>();
+            ArrayList<RSyntaxNode> nodes = new ArrayList<>();
             ArrayList<String> names = new ArrayList<>();
 
             FrameSlot varArgSlot = cframe.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
@@ -299,7 +299,7 @@ public class FrameFunctions {
 
                     if (expandDots) {
                         for (int i2 = 0; i2 < varArgNodes.length; i2++) {
-                            nodes.add(varArgNodes[i2]);
+                            nodes.add(varArgNodes[i2].asRSyntaxNode());
                             names.add(varArgSignature.getName(i2));
                         }
                     } else {
@@ -328,10 +328,10 @@ public class FrameFunctions {
                         names.add(ArgumentsSignature.VARARG_NAME);
                     }
                 } else if (arg instanceof PromiseNode) {
-                    nodes.add(((PromiseNode) arg).getPromiseExpr().asRNode());
+                    nodes.add(((PromiseNode) arg).getPromiseExpr());
                     names.add(sig.getName(i));
                 } else {
-                    nodes.add(arg);
+                    nodes.add(arg.asRSyntaxNode());
                     names.add(sig.getName(i));
                 }
             }
