@@ -191,6 +191,13 @@ public class TestBuiltin_deriv extends TestBase {
     }
 
     @Test
+    public void testEnvironment() {
+        assertEval("environment(deriv((y ~ sin(cos(x) * y)), c('x','y'), func = TRUE))");
+        assertEval("environment(local(deriv((y ~ sin(cos(x) * y)), c('x','y'), func = TRUE)))");
+        assertEval("environment(local(deriv((y ~ sin(cos(x) * y)), c('x','y'), func = deriv)))");
+    }
+
+    @Test
     public void testUnusualExprs() {
         assertEval("(df <- deriv(expression(x^2*sin(x)), \"x\"));df(0)");
         assertEval("(df <- deriv(quote(x^2*sin(x)), \"x\"));df(0)");
