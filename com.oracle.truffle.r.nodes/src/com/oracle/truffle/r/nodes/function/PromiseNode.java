@@ -528,9 +528,10 @@ public abstract class PromiseNode extends RNode {
         }
 
         private int evaluateArguments(VirtualFrame frame, Object[] evaluatedArgs) {
-            if (evaluatedArgs.length <= 32) {
+            if (evaluatedArgs.length <= 64) {
                 return evaluateArgumentsExplode(frame, evaluatedArgs);
             }
+
             return evaluateArgumentsLoop(frame, evaluatedArgs);
         }
 
