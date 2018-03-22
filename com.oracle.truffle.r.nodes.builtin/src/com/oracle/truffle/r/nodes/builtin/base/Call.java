@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -74,7 +75,8 @@ public abstract class Call extends RBuiltinNode.Arg2 {
     @TruffleBoundary
     public static RPairList makeCall(TruffleRLanguage language, RSyntaxNode target, Object[] arguments, ArgumentsSignature signature) {
         assert arguments.length == signature.getLength();
-        if (target instanceof RSyntaxLookup && "function".equals(((RSyntaxLookup) target).getIdentifier()) && arguments.length >= 2) {
+        if (target instanceof RSyntaxLookup && "function".equals(((RSyntaxLookup) target).getIdentifier()) && arguments.length >= 2 &&
+                        (arguments[1] == RNull.instance || arguments[1] instanceof RPairList)) {
             // this optimization is not strictly necessary, `function` builtin is functional too.
             FunctionExpressionNode function = FunctionBuiltin.createFunctionExpressionNode(language, arguments[0], arguments[1]);
             return RDataFactory.createLanguage(Closure.createLanguageClosure(function.asRNode()));

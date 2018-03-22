@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -132,7 +133,17 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         if (node instanceof RSyntaxCall) {
             RSyntaxCall call = (RSyntaxCall) node;
             if (call.getSyntaxLHS() instanceof RSyntaxLookup && ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals("function")) {
-                assert false : "calls to 'function' should be instances of RSyntaxFunction";
+                boolean valid = true;
+                valid &= call.getSyntaxSignature().getLength() >= 2;
+                if (valid) {
+                    RSyntaxElement argList = call.getSyntaxArguments()[1];
+                    valid &= argList instanceof RSyntaxConstant;
+                    if (valid) {
+                        Object list = ((RSyntaxConstant) argList).getValue();
+                        valid &= list instanceof RNull || list instanceof RPairList;
+                    }
+                }
+                assert !valid : "valid calls to 'function' should be instances of RSyntaxFunction";
             }
         } else {
             assert node instanceof RSyntaxFunction : "invalid contents of 'language' pairlist: " + node;
