@@ -558,6 +558,8 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 tt = TokenType.NUM_CONST;
             } else if (value instanceof String) {
                 tt = TokenType.STR_CONST;
+            } else if (value instanceof RComplex) {
+                tt = TokenType.NUM_CONST;
             } else if (value == REmpty.instance || value == RMissing.instance) {
                 return null;    // ignored
             } else {
