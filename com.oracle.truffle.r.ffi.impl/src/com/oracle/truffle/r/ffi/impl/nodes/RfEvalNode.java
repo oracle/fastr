@@ -141,7 +141,11 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         if (envIsNullProfile.profile(envArg == RNull.instance)) {
             return REnvironment.globalEnv(RContext.getInstance());
         } else if (envArg instanceof REnvironment) {
-            return (REnvironment) envArg;
+            REnvironment env = (REnvironment) envArg;
+            if (env == REnvironment.emptyEnv()) {
+                return RContext.getInstance().stateREnvironment.getEmptyDummy();
+            }
+            return env;
         }
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.NO_CALLER, ARGUMENT_NOT_ENVIRONMENT);
