@@ -158,11 +158,12 @@ public final class RInternalError extends Error implements TruffleException {
     }
 
     @TruffleBoundary
-    public static void reportError(Throwable throwable) {
-        reportError(throwable, 0);
+    public static void reportError(Throwable t) {
+        String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
+        reportError(message, t, 0);
     }
 
-    private static void reportError(Throwable throwable, int contextId) {
+    private static void reportError(String message, Throwable throwable, int contextId) {
         try {
             Throwable t = throwable;
             if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
@@ -184,7 +185,6 @@ public final class RInternalError extends Error implements TruffleException {
                     System.err.println(out.toString());
                     System.err.println(verboseStackTrace);
                 }
-                String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
                 if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
                     String suffix = contextId == 0 ? "" : "-" + Integer.toString(contextId);
                     Path logfile = Utils.getLogPath("fastr_errors.log" + suffix);

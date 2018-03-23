@@ -419,8 +419,9 @@ public class RDeparse {
             } catch (IOException e) {
                 RInternalError.reportError(e);
                 fixupSourcesTextInternal();
-            } catch (NoSuchAlgorithmException e) {
-                throw RInternalError.shouldNotReachHere("SHA-256 is an unknown algorithm");
+            } catch (Throwable e) {
+                RInternalError.reportError(e);
+                fixupSourcesTextInternal();
             }
         }
 
