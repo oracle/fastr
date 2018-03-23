@@ -27,37 +27,55 @@ import java.util.Iterator;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory.BaseVectorFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Denotes the (rarely seen) {@code pairlist} type in R.
- *
- * {@code null} is never allowed as a value for the tag, car or cdr, only the type.
+ * RPairList objects can represent both "normal" pairlists (which are rarely used from R directly)
+ * and language objects. They are unified in one implementation class because native code often
+ * changes the type of these in-place.
  */
 public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
+
+    private static final RSymbol FUNCTION_SYMBOL = RSymbol.install("function");
+
     /**
-     * Data of the current pair list cell.
+     * Data of the current pair list cell (can never be {@code null}).
      */
-    private Object car = RNull.instance;
+    private Object car;
+
     /**
-     * Link to the next {@link RPairList} cell or {@link RNull} if last.
+     * Link to the next {@link RPairList} cell or {@link RNull} if last (can never be {@code null}).
      */
-    private Object cdr = RNull.instance;
+    private Object cdr;
+
     /**
      * Externally, i.e., when serialized, this is either a SYMSXP ({@link RSymbol}) or an
-     * {@link RNull}. Internally it may take on other, non-null, values.
+     * {@link RNull}. Internally it may take on other values (can never be {@code null}).
      */
-    private Object tag = RNull.instance;
+    private Object tag;
 
     /**
      * Denotes the (GnuR) type of entity that the pairlist represents. (Internal use only).
@@ -65,13 +83,29 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     private SEXPTYPE type;
 
     /**
+     * A closure representing the language pairlist. If this is non-null, then car/cdr/tag are
+     * uninitialized and were never accessed.
+     */
+    private Closure closure;
+
+    /**
+     * If this is {@code true}, then the car/cdr/tag fields were not accessed yet, and thus the
+     * closure field can be initialized.
+     */
+    private boolean mayBeClosure;
+
+    /**
      * Uninitialized pairlist.
      */
     RPairList() {
+        // defaults to the uninitialized list case
+        this.car = RNull.instance;
+        this.cdr = RNull.instance;
+        this.tag = RNull.instance;
     }
 
     /**
-     * Variant used in unserialization to record the GnuR type the pairlist denotes.
+     * Normal pairlist with values for car, cdr, tag and type.
      */
     RPairList(Object car, Object cdr, Object tag, SEXPTYPE type) {
         assert car != null;
@@ -83,42 +117,119 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.type = type;
     }
 
-    @Override
-    public Object getInternalStore() {
-        return this;
+    /**
+     * A "language" pairlist that is initialized with an AST (and which will be deconstructed into a
+     * real pairlist if needed).
+     */
+    RPairList(Closure closure) {
+        assert assertClosure(closure);
+        this.closure = closure;
+        this.type = SEXPTYPE.LANGSXP;
+        this.mayBeClosure = true;
+    }
+
+    private static boolean assertClosure(Closure closure) {
+        RBaseNode node = closure.getExpr();
+        if (node instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) node;
+            if (call.getSyntaxLHS() instanceof RSyntaxLookup && ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier().equals("function")) {
+                boolean valid = true;
+                valid &= call.getSyntaxSignature().getLength() >= 2;
+                if (valid) {
+                    RSyntaxElement argList = call.getSyntaxArguments()[1];
+                    valid &= argList instanceof RSyntaxConstant;
+                    if (valid) {
+                        Object list = ((RSyntaxConstant) argList).getValue();
+                        valid &= list instanceof RNull || list instanceof RPairList;
+                    }
+                }
+                assert !valid : "valid calls to 'function' should be instances of RSyntaxFunction";
+            }
+        } else {
+            assert node instanceof RSyntaxFunction : "invalid contents of 'language' pairlist: " + node;
+        }
+        return true;
     }
 
     /**
-     * Creates a new pair list of given size > 0. Note: pair list of size 0 is NULL.
+     * Converts the given vector to a pairlist of the given type. This will apply the "names"
+     * attribute by putting the names into tags, and copy all other attributes.
      */
-    public static RPairList create(int size) {
-        return create(size, null);
+    @TruffleBoundary
+    public static Object asPairList(RAbstractContainer vector, SEXPTYPE type) {
+        BaseVectorFactory dataFactory = RDataFactory.getInstance();
+        Object result = RNull.instance;
+        RStringVector names = vector.getNames();
+        for (int i = vector.getLength() - 1; i >= 0; i--) {
+            result = dataFactory.createPairList(vector.getDataAtAsObject(i), result, names != null ? RSymbol.install(names.getDataAt(i)) : RNull.instance, SEXPTYPE.LISTSXP);
+        }
+        if (result != RNull.instance) {
+            RPairList list = (RPairList) result;
+            list.mayBeClosure = true;
+            list.setType(type);
+            DynamicObject attrs = vector.getAttributes();
+            if (attrs != null) {
+                DynamicObject resultAttrs = list.initAttributes();
+                Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
+                while (iter.hasNext()) {
+                    RAttributesLayout.RAttribute attr = iter.next();
+                    String attrName = attr.getName();
+                    if (!(attrName.equals(RRuntime.NAMES_ATTR_KEY) || attrName.equals(RRuntime.DIM_ATTR_KEY) || attrName.equals(RRuntime.DIMNAMES_ATTR_KEY))) {
+                        resultAttrs.define(attrName, attr.getValue());
+                    }
+                }
+            }
+            list.setTypedValueInfo(vector.getTypedValueInfo());
+        }
+        return result;
     }
 
+    /**
+     * Creates a new pair list of given size and type.
+     */
     @TruffleBoundary
-    public static RPairList create(int size, SEXPTYPE type) {
+    static RPairList create(int size, SEXPTYPE type) {
         assert size > 0 : "a pair list of size = 0 does not exist, it should be NULL";
         RPairList result = new RPairList();
         for (int i = 1; i < size; i++) {
             RPairList tmp = result;
             result = new RPairList();
-            result.cdr = tmp;
+            result.setCdr(tmp);
         }
-        if (type != null) {
-            result.type = type;
-        }
+        result.setType(type);
         return result;
+    }
+
+    public boolean isLanguage() {
+        return type == SEXPTYPE.LANGSXP;
     }
 
     @Override
     public RType getRType() {
-        return RType.PairList;
+        return isLanguage() ? RType.Language : RType.PairList;
+    }
+
+    /**
+     * Can be called after constructing a new pairlist to signal that the individual elements are
+     * not referenced and thus the closure field can be initialized.
+     */
+    public void allowClosure() {
+        this.mayBeClosure = true;
+    }
+
+    @Override
+    public Object getInternalStore() {
+        return this;
     }
 
     @Override
     public String toString() {
         CompilerAsserts.neverPartOfCompilation();
-        return String.format("type=%s, tag=%s, car=%s, cdr=%s", type, tag, toStringHelper(car), toStringHelper(cdr));
+        if (isLanguage()) {
+            return String.format("language(%s)", RDeparse.deparseSyntaxElement(getSyntaxElement()));
+        } else {
+            return String.format("pairlist(type=%s, tag=%s, car=%s, cdr=%s)", type, tag, toStringHelper(car), toStringHelper(cdr));
+        }
     }
 
     private static String toStringHelper(Object obj) {
@@ -126,10 +237,13 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     /**
-     * Convert to a {@link RList}.
+     * Creates an RList from this pairlist.
      */
     @TruffleBoundary
     public RList toRList() {
+        /**
+         * Convert to a {@link RList}.
+         */
         int len = 0;
         boolean named = false;
         for (RPairList item : this) {
@@ -140,9 +254,9 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         String[] names = named ? new String[len] : null;
         int i = 0;
         for (RPairList plt : this) {
-            data[i] = plt.car;
+            data[i] = plt.car();
             if (named) {
-                Object ptag = plt.tag;
+                Object ptag = plt.getTag();
                 if (isNull(ptag)) {
                     names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
                 } else if (ptag instanceof RSymbol) {
@@ -171,54 +285,75 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     public Object car() {
+        if (closure != null) {
+            // TODO: maybe we need to wipe the closure here?
+            return getDataAtAsObject(0);
+        }
+        ensurePairList();
         return car;
     }
 
-    public Object cdr() {
-        return cdr;
-    }
-
     public void setCar(Object newCar) {
+        ensurePairList();
         assert newCar != null;
         car = newCar;
     }
 
+    public Object cdr() {
+        ensurePairList();
+        return cdr;
+    }
+
     public void setCdr(Object newCdr) {
+        ensurePairList();
         assert newCdr != null;
         cdr = newCdr;
     }
 
     public Object cadr() {
-        RPairList cdrpl = (RPairList) cdr;
-        return cdrpl.car;
+        ensurePairList();
+        return ((RPairList) cdr).car();
     }
 
     public Object cddr() {
-        RPairList cdrpl = (RPairList) cdr;
-        return cdrpl.cdr;
+        ensurePairList();
+        return ((RPairList) cdr).cdr();
     }
 
     public Object caddr() {
-        RPairList pl = (RPairList) cddr();
-        return pl.car;
+        ensurePairList();
+        RPairList pl = (RPairList) ((RPairList) cdr).cdr();
+        return pl.car();
     }
 
     public Object getTag() {
-        return tag;
+        if (closure != null) {
+            return closure.getSyntaxLHSName() == null ? RNull.instance : closure.getSyntaxLHSName();
+        } else {
+            return tag;
+        }
     }
 
     public void setTag(Object newTag) {
+        ensurePairList();
         assert newTag != null;
         this.tag = newTag;
     }
 
     public void setType(SEXPTYPE type) {
-        assert this.type == null || this.type.equals(type);
-        this.type = type;
+        if (type != this.type) {
+            ensurePairList();
+            assert type == null || type.equals(type);
+            this.type = type;
+        }
     }
 
     public boolean isNullTag() {
-        return tag == RNull.instance;
+        if (closure != null) {
+            return closure.getSyntaxLHSName() == null;
+        } else {
+            return tag == RNull.instance;
+        }
     }
 
     public SEXPTYPE getType() {
@@ -229,6 +364,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
      * Appends given value as the last element of the pairlist.
      */
     public void appendToEnd(RPairList value) {
+        ensurePairList();
         RPairList last = null;
         for (RPairList item : this) {
             last = item;
@@ -238,21 +374,31 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
     @Override
     public boolean isComplete() {
-        // TODO: is it important to get more precise information here?
         return false;
     }
 
     @Override
+    @TruffleBoundary
     public int getLength() {
-        int result = 1;
-        Object tcdr = cdr;
-        while (!isNull(tcdr)) {
-            if (tcdr instanceof RPairList) {
-                tcdr = ((RPairList) tcdr).cdr;
+        if (closure != null) {
+            RSyntaxElement s = closure.getSyntaxElement();
+            if (s instanceof RSyntaxCall) {
+                return ((RSyntaxCall) s).getSyntaxSignature().getLength() + 1;
+            } else {
+                assert s instanceof RSyntaxFunction : "unexpected type: " + s.getClass();
+                return 4;
             }
-            result++;
+        } else {
+            int result = 1;
+            Object tcdr = cdr();
+            while (!isNull(tcdr)) {
+                if (tcdr instanceof RPairList) {
+                    tcdr = ((RPairList) tcdr).cdr();
+                }
+                result++;
+            }
+            return result;
         }
-        return result;
     }
 
     @Override
@@ -262,12 +408,16 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
     @Override
     public boolean hasDimensions() {
-        return true;
+        return isLanguage() ? false : true;
     }
 
     @Override
     public int[] getDimensions() {
-        return new int[]{1};
+        if (isLanguage()) {
+            return null;
+        } else {
+            return new int[]{1};
+        }
     }
 
     @Override
@@ -275,39 +425,65 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         throw RInternalError.shouldNotReachHere();
     }
 
+    @Override
     @TruffleBoundary
-    public RPairList copy(boolean keepAttributes) {
-        BaseVectorFactory dataFactory = RDataFactory.getInstance();
-        RPairList curr = dataFactory.createPairList();
-        RPairList result = curr;
-        Object original = this;
-        while (true) {
-            RPairList origList = (RPairList) original;
-            curr.car = origList.car;
-            curr.tag = origList.tag;
-            original = origList.cdr;
-            if (isNull(original)) {
-                curr.cdr = RNull.instance;
-                break;
-            }
-            curr.cdr = dataFactory.createPairList();
-            curr = (RPairList) curr.cdr;
-        }
-        if (keepAttributes && getAttributes() != null) {
-            result.initAttributes(RAttributesLayout.copy(getAttributes()));
-        }
-        return result;
-    }
-
-    @Override
     public RPairList copy() {
-        return copy(true);
+        if (closure != null) {
+            RPairList result = new RPairList(closure);
+            if (getAttributes() != null) {
+                result.initAttributes(RAttributesLayout.copy(getAttributes()));
+            }
+            result.setTypedValueInfo(getTypedValueInfo());
+            return result;
+        } else {
+            BaseVectorFactory dataFactory = RDataFactory.getInstance();
+            RPairList curr = dataFactory.createPairList();
+            RPairList result = curr;
+            Object original = this;
+            while (true) {
+                RPairList origList = (RPairList) original;
+                curr.setCar(origList.car());
+                curr.setTag(origList.getTag());
+                curr.setType(origList.getType());
+                original = origList.cdr();
+                if (isNull(original)) {
+                    curr.setCdr(RNull.instance);
+                    break;
+                }
+                curr.setCdr(dataFactory.createPairList());
+                curr = (RPairList) curr.cdr();
+            }
+            if (getAttributes() != null) {
+                result.initAttributes(RAttributesLayout.copy(getAttributes()));
+            }
+            result.allowClosure();
+            result.setTypedValueInfo(getTypedValueInfo());
+            return result;
+        }
     }
 
     @Override
+    @TruffleBoundary
     public RShareable deepCopy() {
-        RInternalError.shouldNotReachHere();
-        return null;
+        if (closure != null) {
+            return copy();
+        } else {
+            RPairList result = copy();
+            RPairList current = result;
+            while (true) {
+                Object c = current.car();
+                if (c instanceof RShareable) {
+                    current.setCar(((RShareable) c).deepCopy());
+                }
+                Object next = current.cdr();
+                if (next == RNull.instance) {
+                    break;
+                }
+                current = (RPairList) next;
+            }
+            result.allowClosure();
+            return result;
+        }
     }
 
     @Override
@@ -316,14 +492,19 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
+    @TruffleBoundary
     public Object getDataAtAsObject(int index) {
-        RPairList pl = this;
-        int i = 0;
-        while (!isNull(pl) && i < index) {
-            pl = (RPairList) pl.cdr;
-            i++;
+        if (closure != null) {
+            return getClosureDataAtAsObject(index);
+        } else {
+            RPairList pl = this;
+            int i = 0;
+            while (!isNull(pl) && i < index) {
+                pl = (RPairList) pl.cdr();
+                i++;
+            }
+            return pl.car();
         }
-        return pl.car;
     }
 
     public static boolean isNull(Object obj) {
@@ -331,59 +512,62 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
+    @TruffleBoundary
     public RStringVector getNames() {
-        if (this.tag == RNull.instance) {
-            return null;
-        }
-        int l = getLength();
-        String[] data = new String[l];
-        RPairList pl = this;
-        boolean complete = RDataFactory.COMPLETE_VECTOR;
-        int i = 0;
-        while (true) {
-            data[i] = Utils.toString(pl.tag);
-            complete &= data[i] != RRuntime.STRING_NA;
-            if (isNull(pl.cdr)) {
-                break;
+        if (closure != null) {
+            return closure.getNamesVector();
+        } else {
+            boolean hasNames = false;
+            int length = 1;
+            RPairList current = this;
+            while (true) {
+                if (current.getTag() != RNull.instance) {
+                    hasNames = true;
+                }
+                Object next = current.cdr();
+                if (isNull(next)) {
+                    break;
+                }
+                current = (RPairList) next;
+                length++;
             }
-            pl = (RPairList) pl.cdr;
-            i++;
+            if (!hasNames) {
+                return null;
+            }
+            String[] data = new String[length];
+            current = this;
+            int i = 0;
+            while (true) {
+                Object name = current.getTag();
+                assert name == RNull.instance || name instanceof RSymbol;
+                data[i] = name == RNull.instance ? "" : ((RSymbol) name).getName();
+                Object next = current.cdr();
+                if (isNull(next)) {
+                    break;
+                }
+                current = (RPairList) next;
+                i++;
+            }
+            // there can never be NAs in the names
+            return RDataFactory.createStringVector(data, true);
         }
-        return RDataFactory.createStringVector(data, complete);
     }
 
     @Override
+    @TruffleBoundary
     public void setNames(RStringVector newNames) {
+        ensurePairList();
         Object p = this;
         for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
             RPairList pList = (RPairList) p;
-            pList.tag = RDataFactory.createSymbol(newNames.getDataAt(i));
-            p = pList.cdr;
+            pList.setTag(RDataFactory.createSymbol(newNames.getDataAt(i)));
+            p = pList.cdr();
         }
-    }
-
-    @Override
-    public RList getDimNames() {
-        return null;
-    }
-
-    @Override
-    public void setDimNames(RList newDimNames) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public void setRowNames(RAbstractVector rowNames) {
-        throw RInternalError.unimplemented();
-    }
-
-    @Override
-    public boolean isObject() {
-        return false;
     }
 
     @Override
     public Iterator<RPairList> iterator() {
+        ensurePairList();
         return new Iterator<RPairList>() {
             private Object plt = RPairList.this;
 
@@ -394,15 +578,281 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
             @Override
             public RPairList next() {
-                if (plt instanceof RLanguage) {
-                    plt = ((RLanguage) plt).getPairList();
-                }
                 assert plt instanceof RPairList;
                 RPairList curr = (RPairList) plt;
-                plt = curr.cdr;
+                plt = curr.cdr();
                 return curr;
             }
         };
+    }
+
+    /**
+     * Returns a new node that contains the code represented by this language pairlist. This node is
+     * not used anywhere else and can be executed.
+     */
+    public RSyntaxNode createNode() {
+        assert isLanguage();
+        return RContext.getASTBuilder().process(getSyntaxElement());
+    }
+
+    private static RSyntaxElement unwrapToRSyntaxElement(Object obj, boolean functionLookup) {
+        if ((obj instanceof RPairList && ((RPairList) obj).isLanguage())) {
+            return ((RPairList) obj).getSyntaxElement();
+        } else if (obj instanceof RSymbol) {
+            return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) obj).getName(), functionLookup);
+        } else if (obj instanceof RPromise) {
+            // Evaluate promise and return the result as constant.
+            return RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, RContext.getRRuntimeASTAccess().forcePromise("unwrapToRNode", obj));
+        } else {
+            return RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, obj);
+        }
+    }
+
+    public SourceSection getLazySourceSection() {
+        return getSyntaxElement().getLazySourceSection();
+    }
+
+    public SourceSection getSourceSection() {
+        return getSyntaxElement().getSourceSection();
+    }
+
+    public RSyntaxElement getSyntaxElement() {
+        CompilerAsserts.neverPartOfCompilation();
+        assert isLanguage();
+        if (closure != null) {
+            return closure.getSyntaxElement();
+        } else {
+            final int length = getLength();
+            if (car == FUNCTION_SYMBOL) {
+                if (length < 3) {
+                    throw RError.error(RError.SHOW_CALLER, Message.BAD_FUNCTION_EXPR);
+                }
+                Object argsList = cadr();
+                if (!(argsList instanceof RPairList || argsList == RNull.instance)) {
+                    throw RError.error(RError.SHOW_CALLER, Message.BAD_FUNCTION_EXPR);
+                }
+                return new RSyntaxFunction() {
+                    @Override
+                    public SourceSection getSourceSection() {
+                        return RSyntaxNode.INTERNAL;
+                    }
+
+                    @Override
+                    public SourceSection getLazySourceSection() {
+                        return RSyntaxNode.INTERNAL;
+                    }
+
+                    @Override
+                    public void setSourceSection(SourceSection source) {
+                        // ignored
+                    }
+
+                    @Override
+                    public ArgumentsSignature getSyntaxSignature() {
+                        if (argsList == RNull.instance) {
+                            return ArgumentsSignature.empty(0);
+                        }
+                        RStringVector argsNames = ((RPairList) argsList).getNames();
+                        return ArgumentsSignature.get(argsNames.getReadonlyData());
+                    }
+
+                    @Override
+                    public RSyntaxElement[] getSyntaxArgumentDefaults() {
+                        if (argsList == RNull.instance) {
+                            return new RSyntaxElement[0];
+                        }
+                        RPairList current = (RPairList) argsList;
+                        int argsLength = current.getLength();
+                        RSyntaxElement[] result = new RSyntaxElement[argsLength];
+                        int i = 0;
+                        while (true) {
+                            result[i] = unwrapToRSyntaxElement(current.car(), false);
+                            Object next = current.cdr();
+                            if (next == RNull.instance) {
+                                break;
+                            }
+                            current = (RPairList) next;
+                            i++;
+                        }
+                        return result;
+                    }
+
+                    @Override
+                    public RSyntaxElement getSyntaxBody() {
+                        return unwrapToRSyntaxElement(caddr(), false);
+                    }
+
+                    @Override
+                    public String getSyntaxDebugName() {
+                        return null;
+                    }
+                };
+            } else {
+                return new RSyntaxCall() {
+
+                    @Override
+                    public SourceSection getSourceSection() {
+                        return RSyntaxNode.INTERNAL;
+                    }
+
+                    @Override
+                    public SourceSection getLazySourceSection() {
+                        return RSyntaxNode.INTERNAL;
+                    }
+
+                    @Override
+                    public void setSourceSection(SourceSection source) {
+                        // ignored
+                    }
+
+                    @Override
+                    public RSyntaxElement getSyntaxLHS() {
+                        return unwrapToRSyntaxElement(getDataAtAsObject(0), true);
+                    }
+
+                    @Override
+                    public ArgumentsSignature getSyntaxSignature() {
+                        RStringVector names = getNames();
+                        if (names == null) {
+                            return ArgumentsSignature.empty(length - 1);
+                        } else {
+                            String[] signature = new String[length - 1];
+                            for (int i = 0; i < names.getLength() && i < (length - 1); i++) {
+                                signature[i] = names.getDataAt(i + 1);
+                            }
+                            return ArgumentsSignature.get(signature);
+                        }
+                    }
+
+                    @Override
+                    public RSyntaxElement[] getSyntaxArguments() {
+                        RSyntaxElement[] result = new RSyntaxElement[length - 1];
+                        for (int i = 1; i < length; i++) {
+                            result[i - 1] = unwrapToRSyntaxElement(getDataAtAsObject(i), false);
+                        }
+                        return result;
+                    }
+                };
+            }
+        }
+    }
+
+    /**
+     * Used mainly for serialization (because it has special handling for converting nodes to
+     * pairlists).
+     */
+    public boolean hasClosure() {
+        return closure != null;
+    }
+
+    public Closure getClosure(ClosureCache<RBaseNode> cache) {
+        if (closure != null) {
+            return closure;
+        } else {
+            return createClosure(cache);
+        }
+    }
+
+    @TruffleBoundary
+    private Closure createClosure(ClosureCache<RBaseNode> cache) {
+        RNode node = createNode().asRNode();
+        Closure result = cache == null ? Closure.createLanguageClosure(node) : cache.getOrCreateLanguageClosure(node);
+        if (mayBeClosure) {
+            closure = result;
+        }
+        return result;
+    }
+
+    public Closure getClosure() {
+        return getClosure(null);
+    }
+
+    @TruffleBoundary
+    public Object getClosureDataAtAsObject(int index) {
+        assert closure != null;
+        // index has already been range checked based on getLength
+        RSyntaxElement s = closure.getSyntaxElement();
+
+        RSyntaxElement result;
+        if (s instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) s;
+            if (index == 0) {
+                result = call.getSyntaxLHS();
+            } else {
+                result = call.getSyntaxArguments()[index - 1];
+                if (result == null) {
+                    return RSymbol.MISSING;
+                }
+            }
+        } else {
+            /*
+             * We do not expect RSyntaxConstant and RSyntaxLookup here: RSyntaxConstant should have
+             * been converted to the constant value, and RSyntaxLookup should have been converted to
+             * an RSymbol (see below).
+             */
+            assert s instanceof RSyntaxFunction;
+
+            RSyntaxFunction function = (RSyntaxFunction) s;
+            switch (index) {
+                case 0:
+                    return RDataFactory.createSymbol("function");
+                case 1:
+                    ArgumentsSignature sig = function.getSyntaxSignature();
+                    RSyntaxElement[] defaults = function.getSyntaxArgumentDefaults();
+
+                    Object lst = RNull.instance;
+                    for (int i = sig.getLength() - 1; i >= 0; i--) {
+                        lst = RDataFactory.createPairList(defaults[i] == null ? RSymbol.MISSING : RContext.getRRuntimeASTAccess().createLanguageElement(defaults[i]), lst,
+                                        RDataFactory.createSymbolInterned(sig.getName(i)));
+                    }
+                    return lst;
+                case 2:
+                    result = function.getSyntaxBody();
+                    break;
+                case 3:
+                    // srcref
+                    return RSrcref.createLloc(s.getLazySourceSection());
+                default:
+                    throw RInternalError.shouldNotReachHere();
+            }
+        }
+
+        /*
+         * Constants and lookups are converted to their intrinsic value:
+         */
+        return RContext.getRRuntimeASTAccess().createLanguageElement(result);
+    }
+
+    /**
+     * Ensures that the car, cdr and tag fields are initialized from the contents of closure if
+     * necessary.
+     */
+    private void ensurePairList() {
+        mayBeClosure = false;
+        if (closure != null) {
+            convertToPairList();
+        }
+    }
+
+    @TruffleBoundary
+    private void convertToPairList() {
+        RStringVector names = getNames();
+
+        Object obj = RNull.instance;
+        for (int i = getLength() - 1; i > 0; i--) {
+            obj = RDataFactory.createPairList(getDataAtAsObject(i), obj);
+        }
+        this.car = getDataAtAsObject(0);
+        this.cdr = obj;
+        // names have to be taken before list is assigned
+        closure = null;
+        mayBeClosure = false;
+        if (names != null) {
+            setNames(names);
+        } else {
+            // needs to be initialized
+            this.tag = RNull.instance;
+        }
     }
 
     private static final class FastPathAccess extends FastPathFromListAccess {

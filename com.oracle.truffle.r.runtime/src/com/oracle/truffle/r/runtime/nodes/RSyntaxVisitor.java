@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ public abstract class RSyntaxVisitor<T> {
         } else if (element instanceof RSyntaxFunction) {
             return visit((RSyntaxFunction) element);
         } else {
-            throw RInternalError.shouldNotReachHere("unexpected RSyntaxElement: " + element.getClass().getCanonicalName());
+            throw RInternalError.shouldNotReachHere("unexpected RSyntaxElement: " + element == null ? "null" : element.getClass().getCanonicalName());
         }
     }
 

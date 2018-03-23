@@ -38,10 +38,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -67,30 +66,26 @@ public abstract class GetAttributesNode extends RBaseNode {
 
     public abstract Object execute(RAttributable attributable);
 
-    @Specialization(guards = "!isPairList(container)")
+    @Specialization(guards = "!isRPairList(container)")
     protected Object attributesNull(RAbstractContainer container,
                     @Cached("createBinaryProfile()") ConditionProfile hasAttributesProfile) {
         if (hasAttributesProfile.profile(hasAttributes(container))) {
-            return createResult(container, container instanceof RLanguage, null);
+            return createResult(container, (container instanceof RPairList && ((RPairList) container).isLanguage()), null);
         } else {
             return RNull.instance;
         }
     }
 
     @Specialization
-    @TruffleBoundary
-    protected Object attributesPairList(RPairList pairList) {
+    protected Object attributesPairList(RPairList pairList,
+                    @Cached("createBinaryProfile()") ConditionProfile hasNamesProfile) {
         RStringVector names = pairList.getNames();
         if (hasAttributes(pairList)) {
             return createResult(pairList, false, names);
-        } else if (names != null) {
+        } else if (hasNamesProfile.profile(names != null)) {
             return RDataFactory.createList(new Object[]{names}, RDataFactory.createStringVector(RRuntime.NAMES_ATTR_KEY));
         }
         return RNull.instance;
-    }
-
-    protected static boolean isPairList(RAbstractContainer x) {
-        return x instanceof RPairList;
     }
 
     /**

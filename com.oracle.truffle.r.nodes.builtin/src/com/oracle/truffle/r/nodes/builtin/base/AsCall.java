@@ -32,15 +32,15 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = "as.call", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
@@ -55,9 +55,9 @@ public abstract class AsCall extends RBuiltinNode.Arg1 {
 
     @Specialization
     @TruffleBoundary
-    protected RLanguage asCallFunction(RAbstractListBaseVector x) {
+    protected RPairList asCallFunction(RAbstractListBaseVector x) {
         if (x.getLength() == 0) {
-            error(Message.INVALID_LEN_0_ARG);
+            throw error(Message.INVALID_LEN_0_ARG);
         }
         // separate the first element (call target) from the rest (arguments)
 
@@ -88,13 +88,13 @@ public abstract class AsCall extends RBuiltinNode.Arg1 {
         }
     }
 
-    protected boolean containsCall(RLanguage l) {
-        return l.getRep() instanceof RCallBaseNode;
-    }
-
-    @Specialization(guards = "containsCall(l)")
-    protected RLanguage asCall(RLanguage l) {
-        return l;
+    @Specialization
+    protected Object asCall(RPairList l) {
+        if (l.isLanguage()) {
+            return l;
+        } else {
+            return RPairList.asPairList(l, SEXPTYPE.LANGSXP);
+        }
     }
 
     @Fallback

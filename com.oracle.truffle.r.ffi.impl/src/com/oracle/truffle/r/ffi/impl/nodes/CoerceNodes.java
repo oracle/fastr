@@ -58,39 +58,51 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public final class CoerceNodes {
 
-    public abstract static class VectorToPairListNode extends FFIUpCallNode.Arg1 {
+    public static final class VectorToPairListNode extends FFIUpCallNode.Arg1 {
 
-        @Child private CopyOfRegAttributesNode copyRegAttributesNode;
-        @Child private GetNamesAttributeNode getNamesAttributeNode;
+        @Child private CastPairListNode cast = CastPairListNode.create(SEXPTYPE.LISTSXP);
+
+        @Override
+        public Object executeObject(Object value) {
+            return cast.doCast(value);
+        }
+
+        public static VectorToPairListNode create() {
+            return new VectorToPairListNode();
+        }
+    }
+
+    public abstract static class CastPairListNode extends CastNode {
+
+        private final SEXPTYPE type;
+
+        @Child private CopyOfRegAttributesNode copyRegAttributesNode = CopyOfRegAttributesNode.create();
+        @Child private GetNamesAttributeNode getNamesAttributeNode = GetNamesAttributeNode.create();
+
+        protected CastPairListNode(SEXPTYPE type) {
+            this.type = type;
+        }
 
         @Specialization
         protected Object convert(RAbstractVector v) {
-
             RStringVector names = getNamesAttributeNode.getNames(v);
             SEXPTYPE gnurType = SEXPTYPE.gnuRTypeForObject(v);
 
-            RPairList head = null;
-            RPairList prev = null;
+            Object current = RNull.instance;
             assert names == null || names.getLength() == v.getLength();
-            for (int i = 0; i < v.getLength(); i++) {
+            for (int i = v.getLength() - 1; i >= 0; i--) {
                 Object element = v.getDataAtAsObject(i);
                 adjustSharing(v, element);
-                RPairList cur = RDataFactory.createPairList(element, RNull.instance, names != null ? RDataFactory.createSymbol(names.getDataAt(i)) : RNull.instance, gnurType);
-
-                if (prev == null) {
-                    assert head == null;
-                    head = cur;
-                } else {
-                    prev.setCdr(cur);
-                }
-                prev = cur;
+                current = RDataFactory.createPairList(element, current, names != null ? RDataFactory.createSymbol(names.getDataAt(i)) : RNull.instance, gnurType);
             }
-            if (head != null) {
+            if (current != RNull.instance) {
                 // also copy regular attributes
-                copyRegAttributesNode.execute(v, head);
-                return head;
+                RPairList pl = (RPairList) current;
+                copyRegAttributesNode.execute(v, pl);
+                pl.setType(type);
+                pl.allowClosure();
             }
-            return RNull.instance;
+            return current;
         }
 
         private static void adjustSharing(RAbstractVector origin, Object element) {
@@ -110,8 +122,8 @@ public final class CoerceNodes {
             }
         }
 
-        public static VectorToPairListNode create() {
-            return CoerceNodesFactory.VectorToPairListNodeGen.create();
+        public static CastPairListNode create(SEXPTYPE type) {
+            return CoerceNodesFactory.CastPairListNodeGen.create(type);
         }
 
         private static int getSharingLevel(RShareable r) {
@@ -234,9 +246,8 @@ public final class CoerceNodes {
                 case NILSXP:
                     return new CastNullNode();
                 case LISTSXP:
-                    throw RInternalError.unimplemented("Rf_coerceVector unimplemented for PairLists.");
                 case LANGSXP:
-                    throw RInternalError.unimplemented("Rf_coerceVector unimplemented for RLanguage.");
+                    return CastPairListNode.create(type);
                 case ENVSXP:
                     return new EnvironmentCast();
                 case VECSXP:

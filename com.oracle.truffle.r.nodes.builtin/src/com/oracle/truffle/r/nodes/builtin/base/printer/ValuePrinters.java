@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,7 +37,6 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -63,10 +62,8 @@ final class ValuePrinters implements ValuePrinter<Object> {
         printers.put(RSymbol.class, SymbolPrinter.INSTANCE);
         printers.put(RFunction.class, FunctionPrinter.INSTANCE);
         printers.put(RExpression.class, ExpressionPrinter.INSTANCE);
-        printers.put(RLanguage.class, LanguagePrinter.INSTANCE);
         printers.put(RExternalPtr.class, ExternalPtrPrinter.INSTANCE);
         printers.put(RS4Object.class, S4ObjectPrinter.INSTANCE);
-        printers.put(RPairList.class, PairListPrinter.INSTANCE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})
@@ -106,6 +103,8 @@ final class ValuePrinters implements ValuePrinter<Object> {
                     printer = RArgsValuesAndNamesPrinter.INSTANCE;
                 } else if (x instanceof REnvironment) {
                     printer = EnvironmentPrinter.INSTANCE;
+                } else if (x instanceof RPairList) {
+                    printer = ((RPairList) x).isLanguage() ? LanguagePrinter.INSTANCE : PairListPrinter.INSTANCE;
                 } else if (x instanceof TruffleObject) {
                     assert !(x instanceof RTypedValue);
                     printer = TruffleObjectPrinter.INSTANCE;

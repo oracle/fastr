@@ -712,6 +712,18 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-quote(function(x, y=7) 42); x[[2]] }");
 
         assertEval("{ f<-quote(function(x=42) x); f[[2]]$x<-7; eval(f)() }");
+
+        assertEval("f <- function(x) x[[1]]; l <- as.pairlist(c('a','b')); f(l); l <- quote(a+b); f(l)");
+        assertEval("l <- quote(a+b+c); l[[c(2,2)]]; l[[c(2,3)]]; l[[c(2,2)]]; l[[c(3)]]; l <- as.pairlist(c('+','x','c')); l[[2]] <- as.pairlist(c('+','a','b')); l[[c(2,2)]]; l[[c(2,3)]]; l[[c(2,2)]]; l[[c(3)]]");
+    }
+
+    @Test
+    public void testPairList() {
+        assertEval("l <- as.pairlist(c(1,2,3,4)); typeof(l); l[[3]] <- 123; typeof(l); l");
+        assertEval("l <- as.pairlist(c(1,2,3,4)); l2 <- l; typeof(l); l[[3]] <- 123; typeof(l); l");
+        assertEval("x <- as.pairlist(list(7,42)); x[[1]] <- list(); typeof(x); x$foo <- 123; typeof(x); x[1] <- list(1); typeof(x)");
+        assertEval("l <- quote(a(\"b\",1,4,3)); typeof(l); typeof(l[[1]]); typeof(l[1]); typeof(l[1:5]); typeof(l[4:5]); l[4:5]");
+        assertEval("l <- pairlist(\"a\",\"b\",1,4,3); typeof(l); typeof(l[[1]]); typeof(l[1]); typeof(l[1:5]); typeof(l[4:5]); l[4:5]");
     }
 
     @Test

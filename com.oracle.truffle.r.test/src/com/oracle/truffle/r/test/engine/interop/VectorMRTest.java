@@ -42,52 +42,46 @@ public class VectorMRTest extends AbstractMRTest {
 
     @Test
     public void testReadWrite() throws Exception {
-        execInContext(() -> {
-            final TruffleObject vi = RDataFactory.createIntSequence(1, 1, 10);
-            assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2));
-            assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2L));
+        final TruffleObject vi = RDataFactory.createIntSequence(1, 1, 10);
+        assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2));
+        assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2L));
 
-            assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, "a"), UnknownIdentifierException.class);
-            assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, 100), UnknownIdentifierException.class);
-            assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, "s", "abc"), UnknownIdentifierException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, "a"), UnknownIdentifierException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, 100), UnknownIdentifierException.class);
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, "s", "abc"), UnknownIdentifierException.class);
 
-            TruffleObject vd = RDataFactory.createDoubleSequence(1.1, 1, 10);
-            assertEquals(1.1, ForeignAccess.sendRead(Message.READ.createNode(), vd, 0));
+        TruffleObject vd = RDataFactory.createDoubleSequence(1.1, 1, 10);
+        assertEquals(1.1, ForeignAccess.sendRead(Message.READ.createNode(), vd, 0));
 
-            TruffleObject vb = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
-            assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), vb, 0));
+        TruffleObject vb = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
+        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), vb, 0));
 
-            TruffleObject nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, 0, 123);
-            assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
+        TruffleObject nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, 0, 123);
+        assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
 
-            assertEquals(10, ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), nvi));
-            nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), nvi, 100, 321);
-            assertEquals(101, ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), nvi));
-            assertEquals(321, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 100));
+        assertEquals(10, ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), nvi));
+        nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), nvi, 100, 321);
+        assertEquals(101, ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), nvi));
+        assertEquals(321, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 100));
 
-            nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), nvi, 0, "abc");
-            assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
-            return null;
-        });
+        nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), nvi, 0, "abc");
+        assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
     }
 
     @Test
     public void testKeyInfo() throws Exception {
-        execInContext(() -> {
-            TruffleObject v = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
-            assertInteropException(() -> ForeignAccess.sendKeys(Message.KEYS.createNode(), v), UnsupportedMessageException.class);
+        TruffleObject v = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
+        assertInteropException(() -> ForeignAccess.sendKeys(Message.KEYS.createNode(), v), UnsupportedMessageException.class);
 
-            int keyInfo = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), v, 0);
-            assertTrue(KeyInfo.isExisting(keyInfo));
-            assertTrue(KeyInfo.isReadable(keyInfo));
-            assertTrue(KeyInfo.isWritable(keyInfo));
-            assertFalse(KeyInfo.isInvocable(keyInfo));
-            assertFalse(KeyInfo.isInternal(keyInfo));
+        int keyInfo = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), v, 0);
+        assertTrue(KeyInfo.isExisting(keyInfo));
+        assertTrue(KeyInfo.isReadable(keyInfo));
+        assertTrue(KeyInfo.isWritable(keyInfo));
+        assertFalse(KeyInfo.isInvocable(keyInfo));
+        assertFalse(KeyInfo.isInternal(keyInfo));
 
-            keyInfo = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), v, 100);
-            assertFalse(KeyInfo.isExisting(keyInfo));
-            return null;
-        });
+        keyInfo = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), v, 100);
+        assertFalse(KeyInfo.isExisting(keyInfo));
     }
 
     @Override

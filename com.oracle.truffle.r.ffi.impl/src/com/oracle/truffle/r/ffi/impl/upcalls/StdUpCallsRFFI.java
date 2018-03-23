@@ -273,7 +273,7 @@ public interface StdUpCallsRFFI {
 
     void SET_NAMED_FASTR(Object x, int v);
 
-    Object SET_TYPEOF_FASTR(Object x, int v);
+    void SET_TYPEOF(Object x, int v);
 
     int TYPEOF(Object x);
 

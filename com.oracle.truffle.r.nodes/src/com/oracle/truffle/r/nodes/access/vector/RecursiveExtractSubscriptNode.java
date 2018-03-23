@@ -26,7 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.data.RInteger;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -73,7 +73,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
         for (int i = 1; i < positionLength; i++) {
             Object selection = getPositionExtract.apply(firstPosition, new Object[]{RInteger.valueOf(i)}, RLogical.TRUE, RLogical.TRUE);
             try {
-                if (!(currentVector instanceof RAbstractListVector || currentVector instanceof RLanguage)) {
+                if (!(currentVector instanceof RAbstractListVector || currentVector instanceof RPairList)) {
                     throw indexingFailed(i);
                 }
                 currentVector = recursiveSubscriptExtract.apply(currentVector, new Object[]{selection}, exact, dropDimensions);

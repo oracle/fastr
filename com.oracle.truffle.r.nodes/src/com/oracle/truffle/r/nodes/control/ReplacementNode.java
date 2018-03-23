@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededExcep
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.CodeBuilderContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -157,7 +157,7 @@ abstract class ReplacementNode extends OperatorNode {
         return RCallSpecialNode.createCallInReplace(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes, 0, argNodes.length - 1).asRNode();
     }
 
-    static RLanguage getLanguage(WriteVariableNode wvn) {
+    static RPairList getLanguage(WriteVariableNode wvn) {
         Node parent = wvn.getParent();
         if (parent instanceof ReplacementNode) {
             return RDataFactory.createLanguage(Closure.createLanguageClosure((ReplacementNode) parent));

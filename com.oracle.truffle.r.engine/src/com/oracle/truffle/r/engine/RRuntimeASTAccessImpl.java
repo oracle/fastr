@@ -28,22 +28,17 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.launcher.RCommand;
 import com.oracle.truffle.r.launcher.RscriptCommand;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinRootNode;
@@ -57,19 +52,14 @@ import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
-import com.oracle.truffle.r.nodes.function.FunctionExpressionNode;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
-import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
-import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -77,301 +67,30 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
-import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Implementation of {@link RRuntimeASTAccess}.
- *
- * A note on the "list" aspects of {@link RLanguage}, specified by {@link RAbstractContainer}. In
- * GnuR a language element (LANGSXP) is represented as a pairlist, so the length of the language
- * element is defined to be the length of the pairlist. The goal of this implementation is to
- * emulate the behavior of GnuR by walking the AST.
- *
- * The nodes we are interested in are {@link ReadVariableNode} (symbols), {@link ConstantNode}
- * (constants) and {@link RCallNode} etc., (calls). However, the nodes that are not (but should be)
- * represented as calls, e.g. {@link IfNode} have to be handled specially.
- *
- * Since the AST is a final field (and we assert) immutable in its syntactic essence, we can cache
- * information such as the length here. A Truffle AST has many nodes that are not part of the
- * syntactic essence and we ignore these.
- *
- * This implementation necessarily has to use a lot of {@code instanceof} checks on the node class.
- * However, it is not important enough to warrant refactoring as an {@link RNode} method, (cf
- * deparse). TODO reconsider this.
- *
- * Some examples:
- *
- * <pre>
- * length(quote(f()) == 1
- * length(quote(f(a)) == 2
- * length(quote(a + b)) == 3
- * length(quote(a + f(b))) == 3
- * </pre>
- *
- * Note the last example in particular which shows that the length is not computed from the
- * flattened tree. Rather indexing the third element would produce another language element of
- * length 2.
+ * This class contains functions that need access to actual implementation classes but which are
+ * used in places where there is not dependency on the node project.
  */
 class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
-    @TruffleBoundary
     @Override
-    public RLanguage.RepType getRepType(RLanguage rl) {
-        RSyntaxElement s = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
-
-        if (s instanceof RSyntaxCall) {
-            return RLanguage.RepType.CALL;
-        } else if (s instanceof RSyntaxFunction) {
-            return RLanguage.RepType.FUNCTION;
-        } else {
-            throw RInternalError.shouldNotReachHere("unexpected type: " + s.getClass());
-        }
-    }
-
-    @TruffleBoundary
-    @Override
-    public int getLength(RLanguage rl) {
-        RSyntaxElement s = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
-
-        if (s instanceof RSyntaxCall) {
-            return ((RSyntaxCall) s).getSyntaxSignature().getLength() + 1;
-        } else if (s instanceof RSyntaxFunction) {
-            return 4;
-        } else {
-            /*
-             * We do not expect RSyntaxConstant and RSyntaxLookup here (see getDataAtAsObject).
-             */
-            throw RInternalError.shouldNotReachHere("unexpected type: " + s.getClass());
-        }
-    }
-
-    @TruffleBoundary
-    @Override
-    public Object getDataAtAsObject(RLanguage rl, final int index) {
-        // index has already been range checked based on getLength
-        RSyntaxElement s = RASTUtils.unwrap(rl.getRep()).asRSyntaxNode();
-
-        RSyntaxElement result;
-        if (s instanceof RSyntaxCall) {
-            RSyntaxCall call = (RSyntaxCall) s;
-            if (index == 0) {
-                result = call.getSyntaxLHS();
-            } else {
-                result = call.getSyntaxArguments()[index - 1];
-                if (result == null) {
-                    result = RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "", false);
-                }
-            }
-        } else if (s instanceof RSyntaxFunction) {
-            switch (index) {
-                case 0:
-                    result = RSyntaxLookup.createDummyLookup(null, "function", true);
-                    break;
-                case 1:
-                    ArgumentsSignature sig = ((RSyntaxFunction) s).getSyntaxSignature();
-                    RSyntaxElement[] defaults = ((RSyntaxFunction) s).getSyntaxArgumentDefaults();
-
-                    Object list = RNull.instance;
-                    for (int i = sig.getLength() - 1; i >= 0; i--) {
-                        list = RDataFactory.createPairList(defaults[i] == null ? RSymbol.MISSING : RASTUtils.createLanguageElement(defaults[i]), list,
-                                        RDataFactory.createSymbolInterned(sig.getName(i)));
-                    }
-                    return list;
-                case 2:
-                    result = ((RSyntaxFunction) s).getSyntaxBody();
-                    break;
-                case 3:
-                    // srcref
-                    return RSrcref.createLloc(s.getLazySourceSection());
-                default:
-                    throw RInternalError.shouldNotReachHere();
-            }
-        } else {
-            /*
-             * We do not expect RSyntaxConstant and RSyntaxLookup here: RSyntaxConstant should have
-             * been converted to the constant value, and RSyntaxLookup should have been converted to
-             * an RSymbol (see below).
-             */
-            throw RInternalError.shouldNotReachHere("unexpected type: " + s.getClass());
-        }
-
-        /*
-         * Constants and lookups are converted to their intrinsic value:
-         */
-        return RASTUtils.createLanguageElement(result);
-    }
-
-    @Override
-    @TruffleBoundary
-    public Object createLanguageFromList(RList list, RLanguage.RepType repType) {
-        int length = list.getLength();
-        if (length == 0) {
-            return RNull.instance;
-        } else if (repType == RLanguage.RepType.CALL) {
-            RStringVector formals = list.getNames();
-
-            List<RCodeBuilder.Argument<RSyntaxNode>> argList = new ArrayList<>(length - 1);
-            for (int i = 1; i < length; i++) {
-                String formal = formals == null ? null : formals.getDataAt(i);
-                RSyntaxNode syntaxArg = (RSyntaxNode) unwrapToRNode(list.getDataAtAsObject(i), false);
-                if (formal != null) {
-                    argList.add(RCodeBuilder.argument(RSourceSectionNode.LAZY_DEPARSE, formal, syntaxArg));
-                } else {
-                    argList.add(RCodeBuilder.argument(syntaxArg));
-                }
-            }
-
-            RNode fn = unwrapToRNode(list.getDataAtAsObject(0), true);
-            RSyntaxNode call = RContext.getASTBuilder().call(RSourceSectionNode.LAZY_DEPARSE, fn.asRSyntaxNode(), argList);
-            RLanguage result = RDataFactory.createLanguage(Closure.createLanguageClosure(call.asRNode()));
-            if (formals != null && formals.getLength() > 0 && formals.getDataAt(0).length() > 0) {
-                result.setCallLHSName(formals.getDataAt(0));
-            }
-            return addAttributes(result, list);
-        } else if (repType == RLanguage.RepType.FUNCTION) {
-            RAbstractContainer argsList = (RAbstractContainer) list.getDataAt(1);
-            RSyntaxNode body = (RSyntaxNode) unwrapToRNode(list.getDataAt(2), false);
-            List<Argument<RSyntaxNode>> resArgs = new LinkedList<>();
-            RStringVector argsNames = argsList.getNames();
-            for (int i = 0; i < argsList.getLength(); i++) {
-                String argName = argsNames == null ? null : argsNames.getDataAt(i);
-                Object argVal = argsList.getDataAtAsObject(i);
-                Argument<RSyntaxNode> arg = RCodeBuilder.argument(RSyntaxNode.LAZY_DEPARSE, argName, argVal == RSymbol.MISSING ? null : (RSyntaxNode) unwrapToRNode(argVal, false));
-                resArgs.add(arg);
-            }
-            RootCallTarget rootCallTarget = RContext.getASTBuilder().rootFunction(RContext.getInstance().getLanguage(), RSyntaxNode.LAZY_DEPARSE, resArgs, body, null);
-            FunctionExpressionNode fnExprNode = FunctionExpressionNode.create(RSyntaxNode.LAZY_DEPARSE, rootCallTarget);
-            RLanguage result = RDataFactory.createLanguage(Closure.createLanguageClosure(fnExprNode));
-            return addAttributes(result, list);
-        } else {
-            throw RInternalError.shouldNotReachHere("unexpected type");
-        }
-    }
-
-    private static Object addAttributes(RAttributable result, RList list) {
-        DynamicObject attrs = list.getAttributes();
-        if (attrs != null && !attrs.isEmpty()) {
-            result.initAttributes(RAttributesLayout.copy(attrs));
-        }
-        return result;
-    }
-
-    private RNode unwrapToRNode(Object objArg, boolean functionLookup) {
-        Object obj = objArg;
-        // obj is RSymbol or a primitive value.
-        // A symbol needs to be converted back to a ReadVariableNode
-        if (obj instanceof RLanguage) {
-            return (RNode) RASTUtils.unwrap(((RLanguage) obj).getRep());
-        } else if (obj instanceof RSymbol) {
-            return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) obj).getName(), functionLookup).asRNode();
-        } else if (obj instanceof RPromise) {
-            // Evaluate promise and return the result as constant.
-            return ConstantNode.create(forcePromise("unwrapToRNode", objArg));
-        } else {
-            return ConstantNode.create(obj);
-        }
-    }
-
-    @Override
-    public RList asList(RLanguage rl) {
-        Object[] data = new Object[getLength(rl)];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = getDataAtAsObject(rl, i);
-        }
-        RStringVector names = getNames(rl);
-        if (names == null) {
-            return RDataFactory.createList(data);
-        } else {
-            return RDataFactory.createList(data, names);
-        }
-    }
-
-    @Override
-    @TruffleBoundary
-    public RStringVector getNames(RLanguage rl) {
-        RBaseNode node = rl.getRep();
-        if (node instanceof RCallNode) {
-            RCallNode call = (RCallNode) node;
-            /*
-             * If the function or any argument has a name, then all arguments (and the function) are
-             * given names, with unnamed arguments getting "". However, if no arguments have names,
-             * the result is NULL (null)
-             */
-            boolean hasName = false;
-            String functionName = "";
-            if (rl.getCallLHSName() != null) {
-                hasName = true;
-                functionName = rl.getCallLHSName();
-            }
-            ArgumentsSignature sig = call.getSyntaxSignature();
-            if (!hasName) {
-                for (int i = 0; i < sig.getLength(); i++) {
-                    if (sig.getName(i) != null) {
-                        hasName = true;
-                        break;
-                    }
-                }
-            }
-            if (!hasName) {
-                return null;
-            }
-            String[] data = new String[sig.getLength() + 1];
-            data[0] = functionName; // function
-            for (int i = 0; i < sig.getLength(); i++) {
-                String name = sig.getName(i);
-                data[i + 1] = name == null ? "" : name;
-            }
-            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
-        } else {
-            return null;
-        }
-    }
-
-    @Override
-    @TruffleBoundary
-    public void setNames(RLanguage rl, RStringVector names) {
-        RNode node = (RNode) rl.getRep();
-        if (node instanceof RCallBaseNode) {
-            RCallBaseNode call = (RCallBaseNode) node;
-            Arguments<RSyntaxNode> args = call.getArguments();
-            ArgumentsSignature sig = args.getSignature();
-            String[] newNames = new String[sig.getLength()];
-            int argNamesLength = names.getLength() - 1;
-            if (argNamesLength > sig.getLength()) {
-                throw RError.error(RError.SHOW_CALLER2, RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, "names", names.getLength(), sig.getLength() + 1);
-            }
-            for (int i = 0, j = 1; i < sig.getLength() && j <= argNamesLength; i++, j++) {
-                newNames[i] = names.getDataAt(j);
-            }
-            // copying is already handled by RShareable
-            RCallNode newCall = RCallNode.createCall(RSyntaxNode.INTERNAL, ((RCallBaseNode) node).getFunction(), ArgumentsSignature.get(newNames), args.getArguments());
-            rl.setClosure(Closure.createLanguageClosure(newCall));
-        } else {
-            throw RInternalError.shouldNotReachHere();
-        }
+    public Object createLanguageElement(RSyntaxElement element) {
+        return RASTUtils.createLanguageElement(element);
     }
 
     @Override
@@ -415,7 +134,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public RLanguage getSyntaxCaller(RCaller rl) {
+    public RPairList getSyntaxCaller(RCaller rl) {
         RCaller call = rl;
         while (call.isPromise()) {
             call = call.getParent();
@@ -442,10 +161,11 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public String getCallerSource(RLanguage rl) {
+    public String getCallerSource(RPairList rl) {
+        assert rl.isLanguage();
         // This checks for the specific structure of replacements
-        RLanguage replacement = ReplacementDispatchNode.getRLanguage(rl);
-        RLanguage elem = replacement == null ? rl : replacement;
+        RPairList replacement = ReplacementDispatchNode.getRLanguage(rl);
+        RPairList elem = replacement == null ? rl : replacement;
         String string = RDeparse.deparse(elem, RDeparse.DEFAULT_CUTOFF, true, RDeparse.KEEPINTEGER, -1);
         return string.split("\n")[0];
     }
@@ -480,11 +200,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 return findCallerFromFrame(frame);
             }
         }
-    }
-
-    @Override
-    public RSyntaxFunction getSyntaxFunction(RFunction f) {
-        return (FunctionDefinitionNode) f.getTarget().getRootNode();
     }
 
     private Object findCallerFromFrame(Frame frame) {

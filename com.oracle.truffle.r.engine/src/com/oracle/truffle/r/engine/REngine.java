@@ -51,7 +51,6 @@ import com.oracle.truffle.r.launcher.StartupTiming;
 import com.oracle.truffle.r.library.graphics.RGraphics;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.control.BreakException;
@@ -82,18 +81,16 @@ import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
-import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -102,7 +99,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -434,8 +430,8 @@ final class REngine implements Engine, Engine.Timings {
                 if (result == null) {
                     throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
                 }
-            } else if (obj instanceof RLanguage) {
-                result = evalNode(((RLanguage) obj).getRep().asRSyntaxNode(), envir, caller);
+            } else if ((obj instanceof RPairList && ((RPairList) obj).isLanguage())) {
+                result = eval((RPairList) obj, envir, caller);
             } else {
                 result = obj;
             }
@@ -445,7 +441,8 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object eval(RLanguage expr, REnvironment envir, RCaller caller) {
+    public Object eval(RPairList expr, REnvironment envir, RCaller caller) {
+        assert expr.isLanguage();
         return expr.getClosure().eval(envir, caller);
     }
 
@@ -455,8 +452,8 @@ final class REngine implements Engine, Engine.Timings {
         Object result = null;
         for (int i = 0; i < expr.getLength(); i++) {
             result = expr.getDataAt(i);
-            if (result instanceof RLanguage) {
-                RLanguage lang = (RLanguage) result;
+            if ((result instanceof RPairList && ((RPairList) result).isLanguage())) {
+                RPairList lang = (RPairList) result;
                 result = eval(lang, frame);
             }
         }
@@ -464,15 +461,10 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    public Object eval(RLanguage expr, MaterializedFrame frame) {
+    public Object eval(RPairList expr, MaterializedFrame frame) {
+        assert expr.isLanguage();
         CompilerAsserts.neverPartOfCompilation();
-        RNode n = (RNode) expr.getRep();
-        // TODO perhaps this ought to be being checked earlier
-        if (n instanceof ConstantNode) {
-            return ((ConstantNode) n).getValue();
-        }
-        Closure closure = expr.getClosure();
-        return closure.eval(frame);
+        return expr.getClosure().eval(frame);
     }
 
     @Override
@@ -503,31 +495,6 @@ final class REngine implements Engine, Engine.Timings {
         }
         RCaller rCaller = caller == null ? RCaller.create(actualFrame, RCallerHelper.createFromArguments(func, new RArgsValuesAndNames(args, argsSignature))) : caller;
         return CallRFunctionNode.executeSlowpath(func, rCaller, actualFrame, newArgs, reorderedArgs.getSignature(), null);
-    }
-
-    private Object evalNode(RSyntaxElement exprRep, REnvironment envir, RCaller caller) {
-        // we need to copy the node, otherwise it (and its children) will specialized to a specific
-        // frame descriptor and will fail on subsequent re-executions
-        RSyntaxNode n = RContext.getASTBuilder().process(exprRep);
-        RootCallTarget callTarget = doMakeCallTarget(n.asRNode(), RSource.Internal.EVAL_WRAPPER.string, false, false);
-        return evalTarget(callTarget, caller, envir);
-    }
-
-    /**
-     * This is tricky because the {@link Frame} "f" associated with {@code envir} has been
-     * materialized so we can't evaluate in it directly. Instead we create a new
-     * {@link VirtualEvalFrame} that behaves like "f" (delegates most calls to it) but has a
-     * slightly changed arguments array.
-     *
-     * N.B. The implementation should do its utmost to avoid calling this method as it is inherently
-     * inefficient. In particular, in the case where a {@link VirtualFrame} is available, then the
-     * {@code eval} methods that take such a {@link VirtualFrame} should be used in preference.
-     */
-    private static Object evalTarget(RootCallTarget callTarget, RCaller call, REnvironment envir) {
-        // Here we create fake frame that wraps the original frame's context and has an only
-        // slightly changed arguments array (function and callSrc).
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, call);
-        return callTarget.call(vFrame);
     }
 
     @Override

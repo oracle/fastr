@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -74,12 +75,11 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -231,7 +231,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public Object Rf_findVar(Object symbolArg, Object envArg) {
         return findVarInFrameHelper(envArg, symbolArg, true);
     }
@@ -248,6 +247,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return findVarInFrameHelper(envArg, symbolArg, false);
     }
 
+    @TruffleBoundary
     private static Object findVarInFrameHelper(Object envArg, Object symbolArg, boolean inherits) {
         if (envArg == RNull.instance) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.USE_NULL_ENV_DEFUNCT);
@@ -264,6 +264,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     // From the point of view of RFFI, optimized promises (i.e. promises with null
                     // env) should not show up
                     return ((RPromise) value).getRawValue();
+                }
+                if (value instanceof RArgsValuesAndNames) {
+                    return ((RArgsValuesAndNames) value).toPairlist();
                 }
                 return value;
             }
@@ -434,8 +437,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 return RDataFactory.createRawVector(new byte[ni]);
             case VECSXP:
                 return RDataFactory.createList(ni);
+            case LISTSXP:
             case LANGSXP:
-                return RDataFactory.createLangPairList(ni);
+                return RDataFactory.createPairList(ni, type);
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
@@ -588,14 +592,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
-    public Object SET_TYPEOF_FASTR(Object x, int v) {
-        int code = SEXPTYPE.gnuRCodeForObject(x);
-        if (code == SEXPTYPE.LISTSXP.code && v == SEXPTYPE.LANGSXP.code) {
-            return RLanguage.fromList(x, RLanguage.RepType.CALL);
-        } else {
-            throw unimplemented();
-        }
+    public void SET_TYPEOF(Object x, int v) {
+        guaranteeInstanceOf(x, RPairList.class).setType(SEXPTYPE.mapInt(v));
     }
 
     @Override
@@ -715,8 +713,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object SETCDR(Object x, Object y) {
-        guaranteeInstanceOf(x, RPairList.class);
-        ((RPairList) x).setCdr(y);
+        guaranteeInstanceOf(x, RPairList.class).setCdr(y);
         return y;
     }
 

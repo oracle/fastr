@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,68 +30,25 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * A collection of methods that need access to the AST types, needed by code that resides in the
  * runtime project, which does not have direct access, as it would introduce project circularities.
- *
  */
 public interface RRuntimeASTAccess {
-    /**
-     * Retrieves a type of RLanguage object's representation.
-     */
-    RLanguage.RepType getRepType(RLanguage rl);
-
-    /**
-     * Computes the "length" of the language element as per the R specification.
-     */
-    int getLength(RLanguage rl);
-
-    /**
-     * Returns the object ({@link RSymbol}, {@link RLanguage} or scalar value (e.g. {@link Double})
-     * at index {@code index}.
-     */
-    Object getDataAtAsObject(RLanguage rl, int index);
-
-    /**
-     * Converts {@code rl} to a {@link RList}.
-     */
-    RList asList(RLanguage rl);
-
-    /**
-     * If {@code list} is empty return {@link RNull#instance} else create an {@link RLanguage}
-     * object whose rep is a {@code RCallNode} with the first list element as the function and the
-     * remainder as the arguments, or a {@code RFunction} (as determined by repType).
-     */
-    Object createLanguageFromList(RList list, RLanguage.RepType repType);
-
-    /**
-     * Get the "names" attribute for an {@link RLanguage} object, or {@code null} if none.
-     */
-    RStringVector getNames(RLanguage rl);
-
-    /**
-     * Set the "names" attribute for an {@link RLanguage} object.
-     */
-    void setNames(RLanguage rl, RStringVector names);
-
-    RSyntaxFunction getSyntaxFunction(RFunction f);
 
     /**
      * Returns the real caller associated with {@code rl}, by locating the {@code RSyntaxNode}
      * associated with the node stored with {@code rl}.
      */
-    RLanguage getSyntaxCaller(RCaller rl);
+    RPairList getSyntaxCaller(RCaller rl);
 
     /**
      * Gets {@code TruffleRLanguage} avoiding project circularity.
@@ -102,13 +59,13 @@ public interface RRuntimeASTAccess {
      * Returns a string for a call as represented by {@code rl}, returned originally by
      * {@link #getSyntaxCaller}.
      */
-    String getCallerSource(RLanguage rl);
+    String getCallerSource(RPairList rl);
 
     /**
      * Used by error/warning handling to try to find the call that provoked the error/warning.
      *
      * If there is no caller, return {@link RNull#instance}, e.g. "call" of a builtin from the
-     * global env, otherwise return an {@code RLanguage} instance that represents the call.
+     * global env, otherwise return an {@code RPairList} instance that represents the call.
      *
      * @param call may be {@code null} or it may be the {@link Node} that was executing when the
      *            error.warning was generated (builtin or associated node).
@@ -205,4 +162,6 @@ public interface RRuntimeASTAccess {
     RAbstractStringVector getClassHierarchy(RAttributable value);
 
     RContext getCurrentContext();
+
+    Object createLanguageElement(RSyntaxElement element);
 }

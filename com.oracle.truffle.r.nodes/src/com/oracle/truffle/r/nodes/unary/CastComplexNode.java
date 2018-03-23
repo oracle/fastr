@@ -266,7 +266,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         return ret;
     }
 
-    @Specialization
+    @Specialization(guards = "!pairList.isLanguage()")
     protected RComplexVector doPairList(RPairList pairList) {
         return doList(pairList.toRList());
     }

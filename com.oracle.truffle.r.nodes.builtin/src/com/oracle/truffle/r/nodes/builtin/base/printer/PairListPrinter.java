@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -16,9 +16,8 @@ import java.io.IOException;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -68,7 +67,7 @@ final class PairListPrinter extends AbstractValuePrinter<RPairList> {
                     pbuf = "Raw," + ((RAbstractContainer) tmp).getLength();
                 } else if (tmp instanceof RAbstractListVector) {
                     pbuf = "List," + ((RAbstractContainer) tmp).getLength();
-                } else if (tmp instanceof RLanguage) {
+                } else if ((tmp instanceof RPairList && ((RPairList) tmp).isLanguage())) {
                     pbuf = "Expression";
                 } else {
                     pbuf = "?";

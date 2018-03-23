@@ -72,8 +72,8 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -226,8 +226,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         } else {
                             argValues[i] = createLookupPromise(promiseFrame, symbol.getName());
                         }
-                    } else if (arg instanceof RLanguage) {
-                        argValues[i] = createLanguagePromise(promiseFrame, (RLanguage) arg);
+                    } else if ((arg instanceof RPairList && ((RPairList) arg).isLanguage())) {
+                        argValues[i] = createLanguagePromise(promiseFrame, (RPairList) arg);
                     }
                 }
             }
@@ -236,9 +236,8 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         @TruffleBoundary
-        private RPromise createLanguagePromise(MaterializedFrame promiseFrame, RLanguage arg) {
-            Closure closure = languagesClosureCache.getOrCreatePromiseClosure(arg.getRep());
-            return RDataFactory.createPromise(PromiseState.Supplied, closure, promiseFrame);
+        private RPromise createLanguagePromise(MaterializedFrame promiseFrame, RPairList arg) {
+            return RDataFactory.createPromise(PromiseState.Supplied, arg.getClosure(languagesClosureCache), promiseFrame);
         }
 
         @TruffleBoundary

@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -61,7 +60,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public final class Utils {
 
@@ -488,15 +486,14 @@ public final class Utils {
                 skip--;
                 return null;
             }
-            RLanguage rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
-            RSyntaxNode sn = (RSyntaxNode) rl.getRep();
-            SourceSection ss = sn != null ? sn.getSourceSection() : null;
+            RPairList rl = RContext.getRRuntimeASTAccess().getSyntaxCaller(call);
+            SourceSection section = rl.getSourceSection();
             // fabricate a srcref attribute from ss
-            Source source = ss != null ? ss.getSource() : null;
+            Source source = section != null ? section.getSource() : null;
             String path = RSource.getPath(source);
             RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
             if (path != null) {
-                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(ss, path));
+                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(section, path));
             }
             RPairList pl = RDataFactory.createPairList(callerSource);
             if (prev != null) {
@@ -598,7 +595,7 @@ public final class Utils {
                                 str.append(text.length() < 256 ? text : text.substring(0, 256) + "...");
                             }
                         } catch (Throwable t) {
-                            // RLanguage values may not react kindly to getLength() calls
+                            // RPairList values may not react kindly to getLength() calls
                             str.append("<exception ").append(t.getClass().getSimpleName()).append(" while printing value of type ").append(
                                             value == null ? "null" : value.getClass().getSimpleName()).append('>');
                         }

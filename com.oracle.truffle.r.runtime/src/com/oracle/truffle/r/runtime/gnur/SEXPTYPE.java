@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -23,12 +23,11 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -46,11 +45,11 @@ public enum SEXPTYPE {
 
     NILSXP(0, RNull.class), /* nil ()NULL */
     SYMSXP(1, RSymbol.class), /* symbols */
-    LISTSXP(2, RPairList.class), /* lists of dotted pairs */
-    CLOSXP(3, RPairList.class), /* closures */
+    LISTSXP(2), /* lists of dotted pairs */
+    CLOSXP(3), /* closures */
     ENVSXP(4, REnvironment.class), /* environments */
     PROMSXP(5, RPromise.class, EagerPromise.class), /* promises: [un]evaluated closure arguments */
-    LANGSXP(6, RLanguage.class), /* language constructs (special lists) */
+    LANGSXP(6), /* language constructs (special lists) */
     SPECIALSXP(7), /* special forms */
     BUILTINSXP(8), /* builtin non-special forms */
     CHARSXP(9), /* "scalar" string type (GnuR internal only) */
@@ -119,7 +118,11 @@ public enum SEXPTYPE {
      * ints, e.g. {@code DeParse}. N.B. This is not unique for {@link RPairList}, so the
      * {@code type} field on the {@link RPairList} has to be consulted.
      */
-    public static SEXPTYPE typeForClass(Class<?> fastRClass) {
+    public static SEXPTYPE typeForClass(Object value) {
+        if (value instanceof RPairList) {
+            return ((RPairList) value).isLanguage() ? LANGSXP : LISTSXP;
+        }
+        Class<?> fastRClass = value.getClass();
         for (SEXPTYPE type : values()) {
             for (Class<?> clazz : type.fastRClasses) {
                 if (fastRClass == clazz) {
@@ -147,7 +150,7 @@ public enum SEXPTYPE {
      * Accessed from FFI layer.
      */
     public static SEXPTYPE gnuRTypeForObject(Object obj) {
-        SEXPTYPE type = typeForClass(obj.getClass());
+        SEXPTYPE type = typeForClass(obj);
         return gnuRType(type, obj);
     }
 
@@ -166,7 +169,7 @@ public enum SEXPTYPE {
                 }
             case LISTSXP:
                 RPairList pl = (RPairList) obj;
-                if (pl.getType() != null && pl.getType() == SEXPTYPE.LANGSXP) {
+                if (pl.getType() == SEXPTYPE.LANGSXP) {
                     return SEXPTYPE.LANGSXP;
                 } else {
                     return type;

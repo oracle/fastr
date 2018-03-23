@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,13 +34,12 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.RASTUtils;
-import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -50,7 +49,7 @@ public abstract class D extends RExternalBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(D.class);
-        casts.arg(0, "expr").mustBe(instanceOf(RExpression.class).or(instanceOf(RLanguage.class)).or(instanceOf(RSymbol.class)).or(numericValue()).or(complexValue()),
+        casts.arg(0, "expr").mustBe(instanceOf(RExpression.class).or(instanceOf(RPairList.class)).or(instanceOf(RSymbol.class)).or(numericValue()).or(complexValue()),
                         RError.Message.INVALID_EXPRESSION_TYPE, typeName());
         casts.arg(1, "namevec").mustBe(stringValue()).asStringVector().mustBe(notEmpty(), RError.Message.GENERIC, "variable must be a character string").shouldBe(size(1),
                         RError.Message.ONLY_FIRST_VARIABLE_NAME).findFirst();
@@ -61,13 +60,13 @@ public abstract class D extends RExternalBuiltinNode.Arg2 {
     }
 
     protected static boolean isConstant(Object expr) {
-        return !(expr instanceof RLanguage || expr instanceof RExpression || expr instanceof RSymbol);
+        return !((expr instanceof RPairList && ((RPairList) expr).isLanguage()) || expr instanceof RExpression || expr instanceof RSymbol);
     }
 
     @Specialization(guards = "isConstant(expr)")
     @TruffleBoundary
     protected Object doD(Object expr, String var) {
-        return doD(ConstantNode.create(expr), var);
+        return doD(RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, expr), var);
     }
 
     @Specialization
@@ -76,10 +75,10 @@ public abstract class D extends RExternalBuiltinNode.Arg2 {
         return doD(RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, expr.getName(), false), var);
     }
 
-    @Specialization
+    @Specialization(guards = "expr.isLanguage()")
     @TruffleBoundary
-    protected Object doD(RLanguage expr, String var) {
-        return doD((RSyntaxElement) expr.getRep(), var);
+    protected Object doD(RPairList expr, String var) {
+        return doD(expr.getSyntaxElement(), var);
     }
 
     @Specialization

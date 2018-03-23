@@ -38,34 +38,30 @@ import com.oracle.truffle.r.test.generate.FastRSession;
 public class RFunctionMRTest extends AbstractMRTest {
 
     @Test
-    public void testExecute() {
-        execInContext(() -> {
-            RFunction f = create("function() {}");
-            assertTrue(ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), f));
+    public void testExecute() throws Exception {
+        RFunction f = create("function() {}");
+        assertTrue(ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), f));
 
-            TruffleObject result = (TruffleObject) ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f);
-            assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), result));
+        TruffleObject result = (TruffleObject) ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f);
+        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), result));
 
-            f = create("function() {1L}");
-            assertEquals(1, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        f = create("function() {1L}");
+        assertEquals(1, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
-            f = create("function() {1}");
-            assertEquals(1.0, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        f = create("function() {1}");
+        assertEquals(1.0, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
-            f = create("function() {TRUE}");
-            assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        f = create("function() {TRUE}");
+        assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
-            f = create("function(a) {a}");
-            assertEquals("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));
+        f = create("function(a) {a}");
+        assertEquals("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));
 
-            f = create("function(a) { is.logical(a) }");
-            assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
+        f = create("function(a) { is.logical(a) }");
+        assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
 
-            f = create("function(a) { as.external.short(a) }");
-            assertTrue(ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, 123) instanceof Short);
-            return null;
-        });
-
+        f = create("function(a) { as.external.short(a) }");
+        assertTrue(ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, 123) instanceof Short);
     }
 
     @Override

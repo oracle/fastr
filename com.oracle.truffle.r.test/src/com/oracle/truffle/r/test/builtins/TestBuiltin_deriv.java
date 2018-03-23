@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -188,6 +188,13 @@ public class TestBuiltin_deriv extends TestBase {
         assertEval(Output.IgnoreWhitespace, "(df <- deriv(~x^2*sin(x), \"x\", function.arg=c(\"x\")));df(0)");
         assertEval(Output.IgnoreWhitespace, "(df <- deriv(~x^2*sin(x), \"x\", function.arg=function(x=1){}));df(0)");
         assertEval(Output.IgnoreWhitespace, "(df <- deriv(~x^2*sin(x), \"x\", function.arg=function(x)NULL));df(0)");
+    }
+
+    @Test
+    public void testEnvironment() {
+        assertEval("environment(deriv((y ~ sin(cos(x) * y)), c('x','y'), func = TRUE))");
+        assertEval("environment(local(deriv((y ~ sin(cos(x) * y)), c('x','y'), func = TRUE)))");
+        assertEval("environment(local(deriv((y ~ sin(cos(x) * y)), c('x','y'), func = deriv)))");
     }
 
     @Test

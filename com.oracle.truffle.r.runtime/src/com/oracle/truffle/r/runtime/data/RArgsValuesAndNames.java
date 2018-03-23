@@ -103,22 +103,16 @@ public final class RArgsValuesAndNames extends RObject implements RTypedValue {
         return str.toString();
     }
 
-    public RPairList toPairlist() {
-        RPairList head = null;
-        assert signature.getLength() == getLength();
-        for (int i = 0; i < getLength(); i++) {
+    public Object toPairlist() {
+        // special case: empty lists are represented by "missing"
+        if (isEmpty()) {
+            return RMissing.instance;
+        }
+        Object current = RNull.instance;
+        for (int i = getLength() - 1; i >= 0; i--) {
             String name = signature.getName(i);
-            RPairList cur = RDataFactory.createPairList(getArgument(i), RNull.instance, name != null ? RDataFactory.createSymbol(name) : RNull.instance, SEXPTYPE.DOTSXP);
-
-            if (head == null) {
-                head = cur;
-            } else {
-                head.appendToEnd(cur);
-            }
+            current = RDataFactory.createPairList(getArgument(i), current, name != null ? RDataFactory.createSymbol(name) : RNull.instance, SEXPTYPE.DOTSXP);
         }
-        if (head != null) {
-            return head;
-        }
-        return RDataFactory.createPairList(RNull.instance);
+        return current;
     }
 }

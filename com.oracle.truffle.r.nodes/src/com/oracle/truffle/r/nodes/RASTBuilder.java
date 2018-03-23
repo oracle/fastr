@@ -200,7 +200,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     @Override
     public ArrayList<Argument<RSyntaxNode>> getFunctionExprArgs(Object args) {
         CompilerAsserts.neverPartOfCompilation();
-        if (!(args instanceof RPairList || args == RNull.instance)) {
+        if (!((args instanceof RPairList && !((RPairList) args).isLanguage()) || args == RNull.instance)) {
             throw RError.error(RError.SHOW_CALLER, Message.INVALID_FORMAL_ARG_LIST, "function");
         }
         ArrayList<Argument<RSyntaxNode>> finalArgs = new ArrayList<>();

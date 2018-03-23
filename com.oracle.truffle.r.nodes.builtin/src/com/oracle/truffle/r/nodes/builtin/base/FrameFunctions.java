@@ -72,9 +72,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -234,18 +233,18 @@ public class FrameFunctions {
         static {
             Casts casts = new Casts(MatchCall.class);
             casts.arg("definition").mustBe(RFunction.class);
-            casts.arg("call").mustBe(RLanguage.class);
+            casts.arg("call").mustBe(RPairList.class);
             casts.arg("expand.dots").asLogicalVector().findFirst();
             casts.arg("envir").mustBe(REnvironment.class, Message.MUST_BE_ENVIRON, "envir");
         }
 
         @Specialization
-        protected RLanguage matchCall(RFunction definition, Object callObj, byte expandDotsL, REnvironment env) {
+        protected RPairList matchCall(RFunction definition, Object callObj, byte expandDotsL, REnvironment env) {
             /*
              * definition==null in the standard (default) case, in which case we get the RFunction
              * from the calling frame
              */
-            RLanguage call = checkCall(callObj);
+            RPairList call = checkCall(callObj);
             if (expandDotsL == RRuntime.LOGICAL_NA) {
                 throw error(RError.Message.INVALID_ARGUMENT, "expand.dots");
             }
@@ -255,19 +254,19 @@ public class FrameFunctions {
         }
 
         @TruffleBoundary
-        private static RLanguage doMatchCall(MaterializedFrame cframe, RFunction definition, RLanguage call, boolean expandDots) {
+        private static RPairList doMatchCall(MaterializedFrame cframe, RFunction definition, RPairList call, boolean expandDots) {
             /*
              * We have to ensure that all parameters are named, in the correct order, and deal with
              * "...". This process has a lot in common with MatchArguments, which we use as a
              * starting point
              */
-            RCallNode callNode = (RCallNode) RASTUtils.unwrap(call.getRep());
+            RCallNode callNode = (RCallNode) call.getSyntaxElement();
             CallArgumentsNode callArgs = callNode.createArguments(null, false, true);
             ArgumentsSignature inputVarArgSignature = callArgs.containsVarArgsSymbol() ? CallArgumentsNode.getVarargsAndNames(cframe).getSignature() : null;
             RNode[] matchedArgNodes = ArgumentMatcher.matchArguments((RRootNode) definition.getRootNode(), callArgs, inputVarArgSignature, null, null, true).getArguments();
             ArgumentsSignature sig = ((HasSignature) definition.getRootNode()).getSignature();
             // expand any varargs
-            ArrayList<RNode> nodes = new ArrayList<>();
+            ArrayList<RSyntaxNode> nodes = new ArrayList<>();
             ArrayList<String> names = new ArrayList<>();
 
             FrameSlot varArgSlot = cframe.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
@@ -300,7 +299,7 @@ public class FrameFunctions {
 
                     if (expandDots) {
                         for (int i2 = 0; i2 < varArgNodes.length; i2++) {
-                            nodes.add(varArgNodes[i2]);
+                            nodes.add(varArgNodes[i2].asRSyntaxNode());
                             names.add(varArgSignature.getName(i2));
                         }
                     } else {
@@ -329,10 +328,10 @@ public class FrameFunctions {
                         names.add(ArgumentsSignature.VARARG_NAME);
                     }
                 } else if (arg instanceof PromiseNode) {
-                    nodes.add(((PromiseNode) arg).getPromiseExpr().asRNode());
+                    nodes.add(((PromiseNode) arg).getPromiseExpr());
                     names.add(sig.getName(i));
                 } else {
-                    nodes.add(arg);
+                    nodes.add(arg.asRSyntaxNode());
                     names.add(sig.getName(i));
                 }
             }
@@ -377,21 +376,17 @@ public class FrameFunctions {
 
         @Specialization
         @SuppressWarnings("unused")
-        protected RLanguage matchCall(Object definition, Object call, Object expandDots, Object envir) {
+        protected RPairList matchCall(Object definition, Object call, Object expandDots, Object envir) {
             throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
         }
 
-        private RLanguage checkCall(Object obj) throws RError {
+        private RPairList checkCall(Object obj) throws RError {
             Object callObj = obj;
             while (callObj instanceof RExpression) {
                 callObj = ((RExpression) callObj).getDataAt(0);
             }
-            if (callObj instanceof RLanguage) {
-                RLanguage call = (RLanguage) callObj;
-                RNode node = (RNode) RASTUtils.unwrap(call.getRep());
-                if (node instanceof RCallNode) {
-                    return call;
-                }
+            if ((callObj instanceof RPairList && ((RPairList) callObj).isLanguage())) {
+                return (RPairList) callObj;
             }
             throw error(RError.Message.INVALID_ARGUMENT, "call");
         }

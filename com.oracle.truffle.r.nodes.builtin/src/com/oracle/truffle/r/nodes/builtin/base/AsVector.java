@@ -70,7 +70,6 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -184,9 +183,13 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             throw RError.error(RError.SHOW_CALLER, Message.CANNOT_COERCE, RType.Environment.getName(), type != null ? type.getName() : mode);
         }
 
+        protected static boolean isREnvironment(Object value) {
+            return value instanceof REnvironment;
+        }
+
         // there should never be more than ~12 specializations
         @SuppressWarnings("unused")
-        @Specialization(limit = "99", guards = {"!isEnv(x)", "matchesMode(mode, cachedMode)"})
+        @Specialization(limit = "99", guards = {"!isREnvironment(x)", "matchesMode(mode, cachedMode)"})
         protected Object asVector(Object x, String mode,
                         @Cached("mode") String cachedMode,
                         @Cached("fromMode(cachedMode)") RType type,
@@ -198,21 +201,13 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                 if (!RRuntime.isForeignObject(o)) {
                     return cast == null ? o : cast.doCast(o);
                 }
-                if (type == RType.List) {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "list");
-                } else {
-                    throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
-                }
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, type == RType.List ? "list" : "vector");
             }
             Object result = x;
             if (x instanceof RS4Object) {
                 result = getS4DataSlot((RS4Object) x);
             }
             return drop.execute(result, cast == null ? x : cast.doCast(result));
-        }
-
-        static boolean isEnv(Object x) {
-            return x instanceof REnvironment;
         }
 
         private Object getS4DataSlot(RS4Object o) {
@@ -260,8 +255,8 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                 return profile.profile(o.getAttributes() != null) ? o.copyDropAttributes() : o;
             }
 
-            @Specialization(guards = "o.getAttributes() != null")
-            protected RLanguage drop(@SuppressWarnings("unused") Object original, RLanguage o) {
+            @Specialization(guards = {"o.isLanguage()", "o.getAttributes() != null"})
+            protected RPairList drop(@SuppressWarnings("unused") Object original, RPairList o) {
                 switch (targetType) {
                     case Any:
                     case PairList:
@@ -277,7 +272,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Specialization(guards = "pairList.getAttributes() != null")
-            protected Object drop(@SuppressWarnings("unused") Object original, RPairList pairList) {
+            protected Object dropPairList(@SuppressWarnings("unused") Object original, RPairList pairList) {
                 // dropping already done in the cast node CastPairListNode below
                 return pairList;
             }
@@ -334,15 +329,8 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             }
 
             @Specialization
-            @TruffleBoundary
-            protected Object doPairList(RPairList list) {
-                return list.copy();
-            }
-
-            @Specialization
-            protected Object doRLanguage(RLanguage language) {
-                // GNUR just let's language be language...
-                return language;
+            protected Object doRLanguage(RPairList pairlist) {
+                return pairlist;
             }
 
             @Fallback

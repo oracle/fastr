@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -53,13 +53,12 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -113,12 +112,12 @@ public abstract class Deriv extends RExternalBuiltinNode {
         return DerivNodeGen.create();
     }
 
-    public abstract Object execute(VirtualFrame frame, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
+    public abstract Object execute(Object arg1, Object arg2, Object arg3, Object arg4, Object arg5);
 
     @Override
     public Object call(VirtualFrame frame, RArgsValuesAndNames args) {
         checkLength(args, 5);
-        return execute(frame, castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4));
+        return execute(castArg(args, 0), castArg(args, 1), castArg(args, 2), castArg(args, 3), castArg(args, 4));
     }
 
     @Override
@@ -127,43 +126,38 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     protected static boolean isConstant(Object expr) {
-        return !(expr instanceof RLanguage || expr instanceof RExpression || expr instanceof RSymbol);
+        return !((expr instanceof RPairList && ((RPairList) expr).isLanguage()) || expr instanceof RExpression || expr instanceof RSymbol);
     }
 
     @Specialization(guards = "isConstant(expr)")
-    protected Object derive(VirtualFrame frame, Object expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return derive(frame.materialize(), createConstant(expr), names, functionArg, tag, hessian);
-    }
-
-    @TruffleBoundary
-    private static ConstantNode createConstant(Object expr) {
-        return ConstantNode.create(expr);
+    protected Object derive(Object expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+        return deriveInternal(RSyntaxConstant.createDummyConstant(RSyntaxNode.INTERNAL, expr), names, functionArg, tag, hessian);
     }
 
     @Specialization
-    protected Object derive(VirtualFrame frame, RSymbol expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return derive(frame.materialize(), createLookup(expr), names, functionArg, tag, hessian);
-    }
-
-    @TruffleBoundary
-    private static RBaseNode createLookup(RSymbol expr) {
-        return (RBaseNode) RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, expr.getName(), false);
+    protected Object derive(RSymbol expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+        return deriveInternal(RSyntaxLookup.createDummyLookup(RSyntaxNode.INTERNAL, expr.getName(), false), names, functionArg, tag, hessian);
     }
 
     @Specialization
-    protected Object derive(VirtualFrame frame, RExpression expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian,
+    protected Object derive(RExpression expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian,
                     @Cached("create()") Deriv derivNode) {
-        return derivNode.execute(frame, expr.getDataAt(0), names, functionArg, tag, hessian);
+        return derivNode.execute(expr.getDataAt(0), names, functionArg, tag, hessian);
     }
 
-    @Specialization
-    protected Object derive(VirtualFrame frame, RLanguage expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return derive(frame.materialize(), expr.getRep(), names, functionArg, tag, hessian);
+    @Specialization(guards = "expr.isLanguage()")
+    protected Object derive(RPairList expr, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+        return deriveInternal(getSyntaxElement(expr), names, functionArg, tag, hessian);
     }
 
     @TruffleBoundary
-    private Object derive(MaterializedFrame frame, RBaseNode elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
-        return findDerive(elem, names, functionArg, tag, hessian).getResult(frame.materialize(), getRLanguage());
+    private static RSyntaxElement getSyntaxElement(RPairList expr) {
+        return expr.getSyntaxElement();
+    }
+
+    @TruffleBoundary
+    private Object deriveInternal(RSyntaxElement elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+        return findDerive(elem, names, functionArg, tag, hessian).getResult(getRLanguage(), functionArg);
     }
 
     private static final class DerivResult {
@@ -183,10 +177,11 @@ public abstract class Deriv extends RExternalBuiltinNode {
             result = null;
         }
 
-        private Object getResult(MaterializedFrame frame, TruffleRLanguage language) {
+        private Object getResult(TruffleRLanguage language, Object functionArg) {
             if (result != null) {
                 return result;
             }
+            MaterializedFrame frame = functionArg instanceof RFunction ? ((RFunction) functionArg).getEnclosingFrame() : RContext.getInstance().stateREnvironment.getGlobalFrame();
             RootCallTarget callTarget = RContext.getASTBuilder().rootFunction(language, RSyntaxNode.LAZY_DEPARSE, targetArgs, blockCall, null);
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), frame);
             return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, frame);
@@ -194,7 +189,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
     }
 
     @TruffleBoundary
-    private DerivResult findDerive(RBaseNode elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
+    private DerivResult findDerive(RSyntaxElement elem, RAbstractStringVector names, Object functionArg, String tag, boolean hessian) {
         LinkedList<RSyntaxNode> exprlist = new LinkedList<>();
         int fIndex = findSubexpression(elem, exprlist, tag);
 
@@ -202,12 +197,12 @@ public abstract class Deriv extends RExternalBuiltinNode {
         int[] dIndex = new int[nderiv];
         int[] d2Index = hessian ? new int[(nderiv * (1 + nderiv)) / 2] : null;
         for (int i = 0, k = 0; i < nderiv; i++) {
-            RBaseNode dExpr = d(elem, names.getDataAt(i));
+            RSyntaxElement dExpr = d(elem, names.getDataAt(i));
             dIndex[i] = findSubexpression(dExpr, exprlist, tag);
 
             if (hessian) {
                 for (int j = i; j < nderiv; j++) {
-                    RBaseNode d2Expr = d(dExpr, names.getDataAt(j));
+                    RSyntaxElement d2Expr = d(dExpr, names.getDataAt(j));
                     d2Index[k] = findSubexpression(d2Expr, exprlist, tag);
                     k++;
                 }
@@ -219,7 +214,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         if (fIndex > 0) {
             exprlist.add(createLookup(tag + fIndex));
         } else {
-            exprlist.add(cloneElement(elem.asRSyntaxNode()));
+            exprlist.add(cloneElement(elem));
         }
 
         exprlist.add(null);
@@ -232,7 +227,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
                 exprlist.add(createLookup(tag + dIndex[i]));
 
                 if (hessian) {
-                    RBaseNode dExpr = d(elem, names.getDataAt(i));
+                    RSyntaxElement dExpr = d(elem, names.getDataAt(i));
                     for (int j = i; j < nderiv; j++) {
                         if (d2Index[k] > 0) {
                             exprlist.add(createLookup(tag + d2Index[k]));
@@ -245,7 +240,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
             } else {
                 // the first derivative is constant or simple variable
                 // TODO: do not call the d twice
-                RBaseNode dExpr = d(elem, names.getDataAt(i));
+                RSyntaxElement dExpr = d(elem, names.getDataAt(i));
                 exprlist.add((RSyntaxNode) dExpr);
 
                 if (hessian) {
@@ -253,8 +248,8 @@ public abstract class Deriv extends RExternalBuiltinNode {
                         if (d2Index[k] > 0) {
                             exprlist.add(createLookup(tag + d2Index[k]));
                         } else {
-                            RBaseNode d2Expr = d(dExpr, names.getDataAt(j));
-                            if (isZero((RSyntaxElement) d2Expr)) {
+                            RSyntaxElement d2Expr = d(dExpr, names.getDataAt(j));
+                            if (isZero(d2Expr)) {
                                 exprlist.add(null);
                             } else {
                                 exprlist.add((RSyntaxNode) d2Expr);
@@ -357,17 +352,13 @@ public abstract class Deriv extends RExternalBuiltinNode {
 
             return new DerivResult(blockCall, targetArgs);
         } else {
-            RLanguage lan = RDataFactory.createLanguage(Closure.createLanguageClosure(blockCall.asRNode()));
+            RPairList lan = RDataFactory.createLanguage(Closure.createLanguageClosure(blockCall.asRNode()));
             RExpression res = RDataFactory.createExpression(new Object[]{lan});
             return new DerivResult(res);
         }
     }
 
-    private int findSubexpression(RBaseNode expr, List<RSyntaxNode> exprlist, String tag) {
-        if (!(expr instanceof RSyntaxElement)) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_EXPRESSION, "FindSubexprs");
-        }
-
+    private int findSubexpression(RSyntaxElement expr, List<RSyntaxNode> exprlist, String tag) {
         RSyntaxVisitor<Integer> vis = new RSyntaxVisitor<Integer>() {
             @Override
             protected Integer visit(RSyntaxCall call) {
@@ -404,7 +395,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
                 throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_EXPRESSION, "FindSubexprs");
             }
         };
-        return vis.accept((RSyntaxElement) expr);
+        return vis.accept(expr);
     }
 
     private static int checkConstant(Object val) {
@@ -490,13 +481,8 @@ public abstract class Deriv extends RExternalBuiltinNode {
         return RContext.getASTBuilder().process(element);
     }
 
-    private static RBaseNode d(RBaseNode expr, String var) {
-        if (!(expr instanceof RSyntaxElement)) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.INVALID_EXPRESSION, "FindSubexprs");
-        }
-
-        RSyntaxVisitor<RSyntaxElement> vis = new DerivVisitor(var);
-        return (RBaseNode) vis.accept((RSyntaxElement) expr);
+    private static RSyntaxElement d(RSyntaxElement expr, String var) {
+        return new DerivVisitor(var).accept(expr);
     }
 
     private static int argsLength(RSyntaxElement elem) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,8 @@ package com.oracle.truffle.r.test.engine.interop;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -33,17 +35,15 @@ import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
 
 public class RLanguageMRTest extends AbstractMRTest {
 
     @Test
     public void testKeysInfo() throws Exception {
-        RLanguage rl = (RLanguage) createTruffleObjects()[0];
+        RPairList rl = (RPairList) createTruffleObjects()[0];
         int info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, "nnoonnee");
         assertFalse(KeyInfo.isExisting(info));
 
@@ -56,49 +56,53 @@ public class RLanguageMRTest extends AbstractMRTest {
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, 0);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertFalse(KeyInfo.isWritable(info));
+        assertTrue(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, 1);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertFalse(KeyInfo.isWritable(info));
+        assertTrue(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, 2);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertFalse(KeyInfo.isWritable(info));
+        assertTrue(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
     }
 
     @Test
     public void testReadWrite() throws Exception {
-        RLanguage rl = (RLanguage) createTruffleObjects()[0];
+        RPairList rl = (RPairList) createTruffleObjects()[0];
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, "nnnoooonnne"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, rl.getLength()), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, 0d), UnknownIdentifierException.class);
+        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0d) == RSymbol.install("+"));
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, 0f), UnknownIdentifierException.class);
 
-        // TODO add some meaningfull read tests
+        // TODO add some meaningful read tests
         Assert.assertNotNull(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0));
 
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), rl, "aaa", "abc"), UnsupportedMessageException.class);
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), rl, 0, "abc"), UnsupportedMessageException.class);
-
+        // shouldn't fail:
+        ForeignAccess.sendWrite(Message.WRITE.createNode(), rl, "aaa", "abc");
+        ForeignAccess.sendWrite(Message.WRITE.createNode(), rl, 0, "abc");
     }
 
     @Override
     protected TruffleObject[] createTruffleObjects() {
-        // TODO any simpler way to create a RLanguage ?
-        String srcTxt = "ne <- new.env(); delayedAssign('x', 1 + 2, assign.env = ne); substitute(x, ne)";
+        String srcTxt = "quote(1+2)";
         Source src = Source.newBuilder("R", srcTxt, "<testrlanguage>").internal(true).buildLiteral();
         Value result = context.eval(src);
         return new TruffleObject[]{(TruffleObject) FastRSession.getReceiver(result)};
+    }
+
+    @Override
+    protected String[] getKeys(TruffleObject obj) {
+        return new String[0];
     }
 
     @Override
@@ -108,6 +112,6 @@ public class RLanguageMRTest extends AbstractMRTest {
 
     @Override
     protected int getSize(TruffleObject obj) {
-        return ((RLanguage) obj).getLength();
+        return ((RPairList) obj).getLength();
     }
 }

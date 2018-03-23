@@ -38,11 +38,10 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -105,8 +104,6 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RPromiseMRForeign.ACCESS;
         } else if (obj instanceof RArgsValuesAndNames) {
             return RArgsValuesAndNamesMRForeign.ACCESS;
-        } else if (obj instanceof RLanguage) {
-            return RLanguageMRForeign.ACCESS;
         } else if (obj instanceof ActiveBinding) {
             return ActiveBindingMRForeign.ACCESS;
         } else if (obj instanceof RInteropScalar) {

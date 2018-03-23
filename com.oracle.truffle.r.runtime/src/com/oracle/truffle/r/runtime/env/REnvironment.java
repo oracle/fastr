@@ -124,8 +124,12 @@ public abstract class REnvironment extends RAttributeStorage {
         @CompilationFinal private SearchPath searchPath;
         @CompilationFinal private MaterializedFrame parentGlobalFrame; // SHARED_PARENT_RW only
 
+        @CompilationFinal private REnvironment emptyDummy; // used when evaluating in emptyenv
+
         private ContextStateImpl(MaterializedFrame globalFrame) {
             this.globalFrame = globalFrame;
+            this.emptyDummy = RDataFactory.createNewEnv(null, false, 0);
+            RArguments.initializeEnclosingFrame(this.emptyDummy.getFrame(), null);
         }
 
         public REnvironment getGlobalEnv() {
@@ -142,6 +146,10 @@ public abstract class REnvironment extends RAttributeStorage {
 
         public Base getBaseEnv() {
             return baseEnv;
+        }
+
+        public REnvironment getEmptyDummy() {
+            return emptyDummy;
         }
 
         public REnvironment getBaseNamespace() {

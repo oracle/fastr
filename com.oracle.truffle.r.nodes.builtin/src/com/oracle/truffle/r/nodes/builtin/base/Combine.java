@@ -71,7 +71,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -121,7 +121,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
                         !(args.getArgument(0) instanceof RAbstractVector) &&
                         !(args.getArgument(0) instanceof REnvironment) &&
                         !(args.getArgument(0) instanceof RFunction) &&
-                        !(args.getArgument(0) instanceof RLanguage) &&
+                        !(args.getArgument(0) instanceof RPairList) &&
                         !(args.getArgument(0) instanceof RSymbol) &&
                         !(args.getArgument(0) instanceof RS4Object) &&
                         !RRuntime.isForeignObject(args.getArgument(0));
@@ -238,7 +238,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         for (int i = 0; i < elements.length; i++) {
             CombineInputCast inputCast = getCast(i);
             Object value = args[i];
-            Object element = (exprListPrecedence && value instanceof RLanguage) ? value : cast.doCast(inputCast.cast(value));
+            Object element = (exprListPrecedence && (value instanceof RPairList && ((RPairList) value).isLanguage())) ? value : cast.doCast(inputCast.cast(value));
             element = inputCast.valueProfile.profile(element);
             elements[i] = element;
             size += getElementSize(element);

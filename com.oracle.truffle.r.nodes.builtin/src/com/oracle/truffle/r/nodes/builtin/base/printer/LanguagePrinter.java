@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,9 +26,9 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RDeparse;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 
-final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
+final class LanguagePrinter extends AbstractValuePrinter<RPairList> {
 
     static final LanguagePrinter INSTANCE = new LanguagePrinter();
 
@@ -38,7 +38,7 @@ final class LanguagePrinter extends AbstractValuePrinter<RLanguage> {
 
     @Override
     @TruffleBoundary
-    protected void printValue(RLanguage language, PrintContext printCtx) throws IOException {
+    protected void printValue(RPairList language, PrintContext printCtx) throws IOException {
         printCtx.output().print(RDeparse.deparse(language, RDeparse.DEFAULT_CUTOFF, true, RDeparse.KEEPINTEGER, -1));
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"}, behavior = PURE)
 public abstract class Vector extends RBuiltinNode.Arg2 {
@@ -76,7 +77,7 @@ public abstract class Vector extends RBuiltinNode.Arg2 {
     // RAbstractVector. Note2: pair list of size == 0 is RNull -> we have to return Object.
     private static Object createType(RType type, int length) {
         if (type == RType.PairList) {
-            return RDataFactory.createPairList(length);
+            return RDataFactory.createPairList(length, SEXPTYPE.LISTSXP);
         }
         return type.create(length, false);
     }

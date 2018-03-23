@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -168,16 +168,15 @@ public class FastRTrace {
             return Utils.toString(func);
         }
 
-        @SuppressWarnings("unused")
         @TruffleBoundary
-        private void complexCase(RFunction func, Object tracerObj, Object exit, Object at, boolean print, Object signature) {
+        private void complexCase(RFunction func, Object tracerObj, @SuppressWarnings("unused") Object exit, Object at, boolean print, @SuppressWarnings("unused") Object signature) {
             // the complex case
-            RLanguage tracer;
+            RPairList tracer;
             if (tracerObj instanceof RFunction) {
                 Closure closure = Closure.createLanguageClosure(RASTUtils.createCall(tracerObj, false, ArgumentsSignature.empty(0)).asRNode());
                 tracer = RDataFactory.createLanguage(closure);
-            } else if (tracerObj instanceof RLanguage) {
-                tracer = (RLanguage) tracerObj;
+            } else if ((tracerObj instanceof RPairList && ((RPairList) tracerObj).isLanguage())) {
+                tracer = (RPairList) tracerObj;
             } else {
                 throw error(RError.Message.GENERIC, "tracer is unexpected type");
             }

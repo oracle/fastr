@@ -60,7 +60,7 @@ static void setupOverrides(void);
 static void *dlopen_jvmlib(char *libpath);
 static JNIEnv* getEnv();
 static jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, const char *sig, int isStatic);
-static jclass checkFindClass(JNIEnv *env, const char *name);
+static jclass checkFindClass(JNIEnv *env, const char *name, const char* vm_cp);
 static int process_vmargs(int argc, char *argv[], char *vmargv[], char *uargv[]);
 static char **update_environ_with_java_home(void);
 static void print_environ(char **env);
@@ -224,9 +224,9 @@ static int initializeFastR(int argc, char *argv[], int setupRmainloop) {
         return 1;
     }
 
-    rInterfaceCallbacksClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RInterfaceCallbacks");
-    rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded");
-    jclass stringClass = checkFindClass(jniEnv, "java/lang/String");
+    rInterfaceCallbacksClass = checkFindClass(jniEnv, "com/oracle/truffle/r/runtime/RInterfaceCallbacks", vm_cp);
+    rembeddedClass = checkFindClass(jniEnv, "com/oracle/truffle/r/engine/shell/REmbedded", vm_cp);
+    jclass stringClass = checkFindClass(jniEnv, "java/lang/String", vm_cp);
     jmethodID initializeMethod = checkGetMethodID(jniEnv, rembeddedClass, "initializeR", "([Ljava/lang/String;Z)V", 1);
     jobjectArray argsArray = (*jniEnv)->NewObjectArray(jniEnv, argc, stringClass, NULL);
     for (int i = 0; i < argc; i++) {
@@ -578,13 +578,16 @@ static jmethodID checkGetMethodID(JNIEnv *env, jclass klass, const char *name, c
     return methodID;
 }
 
-static jclass checkFindClass(JNIEnv *env, const char *name) {
+static jclass checkFindClass(JNIEnv *env, const char *name, const char* vm_cp) {
     jclass klass = (*env)->FindClass(env, name);
     if (klass == NULL) {
-        char buf[1024];
+        char buf[16384];
         strcpy(buf, "failed to find class ");
         strcat(buf, name);
+        strcat(buf, " in classpath ");
+        strcat(buf, vm_cp);
         strcat(buf, ".\nDid you set R_HOME to the correct location?");
+        (*env)->ExceptionDescribe(env);
         (*env)->FatalError(env, buf);
     }
     return (*env)->NewGlobalRef(env, klass);

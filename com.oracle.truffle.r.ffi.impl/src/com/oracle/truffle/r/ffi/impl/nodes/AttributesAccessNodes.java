@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -215,12 +214,6 @@ public final class AttributesAccessNodes {
         }
 
         @Specialization
-        protected Object doLanguage(RSharingAttributeStorage target, RLanguage attributes,
-                        @Cached("create()") SetAttributeNode setAttribNode) {
-            return doIt(target, getPairList(attributes), setAttribNode);
-        }
-
-        @Specialization
         protected Object doIt(RSharingAttributeStorage target, RPairList attributes,
                         @Cached("create()") SetAttributeNode setAttribNode) {
             clearAttrs(target);
@@ -246,11 +239,6 @@ public final class AttributesAccessNodes {
         @TruffleBoundary
         private static void clearAttrs(RSharingAttributeStorage target) {
             target.initAttributes(RAttributesLayout.createRAttributes());
-        }
-
-        @TruffleBoundary
-        private static RPairList getPairList(RLanguage attributes) {
-            return attributes.getPairList();
         }
     }
 }

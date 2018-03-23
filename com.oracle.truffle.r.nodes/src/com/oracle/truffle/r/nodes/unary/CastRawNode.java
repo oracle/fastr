@@ -314,7 +314,7 @@ public abstract class CastRawNode extends CastBaseNode {
         return result;
     }
 
-    @Specialization
+    @Specialization(guards = "!pairList.isLanguage()")
     protected RRawVector doPairList(RPairList pairList) {
         return doList(pairList.toRList());
     }

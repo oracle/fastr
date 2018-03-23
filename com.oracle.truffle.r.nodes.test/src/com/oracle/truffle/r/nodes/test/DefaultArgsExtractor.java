@@ -32,9 +32,8 @@ import com.oracle.truffle.r.nodes.casts.Samples;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-import com.oracle.truffle.r.runtime.data.RLanguage;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -74,7 +73,7 @@ class DefaultArgsExtractor {
                     String name = names.getDataAt(i);
                     Object defVal = formals.getDataAtAsObject(i);
 
-                    if (defVal instanceof RLanguage) {
+                    if ((defVal instanceof RPairList && ((RPairList) defVal).isLanguage())) {
                         String deparsedDefVal = RDeparse.deparse(defVal);
                         try {
                             Value eval = context.eval(FastRSession.createSource(deparsedDefVal, RSource.Internal.UNIT_TEST.string));

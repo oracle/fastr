@@ -57,11 +57,10 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RScalar;
@@ -607,7 +606,7 @@ public class RSerialize {
                              * for LANGSXP when specifying a formula
                              */
                             if (langDepth == 0) {
-                                RLanguage lang = PairlistDeserializer.processLanguage(carItem, cdrItem, tagItem);
+                                RPairList lang = PairlistDeserializer.processLanguage(carItem, cdrItem, tagItem);
                                 if (attrItem != RNull.instance) {
                                     setAttributes(lang, attrItem);
                                 }
@@ -1482,7 +1481,7 @@ public class RSerialize {
                     stream.writeInt(specialType.code);
                     return;
                 }
-                SEXPTYPE type = SEXPTYPE.typeForClass(obj.getClass());
+                SEXPTYPE type = SEXPTYPE.typeForClass(obj);
                 SEXPTYPE gnuRType = SEXPTYPE.gnuRType(type, obj);
                 int refIndex;
                 if ((refIndex = getRefIndex(obj)) != -1) {
@@ -1653,7 +1652,6 @@ public class RSerialize {
                                         RFunction fun = (RFunction) obj;
                                         RPairList pl = (RPairList) serializeLanguageObject(state, fun);
                                         assert pl != null;
-                                        state.convertUnboundValues(pl);
                                         if (FastROptions.debugMatches("printWclosure")) {
                                             Debug.printClosure(pl);
                                         }
@@ -1666,7 +1664,6 @@ public class RSerialize {
                                     case PROMSXP: {
                                         RPairList pl = (RPairList) serializeLanguageObject(state, obj);
                                         assert pl != null;
-                                        state.convertUnboundValues(pl);
                                         if (pl.getTag() != RNull.instance) {
                                             writeItem(pl.getTag());
                                         }
@@ -1687,7 +1684,6 @@ public class RSerialize {
 
                                     case LANGSXP: {
                                         RPairList pl = (RPairList) serializeLanguageObject(state, obj);
-                                        state.convertUnboundValues(pl);
                                         writeItem(pl.car());
                                         obj = pl.cdr();
                                         break;
@@ -1737,7 +1733,7 @@ public class RSerialize {
             if (hook == null) {
                 return RNull.instance;
             }
-            switch (SEXPTYPE.typeForClass(obj.getClass())) {
+            switch (SEXPTYPE.typeForClass(obj)) {
                 case WEAKREFSXP:
                 case EXTPTRSXP:
                     break;
@@ -2205,11 +2201,11 @@ public class RSerialize {
         }
 
         private static SEXPTYPE type(Object obj) {
-            if (obj instanceof RPairList) {
+            if ((obj instanceof RPairList && !((RPairList) obj).isLanguage())) {
                 SEXPTYPE s = ((RPairList) obj).getType();
                 return s == null ? SEXPTYPE.LISTSXP : s;
             } else {
-                return SEXPTYPE.typeForClass(obj.getClass());
+                return SEXPTYPE.typeForClass(obj);
             }
         }
 
@@ -2430,12 +2426,23 @@ public class RSerialize {
     }
 
     private static Object serializeLanguageObject(RSerialize.State state, Object obj) {
-        if (obj instanceof RFunction) {
-            return RSerialize.serializeFunction(state, (RFunction) obj);
-        } else if (obj instanceof RLanguage) {
-            return RSerialize.serializeLanguage(state, (RLanguage) obj);
+        if (obj instanceof RPairList) {
+            RPairList list = (RPairList) obj;
+            if (list.isLanguage() && list.hasClosure()) {
+                RPairList result = (RPairList) RSerialize.serializeLanguage(state, list);
+                state.convertUnboundValues(result);
+                return result;
+            } else {
+                return list;
+            }
+        } else if (obj instanceof RFunction) {
+            RPairList result = (RPairList) RSerialize.serializeFunction(state, (RFunction) obj);
+            state.convertUnboundValues(result);
+            return result;
         } else if (obj instanceof RPromise) {
-            return RSerialize.serializePromise(state, (RPromise) obj);
+            RPairList result = (RPairList) RSerialize.serializePromise(state, (RPromise) obj);
+            state.convertUnboundValues(result);
+            return result;
         } else {
             throw RInternalError.unimplemented("serialize");
         }
@@ -2512,8 +2519,8 @@ public class RSerialize {
         return null;
     }
 
-    private static Object serializeLanguage(State state, RLanguage lang) {
-        RSyntaxElement element = lang.getRep().asRSyntaxNode();
+    private static Object serializeLanguage(State state, RPairList lang) {
+        RSyntaxElement element = lang.getSyntaxElement();
         state.openPairList(SEXPTYPE.LANGSXP);
         new SerializeVisitor(state).accept(element);
         return state.closePairList();
@@ -2566,7 +2573,7 @@ public class RSerialize {
             return func;
         }
 
-        public static RLanguage processLanguage(Object car, Object cdr, Object tag) {
+        public static RPairList processLanguage(Object car, Object cdr, Object tag) {
             Closure closure = Closure.createLanguageClosure(processCall(car, cdr, tag, null).asRNode());
             return RDataFactory.createLanguage(closure);
         }
@@ -2594,12 +2601,11 @@ public class RSerialize {
                     case CLOSXP:
                         return processFunctionExpression(pl.car(), pl.cdr(), pl.getTag(), name);
                     default:
-                        throw RInternalError.shouldNotReachHere("unexpected SXP type: " + pl.getType());
+                        // other pairlists: include as constants
+                        return RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, unwrapScalarValues(value));
                 }
             } else {
                 assert !(value instanceof RMissing) : "should be handled outside";
-                assert !(value instanceof RLanguage) : "unexpected RLanguage constant in unserialize";
-
                 return RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, unwrapScalarValues(value));
             }
         }

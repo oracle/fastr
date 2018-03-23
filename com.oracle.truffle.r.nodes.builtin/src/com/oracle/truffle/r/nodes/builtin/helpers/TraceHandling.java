@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 
 /**
@@ -95,7 +95,7 @@ public class TraceHandling {
         }
     }
 
-    public static boolean enableStatementTrace(RFunction func, RLanguage tracer, Object at, boolean print) {
+    public static boolean enableStatementTrace(RFunction func, RPairList tracer, Object at, boolean print) {
         @SuppressWarnings("unchecked")
         EventBinding<TraceEventListener> binding = (EventBinding<TraceEventListener>) RContext.getInstance().stateInstrumentation.getTraceBinding(RInstrumentation.getSourceSection(func));
         if (binding != null) {
@@ -198,10 +198,10 @@ public class TraceHandling {
      * entry.
      */
     private static class TracerFunctionEntryEventListener extends TraceEventListener {
-        private final RLanguage tracer;
+        private final RPairList tracer;
         private final boolean print;
 
-        TracerFunctionEntryEventListener(RLanguage tracer, boolean print) {
+        TracerFunctionEntryEventListener(RPairList tracer, boolean print) {
             this.tracer = tracer;
             this.print = print;
         }

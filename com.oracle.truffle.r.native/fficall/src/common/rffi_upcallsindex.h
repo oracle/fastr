@@ -262,7 +262,7 @@
 #define SET_STRING_ELT_x 256
 #define SET_SYMVALUE_x 257
 #define SET_TAG_x 258
-#define SET_TYPEOF_FASTR_x 259
+#define SET_TYPEOF_x 259
 #define SET_VECTOR_ELT_x 260
 #define STRING_ELT_x 261
 #define SYMVALUE_x 262

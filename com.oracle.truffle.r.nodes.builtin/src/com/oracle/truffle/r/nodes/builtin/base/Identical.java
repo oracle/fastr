@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -164,14 +163,45 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     }
 
     private byte identicalAttr(RAttributable x, RAttributable y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
-        // TODO interpret attribAsSet correctly
         DynamicObject xAttributes = x.getAttributes();
         DynamicObject yAttributes = y.getAttributes();
-        if (xAttributes == null && yAttributes == null) {
+        int xSize = xAttributes == null ? 0 : xAttributes.size();
+        int ySize = yAttributes == null ? 0 : yAttributes.size();
+        if (xSize == 0 && ySize == 0) {
             return RRuntime.LOGICAL_TRUE;
-        } else if (xAttributes == null || yAttributes == null) {
+        } else if (xSize != ySize) {
             return RRuntime.LOGICAL_FALSE;
-        } else if (xAttributes.size() == yAttributes.size()) {
+        } else {
+            return identicalAttrInternal(numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref, xAttributes, yAttributes);
+        }
+    }
+
+    @TruffleBoundary
+    private byte identicalAttrInternal(boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref, DynamicObject xAttributes,
+                    DynamicObject yAttributes) {
+        if (attribAsSet) {
+            // make sure all attributes from x are in y, with identical values
+            Iterator<RAttributesLayout.RAttribute> xIter = attrIterNodeX.execute(xAttributes).iterator();
+            while (xIter.hasNext()) {
+                RAttributesLayout.RAttribute xAttr = xIter.next();
+                Object yValue = yAttributes.get(xAttr.getName());
+                if (yValue == null) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
+                byte res = identicalRecursiveAttr(xAttr.getValue(), yValue, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
+                if (res == RRuntime.LOGICAL_FALSE) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
+            }
+            // make sure all attributes from y are in x
+            Iterator<RAttributesLayout.RAttribute> yIter = attrIterNodeY.execute(yAttributes).iterator();
+            while (xIter.hasNext()) {
+                RAttributesLayout.RAttribute yAttr = yIter.next();
+                if (!xAttributes.containsKey(yAttr.getName())) {
+                    return RRuntime.LOGICAL_FALSE;
+                }
+            }
+        } else {
             Iterator<RAttributesLayout.RAttribute> xIter = attrIterNodeX.execute(xAttributes).iterator();
             Iterator<RAttributesLayout.RAttribute> yIter = attrIterNodeY.execute(yAttributes).iterator();
             while (xIter.hasNext()) {
@@ -185,9 +215,8 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
                     return RRuntime.LOGICAL_FALSE;
                 }
             }
-            return RRuntime.LOGICAL_TRUE;
         }
-        return RRuntime.LOGICAL_FALSE;
+        return RRuntime.LOGICAL_TRUE;
     }
 
     @SuppressWarnings("unused")
@@ -202,20 +231,6 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     protected byte doInternalIdentical(RSymbol x, RSymbol y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
         assert Utils.isInterned(x.getName()) && Utils.isInterned(y.getName());
         return RRuntime.asLogical(x.getName() == y.getName());
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected byte doInternalIdentical(RLanguage x, RLanguage y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
-        if (x == y) {
-            return RRuntime.LOGICAL_TRUE;
-        }
-        RSyntaxNode xNode = x.getRep().asRSyntaxNode();
-        RSyntaxNode yNode = y.getRep().asRSyntaxNode();
-        if (!new IdenticalVisitor().accept(xNode, yNode)) {
-            return RRuntime.LOGICAL_FALSE;
-        }
-        return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
     }
 
     @Specialization
@@ -300,48 +315,64 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     }
 
     @Specialization
+    @TruffleBoundary
     protected byte doInternalIdenticalGeneric(RPairList x, RPairList y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
-        if (identicalRecursive(x.car(), y.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref) == RRuntime.LOGICAL_FALSE) {
-            return RRuntime.LOGICAL_FALSE;
+        if (x == y) {
+            return RRuntime.LOGICAL_TRUE;
         }
-        Object tmpXCdr = x.cdr();
-        Object tmpYCdr = y.cdr();
-        while (true) {
-            if (RPairList.isNull(tmpXCdr) && RPairList.isNull(tmpYCdr)) {
-                break;
-            } else if (RPairList.isNull(tmpXCdr) || RPairList.isNull(tmpYCdr)) {
+        boolean xHasClosure = x.hasClosure();
+        boolean yHasClosure = y.hasClosure();
+        try {
+            if (identicalRecursive(x.car(), y.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref) == RRuntime.LOGICAL_FALSE) {
                 return RRuntime.LOGICAL_FALSE;
-            } else {
-                RPairList xSubList = (RPairList) tmpXCdr;
-                RPairList ySubList = (RPairList) tmpYCdr;
-
-                if (RPairList.isNull(xSubList.getTag()) && RPairList.isNull(ySubList.getTag())) {
+            }
+            Object tmpXCdr = x.cdr();
+            Object tmpYCdr = y.cdr();
+            while (true) {
+                if (RPairList.isNull(tmpXCdr) && RPairList.isNull(tmpYCdr)) {
                     break;
-                } else if (RPairList.isNull(xSubList.getTag()) || RPairList.isNull(ySubList.getTag())) {
+                } else if (RPairList.isNull(tmpXCdr) || RPairList.isNull(tmpYCdr)) {
                     return RRuntime.LOGICAL_FALSE;
                 } else {
-                    if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
-                        String xTagName = ((RSymbol) xSubList.getTag()).getName();
-                        String yTagName = ((RSymbol) ySubList.getTag()).getName();
-                        assert Utils.isInterned(xTagName) && Utils.isInterned(yTagName);
-                        if (xTagName != yTagName) {
-                            return RRuntime.LOGICAL_FALSE;
-                        }
+                    RPairList xSubList = (RPairList) tmpXCdr;
+                    RPairList ySubList = (RPairList) tmpYCdr;
+
+                    if (RPairList.isNull(xSubList.getTag()) && RPairList.isNull(ySubList.getTag())) {
+                        // continue
+                    } else if (RPairList.isNull(xSubList.getTag()) || RPairList.isNull(ySubList.getTag())) {
+                        return RRuntime.LOGICAL_FALSE;
                     } else {
-                        RInternalError.unimplemented("non-RNull and non-RSymbol pairlist tags are not currently supported");
+                        if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
+                            String xTagName = ((RSymbol) xSubList.getTag()).getName();
+                            String yTagName = ((RSymbol) ySubList.getTag()).getName();
+                            assert Utils.isInterned(xTagName) && Utils.isInterned(yTagName);
+                            if (xTagName != yTagName) {
+                                return RRuntime.LOGICAL_FALSE;
+                            }
+                        } else {
+                            throw RInternalError.unimplemented("non-RNull and non-RSymbol pairlist tags are not currently supported");
+                        }
                     }
+                    if (identicalRecursive(xSubList.car(), ySubList.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref) == RRuntime.LOGICAL_FALSE) {
+                        return RRuntime.LOGICAL_FALSE;
+                    }
+                    if (xSubList.getAttributes() != null || ySubList.getAttributes() != null) {
+                        throw RInternalError.unimplemented("attributes of internal pairlists are not currently supported");
+                    }
+                    tmpXCdr = ((RPairList) tmpXCdr).cdr();
+                    tmpYCdr = ((RPairList) tmpYCdr).cdr();
                 }
-                if (identicalRecursive(xSubList.car(), ySubList.car(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref) == RRuntime.LOGICAL_FALSE) {
-                    return RRuntime.LOGICAL_FALSE;
-                }
-                if (xSubList.getAttributes() != null || ySubList.getAttributes() != null) {
-                    RInternalError.unimplemented("attributes of internal pairlists are not currently supported");
-                }
-                tmpXCdr = ((RPairList) tmpXCdr).cdr();
-                tmpYCdr = ((RPairList) tmpYCdr).cdr();
+            }
+            return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
+        } finally {
+            // if they were closures before, they can still be afterwards
+            if (xHasClosure) {
+                x.allowClosure();
+            }
+            if (yHasClosure) {
+                y.allowClosure();
             }
         }
-        return identicalAttr(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
     }
 
     @SuppressWarnings("unused")

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,15 +29,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 
 /**
  * Allows to show the actual location of the source section of a provided function.
@@ -47,30 +46,30 @@ public abstract class FastRSourceInfo extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(FastRSourceInfo.class);
-        casts.arg("fun").defaultError(RError.Message.GENERIC, "Only functions are allowed.").mustBe(instanceOf(RFunction.class).or(instanceOf(RLanguage.class)));
+        casts.arg("fun").defaultError(RError.Message.GENERIC, "Only functions are allowed.").mustBe(instanceOf(RFunction.class).or(instanceOf(RPairList.class)));
     }
 
     @Specialization
-    public Object srcInfo(RFunction fun) {
-        return srcInfo(fun.getRootNode());
-    }
-
-    @Specialization
-    public Object srcInfo(RLanguage fun) {
-        return srcInfo(fun.getRep());
-    }
-
     @TruffleBoundary
-    private static Object srcInfo(Node fun) {
-        SourceSection ss = fun.getSourceSection();
-        if (ss != null) {
-            String path = ss.getSource().getPath();
+    public Object srcInfo(RFunction fun) {
+        return syntaxSrcInfo(fun.getRootNode().getSourceSection());
+    }
+
+    @Specialization(guards = "fun.isLanguage()")
+    @TruffleBoundary
+    public Object srcInfo(RPairList fun) {
+        return syntaxSrcInfo(fun.getSourceSection());
+    }
+
+    private static Object syntaxSrcInfo(SourceSection source) {
+        if (source != null) {
+            String path = source.getSource().getPath();
             if (path != null) {
-                return path + "#" + ss.getStartLine();
-            } else if (ss.getSource().getURI() != null) {
-                return ss.getSource().getURI() + "#" + ss.getStartLine();
+                return path + "#" + source.getStartLine();
+            } else if (source.getSource().getURI() != null) {
+                return source.getSource().getURI() + "#" + source.getStartLine();
             } else {
-                return ss.getSource().getName();
+                return source.getSource().getName();
             }
         }
         return RNull.instance;

@@ -55,7 +55,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 // Transcribed (unless otherwise noted) from src/library/methods/methods_list_dispatch.c
@@ -451,9 +452,9 @@ public class MethodsListDispatch {
             Casts.noCasts(R_nextMethodCall.class);
         }
 
-        @Specialization
+        @Specialization(guards = "matchedCall.isLanguage()")
         @TruffleBoundary
-        protected Object nextMethodCall(RLanguage matchedCall, REnvironment ev) {
+        protected Object nextMethodCall(RPairList matchedCall, REnvironment ev) {
             // TODO: we can't create LocalReadVariableNode-s once and for all because ev may change
             // leading to a problem if contains a different frame; should we finesse implementation
             // of LocalReadVariableNode to handle this?
@@ -468,18 +469,18 @@ public class MethodsListDispatch {
             if (primCase) {
                 throw RInternalError.unimplemented();
             }
-            if (!(matchedCall.getRep() instanceof RCallNode)) {
+            if (!(matchedCall.getSyntaxElement() instanceof RSyntaxCall)) {
                 throw RInternalError.unimplemented();
 
             }
-            RCallNode callNode = (RCallNode) matchedCall.getRep();
+            RSyntaxCall callNode = (RSyntaxCall) matchedCall.getSyntaxElement();
             RNode f = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, RRuntime.R_DOT_NEXT_METHOD, false).asRNode();
             ArgumentsSignature sig = callNode.getSyntaxSignature();
             RSyntaxNode[] args = new RSyntaxNode[sig.getLength()];
             for (int i = 0; i < args.length; i++) {
                 args[i] = RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, sig.getName(i), false);
             }
-            RLanguage newCall = RDataFactory.createLanguage(Closure.createLanguageClosure(RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, f, sig, args)));
+            RPairList newCall = RDataFactory.createLanguage(Closure.createLanguageClosure(RCallNode.createCall(RSyntaxNode.SOURCE_UNAVAILABLE, f, sig, args)));
             Object res = RContext.getEngine().eval(newCall, ev.getFrame());
             return res;
         }

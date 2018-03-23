@@ -189,7 +189,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return ret;
     }
 
-    @Specialization
+    @Specialization(guards = "!pairList.isLanguage()")
     protected RLogicalVector doPairList(RPairList pairList) {
         return doList(pairList.toRList());
     }

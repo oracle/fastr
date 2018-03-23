@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -160,7 +160,7 @@ public class RObjectSize {
         }
         // Individual RTypedValues:
         if (obj instanceof RPromise || obj instanceof REnvironment || obj instanceof RExternalPtr || obj instanceof RFunction || obj instanceof RSymbol || obj instanceof RPairList ||
-                        obj instanceof RLanguage || obj instanceof RS4Object) {
+                        obj instanceof RS4Object) {
             // promise: there is no value allocated yet, we may use the size of the closure
             return OBJECT_HEADER_SIZE + attributesSize;
         } else if (obj instanceof RStringSequence) {

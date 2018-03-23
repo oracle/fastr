@@ -25,9 +25,11 @@ package com.oracle.truffle.r.runtime.data;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
@@ -36,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -49,14 +52,22 @@ public final class Closure {
     public static final String PROMISE_CLOSURE_WRAPPER_NAME = new String("<promise>");
     public static final String LANGUAGE_CLOSURE_WRAPPER_NAME = new String("<language>");
 
+    private static final RStringVector NULL_MARKER = new RStringVector(new String[0], true);
+
     private final RBaseNode expr;
     private final String symbol;
     private final String stringConstant;
     private final String closureName;
 
-    private Closure(String closureName, RBaseNode expr) {
+    // the first entry in the "names" attribute (special case for pairlist representation)
+    private final String syntaxLHSName;
+
+    private RStringVector namesVector; // may be null if never queried
+
+    private Closure(String closureName, RBaseNode expr, String syntaxLHSName) {
         this.closureName = closureName;
         this.expr = expr;
+        this.syntaxLHSName = syntaxLHSName;
         if (expr.asRSyntaxNode() instanceof RSyntaxLookup) {
             this.symbol = Utils.intern(((RSyntaxLookup) expr.asRSyntaxNode()).getIdentifier());
         } else {
@@ -77,15 +88,23 @@ public final class Closure {
     }
 
     public static Closure createPromiseClosure(RBaseNode expr) {
-        return new Closure(PROMISE_CLOSURE_WRAPPER_NAME, expr);
+        return new Closure(PROMISE_CLOSURE_WRAPPER_NAME, expr, null);
+    }
+
+    public static Closure createLanguageClosure(RBaseNode expr, String lhsName) {
+        return new Closure(LANGUAGE_CLOSURE_WRAPPER_NAME, expr, lhsName);
     }
 
     public static Closure createLanguageClosure(RBaseNode expr) {
-        return new Closure(LANGUAGE_CLOSURE_WRAPPER_NAME, expr);
+        return new Closure(LANGUAGE_CLOSURE_WRAPPER_NAME, expr, null);
     }
 
     public static Closure create(String name, RBaseNode expr) {
-        return new Closure(name, expr);
+        return new Closure(name, expr, null);
+    }
+
+    public String getSyntaxLHSName() {
+        return syntaxLHSName;
     }
 
     private synchronized RootCallTarget getCallTarget(FrameDescriptor desc, boolean canReuseExpr) {
@@ -151,5 +170,53 @@ public final class Closure {
 
     public String asStringConstant() {
         return stringConstant;
+    }
+
+    public RStringVector getNamesVector() {
+        if (namesVector == null) {
+            initializeNamesVector();
+        }
+        return namesVector == NULL_MARKER ? null : namesVector;
+    }
+
+    @TruffleBoundary
+    private void initializeNamesVector() {
+        RSyntaxElement node = getSyntaxElement();
+        if (node instanceof RSyntaxCall) {
+            RSyntaxCall call = (RSyntaxCall) node;
+            /*
+             * If the function or any argument has a name, then all arguments (and the function) are
+             * given names, with unnamed arguments getting "". However, if no arguments have names,
+             * the result is NULL (null)
+             */
+            boolean hasName = false;
+            String functionName = "";
+            if (getSyntaxLHSName() != null) {
+                hasName = true;
+                functionName = getSyntaxLHSName();
+            }
+            ArgumentsSignature sig = call.getSyntaxSignature();
+            if (!hasName) {
+                for (int i = 0; i < sig.getLength(); i++) {
+                    if (sig.getName(i) != null) {
+                        hasName = true;
+                        break;
+                    }
+                }
+            }
+            if (!hasName) {
+                namesVector = NULL_MARKER;
+            } else {
+                String[] data = new String[sig.getLength() + 1];
+                data[0] = functionName; // function
+                for (int i = 0; i < sig.getLength(); i++) {
+                    String name = sig.getName(i);
+                    data[i + 1] = name == null ? "" : name;
+                }
+                namesVector = RDataFactory.getPermanent().createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+            }
+        } else {
+            namesVector = NULL_MARKER;
+        }
     }
 }

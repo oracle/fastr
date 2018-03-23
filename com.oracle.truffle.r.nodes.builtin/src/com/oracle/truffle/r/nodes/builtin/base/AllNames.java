@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,13 +31,12 @@ import java.util.HashSet;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -66,19 +65,19 @@ public abstract class AllNames extends RBuiltinNode.Arg4 {
             Object expr = exprs.getDataAt(i);
             if (expr instanceof RSymbol) {
                 visitor.accept(RSyntaxLookup.createDummyLookup(null, ((RSymbol) expr).getName(), false));
-            } else if (expr instanceof RLanguage) {
-                RLanguage lang = (RLanguage) expr;
-                visitor.accept(RASTUtils.unwrap(lang.getRep()).asRSyntaxNode());
+            } else if ((expr instanceof RPairList && ((RPairList) expr).isLanguage())) {
+                RPairList lang = (RPairList) expr;
+                visitor.accept(lang.getSyntaxElement());
             }
         }
         return visitor.getResult();
     }
 
-    @Specialization
+    @Specialization(guards = "expr.isLanguage()")
     @TruffleBoundary
-    protected Object doAllNames(RLanguage expr, byte functions, int maxNames, byte unique) {
+    protected Object doAllNames(RPairList expr, byte functions, int maxNames, byte unique) {
         AllNamesVisitor visitor = new AllNamesVisitor(functions == RRuntime.LOGICAL_TRUE, maxNames, unique == RRuntime.LOGICAL_TRUE);
-        visitor.accept(RASTUtils.unwrap(expr.getRep()).asRSyntaxNode());
+        visitor.accept(expr.getSyntaxElement());
         return visitor.getResult();
     }
 

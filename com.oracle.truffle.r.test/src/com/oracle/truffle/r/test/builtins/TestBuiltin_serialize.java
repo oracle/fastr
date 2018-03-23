@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,6 +72,8 @@ public class TestBuiltin_serialize extends TestBase {
         assertEval("options(keep.source=FALSE); serialize(quote(if ({a}) {b} else {c}), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(while (a) b), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(repeat {b; if (c) next else break}), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(quote(xxxx(yyyy=1)), connection=NULL)");
+        assertEval("options(keep.source=FALSE); serialize(quote(b + xxxx(yyyy=1)), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(if (a * 2 < 199) b + foo(x,y,foo=z+1,bar=)), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote(\"bar\"), connection=NULL)");
         assertEval("options(keep.source=FALSE); serialize(quote('baz'), connection=NULL)");

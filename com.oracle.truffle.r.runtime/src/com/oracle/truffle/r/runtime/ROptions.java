@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,10 +27,9 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -285,7 +284,7 @@ public class ROptions {
             }
 
             case "warning.expression": {
-                if (!(value instanceof RLanguage || value instanceof RExpression)) {
+                if (!((value instanceof RPairList && ((RPairList) value).isLanguage()) || value instanceof RExpression)) {
                     throw OptionsException.createInvalid(name);
                 }
                 break;
@@ -313,7 +312,7 @@ public class ROptions {
             }
 
             case "error": {
-                if (!(value == RNull.instance || value instanceof RFunction || value instanceof RLanguage || value instanceof RExpression)) {
+                if (!(value == RNull.instance || value instanceof RFunction || (value instanceof RPairList && ((RPairList) value).isLanguage()) || value instanceof RExpression)) {
                     throw OptionsException.createInvalid(name);
                 }
                 break;

@@ -196,7 +196,6 @@ typedef int (*call_NAMED)(SEXP x);
 typedef int (*call_REFCNT)(SEXP x);
 typedef void (*call_SET_OBJECT)(SEXP x, int v);
 typedef void (*call_SET_TYPEOF)(SEXP x, int v);
-typedef SEXP (*call_SET_TYPEOF_FASTR)(SEXP x, int v);
 typedef void (*call_SET_NAMED)(SEXP x, int v);
 typedef void (*call_SET_ATTRIB)(SEXP x, SEXP v);
 typedef void (*call_DUPLICATE_ATTRIB)(SEXP to, SEXP from);

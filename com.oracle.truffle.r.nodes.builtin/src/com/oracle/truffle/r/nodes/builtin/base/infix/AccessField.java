@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,7 +42,6 @@ import com.oracle.truffle.r.nodes.helpers.AccessListField;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -87,7 +86,7 @@ public abstract class AccessField extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(AccessField.class);
-        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT_TYPE, RType.Language.getName()).mustBe(stringValue()).asStringVector().findFirst();
+        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT_TYPE, "language").mustBe(stringValue()).asStringVector().findFirst();
     }
 
     public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {

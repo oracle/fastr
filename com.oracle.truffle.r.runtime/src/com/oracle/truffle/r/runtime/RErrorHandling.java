@@ -25,11 +25,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -53,7 +52,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * passed as an argument. For better or worse, we use an {@link RPairList}. We handle the
  * {@code deparse} special case explicitly in our implementation of {@code deparse}.
  * <p>
- * TODO Consider using an {@link RLanguage} object to denote the call (somehow).
+ * TODO Consider using an {@link RPairList} object to denote the call (somehow).
  */
 public class RErrorHandling {
 
@@ -469,11 +468,11 @@ public class RErrorHandling {
     /**
      * Check a {@code call} value.
      *
-     * @param call Either {@link RNull#instance} or an {@link RLanguage}.
-     * @return {@code null} iff {@code call == RNull.instance} else cast to {@link RLanguage}.
+     * @param call Either {@link RNull#instance} or an {@link RPairList}.
+     * @return {@code null} iff {@code call == RNull.instance} else cast to {@link RPairList}.
      */
     private static Object fromCall(Object call) {
-        if (!(call == RNull.instance || call instanceof RLanguage)) {
+        if (!(call == RNull.instance || (call instanceof RPairList && ((RPairList) call).isLanguage()))) {
             throw RInternalError.shouldNotReachHere();
         }
         return call;
@@ -539,9 +538,9 @@ public class RErrorHandling {
                         }
                     }
                     RContext.getEngine().evalFunction(errorFunction, null, null, true, null, evaluatedArgs);
-                } else if (errorExpr instanceof RLanguage || errorExpr instanceof RExpression) {
-                    if (errorExpr instanceof RLanguage) {
-                        RContext.getEngine().eval((RLanguage) errorExpr, materializedFrame);
+                } else if ((errorExpr instanceof RPairList && ((RPairList) errorExpr).isLanguage()) || errorExpr instanceof RExpression) {
+                    if ((errorExpr instanceof RPairList && ((RPairList) errorExpr).isLanguage())) {
+                        RContext.getEngine().eval((RPairList) errorExpr, materializedFrame);
                     } else if (errorExpr instanceof RExpression) {
                         RContext.getEngine().eval((RExpression) errorExpr, materializedFrame);
                     }
@@ -635,7 +634,7 @@ public class RErrorHandling {
         }
         Object s = RContext.getInstance().stateROptions.getValue("warning.expression");
         if (s != RNull.instance) {
-            if (!(s instanceof RLanguage || s instanceof RExpression)) {
+            if (!((s instanceof RPairList && ((RPairList) s).isLanguage()) || s instanceof RExpression)) {
                 // TODO
             }
             throw RInternalError.unimplemented();
@@ -742,7 +741,7 @@ public class RErrorHandling {
     }
 
     private static void printWarningMessage(String prefix, Warning warning, int maxLen) {
-        String callString = RContext.getRRuntimeASTAccess().getCallerSource((RLanguage) warning.call);
+        String callString = RContext.getRRuntimeASTAccess().getCallerSource((RPairList) warning.call);
 
         String message = warning.message;
         int firstLineLength = message.contains("\n") ? message.indexOf('\n') : message.length();
@@ -795,13 +794,13 @@ public class RErrorHandling {
     private static String createKindMessage(String kind, Object call, String formattedMsg) {
         String preamble = kind;
         String errorMsg = null;
-        assert call instanceof RNull || call instanceof RLanguage;
+        assert call instanceof RNull || (call instanceof RPairList && ((RPairList) call).isLanguage());
         if (call == RNull.instance) {
             // generally means top-level of shell or similar
             preamble += ": ";
             errorMsg = preamble + formattedMsg;
         } else {
-            RLanguage rl = (RLanguage) call;
+            RPairList rl = (RPairList) call;
             preamble += " in " + RContext.getRRuntimeASTAccess().getCallerSource(rl) + " :";
             errorMsg = wrapMessage(preamble, formattedMsg);
         }

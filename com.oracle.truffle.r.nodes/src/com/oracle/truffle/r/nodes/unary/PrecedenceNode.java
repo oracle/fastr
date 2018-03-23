@@ -44,10 +44,9 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -176,7 +175,7 @@ public abstract class PrecedenceNode extends RBaseNode {
         return precedence;
     }
 
-    @Specialization(guards = "recursive")
+    @Specialization(guards = {"recursive", "!list.isLanguage()"})
     protected int doPairListRecursive(RPairList list, boolean recursive,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode) {
         int precedence = -1;
@@ -202,7 +201,7 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LIST_PRECEDENCE;
     }
 
-    @Specialization(guards = "!recursive")
+    @Specialization(guards = {"!recursive", "!val.isLanguage()"})
     @SuppressWarnings("unused")
     protected int doPairList(RPairList val, boolean recursive) {
         return LIST_PRECEDENCE;
@@ -214,9 +213,9 @@ public abstract class PrecedenceNode extends RBaseNode {
         return EXPRESSION_PRECEDENCE;
     }
 
-    @Specialization
+    @Specialization(guards = "val.isLanguage()")
     @SuppressWarnings("unused")
-    protected int doExpression(RLanguage val, boolean recursive) {
+    protected int doExpression(RPairList val, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 

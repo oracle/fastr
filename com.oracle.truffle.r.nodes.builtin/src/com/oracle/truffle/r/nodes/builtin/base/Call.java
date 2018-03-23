@@ -40,15 +40,16 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RLanguage;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Construct a call object ({@link RLanguage}) from a name and optional arguments.
+ * Construct a call object ({@link RPairList}) from a name and optional arguments.
  *
  * Does not perform argument matching for first parameter "name".
  */
@@ -67,14 +68,15 @@ public abstract class Call extends RBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RLanguage call(String name, RArgsValuesAndNames args) {
+    protected RPairList call(String name, RArgsValuesAndNames args) {
         return makeCall(getRLanguage(), RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, name, true), args.getArguments(), args.getSignature());
     }
 
     @TruffleBoundary
-    public static RLanguage makeCall(TruffleRLanguage language, RSyntaxNode target, Object[] arguments, ArgumentsSignature signature) {
+    public static RPairList makeCall(TruffleRLanguage language, RSyntaxNode target, Object[] arguments, ArgumentsSignature signature) {
         assert arguments.length == signature.getLength();
-        if (target instanceof RSyntaxLookup && "function".equals(((RSyntaxLookup) target).getIdentifier()) && arguments.length == 2) {
+        if (target instanceof RSyntaxLookup && "function".equals(((RSyntaxLookup) target).getIdentifier()) && arguments.length >= 2 &&
+                        (arguments[1] == RNull.instance || arguments[1] instanceof RPairList)) {
             // this optimization is not strictly necessary, `function` builtin is functional too.
             FunctionExpressionNode function = FunctionBuiltin.createFunctionExpressionNode(language, arguments[0], arguments[1]);
             return RDataFactory.createLanguage(Closure.createLanguageClosure(function.asRNode()));
@@ -84,7 +86,7 @@ public abstract class Call extends RBuiltinNode.Arg2 {
     }
 
     @TruffleBoundary
-    private static RLanguage makeCall0(RSyntaxNode target, Object[] arguments, ArgumentsSignature signature) {
+    private static RPairList makeCall0(RSyntaxNode target, Object[] arguments, ArgumentsSignature signature) {
         RSyntaxNode[] args = new RSyntaxNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             args[i] = (RSyntaxNode) RASTUtils.createNodeForValue(arguments[i]);

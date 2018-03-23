@@ -40,6 +40,11 @@ dir="$( cd -P "$( dirname "$source" )" && pwd )"
 : ${R_HOME?"R_HOME must point to FastR directory"}
 : ${NFI_LIB?"NFI_LIB must point to libtrufflenfi.so located in mxbuild directory of Truffle"}
 
+echo "R_HOME: $R_HOME"
+echo "NFI_LIB: $NFI_LIB"
+echo "Rclasspath: "
+$dir/../../bin/execRextras/Rclasspath
+
 echo "Testing 'main' embedding example..."
 (cd $dir/bin; ./main -Dtruffle.nfi.library=$NFI_LIB --vanilla < $dir/src/main.input > $dir/main.actual.output 2>&1)
 if ! diff -q $dir/main.actual.output $dir/src/main.expected.output > /dev/null 2>&1; then

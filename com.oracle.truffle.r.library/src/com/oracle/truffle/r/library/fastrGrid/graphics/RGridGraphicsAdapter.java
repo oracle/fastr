@@ -8,7 +8,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -90,7 +90,7 @@ public final class RGridGraphicsAdapter {
     public static RPairList fixupDevicesVariable() {
         REnvironment baseEnv = REnvironment.baseEnv();
         Object devices = baseEnv.get(DOT_DEVICES);
-        if (devices instanceof RPairList) {
+        if ((devices instanceof RPairList && !((RPairList) devices).isLanguage())) {
             return (RPairList) devices;
         }
         if (devices instanceof RList) {
@@ -151,11 +151,11 @@ public final class RGridGraphicsAdapter {
 
     public static int getDevicesCount() {
         Object dotDevices = REnvironment.baseEnv().get(DOT_DEVICES);
-        return dotDevices instanceof RPairList ? ((RPairList) dotDevices).getLength() : 0;
+        return (dotDevices instanceof RPairList && !((RPairList) dotDevices).isLanguage()) ? ((RPairList) dotDevices).getLength() : 0;
     }
 
     private static boolean contains(Object devices, String name) {
-        if (!(devices instanceof RPairList)) {
+        if (!((devices instanceof RPairList && !((RPairList) devices).isLanguage()))) {
             return false;
         }
         for (RPairList dev : (RPairList) devices) {
