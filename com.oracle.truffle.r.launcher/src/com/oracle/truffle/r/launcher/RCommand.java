@@ -183,8 +183,9 @@ public class RCommand {
 
     public static ConsoleHandler createConsoleHandler(RCmdOptions options, DelegatingConsoleHandler useDelegatingWrapper, InputStream inStream, OutputStream outStream) {
         /*
-         * Whether the input is from stdin, a file (-f), or an expression on the command line (-e) it goes
-         * through the console. N.B. -f and -e can't be used together and this is already checked.
+         * Whether the input is from stdin, a file (-f), or an expression on the command line (-e)
+         * it goes through the console. N.B. -f and -e can't be used together and this is already
+         * checked.
          */
         RStartParams rsp = new RStartParams(options, false);
         String fileArgument = rsp.getFileArgument();
@@ -192,8 +193,8 @@ public class RCommand {
             List<String> lines;
             try {
                 /*
-                 * If initial==false, ~ expansion will not have been done and the open will fail. It's harmless to
-                 * always do it.
+                 * If initial==false, ~ expansion will not have been done and the open will fail.
+                 * It's harmless to always do it.
                  */
                 File file = fileArgument.startsWith("~") ? new File(System.getProperty("user.home") + fileArgument.substring(1)) : new File(fileArgument);
                 lines = Files.readAllLines(file.toPath());
@@ -215,8 +216,9 @@ public class RCommand {
             boolean useReadLine = isInteractive && !rsp.noReadline();
             if (useDelegatingWrapper != null) {
                 /*
-                 * If we are in embedded mode, the creation of ConsoleReader and the ConsoleHandler should be lazy,
-                 * as these may not be necessary and can cause hangs if stdin has been redirected.
+                 * If we are in embedded mode, the creation of ConsoleReader and the ConsoleHandler
+                 * should be lazy, as these may not be necessary and can cause hangs if stdin has
+                 * been redirected.
                  */
                 Supplier<ConsoleHandler> delegateFactory = useReadLine ? () -> new JLineConsoleHandler(inStream, outStream, rsp.isSlave())
                                 : () -> new DefaultConsoleHandler(inStream, outStream, isInteractive);
@@ -249,14 +251,14 @@ public class RCommand {
     }
 
     /**
-     * The read-eval-print loop, which can take input from a console, command line expression or a file.
-     * There are two ways the repl can terminate:
+     * The read-eval-print loop, which can take input from a console, command line expression or a
+     * file. There are two ways the repl can terminate:
      * <ol>
      * <li>A {@code quit} command is executed successfully.</li>
      * <li>EOF on the input.</li>
      * </ol>
-     * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before exiting.
-     * So,in either case, we never return.
+     * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
+     * exiting. So,in either case, we never return.
      */
     public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile) {
         int lastStatus = 0;
