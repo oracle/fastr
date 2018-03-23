@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.CustomNativeMirror;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
@@ -113,7 +114,9 @@ public class DLL {
                 RootCallTarget closeCallTarget = DLCloseRootNode.create(contextArg);
                 for (int i = 1; i < list.size(); i++) {
                     DLLInfo dllInfo = list.get(i);
-                    closeCallTarget.call(dllInfo.handle);
+                    if (!dllInfo.isSynthetic()) {
+                        closeCallTarget.call(dllInfo.handle);
+                    }
                 }
             }
             list = null;
@@ -209,8 +212,13 @@ public class DLL {
         private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
         private ArrayList<CEntry> cEntryTable = null;
         private final HashSet<String> unsuccessfulLookups = new HashSet<>();
+        /**
+         * A synthetic DLLInfo faking {@link RFunction}-s as if they were real native symbols to
+         * .Call etc.
+         */
+        private final boolean syntheticHandle;
 
-        private DLLInfo(String name, String path, boolean dynamicLookup, Object handle) {
+        private DLLInfo(String name, String path, boolean dynamicLookup, Object handle, boolean syntheticHandle) {
             this.id = ID.getAndIncrement();
             this.name = name;
             this.nameSXP = CharSXPWrapper.create(name);
@@ -218,10 +226,15 @@ public class DLL {
             this.pathSXP = CharSXPWrapper.create(path);
             this.dynamicLookup = dynamicLookup;
             this.handle = handle;
+            this.syntheticHandle = syntheticHandle;
         }
 
         private static DLLInfo create(String name, String path, boolean dynamicLookup, Object handle, boolean addToList) {
-            DLLInfo result = new DLLInfo(name, path, dynamicLookup, handle);
+            return create(name, path, dynamicLookup, handle, addToList, false);
+        }
+
+        private static DLLInfo create(String name, String path, boolean dynamicLookup, Object handle, boolean addToList, boolean syntheticHandle) {
+            DLLInfo result = new DLLInfo(name, path, dynamicLookup, handle, syntheticHandle);
             if (addToList) {
                 ContextStateImpl contextState = getContextState();
                 contextState.list.add(result);
@@ -235,6 +248,14 @@ public class DLL {
          */
         public boolean isEmbeddingDllInfo() {
             return handle == null;
+        }
+
+        /**
+         * Determines whether this is a synthetic {@link DLLInfo} faking {@link RFunction}-s as if
+         * they were real native symbols.
+         */
+        private boolean isSynthetic() {
+            return syntheticHandle;
         }
 
         public void setNativeSymbols(int nstOrd, DotSymbol[] symbols) {
@@ -471,6 +492,12 @@ public class DLL {
         }
         ContextStateImpl dllContext = context.stateDLL;
         dllContext.addLibR(DLLInfo.create(libName(path), path, true, handle, false));
+    }
+
+    public static DLLInfo createSyntheticLib(RContext context, String library) {
+        DLLInfo dllInfo = DLLInfo.create(library, library, true, new Object(), false, true);
+        context.stateDLL.list.add(dllInfo);
+        return dllInfo;
     }
 
     public static String libName(String absPath) {
@@ -713,6 +740,9 @@ public class DLL {
             SymbolHandle f = getDLLRegisteredSymbol(dllInfo, name, rns);
             if (f != SYMBOL_NOT_FOUND) {
                 return f;
+            }
+            if (dllInfo.isSynthetic()) {
+                return SYMBOL_NOT_FOUND;
             }
 
             // TODO: there is a weird interaction with namespace environments that makes this not

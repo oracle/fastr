@@ -178,7 +178,7 @@ public class DynLoadFunctions {
         @TruffleBoundary
         protected Object getSymbolInfo(String symbol, RAbstractStringVector packageName, boolean withReg) {
             DLL.RegisteredNativeSymbol rns = DLL.RegisteredNativeSymbol.any();
-            DLL.SymbolHandle f = findSymbolNode.execute(RRuntime.asString(symbol), packageName.getDataAt(0), rns);
+            DLL.SymbolHandle f = findSymbolNode.execute(symbol, packageName.getDataAt(0), rns);
             SymbolInfo symbolInfo = null;
             if (f != DLL.SYMBOL_NOT_FOUND) {
                 symbolInfo = new SymbolInfo(rns.getDllInfo(), symbol, f);

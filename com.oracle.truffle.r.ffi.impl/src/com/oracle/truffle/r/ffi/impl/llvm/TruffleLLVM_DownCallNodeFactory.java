@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -70,6 +71,8 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
             @Override
             @ExplodeLoop
             protected long beforeCall(NativeFunction nativeFunction, TruffleObject fn, Object[] args) {
+                assert !(fn instanceof RFunction);
+
                 for (int i = 0; i < args.length; i++) {
                     Object obj = args[i];
                     if (obj instanceof double[]) {
@@ -93,6 +96,8 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
             @Override
             @ExplodeLoop
             protected void afterCall(long before, NativeFunction fn, TruffleObject target, Object[] args) {
+                assert !(target instanceof RFunction);
+
                 for (int i = 0; i < args.length; i++) {
                     Object obj = args[i];
                     if (obj instanceof NativeArray<?>) {
