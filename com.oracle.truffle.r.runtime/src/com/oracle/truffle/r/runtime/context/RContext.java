@@ -361,6 +361,7 @@ public final class RContext {
     public final List<String> libraryPaths = new ArrayList<>(1);
     public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
     public final LanguageClosureCache languageClosureCache = new LanguageClosureCache();
+    public final Map<String, Source> sourceCache = new ConcurrentHashMap<>();
 
     private final AllocationReporter allocationReporter;
 
