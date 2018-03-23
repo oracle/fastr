@@ -59,6 +59,7 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     private Context context;
     private Supplier<ConsoleHandler> delegateFactory;
     private ConsoleHandler delegate;
+    private int currentLine;
 
     private CallTarget readLineCallTarget;
     private CallTarget writeCallTarget;
@@ -78,7 +79,9 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
     @Override
     public String readLine() {
         try (ContextClose ignored = inContext()) {
-            return isOverridden("R_ReadConsole") ? (String) getReadLineCallTarget().call("TODO prompt>") : getDelegate().readLine();
+            String l = isOverridden("R_ReadConsole") ? (String) getReadLineCallTarget().call("TODO prompt>") : getDelegate().readLine();
+            currentLine++;
+            return l;
         }
     }
 
@@ -238,5 +241,10 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
             writeNode.execute((String) frame.getArguments()[0]);
             return null;
         }
+    }
+
+    @Override
+    public int getCurrentLineIndex() {
+        return currentLine;
     }
 }

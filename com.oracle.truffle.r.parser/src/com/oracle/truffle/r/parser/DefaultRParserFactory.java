@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 
@@ -45,7 +46,8 @@ public class DefaultRParserFactory extends RParserFactory {
         public List<T> script(Source source, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
             try {
                 try {
-                    RParser<T> parser = new RParser<>(source, builder, language);
+                    RContext context = language.getContextReference().get();
+                    RParser<T> parser = new RParser<>(source, builder, language, context.sourceCache);
                     return parser.script();
                 } catch (IllegalArgumentException e) {
                     // the lexer will wrap exceptions in IllegalArgumentExceptions
@@ -62,7 +64,8 @@ public class DefaultRParserFactory extends RParserFactory {
 
         @Override
         public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
-            RParser<T> parser = new RParser<>(source, builder, language);
+            RContext context = language.getContextReference().get();
+            RParser<T> parser = new RParser<>(source, builder, language, context.sourceCache);
             try {
                 return parser.root_function(name);
             } catch (RecognitionException e) {

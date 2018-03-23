@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.launcher;
 
+import java.io.File;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -140,7 +141,8 @@ public class RscriptCommand {
         try (Context context = Context.newBuilder().allowHostAccess(useJVM).options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(outStream).err(
                         errStream).build()) {
             consoleHandler.setContext(context);
-            return RCommand.readEvalPrint(context, consoleHandler);
+            String fileOption = options.getString(RCmdOption.FILE);
+            return RCommand.readEvalPrint(context, consoleHandler, fileOption != null ? new File(fileOption) : null);
         }
     }
 }

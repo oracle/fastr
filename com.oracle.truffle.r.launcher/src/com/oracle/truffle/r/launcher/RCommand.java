@@ -170,7 +170,14 @@ public class RCommand {
             consoleHandler.setContext(context);
             StartupTiming.timestamp("VM Created");
             StartupTiming.printSummary();
-            return readEvalPrint(context, consoleHandler);
+
+            File srcFile = null;
+            String fileOption = options.getString(RCmdOption.FILE);
+            if (fileOption != null) {
+                srcFile = new File(fileOption);
+            }
+
+            return readEvalPrint(context, consoleHandler, srcFile);
         }
     }
 
@@ -239,6 +246,10 @@ public class RCommand {
     private static final Source GET_PROMPT = Source.newBuilder("R", ".Internal(getOption('prompt'))", "<prompt>").internal(true).buildLiteral();
     private static final Source GET_CONTINUE_PROMPT = Source.newBuilder("R", ".Internal(getOption('continue'))", "<continue-prompt>").internal(true).buildLiteral();
 
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler) {
+        return readEvalPrint(context, consoleHandler, null);
+    }
+
     /**
      * The read-eval-print loop, which can take input from a console, command line expression or a
      * file. There are two ways the repl can terminate:
@@ -249,7 +260,7 @@ public class RCommand {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler) {
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile) {
         int lastStatus = 0;
         try {
             while (true) { // processing inputs
@@ -268,10 +279,18 @@ public class RCommand {
 
                     String continuePrompt = null;
                     StringBuilder sb = new StringBuilder(input);
+                    int startLine = consoleHandler.getCurrentLineIndex();
                     while (true) { // processing subsequent lines while input is incomplete
                         lastStatus = 0;
                         try {
-                            context.eval(Source.newBuilder("R", sb.toString(), "<REPL>").interactive(true).buildLiteral());
+                            Source src;
+                            if (srcFile != null) {
+                                int endLine = consoleHandler.getCurrentLineIndex();
+                                src = Source.newBuilder("R", sb.toString(), srcFile.toString() + "#" + startLine + "-" + endLine).interactive(true).uri(srcFile.toURI()).buildLiteral();
+                            } else {
+                                src = Source.newBuilder("R", sb.toString(), "<REPL>").interactive(true).buildLiteral();
+                            }
+                            context.eval(src);
                         } catch (PolyglotException e) {
                             if (continuePrompt == null) {
                                 continuePrompt = doEcho ? getContinuePrompt(context) : null;

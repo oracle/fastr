@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,6 +96,7 @@ public class ParserGeneration {
         "handle four and more dots as identifier",
         "allow greek characters in identifiers",
         "allow everything but newlines in %<ident>% operators",
-        "allow strings in :: and :::"
+        "allow strings in :: and :::",
+        "use file for interactive single-line source"
     };
 }
