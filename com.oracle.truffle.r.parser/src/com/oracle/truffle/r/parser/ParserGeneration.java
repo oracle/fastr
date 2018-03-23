@@ -97,6 +97,7 @@ public class ParserGeneration {
         "allow greek characters in identifiers",
         "allow everything but newlines in %<ident>% operators",
         "allow strings in :: and :::",
-        "use file for interactive single-line source"
+        "use file for interactive single-line source",
+        ":: and ::: do not set argument names"
     };
 }
