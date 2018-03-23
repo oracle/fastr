@@ -175,6 +175,11 @@ public class ROptions {
         map.put("browserNLdisabled", RDataFactory.createSharedLogicalVectorFromScalar(false));
         boolean cBoundsCheck = optionFromEnvVar("R_C_BOUNDS_CHECK", envVars);
         map.put("CBoundsCheck", RDataFactory.createSharedLogicalVectorFromScalar(cBoundsCheck));
+
+        String cranMirror = REnvVars.getCRANMirror();
+        if (cranMirror != null) {
+            map.put("repos", cranMirror);
+        }
     }
 
     private static boolean optionFromEnvVar(String envVar, REnvVars envVars) {
