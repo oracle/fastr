@@ -361,7 +361,7 @@ public final class FastRSession implements RSession {
     }
 
     public static void execInContext(Context context, Callable<Object> c) {
-        execInContext(context, c, (Class<?>) null);
+        execInContext(context, c, (Class<?>[]) null);
     }
 
     // TODO: export/importSymbol
