@@ -60,9 +60,10 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         return RfEvalNodeGen.create();
     }
 
-    private static RCaller createCall() {
+    private static RCaller createCall(REnvironment env) {
         Frame frame = Utils.getActualCurrentFrame();
-        return RArguments.getCall(frame);
+        RCaller originalCaller = RArguments.getCall(env.getFrame());
+        return RCaller.createForPromise(originalCaller, frame);
     }
 
     @Specialization
@@ -73,20 +74,22 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    Object handlePromise(RPromise expr, @SuppressWarnings("unused") REnvironment env) {
-        return getPromiseHelper().evaluate(Utils.getActualCurrentFrame().materialize(), expr);
+    Object handlePromise(RPromise expr, REnvironment env) {
+        return getPromiseHelper().evaluate(env.getFrame(), expr);
     }
 
     @Specialization
     @TruffleBoundary
     Object handleExpression(RExpression expr, Object envArg) {
-        return RContext.getEngine().eval(expr, getEnv(envArg), createCall());
+        REnvironment env = getEnv(envArg);
+        return RContext.getEngine().eval(expr, env, createCall(env));
     }
 
     @Specialization(guards = "expr.isLanguage()")
     @TruffleBoundary
     Object handleLanguage(RPairList expr, Object envArg) {
-        return RContext.getEngine().eval(expr, getEnv(envArg), createCall());
+        REnvironment env = getEnv(envArg);
+        return RContext.getEngine().eval(expr, env, createCall(env));
     }
 
     @Specialization
@@ -132,7 +135,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @TruffleBoundary
     private static Object evalFunction(RFunction f, REnvironment env, ArgumentsSignature argsNames, Object... args) {
-        return RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : env.getFrame(), createCall(), true, argsNames, args);
+        return RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : env.getFrame(), createCall(env), true, argsNames, args);
     }
 
     @Fallback
