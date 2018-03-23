@@ -92,8 +92,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     }
 
     private RLogicalVector vectorCopy(RAbstractVector operand, byte[] bdata, boolean isComplete) {
-        RLogicalVector ret = RDataFactory.createLogicalVector(bdata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RLogicalVector ret = factory().createLogicalVector(bdata, isComplete, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -126,7 +125,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     protected RLogicalVector asLogical(RAbstractIntVector factor) {
         byte[] data = new byte[factor.getLength()];
         Arrays.fill(data, RRuntime.LOGICAL_NA);
-        return RDataFactory.createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
+        return factory().createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
     }
 
     @Specialization
@@ -182,7 +181,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
                 }
             }
         }
-        RLogicalVector ret = RDataFactory.createLogicalVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
+        RLogicalVector ret = factory().createLogicalVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list), null);
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }

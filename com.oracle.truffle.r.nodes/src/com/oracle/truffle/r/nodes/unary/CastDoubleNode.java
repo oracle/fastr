@@ -36,7 +36,6 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -73,8 +72,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     private RDoubleVector vectorCopy(RAbstractContainer operand, double[] data, boolean isComplete) {
-        RDoubleVector ret = RDataFactory.createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RDoubleVector ret = factory().createDoubleVector(data, isComplete, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -152,8 +150,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         if (warning) {
             warning(RError.Message.NA_INTRODUCED_COERCION);
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RDoubleVector ret = factory().createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -216,7 +213,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
                 }
             }
         }
-        RDoubleVector ret = RDataFactory.createDoubleVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
+        RDoubleVector ret = factory().createDoubleVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list), null);
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }

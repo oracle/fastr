@@ -123,7 +123,7 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     @Specialization
     protected RComplex doRaw(RRaw operand) {
-        return RDataFactory.createComplex(operand.getValue(), 0);
+        return factory().createComplex(operand.getValue(), 0);
     }
 
     @Specialization
@@ -151,8 +151,7 @@ public abstract class CastComplexNode extends CastBaseNode {
             ddata[index + 1] = complexValue.getImaginaryPart();
             seenNA = seenNA || naProfile.isNA(complexValue);
         }
-        RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RComplexVector ret = factory().createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -204,8 +203,7 @@ public abstract class CastComplexNode extends CastBaseNode {
         if (warning) {
             warning(RError.Message.NA_INTRODUCED_COERCION);
         }
-        RComplexVector ret = RDataFactory.createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RComplexVector ret = factory().createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -259,7 +257,7 @@ public abstract class CastComplexNode extends CastBaseNode {
                 }
             }
         }
-        RComplexVector ret = RDataFactory.createComplexVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list));
+        RComplexVector ret = factory().createComplexVector(result, !seenNA, getPreservedDimensions(list), getPreservedNames(list), null);
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(list);
         }

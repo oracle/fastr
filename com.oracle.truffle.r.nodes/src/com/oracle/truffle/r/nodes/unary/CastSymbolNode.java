@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -151,8 +150,8 @@ public abstract class CastSymbolNode extends CastBaseNode {
     }
 
     @TruffleBoundary
-    private static RSymbol asSymbol(String s) {
-        return RDataFactory.createSymbolInterned(s);
+    private RSymbol asSymbol(String s) {
+        return factory().createSymbolInterned(s);
     }
 
     @Override

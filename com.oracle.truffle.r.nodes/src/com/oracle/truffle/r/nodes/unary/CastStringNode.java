@@ -32,7 +32,6 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
@@ -64,8 +63,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     public abstract Object executeString(Object o);
 
     private RStringVector vectorCopy(RAbstractContainer operand, String[] data) {
-        RStringVector ret = RDataFactory.createStringVector(data, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand));
-        preserveDimensionNames(operand, ret);
+        RStringVector ret = factory().createStringVector(data, operand.isComplete(), getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
@@ -83,7 +81,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     @Specialization
     protected RStringSequence doIntSequence(RIntSequence vector) {
-        return RDataFactory.createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
+        return factory().createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
     }
 
     @Specialization(guards = {"!isIntSequence(operandIn)", "!isRAbstractStringVector(operandIn)"})
