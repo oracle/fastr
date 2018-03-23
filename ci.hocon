@@ -13,6 +13,7 @@ java8Downloads : {
   downloads : {
     EXTRA_JAVA_HOMES : { pathlist :[
       ${java7}
+      ${java9}
     ]}
     JAVA_HOME : ${java8}
   }
