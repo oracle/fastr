@@ -32,10 +32,13 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.BiFunction;
+import java.util.function.Predicate;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.SourceSection;
 import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.tck.InlineSnippet;
 import org.graalvm.polyglot.tck.Snippet;
 import org.graalvm.polyglot.tck.TypeDescriptor;
 import org.junit.Assert;
@@ -262,6 +265,30 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         }
     }
 
+    @Override
+    public Collection<? extends InlineSnippet> createInlineScripts(Context context) {
+        List<InlineSnippet> res = new ArrayList<>();
+        res.add(createInlineSnippet(
+                        context,
+                        "resources/mandel.R",
+                        5,
+                        6,
+                        "resources/mandel_inline1.R"));
+        res.add(createInlineSnippet(
+                        context,
+                        "resources/mandel.R",
+                        18,
+                        19,
+                        "resources/mandel_inline2.R"));
+        res.add(createInlineSnippet(
+                        context,
+                        "resources/quicksort.R",
+                        5,
+                        21,
+                        "resources/quicksort_inline.R"));
+        return Collections.unmodifiableList(res);
+    }
+
     private static Snippet createValueConstructor(
                     Context context,
                     String value,
@@ -318,6 +345,33 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         Value fnc = eval(context, String.format(fncFormat, exprWithFormalParams));
         Snippet.Builder opb = Snippet.newBuilder(name, fnc, type).parameterTypes(paramTypes).resultVerifier(verifier);
         return opb.build();
+    }
+
+    private InlineSnippet createInlineSnippet(Context context, String sourceName, int l1, int l2, String snippetName) {
+        Snippet script = loadScript(context, sourceName, TypeDescriptor.ANY, null);
+        String simpleName = sourceName.substring(sourceName.lastIndexOf('/') + 1);
+        try {
+            InlineSnippet.Builder snippetBuilder = InlineSnippet.newBuilder(script, createSource(snippetName).getCharacters());
+            if (l1 > 0) {
+                Predicate<SourceSection> locationPredicate = (SourceSection ss) -> {
+                    return ss.getSource().getName().endsWith(simpleName) && l1 <= ss.getStartLine() && ss.getEndLine() <= l2;
+                };
+                snippetBuilder.locationPredicate(locationPredicate);
+            }
+            snippetBuilder.resultVerifier((ResultVerifier.SnippetRun snippetRun) -> {
+                PolyglotException exception = snippetRun.getException();
+                if (exception != null) {
+                    throw exception;
+                }
+                Value result = snippetRun.getResult();
+                if (!result.isNumber()) {
+                    throw new AssertionError("Wrong value " + result.toString() + " from " + sourceName);
+                }
+            });
+            return snippetBuilder.build();
+        } catch (IOException ioe) {
+            throw new AssertionError("IOException while creating a test script.", ioe);
+        }
     }
 
     private static Snippet loadScript(
