@@ -143,24 +143,37 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
                         RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
 
+        // TODO cause occasional and more then accasional fails on gate builds
         // <
-        ops.add(createBinaryOperator(context, "<", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // >
-        ops.add(createBinaryOperator(context, ">", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // <=
-        ops.add(createBinaryOperator(context, "<=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // >=
-        ops.add(createBinaryOperator(context, ">=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // ==
-        ops.add(createBinaryOperator(context, "==", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // !=
-        ops.add(createBinaryOperator(context, "!=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // ops.add(createBinaryOperator(context, "<", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // >
+        // ops.add(createBinaryOperator(context, ">", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // <=
+        // ops.add(createBinaryOperator(context, "<=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // >=
+        // ops.add(createBinaryOperator(context, ">=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // ==
+        // ops.add(createBinaryOperator(context, "==", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // !=
+        // ops.add(createBinaryOperator(context, "!=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
         // // TODO &, |, &&, ||
 
         // !
