@@ -6,13 +6,17 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
 package com.oracle.truffle.r.runtime.nmath;
 
+import static com.oracle.truffle.r.runtime.nmath.Arithmetic.powDi;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_EPSILON;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.DBL_MIN;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.LONG_MAX;
+import static com.oracle.truffle.r.runtime.nmath.MathConstants.MAX10E;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN_SQRT_2PI;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
@@ -65,6 +69,107 @@ public final class RMath {
         return forceint(x);
     }
 
+    public static double trunc(double x) {
+        if (x > 0) {
+            return Math.floor(x);
+        } else {
+            return Math.ceil(x);
+        }
+    }
+
+    // GNUR from fprec.c
+
+    private static final int MAX_DIGITS = 22;
+
+    public static double fprec(double x, double digits) {
+        if (Double.isNaN(x) || Double.isNaN(digits))
+            return x + digits;
+        if (!RRuntime.isFinite(x)) {
+            return x;
+        }
+        if (!RRuntime.isFinite(digits)) {
+            if (digits > 0.0) {
+                return x;
+            } else {
+                digits = 1.0;
+            }
+        }
+        if (x == 0) {
+            return x;
+        }
+        int dig = (int) round(digits);
+        if (dig > MAX_DIGITS) {
+            return x;
+        } else if (dig < 1) {
+            dig = 1;
+        }
+
+        double sgn = 1.0;
+        if (x < 0.0) {
+            sgn = -sgn;
+            x = -x;
+        }
+        double l10 = Math.log10(x);
+        int e10 = (int) (dig - 1 - Math.floor(l10));
+        if (fabs(l10) < MAX10E - 2) {
+            double p10 = 1.0;
+            if (e10 > MAX10E) { /* numbers less than 10^(dig-1) * 1e-308 */
+                p10 = powDi(10., e10 - MAX10E);
+                e10 = MAX10E;
+            }
+            if (e10 > 0) { /*
+                            * Try always to have pow >= 1 and so exactly representable
+                            */
+                double pow10 = powDi(10., e10);
+                return (sgn * (rint((x * pow10) * p10) / pow10) / p10);
+            } else {
+                double pow10 = powDi(10., -e10);
+                return (sgn * (rint((x / pow10)) * pow10));
+            }
+        } else { /* -- LARGE or small -- */
+            boolean do_round = (MAX10E - l10 >= powDi(10., -dig));
+            int e2 = dig + ((e10 > 0) ? 1 : -1) * MAX_DIGITS;
+            double p10 = powDi(10., e2);
+            x *= p10;
+            double P10 = powDi(10., e10 - e2);
+            x *= P10;
+            /*-- p10 * P10 = 10 ^ e10 */
+            if (do_round) {
+                x += 0.5;
+            }
+            x = Math.floor(x) / p10;
+            return (sgn * x / P10);
+        }
+    }
+
+    // GNUR from fround.c
+
+    public static double rint(double x) {
+        double tmp, sgn = 1.0;
+        long ltmp;
+
+        if (x != x) { /* NaN */
+            return x;
+        }
+
+        if (x < 0.0) {
+            x = -x;
+            sgn = -1.0;
+        }
+
+        if (x < (double) LONG_MAX) {
+            ltmp = (long) (x + 0.5);
+            /* implement round to even */
+            if (fabs(x + 0.5 - ltmp) < 10 * DBL_EPSILON && (ltmp % 2 == 1))
+                ltmp--;
+            tmp = ltmp;
+        } else {
+            /* ignore round to even: too small a point to bother */
+            tmp = Math.floor(x + 0.5);
+        }
+        return sgn * tmp;
+    }
+
     public static double fsign(double x, double y) {
         if (Double.isNaN(x) || Double.isNaN(y)) {
             return x + y;
@@ -83,6 +188,34 @@ public final class RMath {
         }
         double tmp = a - Math.floor(q) * b;
         return tmp - Math.floor(tmp / b) * b;
+    }
+
+    public static double sinpi(double x) {
+        double norm = x % 2d;
+        if (norm == 0d || norm == 1d || norm == -1d) {
+            return 0d;
+        }
+        if (norm == -1.5d || norm == 0.5d) {
+            return 1d;
+        }
+        if (norm == -0.5d || norm == 1.5d) {
+            return -1d;
+        }
+        return Math.sin(norm * Math.PI);
+    }
+
+    public static double cospi(double x) {
+        double norm = x % 2d;
+        if (norm == 0d) {
+            return 1d;
+        }
+        if (norm == -1d || norm == 1d) {
+            return -1d;
+        }
+        if (norm == -1.5d || norm == -0.5d || norm == 0.5d || norm == 1.5d) {
+            return 0d;
+        }
+        return Math.cos(norm * Math.PI);
     }
 
     public static double tanpi(double x) {

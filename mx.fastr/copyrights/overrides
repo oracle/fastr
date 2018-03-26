@@ -208,6 +208,8 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/ffi/DLL.java,gnu_r
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SA_TYPE.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/gnur/SEXPTYPE.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/Arithmetic.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/BesselFunctions.java,gnu_r_ihaka_core.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/Beta.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/Choose.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Cauchy.java,gnu_r_ihaka_core.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/nmath/distr/Chisq.java,gnu_r_ihaka_core.copyright

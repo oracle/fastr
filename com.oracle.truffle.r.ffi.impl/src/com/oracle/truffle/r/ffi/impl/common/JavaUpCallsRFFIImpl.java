@@ -107,6 +107,7 @@ import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -1636,6 +1637,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public void Rf_pnorm_both(double arg0, Object arg1, Object arg2, int arg3, int arg4) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public double Rf_dlnorm(double a, double b, double c, int d) {
         throw implementedAsNode();
     }
@@ -1672,6 +1678,31 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public double Rf_rgamma(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_log1pmx(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_log1pexp(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_lgamma1p(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_logspace_add(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_logspace_sub(double a, double b) {
         throw implementedAsNode();
     }
 
@@ -2041,12 +2072,138 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public double Rf_gammafn(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_lgammafn(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_lgammafn_sign(double a, Object b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public void Rf_dpsifn(double a, int b, int c, int d, Object e, Object f, Object g) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_psigamma(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_digamma(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_trigamma(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_tetragamma(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_pentagamma(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_beta(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_lbeta(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_choose(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_lchoose(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_i(double a, double b, double c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_j(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_k(double a, double b, double c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_y(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_i_ex(double a, double b, double c, Object d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_j_ex(double a, double b, Object c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_k_ex(double a, double b, double c, Object d) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_bessel_y_ex(double a, double b, Object c) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_sign(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_fprec(double a, double b) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public double Rf_ftrunc(double a) {
-        if (a > 0) {
-            return Math.floor(a);
-        } else {
-            return Math.ceil(a);
-        }
+        return RMath.trunc(a);
+    }
+
+    @Override
+    public double Rf_cospi(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_sinpi(double a) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public double Rf_tanpi(double a) {
+        throw implementedAsNode();
     }
 
     @Override
