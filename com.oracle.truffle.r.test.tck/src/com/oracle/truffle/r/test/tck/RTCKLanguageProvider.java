@@ -144,23 +144,35 @@ public final class RTCKLanguageProvider implements LanguageProvider {
                         RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
 
         // <
-        ops.add(createBinaryOperator(context, "<", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // >
-        ops.add(createBinaryOperator(context, ">", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // <=
-        ops.add(createBinaryOperator(context, "<=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // >=
-        ops.add(createBinaryOperator(context, ">=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // ==
-        ops.add(createBinaryOperator(context, "==", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // !=
-        ops.add(createBinaryOperator(context, "!=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool,
-                        RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool, strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // ops.add(createBinaryOperator(context, "<", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // >
+        // ops.add(createBinaryOperator(context, ">", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // <=
+        // ops.add(createBinaryOperator(context, "<=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // >=
+        // ops.add(createBinaryOperator(context, ">=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // ==
+        // ops.add(createBinaryOperator(context, "==", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        // // !=
+        // ops.add(createBinaryOperator(context, "!=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool,
+        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
+        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
         // // TODO &, |, &&, ||
 
         // !
