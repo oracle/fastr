@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ShowCallerOf;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.Utils;
@@ -79,7 +80,9 @@ import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -189,6 +192,32 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                 RCaller parent = RArguments.getCall(frame);
                 frame = Utils.getCallerFrame(parent, FrameAccess.READ_ONLY);
             }
+            return findCallerFromFrame(frame);
+        } else if (call instanceof ShowCallerOf) {
+            Frame frame = Utils.getActualCurrentFrame();
+
+            boolean match = false;
+            String name = ((ShowCallerOf) call).getCallerOf();
+            Frame f = frame;
+            while (f != null && RArguments.isRFrame(f)) {
+                RCaller parent = RArguments.getCall(f);
+                if (parent.isValidCaller()) {
+                    RSyntaxElement syntaxNode = parent.getSyntaxNode();
+                    if (syntaxNode instanceof RSyntaxCall) {
+                        RSyntaxElement syntaxElement = ((RSyntaxCall) syntaxNode).getSyntaxLHS();
+                        if (syntaxElement instanceof RSyntaxLookup) {
+                            if (match) {
+                                return findCallerFromFrame(f);
+                            }
+                            if (name.equals(((RSyntaxLookup) syntaxElement).getIdentifier())) {
+                                match = true;
+                            }
+                        }
+                    }
+                }
+                f = Utils.getCallerFrame(parent, FrameAccess.READ_ONLY);
+            }
+
             return findCallerFromFrame(frame);
         } else {
             RBaseNode originalCall = checkBuiltin(call);

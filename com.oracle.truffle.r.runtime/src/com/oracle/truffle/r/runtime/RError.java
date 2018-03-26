@@ -124,6 +124,23 @@ public final class RError extends RuntimeException implements TruffleException {
     public static final ErrorContext SHOW_CALLER = new ErrorContextImpl();
 
     /**
+     * This flags a call to {@code error} or {@code warning} where the error message should show the
+     * caller provided function if such is available. Otherwise the caller of the current function
+     * will be shown.
+     */
+    public static final class ShowCallerOf extends ErrorContext {
+        private final String function;
+
+        public ShowCallerOf(String function) {
+            this.function = function;
+        }
+
+        public String getCallerOf() {
+            return function;
+        }
+    }
+
+    /**
      * A very special case that ensures that no caller is output in the error/warning message. This
      * is needed where, even if there is a caller, GnuR does not show it.
      */
@@ -193,7 +210,7 @@ public final class RError extends RuntimeException implements TruffleException {
 
     @TruffleBoundary
     public static RError handleInteropException(Node node, RuntimeException e) {
-        if (e instanceof TruffleException) {
+        if (e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) {
             if (RContext.getInstance().stateInteropTry.isInTry()) {
                 // will be catched and handled in .fastr.interop.try builtin
                 throw new FastRInteropTryException(e);

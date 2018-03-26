@@ -247,9 +247,9 @@ public class TestJavaInterop extends TestBase {
     public void testGetClass() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "java.class(to)", "'com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass'");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "java.class(to$methodReturnsNull())", errorIn("java.class(to$methodReturnsNull())", "unsupported type"));
-        assertEvalFastR("java.class(NULL)", errorIn("java.class(NULL)", "unsupported type"));
-        assertEvalFastR("java.class(1)", errorIn("java.class(1)", "unsupported type"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "java.class(to$methodReturnsNull())", errorIn("java.class(to$methodReturnsNull())", "unsupported type com.oracle.truffle.r.runtime.data.RNull"));
+        assertEvalFastR("java.class(NULL)", errorIn("java.class(NULL)", "unsupported type com.oracle.truffle.r.runtime.data.RNull"));
+        assertEvalFastR("java.class(1)", errorIn("java.class(1)", "unsupported type java.lang.Double"));
     }
 
     @Test

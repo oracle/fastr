@@ -267,7 +267,6 @@ public abstract class ForeignArray2R extends RBaseNode {
         int size = arrayData.elements.size();
 
         int[] dims = arrayData.dims != null && arrayData.dims.size() > 1 ? arrayData.dims.stream().mapToInt((i) -> i.intValue()).toArray() : null;
-        assert dims == null || sizeByDims(dims) == size : sizeByDims(dims) + " " + size;
 
         switch (type) {
             case NONE:
