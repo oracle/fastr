@@ -45,14 +45,17 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -64,6 +67,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -317,7 +321,6 @@ public class SysFunctions {
         }
     }
 
-    // TODO implement
     @RBuiltin(name = "Sys.umask", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"octmode"}, behavior = COMPLEX)
     public abstract static class SysUmask extends RBuiltinNode.Arg1 {
 
@@ -326,11 +329,23 @@ public class SysFunctions {
             casts.arg("octmode").asIntegerVector().findFirst();
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        @TruffleBoundary
-        protected Object sysUmask(int octmode) {
-            throw RError.nyi(this, "Sys.umask");
+        protected Object sysUmask(VirtualFrame frame, int octmode,
+                        @Cached("create()") BaseRFFI.UmaskNode umaskNode,
+                        @Cached("create()") SetVisibilityNode setVisibilityNode,
+                        @Cached("create()") SetClassAttributeNode setClassNode) {
+            int res;
+            if (octmode == RRuntime.INT_NA) {
+                res = umaskNode.umask(0);
+                umaskNode.umask(res);
+                setVisibilityNode.execute(frame, true);
+            } else {
+                res = umaskNode.umask(octmode);
+                setVisibilityNode.execute(frame, false);
+            }
+            RIntVector rv = RDataFactory.createIntVectorFromScalar(res);
+            setClassNode.execute(rv, RDataFactory.createStringVector("octmode"));
+            return rv;
         }
     }
 

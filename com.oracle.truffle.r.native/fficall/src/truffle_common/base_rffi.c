@@ -23,6 +23,7 @@
 #include <rffiutils.h>
 
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <unistd.h>
 #include <sys/stat.h>
 #include <glob.h>
@@ -109,4 +110,8 @@ void call_base_eSoftVersion(void (*call_eSoftVersion_setfields)(char *zlibVersio
     snprintf(sZlibVersion, 256, "%s", zlibVersion());
     snprintf(sPcreVersion, 256, "%s", pcre_version());
     call_eSoftVersion_setfields(sZlibVersion, sPcreVersion);
+}
+
+int call_base_umask(int mode) {
+	return umask(mode);
 }
