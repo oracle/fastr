@@ -28,9 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.api.frame.FrameSlot;
-import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -45,13 +42,11 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RShareable;
-import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -88,32 +83,19 @@ public final class PromiseHelperNode extends RBaseNode {
          * Guarantees, that all {@link RPromise}s in frame are deoptimized and thus are safe to
          * leave it's stack-branch.
          *
-         * @param frame The frame to check for {@link RPromise}s to deoptimize
+         * @param arguments The frame's arguments, which will be checked for {@link RPromise}s to
+         *            deoptimize
          * @return Whether there was at least on {@link RPromise} which needed to be deoptimized.
          */
-        @TruffleBoundary
-        public boolean deoptimizeFrame(MaterializedFrame frame) {
+        public boolean deoptimizeFrame(Object[] arguments) {
             boolean deoptOne = false;
-            for (FrameSlot slot : frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0])) {
-                // We're only interested in RPromises
-                if (slot.getKind() != FrameSlotKind.Object || !(slot.getIdentifier() instanceof String)) {
-                    continue;
-                }
-
-                // Try to read it...
-                try {
-                    Object value = FrameSlotChangeMonitor.getObject(slot, frame);
-
-                    // If it's a promise, deoptimize it!
-                    if (value instanceof RPromise) {
-                        RPromise promise = (RPromise) value;
-                        if (!promise.isEvaluated()) {
-                            deoptOne |= deoptimize(promise);
-                        }
+            for (Object value : arguments) {
+                // If it's a promise, deoptimize it!
+                if (value instanceof RPromise) {
+                    RPromise promise = (RPromise) value;
+                    if (!promise.isEvaluated()) {
+                        deoptOne |= deoptimize(promise);
                     }
-                } catch (FrameSlotTypeException err) {
-                    // Should not happen after former check on FrameSlotKind!
-                    throw RInternalError.shouldNotReachHere();
                 }
             }
             return deoptOne;

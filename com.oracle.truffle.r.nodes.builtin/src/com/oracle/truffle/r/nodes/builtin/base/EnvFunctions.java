@@ -349,7 +349,7 @@ public class EnvFunctions {
             MaterializedFrame matFrame = callerFrame.execute(frame);
 
             matFrame = matFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) matFrame).getOriginalFrame() : matFrame;
-            deoptFrameNode.deoptimizeFrame(matFrame);
+            deoptFrameNode.deoptimizeFrame(RArguments.getArguments(matFrame));
             return REnvironment.frameToEnvironment(matFrame);
         }
 

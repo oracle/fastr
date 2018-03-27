@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,16 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.runtime.data.RAttributable;
+import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+
+/**
+ * Currently, this visitor is only necessary because we don't treat the body of an RFunction as a
+ * pairlist. It's slightly inaccurate in how it treats constants, attributes, etc.
+ */
 public final class IdenticalVisitor extends RSyntaxArgVisitor<Boolean, RSyntaxElement> {
 
     @Override
@@ -41,7 +51,65 @@ public final class IdenticalVisitor extends RSyntaxArgVisitor<Boolean, RSyntaxEl
         if (!(arg instanceof RSyntaxConstant)) {
             return false;
         }
-        return element.getValue().equals(((RSyntaxConstant) arg).getValue());
+        return identicalValue(element.getValue(), ((RSyntaxConstant) arg).getValue());
+    }
+
+    private Boolean identicalValue(Object value, Object otherValue) {
+        if (value instanceof Number || value instanceof String) {
+            return value.equals(otherValue);
+        }
+        if (value instanceof RAttributable) {
+            if (!(otherValue instanceof RAttributable)) {
+                return false;
+            }
+            if (!identicalAttributes((RAttributable) value, (RAttributable) otherValue)) {
+                return false;
+            }
+            if (!identicalAttributes((RAttributable) otherValue, (RAttributable) value)) {
+                return false;
+            }
+        }
+        if (value instanceof RAbstractVector) {
+            RAbstractVector vector = (RAbstractVector) value;
+            if (!(otherValue instanceof RAbstractVector)) {
+                return false;
+            }
+            RAbstractVector otherVector = (RAbstractVector) otherValue;
+            if (vector.getLength() != otherVector.getLength() || vector.getRType() != otherVector.getRType()) {
+                return false;
+            }
+            for (int i = 0; i < vector.getLength(); i++) {
+                if (!identicalValue(vector.getDataAtAsObject(i), otherVector.getDataAtAsObject(i))) {
+                    return false;
+                }
+            }
+            return true;
+        }
+        if (value instanceof RPairList && ((RPairList) value).isLanguage()) {
+            if (!(otherValue instanceof RPairList && ((RPairList) otherValue).isLanguage())) {
+                return false;
+            }
+            return accept(((RPairList) value).getSyntaxElement(), ((RPairList) otherValue).getSyntaxElement());
+        }
+        if (value instanceof REnvironment) {
+            return value == otherValue;
+        }
+        return value == otherValue;
+    }
+
+    private boolean identicalAttributes(RAttributable attributable, RAttributable otherAttributable) {
+        DynamicObject attributes = attributable.getAttributes();
+        if (attributes != null) {
+            DynamicObject otherAttributes = otherAttributable.getAttributes();
+            for (Object key : attributes.getShape().getKeys()) {
+                Object attributeValue = attributes.get(key);
+                Object otherAttributeValue = otherAttributes == null ? null : otherAttributes.get(key);
+                if ((attributeValue == null) != (otherAttributeValue == null) || !identicalValue(attributeValue, otherAttributeValue)) {
+                    return false;
+                }
+            }
+        }
+        return true;
     }
 
     @Override

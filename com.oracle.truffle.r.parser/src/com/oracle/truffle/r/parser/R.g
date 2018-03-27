@@ -578,17 +578,17 @@ simple_expr returns [T v]
     | cstr=conststring                          { $v = $cstr.v; }
     | pkg=id op=(NS_GET|NS_GET_INT) n_          {
         SourceSection pkgSource = src($pkg.v);
-        args.add(RCodeBuilder.argument(pkgSource, "pkg", builder.lookup(pkgSource, $pkg.text, false)));
+        args.add(RCodeBuilder.argument(pkgSource, (String) null, builder.lookup(pkgSource, $pkg.text, false)));
         }
       ( compId=id                               {
         SourceSection compSource = src($compId.v);
         compToken = $compId.v;
-        args.add(RCodeBuilder.argument(compSource, "name", builder.lookup(compSource, $compId.text, false)));
+        args.add(RCodeBuilder.argument(compSource, (String) null, builder.lookup(compSource, $compId.text, false)));
         }
       | compString=STRING                       { 
         SourceSection compSource = src($compString);
         compToken = $compString;
-        args.add(RCodeBuilder.argument(compSource, "name", builder.constant(compSource, $compString.text)));
+        args.add(RCodeBuilder.argument(compSource, (String) null, builder.constant(compSource, $compString.text)));
         }
         )                                       { $v = builder.call(src($pkg.v, compToken), operator($op), args); }
     | op=LPAR n_ ea=expr_or_assign n_ y=RPAR    { $v = builder.call(src($op, $y), operator($op), $ea.v); }

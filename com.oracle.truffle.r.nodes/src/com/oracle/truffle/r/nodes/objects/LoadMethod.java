@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -68,6 +68,7 @@ abstract class LoadMethod extends RBaseNode {
     @Specialization
     protected RFunction loadMethod(VirtualFrame frame, RFunction fdef, String fname,
                     @Cached("createClassProfile()") ValueProfile regFrameAccessProfile,
+                    @Cached("createClassProfile()") ValueProfile regFrameProfile,
                     @Cached("createClassProfile()") ValueProfile methodsFrameAccessProfile) {
         DynamicObject attributes = fdef.getAttributes();
         assert fdef.isBuiltin() || attributes != null;
@@ -115,7 +116,7 @@ abstract class LoadMethod extends RBaseNode {
         RFunction ret;
         if (fdef.getAttributes() != null && moreAttributes.profile(found < fdef.getAttributes().size())) {
             RFunction currentFunction;
-            REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, REnvironment.getNamespaceRegistry().getFrame(regFrameAccessProfile));
+            REnvironment methodsEnv = (REnvironment) methodsEnvRead.execute(frame, regFrameProfile.profile(REnvironment.getNamespaceRegistry().getFrame(regFrameAccessProfile)));
             if (loadMethodFind == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 loadMethodFind = insert(ReadVariableNode.createFunctionLookup(RRuntime.R_LOAD_METHOD_NAME));

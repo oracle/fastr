@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
@@ -84,10 +85,11 @@ public abstract class Lapply extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object lapply(VirtualFrame frame, RAbstractVector vec, RFunction fun,
-                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @Cached("create()") VectorFactory factory) {
         Object[] result = lapply.execute(frame, vec, fun);
         // set here else it gets overridden by the iterator evaluation
-        return RDataFactory.createList(result, extractNamesNode.execute(vec));
+        return factory.createList(result, extractNamesNode.execute(vec));
     }
 
     @Specialization

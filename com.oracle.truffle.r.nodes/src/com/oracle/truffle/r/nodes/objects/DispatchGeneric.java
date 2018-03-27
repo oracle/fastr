@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -38,6 +38,7 @@ public abstract class DispatchGeneric extends RBaseNode {
     public abstract Object executeObject(VirtualFrame frame, REnvironment mtable, RStringVector classes, RFunction fdef, String fname);
 
     private final ConditionProfile singleStringProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isDeferredProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile equalsMethodRequired = BranchProfile.create();
     @Child private LoadMethod loadMethod = LoadMethodNodeGen.create();
     @Child private ExecuteMethod executeMethod = new ExecuteMethod();
@@ -78,7 +79,7 @@ public abstract class DispatchGeneric extends RBaseNode {
             RFunction currentFunction = ReadVariableNode.lookupFunction(".InheritForDispatch", methodsEnv.getFrame(), true, true);
             method = (RFunction) RContext.getEngine().evalFunction(currentFunction, frame.materialize(), RCaller.create(frame, RASTUtils.getOriginalCall(this)), true, null, classes, fdef, mtable);
         }
-        if (method.isBuiltin() || getInheritsInternalDispatchCheckNode().execute(method)) {
+        if (isDeferredProfile.profile(method.isBuiltin() || getInheritsInternalDispatchCheckNode().execute(method))) {
             return RRuntime.DEFERRED_DEFAULT_MARKER;
         }
         method = loadMethod.executeRFunction(frame, method, fname);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  */
 public final class GetBaseEnvFrameNode extends Node {
     private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
+    private final ValueProfile frameProfile = ValueProfile.createClassProfile();
     private final ValueProfile baseEnvProfile = ValueProfile.createIdentityProfile();
 
     public static GetBaseEnvFrameNode create() {
@@ -41,6 +42,6 @@ public final class GetBaseEnvFrameNode extends Node {
 
     public MaterializedFrame execute() {
         REnvironment baseEnv = baseEnvProfile.profile(REnvironment.baseEnv());
-        return baseEnv.getFrame(frameAccessProfile);
+        return frameProfile.profile(baseEnv.getFrame(frameAccessProfile));
     }
 }

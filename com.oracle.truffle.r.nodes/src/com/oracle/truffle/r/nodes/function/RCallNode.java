@@ -1202,4 +1202,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     public static Object createDeferredMemberAccess(TruffleObject object, String name) {
         return new DeferredFunctionValue(object, name);
     }
+
+    @Override
+    public String toString() {
+        return "call: " + RDeparse.deparseSyntaxElement(this);
+    }
 }

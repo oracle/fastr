@@ -31,13 +31,16 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -57,28 +60,36 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         return RfEvalNodeGen.create();
     }
 
-    @Specialization
-    @TruffleBoundary
-    Object handlePromise(RPromise expr, @SuppressWarnings("unused") RNull nulLEnv) {
-        return getPromiseHelper().evaluate(null, expr);
+    private static RCaller createCall(REnvironment env) {
+        Frame frame = Utils.getActualCurrentFrame();
+        RCaller originalCaller = RArguments.getCall(env.getFrame());
+        return RCaller.createForPromise(originalCaller, frame);
     }
 
     @Specialization
     @TruffleBoundary
-    Object handlePromise(RPromise expr, @SuppressWarnings("unused") REnvironment env) {
-        return getPromiseHelper().evaluate(null, expr);
+    Object handlePromise(RPromise expr, @SuppressWarnings("unused") RNull nulLEnv) {
+        return getPromiseHelper().evaluate(Utils.getActualCurrentFrame().materialize(), expr);
+    }
+
+    @Specialization
+    @TruffleBoundary
+    Object handlePromise(RPromise expr, REnvironment env) {
+        return getPromiseHelper().evaluate(env.getFrame(), expr);
     }
 
     @Specialization
     @TruffleBoundary
     Object handleExpression(RExpression expr, Object envArg) {
-        return RContext.getEngine().eval(expr, getEnv(envArg), null);
+        REnvironment env = getEnv(envArg);
+        return RContext.getEngine().eval(expr, env, createCall(env));
     }
 
     @Specialization(guards = "expr.isLanguage()")
     @TruffleBoundary
     Object handleLanguage(RPairList expr, Object envArg) {
-        return RContext.getEngine().eval(expr, getEnv(envArg), null);
+        REnvironment env = getEnv(envArg);
+        return RContext.getEngine().eval(expr, env, createCall(env));
     }
 
     @Specialization
@@ -124,7 +135,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
     @TruffleBoundary
     private static Object evalFunction(RFunction f, REnvironment env, ArgumentsSignature argsNames, Object... args) {
-        return RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : env.getFrame(), RCaller.topLevel, true, argsNames, args);
+        return RContext.getEngine().evalFunction(f, env == REnvironment.globalEnv() ? null : env.getFrame(), createCall(env), true, argsNames, args);
     }
 
     @Fallback

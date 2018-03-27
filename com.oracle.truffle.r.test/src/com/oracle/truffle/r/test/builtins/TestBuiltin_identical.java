@@ -271,6 +271,7 @@ public class TestBuiltin_identical extends TestBase {
         assertEval("a <- quote(a(100)); b <- quote(a(100)); attr(a[[2]], 'foo') <- 'bar'; b[[2]] <- a[[2]]; identical(a,b)");
         assertEval("a <- quote(a(100)); b <- quote(a(100)); attr(b[[2]], 'foo') <- 'baz'; attr(a[[2]], 'foo') <- 'bar'; identical(a,b)");
         assertEval("a <- quote(a(100)); b <- quote(a(100)); attr(b[[2]], 'foo') <- 'bar'; attr(a[[2]], 'foo') <- 'bar'; identical(a,b)");
+        assertEval("e1 <- quote(a+1); e2 <- quote(a+2); identical(e1, e2); e2[[3]] <- c(1,2,3); identical(e1, e2); e1[[3]] <- c(1,2,3); identical(e1, e2); attr(e2[[3]], 'foo') <- 'bar'; identical(e1, e2)");
     }
 
     @Test

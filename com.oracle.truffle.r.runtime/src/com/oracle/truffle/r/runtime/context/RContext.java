@@ -279,7 +279,7 @@ public final class RContext {
 
     private EnumSet<State> state = EnumSet.noneOf(State.class);
 
-    private PrimitiveMethodsInfo primitiveMethodsInfo;
+    @CompilationFinal private PrimitiveMethodsInfo primitiveMethodsInfo;
 
     /** Class loader for Java interop. */
     private ClassLoader interopClassLoader = FastRConfig.InternalGridAwtSupport ? getClass().getClassLoader() : null;
@@ -691,7 +691,6 @@ public final class RContext {
         s4ExtendsTable.put(key, value);
     }
 
-    @TruffleBoundary
     public PrimitiveMethodsInfo getPrimitiveMethodsInfo() {
         if (primitiveMethodsInfo == null) {
             // shared contexts do not run concurrently with their parent and re-use primitive

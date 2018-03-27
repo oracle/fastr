@@ -149,6 +149,7 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
         }
 
         protected final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
+        protected final ValueProfile frameProfile = ValueProfile.createClassProfile();
 
         public abstract void execute(VirtualFrame frame, REnvironment env, String name, Object value);
 
@@ -156,11 +157,15 @@ public abstract class Assign extends RBuiltinNode.Arg4 {
             return ResolvedWriteSuperFrameVariableNodeGen.create(name, Mode.REGULAR, null, null, FrameSlotNode.create(findOrAddFrameSlot(envDesc, name, FrameSlotKind.Illegal)));
         }
 
-        @Specialization(guards = {"env.getFrame(frameAccessProfile).getFrameDescriptor() == envDesc", "write.getName().equals(name)"})
+        protected FrameDescriptor getFrameDescriptor(REnvironment env) {
+            return frameProfile.profile(env.getFrame(frameAccessProfile)).getFrameDescriptor();
+        }
+
+        @Specialization(guards = {"getFrameDescriptor(env) == envDesc", "write.getName().equals(name)"})
         protected void assignCached(VirtualFrame frame, REnvironment env, @SuppressWarnings("unused") String name, Object value,
                         @Cached("env.getFrame().getFrameDescriptor()") @SuppressWarnings("unused") FrameDescriptor envDesc,
                         @Cached("createWrite(name, envDesc)") ResolvedWriteSuperFrameVariableNode write) {
-            write.execute(frame, value, env.getFrame(frameAccessProfile));
+            write.execute(frame, value, frameProfile.profile(env.getFrame(frameAccessProfile)));
         }
 
         @Specialization(replaces = "assignCached")
