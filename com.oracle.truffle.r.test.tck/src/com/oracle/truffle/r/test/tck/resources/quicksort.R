@@ -31,5 +31,5 @@ Quicksort = function(n) {
 }
 
 function () {
-    Quicksort(1000);
+    Quicksort(10);
 }
