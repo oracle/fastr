@@ -23,11 +23,11 @@
 
 // A very simple test of the R FFI interface
 
+#define USE_RINTERNALS
 #include <R.h>
 #include <Rdefines.h>
 #include <Rinterface.h>
 #include <Rinternals.h>
-#include <Rinterface.h>
 #include <Rmath.h>
 #include <R_ext/Connections.h>
 #include <R_ext/Parse.h>
@@ -716,5 +716,20 @@ SEXP test_RfFunctions() {
     REAL(v)[n++] = Rf_ftrunc(-5.3);
     UNPROTECT(1);
     return v;
+}
+
+SEXP test_DATAPTR(SEXP strings, SEXP testSingleChar) {
+    if (asLogical(testSingleChar)) {
+        void* data = DATAPTR(STRING_ELT(strings, 0));
+        printf("DATAPTR(STRING_ELT(strings, 0)) == '%s'\n", (char *)data);
+    } else {
+        // pointer to CHARSXP array
+        void* data = DATAPTR(strings);
+        for (int i = 0; i < LENGTH(strings); ++i) {
+            printf("DATAPTR(strings)[%d] == '%s'\n", i, R_CHAR(((SEXP*)data)[i]));
+        }
+    }
+    fflush(stdout);
+    return R_NilValue;
 }
 
