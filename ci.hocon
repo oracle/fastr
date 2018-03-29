@@ -281,5 +281,5 @@ builds = [
   ${gnurTests}                {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-gnur-tests"}
   # disabled because of spurious dragonegg problems
   #${gateTestLinuxLLVM}        {capabilities: [linux, amd64], targets : [gate], name: "gate-test-llvm-linux-amd64" }
-  ${gateTestDarwinLLVM}        {capabilities: [darwin_sierra, amd64], targets : [gate], name: "gate-test-llvm-darwin-amd64" }
+  #${gateTestDarwinLLVM}        {capabilities: [darwin_sierra, amd64], targets : [gate], name: "gate-test-llvm-darwin-amd64" }
 ]

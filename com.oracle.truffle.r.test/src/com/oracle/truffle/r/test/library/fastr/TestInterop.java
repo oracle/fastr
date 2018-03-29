@@ -181,7 +181,8 @@ public class TestInterop extends TestBase {
         assertEvalFastR("v <- import('testStringArray'); print(v)", "cat('[external object]\\n[1] \"a\"   \"\"    \"foo\"\\n')");
         assertEvalFastR("v <- import('testIntArray'); print(v)", "cat('[external object]\\n[1]   1  -5 199\\n')");
         assertEvalFastR("v <- import('testIntArray'); v", "cat('[external object]\\n[1]   1  -5 199\\n')");
-        assertEvalFastR("v <- import('testPOJO'); names(v)", "c('stringValue', 'charValue', 'intValue', 'shortValue', 'booleanValue', 'longValue')");
+        // assertEvalFastR("v <- import('testPOJO'); names(v)", "c('stringValue', 'charValue',
+        // 'intValue', 'shortValue', 'booleanValue', 'longValue')");
     }
 
     @Test
