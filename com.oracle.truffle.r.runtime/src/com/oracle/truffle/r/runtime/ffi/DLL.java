@@ -512,7 +512,7 @@ public class DLL {
 
     public static final String R_INIT_PREFIX = "R_init_";
 
-    public static class LoadPackageDLLNode extends Node {
+    public static final class LoadPackageDLLNode extends Node {
         @Child private InvokeVoidCallNode invokeVoidCallNode;
         @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
         @Child private DLLRFFI.DLOpenNode dlOpenNode = RFFIFactory.getDLLRFFI().createDLOpenNode();

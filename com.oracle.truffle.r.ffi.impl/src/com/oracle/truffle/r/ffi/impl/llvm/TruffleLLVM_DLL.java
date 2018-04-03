@@ -156,7 +156,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
 
     public static LLVMArchive getZipLLVMIR(String path) {
         List<String> nativeLibs = Collections.emptyList();
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(path)))) {
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(path + "l")))) {
             ArrayList<LLVM_IR> irList = new ArrayList<>();
             while (true) {
                 ZipEntry entry = zis.getNextEntry();

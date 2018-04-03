@@ -22,9 +22,23 @@
 # questions.
 #
 
+if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
+	ar "$@"
+fi
+if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
+    exit 0
+fi
+
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 . $DIR/llvm-helper
 
-create_bc_archive $@
+errorOccurred || {
+try
+(
+	create_bc_archive $@
+) || catch || {
+	recordError
+}
+}

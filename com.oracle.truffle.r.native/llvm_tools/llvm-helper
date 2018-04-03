@@ -77,14 +77,14 @@ function analyze_args() {
         f=`basename $p`
         d=`dirname $p`
         ext=${f##*.}
-        if [ $ext == 'so' ] || [ $ext == 'dylib' ]
+        if [ $ext == 'so' ] || [ $ext == 'dylib' ] || [ $ext == 'sol' ] || [ $ext == 'dylibl' ]
         then
           is_link=1
-        elif [ $ext == 'o' ]
-		    then
-		      llvm_ir_file=${d}/${f%%.*}
-		      llvm_ir_file="${llvm_ir_file}${llvm_file_ext}"
-          llvm_ir_file_opt="-o ${llvm_ir_file}"
+        elif [ $ext == 'o' ] || [ $ext == 'bc' ]
+		then
+			llvm_ir_file=${d}/${f%%.*}
+		    llvm_ir_file="${llvm_ir_file}${llvm_file_ext}"
+         	llvm_ir_file_opt="-o ${llvm_ir_file}"
         else
           out_file_opt="-o $p"
         fi
@@ -147,11 +147,11 @@ function mem2reg_opt() {
    fi
 }
 
-function fake_obj() {
-  f=`basename $llvm_ir_file`
-  d=`dirname $llvm_ir_file`
-  runit touch ${d}/${f%%.*}.o
-}
+#function fake_obj() {
+#  f=`basename $llvm_ir_file`
+#  d=`dirname $llvm_ir_file`
+#  runit touch ${d}/${f%%.*}.o
+#}
 
 # Input: all the arguments to the original command line
 function create_bc_lib() {
@@ -165,17 +165,17 @@ function create_bc_lib() {
     case $1 in
       -o)
         shift
-		    lib=$1
+		    lib="$1l"
         ;;
       -l*)
 		    linkedLib=`echo $1 | cut -c 3-`
         statLibFound='0'
         if [ -f "$statlibs" ]; then
-          statLibFound=`cat "$statlibs" | grep "lib${linkedLib}.a" | wc -l`
+          statLibFound=`cat "$statlibs" | grep "lib${linkedLib}.al" | wc -l`
         fi
         if [ $statLibFound == '0' ]
 		    then
-          echo $linkedLib >> $linkedLibs
+	          echo $linkedLib >> $linkedLibs
 		    fi
         ;;
       -*)
@@ -183,12 +183,12 @@ function create_bc_lib() {
         ;;
       *)
         f=$(basename $1)
-     	  ext=${f##*.}
-		    if [ $ext == 'o' ]
-		    then
-	  		   fn="$(dirname $1)/${f%%.*}.bc"
-			     bcfiles+="$fn "
-		    fi
+		ext=${f##*.}
+		if [ $ext == 'o' ] || [ $ext == 'bc' ]
+		then
+	  		fn="$(dirname $1)/${f%%.*}.bc"
+			bcfiles+="$fn "
+		fi
         ;;
     esac
     shift
@@ -204,6 +204,9 @@ function create_bc_lib() {
   runit $llvm_tool_bin $bcfiles -o $lib.bc
   runit zip -r $lib $lib.bc $linkedLibs
   rm $lib.bc
+  if [ -d "$R_PACKAGE_DIR/libs" ]; then
+    cp $lib "$R_PACKAGE_DIR/libs"
+  fi
 }
 
 # It appends objects constituting a static library to the list of extra object files.
@@ -220,7 +223,7 @@ function create_bc_archive() {
   # symbols objects (see below) to get the final list of objects to be linked with
   # the package dynamic library in the end.
   shift
-  archname=$1
+  archname="$1l"
   arargs="rcs $archname "
   shift
 
@@ -264,4 +267,40 @@ function create_bc_archive() {
 
   # Record the archive (static library) name to distinguish between LLVM static libs and native libs when linking (via -l)
   echo $archname >> "$R_PACKAGE_DIR/statlibs"
+}
+
+# A simple try-catch mimicking apparatus
+
+function try()
+{
+    [[ $- = *e* ]]; SAVED_OPT_E=$?
+    set -e
+}
+
+function throw()
+{
+    exit $1
+}
+
+function catch()
+{
+    export ex_code=$?
+    (( $SAVED_OPT_E )) && set +e
+    return $ex_code
+}
+
+function recordError()
+{
+	echo "***************************************************************"
+	echo "The LLVM build failed. Only the native libraries will be built."
+	echo "***************************************************************"
+
+	errorFlagFile="$R_PACKAGE_DIR/errorFlag"
+	touch $errorFlagFile
+}
+
+function errorOccurred()
+{
+	errorFlagFile="$R_PACKAGE_DIR/errorFlag"
+	[[ -f $errorFlagFile ]]
 }
