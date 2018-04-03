@@ -138,8 +138,8 @@ public class RscriptCommand {
         String[] arguments = preprocessRScriptOptions(launcher, options);
 
         ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, null, inStream, outStream);
-        try (Context context = Context.newBuilder().allowHostAccess(useJVM).options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(outStream).err(
-                        errStream).build()) {
+        try (Context context = Context.newBuilder().allowAllAccess(true).allowHostAccess(useJVM).options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(
+                        outStream).err(errStream).build()) {
             consoleHandler.setContext(context);
             String fileOption = options.getString(RCmdOption.FILE);
             return RCommand.readEvalPrint(context, consoleHandler, fileOption != null ? new File(fileOption) : null);

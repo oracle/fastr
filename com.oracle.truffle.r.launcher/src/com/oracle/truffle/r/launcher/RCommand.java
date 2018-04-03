@@ -165,8 +165,8 @@ public class RCommand {
         RCmdOptions options = RCmdOptions.parseArguments(Client.R, argsList.toArray(new String[argsList.size()]), false);
         assert env == null || env.length == 0 : "re-enable setting environments";
         ConsoleHandler consoleHandler = createConsoleHandler(options, null, inStream, outStream);
-        try (Context context = Context.newBuilder().allowHostAccess(useJVM).options(polyglotOptions).arguments("R", options.getArguments()).in(consoleHandler.createInputStream()).out(outStream).err(
-                        errStream).build()) {
+        try (Context context = Context.newBuilder().allowAllAccess(true).allowHostAccess(useJVM).options(polyglotOptions).arguments("R", options.getArguments()).in(
+                        consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
             consoleHandler.setContext(context);
             StartupTiming.timestamp("VM Created");
             StartupTiming.printSummary();
