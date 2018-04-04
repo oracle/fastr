@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -102,7 +103,7 @@ public class RInstrumentation {
     public static SourceSectionFilter.Builder createFunctionStartFilter(RFunction func) {
         FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
         SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-        builder.tagIs(StandardTags.RootTag.class);
+        builder.tagIs(FunctionBodyBlockTag.class);
         builder.sourceSectionEquals(fdn.getBody().getSourceSection());
         return builder;
     }

@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class BlockNode extends OperatorNode {
 
-    @Children protected final RNode[] sequence;
+    @Children private final RNode[] sequence;
     @Child private SetVisibilityNode visibility;
 
     public BlockNode(SourceSection src, RSyntaxLookup operator, RNode[] sequence) {

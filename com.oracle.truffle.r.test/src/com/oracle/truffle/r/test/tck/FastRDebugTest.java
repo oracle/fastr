@@ -39,7 +39,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.api.debug.Breakpoint;
@@ -498,7 +497,6 @@ public class FastRDebugTest {
     }
 
     @Test
-    @Ignore
     public void testReenterArgumentsAndValues() throws Throwable {
         // Test that after a re-enter, arguments are kept and variables are cleared.
         final Source source = sourceFromText("" +
@@ -719,7 +717,7 @@ public class FastRDebugTest {
             }
             assertNotNull("identifier \"" + expectedIdentifier + "\" not found", value);
             String valueStr = value.as(String.class);
-            assertEquals(expectedValueStr, valueStr);
+            assertEquals(line + ": " + code + "; identifier: '" + expectedIdentifier + "'", expectedValueStr, valueStr);
         }
 
         if (!run.isEmpty()) {

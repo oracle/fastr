@@ -43,6 +43,7 @@ import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
@@ -78,6 +79,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootWithBody;
+import com.oracle.truffle.r.runtime.RootBodyNode;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -326,7 +328,7 @@ final class REngine implements Engine, Engine.Timings {
             statements[i] = list.get(i).asRNode();
         }
         return new ExecutableNode(context.getLanguage()) {
-            @Child R2Foreign toForeignNode = R2Foreign.create();
+            @Child private R2Foreign toForeignNode = R2Foreign.create();
 
             @Override
             public Object execute(VirtualFrame frame) {
@@ -529,14 +531,14 @@ final class REngine implements Engine, Engine.Timings {
         private final boolean topLevel;
         private final boolean suppressWarnings;
 
-        @Child private RNode body;
+        @Child private RootBodyNode body;
         @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
         @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
         protected AnonymousRootNode(REngine engine, RNode body, String description, boolean printResult, boolean topLevel) {
             super(engine.context.getLanguage());
             this.suppressWarnings = engine.suppressWarnings;
-            this.body = body;
+            this.body = new AnonymousBodyNode(body);
             this.description = description;
             this.printResult = printResult;
             this.topLevel = topLevel;
@@ -544,12 +546,12 @@ final class REngine implements Engine, Engine.Timings {
 
         @Override
         public SourceSection getSourceSection() {
-            return body.getSourceSection();
+            return getBody().getSourceSection();
         }
 
         @Override
         public boolean isInternal() {
-            return RSyntaxNode.isInternal(body.asRSyntaxNode().getLazySourceSection());
+            return RSyntaxNode.isInternal(getBody().getLazySourceSection());
         }
 
         private VirtualFrame prepareFrame(VirtualFrame frame) {
@@ -618,6 +620,29 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         public boolean isCloningAllowed() {
             return false;
+        }
+
+        @Override
+        public RSyntaxNode getBody() {
+            return body.getBody().asRSyntaxNode();
+        }
+    }
+
+    private static final class AnonymousBodyNode extends Node implements RootBodyNode {
+        @Child private RNode body;
+
+        AnonymousBodyNode(RNode body) {
+            this.body = body;
+        }
+
+        @Override
+        public Object visibleExecute(VirtualFrame frame) {
+            return body.visibleExecute(frame);
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return body.getSourceSection();
         }
 
         @Override

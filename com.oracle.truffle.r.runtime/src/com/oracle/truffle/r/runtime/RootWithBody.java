@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2016, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,12 +22,16 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Used for testing.
+ * Used to allow access to the body field for testing purposes.
  */
 public interface RootWithBody {
 
-    RNode getBody();
+    /**
+     * Should return the real body, i.e. what is wrapped by {@link RootBodyNode}.
+     */
+    RSyntaxNode getBody();
+
 }

@@ -33,6 +33,9 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.instrumentation.StandardTags.CallTag;
+import com.oracle.truffle.api.instrumentation.StandardTags.RootTag;
+import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.launcher.RCommand;
@@ -54,6 +57,8 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -61,7 +66,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ShowCallerOf;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
-import com.oracle.truffle.r.runtime.RootWithBody;
+import com.oracle.truffle.r.runtime.RootBodyNode;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.Engine;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -265,45 +270,49 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public boolean isTaggedWith(Node node, Class<?> tag) {
+        if (node instanceof RootBodyNode) {
+            return (tag == RootTag.class);
+        }
+        if (node instanceof RootNode) {
+            // roots don't have any tags
+            return false;
+        }
         if (!(node instanceof RSyntaxNode)) {
             return false;
         }
         if (isInternalChild(node)) {
             return false;
         }
-        String className = tag.getSimpleName();
-        switch (className) {
-            case "CallTag":
-                return node instanceof RCallNode;
-
-            case "StatementTag": {
-                Node parent = ((RInstrumentableNode) node).unwrapParent();
-                if (node instanceof BlockNode) {
-                    // TODO we may reconsider this
-                    return false;
-                }
-                // Most likely
-                if (parent instanceof BlockNode) {
-                    return true;
-                } else {
-                    // single statement block, variable parent
-                    // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
-                    // under the repeating node !
-                    return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody || parent instanceof IfNode || AbstractLoopNode.isLoopBody(node);
-                }
-            }
-
-            case "RootTag": {
-                Node parent = ((RInstrumentableNode) node).unwrapParent();
-                return parent instanceof FunctionDefinitionNode || parent instanceof RootWithBody;
-            }
-
-            case "LoopTag":
-                return node instanceof AbstractLoopNode;
-
-            default:
-                return false;
+        if (tag == CallTag.class) {
+            return node instanceof RCallNode;
         }
+        if (tag == FunctionBodyBlockTag.class) {
+            return node instanceof BlockNode && ((BlockNode) node).unwrapParent() instanceof RootBodyNode;
+        }
+        if (tag == LoopTag.class) {
+            return node instanceof AbstractLoopNode;
+        }
+        if (tag == StatementTag.class) {
+            if (node instanceof BlockNode) {
+                // so that the stepping location is not the block itself, but the first statement in
+                // the block, note that the FastR's own debugging and tracing mechanism uses
+                // FunctionBodyBlockTag to recognize function bodies.
+                return false;
+            }
+            // How to recognize statement from some node inside a statement (e.g. expression)?
+            Node parent = ((RInstrumentableNode) node).unwrapParent();
+            if (parent instanceof BlockNode) {
+                // It's in a block of statements
+                return true;
+            } else {
+                // single statement block: as function body, if/else body, loop body
+                // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
+                // under the repeating node !
+                return parent instanceof RootBodyNode || parent instanceof IfNode || AbstractLoopNode.isLoopBody(node);
+            }
+        }
+        // TODO: ExpressionTag: (!statement && !loop && !if && !call && !root)??
+        return false;
     }
 
     private static boolean isInternalChild(Node node) {

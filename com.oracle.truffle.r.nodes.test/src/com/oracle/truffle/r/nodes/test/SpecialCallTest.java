@@ -52,7 +52,7 @@ public class SpecialCallTest extends TestBase {
         public int special;
 
         CountCallsVisitor(RootCallTarget callTarget) {
-            accept(((RootWithBody) callTarget.getRootNode()).getBody().asRSyntaxNode());
+            accept(((RootWithBody) callTarget.getRootNode()).getBody());
         }
 
         @Override
@@ -108,7 +108,7 @@ public class SpecialCallTest extends TestBase {
 
         void print(RootCallTarget callTarget) {
             System.out.println();
-            accept(((RootWithBody) callTarget.getRootNode()).getBody().asRSyntaxNode());
+            accept(((RootWithBody) callTarget.getRootNode()).getBody());
         }
 
         @Override
