@@ -150,6 +150,10 @@ setAttrTarget
 typeof(api.ATTRIB(mtcars))
 api.ATTRIB(structure(c(1,2,3), myattr3 = 33))
 
+invisible(rffi.testDATAPTR('hello', testSingleString = T));
+# Ignored: FastR does not support DATAPTR for character vectors
+# rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
+
 # SET_OBJECT
 # FastR does not fully support the SET_OBJECT fully,
 # the test is left here in case there is a need to actually implement it.

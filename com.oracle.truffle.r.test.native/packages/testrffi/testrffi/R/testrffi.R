@@ -224,3 +224,7 @@ rffi.RfRMultinom <- function() {
 rffi.RfFunctions <- function() {
 	.Call('test_RfFunctions')
 }
+
+rffi.testDATAPTR <- function(strings, testSingleString) {
+	.Call('test_DATAPTR', strings, testSingleString)
+}

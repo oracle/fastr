@@ -122,3 +122,5 @@ extern SEXP test_RfRandomFunctions();
 extern SEXP test_RfRMultinom();
 
 extern SEXP test_RfFunctions();
+
+extern SEXP test_DATAPTR(SEXP,SEXP);

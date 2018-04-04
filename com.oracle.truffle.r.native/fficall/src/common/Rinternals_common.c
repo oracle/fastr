@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,9 +113,16 @@ void *DATAPTR(SEXP x) {
 		return LOGICAL(x);
 	} else if (type == RAWSXP) {
 		return RAW(x);
-	} else {
-		printf("DATAPTR %d\n", type);
-		unimplemented("R_DATAPTR");
+	} else if (type == CPLXSXP) {
+	    return COMPLEX(x);
+    } else if (type == CHARSXP) {
+        return R_CHAR(x);
+    } else if (type == STRSXP) {
+        printf("FastR does not support DATAPTR macro with character vectors, please use SET_STRING_ELT or STRING_ELT.\n");
+        exit(1);
+    } else {
+		printf("DATAPTR macro with SEXPTYPE %d is not supported.\n", type);
+		exit(1);
 		return NULL;
 	}
 }
