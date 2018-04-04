@@ -38,6 +38,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -45,6 +46,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.ExecutableNode;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -285,7 +287,7 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    List<RSyntaxNode> parseSource(Source source) throws ParseException {
+    private List<RSyntaxNode> parseSource(Source source) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
         return parser.script(source, new RASTBuilder(), context.getLanguage());
     }
@@ -327,24 +329,33 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public ExecutableNode parseToExecutableNode(Source source) throws ParseException {
         List<RSyntaxNode> list = parseSource(source);
-        RNode[] statements = new RNode[list.size()];
-        for (int i = 0; i < statements.length; i++) {
-            statements[i] = list.get(i).asRNode();
-        }
-        return new ExecutableNode(context.getLanguage()) {
-            @Child private R2Foreign toForeignNode = R2Foreign.create();
+        return new ExecutableNodeImpl(context.getLanguage(), list);
+    }
 
-            @Override
-            public Object execute(VirtualFrame frame) {
-                if (statements.length == 0) {
-                    return RNull.instance;
-                }
-                for (int i = 0; i < statements.length - 1; i++) {
-                    statements[i].execute(frame);
-                }
-                return toForeignNode.execute(statements[statements.length - 1].execute(frame));
+    private class ExecutableNodeImpl extends ExecutableNode {
+
+        @Child R2Foreign toForeignNode = R2Foreign.create();
+        @Children final RNode[] statements;
+
+        private ExecutableNodeImpl(TruffleLanguage<?> language, List<RSyntaxNode> list) {
+            super(language);
+            statements = new RNode[list.size()];
+            for (int i = 0; i < statements.length; i++) {
+                statements[i] = list.get(i).asRNode();
             }
-        };
+        }
+
+        @Override
+        @ExplodeLoop
+        public Object execute(VirtualFrame frame) {
+            if (statements.length == 0) {
+                return RNull.instance;
+            }
+            for (int i = 0; i < statements.length - 1; i++) {
+                statements[i].execute(frame);
+            }
+            return toForeignNode.execute(statements[statements.length - 1].execute(frame));
+        }
     }
 
     private static SourceSection createSourceSection(Source source, List<RSyntaxNode> statements) {
