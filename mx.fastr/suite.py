@@ -231,6 +231,7 @@ suite = {
       "sourceDirs" : ["src"],
       "dependencies" : [
         "sdk:GRAAL_SDK",
+        "sdk:LAUNCHER_COMMON",
         "truffle:JLINE",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",

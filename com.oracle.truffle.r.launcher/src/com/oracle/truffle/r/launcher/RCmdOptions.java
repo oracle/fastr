@@ -268,25 +268,44 @@ public final class RCmdOptions {
      * {@code args[0]} and we do not want to parse that!
      */
     public static RCmdOptions parseArguments(Client client, String[] args, boolean reparse) {
+        return parseArguments(client, args, reparse, null);
+    }
+
+    public static RCmdOptions parseArguments(Client client, String[] args, boolean reparse, boolean[] recognizedArgsIndices) {
+        assert recognizedArgsIndices == null || recognizedArgsIndices.length == args.length;
+
         EnumMap<RCmdOption, Object> options = new EnumMap<>(RCmdOption.class);
+        if (recognizedArgsIndices != null) {
+            recognizedArgsIndices[0] = true;
+        }
         int i = 1; // skip the first argument (the command)
         int firstNonOptionArgIndex = args.length;
         while (i < args.length) {
             final String arg = args[i];
             MatchResult result = matchOption(arg);
             if (result == null) {
-                // for Rscript, this means we are done
-                if (client == Client.RSCRIPT) {
+                boolean isOption = arg.startsWith("--") || arg.startsWith("-");
+                if (!isOption && client == Client.RSCRIPT) {
+                    // for Rscript, this means we are done
+                    if (recognizedArgsIndices != null) {
+                        recognizedArgsIndices[i] = true;
+                    }
                     firstNonOptionArgIndex = i;
                     break;
                 }
                 if (!reparse) {
                     // GnuR does not abort, simply issues a warning
                     System.out.printf("WARNING: unknown option '%s'%n", arg);
+                    if (recognizedArgsIndices != null) {
+                        recognizedArgsIndices[i] = true;
+                    }
                 }
                 i++;
                 continue;
             } else {
+                if (recognizedArgsIndices != null) {
+                    recognizedArgsIndices[i] = true;
+                }
                 RCmdOption option = result.option;
                 if (result.matchedShort && i == args.length - 1) {
                     System.out.println("usage:");
@@ -302,6 +321,9 @@ public final class RCmdOptions {
                 if (result.matchedShort) {
                     i++;
                     setValue(options, option, args[i]);
+                    if (recognizedArgsIndices != null) {
+                        recognizedArgsIndices[i] = true;
+                    }
                 } else {
                     if (option.type == RCmdOptionType.BOOLEAN) {
                         setValue(options, option, true);
@@ -318,6 +340,14 @@ public final class RCmdOptions {
                 }
             }
         }
+
+        if (recognizedArgsIndices != null) {
+            // mark the all non-option arguments (the tail) as recognized
+            for (int j = firstNonOptionArgIndex; j < recognizedArgsIndices.length; j++) {
+                recognizedArgsIndices[j] = true;
+            }
+        }
+
         // adjust for inserted executable name
         return new RCmdOptions(options, args, firstNonOptionArgIndex);
     }

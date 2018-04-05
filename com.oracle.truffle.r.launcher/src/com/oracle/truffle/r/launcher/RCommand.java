@@ -30,15 +30,11 @@ import java.io.OutputStream;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.function.Supplier;
 
-import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
@@ -46,37 +42,6 @@ import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 
 import jline.console.UserInterruptException;
-
-class RLauncher extends Launcher {
-
-    private final Client client;
-
-    RLauncher(Client client) {
-        this.client = client;
-    }
-
-    @Override
-    protected void printHelp(OptionCategory maxCategory) {
-        RCmdOptions.printHelp(client);
-    }
-
-    @Override
-    protected void printVersion() {
-        RCmdOptions.printVersion();
-    }
-
-    @Override
-    protected void collectArguments(Set<String> options) {
-        for (RCmdOption option : RCmdOption.values()) {
-            if (option.shortName != null) {
-                options.add(option.shortName);
-            }
-            if (option.plainName != null) {
-                options.add(option.plainName);
-            }
-        }
-    }
-}
 
 /*
  * TODO:
@@ -89,40 +54,25 @@ class RLauncher extends Launcher {
 /**
  * Emulates the (Gnu)R command as precisely as possible.
  */
-public class RCommand {
+public class RCommand extends RAbstractLauncher {
 
-    // CheckStyle: stop system..print check
-    public static RuntimeException fatal(String message, Object... args) {
-        System.out.println("FATAL: " + String.format(message, args));
-        System.exit(-1);
-        return new RuntimeException();
+    RCommand(String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
+        super(Client.R, env, inStream, outStream, errStream);
     }
 
-    public static RuntimeException fatal(Throwable t, String message, Object... args) {
-        t.printStackTrace();
-        System.out.println("FATAL: " + String.format(message, args));
-        System.exit(-1);
-        return null;
+    @Override
+    protected String[] getArguments() {
+        return options.getArguments();
     }
 
-    public static void main(String[] args) {
-        try {
-            System.exit(doMain(prependCommand(args), null, System.in, System.out, System.err));
-            // never returns
-            throw fatal("main should never return");
-        } catch (Throwable t) {
-            throw fatal(t, "error during REPL execution");
-        }
+    @Override
+    protected void launch(Builder contextBuilder) {
+        super.launch(contextBuilder);
+        StartupTiming.timestamp("VM Created");
+        StartupTiming.printSummary();
     }
 
-    static String[] prependCommand(String[] args) {
-        String[] result = new String[args.length + 1];
-        result[0] = "R";
-        System.arraycopy(args, 0, result, 1, args.length);
-        return result;
-    }
-
-    public static int doMain(String[] args, String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
+    private int execute(String[] args) {
         StartupTiming.timestamp("Main Entered");
         ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
         if (System.console() != null) {
@@ -143,34 +93,8 @@ public class RCommand {
             }
         }
 
-        boolean useJVM = false;
-        RLauncher launcher = new RLauncher(Client.R);
-        Map<String, String> polyglotOptions = new HashMap<>();
-        Iterator<String> iterator = argsList.iterator();
-        if (iterator.hasNext()) {
-            iterator.next(); // skip first argument
-            while (iterator.hasNext()) {
-                String arg = iterator.next();
-                if ("--jvm".equals(arg)) {
-                    useJVM = true;
-                    iterator.remove();
-                } else if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
-                    iterator.remove();
-                }
-            }
-        }
-        if (launcher.runPolyglotAction()) {
-            return 0;
-        }
-        RCmdOptions options = RCmdOptions.parseArguments(Client.R, argsList.toArray(new String[argsList.size()]), false);
-        assert env == null || env.length == 0 : "re-enable setting environments";
-        ConsoleHandler consoleHandler = createConsoleHandler(options, null, inStream, outStream);
-        try (Context context = Context.newBuilder().allowAllAccess(true).allowHostAccess(useJVM).options(polyglotOptions).arguments("R", options.getArguments()).in(
-                        consoleHandler.createInputStream()).out(outStream).err(errStream).build()) {
-            consoleHandler.setContext(context);
-            StartupTiming.timestamp("VM Created");
-            StartupTiming.printSummary();
-
+        launch(argsList.toArray(new String[0]));
+        if (context != null) {
             File srcFile = null;
             String fileOption = options.getString(RCmdOption.FILE);
             if (fileOption != null) {
@@ -178,6 +102,45 @@ public class RCommand {
             }
 
             return readEvalPrint(context, consoleHandler, srcFile);
+        } else {
+            return 0;
+        }
+    }
+
+    // CheckStyle: stop system..print check
+    public static RuntimeException fatal(String message, Object... args) {
+        System.out.println("FATAL: " + String.format(message, args));
+        System.exit(-1);
+        return new RuntimeException();
+    }
+
+    public static RuntimeException fatal(Throwable t, String message, Object... args) {
+        t.printStackTrace();
+        System.out.println("FATAL: " + String.format(message, args));
+        System.exit(-1);
+        return null;
+    }
+
+    static String[] prependCommand(String[] args) {
+        String[] result = new String[args.length + 1];
+        result[0] = "R";
+        System.arraycopy(args, 0, result, 1, args.length);
+        return result;
+    }
+
+    public static void main(String[] args) {
+        try {
+            System.exit(doMain(prependCommand(args), null, System.in, System.out, System.err));
+            // never returns
+            throw fatal("main should never return");
+        } catch (Throwable t) {
+            throw fatal(t, "error during REPL execution");
+        }
+    }
+
+    public static int doMain(String[] args, String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
+        try (RCommand rcmd = new RCommand(env, inStream, outStream, errStream)) {
+            return rcmd.execute(args);
         }
     }
 
