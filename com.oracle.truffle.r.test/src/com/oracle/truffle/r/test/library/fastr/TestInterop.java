@@ -107,22 +107,6 @@ public class TestInterop extends TestBase {
                         "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
     }
 
-    @Test
-    public void testHelp() {
-        assertHelpResult(fastREval("?as.external.byte", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
-        assertHelpResult(fastREval("help(as.external.byte)", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
-        assertHelpResult(fastREval("example(as.external.byte)", ContextKind.SHARE_PARENT_RW, false), null, "byteClass$valueOf(javaByte)", "[1] 123");
-    }
-
-    private static void assertHelpResult(String result, String startsWith, String... contains) {
-        if (startsWith != null) {
-            assertTrue(result.startsWith(startsWith));
-        }
-        for (String s : contains) {
-            assertTrue(result.contains(s));
-        }
-    }
-
     /**
      * Used for testing interop functionality.
      */

@@ -20,21 +20,40 @@
 # questions.
 
 eval(expression({
+
+    assignInNs <- function(x, val) {
+        ns <- asNamespace("grDevices")
+        unlockBinding(x, ns)
+        assign(x, val, envir = ns, inherits = T)
+        lockBinding(x, ns)
+    }
+
     # This should be preffered way of starting the FastR java device.
     # For compatibility reasons, both X11 and awt end up calling C_X11.
     # In the future, this function may support extra parameters like a
     # reference to java 2D graphics object, which will be used for the drawing.
-    awt <- function(width = NULL, height = NULL, graphicsObj = NULL) {
-        .External2(grDevices:::C_X11, ".FASTR.AWT", width, height, graphicsObj)
-    }
+    assignInNs('awt', function(width = NULL, height = NULL, graphicsObj = NULL) {
+        invisible(.External2(grDevices:::C_X11, ".FASTR.AWT", width, height, graphicsObj))
+    })
+
     # Allows to get the SVG code from SVG device, it also closes the device,
     # but the contents are not saved to the given file.
-    svg.off <- function(which = dev.cur()) {
+    assignInNs('svg.off', function(which = dev.cur()) {
         if (which == 1) {
             stop("cannot shut down device 1 (the null device)")
         }
         .External(C_devoff, as.integer(-which))
-    }
+    })
+
+    # Allows to get the SVG code from SVG device without closing it
+    svgStringSymbol <- list(name='svgstring')
+    assignInNs('svg.string', function() {
+        .External(svgStringSymbol)
+    })
+
+    # Adds help files for the new public functions
+    .fastr.addHelpPath('/com/oracle/truffle/r/library/fastrGrid/grDevices/Rd')
+
     # GnuR version only works with "X11cairo" device. Our version of savePlot
     # works with "awt" device and "X11cairo", which is for us only alias for
     # "awt". Moreover, we only support formats that awt supports.

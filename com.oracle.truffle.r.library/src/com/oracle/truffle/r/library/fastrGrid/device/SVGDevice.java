@@ -59,8 +59,14 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     }
 
     public String closeAndGetContents() {
-        closeSVGDocument();
+        closeSVGDocument(data);
         return data.toString();
+    }
+
+    public String getContents() {
+        StringBuilder result = new StringBuilder(data);
+        closeSVGDocument(result);
+        return result.toString();
     }
 
     @Override
@@ -207,7 +213,7 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     }
 
     private void saveFile() throws DeviceCloseException {
-        closeSVGDocument();
+        closeSVGDocument(data);
         try {
             Files.write(Paths.get(filename), Collections.singleton(data.toString()), StandardCharsets.UTF_8);
         } catch (IOException e) {
@@ -215,15 +221,15 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         }
     }
 
-    private void closeSVGDocument() {
-        if (data.length() == 0) {
+    private void closeSVGDocument(StringBuilder sb) {
+        if (sb.length() == 0) {
             return;
         }
         if (cachedCtx != null) {
             // see #appendStyle
-            data.append("</g>");
+            sb.append("</g>");
         }
-        data.append("</svg>");
+        sb.append("</svg>");
     }
 
     // closes opened <g> tag if necessary
