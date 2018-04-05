@@ -45,7 +45,7 @@ public final class CastForeignNode extends CastNode {
         }
     }
 
-    protected boolean isInteropScalar(Object obj) {
+    protected static boolean isInteropScalar(Object obj) {
         return obj instanceof RInteropScalar;
     }
 }

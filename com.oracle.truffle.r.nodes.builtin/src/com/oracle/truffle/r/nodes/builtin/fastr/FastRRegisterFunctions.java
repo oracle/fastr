@@ -104,7 +104,7 @@ public abstract class FastRRegisterFunctions extends RBuiltinNode.Arg4 {
     }
 
     @TruffleBoundary
-    private void assign(DotSymbol[] symbols, DLLInfo dllInfo, SymbolHandle[] symbolHandles, NativeSymbolType nst, REnvironment env) throws PutException {
+    private static void assign(DotSymbol[] symbols, DLLInfo dllInfo, SymbolHandle[] symbolHandles, NativeSymbolType nst, REnvironment env) throws PutException {
         for (int i = 0; i < symbols.length; i++) {
             SymbolInfo si = new SymbolInfo(dllInfo, symbols[i].name, symbolHandles[i]);
             RList symbolObject = si.createRSymbolObject(new RegisteredNativeSymbol(nst, symbols[i], dllInfo), true);
