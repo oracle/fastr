@@ -39,8 +39,9 @@ setMethod("$", c(x="jclassName"), function(x, name) {
 	}
 })
 setMethod("$<-", c(x="jclassName"), function(x, name, value) {    
-    .jfield(x@jobj, name) <- value
-    # FASTR <<<<<
+    # FASTR <<<<<    
+    # .jfield(x@jobj, name) <- value
+    .jfield(x@name, name) <- value
     # Fix: return x, otherwise LHS of $<- is overriden with 
     # the result of .jfield(x@jobj, name) <- value which is the field value
     x

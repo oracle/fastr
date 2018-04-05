@@ -32,9 +32,11 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestHelp extends TestBase {
     @Test
     public void testInteropHelp() {
-        assertHelpResult(fastREval("?as.external.byte", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
-        assertHelpResult(fastREval("help(as.external.byte)", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘as.external.byte’ ====", "converted to a byte", "byteClass$valueOf(javaByte)");
-        assertHelpResult(fastREval("example(as.external.byte)", ContextKind.SHARE_PARENT_RW, false), null, "byteClass$valueOf(javaByte)", "[1] 123");
+        assertHelpResult(fastREval("?java.type", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘java.type’ ====", "Access to a java type given by",
+                        "An polyglot value representing a java type");
+        assertHelpResult(fastREval("help(java.type)", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘java.type’ ====", "Access to a java type given by",
+                        "An polyglot value representing a java type");
+        assertHelpResult(fastREval("example(java.type)", ContextKind.SHARE_PARENT_RW, false), null, "java.type('java.util.ArrayList')", "$class");
     }
 
     @Test

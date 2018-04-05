@@ -24,16 +24,16 @@
 print("Hello, World! (from file)")
 print("Creating a Java object in FastR")
 
-clazz <- new.java.class("java.util.Date")
-obj <- new.external(clazz, as.external.long(as.integer(Sys.time())*1000))
+clazz <- java.type("java.util.Date")
+obj <- new(clazz, as.integer(Sys.time())*1000)
 print(obj$toString())
 
 # add classpath entry to be able to use our class
 java.addToClasspath("build/classes")
-clazz <- new.java.class("com.oracle.truffle.r.JavaMessage")
-obj <- new.external(clazz, "Hi there")
+clazz <- java.type("com.oracle.truffle.r.JavaMessage")
+obj <- new(clazz, "Hi there")
 print(obj$getMessage())
 
-eval.external('js', source='var s = "Hello from Javascript"; print(s)')
-eval.external('js', path="JS/main.js")
+eval.polyglot('js', source='var s = "Hello from Javascript"; print(s)')
+eval.polyglot('js', path="JS/main.js")
 

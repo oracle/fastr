@@ -332,7 +332,7 @@ final class REngine implements Engine, Engine.Timings {
         return new ExecutableNodeImpl(context.getLanguage(), list);
     }
 
-    private class ExecutableNodeImpl extends ExecutableNode {
+    private final class ExecutableNodeImpl extends ExecutableNode {
 
         @Child R2Foreign toForeignNode = R2Foreign.create();
         @Children final RNode[] statements;
@@ -685,7 +685,7 @@ final class REngine implements Engine, Engine.Timings {
             // this supports printing of non-R values (via toString for now)
             String str;
             if (result == null) {
-                str = "[external object (null)]";
+                str = "[polyglot value (null)]";
             } else if (result instanceof CharSequence) {
                 str = "[1] \"" + String.valueOf(result) + "\"";
             } else {

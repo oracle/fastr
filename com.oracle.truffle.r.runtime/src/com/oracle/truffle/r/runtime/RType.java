@@ -5,7 +5,7 @@
  *
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -48,7 +48,7 @@ public enum RType {
     S4Object("S4", -1),
     Connection("connection", -1),
     Dots("...", -1),
-    TruffleObject("truffle.object", -1),
+    TruffleObject("polyglot.value", -1),
     RInteropByte("interopt.byte", -1),
     RInteropChar("interopt.char", -1),
     RInteropFloat("interopt.float", -1),

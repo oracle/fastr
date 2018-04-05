@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notLogicalNA
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.rawValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
@@ -36,7 +35,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
-import java.net.MalformedURLException;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -44,6 +42,8 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -96,12 +96,10 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -117,7 +115,7 @@ public class FastRInterop {
         isTesting = true;
     }
 
-    @RBuiltin(name = "eval.external", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"mimeType", "source", "path"}, behavior = COMPLEX)
+    @RBuiltin(name = "eval.polyglot", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"mimeType", "source", "path"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg3 {
 
         static {
@@ -284,47 +282,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = "is.external.null", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class IsNull extends RBuiltinNode.Arg1 {
-
-        @Child private Node node = Message.IS_NULL.createNode();
-
-        static {
-            Casts.noCasts(IsNull.class);
-        }
-
-        @Specialization
-        public byte isNull(TruffleObject obj) {
-            return RRuntime.asLogical(ForeignAccess.sendIsNull(node, obj));
-        }
-
-        @Fallback
-        public byte isNull(@SuppressWarnings("unused") Object obj) {
-            return RRuntime.asLogical(false);
-        }
-    }
-
-    @RBuiltin(name = "is.external.executable", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class IsExecutable extends RBuiltinNode.Arg1 {
-
-        @Child private Node node = Message.IS_EXECUTABLE.createNode();
-
-        static {
-            Casts.noCasts(IsExecutable.class);
-        }
-
-        @Specialization
-        public byte isExecutable(TruffleObject obj) {
-            return RRuntime.asLogical(ForeignAccess.sendIsExecutable(node, obj));
-        }
-
-        @Fallback
-        public byte isExecutable(@SuppressWarnings("unused") Object obj) {
-            return RRuntime.asLogical(false);
-        }
-    }
-
-    @RBuiltin(name = "as.external.byte", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.interop.asByte", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToByte extends RBuiltinNode.Arg1 {
 
         static {
@@ -347,7 +305,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = "as.external.char", visibility = ON, kind = PRIMITIVE, parameterNames = {"value", "pos"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.interop.asChar", visibility = ON, kind = PRIMITIVE, parameterNames = {"value", "pos"}, behavior = COMPLEX)
     public abstract static class ToChar extends RBuiltinNode.Arg2 {
 
         static {
@@ -390,7 +348,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = "as.external.float", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.interop.asFloat", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToFloat extends RBuiltinNode.Arg1 {
 
         static {
@@ -413,7 +371,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = "as.external.long", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.interop.asLong", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToLong extends RBuiltinNode.Arg1 {
 
         static {
@@ -436,7 +394,7 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = "as.external.short", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.interop.asShort", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
     public abstract static class ToShort extends RBuiltinNode.Arg1 {
 
         static {
@@ -463,109 +421,57 @@ public class FastRInterop {
         casts.arg("value").mustBe(integerValue().or(doubleValue().or(rawValue())), RError.Message.INVALID_ARGUMENT_OF_TYPE, "value", Predef.typeName()).asVector().mustBe(singleElement()).findFirst();
     }
 
-    @RBuiltin(name = ".fastr.interop.toBoolean", visibility = ON, kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX)
-    public abstract static class ToBoolean extends RBuiltinNode.Arg1 {
+    @RBuiltin(name = "java.type", visibility = ON, kind = PRIMITIVE, parameterNames = {"className", "silent"}, behavior = COMPLEX)
+    public abstract static class JavaType extends RBuiltinNode.Arg2 {
 
         static {
-            Casts casts = new Casts(ToBoolean.class);
-            casts.arg("value").mustBe(logicalValue()).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(notLogicalNA()).map(Predef.toBoolean());
-        }
-
-        @Specialization
-        public boolean toBoolean(boolean value) {
-            return value;
-        }
-    }
-
-    @RBuiltin(name = "new.java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "silent"}, behavior = COMPLEX)
-    public abstract static class JavaClass extends RBuiltinNode.Arg2 {
-
-        private static final Object accessError = new Object();
-
-        static {
-            Casts casts = new Casts(JavaClass.class);
-            casts.arg("class").mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
+            Casts casts = new Casts(JavaType.class);
+            casts.arg("className").mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
             casts.arg("silent").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
         }
 
-        @Specialization
-        @TruffleBoundary
-        public TruffleObject javaClass(TruffleObject obj, boolean silent) {
-            if (JavaInterop.isJavaObject(obj)) {
-                return JavaInterop.toJavaClass(obj);
-            }
-            throw error(RError.Message.GENERIC, "unsupported type " + obj.getClass().getName());
+        @SuppressWarnings("unused")
+        @Specialization(guards = {"isClass(className)", "className.equals(cachedClazz)"}, limit = "10")
+        public TruffleObject javaClassCached(String className, boolean silent,
+                        @Cached("className") String cachedClazz,
+                        @Cached("getJavaClass(className, silent)") Object result,
+                        @Cached("create()") BranchProfile interopExceptionProfile) {
+            return javaClassToTruffleObject(className, result, interopExceptionProfile);
+        }
+
+        @Specialization(replaces = "javaClassCached")
+        public TruffleObject javaClass(String className, boolean silent,
+                        @Cached("create()") BranchProfile interopExceptionProfile) {
+            Object result = getJavaClass(className, silent);
+            return javaClassToTruffleObject(className, result, interopExceptionProfile);
         }
 
         protected boolean isClass(Object obj) {
             return obj != null && obj instanceof Class;
         }
 
-        @Specialization(guards = {"isClass(clazz)", "clazz.equals(cachedClazz)"}, limit = "10")
-        public TruffleObject javaClassCached(String clazz, boolean silent,
-                        @Cached("clazz") String cachedClazz,
-                        @Cached("getJavaClass(clazz, silent)") Object result,
-                        @Cached("create()") BranchProfile interopExceptionProfile) {
-            return javaClassToTruffleObject(clazz, result, interopExceptionProfile);
-        }
-
-        @Specialization(replaces = "javaClassCached")
-        public TruffleObject javaClass(String clazz, boolean silent,
-                        @Cached("create()") BranchProfile interopExceptionProfile) {
-            Object result = getJavaClass(clazz, silent);
-            return javaClassToTruffleObject(clazz, result, interopExceptionProfile);
+        protected Object getJavaClass(String clazz, boolean silent) {
+            return classForName(clazz, silent);
         }
 
         @TruffleBoundary
-        private TruffleObject javaClassToTruffleObject(String clazz, Object result, BranchProfile interopExceptionProfile) {
+        protected TruffleObject javaClassToTruffleObject(String clazz, Object result, BranchProfile interopExceptionProfile) {
             if (result == RNull.instance) {
                 return RNull.instance;
             }
-            if (result instanceof Class<?>) {
+            if (result instanceof TruffleObject) {
+                return (TruffleObject) result;
+            } else if (result instanceof Class<?>) {
                 return JavaInterop.asTruffleObject(result);
-            } else if (result == accessError) {
-                CompilerDirectives.transferToInterpreter();
-                throw error(RError.Message.GENERIC, "error while accessing Java class: " + clazz);
             } else {
                 interopExceptionProfile.enter();
                 if (result instanceof RuntimeException) {
                     throw RError.handleInteropException(this, (RuntimeException) result);
                 } else {
-                    assert result instanceof Throwable;
+                    assert result instanceof Throwable : "class " + clazz + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
                     throw RError.handleInteropException(this, new RuntimeException((Throwable) result));
                 }
-            }
-        }
-
-        protected static Object getJavaClass(String className, boolean silent) {
-            Class<?> clazz = getPrimitiveClass(className);
-            if (clazz != null) {
-                return clazz;
-            }
-            return loadClass(className, silent);
-        }
-
-        @TruffleBoundary
-        private static Object loadClass(String clazz, boolean silent) {
-            try {
-                Class<?> result = RContext.getInstance().loadClass(clazz);
-                if (result == null) {
-                    // not found
-                    if (silent) {
-                        return RNull.instance;
-                    } else {
-                        return new ClassNotFoundException(clazz + " not found");
-                    }
-                }
-                return result;
-            } catch (SecurityException | IllegalArgumentException e) {
-                return accessError;
-            } catch (RuntimeException e) {
-                if (silent) {
-                    return RNull.instance;
-                }
-                return e;
             }
         }
     }
@@ -582,112 +488,24 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public TruffleObject addEntries(RAbstractStringVector value, boolean silent) {
-            try {
-                RContext ctx = RContext.getInstance();
-                String[] entriesArr = new String[value.getLength()];
-                for (int i = 0; i < value.getLength(); i++) {
-                    entriesArr[i] = value.getDataAt(i);
+        public TruffleObject addEntries(@SuppressWarnings("unused") RAbstractStringVector value, @SuppressWarnings("unused") boolean silent) {
+            Env env = RContext.getInstance().getEnv();
+
+            for (int i = 0; i < value.getLength(); i++) {
+                TruffleFile file = env.getTruffleFile(value.getDataAt(i));
+                try {
+                    env.addToHostClassPath(file);
+                } catch (Exception e) {
+                    if (silent) {
+                        return RNull.instance;
+                    }
+                    throw error(RError.Message.GENERIC, "error while adding classpath entry: " +
+                                    e.getMessage());
+
                 }
-                ctx.addInteropClasspathEntries(entriesArr);
-                return value;
-            } catch (MalformedURLException e) {
-                if (silent) {
-                    return RNull.instance;
-                }
-                throw error(RError.Message.GENERIC, "error while adding classpath entry: " + e.getMessage());
             }
-        }
-    }
 
-    @RBuiltin(name = "java.classpath", visibility = ON, kind = PRIMITIVE, parameterNames = {}, behavior = COMPLEX)
-    public abstract static class JavaClasspath extends RBuiltinNode.Arg0 {
-
-        static {
-            Casts.noCasts(JavaClasspath.class);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        public RAbstractStringVector getEntries() {
-            RContext ctx = RContext.getInstance();
-            String[] paths = ctx.getInteropClasspathEntries();
-            return RDataFactory.createStringVector(paths, true);
-        }
-    }
-
-    @ImportStatic({RRuntime.class})
-    @RBuiltin(name = "java.class", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj", "getClassName"}, behavior = COMPLEX)
-    public abstract static class JavaClassName extends RBuiltinNode.Arg2 {
-
-        static {
-            Casts casts = new Casts(JavaClassName.class);
-            casts.arg("getClassName").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
-                            notLogicalNA()).map(Predef.toBoolean());
-        }
-
-        @Specialization(guards = {"isJavaObject(obj)"})
-        @TruffleBoundary
-        public Object javaClassName(Object obj, boolean getClassName) {
-            if (isJavaObject(obj)) {
-                Object o = JavaInterop.asJavaObject(Object.class, (TruffleObject) obj);
-                if (o == null) {
-                    return RNull.instance;
-                }
-                if (getClassName && o instanceof Class) {
-                    return ((Class<?>) o).getName();
-                }
-                return o.getClass().getName();
-            } else {
-                throw error(RError.Message.GENERIC, "unsupported type " + obj.getClass().getName());
-            }
-        }
-
-        protected boolean isJavaObject(Object obj) {
-            return RRuntime.isForeignObject(obj) && JavaInterop.isJavaObject(obj);
-        }
-
-        @Fallback
-        public String javaClassName(@SuppressWarnings("unused") Object obj,
-                        @SuppressWarnings("unused") Object getClassName) {
-            throw error(RError.Message.GENERIC, "unsupported type " + obj.getClass().getName());
-        }
-    }
-
-    @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = "is.external.array", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
-    public abstract static class IsForeignArray extends RBuiltinNode.Arg1 {
-
-        static {
-            Casts.noCasts(IsForeignArray.class);
-        }
-
-        @Specialization(guards = {"isForeignObject(obj)"})
-        public byte isArray(TruffleObject obj,
-                        @Cached("HAS_SIZE.createNode()") Node hasSize) {
-            return RRuntime.asLogical(ForeignAccess.sendHasSize(hasSize, obj));
-        }
-
-        @Fallback
-        public byte isArray(@SuppressWarnings("unused") Object obj) {
-            return RRuntime.LOGICAL_FALSE;
-        }
-    }
-
-    @RBuiltin(name = ".fastr.interop.getJavaClass", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
-    public abstract static class GetJavaClass extends RBuiltinNode.Arg1 {
-
-        static {
-            Casts.noCasts(GetJavaClass.class);
-        }
-
-        @Specialization
-        @TruffleBoundary
-        public TruffleObject javaClass(TruffleObject obj) {
-            if (JavaInterop.isJavaObject(obj)) {
-                return JavaInterop.toJavaClass(obj);
-            }
-            throw error(RError.Message.GENERIC, "unsupported type " + obj.getClass().getName());
+            return RNull.instance;
         }
     }
 
@@ -706,7 +524,7 @@ public class FastRInterop {
 
         @Fallback
         @TruffleBoundary
-        public byte isIdentical(@SuppressWarnings("unused") Object x1, @SuppressWarnings("unused") Object x2) {
+        public byte isIdentical(Object x1, Object x2) {
             throw error(RError.Message.GENERIC, String.format("unsupported types: %s, %s", x1.getClass().getName(), x2.getClass().getName()));
         }
 
@@ -770,7 +588,7 @@ public class FastRInterop {
 
         @Fallback
         @TruffleBoundary
-        public byte asTruffleObject(@SuppressWarnings("unused") Object x) {
+        public byte asTruffleObject(Object x) {
             throw error(RError.Message.GENERIC, String.format("unsupported type: %s", x.getClass().getName()));
         }
     }
@@ -794,7 +612,7 @@ public class FastRInterop {
 
         @Fallback
         @TruffleBoundary
-        public byte isAssignable(@SuppressWarnings("unused") Object x1, @SuppressWarnings("unused") Object x2) {
+        public byte isAssignable(Object x1, Object x2) {
             throw error(RError.Message.GENERIC, String.format("unsupported types: %s, %s", x1.getClass().getName(), x2.getClass().getName()));
         }
 
@@ -845,7 +663,7 @@ public class FastRInterop {
 
         @Fallback
         @TruffleBoundary
-        public byte isInstance(@SuppressWarnings("unused") Object x1, @SuppressWarnings("unused") Object x2) {
+        public byte isInstance(Object x1, Object x2) {
             throw error(RError.Message.GENERIC, String.format("unsupported types: %s, %s", x1.getClass().getName(), x2.getClass().getName()));
         }
 
@@ -862,43 +680,11 @@ public class FastRInterop {
         }
     }
 
-    @RBuiltin(name = "new.java.array", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "dim"}, behavior = COMPLEX)
-    public abstract static class NewJavaArray extends RBuiltinNode.Arg2 {
-
-        static {
-            Casts casts = new Casts(NewJavaArray.class);
-            casts.arg("class").mustBe(stringValue()).asStringVector().mustBe(Predef.singleElement()).findFirst();
-            casts.arg("dim").mustBe(integerValue().or(doubleValue()), RError.Message.INVALID_ARGUMENT_OF_TYPE, "dim", typeName()).asIntegerVector();
-        }
-
-        @Specialization
-        @TruffleBoundary
-        public Object newArray(String clazz, int length) {
-            return JavaInterop.asTruffleObject(Array.newInstance(getClazz(clazz), length));
-        }
-
-        @Specialization
-        @TruffleBoundary
-        public Object newArray(String clazz, RAbstractIntVector dim) {
-            int[] dima = new int[dim.getLength()];
-            for (int i = 0; i < dima.length; i++) {
-                dima[i] = dim.getDataAt(i);
-            }
-            return JavaInterop.asTruffleObject(Array.newInstance(getClazz(clazz), dima));
-        }
-
-        private Class<?> getClazz(String className) throws RError {
-            Class<?> result = classForName(className);
-            if (result == null) {
-                throw error(RError.Message.GENERIC, "cannot access Java class %s", className);
-            }
-            return result;
-        }
-    }
-
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = "as.java.array", visibility = ON, kind = PRIMITIVE, parameterNames = {"x", "className", "flat"}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.interop.asJavaArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"x", "className", "flat"}, behavior = COMPLEX)
     public abstract static class ToJavaArray extends RBuiltinNode.Arg3 {
+
+        BranchProfile interopExceptionProfile = BranchProfile.create();
 
         static {
             Casts casts = new Casts(ToJavaArray.class);
@@ -907,6 +693,8 @@ public class FastRInterop {
             casts.arg("flat").mapMissing(Predef.constant(RRuntime.LOGICAL_TRUE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
         }
+
+        abstract Object execute(Object arg1, Object arg2, Object arg3);
 
         @Specialization
         @TruffleBoundary
@@ -1052,6 +840,7 @@ public class FastRInterop {
 
         private static Object toArray(RAbstractVector vec, boolean flat, Class<?> clazz, VecElementToArray vecToArray) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
             int[] dims = getDim(flat, vec);
+            // TODO need ForeignAccess.sendNew(multiDimArrayClass, dims)
             final Object array = Array.newInstance(clazz, dims);
             for (int d = 0; d < dims.length; d++) {
                 int dim = dims[d];
@@ -1116,12 +905,21 @@ public class FastRInterop {
             throw error(RError.Message.GENERIC, "unsupported type");
         }
 
+        @TruffleBoundary
         private Class<?> getClazz(String className) throws RError {
-            Class<?> result = classForName(className);
-            if (result == null) {
-                throw error(RError.Message.GENERIC, "cannot access Java class %s", className);
+            Object result = classForName(className);
+
+            if (result instanceof TruffleObject && JavaInterop.isJavaObject(Class.class, (TruffleObject) result)) {
+                return JavaInterop.asJavaObject(Class.class, (TruffleObject) result);
+            } else {
+                interopExceptionProfile.enter();
+                if (result instanceof RuntimeException) {
+                    throw RError.handleInteropException(this, (RuntimeException) result);
+                } else {
+                    assert result instanceof Throwable : "class " + className + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
+                    throw RError.handleInteropException(this, new RuntimeException((Throwable) result));
+                }
             }
-            return result;
         }
 
         protected boolean isJavaObject(TruffleObject obj) {
@@ -1169,7 +967,7 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = "new.external", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
+    @RBuiltin(name = ".fastr.interop.new", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
     public abstract static class InteropNew extends RBuiltinNode.Arg2 {
 
         static {
@@ -1189,7 +987,33 @@ public class FastRInterop {
                 }
                 Object result = ForeignAccess.sendNew(sendNew, clazz, argValues);
                 return foreign2R.execute(result);
-            } catch (IllegalStateException | SecurityException | IllegalArgumentException | UnsupportedTypeException | ArityException | UnsupportedMessageException e) {
+            } catch (UnsupportedTypeException ute) {
+                if (JavaInterop.isJavaObject(Class.class, clazz)) {
+                    Class<?> cls = JavaInterop.asJavaObject(Class.class, clazz);
+                    if (cls.isArray()) {
+                        // TODO temporary hot fix
+                        // need ForeignAccess.sendNew(multiDimArrayClass, dims)
+                        Object arg0 = args.getArgument(0);
+                        if (arg0 instanceof RAbstractIntVector) {
+                            RAbstractIntVector vec = (RAbstractIntVector) arg0;
+                            int[] dims = new int[vec.getLength()];
+
+                            for (int i = 0; i < vec.getLength(); i++) {
+                                Array.setInt(dims, i, vec.getDataAt(i));
+                            }
+                            cls = cls.getComponentType();
+                            while (cls.isArray()) {
+                                cls = cls.getComponentType();
+                            }
+
+                            Object a = Array.newInstance(cls, dims);
+                            return JavaInterop.asTruffleObject(a);
+                        }
+                    }
+                }
+                String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + ute.getMessage();
+                throw error(RError.Message.GENERIC, msg);
+            } catch (IllegalStateException | SecurityException | IllegalArgumentException | ArityException | UnsupportedMessageException e) {
                 String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + e.getMessage();
                 throw error(RError.Message.GENERIC, msg);
             } catch (RuntimeException e) {
@@ -1204,7 +1028,7 @@ public class FastRInterop {
     }
 
     @ImportStatic(RRuntime.class)
-    @RBuiltin(name = "is.external", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
+    @RBuiltin(name = "is.polyglot.value", visibility = ON, kind = PRIMITIVE, parameterNames = {"obj"}, behavior = COMPLEX)
     public abstract static class IsExternal extends RBuiltinNode.Arg1 {
 
         static {
@@ -1222,79 +1046,30 @@ public class FastRInterop {
         }
     }
 
-    private static Class<?> classForName(String className) {
-        Class<?> clazz = getPrimitiveClass(className);
-        if (clazz != null) {
-            return clazz;
-        }
-        return RContext.getInstance().loadClass(className);
+    private static Object classForName(String className) {
+        return classForName(className, false);
     }
 
-    private static Class<?> getPrimitiveClass(String className) {
-        if (Boolean.TYPE.getName().equals(className)) {
-            return Boolean.TYPE;
-        } else if (Byte.TYPE.getName().equals(className)) {
-            return Byte.TYPE;
-        } else if (Character.TYPE.getName().equals(className)) {
-            return Character.TYPE;
-        } else if (Double.TYPE.getName().equals(className)) {
-            return Double.TYPE;
-        } else if (Float.TYPE.getName().equals(className)) {
-            return Float.TYPE;
-        } else if (Integer.TYPE.getName().equals(className)) {
-            return Integer.TYPE;
-        } else if (Long.TYPE.getName().equals(className)) {
-            return Long.TYPE;
-        } else if (Short.TYPE.getName().equals(className)) {
-            return Short.TYPE;
-        }
-        return null;
-    }
-
-    @RBuiltin(name = "do.call.external", visibility = ON, kind = PRIMITIVE, parameterNames = {"receiver", "what", "args"}, behavior = COMPLEX)
-    public abstract static class DoCallExternal extends RBuiltinNode.Arg3 {
-
-        static {
-            Casts casts = new Casts(DoCallExternal.class);
-            casts.arg("args").mustBe(RAbstractListVector.class, RError.Message.GENERIC, "third argument must be a list");
-        }
-
-        @Child private GetReadonlyData.ListData getDataNode;
-
-        protected Node createInvoke(int nargs) {
-            return Message.createInvoke(nargs).createNode();
-        }
-
-        @Specialization
-        public Object invoke(TruffleObject obj, String what, RAbstractListVector args,
-                        @Cached("create()") Foreign2R foreign2R,
-                        @Cached("create()") R2Foreign r2Foreign,
-                        @Cached("createInvoke(args.getLength())") Node invokeNode) {
-
-            if (getDataNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getDataNode = insert(GetReadonlyData.ListData.create());
-            }
-
-            Object[] argValues = getDataNode.execute(args);
-            for (int i = 0; i < argValues.length; i++) {
-                argValues[i] = r2Foreign.execute(argValues[i]);
-            }
+    private static Object classForName(String className, boolean silent) {
+        Env env = RContext.getInstance().getEnv();
+        if (env != null && env.isHostLookupAllowed()) {
             try {
-                return foreign2R.execute(ForeignAccess.sendInvoke(invokeNode, obj, what, argValues));
-            } catch (UnsupportedTypeException e) {
-                throw error(RError.Message.GENERIC, "Invalid argument types provided");
-            } catch (ArityException e) {
-                throw error(RError.Message.INVALID_ARG_NUMBER, what);
-            } catch (UnknownIdentifierException e) {
-                throw error(RError.Message.UNKNOWN_FUNCTION, what);
-            } catch (UnsupportedMessageException e) {
-                throw error(RError.Message.MUST_BE_STRING_OR_FUNCTION, "what");
-            } catch (RuntimeException e) {
-                CompilerDirectives.transferToInterpreter();
-                throw error(RError.Message.GENERIC, e.getMessage());
+                Object found = env.lookupHostSymbol(demangle(className));
+                if (found != null) {
+                    return found;
+                }
+            } catch (Exception ex) {
             }
+        } else {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC,
+                            "Java Interop is not available, please run FastR with --jvm, e.g. '$bin/R --jvm CMD INSTALL' or '$bin/Rscript --jvm myscript.R'");
         }
+        return silent ? RNull.instance : new ClassNotFoundException(className + " not found");
+    }
+
+    @TruffleBoundary
+    private static String demangle(String className) {
+        return className.replaceAll("/", ".");
     }
 
     @RBuiltin(name = ".fastr.interop.try", kind = PRIMITIVE, parameterNames = {"function", "check"}, behavior = COMPLEX)
@@ -1345,12 +1120,12 @@ public class FastRInterop {
         }
 
         @Specialization
-        public Object getException(VirtualFrame frame, byte silent, RMissing callerFor) {
-            return getException(frame, silent, (String) null);
+        public Object getException(byte silent, @SuppressWarnings("unused") RMissing callerFor) {
+            return getException(silent, (String) null);
         }
 
         @Specialization
-        public Object getException(VirtualFrame frame, byte silent, String showCallerOf) {
+        public Object getException(byte silent, String showCallerOf) {
             Throwable t = getInteropTryState().lastException;
             if (t != null) {
                 CompilerDirectives.transferToInterpreter();

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public class IsFiniteFunctions {
         @Specialization(guards = "isForeignObject(obj)")
         @TruffleBoundary
         protected byte doIsForeign(@SuppressWarnings("unused") TruffleObject obj) {
-            throw error(RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, "external object");
+            throw error(RError.Message.DEFAULT_METHOD_NOT_IMPLEMENTED_FOR_TYPE, "polyglot.value");
         }
 
         @Fallback

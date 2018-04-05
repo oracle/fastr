@@ -52,7 +52,7 @@ public abstract class AbstractMRTest {
 
     @BeforeClass
     public static void before() {
-        context = Context.newBuilder("R", "llvm").build();
+        context = Context.newBuilder("R", "llvm").allowHostAccess(true).build();
         context.eval("R", "1"); // initialize context
         context.enter();
     }

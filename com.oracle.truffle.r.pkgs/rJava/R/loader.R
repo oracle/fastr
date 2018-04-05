@@ -30,7 +30,9 @@
     # } else {
     #     .jcall(.rJava.class.loader,"[Ljava/lang/String;","getClassPath")
     # }
-    java.classpath()
+    
+    # not provided, do nothing
+
     # FASTR >>>>>
 }
 

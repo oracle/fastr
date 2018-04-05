@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,6 @@ final class TruffleObjectPrinter extends AbstractValuePrinter<TruffleObject> {
     @Override
     @TruffleBoundary
     protected void printValue(TruffleObject value, PrintContext printCtx) throws IOException {
-        printCtx.output().print("[external object]");
+        printCtx.output().print("[polyglot value]");
     }
 }

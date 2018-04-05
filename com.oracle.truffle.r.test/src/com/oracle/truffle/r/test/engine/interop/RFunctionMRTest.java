@@ -60,7 +60,7 @@ public class RFunctionMRTest extends AbstractMRTest {
         f = create("function(a) { is.logical(a) }");
         assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
 
-        f = create("function(a) { as.external.short(a) }");
+        f = create("function(a) { .fastr.interop.asShort(a) }");
         assertTrue(ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, 123) instanceof Short);
     }
 

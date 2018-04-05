@@ -18,5 +18,5 @@ Adds a class path entry to the class path.
 java.addClasspathEntry('/foo/bar.jar')
 }
 \seealso{
-\code{\link{new.java.class}}
+\code{\link{java.type}}
 }

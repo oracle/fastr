@@ -52,11 +52,11 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testInteropEval() {
-        assertEvalFastR("eval.external('application/x-r', '14 + 2')", "16");
-        assertEvalFastR("eval.external('application/x-r', '1')", "1");
-        assertEvalFastR("eval.external('application/x-r', '1L')", "1L");
-        assertEvalFastR("eval.external('application/x-r', 'TRUE')", "TRUE");
-        assertEvalFastR("eval.external('application/x-r', 'as.character(123)')", "as.character(123)");
+        assertEvalFastR("eval.polyglot('application/x-r', '14 + 2')", "16");
+        assertEvalFastR("eval.polyglot('application/x-r', '1')", "1");
+        assertEvalFastR("eval.polyglot('application/x-r', '1L')", "1L");
+        assertEvalFastR("eval.polyglot('application/x-r', 'TRUE')", "TRUE");
+        assertEvalFastR("eval.polyglot('application/x-r', 'as.character(123)')", "as.character(123)");
     }
 
     @Test
@@ -68,43 +68,27 @@ public class TestInterop extends TestBase {
     }
 
     @Test
-    public void testIsExternalExecutable() {
-        assertEvalFastR("is.external.executable(sum)", "TRUE");
-        assertEvalFastR("is.external.executable(NULL)", "FALSE");
-        assertEvalFastR("is.external.executable(c(1))", "FALSE");
-        assertEvalFastR("is.external.executable(list(1))", "FALSE");
-        assertEvalFastR("is.external.executable()", "FALSE");
-    }
-
-    @Test
-    public void testIsExternalNull() {
-        assertEvalFastR("is.external.null(NULL)", "TRUE");
-        assertEvalFastR("is.external.null(c(1))", "FALSE");
-        assertEvalFastR("is.external.null(list(1))", "FALSE");
-        assertEvalFastR("is.external.null()", "FALSE");
-    }
-
-    @Test
     public void testInteropEvalFile() {
-        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.external(mimeType=\"application/x-r\", path=\"" +
+        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.polyglot(mimeType=\"application/x-r\", path=\"" +
                         TEST_EVAL_FILE + "\")",
                         "x<-c(1);cat(x)");
-        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.external(path=\"" + TEST_EVAL_FILE + "\")",
+        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.polyglot(path=\"" + TEST_EVAL_FILE + "\")",
                         "x<-c(1);cat(x)");
-        assertEvalFastR("tryCatch(eval.external(path=\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
+        assertEvalFastR("tryCatch(eval.polyglot(path=\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
 
-        assertEvalFastR("eval.external()", "cat('Error in eval.external() : invalid \\'source\\' or \\'path\\' argument\\n')");
-        assertEvalFastR("eval.external(,'abc',)", "cat('Error in eval.external(, \"abc\", ) : invalid mimeType argument\\n')");
+        assertEvalFastR("eval.polyglot()", "cat('Error in eval.polyglot() : invalid \\'source\\' or \\'path\\' argument\\n')");
+        assertEvalFastR("eval.polyglot(,'abc',)", "cat('Error in eval.polyglot(, \"abc\", ) : invalid mimeType argument\\n')");
     }
 
     @Test
     public void testInvoke() {
-        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
-        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength(), silent=TRUE); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
-        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
-                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
-        assertEvalFastR("cl <- new.java.class('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength, silent=TRUE); fo <- new.external(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
-                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"external object\"\n')");
+        assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()", "print(72L)");
+        assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength(), silent=TRUE); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength()",
+                        "print(72L)");
+        assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
+                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"polyglot.value\"\n')");
+        assertEvalFastR("cl <- java.type('java.math.BigInteger'); fo <- 1:100; try(fo@bitLength, silent=TRUE); fo <- new(cl, 'FFFFFFFFFFFFFFFFFF', 16L); fo@bitLength",
+                        "cat('Error in fo@bitLength :\n  cannot get a slot (\"bitLength\") from an object of type \"polyglot.value\"\n')");
     }
 
     /**
@@ -144,7 +128,7 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testPrinting() {
-        assertEvalFastR("v <- import('testPOJO'); print(v)", "cat('[external object]\\n" +
+        assertEvalFastR("v <- import('testPOJO'); print(v)", "cat('[polyglot value]\\n" +
                         "$stringValue\\n" +
                         "[1] \"foo\"\\n" +
                         "\\n" +
@@ -162,11 +146,10 @@ public class TestInterop extends TestBase {
                         "\\n" +
                         "$longValue\\n" +
                         "[1] 123412341234\\n\\n')");
-        assertEvalFastR("v <- import('testStringArray'); print(v)", "cat('[external object]\\n[1] \"a\"   \"\"    \"foo\"\\n')");
-        assertEvalFastR("v <- import('testIntArray'); print(v)", "cat('[external object]\\n[1]   1  -5 199\\n')");
-        assertEvalFastR("v <- import('testIntArray'); v", "cat('[external object]\\n[1]   1  -5 199\\n')");
-        // assertEvalFastR("v <- import('testPOJO'); names(v)", "c('stringValue', 'charValue',
-        // 'intValue', 'shortValue', 'booleanValue', 'longValue')");
+        assertEvalFastR("v <- import('testStringArray'); print(v)", "cat('[polyglot value]\\n[1] \"a\"   \"\"    \"foo\"\\n')");
+        assertEvalFastR("v <- import('testIntArray'); print(v)", "cat('[polyglot value]\\n[1]   1  -5 199\\n')");
+        assertEvalFastR("v <- import('testIntArray'); v", "cat('[polyglot value]\\n[1]   1  -5 199\\n')");
+        assertEvalFastR("v <- import('testPOJO'); names(v)", "c('stringValue', 'charValue', 'intValue', 'shortValue', 'booleanValue', 'longValue', 'class')");
     }
 
     @Test

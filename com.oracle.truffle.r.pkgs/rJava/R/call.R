@@ -149,7 +149,7 @@
           if(is.null(clazzname)) {
               # returnSig is not primitive, but we might have an unboxed primitive value              
               # typicaly, this can happen when called from .jrcall (in cases like rJavaObject$someMethodReturningInt())
-              # and .jrcall for now always simplyfies the return value and dumps the class name anyway
+              # and .jrcall for now always simplifies the return value and dumps the class name anyway
               # so lets retrieve it "just in case"
               if (is.character(o)) {
                   clazzname <- "java.lang.String"
@@ -160,7 +160,10 @@
               } else if (is.logical(o)) {
                   clazzname <- "java.lang.Boolean"
               } else {
-                  clazzname <- java.class(o, getClassName = TRUE)
+                  clazzname <- o$getClass()$getName()
+                  if(clazzname == "java.lang.Class") {
+                      clazzname <- o$getName()
+                  }
               }
           }
           # FASTR >>>>>>
