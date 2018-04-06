@@ -73,6 +73,19 @@ public final class REnvVars implements RContext.ContextState {
         // Always read the system file
         FileSystem fileSystem = FileSystems.getDefault();
         safeReadEnvironFile(fileSystem.getPath(rHome, "etc", "Renviron").toString());
+
+        String internalArgs = System.getenv("FASTR_INTERNAL_ARGS");
+        if (context.getEnv().isHostLookupAllowed()) {
+            if (internalArgs == null) {
+                internalArgs = "--jvm";
+            } else if (!internalArgs.contains("--jvm")) {
+                internalArgs += " --jvm";
+            }
+        }
+        if (internalArgs != null) {
+            envVars.put("FASTR_INTERNAL_ARGS", internalArgs);
+        }
+
         envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
         envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
         envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());

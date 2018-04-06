@@ -46,4 +46,4 @@ else
     mx=`which mx`
 fi
 
-exec $mx --primary-suite-path $PRIMARY_PATH $MX_R_GLOBAL_ARGS R $MX_R_CMD_ARGS "$@"
+exec $mx --primary-suite-path $PRIMARY_PATH $MX_R_GLOBAL_ARGS R $FASTR_INTERNAL_ARGS $MX_R_CMD_ARGS "$@"
