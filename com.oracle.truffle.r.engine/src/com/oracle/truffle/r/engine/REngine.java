@@ -110,6 +110,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
  * this class per {@link RContext}.
  */
+@SuppressWarnings("deprecation")
 final class REngine implements Engine, Engine.Timings {
 
     /**

@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 /**
  * The FastR builtins that allow multiple "virtual" R sessions potentially executing in parallel.
  */
+@SuppressWarnings("deprecation")
 public class FastRContext {
 
     private static final class CastsHelper {

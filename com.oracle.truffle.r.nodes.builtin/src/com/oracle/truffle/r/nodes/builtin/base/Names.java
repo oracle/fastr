@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@SuppressWarnings("deprecation")
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Names extends RBuiltinNode.Arg1 {

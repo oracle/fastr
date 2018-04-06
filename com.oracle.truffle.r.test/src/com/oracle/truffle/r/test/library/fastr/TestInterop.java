@@ -36,6 +36,7 @@ import java.io.File;
 import org.junit.After;
 import static org.junit.Assert.assertTrue;
 
+@SuppressWarnings("deprecation")
 public class TestInterop extends TestBase {
 
     private static final SeekableMemoryByteChannel CHANNEL = new SeekableMemoryByteChannel();
@@ -117,7 +118,6 @@ public class TestInterop extends TestBase {
                     new TestJavaObject("testStringArray", new String[]{"a", "", "foo"})};
 
     // TODO: export/importSymbol
-    @SuppressWarnings("deprecation")
     @Override
     public void addPolyglotSymbols(org.graalvm.polyglot.Context context) {
         for (TestJavaObject t : TestInterop.testJavaObjects) {

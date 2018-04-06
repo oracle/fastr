@@ -118,6 +118,7 @@ import java.util.List;
  * Tests the cast pipelines and also that the samples generation process matches the intended
  * semantics.
  */
+@SuppressWarnings("deprecation")
 public class CastBuilderTest {
 
     /**

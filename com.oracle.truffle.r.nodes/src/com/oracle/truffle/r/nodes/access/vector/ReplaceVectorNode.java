@@ -67,6 +67,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 /**
  * Syntax node for element writes.
  */
+
+@SuppressWarnings("deprecation")
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class ReplaceVectorNode extends RBaseNode {
 

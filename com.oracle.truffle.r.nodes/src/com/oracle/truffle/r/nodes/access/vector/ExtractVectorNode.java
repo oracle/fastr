@@ -70,6 +70,7 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R.ForeignArrayData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@SuppressWarnings("deprecation")
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class ExtractVectorNode extends RBaseNode {
 

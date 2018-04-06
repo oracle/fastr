@@ -121,6 +121,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts can be destroyed
  */
+@SuppressWarnings("deprecation")
 public final class RContext {
 
     public static ChildContextInfo childInfo;
@@ -825,13 +826,13 @@ public final class RContext {
                     throws UnknownIdentifierException, UnsupportedMessageException, UnsupportedTypeException, ArityException {
         assert JavaInterop.isJavaObject(obj) && !JavaInterop.isJavaObject(Class.class, obj);
 
-        Env env = getEnv();
-        if (env != null && env.isHostLookupAllowed()) {
+        Env e = getEnv();
+        if (e != null && e.isHostLookupAllowed()) {
             TruffleObject gcf = (TruffleObject) ForeignAccess.sendRead(readNode, obj, "getClass");
             TruffleObject clazz = (TruffleObject) ForeignAccess.sendExecute(executeNode, gcf);
             TruffleObject cnf = (TruffleObject) ForeignAccess.sendRead(readNode, clazz, "getName");
             String className = (String) ForeignAccess.sendExecute(executeNode, cnf);
-            return (TruffleObject) env.lookupHostSymbol(className);
+            return (TruffleObject) e.lookupHostSymbol(className);
         }
         return null;
     }

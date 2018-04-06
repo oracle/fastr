@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@SuppressWarnings("deprecation")
 @ImportStatic({Message.class, RRuntime.class})
 public abstract class ForeignArray2R extends RBaseNode {
 

@@ -28,6 +28,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 
+@SuppressWarnings("deprecation")
 @MessageResolution(receiverType = BytesToNativeCharArrayCall.class)
 public class BytesToNativeCharArrayCallMR {
 

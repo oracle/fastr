@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeUInt8Array;
 
+@SuppressWarnings("deprecation")
 public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
     public static final TruffleNFI_DownCallNodeFactory INSTANCE = new TruffleNFI_DownCallNodeFactory();
 

@@ -107,6 +107,7 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
+@SuppressWarnings("deprecation")
 public class FastRInterop {
 
     private static boolean isTesting = false;
@@ -488,7 +489,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        public TruffleObject addEntries(@SuppressWarnings("unused") RAbstractStringVector value, @SuppressWarnings("unused") boolean silent) {
+        public TruffleObject addEntries(RAbstractStringVector value, boolean silent) {
             Env env = RContext.getInstance().getEnv();
 
             for (int i = 0; i < value.getLength(); i++) {
