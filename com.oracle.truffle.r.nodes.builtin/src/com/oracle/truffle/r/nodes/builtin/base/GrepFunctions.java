@@ -181,8 +181,12 @@ public class GrepFunctions {
             } else {
                 // trim array to the appropriate size
                 int[] result = new int[numMatches];
-                for (int i = 0; i < result.length; i++) {
-                    result[i] = tmp[i];
+                int resultIdx = 0;
+                for (int i = 0; i < tmp.length; i++) {
+                    if (tmp[i] > 0) {
+                        result[resultIdx] = tmp[i];
+                        resultIdx++;
+                    }
                 }
                 return result;
             }
@@ -1250,14 +1254,20 @@ public class GrepFunctions {
         protected Object aGrep(String pattern, RAbstractStringVector vector, boolean ignoreCase, boolean value, RAbstractIntVector costs, RAbstractDoubleVector bounds, boolean useBytes, boolean fixed,
                         @Cached("createCommon()") CommonCodeNode common) {
             // TODO implement completely; this is a very basic implementation for fixed=TRUE only.
-            common.checkExtraArgs(ignoreCase, false, false, useBytes, false);
+            common.checkExtraArgs(!fixed && ignoreCase, false, false, useBytes, false);
             common.valueCheck(value);
             common.checkNotImplemented(!fixed, "fixed", false);
             int[] tmp = new int[vector.getLength()];
             int numMatches = 0;
             long maxDistance = Math.round(pattern.length() * bounds.getDataAt(0));
             for (int i = 0; i < vector.getLength(); i++) {
-                int ld = ld(pattern, vector.getDataAt(i));
+                int ld;
+                if (ignoreCase) {
+                    // reliable only with fixed=true
+                    ld = ld(pattern.toLowerCase(), vector.getDataAt(i).toLowerCase());
+                } else {
+                    ld = ld(pattern, vector.getDataAt(i));
+                }
                 if (ld <= maxDistance) {
                     tmp[i] = i + 1;
                     numMatches++;
