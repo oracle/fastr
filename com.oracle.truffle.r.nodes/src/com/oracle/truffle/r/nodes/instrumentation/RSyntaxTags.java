@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.instrumentation;
 
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.instrumentation.Tag;
+import com.oracle.truffle.r.runtime.RootBodyNode;
 
 public class RSyntaxTags {
 
@@ -33,6 +34,22 @@ public class RSyntaxTags {
         }
     }
 
+    /**
+     * Marks a block of statements that is the body of a function, the difference to
+     * {@link com.oracle.truffle.api.instrumentation.StandardTags.RootTag} is that the
+     * {@code RootTag} is supposed to save arguments and then invoke the actual body tagged with
+     * this tag.
+     *
+     * More technically, this tag tags {@link com.oracle.truffle.r.nodes.control.BlockNode}s that
+     * have parent of type {@link RootBodyNode}.
+     */
+    @Tag.Identifier("FUNCTIONBODYBLOCK")
+    public static final class FunctionBodyBlockTag extends Tag {
+        private FunctionBodyBlockTag() {
+            // no instances
+        }
+    }
+
     @SuppressWarnings("unchecked") public static final Class<? extends Tag>[] ALL_TAGS = (Class<? extends Tag>[]) new Class<?>[]{StandardTags.CallTag.class, StandardTags.StatementTag.class,
-                    StandardTags.RootTag.class, LoopTag.class};
+                    StandardTags.RootTag.class, LoopTag.class, FunctionBodyBlockTag.class};
 }

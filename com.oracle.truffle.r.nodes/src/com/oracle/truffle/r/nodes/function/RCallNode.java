@@ -788,6 +788,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @Override
+        public SourceSection getSourceSection() {
+            return arg.getSourceSection();
+        }
+
+        @Override
         public Object execute(VirtualFrame frame) {
             try {
                 return FrameSlotChangeMonitor.getObject(slot, frame);

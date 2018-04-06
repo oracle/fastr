@@ -22,6 +22,11 @@
  */
 package com.oracle.truffle.r.engine;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.URI;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -33,16 +38,14 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
-import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.dsl.UnsupportedSpecializationException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.java.JavaInterop;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.ExecutableNode;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.Source;
@@ -78,6 +81,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.RootWithBody;
+import com.oracle.truffle.r.runtime.RootBodyNode;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -97,7 +101,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
-import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -254,7 +257,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     public Object parseAndEval(Source source, MaterializedFrame frame, boolean printResult) throws ParseException {
-        List<RSyntaxNode> list = parseImpl(source);
+        List<RSyntaxNode> list = parseSource(source);
         try {
             Object lastValue = RNull.instance;
             for (RSyntaxNode node : list) {
@@ -282,21 +285,23 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    private List<RSyntaxNode> parseImpl(Source source) throws ParseException {
+    List<RSyntaxNode> parseSource(Source source) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
         return parser.script(source, new RASTBuilder(), context.getLanguage());
     }
 
     @Override
     public RExpression parse(Source source) throws ParseException {
-        List<RSyntaxNode> list = parseImpl(source);
+        List<RSyntaxNode> list = parseSource(source);
         Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node)).toArray();
         return RDataFactory.createExpression(data);
     }
 
     @Override
     public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
-        if (source == Engine.GET_CONTEXT) {
+        if (source.getPath() != null && !source.isInteractive()) {
+            return Truffle.getRuntime().createCallTarget(createRScriptRoot(source, executionFrame));
+        } else if (source == Engine.GET_CONTEXT) {
             /*
              * The "get context" operations should be executed with as little influence on the
              * actual engine as possible, therefore this special case takes care of it explicitly.
@@ -313,20 +318,21 @@ final class REngine implements Engine, Engine.Timings {
                 }
             });
         } else {
-            List<RSyntaxNode> statements = parseImpl(source);
-            return Truffle.getRuntime().createCallTarget(new PolyglotEngineRootNode(statements, createSourceSection(source, statements), executionFrame));
+            List<RSyntaxNode> statements = parseSource(source);
+            EngineRootNode rootNode = EngineRootNode.createEngineRoot(this, context, statements, createSourceSection(source, statements), executionFrame);
+            return Truffle.getRuntime().createCallTarget(rootNode);
         }
     }
 
     @Override
     public ExecutableNode parseToExecutableNode(Source source) throws ParseException {
-        List<RSyntaxNode> list = parseImpl(source);
+        List<RSyntaxNode> list = parseSource(source);
         RNode[] statements = new RNode[list.size()];
         for (int i = 0; i < statements.length; i++) {
             statements[i] = list.get(i).asRNode();
         }
         return new ExecutableNode(context.getLanguage()) {
-            @Child R2Foreign toForeignNode = R2Foreign.create();
+            @Child private R2Foreign toForeignNode = R2Foreign.create();
 
             @Override
             public Object execute(VirtualFrame frame) {
@@ -353,68 +359,49 @@ final class REngine implements Engine, Engine.Timings {
         }
     }
 
-    private final class PolyglotEngineRootNode extends RootNode {
-
-        private final List<RSyntaxNode> statements;
-        private final MaterializedFrame executionFrame;
-        @Children private final DirectCallNode[] calls;
-        private final boolean printResult;
-        private final SourceSection sourceSection;
-        private final ContextReference<RContext> contextReference;
-
-        @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
-
-        PolyglotEngineRootNode(List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame) {
-            super(context.getLanguage());
-            this.sourceSection = sourceSection;
-            this.contextReference = context.getLanguage().getContextReference();
-            // can't print if initializing the system in embedded mode (no builtins yet)
-            this.printResult = !sourceSection.getSource().getName().equals(RSource.Internal.INIT_EMBEDDED.string) && sourceSection.getSource().isInteractive();
-            this.statements = statements;
-            this.executionFrame = executionFrame;
-            this.calls = new DirectCallNode[statements.size()];
-        }
-
-        @Override
-        public SourceSection getSourceSection() {
-            return sourceSection;
-        }
-
-        /**
-         * The normal {@link #doMakeCallTarget} happens first, then we actually run the call using
-         * the standard FastR machinery, saving and restoring the {@link RContext}, since we have no
-         * control over what that might be when the call is initiated.
-         */
-        @Override
-        @ExplodeLoop
-        public Object execute(VirtualFrame frame) {
-            Object actualFrame = executionFrame != null ? executionFrame : contextReference.get().stateREnvironment.getGlobalFrame();
-            try {
-                Object lastValue = RNull.instance;
-                for (int i = 0; i < calls.length; i++) {
-                    if (calls[i] == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        RSyntaxNode node = statements.get(i);
-                        calls[i] = insert(Truffle.getRuntime().createDirectCallNode(doMakeCallTarget(node.asRNode(), RSource.Internal.REPL_WRAPPER.string, printResult, true)));
+    private EngineRootNode createRScriptRoot(Source fullSource, MaterializedFrame frame) {
+        URI uri = fullSource.getURI();
+        String file = fullSource.getPath();
+        ArrayList<RSyntaxNode> statements = new ArrayList<>(128);
+        try {
+            try (BufferedReader br = new BufferedReader(new InputStreamReader(fullSource.getInputStream()))) {
+                int lineIndex = 1;
+                int startLine = lineIndex;
+                StringBuilder sb = new StringBuilder();
+                while (true) {
+                    String input = br.readLine();
+                    if (input == null) {
+                        if (sb.length() != 0) {
+                            // end of file, but not end of statement => error
+                            statements.add(new SyntaxErrorNode(null, fullSource.createSection(startLine, 1, sb.length())));
+                        }
+                        break;
                     }
-                    lastValue = calls[i].call(new Object[]{actualFrame});
+                    sb.append(input);
+                    Source src = Source.newBuilder(sb.toString()).mimeType(RRuntime.R_APP_MIME).name(file + "#" + startLine + "-" + lineIndex).uri(uri).build();
+                    lineIndex++;
+                    List<RSyntaxNode> currentStmts = null;
+                    try {
+                        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+                        currentStmts = parser.statements(src, fullSource, startLine, new RASTBuilder(), context.getLanguage());
+                    } catch (IncompleteSourceException e) {
+                        sb.append('\n');
+                        continue;
+                    } catch (ParseException e) {
+                        statements.add(new SyntaxErrorNode(e, fullSource.createSection(startLine, 1, sb.length())));
+                    }
+                    if (currentStmts != null) {
+                        statements.addAll(currentStmts);
+                    }
+                    // we did not continue on incomplete source exception
+                    sb.setLength(0);
+                    startLine = lineIndex;
                 }
-                return r2Foreign.execute(lastValue);
-            } catch (ReturnException ex) {
-                return ex.getResult();
-            } catch (DebugExitException | JumpToTopLevelException | ExitException | ThreadDeath e) {
-                CompilerDirectives.transferToInterpreter();
-                throw e;
-            } catch (RError e) {
-                CompilerDirectives.transferToInterpreter();
-                throw e;
-            } catch (Throwable t) {
-                CompilerDirectives.transferToInterpreter();
-                // other errors didn't produce an output yet
-                RInternalError.reportError(t);
-                throw t;
             }
+        } catch (IOException ex) {
+            throw new RuntimeException(ex);
         }
+        return EngineRootNode.createEngineRoot(this, context, statements, createSourceSection(fullSource, statements), frame);
     }
 
     @Override
@@ -508,7 +495,7 @@ final class REngine implements Engine, Engine.Timings {
      * that the body should be executed in.
      */
     @TruffleBoundary
-    private RootCallTarget doMakeCallTarget(RNode body, String description, boolean printResult, boolean topLevel) {
+    RootCallTarget doMakeCallTarget(RNode body, String description, boolean printResult, boolean topLevel) {
         return Truffle.getRuntime().createCallTarget(new AnonymousRootNode(this, body, description, printResult, topLevel));
     }
 
@@ -529,14 +516,14 @@ final class REngine implements Engine, Engine.Timings {
         private final boolean topLevel;
         private final boolean suppressWarnings;
 
-        @Child private RNode body;
+        @Child private RootBodyNode body;
         @Child private GetVisibilityNode visibility = GetVisibilityNode.create();
         @Child private SetVisibilityNode setVisibility = SetVisibilityNode.create();
 
         protected AnonymousRootNode(REngine engine, RNode body, String description, boolean printResult, boolean topLevel) {
             super(engine.context.getLanguage());
             this.suppressWarnings = engine.suppressWarnings;
-            this.body = body;
+            this.body = new AnonymousBodyNode(body);
             this.description = description;
             this.printResult = printResult;
             this.topLevel = topLevel;
@@ -544,12 +531,12 @@ final class REngine implements Engine, Engine.Timings {
 
         @Override
         public SourceSection getSourceSection() {
-            return body.getSourceSection();
+            return getBody().getSourceSection();
         }
 
         @Override
         public boolean isInternal() {
-            return RSyntaxNode.isInternal(body.asRSyntaxNode().getLazySourceSection());
+            return RSyntaxNode.isInternal(getBody().getLazySourceSection());
         }
 
         private VirtualFrame prepareFrame(VirtualFrame frame) {
@@ -618,6 +605,29 @@ final class REngine implements Engine, Engine.Timings {
         @Override
         public boolean isCloningAllowed() {
             return false;
+        }
+
+        @Override
+        public RSyntaxNode getBody() {
+            return body.getBody().asRSyntaxNode();
+        }
+    }
+
+    private static final class AnonymousBodyNode extends Node implements RootBodyNode {
+        @Child private RNode body;
+
+        AnonymousBodyNode(RNode body) {
+            this.body = body;
+        }
+
+        @Override
+        public Object visibleExecute(VirtualFrame frame) {
+            return body.visibleExecute(frame);
+        }
+
+        @Override
+        public SourceSection getSourceSection() {
+            return body.getSourceSection();
         }
 
         @Override

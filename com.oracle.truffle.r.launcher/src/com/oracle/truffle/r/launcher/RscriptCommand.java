@@ -23,16 +23,16 @@
 package com.oracle.truffle.r.launcher;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.Iterator;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-import org.graalvm.options.OptionCategory;
-import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Source;
 
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
@@ -43,11 +43,67 @@ import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
  * way but the effect is similar.
  *
  */
-public class RscriptCommand {
+public final class RscriptCommand extends RAbstractLauncher {
+
+    private String[] rScriptArguments;
+
+    RscriptCommand(String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
+        super(Client.RSCRIPT, env, inStream, outStream, errStream);
+    }
+
+    @Override
+    protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
+        List<String> unrecognizedArgs = super.preprocessArguments(arguments, polyglotOptions);
+        try {
+            this.rScriptArguments = preprocessRScriptOptions(options);
+            return unrecognizedArgs;
+        } catch (PrintHelp e) {
+            return Collections.singletonList("--help");
+        }
+    }
+
+    @Override
+    protected String[] getArguments() {
+        return rScriptArguments;
+    }
+
+    protected int execute(String[] args) {
+        launch(args);
+        if (context != null) {
+            String fileOption = options.getString(RCmdOption.FILE);
+            if (fileOption != null) {
+                return executeFile(fileOption);
+            } else {
+                return RCommand.readEvalPrint(context, consoleHandler, null);
+            }
+        } else {
+            return 0;
+        }
+    }
+
+    private int executeFile(String fileOption) {
+        Source src;
+        try {
+            src = Source.newBuilder("R", new File(fileOption)).interactive(false).build();
+        } catch (IOException ex) {
+            System.err.printf("IO error while reading the source file '%s'.\nDetails: '%s'.", fileOption, ex.getLocalizedMessage());
+            return 1;
+        }
+        try {
+            context.eval(src);
+            return 0;
+        } catch (Throwable ex) {
+            if (ex instanceof PolyglotException && ((PolyglotException) ex).isExit()) {
+                return ((PolyglotException) ex).getExitStatus();
+            }
+            // Internal exceptions are reported by the engine already
+            return 1;
+        }
+    }
 
     // CheckStyle: stop system..print check
 
-    private static String[] preprocessRScriptOptions(RLauncher launcher, RCmdOptions options) {
+    private static String[] preprocessRScriptOptions(RCmdOptions options) throws PrintHelp {
         String[] arguments = options.getArguments();
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
@@ -61,11 +117,7 @@ public class RscriptCommand {
         // Either -e options are set or first non-option arg is a file
         if (options.getStringList(RCmdOption.EXPR) == null) {
             if (firstNonOptionArgIndex == resultArgsLength) {
-                launcher.setHelpCategory(OptionCategory.USER);
-                // does not return
-                if (launcher.runPolyglotAction()) {
-                    System.exit(1);
-                }
+                throw new PrintHelp();
             } else {
                 options.setValue(RCmdOption.FILE, arguments[firstNonOptionArgIndex]);
             }
@@ -99,50 +151,18 @@ public class RscriptCommand {
         return adjArgs.toArray(new String[adjArgs.size()]);
     }
 
+    @SuppressWarnings("serial")
+    static class PrintHelp extends Exception {
+    }
+
     public static void main(String[] args) {
         System.exit(doMain(RCommand.prependCommand(args), null, System.in, System.out, System.err));
         throw RCommand.fatal("should not reach here");
     }
 
     public static int doMain(String[] args, String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
-        assert env == null : "re-enble environment variables";
-
-        ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
-        RLauncher launcher = new RLauncher(Client.RSCRIPT) {
-            @Override
-            protected void printVersion() {
-                System.out.print("R scripting front-end version ");
-                System.out.print(RVersionNumber.FULL);
-                System.out.println(RVersionNumber.RELEASE_DATE);
-            }
-        };
-        boolean useJVM = false;
-        Map<String, String> polyglotOptions = new HashMap<>();
-        Iterator<String> iterator = argsList.iterator();
-        if (iterator.hasNext()) {
-            iterator.next(); // skip first argument
-            while (iterator.hasNext()) {
-                String arg = iterator.next();
-                if ("--jvm".equals(arg)) {
-                    useJVM = true;
-                    iterator.remove();
-                } else if (launcher.parsePolyglotOption("R", polyglotOptions, arg)) {
-                    iterator.remove();
-                }
-            }
-        }
-        if (launcher.runPolyglotAction()) {
-            return 0;
-        }
-        RCmdOptions options = RCmdOptions.parseArguments(Client.RSCRIPT, argsList.toArray(new String[argsList.size()]), false);
-        String[] arguments = preprocessRScriptOptions(launcher, options);
-
-        ConsoleHandler consoleHandler = RCommand.createConsoleHandler(options, null, inStream, outStream);
-        try (Context context = Context.newBuilder().allowAllAccess(true).allowHostAccess(useJVM).options(polyglotOptions).arguments("R", arguments).in(consoleHandler.createInputStream()).out(
-                        outStream).err(errStream).build()) {
-            consoleHandler.setContext(context);
-            String fileOption = options.getString(RCmdOption.FILE);
-            return RCommand.readEvalPrint(context, consoleHandler, fileOption != null ? new File(fileOption) : null);
+        try (RscriptCommand rcmd = new RscriptCommand(env, inStream, outStream, errStream)) {
+            return rcmd.execute(args);
         }
     }
 }

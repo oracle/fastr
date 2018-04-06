@@ -34,11 +34,13 @@ import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
@@ -57,7 +59,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "3.3.2", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
-@ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class})
+@ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
     private final HashMap<String, RFunction> builtinFunctionCache = new HashMap<>();
@@ -188,12 +190,13 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     @Override
     protected CallTarget parse(ParsingRequest request) throws Exception {
         CompilerAsserts.neverPartOfCompilation();
+        Source source = request.getSource();
         try {
-            return RContext.getEngine().parseToCallTarget(request.getSource(), null);
+            return RContext.getEngine().parseToCallTarget(source, null);
         } catch (IncompleteSourceException e) {
             throw e;
         } catch (ParseException e) {
-            if (request.getSource().isInteractive()) {
+            if (source.isInteractive()) {
                 throw e.throwAsRError();
             } else {
                 throw e;

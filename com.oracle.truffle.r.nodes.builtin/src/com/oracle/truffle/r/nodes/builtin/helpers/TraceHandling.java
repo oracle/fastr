@@ -33,9 +33,9 @@ import com.oracle.truffle.api.instrumentation.EventBinding;
 import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventListener;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
-import com.oracle.truffle.api.instrumentation.StandardTags;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -88,7 +88,7 @@ public class TraceHandling {
         if (FastROptions.TraceCalls.getBooleanValue()) {
             PrimitiveFunctionEntryEventListener fser = new PrimitiveFunctionEntryEventListener();
             SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
-            builder.tagIs(StandardTags.RootTag.class);
+            builder.tagIs(FunctionBodyBlockTag.class);
             SourceSectionFilter filter = builder.build();
             RInstrumentation.getInstrumenter().attachExecutionEventListener(filter, fser);
             setOutputHandler();
@@ -122,7 +122,7 @@ public class TraceHandling {
     private abstract static class TraceEventListener implements ExecutionEventListener {
 
         @CompilationFinal private boolean disabled;
-        CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");
+        private final CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("trace event disabled state unchanged");
 
         protected TraceEventListener() {
         }

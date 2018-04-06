@@ -75,90 +75,25 @@ import com.oracle.truffle.r.runtime.RError;
     private TruffleRLanguage language;
     private int fileStartOffset = 0;
     private Map<String, Source> sourceCache;
-    
-    /**
-     * Always use this constructor to initialize the R specific fields.
-     */
+
     public RParser(Source source, RCodeBuilder<T> builder, TruffleRLanguage language, Map<String, Source> sourceCache) {
         super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCharacters().toString()))));
         assert source != null && builder != null;
         this.initialSource = source;
         this.builder = builder;
         this.language = language;
-        this.sourceCache = sourceCache;
-        if (source.getURI() != null && source.getName().contains("#")) {
-        	this.source = createFullSource(source);
-        } else {
-        	this.source = source;
-        }
+        this.source = source;
     }
-    
-    private Source createFullSource(Source original) {
-	    String originalName = original.getName();
 
-	    // check if source name is like 'path/to/source.R#45-54'
-	    int hash_idx = originalName.lastIndexOf("#");
-	    if (hash_idx == -1) {
-	        return original;
-	    }
-
-	    String fileName = originalName.substring(0, hash_idx);
-	    String lineRange = originalName.substring(hash_idx + 1);
-
-	    try {
-	        // check for line range, e.g. '45-54'
-	        int startLine = -1;
-	        int endLine = -1;
-	        int dashIdx = lineRange.indexOf('-');
-	        if (dashIdx != -1) {
-	            startLine = Integer.parseInt(lineRange.substring(0, dashIdx));
-	            endLine = Integer.parseInt(lineRange.substring(dashIdx + 1));
-	        } else {
-	            startLine = Integer.parseInt(lineRange);
-	            endLine = startLine;
-	        }
-	        File f = new File(fileName);
-	        Source fullSource;
-	        String canonicalName;
-	        try {
-	            canonicalName = f.getAbsoluteFile().getCanonicalPath();
-	            fullSource = sourceCache != null ? sourceCache.get(canonicalName) : null;
-	        } catch(IOException e) {
-	            // ignore an freshly load file
-	            fullSource = null;
-	            canonicalName = null;
-	        }
-            if(fullSource == null) {
-    	        Builder<IOException, RuntimeException, RuntimeException> newBuilder = Source.newBuilder(f);
-    	        if (original.isInteractive()) {
-    	            newBuilder.interactive();
-    	        }
-    	        fullSource = newBuilder.build();
-    	        
-    	        if (sourceCache != null && canonicalName != null) {
-    	        	sourceCache.put(canonicalName, fullSource);
-    	        }
-            }
-
-	        // verify to avoid accidentally matching file names
-	        for (int i = 0; i < endLine - startLine + 1; i++) {
-	            if (!original.getCharacters(i + 1).equals(fullSource.getCharacters(startLine + i))) {
-	                return original;
-	            }
-	        }
-
-	        fileStartOffset = -fullSource.getLineStartOffset(startLine);
-	        return fullSource;
-	    } catch (NumberFormatException e) {
-	        // invalid line number
-	    } catch (IllegalArgumentException e) {
-            // file name is accidentally named in the expected scheme
-	    } catch (IOException e) {
-	    } catch (RuntimeException e) {
-	    	assert rethrow(e);
-	    }
-	    return original;
-	}
+    public RParser(Source source, Source fullSource, int startLine, RCodeBuilder<T> builder, TruffleRLanguage language, Map<String, Source> sourceCache) {
+        super(new CommonTokenStream(new RLexer(new ANTLRStringStream(source.getCharacters().toString()))));
+        assert source != null && builder != null;
+        this.initialSource = source;
+        this.builder = builder;
+        this.language = language;
+        this.source = fullSource;
+        fileStartOffset = -fullSource.getLineStartOffset(startLine);
+    }
         
     private <T extends Throwable> boolean rethrow(T e) throws T {
     	throw e;

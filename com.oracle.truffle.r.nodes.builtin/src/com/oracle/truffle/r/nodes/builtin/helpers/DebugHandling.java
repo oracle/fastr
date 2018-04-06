@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
+import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -76,7 +77,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * Three different listener classes are defined:
  * <ul>
  * <li>{@link FunctionStatementsEventListener}: attaches to function bodies and handles the special
- * behavior on entry/exit</li>
+ * behavior on entry/exit</li>. Function body is distinguished with tag {@link FunctionBodyBlockTag}
  * <li>{@link StatementEventListener}: attaches to all {@code StandardTags.StatementTag} nodes and
  * handles "n" and "s" browser commands</li>
  * <li>{@link LoopStatementEventListener}: attaches to {@link AbstractLoopNode} instances and
@@ -89,7 +90,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  * mode and reset it's state on return. This is handled as follows:
  * <ol>
  * <li>On a step-into, attach a {@link StepIntoInstrumentListener} with a filter that matches all
- * functions and the {@code StandardTags.RootTag} tag</li>
+ * functions and their bodies like {@link FunctionStatementsEventListener}.</li>
  * <li>On entry to that listener instrument/enable the function we have entered (if necessary) for
  * one-time (unless already)</li>
  * <li>Dispose the {@link StepIntoInstrumentListener} and continue, which will then stop at the
@@ -219,7 +220,7 @@ public class DebugHandling {
         }
 
         @CompilationFinal private boolean disabled;
-        CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
+        private final CyclicAssumption disabledUnchangedAssumption = new CyclicAssumption("debug event disabled state unchanged");
 
         boolean disabled() {
             return disabled || RContext.getInstance().stateInstrumentation.debugGloballyDisabled();
@@ -317,7 +318,7 @@ public class DebugHandling {
         @TruffleBoundary
         private void attachStepInto() {
             FunctionStatementsEventListener parentListener = getFunctionStatementsEventListener(functionDefinitionNode);
-            parentListener.stepIntoInstrument = RInstrumentation.getInstrumenter().attachExecutionEventListener(SourceSectionFilter.newBuilder().tagIs(StandardTags.RootTag.class).build(),
+            parentListener.stepIntoInstrument = RInstrumentation.getInstrumenter().attachExecutionEventListener(SourceSectionFilter.newBuilder().tagIs(FunctionBodyBlockTag.class).build(),
                             new StepIntoInstrumentListener(parentListener));
 
         }
@@ -430,8 +431,10 @@ public class DebugHandling {
 
         public void attach() {
 
+            // Note: BlockStatement is not tagged as a STATEMENT, but there is FastR specific
+            // FunctionBodyBlockTag
             Instrumenter instrumenter = RInstrumentation.getInstrumenter();
-            SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(functionDefinitionNode, StandardTags.RootTag.class);
+            SourceSectionFilter.Builder functionBuilder = RInstrumentation.createFunctionFilter(functionDefinitionNode, FunctionBodyBlockTag.class);
             setBinding(instrumenter.attachExecutionEventListener(functionBuilder.build(), this));
 
             // Next attach statement handler to all STATEMENTs except LOOPs
@@ -470,7 +473,7 @@ public class DebugHandling {
                     accept(element.getSyntaxBody());
                     return null;
                 }
-            }.accept(functionDefinitionNode);
+            }.accept(functionDefinitionNode.getBody());
         }
 
         @Override
@@ -524,8 +527,9 @@ public class DebugHandling {
             CompilerDirectives.transferToInterpreter();
             print("debugging in: ", false);
             printCall(frame);
-            printNode(context.getInstrumentedNode(), true);
-            browserInteract(context.getInstrumentedNode(), frame);
+            Node node = context.getInstrumentedNode();
+            printNode(node, true);
+            browserInteract(node, frame);
         }
 
         @Override
@@ -582,6 +586,7 @@ public class DebugHandling {
             String callString = RContext.getRRuntimeASTAccess().getCallerSource(RArguments.getCall(frame));
             print(callString, true);
         }
+
     }
 
     @TruffleBoundary
@@ -621,10 +626,7 @@ public class DebugHandling {
                 // in case we did a step into that never called a function
                 clearStepInstrument();
                 RBaseNode node = (RBaseNode) context.getInstrumentedNode();
-                if (node.hasTag(StandardTags.RootTag.class)) {
-                    // already handled
-                    return;
-                }
+                assert !node.hasTag(StandardTags.RootTag.class) : "root is not a statement";
                 printNode(node, false);
                 browserInteract(node, frame);
             }
