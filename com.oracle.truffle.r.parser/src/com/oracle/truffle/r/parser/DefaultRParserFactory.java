@@ -63,6 +63,26 @@ public class DefaultRParserFactory extends RParserFactory {
         }
 
         @Override
+        public List<T> statements(Source source, Source fullSource, int startLine, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
+            try {
+                try {
+                    RContext context = language.getContextReference().get();
+                    RParser<T> parser = new RParser<>(source, fullSource, startLine, builder, language, context.sourceCache);
+                    return parser.script();
+                } catch (IllegalArgumentException e) {
+                    // the lexer will wrap exceptions in IllegalArgumentExceptions
+                    if (e.getCause() instanceof RecognitionException) {
+                        throw (RecognitionException) e.getCause();
+                    } else {
+                        throw e;
+                    }
+                }
+            } catch (RecognitionException e) {
+                throw handleRecognitionException(source, e);
+            }
+        }
+
+        @Override
         public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
             RContext context = language.getContextReference().get();
             RParser<T> parser = new RParser<>(source, builder, language, context.sourceCache);

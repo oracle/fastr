@@ -23,12 +23,16 @@
 package com.oracle.truffle.r.launcher;
 
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+
+import org.graalvm.polyglot.PolyglotException;
+import org.graalvm.polyglot.Source;
 
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
@@ -67,9 +71,33 @@ public final class RscriptCommand extends RAbstractLauncher {
         launch(args);
         if (context != null) {
             String fileOption = options.getString(RCmdOption.FILE);
-            return RCommand.readEvalPrint(context, consoleHandler, fileOption != null ? new File(fileOption) : null);
+            if (fileOption != null) {
+                return executeFile(fileOption);
+            } else {
+                return RCommand.readEvalPrint(context, consoleHandler, null);
+            }
         } else {
             return 0;
+        }
+    }
+
+    private int executeFile(String fileOption) {
+        Source src;
+        try {
+            src = Source.newBuilder("R", new File(fileOption)).interactive(false).build();
+        } catch (IOException ex) {
+            System.err.printf("IO error while reading the source file '%s'.\nDetails: '%s'.", fileOption, ex.getLocalizedMessage());
+            return 1;
+        }
+        try {
+            context.eval(src);
+            return 0;
+        } catch (Throwable ex) {
+            if (ex instanceof PolyglotException && ((PolyglotException) ex).isExit()) {
+                return ((PolyglotException) ex).getExitStatus();
+            }
+            // Internal exceptions are reported by the engine already
+            return 1;
         }
     }
 
