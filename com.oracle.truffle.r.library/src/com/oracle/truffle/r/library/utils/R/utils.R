@@ -21,7 +21,10 @@
 
 eval(expression({
 	excludedPkgs <- c("rJava")
-	excludedPkgsMsgs <- c("CRAN rJava is not supported on FastR, but you can download and install rJava compatible replacement package from https://github.com/oracle/fastr/master/com.oracle.truffle.r.pkgs/rJava")
+	excludedPkgsMsgs <- c(paste0(
+		"CRAN rJava is not supported on FastR, but you can download and install rJava compatible replacement package ",
+		"from https://github.com/oracle/fastr/master/com.oracle.truffle.r.pkgs/rJava.\n",
+		"  Install it using 'R --jvm CMD INSTALL {fastr}/com.oracle.truffle.r.pkgs/rJava' and make sure that 'which R' points to FastR. "))
 
 	fastRPkgFilter <- function (av) {
 		# The following statement will assign the url of the FastR clone of rJava, when ready (possibly on GitHub).
