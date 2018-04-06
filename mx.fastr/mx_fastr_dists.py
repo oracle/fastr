@@ -201,6 +201,8 @@ def mx_post_parse_cmd_line(opts):
     else:
         val = ""
     mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
+    if os.environ.has_key('FASTR_RELEASE') and val == '':
+        mx.instantiateDistribution('FASTR_GRAALVM_SUPPORT<rffi>', dict(rffi=val))
 
     for dist in mx_fastr._fastr_suite.dists:
         if isinstance(dist, mx.JARDistribution):

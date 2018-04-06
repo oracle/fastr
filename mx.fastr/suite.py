@@ -309,7 +309,7 @@ suite = {
       "sourceDirs" : ["src"],
       "buildDependencies" : ["com.oracle.truffle.r.native.recommended"],
       "class" : "FastRReleaseProject",
-      "output" : "com.oracle.truffle.r.release"
+      "output" : "com.oracle.truffle.r.release",
     },
 
     "com.oracle.truffle.r.native.recommended" : {
@@ -417,8 +417,8 @@ suite = {
     "FASTR_RELEASE<rffi>": {
       "description" : "a binary release of FastR",
       "dependencies" : ["com.oracle.truffle.r.release"],
-       "os_arch" : {
-         "linux" : {
+      "os_arch" : {
+        "linux" : {
           "amd64" : {
             "path" : "mxbuild/dists/linux/amd64/<rffi>/fastr-release.jar",
           },
@@ -441,5 +441,39 @@ suite = {
         },
       },
     },
+
+    "FASTR_GRAALVM_SUPPORT<rffi>" : {
+      "native" : True,
+      "platformDependent" : True,
+      "description" : "FastR support distribution for the GraalVM",
+      "layout" : {
+        "./" : [
+          {
+            "source_type": "extracted-dependency",
+            "dependency": "FASTR_RELEASE<rffi>",
+            "path": "*",
+            "exclude": [
+              "COPYRIGHT",
+              "LICENSE",
+              "README.md",
+              "bin/fastr_jars",
+            ],
+          },
+          {
+            "source_type": "extracted-dependency",
+            "dependency": "FASTR_RELEASE<rffi>",
+            "path": "bin/fastr_jars/*",
+            "exclude" : [
+              "bin/fastr_jars/truffle*",
+              "bin/fastr_jars/graal-sdk*",
+            ],
+          },
+          "dependency:fastr:GNUR",
+        ],
+        "COPYRIGHT_FASTR" : "extracted-dependency:fastr:FASTR_RELEASE<rffi>/COPYRIGHT",
+        "LICENSE_FASTR" : "extracted-dependency:fastr:FASTR_RELEASE<rffi>/LICENSE",
+        "README_FASTR" : "extracted-dependency:fastr:FASTR_RELEASE<rffi>/README.md",
+      },
+    }
   },
 }
