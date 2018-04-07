@@ -21,6 +21,7 @@
 # questions.
 #
 import mx
+import mx_sdk
 import mx_fastr
 import os, string, shutil
 from os.path import join, basename, isfile
@@ -208,3 +209,19 @@ def mx_post_parse_cmd_line(opts):
         if isinstance(dist, mx.JARDistribution):
             dist.set_archiveparticipant(FastRArchiveParticipant(dist))
 
+mx_sdk.register_component(mx_sdk.GraalVmLanguage(
+    name='FastR',
+    id='R',
+    documentation_files=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT<rffi>/README_FASTR'],
+    license_files=[
+        'link:<support>/COPYRIGHT_FASTR',
+        'link:<support>/LICENSE_FASTR',
+    ],
+    third_party_license_files=[],
+    truffle_jars=['dependency:fastr:FASTR'],
+    support_distributions=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT<rffi>'],
+    provided_executables=[
+        'link:<support>/bin/Rscript',
+        'link:<support>/bin/exec/R',
+    ]
+))

@@ -449,20 +449,22 @@ suite = {
       "layout" : {
         "./" : [
           {
-            "source_type": "extracted-dependency",
-            "dependency": "FASTR_RELEASE<rffi>",
-            "path": "*",
-            "exclude": [
+            "source_type" : "extracted-dependency",
+            "dependency" : "FASTR_RELEASE<rffi>",
+            "path" : "*",
+            "exclude" : [
               "COPYRIGHT",
               "LICENSE",
               "README.md",
+              "bin/Rscript",
               "bin/fastr_jars",
+              "bin/exec/R",
             ],
           },
           {
-            "source_type": "extracted-dependency",
-            "dependency": "FASTR_RELEASE<rffi>",
-            "path": "bin/fastr_jars/*",
+            "source_type" : "extracted-dependency",
+            "dependency" : "FASTR_RELEASE<rffi>",
+            "path" : "bin/fastr_jars/*",
             "exclude" : [
               "bin/fastr_jars/truffle*",
               "bin/fastr_jars/graal-sdk*",
@@ -473,6 +475,8 @@ suite = {
         "COPYRIGHT_FASTR" : "extracted-dependency:fastr:FASTR_RELEASE<rffi>/COPYRIGHT",
         "LICENSE_FASTR" : "extracted-dependency:fastr:FASTR_RELEASE<rffi>/LICENSE",
         "README_FASTR" : "extracted-dependency:fastr:FASTR_RELEASE<rffi>/README.md",
+        "bin/Rscript" : "file:com.oracle.truffle.r.release/src/Rscript_legacy",
+        "bin/exec/R" : "file:com.oracle.truffle.r.release/src/R_legacy",
       },
     }
   },
