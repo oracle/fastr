@@ -466,6 +466,7 @@ suite = {
             "dependency" : "FASTR_RELEASE<rffi>",
             "path" : "bin/fastr_jars/*",
             "exclude" : [
+              "bin/fastr_jars/fastr.jar",
               "bin/fastr_jars/truffle*",
               "bin/fastr_jars/graal-sdk*",
             ],

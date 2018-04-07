@@ -201,27 +201,37 @@ def mx_post_parse_cmd_line(opts):
         val = os.environ['FASTR_RFFI']
     else:
         val = ""
-    mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
-    if os.environ.has_key('FASTR_RELEASE') and val == '':
-        mx.instantiateDistribution('FASTR_GRAALVM_SUPPORT<rffi>', dict(rffi=val))
+    if not mx.distribution('FASTR_RELEASE{}'.format(val), fatalIfMissing=False):
+        mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
 
     for dist in mx_fastr._fastr_suite.dists:
         if isinstance(dist, mx.JARDistribution):
             dist.set_archiveparticipant(FastRArchiveParticipant(dist))
 
+def _instantiate_graalvm_support_dist():
+    if os.environ.has_key('FASTR_RFFI'):
+        mx.abort('Cannot instantiate the GraalVM support distribution when \'FASTR_RFFI\' is set. Found: \'{}\''.format(os.environ.has_key('FASTR_RFFI')))
+    if not os.environ.has_key('FASTR_RELEASE'):
+        mx.abort('Cannot instantiate the GraalVM support distribution when \'FASTR_RELEASE\' is not set.')
+    if not mx.distribution('FASTR_RELEASE', fatalIfMissing=False):
+        mx.instantiateDistribution('fastr:FASTR_RELEASE<rffi>', dict(rffi=''))
+    if not mx.distribution('fastr:FASTR_GRAALVM_SUPPORT', fatalIfMissing=False):
+        mx.instantiateDistribution('fastr:FASTR_GRAALVM_SUPPORT<rffi>', dict(rffi=''))
+
 mx_sdk.register_component(mx_sdk.GraalVmLanguage(
     name='FastR',
     id='R',
-    documentation_files=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT<rffi>/README_FASTR'],
+    documentation_files=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT/README_FASTR'],
     license_files=[
         'link:<support>/COPYRIGHT_FASTR',
         'link:<support>/LICENSE_FASTR',
     ],
     third_party_license_files=[],
     truffle_jars=['dependency:fastr:FASTR'],
-    support_distributions=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT<rffi>'],
+    support_distributions=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT'],
     provided_executables=[
         'link:<support>/bin/Rscript',
         'link:<support>/bin/exec/R',
-    ]
+    ],
+    instantiate_dist=_instantiate_graalvm_support_dist,
 ))
