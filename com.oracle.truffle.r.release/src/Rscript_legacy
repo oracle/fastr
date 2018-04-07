@@ -44,4 +44,4 @@ done
 
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
-exec "$JAVA_HOME/bin/java" -cp "$GRAALVMCP" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${JAVA_ARGS[@]}" com.oracle.graalvm.launcher.LegacyLauncher com.oracle.truffle.r.launcher.RscriptCommand "${PROGRAM_ARGS[@]}"
+exec "$JAVA_HOME/bin/java" -cp "$GRAALVMCP" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${JAVA_ARGS[@]}" com.oracle.truffle.r.launcher.LegacyLauncher com.oracle.truffle.r.launcher.RscriptCommand "${PROGRAM_ARGS[@]}"
