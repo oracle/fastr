@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -54,5 +54,18 @@ public class TestBuiltin_agrep extends TestBase {
         assertEval("{ .Internal(agrepl(7, \"42\", F, F, NULL, NULL, F, F)) }");
         assertEval("{ .Internal(agrepl(character(), \"42\", F, F, NULL, NULL, F, F)) }");
         assertEval("{ .Internal(agrepl(\"7\", 42, F, F, NULL, NULL, F, F)) }");
+
+        assertEval("{ agrep('a', c('a'), ignore.case=T) }");
+        assertEval("{ agrep('A', c('a'), ignore.case=T) }");
+        assertEval("{ agrep('a', c('A'), ignore.case=T) }");
+        assertEval(Ignored.ImplementationError, "{ agrep('a', c('a', 'b'), ignore.case=T) }");
+        assertEval(Ignored.ImplementationError, "{ agrep('a', c('b', 'a'), ignore.case=T) }");
+        assertEval(Ignored.ImplementationError, "{ agrep('a', c('b', 'a'), ignore.case=F) }");
+
+        assertEval("{ agrep('a', c('b', 'a', 'z'), max.distance=0, ignore.case=T) }");
+        assertEval("{ agrep('A', c('b', 'a', 'z'), max.distance=0, ignore.case=T) }");
+        assertEval("{ agrep('a', c('b', 'a', 'z'), max.distance=1, ignore.case=T) }");
+        assertEval("{ agrep('A', c('b', 'a', 'z'), max.distance=1, ignore.case=T) }");
+
     }
 }
