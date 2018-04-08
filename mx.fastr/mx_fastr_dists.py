@@ -196,30 +196,14 @@ class FastRArchiveParticipant:
             include_dir = join(release_project.dir, 'include')
             shutil.rmtree(include_dir)
 
-def mx_post_parse_cmd_line(opts):
-    if os.environ.has_key('FASTR_RFFI'):
-        val = os.environ['FASTR_RFFI']
-    else:
-        val = ""
-    if not mx.distribution('FASTR_RELEASE{}'.format(val), fatalIfMissing=False):
-        mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
 
-    if not val and os.environ.has_key('FASTR_RELEASE'):
-        _instantiate_graalvm_support_dist()
+def mx_post_parse_cmd_line(opts):
+    mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=mx.get_env('FASTR_RFFI', '')))
 
     for dist in mx_fastr._fastr_suite.dists:
         if isinstance(dist, mx.JARDistribution):
             dist.set_archiveparticipant(FastRArchiveParticipant(dist))
 
-def _instantiate_graalvm_support_dist():
-    if os.environ.has_key('FASTR_RFFI'):
-        mx.abort('Cannot instantiate the GraalVM support distribution when \'FASTR_RFFI\' is set. Found: \'{}\''.format(os.environ.has_key('FASTR_RFFI')))
-    if not os.environ.has_key('FASTR_RELEASE'):
-        mx.abort('Cannot instantiate the GraalVM support distribution when \'FASTR_RELEASE\' is not set.')
-    if not mx.distribution('FASTR_GRAALVM_RELEASE', fatalIfMissing=False):
-        mx.instantiateDistribution('fastr:FASTR_GRAALVM_RELEASE<rffi>', dict(rffi='', os=mx.get_os(), arch=mx.get_arch()))
-    if not mx.distribution('fastr:FASTR_GRAALVM_SUPPORT', fatalIfMissing=False):
-        mx.instantiateDistribution('fastr:FASTR_GRAALVM_SUPPORT<rffi>', dict(rffi=''))
 
 mx_sdk.register_component(mx_sdk.GraalVmLanguage(
     name='FastR',
@@ -236,5 +220,4 @@ mx_sdk.register_component(mx_sdk.GraalVmLanguage(
         'link:<support>/bin/Rscript',
         'link:<support>/bin/exec/R',
     ],
-    instantiate_dist=_instantiate_graalvm_support_dist,
 ))

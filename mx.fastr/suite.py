@@ -463,22 +463,15 @@ suite = {
       },
     },
 
-    "FASTR_GRAALVM_RELEASE<rffi>": {
+    "FASTR_GRAALVM_RELEASE": {
       "native" : True,
       "platformDependent" : True,
       "relpath" : True,
       "description" : "a binary release of FastR",
       "dependencies" : ["com.oracle.truffle.r.release"],
-      "os_arch" : {
-        "<others>" : {
-          "<others>" : {
-            "path" : "mxbuild/dists/<os>/<arch>/<rffi>/fastr-graalvm-release.tar.gz",
-          },
-        },
-      },
     },
 
-    "FASTR_GRAALVM_SUPPORT<rffi>" : {
+    "FASTR_GRAALVM_SUPPORT" : {
       "native" : True,
       "platformDependent" : True,
       "description" : "FastR support distribution for the GraalVM",
@@ -486,7 +479,7 @@ suite = {
         "./" : [
           {
             "source_type" : "extracted-dependency",
-            "dependency" : "FASTR_GRAALVM_RELEASE<rffi>",
+            "dependency" : "FASTR_GRAALVM_RELEASE",
             "path" : "*",
             "exclude" : [
               "COPYRIGHT",
@@ -499,7 +492,7 @@ suite = {
           },
           {
             "source_type" : "extracted-dependency",
-            "dependency" : "FASTR_GRAALVM_RELEASE<rffi>",
+            "dependency" : "FASTR_GRAALVM_RELEASE",
             "path" : "bin/fastr_jars/*",
             "exclude" : [
               "bin/fastr_jars/fastr.jar",
@@ -509,9 +502,9 @@ suite = {
           },
           "dependency:fastr:GNUR",
         ],
-        "COPYRIGHT_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE<rffi>/COPYRIGHT",
-        "LICENSE_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE<rffi>/LICENSE",
-        "README_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE<rffi>/README.md",
+        "COPYRIGHT_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/COPYRIGHT",
+        "LICENSE_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/LICENSE",
+        "README_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
         "bin/Rscript" : "file:com.oracle.truffle.r.release/src/Rscript_legacy",
         "bin/exec/R" : "file:com.oracle.truffle.r.release/src/R_legacy",
         "legacy/" : "dependency:fastr:FASTR_LEGACY_LAUNCHER",
