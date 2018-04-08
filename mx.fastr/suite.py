@@ -41,7 +41,7 @@ suite = {
   # properly handled by MX in all cases and causes integration problems.
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.4.0.tar.gz",
+        "path" : "libdownloads/R-3.4.0.tar.gz", # keep in sync with the GraalVM support distribution
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.4.0.tar.gz"],
         "sha1" : "054c1d099006354c89b195df6783b933846ced60",
         "resource" : "true"
@@ -500,13 +500,13 @@ suite = {
               "bin/fastr_jars/graal-sdk*",
             ],
           },
-          "dependency:fastr:GNUR",
         ],
         "COPYRIGHT_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/COPYRIGHT",
         "LICENSE_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/LICENSE",
         "README_FASTR" : "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE/README.md",
         "bin/Rscript" : "file:com.oracle.truffle.r.release/src/Rscript_legacy",
         "bin/exec/R" : "file:com.oracle.truffle.r.release/src/R_legacy",
+        "R-3.4.0.tar.gz" : "dependency:fastr:GNUR",
         "legacy/" : "dependency:fastr:FASTR_LEGACY_LAUNCHER",
       },
     }
