@@ -204,8 +204,8 @@ def mx_post_parse_cmd_line(opts):
     if not mx.distribution('FASTR_RELEASE{}'.format(val), fatalIfMissing=False):
         mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
 
-    if not val and os.environ.has_key('FASTR_RELEASE') and not mx.distribution('fastr:FASTR_GRAALVM_SUPPORT', fatalIfMissing=False):
-        mx.instantiateDistribution('fastr:FASTR_GRAALVM_SUPPORT<rffi>', dict(rffi=''))
+    if not val and os.environ.has_key('FASTR_RELEASE'):
+        _instantiate_graalvm_support_dist()
 
     for dist in mx_fastr._fastr_suite.dists:
         if isinstance(dist, mx.JARDistribution):
@@ -216,8 +216,8 @@ def _instantiate_graalvm_support_dist():
         mx.abort('Cannot instantiate the GraalVM support distribution when \'FASTR_RFFI\' is set. Found: \'{}\''.format(os.environ.has_key('FASTR_RFFI')))
     if not os.environ.has_key('FASTR_RELEASE'):
         mx.abort('Cannot instantiate the GraalVM support distribution when \'FASTR_RELEASE\' is not set.')
-    if not mx.distribution('FASTR_RELEASE', fatalIfMissing=False):
-        mx.instantiateDistribution('fastr:FASTR_RELEASE<rffi>', dict(rffi=''))
+    if not mx.distribution('FASTR_GRAALVM_RELEASE', fatalIfMissing=False):
+        mx.instantiateDistribution('fastr:FASTR_GRAALVM_RELEASE<rffi>', dict(rffi='', os=mx.get_os(), arch=mx.get_arch()))
     if not mx.distribution('fastr:FASTR_GRAALVM_SUPPORT', fatalIfMissing=False):
         mx.instantiateDistribution('fastr:FASTR_GRAALVM_SUPPORT<rffi>', dict(rffi=''))
 
