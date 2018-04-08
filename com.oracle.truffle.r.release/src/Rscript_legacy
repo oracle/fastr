@@ -36,7 +36,7 @@ done
 JAVA_HOME="$( dirname "$JRE" )"
 
 GRAALVMCP=""
-TMPCP="jre/lib/truffle/truffle-api.jar:jre/languages/R/fastr.jar"
+TMPCP="jre/languages/R/fastr.jar"
 for cp in ${TMPCP//:/ }
 do
     GRAALVMCP="$GRAALVMCP$JAVA_HOME/$cp:"
