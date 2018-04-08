@@ -580,6 +580,7 @@ def nativebuild(args):
             os.remove(jniboot_done)
         return mx.build(['--no-java'])
 
+
 def mx_post_parse_cmd_line(opts):
     mx_fastr_dists.mx_post_parse_cmd_line(opts)
     if mx.suite("sulong", fatalIfMissing=False) and not _fastr_suite.isBinarySuite():
@@ -587,6 +588,10 @@ def mx_post_parse_cmd_line(opts):
         # if we are running with sulong we also need the SULONG distribution
         rec = mx.project('com.oracle.truffle.r.native.recommended')
         rec.buildDependencies += [mx.distribution('SULONG')]
+
+
+mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents
+
 
 mx_unittest.add_config_participant(_unittest_config_participant)
 
