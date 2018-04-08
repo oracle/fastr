@@ -241,6 +241,19 @@ suite = {
       "jacoco" : "include",
     },
 
+    "com.oracle.truffle.r.legacylauncher" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "sdk:GRAAL_SDK",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "annotationProcessors" : [
+      ],
+      "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
+    },
+
     "com.oracle.truffle.r.ffi.impl" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
@@ -350,6 +363,14 @@ suite = {
       "description" : "internal support for generating FFI classes",
       "dependencies" : ["com.oracle.truffle.r.ffi.processor"],
       "maven" : "False",
+    },
+
+    "FASTR_LEGACY_LAUNCHER" : {
+      "description" : "legacy launcher for the GraalVM",
+      "dependencies" : ["com.oracle.truffle.r.legacylauncher"],
+      "distDependencies" : [
+        "sdk:GRAAL_SDK"
+      ],
     },
 
     "FASTR" : {
@@ -478,6 +499,7 @@ suite = {
         "README_FASTR" : "extracted-dependency:fastr:FASTR_RELEASE<rffi>/README.md",
         "bin/Rscript" : "file:com.oracle.truffle.r.release/src/Rscript_legacy",
         "bin/exec/R" : "file:com.oracle.truffle.r.release/src/R_legacy",
+        "legacy/" : "dependency:fastr:FASTR_LEGACY_LAUNCHER",
       },
     }
   },

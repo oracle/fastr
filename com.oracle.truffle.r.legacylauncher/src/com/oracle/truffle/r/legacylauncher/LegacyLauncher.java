@@ -20,7 +20,7 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.launcher;
+package com.oracle.truffle.r.legacylauncher;
 
 import java.lang.reflect.Method;
 import java.util.Arrays;

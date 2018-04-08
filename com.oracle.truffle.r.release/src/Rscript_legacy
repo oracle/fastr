@@ -36,7 +36,7 @@ done
 JAVA_HOME="$( dirname "$JRE" )"
 
 GRAALVMCP=""
-TMPCP="jre/languages/R/fastr.jar"
+TMPCP="jre/languages/R/legacy/fastr-legacy-launcher.jar"
 for cp in ${TMPCP//:/ }
 do
     GRAALVMCP="$GRAALVMCP$JAVA_HOME/$cp:"
@@ -49,4 +49,4 @@ fi
 
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
-exec "$JAVA_HOME/bin/java" -cp "$GRAALVMCP" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${JAVA_ARGS[@]}" com.oracle.truffle.r.launcher.LegacyLauncher com.oracle.truffle.r.launcher.RscriptCommand "${FASTR_INTERNAL_ARGS[@]}" "${PROGRAM_ARGS[@]}"
+exec "$JAVA_HOME/bin/java" -cp "$GRAALVMCP" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${JAVA_ARGS[@]}" com.oracle.truffle.r.legacylauncher.LegacyLauncher com.oracle.truffle.r.launcher.RscriptCommand "${FASTR_INTERNAL_ARGS[@]}" "${PROGRAM_ARGS[@]}"

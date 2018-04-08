@@ -204,6 +204,9 @@ def mx_post_parse_cmd_line(opts):
     if not mx.distribution('FASTR_RELEASE{}'.format(val), fatalIfMissing=False):
         mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
 
+    if not val and os.environ.has_key('FASTR_RELEASE') and not mx.distribution('fastr:FASTR_GRAALVM_SUPPORT', fatalIfMissing=False):
+        mx.instantiateDistribution('fastr:FASTR_GRAALVM_SUPPORT<rffi>', dict(rffi=''))
+
     for dist in mx_fastr._fastr_suite.dists:
         if isinstance(dist, mx.JARDistribution):
             dist.set_archiveparticipant(FastRArchiveParticipant(dist))
