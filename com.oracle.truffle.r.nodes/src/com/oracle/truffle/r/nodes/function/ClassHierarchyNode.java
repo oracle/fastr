@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public abstract class ClassHierarchyNode extends UnaryNode {
         return false;
     }
 
-    private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("truffle.object");
+    private static final RStringVector truffleObjectClassHeader = RDataFactory.createStringVectorFromScalar("polyglot.value");
 
     @Child private GetFixedAttributeNode access;
     @Child private S4Class s4Class;

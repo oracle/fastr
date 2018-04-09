@@ -54,6 +54,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
+@SuppressWarnings("deprecation")
 final class TruffleLLVM_Call implements CallRFFI {
 
     TruffleLLVM_Call() {

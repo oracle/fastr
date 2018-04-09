@@ -10,6 +10,7 @@
 #
 
 eval(expression({
+.fastr.addHelpPath('/com/oracle/truffle/r/nodes/builtin/base/Rd')
 .libPaths <- local({
     .lib.loc <- character()            # Profiles need to set this.
     function(new) {

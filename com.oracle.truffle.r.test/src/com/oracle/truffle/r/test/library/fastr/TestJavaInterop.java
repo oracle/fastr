@@ -46,7 +46,7 @@ import org.junit.Ignore;
 public class TestJavaInterop extends TestBase {
 
     private static final String TEST_CLASS = TestClass.class.getName();
-    private static final String CREATE_TRUFFLE_OBJECT = "to <- new.external(new.java.class('" + TEST_CLASS + "'));";
+    private static final String CREATE_TRUFFLE_OBJECT = "to <- .fastr.interop.new(java.type('" + TEST_CLASS + "'));";
 
     @Before
     public void testInit() {
@@ -55,214 +55,207 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testToByte() {
-        assertEvalFastR("v <- as.external.byte(1L); v;", "1");
-        assertEvalFastR("v <- as.external.byte(1.1); v;", "1");
-        assertEvalFastR("v <- as.external.byte(as.raw(1)); v;", "1");
-        assertEvalFastR("v <- as.external.byte(1.1); class(v);", "'" + RType.RInteropByte.getName() + "'");
-        assertEvalFastR("v <- as.external.byte(1.1); typeof(v);", "'" + RType.RInteropByte.getName() + "'");
-        assertEvalFastR("v <- as.external.byte(" + Byte.MAX_VALUE + "); v;", "" + Byte.MAX_VALUE);
-        assertEvalFastR("v <- as.external.byte(" + Byte.MIN_VALUE + "); v;", "" + Byte.MIN_VALUE);
-        assertEvalFastR("v <- as.external.byte(" + Integer.MAX_VALUE + "); v;", "" + new Integer(Integer.MAX_VALUE).byteValue());
-        assertEvalFastR("v <- as.external.byte(" + Integer.MIN_VALUE + "); v;", "" + new Integer(Integer.MIN_VALUE).byteValue());
-        assertEvalFastR("v <- as.external.byte(" + Double.MAX_VALUE + "); v;", "" + new Double(Double.MAX_VALUE).byteValue());
-        assertEvalFastR("v <- as.external.byte(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).byteValue());
+        assertEvalFastR("v <- .fastr.interop.asByte(1L); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asByte(1.1); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asByte(as.raw(1)); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asByte(1.1); class(v);", "'" + RType.RInteropByte.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asByte(1.1); typeof(v);", "'" + RType.RInteropByte.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asByte(" + Byte.MAX_VALUE + "); v;", "" + Byte.MAX_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asByte(" + Byte.MIN_VALUE + "); v;", "" + Byte.MIN_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asByte(" + Integer.MAX_VALUE + "); v;", "" + new Integer(Integer.MAX_VALUE).byteValue());
+        assertEvalFastR("v <- .fastr.interop.asByte(" + Integer.MIN_VALUE + "); v;", "" + new Integer(Integer.MIN_VALUE).byteValue());
+        assertEvalFastR("v <- .fastr.interop.asByte(" + Double.MAX_VALUE + "); v;", "" + new Double(Double.MAX_VALUE).byteValue());
+        assertEvalFastR("v <- .fastr.interop.asByte(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).byteValue());
     }
 
     @Test
     public void testToFloat() {
-        assertEvalFastR("v <- as.external.float(1L); v;", "1");
-        assertEvalFastR("v <- as.external.float(1.1); v;", "1.1");
-        assertEvalFastR("v <- as.external.float(as.raw(1)); v;", "1");
-        assertEvalFastR("v <- as.external.float(1.1); class(v);", "'" + RType.RInteropFloat.getName() + "'");
-        assertEvalFastR("v <- as.external.float(1.1); typeof(v);", "'" + RType.RInteropFloat.getName() + "'");
-        assertEvalFastR("v <- as.external.float(1L); class(v);", "'" + RType.RInteropFloat.getName() + "'");
-        assertEvalFastR("v <- as.external.float(1L); typeof(v);", "'" + RType.RInteropFloat.getName() + "'");
-        assertEvalFastR("v <- as.external.float(" + Float.MAX_VALUE + "); v;", "" + Float.MAX_VALUE);
-        assertEvalFastR("v <- as.external.float(" + Float.MIN_VALUE + "); v;", "" + (double) Float.MIN_VALUE);
-        assertEvalFastR("v <- as.external.float(" + Double.MAX_VALUE + "); v;", "Inf");
-        assertEvalFastR("v <- as.external.float(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).floatValue());
+        assertEvalFastR("v <- .fastr.interop.asFloat(1L); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asFloat(1.1); v;", "1.1");
+        assertEvalFastR("v <- .fastr.interop.asFloat(as.raw(1)); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asFloat(1.1); class(v);", "'" + RType.RInteropFloat.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asFloat(1.1); typeof(v);", "'" + RType.RInteropFloat.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asFloat(1L); class(v);", "'" + RType.RInteropFloat.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asFloat(1L); typeof(v);", "'" + RType.RInteropFloat.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asFloat(" + Float.MAX_VALUE + "); v;", "" + Float.MAX_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asFloat(" + Float.MIN_VALUE + "); v;", "" + (double) Float.MIN_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asFloat(" + Double.MAX_VALUE + "); v;", "Inf");
+        assertEvalFastR("v <- .fastr.interop.asFloat(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).floatValue());
     }
 
     @Test
     public void testToLong() {
-        assertEvalFastR("v <- as.external.long(1L); v;", "1");
-        assertEvalFastR("v <- as.external.long(1.1); v;", "1");
-        assertEvalFastR("v <- as.external.long(as.raw(1)); v;", "1");
-        assertEvalFastR("v <- as.external.long(1.1); class(v);", "'" + RType.RInteropLong.getName() + "'");
-        assertEvalFastR("v <- as.external.long(1.1); typeof(v);", "'" + RType.RInteropLong.getName() + "'");
-        assertEvalFastR("v <- as.external.long(1L); class(v);", "'" + RType.RInteropLong.getName() + "'");
-        assertEvalFastR("v <- as.external.long(1L); typeof(v);", "'" + RType.RInteropLong.getName() + "'");
-        assertEvalFastR("v <- as.external.long(" + Integer.MAX_VALUE + "); v;", "" + Integer.MAX_VALUE);
-        assertEvalFastR("v <- as.external.long(" + Integer.MIN_VALUE + "); v;", "" + Integer.MIN_VALUE);
-        assertEvalFastR("v <- as.external.long(" + Double.MAX_VALUE + "); v;", "" + new Double(Double.MAX_VALUE).longValue());
-        assertEvalFastR("v <- as.external.long(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).longValue());
+        assertEvalFastR("v <- .fastr.interop.asLong(1L); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asLong(1.1); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asLong(as.raw(1)); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asLong(1.1); class(v);", "'" + RType.RInteropLong.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asLong(1.1); typeof(v);", "'" + RType.RInteropLong.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asLong(1L); class(v);", "'" + RType.RInteropLong.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asLong(1L); typeof(v);", "'" + RType.RInteropLong.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asLong(" + Integer.MAX_VALUE + "); v;", "" + Integer.MAX_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asLong(" + Integer.MIN_VALUE + "); v;", "" + Integer.MIN_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asLong(" + Double.MAX_VALUE + "); v;", "" + new Double(Double.MAX_VALUE).longValue());
+        assertEvalFastR("v <- .fastr.interop.asLong(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).longValue());
     }
 
     @Test
     public void testToShort() {
-        assertEvalFastR("v <- as.external.short(1L); v;", "1");
-        assertEvalFastR("v <- as.external.short(1.1); v;", "1");
-        assertEvalFastR("v <- as.external.short(as.raw(1)); v;", "1");
-        assertEvalFastR("v <- as.external.short(1.1); class(v);", "'" + RType.RInteropShort.getName() + "'");
-        assertEvalFastR("v <- as.external.short(1.1); typeof(v);", "'" + RType.RInteropShort.getName() + "'");
-        assertEvalFastR("v <- as.external.short(1L); class(v);", "'" + RType.RInteropShort.getName() + "'");
-        assertEvalFastR("v <- as.external.short(1L); typeof(v);", "'" + RType.RInteropShort.getName() + "'");
-        assertEvalFastR("v <- as.external.short(" + Short.MAX_VALUE + "); v;", "" + Short.MAX_VALUE);
-        assertEvalFastR("v <- as.external.short(" + Short.MIN_VALUE + "); v;", "" + Short.MIN_VALUE);
-        assertEvalFastR("v <- as.external.short(" + Integer.MAX_VALUE + "); v;", "" + new Integer(Integer.MAX_VALUE).shortValue());
-        assertEvalFastR("v <- as.external.short(" + Integer.MIN_VALUE + "); v;", "" + new Integer(Integer.MIN_VALUE).shortValue());
-        assertEvalFastR("v <- as.external.short(" + Double.MAX_VALUE + "); v;", "" + new Double(Double.MAX_VALUE).shortValue());
-        assertEvalFastR("v <- as.external.short(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).shortValue());
+        assertEvalFastR("v <- .fastr.interop.asShort(1L); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asShort(1.1); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asShort(as.raw(1)); v;", "1");
+        assertEvalFastR("v <- .fastr.interop.asShort(1.1); class(v);", "'" + RType.RInteropShort.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asShort(1.1); typeof(v);", "'" + RType.RInteropShort.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asShort(1L); class(v);", "'" + RType.RInteropShort.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asShort(1L); typeof(v);", "'" + RType.RInteropShort.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asShort(" + Short.MAX_VALUE + "); v;", "" + Short.MAX_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asShort(" + Short.MIN_VALUE + "); v;", "" + Short.MIN_VALUE);
+        assertEvalFastR("v <- .fastr.interop.asShort(" + Integer.MAX_VALUE + "); v;", "" + new Integer(Integer.MAX_VALUE).shortValue());
+        assertEvalFastR("v <- .fastr.interop.asShort(" + Integer.MIN_VALUE + "); v;", "" + new Integer(Integer.MIN_VALUE).shortValue());
+        assertEvalFastR("v <- .fastr.interop.asShort(" + Double.MAX_VALUE + "); v;", "" + new Double(Double.MAX_VALUE).shortValue());
+        assertEvalFastR("v <- .fastr.interop.asShort(" + Double.MIN_VALUE + "); v;", "" + new Double(Double.MIN_VALUE).shortValue());
     }
 
     @Test
     public void testToChar() {
-        assertEvalFastR("v <- as.external.char(97L); v;", "'a'");
-        assertEvalFastR("v <- as.external.char(97.1); v;", "'a'");
-        assertEvalFastR("v <- as.external.char(97.1, 1); v;", errorIn("as.external.char(97.1, 1)", "pos argument not allowed with a numeric value"));
-        assertEvalFastR("v <- as.external.char(97L, 1); v;", errorIn("as.external.char(97L, 1)", "pos argument not allowed with a numeric value"));
-        assertEvalFastR("v <- as.external.char('abc', 1); v;", "'b'");
-        assertEvalFastR("v <- as.external.char('abc', 1.1); v;", "'b'");
-        assertEvalFastR("v <- as.external.char(97.1); class(v);", "'" + RType.RInteropChar.getName() + "'");
-        assertEvalFastR("v <- as.external.char(97.1); typeof(v);", "'" + RType.RInteropChar.getName() + "'");
-        assertEvalFastR("v <- as.external.char(97L); class(v);", "'" + RType.RInteropChar.getName() + "'");
-        assertEvalFastR("v <- as.external.char(97L); typeof(v);", "'" + RType.RInteropChar.getName() + "'");
-        assertEvalFastR("v <- as.external.char('a'); v;", "'a'");
+        assertEvalFastR("v <- .fastr.interop.asChar(97L); v;", "'a'");
+        assertEvalFastR("v <- .fastr.interop.asChar(97.1); v;", "'a'");
+        assertEvalFastR("v <- .fastr.interop.asChar(97.1, 1); v;", errorIn(".fastr.interop.asChar(97.1, 1)", "pos argument not allowed with a numeric value"));
+        assertEvalFastR("v <- .fastr.interop.asChar(97L, 1); v;", errorIn(".fastr.interop.asChar(97L, 1)", "pos argument not allowed with a numeric value"));
+        assertEvalFastR("v <- .fastr.interop.asChar('abc', 1); v;", "'b'");
+        assertEvalFastR("v <- .fastr.interop.asChar('abc', 1.1); v;", "'b'");
+        assertEvalFastR("v <- .fastr.interop.asChar(97.1); class(v);", "'" + RType.RInteropChar.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asChar(97.1); typeof(v);", "'" + RType.RInteropChar.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asChar(97L); class(v);", "'" + RType.RInteropChar.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asChar(97L); typeof(v);", "'" + RType.RInteropChar.getName() + "'");
+        assertEvalFastR("v <- .fastr.interop.asChar('a'); v;", "'a'");
     }
 
     @Test
     public void testToArray() {
-        assertEvalFastR("a <- as.java.array(1L); a;", getRValue(new int[]{1}));
-        assertEvalFastR("a <- as.java.array(1L); java.class(a);", "'[I'");
-        assertEvalFastR("a <- as.java.array(c(1L, 2L)); a;", getRValue(new int[]{1, 2}));
-        assertEvalFastR("a <- as.java.array(1L,,T); a;", getRValue(new int[]{1}));
-        assertEvalFastR("a <- as.java.array(c(1L, 2L),,T); a;", getRValue(new int[]{1, 2}));
-        assertEvalFastR("a <- as.java.array(c(1L, 2L),'double',T); a;", getRValue(new double[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1L); a;", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1L); a$getClass()$getName();", "'[I'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1L, 2L)); a;", getRValue(new int[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1L,,T); a;", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1L, 2L),,T); a;", getRValue(new int[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1L, 2L),'double',T); a;", getRValue(new double[]{1, 2}));
 
-        assertEvalFastR("a <- as.java.array(1.1); a;", getRValue(new double[]{1.1}));
-        assertEvalFastR("a <- as.java.array(1.1); java.class(a);", "'[D'");
-        assertEvalFastR("a <- as.java.array(c(1.1, 1.2)); a;", getRValue(new double[]{1.1, 1.2}));
-        assertEvalFastR("a <- as.java.array(1.1,,T); a;", getRValue(new double[]{1.1}));
-        assertEvalFastR("a <- as.java.array(c(1.1, 1.2),,T); a;", getRValue(new double[]{1.1, 1.2}));
-        assertEvalFastR("a <- as.java.array(c(1.1, 1.2),'double',T); a;", getRValue(new double[]{1.1, 1.2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1.1); a;", getRValue(new double[]{1.1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1.1); a$getClass()$getName();", "'[D'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1.1, 1.2)); a;", getRValue(new double[]{1.1, 1.2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1.1,,T); a;", getRValue(new double[]{1.1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1.1, 1.2),,T); a;", getRValue(new double[]{1.1, 1.2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1.1, 1.2),'double',T); a;", getRValue(new double[]{1.1, 1.2}));
 
-        assertEvalFastR("a <- as.java.array(T); a;", getRValue(new boolean[]{true}));
-        assertEvalFastR("a <- as.java.array(T); java.class(a);", "'[Z'");
-        assertEvalFastR("a <- as.java.array(c(T, F)); a;", getRValue(new boolean[]{true, false}));
-        assertEvalFastR("a <- as.java.array(T,,T); a;", getRValue(new boolean[]{true}));
-        assertEvalFastR("a <- as.java.array(c(T, F),,T); a;", getRValue(new boolean[]{true, false}));
-        assertEvalFastR("a <- as.java.array(c(T, F),'boolean',T); a;", getRValue(new boolean[]{true, false}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(T); a;", getRValue(new boolean[]{true}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(T); a$getClass()$getName();", "'[Z'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(T, F)); a;", getRValue(new boolean[]{true, false}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(T,,T); a;", getRValue(new boolean[]{true}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(T, F),,T); a;", getRValue(new boolean[]{true, false}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(T, F),'boolean',T); a;", getRValue(new boolean[]{true, false}));
 
-        assertEvalFastR("a <- as.java.array('a'); a;", getRValue(new String[]{"a"}));
-        assertEvalFastR("a <- as.java.array('a'); java.class(a);", "'[Ljava.lang.String;'");
-        assertEvalFastR("a <- as.java.array(c('a', 'b')); a;", getRValue(new String[]{"a", "b"}));
-        assertEvalFastR("a <- as.java.array('a',,T); a;", getRValue(new String[]{"a"}));
-        assertEvalFastR("a <- as.java.array(c('a', 'b'),,T); a;", getRValue(new String[]{"a", "b"}));
-        assertEvalFastR("a <- as.java.array(c('a', 'b'),'java.lang.String',T); a;", getRValue(new String[]{"a", "b"}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray('a'); a;", getRValue(new String[]{"a"}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray('a'); a$getClass()$getName();", "'[Ljava.lang.String;'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c('a', 'b')); a;", getRValue(new String[]{"a", "b"}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray('a',,T); a;", getRValue(new String[]{"a"}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c('a', 'b'),,T); a;", getRValue(new String[]{"a", "b"}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c('a', 'b'),'java.lang.String',T); a;", getRValue(new String[]{"a", "b"}));
 
-        assertEvalFastR("a <- as.java.array(as.raw(1)); a", getRValue(new byte[]{1}));
-        assertEvalFastR("a <- as.java.array(as.raw(1)); java.class(a);", "'[B'");
-        assertEvalFastR("a <- as.java.array(as.raw(1)); length(a);", "1");
-        assertEvalFastR("a <- as.java.array(as.raw(c(1, 2, 3))); length(a);", "3");
-        assertEvalFastR("a <- as.java.array(as.raw(c(1, 2, 3))); java.class(a);", "'[B'");
-        assertEvalFastR("a <- as.java.array(as.raw(c(1, 2, 3)), 'int'); java.class(a);", "'[I'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(as.raw(1)); a", getRValue(new byte[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(as.raw(1)); a$getClass()$getName();", "'[B'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(as.raw(1)); length(a);", "1");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(as.raw(c(1, 2, 3))); length(a);", "3");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(as.raw(c(1, 2, 3))); a$getClass()$getName();", "'[B'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(as.raw(c(1, 2, 3)), 'int'); a$getClass()$getName();", "'[I'");
 
-        assertEvalFastR("a <- as.java.array(as.external.short(1)); a;", getRValue(new short[]{1}));
-        assertEvalFastR("a <- as.java.array(as.external.short(1)); java.class(a);", "'[S'");
-        assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2))); a;", getRValue(new short[]{1, 2}));
-        assertEvalFastR("a <- as.java.array(as.external.short(1),,T); a;", getRValue(new short[]{1}));
-        assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)),,T); a;", getRValue(new short[]{1, 2}));
-        assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)),'int',T); a;", getRValue(new int[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(.fastr.interop.asShort(1)); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(.fastr.interop.asShort(1)); a$getClass()$getName();", "'[S'");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(.fastr.interop.asShort(1), .fastr.interop.asShort(2))); a;", getRValue(new short[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(.fastr.interop.asShort(1),,T); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(.fastr.interop.asShort(1), .fastr.interop.asShort(2)),,T); a;", getRValue(new short[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(.fastr.interop.asShort(1), .fastr.interop.asShort(2)),'int',T); a;", getRValue(new int[]{1, 2}));
 
-        assertEvalFastR("a <- as.java.array(as.external.short(1), 'java.lang.Short'); a;", getRValue(new short[]{1}));
-        assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)), 'java.lang.Short'); a;", getRValue(new short[]{1, 2}));
-        assertEvalFastR("a <- as.java.array(as.external.short(1), 'java.lang.Short', T); a;", getRValue(new short[]{1}));
-        assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)), 'java.lang.Short', T); a;", getRValue(new short[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(.fastr.interop.asShort(1), 'java.lang.Short'); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(.fastr.interop.asShort(1), .fastr.interop.asShort(2)), 'java.lang.Short'); a;", getRValue(new short[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(.fastr.interop.asShort(1), 'java.lang.Short', T); a;", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(.fastr.interop.asShort(1), .fastr.interop.asShort(2)), 'java.lang.Short', T); a;", getRValue(new short[]{1, 2}));
 
-        assertEvalFastR("a <- as.java.array(c(as.external.short(1), as.external.short(2)), 'int'); a;", getRValue(new int[]{1, 2}));
-        assertEvalFastR("a <- as.java.array(c(1.123, 2.123), 'double'); a;", getRValue(new double[]{1.123, 2.123}));
-        assertEvalFastR("a <- as.java.array(as.external.short(1), 'double'); a;", getRValue(new double[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(.fastr.interop.asShort(1), .fastr.interop.asShort(2)), 'int'); a;", getRValue(new int[]{1, 2}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1.123, 2.123), 'double'); a;", getRValue(new double[]{1.123, 2.123}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(.fastr.interop.asShort(1), 'double'); a;", getRValue(new double[]{1}));
 
-        assertEvalFastR("a <- as.java.array(1L); as.java.array(a);", getRValue(new int[]{1}));
-        assertEvalFastR("a <- as.java.array(1L); as.java.array(a,,T);", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1L); .fastr.interop.asJavaArray(a);", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1L); .fastr.interop.asJavaArray(a,,T);", getRValue(new int[]{1}));
 
-        assertEvalFastR("a <- as.java.array(as.external.short(1)); as.java.array(a);", getRValue(new short[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(.fastr.interop.asShort(1)); .fastr.interop.asJavaArray(a);", getRValue(new short[]{1}));
 
-        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(to); is.external.array(a)", "TRUE");
-        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(c(to, to)); is.external.array(a)", "TRUE");
-        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(c(to, to)); length(a)", "2");
-        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new.external(tc); a <- as.java.array(c(to, to)); java.class(a);",
+        assertEvalFastR("tc <- java.type('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.interop.asJavaArray(to); is.polyglot.value(a) && length(a) > 0", "TRUE");
+        assertEvalFastR("tc <- java.type('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.interop.asJavaArray(c(to, to)); is.polyglot.value(a) && length(a) > 0", "TRUE");
+        assertEvalFastR("tc <- java.type('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.interop.asJavaArray(c(to, to)); length(a)", "2");
+        assertEvalFastR("tc <- java.type('" + TEST_CLASS + "'); to <- .fastr.interop.new(tc); a <- .fastr.interop.asJavaArray(c(to, to)); a$getClass()$getName();",
                         "[Lcom.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass;");
 
-        assertEvalFastR("a <- as.java.array(1L,,F); a;", getRValue(new int[]{1}));
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(1L,,F); a;", getRValue(new int[]{1}));
     }
 
     @Test
     public void testArrayAsParameter() {
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "ja <- as.java.array(c(1L, 2L, 3L), 'int'); to$isIntArray(ja)", "'" + (new int[1]).getClass().getName() + "'");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "ja <- as.java.array(c(1L, 2L, 3L), 'java.lang.Integer'); to$isIntegerArray(ja)", "'" + (new Integer[1]).getClass().getName() + "'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "ja <- .fastr.interop.asJavaArray(c(1L, 2L, 3L), 'int'); to$isIntArray(ja)", "'" + (new int[1]).getClass().getName() + "'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "ja <- .fastr.interop.asJavaArray(c(1L, 2L, 3L), 'java.lang.Integer'); to$isIntegerArray(ja)", "'" + (new Integer[1]).getClass().getName() + "'");
     }
 
     @Test
     public void testNewArray() {
-        testNewArray("java.lang.Boolean", true);
-        testNewArray("java.lang.Byte", true);
-        testNewArray("java.lang.Character", true);
-        testNewArray("java.lang.Double", true);
-        testNewArray("java.lang.Float", true);
-        testNewArray("java.lang.Integer", true);
-        testNewArray("java.lang.Long", true);
-        testNewArray("java.lang.Short", true);
-        testNewArray("java.lang.String", true);
+        testNewArray("java.lang.Boolean");
+        testNewArray("java.lang.Byte");
+        testNewArray("java.lang.Character");
+        testNewArray("java.lang.Double");
+        testNewArray("java.lang.Float");
+        testNewArray("java.lang.Integer");
+        testNewArray("java.lang.Long");
+        testNewArray("java.lang.Short");
+        testNewArray("java.lang.String");
 
-        testNewArray("boolean", true);
-        testNewArray("byte", true);
-        testNewArray("char", true);
-        testNewArray("double", true);
-        testNewArray("float", true);
-        testNewArray("int", true);
-        testNewArray("long", true);
-        testNewArray("short", true);
+        testNewArray("boolean");
+        testNewArray("byte");
+        testNewArray("char");
+        testNewArray("double");
+        testNewArray("float");
+        testNewArray("int");
+        testNewArray("long");
+        testNewArray("short");
 
-        testNewArray("com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass", true);
-
-        // test also with double length/dimensions
-        testNewArray("java.lang.String", false);
+        testNewArray("com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass");
     }
 
-    public void testNewArray(String className, boolean dimInt) {
-        String dim = dimInt ? "10L" : "10.9";
-        assertEvalFastR("a <- new.java.array('" + className + "', " + dim + "); is.external.array(a);", "TRUE");
-        assertEvalFastR("a <- new.java.array('" + className + "', " + dim + "); length(a);", "10");
-        assertEvalFastR("a <- new.java.array('" + className + "', " + dim + "); java.class(a);", toArrayClassName(className, 1));
+    public void testNewArray(String className) {
+        assertEvalFastR("a <- new(java.type('" + className + "[]'), 10L); is.polyglot.value(a) && length(a) > 0", "TRUE");
+        assertEvalFastR("a <- new(java.type('" + className + "[]'), 10L); length(a)", "10");
+        assertEvalFastR("a <- new(java.type('" + className + "[]'), 10L); a$getClass()$getName();", toArrayClassName(className, 1));
 
-        dim = dimInt ? "c(2L, 3L)" : "c(2.9, 3.9)";
-        assertEvalFastR("a <- new.java.array('" + className + "', " + dim + "); is.external.array(a);", "TRUE");
-        assertEvalFastR("a <- new.java.array('" + className + "', " + dim + "); length(a);", "2L");
-        assertEvalFastR("a <- new.java.array('" + className + "', " + dim + "); length(a[1]);", "3L");
-        assertEvalFastR("a <- new.java.array('" + className + "', " + dim + "); java.class(a);", toArrayClassName(className, 2));
+        assertEvalFastR("a <- new(java.type('" + className + "[][]'), c(2L, 3L)); is.polyglot.value(a) && length(a) > 0", "TRUE");
+        assertEvalFastR("a <- new(java.type('" + className + "[][]'), c(2L, 3L)); length(a);", "2L");
+        assertEvalFastR("a <- new(java.type('" + className + "[][]'), c(2L, 3L)); length(a[1]);", "3L");
+        assertEvalFastR("a <- new(java.type('" + className + "[][]'), c(2L, 3L)); a$getClass()$getName();", toArrayClassName(className, 2));
     }
 
     @Test
-    public void testGetClass() {
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "java.class(to)", "'com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass'");
-
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "java.class(to$methodReturnsNull())", errorIn("java.class(to$methodReturnsNull())", "unsupported type com.oracle.truffle.r.runtime.data.RNull"));
-        assertEvalFastR("java.class(NULL)", errorIn("java.class(NULL)", "unsupported type com.oracle.truffle.r.runtime.data.RNull"));
-        assertEvalFastR("java.class(1)", errorIn("java.class(1)", "unsupported type java.lang.Double"));
+    public void testGetClassAndClassName() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$getClass()$getName()", "'com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$class$getName()", "'com.oracle.truffle.r.test.library.fastr.TestJavaInterop$TestClass'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$class$getClass()$getName()", "'java.lang.Class'");
     }
 
     @Test
     public void testAsVectorFromArray() {
-        // testAsVectorFromArray("fieldStaticBooleanArray", "logical");
-        // testAsVectorFromArray("fieldStaticByteArray", "integer");
-        // testAsVectorFromArray("fieldStaticCharArray", "character");
-        // testAsVectorFromArray("fieldStaticDoubleArray", "double");
-        // testAsVectorFromArray("fieldStaticFloatArray", "double");
-        // testAsVectorFromArray("fieldStaticIntegerArray", "integer");
-        // testAsVectorFromArray("fieldStaticLongArray", "double");
-        // testAsVectorFromArray("fieldStaticShortArray", "integer");
-        // testAsVectorFromArray("fieldStaticStringArray", "character");
+        testAsVectorFromArray("fieldStaticBooleanArray", "logical");
+        testAsVectorFromArray("fieldStaticByteArray", "integer");
+        testAsVectorFromArray("fieldStaticCharArray", "character");
+        testAsVectorFromArray("fieldStaticDoubleArray", "double");
+        testAsVectorFromArray("fieldStaticFloatArray", "double");
+        testAsVectorFromArray("fieldStaticIntegerArray", "integer");
+        testAsVectorFromArray("fieldStaticLongArray", "double");
+        testAsVectorFromArray("fieldStaticShortArray", "integer");
+        testAsVectorFromArray("fieldStaticStringArray", "character");
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$objectArray); is.list(v)", "TRUE");
         testAsVectorFromArray("objectIntArray", "integer");
@@ -277,15 +270,15 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testFromArray() {
-        // testAsVectorFromArray("fieldStaticBooleanArray", "logical");
-        // testAsVectorFromArray("fieldStaticByteArray", "integer");
-        // testAsVectorFromArray("fieldStaticCharArray", "character");
-        // testAsVectorFromArray("fieldStaticDoubleArray", "double");
-        // testAsVectorFromArray("fieldStaticFloatArray", "double");
-        // testAsVectorFromArray("fieldStaticIntegerArray", "integer");
-        // testAsVectorFromArray("fieldStaticLongArray", "double");
-        // testAsVectorFromArray("fieldStaticShortArray", "integer");
-        // testAsVectorFromArray("fieldStaticStringArray", "character");
+        testAsVectorFromArray("fieldStaticBooleanArray", "logical");
+        testAsVectorFromArray("fieldStaticByteArray", "integer");
+        testAsVectorFromArray("fieldStaticCharArray", "character");
+        testAsVectorFromArray("fieldStaticDoubleArray", "double");
+        testAsVectorFromArray("fieldStaticFloatArray", "double");
+        testAsVectorFromArray("fieldStaticIntegerArray", "integer");
+        testAsVectorFromArray("fieldStaticLongArray", "double");
+        testAsVectorFromArray("fieldStaticShortArray", "integer");
+        testAsVectorFromArray("fieldStaticStringArray", "character");
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$objectArray); is.list(v)", "TRUE");
         testAsVectorFromArray("objectIntArray", "integer");
@@ -297,7 +290,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[2]", "list(NULL)");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[3]", "list(3)");
 
-        assertEvalFastR("ja <- new.java.array('java.lang.String', 0L); .fastr.interop.fromArray(ja)", "list()");
+        assertEvalFastR("ja <- new(java.type('java.lang.String[]'), 0L); .fastr.interop.fromArray(ja)", "list()");
     }
 
     public void testAsVectorFromArray(String field, String type) {
@@ -307,47 +300,47 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testInteroptNew() {
-        assertEvalFastR("tc <- new.java.class('" + Boolean.class.getName() + "'); t <- new.external(tc, TRUE); t", "TRUE");
-        assertEvalFastR("tc <- new.java.class('java/lang/Boolean'); t <- new(tc, TRUE); t", "TRUE");
-        assertEvalFastR("tc <- new.java.class('" + Byte.class.getName() + "'); t <- new.external(tc, as.external.byte(1)); t", "1");
-        assertEvalFastR("tc <- new.java.class('" + Character.class.getName() + "'); t <- new.external(tc, as.external.char(97)); t", "'a'");
-        assertEvalFastR("tc <- new.java.class('" + Double.class.getName() + "'); t <- new.external(tc, 1.1); t", "1.1");
-        assertEvalFastR("tc <- new.java.class('" + Float.class.getName() + "'); t <- new.external(tc, as.external.float(1.1)); t", "1.1");
-        assertEvalFastR("tc <- new.java.class('" + Integer.class.getName() + "'); t <- new.external(tc, 1L); t", "1");
-        assertEvalFastR("tc <- new.java.class('" + Long.class.getName() + "'); t <- new.external(tc, as.external.long(1)); t", "1");
-        assertEvalFastR("tc <- new.java.class('" + Short.class.getName() + "'); t <- new.external(tc, as.external.short(1)); t", "1");
-        assertEvalFastR("tc <- new.java.class('" + String.class.getName() + "'); t <- new.external(tc, 'abc'); t", "'abc'");
-        assertEvalFastR("tc <- new.java.class('" + TestNullClass.class.getName() + "'); t <- new.external(tc, NULL); class(t)", "'" + RType.TruffleObject.getName() + "'");
+        assertEvalFastR("tc <- java.type('" + Boolean.class.getName() + "'); t <- .fastr.interop.new(tc, TRUE); t", "TRUE");
+        assertEvalFastR("tc <- java.type('java/lang/Boolean'); t <- new(tc, TRUE); t", "TRUE");
+        assertEvalFastR("tc <- java.type('" + Byte.class.getName() + "'); t <- .fastr.interop.new(tc, .fastr.interop.asByte(1)); t", "1");
+        assertEvalFastR("tc <- java.type('" + Character.class.getName() + "'); t <- .fastr.interop.new(tc, .fastr.interop.asChar(97)); t", "'a'");
+        assertEvalFastR("tc <- java.type('" + Double.class.getName() + "'); t <- .fastr.interop.new(tc, 1.1); t", "1.1");
+        assertEvalFastR("tc <- java.type('" + Float.class.getName() + "'); t <- .fastr.interop.new(tc, .fastr.interop.asFloat(1.1)); t", "1.1");
+        assertEvalFastR("tc <- java.type('" + Integer.class.getName() + "'); t <- .fastr.interop.new(tc, 1L); t", "1");
+        assertEvalFastR("tc <- java.type('" + Long.class.getName() + "'); t <- .fastr.interop.new(tc, .fastr.interop.asLong(1)); t", "1");
+        assertEvalFastR("tc <- java.type('" + Short.class.getName() + "'); t <- .fastr.interop.new(tc, .fastr.interop.asShort(1)); t", "1");
+        assertEvalFastR("tc <- java.type('" + String.class.getName() + "'); t <- .fastr.interop.new(tc, 'abc'); t", "'abc'");
+        assertEvalFastR("tc <- java.type('" + TestNullClass.class.getName() + "'); t <- .fastr.interop.new(tc, NULL); class(t)", "'" + RType.TruffleObject.getName() + "'");
     }
 
     @Test
     public void testNewWithJavaClass() {
-        assertEvalFastR("tc <- new.java.class('" + Boolean.class.getName() + "'); to <- new(tc, TRUE); to", "TRUE");
-        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); to <- new(tc); to$fieldInteger", getRValue(Integer.MAX_VALUE));
+        assertEvalFastR("tc <- java.type('" + Boolean.class.getName() + "'); to <- new(tc, TRUE); to", "TRUE");
+        assertEvalFastR("tc <- java.type('" + TEST_CLASS + "'); to <- new(tc); to$fieldInteger", getRValue(Integer.MAX_VALUE));
 
         assertEvalFastR("to <- new('" + Boolean.class.getName() + "', TRUE); to", "TRUE");
         assertEvalFastR("to <- new('java/lang/Boolean', TRUE); to", "TRUE");
-        // assertEvalFastR("to <- new('" + TEST_CLASS + "'); to$fieldStaticInteger",
-        // getRValue(Integer.MAX_VALUE));
+        assertEvalFastR("to <- new('" + TEST_CLASS + "'); to$fieldStaticInteger",
+                        getRValue(Integer.MAX_VALUE));
 
-        assertEvalFastR("to <- new('" + TEST_CLASS + "'); new(to)", errorIn("new.external(Class, ...)", "error during Java object instantiation"));
+        assertEvalFastR("to <- new('" + TEST_CLASS + "'); new(to)", errorIn(".fastr.interop.new(Class, ...)", "error during Java object instantiation"));
 
         assertEvalFastR("to <- new('__bogus_class_name__');", errorIn("getClass(Class, where = topenv(parent.frame()))", "“__bogus_class_name__” is not a defined class"));
     }
 
     @Test
     public void testCombineInteropTypes() {
-        assertEvalFastR("class(c(as.external.byte(123)))", "'interopt.byte'");
-        assertEvalFastR("class(c(as.external.byte(123), as.external.byte(234)))", "'list'");
-        assertEvalFastR("class(c(as.external.byte(123), 1))", "'list'");
-        assertEvalFastR("class(c(1, as.external.byte(123)))", "'list'");
+        assertEvalFastR("class(c(.fastr.interop.asByte(123)))", "'interopt.byte'");
+        assertEvalFastR("class(c(.fastr.interop.asByte(123), .fastr.interop.asByte(234)))", "'list'");
+        assertEvalFastR("class(c(.fastr.interop.asByte(123), 1))", "'list'");
+        assertEvalFastR("class(c(1, .fastr.interop.asByte(123)))", "'list'");
     }
 
     @Test
     public void testCombineForeignObjects() throws IllegalArgumentException {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(to))", "'list'");
-        assertEvalFastR("tc <- new.java.class('" + TEST_CLASS + "'); t <- new.external(tc); t1 <- new.external(tc); class(c(t, t1))", "'list'");
+        assertEvalFastR("tc <- java.type('" + TEST_CLASS + "'); t <- .fastr.interop.new(tc); t1 <- .fastr.interop.new(tc); class(c(t, t1))", "'list'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(1, t))", "'list'");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " class(c(t, 1))", "'list'");
 
@@ -393,7 +386,7 @@ public class TestJavaInterop extends TestBase {
             }
         }
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$mixedTypesArray",
-                        "cat('[external object]\n[[1]]\n[1] 1\n\n[[2]]\n[1] 2.1\n\n[[3]]\n[1] \"a\"\n\n[[4]]\n[1] TRUE\n\n[[5]]\nNULL\n\n', sep='')");
+                        "cat('[polyglot value]\n[[1]]\n[1] 1\n\n[[2]]\n[1] 2.1\n\n[[3]]\n[1] \"a\"\n\n[[4]]\n[1] TRUE\n\n[[5]]\nNULL\n\n', sep='')");
     }
 
     @Test
@@ -417,7 +410,7 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testAllTypes() {
         getValueForAllTypesMethod("allTypesMethod");
-        // getValueForAllTypesMethod("allTypesStaticMethod");
+        getValueForAllTypesMethod("allTypesStaticMethod");
     }
 
     @Test
@@ -428,7 +421,7 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testClassAsParameter() {
         // fails in testdownstream
-        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " to$classAsArg(new.java.class(" + TEST_CLASS + "))", getRValue(TEST_CLASS));
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " to$classAsArg(java.type(" + TEST_CLASS + "))", getRValue(TEST_CLASS));
     }
 
     private void getValueForAllTypesMethod(String method) {
@@ -445,20 +438,20 @@ public class TestJavaInterop extends TestBase {
         sb.append(method);
         sb.append("(");
         sb.append(getRValue(bo));
-        sb.append(", as.external.byte(");
+        sb.append(", .fastr.interop.asByte(");
         sb.append(getRValue(bt));
-        sb.append("), as.external.char(");
+        sb.append("), .fastr.interop.asChar(");
         sb.append(getRValue(c));
-        sb.append("), as.external.short(");
+        sb.append("), .fastr.interop.asShort(");
         sb.append(getRValue(sh));
         sb.append("), ");
         sb.append(getRValue(i));
         sb.append("L, ");
-        sb.append(" as.external.long(");
+        sb.append(" .fastr.interop.asLong(");
         sb.append(getRValue(l));
         sb.append("), ");
         sb.append(getRValue(d));
-        sb.append(", as.external.float(");
+        sb.append(", .fastr.interop.asFloat(");
         sb.append(getRValue(f));
         sb.append("), ");
         sb.append(getRValue(s));
@@ -478,33 +471,33 @@ public class TestJavaInterop extends TestBase {
     @Ignore("FIXME: overloads resolution is not working")
     public void testOverloaded() {
         String className = TestOverload.class.getName();
-        String createClass = "toc <- new.java.class('" + className + "'); ";
+        String createClass = "toc <- java.type('" + className + "'); ";
 
         assertEvalFastR(createClass + " toc$isOverloaded(TRUE)", "'boolean'");
-        assertEvalFastR(createClass + " toc$isOverloaded(as.external.byte(1))", "'byte'");
-        assertEvalFastR(createClass + " toc$isOverloaded(as.external.char('a'))", "'char'");
+        assertEvalFastR(createClass + " toc$isOverloaded(.fastr.interop.asByte(1))", "'byte'");
+        assertEvalFastR(createClass + " toc$isOverloaded(.fastr.interop.asChar('a'))", "'char'");
         assertEvalFastR(createClass + " toc$isOverloaded(1)", "'double'");
-        assertEvalFastR(createClass + " toc$isOverloaded(as.external.float(1))", "'float'");
+        assertEvalFastR(createClass + " toc$isOverloaded(.fastr.interop.asFloat(1))", "'float'");
         assertEvalFastR(createClass + " toc$isOverloaded(1L)", "'int'");
-        assertEvalFastR(createClass + " toc$isOverloaded(as.external.long(1))", "'long'");
-        assertEvalFastR(createClass + " toc$isOverloaded(as.external.short(1))", "'short'");
+        assertEvalFastR(createClass + " toc$isOverloaded(.fastr.interop.asLong(1))", "'long'");
+        assertEvalFastR(createClass + " toc$isOverloaded(.fastr.interop.asShort(1))", "'short'");
         assertEvalFastR(createClass + " toc$isOverloaded('string')", getRValue(String.class.getName()));
 
         assertEvalFastR("new('" + className + "', TRUE)$type", "'boolean'");
-        assertEvalFastR("new('" + className + "', as.external.byte(1))$type", "'byte'");
-        assertEvalFastR("new('" + className + "', as.external.char('a'))$type", "'char'");
+        assertEvalFastR("new('" + className + "', .fastr.interop.asByte(1))$type", "'byte'");
+        assertEvalFastR("new('" + className + "', .fastr.interop.asChar('a'))$type", "'char'");
         assertEvalFastR("new('" + className + "', 1)$type", "'double'");
-        assertEvalFastR("new('" + className + "', as.external.float(1))$type", "'float'");
+        assertEvalFastR("new('" + className + "', .fastr.interop.asFloat(1))$type", "'float'");
         assertEvalFastR("new('" + className + "', 1L)$type", "'int'");
-        assertEvalFastR("new('" + className + "', as.external.long(1))$type", "'long'");
-        assertEvalFastR("new('" + className + "', as.external.short(1))$type", "'short'");
+        assertEvalFastR("new('" + className + "', .fastr.interop.asLong(1))$type", "'long'");
+        assertEvalFastR("new('" + className + "', .fastr.interop.asShort(1))$type", "'short'");
         assertEvalFastR("new('" + className + "', 'string')$type", getRValue(String.class.getName()));
     }
 
     @Test
     public void testArrayReadWrite() {
-        assertEvalFastR("a <- as.java.array(c(1,2,3)); a[1]", "1");
-        assertEvalFastR("a <- as.java.array(c(1,2,3)); a[[1]]", "1");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1,2,3)); a[1]", "1");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1,2,3)); a[[1]]", "1");
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[1];", "1");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[[1]];", "1");
@@ -514,8 +507,8 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[1,2]", "2");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[[1,2]]", "2");
 
-        assertEvalFastR("a <- as.java.array(c(1,2,3)); a[1] <- 123; a[1]", "123");
-        assertEvalFastR("a <- as.java.array(c(1,2,3)); a[[1]] <- 123; a[[1]]", "123");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1,2,3)); a[1] <- 123; a[1]", "123");
+        assertEvalFastR("a <- .fastr.interop.asJavaArray(c(1,2,3)); a[[1]] <- 123; a[[1]]", "123");
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[1] <- 123L; to$fieldIntegerArray[1]", "123");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[[1]] <- 1234L; to$fieldIntegerArray[[1]]", "1234");
@@ -556,30 +549,18 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testNamesForForeignObject() {
-        // assertEvalFastR("tc <- new.java.class('" + TestNamesClassNoMembers.class.getName() + "');
-        // t <- new.external(tc); names(t)", "NULL");
-        // assertEvalFastR("tc <- new.java.class('" + TestNamesClassNoPublicMembers.class.getName()
-        // + "'); t <- new.external(tc); names(t)", "NULL");
-        assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); c('staticField', 'staticMethod') %in% names(tc)", "c(TRUE, TRUE)");
-        assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticField)", "NULL");
-        assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); names(tc$staticMethod)", "NULL");
-        // assertEvalFastR("tc <- new.java.class('" + TestNamesClass.class.getName() + "'); t <-
-        // new.external(tc); sort(names(t))", "c('field', 'method', 'staticField',
-        // 'staticMethod')");
+        assertEvalFastR("tc <- java.type('" + TestNamesClassNoMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "'class'");
+        assertEvalFastR("tc <- java.type('" + TestNamesClassNoPublicMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "'class'");
+        assertEvalFastR("tc <- java.type('" + TestNamesClass.class.getName() + "'); c('staticField', 'staticMethod') %in% names(tc)", "c(TRUE, TRUE)");
+        assertEvalFastR("tc <- java.type('" + TestNamesClass.class.getName() + "'); names(tc$staticField)", "NULL");
+        assertEvalFastR("tc <- java.type('" + TestNamesClass.class.getName() + "'); names(tc$staticMethod)", "NULL");
+        assertEvalFastR("tc <- java.type('" + TestNamesClass.class.getName() + "'); t <- .fastr.interop.new(tc); sort(names(t))", "c('class', 'field', 'method', 'staticField', 'staticMethod')");
     }
 
     @Test
-    public void testIsExternalExecutable() {
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.executable(to)", "FALSE");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.executable(to$methodBoolean)", "TRUE");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.executable(to$fieldBoolean)", "FALSE");
-    }
-
-    @Test
-    public void testIsExternalNull() {
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.null(to)", "FALSE");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.null(to$methodReturnsNull)", "FALSE");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.external.null(to$methodReturnsNull())", "TRUE");
+    public void testReturnsNull() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.null(to$methodReturnsNull())", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.null(to$fieldNullObject)", "TRUE");
     }
 
     @Test
@@ -629,9 +610,9 @@ public class TestJavaInterop extends TestBase {
         assertPassingForeighObjectToFunction("is.unsorted", "FALSE");
         assertPassingForeighObjectToFunction("is.vector", "FALSE");
 
-        assertPassingForeighObjectToFunction("is.nan", errorIn("is.nan(to)", "default method not implemented for type 'external object'"));
-        assertPassingForeighObjectToFunction("is.finite", errorIn("is.finite(to)", "default method not implemented for type 'external object'"));
-        assertPassingForeighObjectToFunction("is.infinite", errorIn("is.infinite(to)", "default method not implemented for type 'external object'"));
+        assertPassingForeighObjectToFunction("is.nan", errorIn("is.nan(to)", "default method not implemented for type 'polyglot.value'"));
+        assertPassingForeighObjectToFunction("is.finite", errorIn("is.finite(to)", "default method not implemented for type 'polyglot.value'"));
+        assertPassingForeighObjectToFunction("is.infinite", errorIn("is.infinite(to)", "default method not implemented for type 'polyglot.value'"));
 
     }
 
@@ -650,18 +631,18 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testAttributes() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " attributes(to)", "NULL");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " attr(to, 'a')<-'a'", errorIn("attr(to, \"a\") <- \"a\"", "external object cannot be attributed"));
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " attr(to, which = 'a')", errorIn("attr(to, which = \"a\")", "external object cannot be attributed"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " attr(to, 'a')<-'a'", errorIn("attr(to, \"a\") <- \"a\"", "polyglot value cannot be attributed"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " attr(to, which = 'a')", errorIn("attr(to, which = \"a\")", "polyglot value cannot be attributed"));
     }
 
     @Test
     public void testIdentical() {
-        assertEvalFastR("b1 <- as.external.byte(1); identical(b1, b1)", "TRUE");
-        assertEvalFastR("b1 <- as.external.byte(1); b2 <- as.external.byte(1); identical(b1, b2)", "FALSE");
-        assertEvalFastR("b1 <- as.external.byte(1); s1 <- as.external.short(1); identical(b1, s1)", "FALSE");
+        assertEvalFastR("b1 <- .fastr.interop.asByte(1); identical(b1, b1)", "TRUE");
+        assertEvalFastR("b1 <- .fastr.interop.asByte(1); b2 <- .fastr.interop.asByte(1); identical(b1, b2)", "FALSE");
+        assertEvalFastR("b1 <- .fastr.interop.asByte(1); s1 <- .fastr.interop.asShort(1); identical(b1, s1)", "FALSE");
 
-        assertEvalFastR("al <- new.external(new.java.class('java.util.ArrayList')); identical(t, t)", "TRUE");
-        assertEvalFastR("ll <- new.external(new.java.class('java.util.LinkedList')); al <- new.external(new.java.class('java.util.ArrayList')); identical(al, ll)", "FALSE");
+        assertEvalFastR("al <- .fastr.interop.new(java.type('java.util.ArrayList')); identical(t, t)", "TRUE");
+        assertEvalFastR("ll <- .fastr.interop.new(java.type('java.util.LinkedList')); al <- .fastr.interop.new(java.type('java.util.ArrayList')); identical(al, ll)", "FALSE");
     }
 
     @Test
@@ -688,7 +669,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); length(l)", "4");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l<-as.list(to$arrayObject); l[[4]]$data", "NULL");
 
-        assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + " l<-as.list(to);", errorIn("as.list(to)", "no method for coercing this external object to a list"));
+        assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + " l<-as.list(to);", errorIn("as.list(to)", "no method for coercing this polyglot value to a list"));
     }
 
     private static final String CREATE_TEST_ARRAYS = "ta <- new('" + TestArraysClass.class.getName() + "');";
@@ -840,7 +821,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2)))", "'" + clazz + "'");
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array2, ta$" + field + "List2), recursive=FALSE)",
                         "cat(" + resultInList +
-                                        "'[[4]]','\n','[external object]','\n\n','[[5]]','\n','[external object]','\n\n','[[6]]','\n','[external object]','\n\n','[[7]]','\n','[external object]','\n\n', sep='')");
+                                        "'[[4]]','\n','[polyglot value]','\n\n','[[5]]','\n','[polyglot value]','\n\n','[[6]]','\n','[polyglot value]','\n\n','[[7]]','\n','[polyglot value]','\n\n', sep='')");
 
         ra = testFieldArrayResult.split(",");
         sb = new StringBuilder();
@@ -857,7 +838,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " class(unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3)))", "'" + clazz + "'");
         assertEvalFastR(CREATE_TEST_ARRAYS + " unlist(list(" + mixWithVector + ", ta$" + field + "Array3, ta$" + field + "List3), recursive=FALSE)",
                         "cat(" + resultInList +
-                                        "'[[4]]','\n','[external object]','\n\n','[[5]]','\n','[external object]','\n\n','[[6]]','\n','[external object]','\n\n','[[7]]','\n','[external object]','\n\n', sep='')");
+                                        "'[[4]]','\n','[polyglot value]','\n\n','[[5]]','\n','[polyglot value]','\n\n','[[6]]','\n','[polyglot value]','\n\n','[[7]]','\n','[polyglot value]','\n\n', sep='')");
     }
 
     private static String getTestFieldValuesAsResult(String name) throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
@@ -983,34 +964,32 @@ public class TestJavaInterop extends TestBase {
     public void testAsXXX(String asXXX, String type) throws IllegalArgumentException, IllegalAccessException {
         TestClass t = new TestClass();
 
-        // Field[] fields = t.getClass().getDeclaredFields();
-        // for (Field f : fields) {
-        // String name = f.getName();
-        // String expr = CREATE_TRUFFLE_OBJECT + asXXX + "(to$" + name + ")";
-        // // test for each primitive wrapper object and string
-        // if (name.startsWith("fieldStatic") && name.endsWith("Object")) {
-        // if (asXXX.equals("as.character") && name.contains("Long")) {
-        // assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
-        // } else if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") ||
-        // asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector")) &&
-        // (name.contains("String") || name.contains("Char"))) {
-        // assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
-        // } else if (asXXX.equals("as.expression") && (name.contains("Long") ||
-        // name.contains("Double"))) {
-        // assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
-        // } else if (asXXX.equals("as.raw") && (name.contains("Short") || name.contains("Integer")
-        // || name.contains("Long") || name.contains("Double") || name.contains("NaN"))) {
-        // assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
-        // } else if (asXXX.equals("as.symbol") && (name.contains("Long") || name.contains("Double")
-        // || name.contains("Float"))) {
-        // assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
-        // } else if (asXXX.equals("as.symbol") && (name.contains("Null"))) {
-        // assertEvalFastR(Output.IgnoreErrorContext, expr, getAsXXX(f.get(t), asXXX));
-        // } else {
-        // assertEvalFastR(expr, getAsXXX(f.get(t), asXXX));
-        // }
-        // }
-        // }
+        Field[] fields = t.getClass().getDeclaredFields();
+        for (Field f : fields) {
+            String name = f.getName();
+            String expr = CREATE_TRUFFLE_OBJECT + asXXX + "(to$" + name + ")";
+            // test for each primitive wrapper object and string
+            if (name.startsWith("fieldStatic") && name.endsWith("Object")) {
+                if (asXXX.equals("as.character") && name.contains("Long")) {
+                    assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
+                } else if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") ||
+                                asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector")) &&
+                                (name.contains("String") || name.contains("Char"))) {
+                    assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.expression") && (name.contains("Long") ||
+                                name.contains("Double"))) {
+                    assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.raw") && (name.contains("Short") || name.contains("Integer") || name.contains("Long") || name.contains("Double") || name.contains("NaN"))) {
+                    assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.symbol") && (name.contains("Long") || name.contains("Double") || name.contains("Float"))) {
+                    assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
+                } else if (asXXX.equals("as.symbol") && (name.contains("Null"))) {
+                    assertEvalFastR(Output.IgnoreErrorContext, expr, getAsXXX(f.get(t), asXXX));
+                } else {
+                    assertEvalFastR(expr, getAsXXX(f.get(t), asXXX));
+                }
+            }
+        }
 
         // test arrays
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldBooleanArray);", toRVector(t.fieldBooleanArray, asXXX));
@@ -1073,11 +1052,11 @@ public class TestJavaInterop extends TestBase {
         }
 
         if (asXXX.equals("as.expression")) {
-            assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this external object to a vector"));
+            assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this polyglot value to a vector"));
         } else if (asXXX.equals("as.raw") || asXXX.equals("as.complex")) {
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "cannot coerce type 'truffleobject' to vector of type '" + type + "'"));
         } else {
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this external object to a vector"));
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this polyglot value to a vector"));
         }
     }
 
@@ -1133,7 +1112,7 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testElseIf() throws IllegalArgumentException {
-        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta)", errorIn("as.logical(test)", "no method for coercing this external object to a vector"));
+        assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta)", errorIn("as.logical(test)", "no method for coercing this polyglot value to a vector"));
         assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$booleanArray, 1, 2)", "c(1,2,1)");
         assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$integerArray, 1, 2)", "c(1,1,1)");
         assertEvalFastR(CREATE_TEST_ARRAYS + " ifelse(ta$stringArray, 1, 2)", "c(NA, NA, NA)");
@@ -1416,7 +1395,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listStringInt)", "c('1', '3')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$listChar)", "c('a', 'c')");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("range(to)", "invalid 'type' (external object) of argument"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("range(to)", "invalid 'type' (polyglot.value) of argument"));
     }
 
     private static final String CREATE_EXCEPTIONS_TO = "to <- new('" + TestExceptionsClass.class.getName() + "');";
@@ -1424,27 +1403,21 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testException() {
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException');",
-                        errorIn("new.external(Class, ...)", "Foreign function failed: java.io.IOException"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg');",
-                        errorIn("new.external(Class, ...)", "Foreign function failed: java.io.IOException: msg"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException: msg"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException');",
-                        errorIn("new.external(Class, ...)", "Foreign function failed: java.lang.RuntimeException"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg');",
-                        errorIn("new.external(Class, ...)", "Foreign function failed: java.lang.RuntimeException: msg"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException: msg"));
 
-        // assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')",
-        // errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed:
-        // java.io.IOException"));
-        // assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
-        // errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed:
-        // java.io.IOException: msg"));
-        // assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
-        // errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed:
-        // java.lang.RuntimeException"));
-        // assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException',
-        // 'msg')",
-        // errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function
-        // failed: java.lang.RuntimeException: msg"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')", errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: java.io.IOException"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
+                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: java.io.IOException: msg"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: java.lang.RuntimeException"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: java.lang.RuntimeException: msg"));
     }
 
     private String getRValue(Object value) {
@@ -1470,7 +1443,7 @@ public class TestJavaInterop extends TestBase {
         }
         if (value.getClass().isArray()) {
             StringBuilder sb = new StringBuilder();
-            sb.append("cat('[external object]\\n[1] ");
+            sb.append("cat('[polyglot value]\\n[1] ");
             int length = Array.getLength(value);
             for (int i = 0; i < length; i++) {
                 if (length > 1) {
@@ -1487,7 +1460,7 @@ public class TestJavaInterop extends TestBase {
         }
         if (value instanceof TestPOJO) {
             StringBuilder sb = new StringBuilder();
-            sb.append("[external object]\n$data\n[1] \"").append(((TestPOJO) value).data).append("\"\n\n$toString\n[external object]\n\n$getData\n[external object]\n\n");
+            sb.append("[polyglot value]\n$data\n[1] \"").append(((TestPOJO) value).data).append("\"\n\n$toString\n[polyglot value]\n\n$getData\n[polyglot value]\n\n");
             return String.format("cat('%s')", sb.toString());
         }
         return value.toString();

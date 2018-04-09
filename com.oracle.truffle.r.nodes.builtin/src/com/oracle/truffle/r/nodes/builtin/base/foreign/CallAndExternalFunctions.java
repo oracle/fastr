@@ -798,8 +798,9 @@ public class CallAndExternalFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached.symbol == symbol"})
+        @Specialization(limit = "1", guards = {"cached.symbol == symbol", "builtin == null"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("new(symbol)") CallNamedFunctionNode cached,
                         @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             if (registeredProfile.profile(isRegisteredRFunction(cached.nativeCallInfo))) {
@@ -913,8 +914,9 @@ public class CallAndExternalFunctions {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "1", guards = {"cached.symbol == symbol"})
+        @Specialization(limit = "1", guards = {"cached.symbol == symbol", "builtin == null"})
         protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
+                        @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("new(symbol)") CallNamedFunctionNode cached) {
             Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
             return dispatch(cached.nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});

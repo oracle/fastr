@@ -123,6 +123,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * {@code com.oracle.truffle.r.runime.conn}.
  *
  */
+@SuppressWarnings("deprecation")
 public abstract class ConnectionFunctions {
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Stdin extends RBuiltinNode.Arg0 {

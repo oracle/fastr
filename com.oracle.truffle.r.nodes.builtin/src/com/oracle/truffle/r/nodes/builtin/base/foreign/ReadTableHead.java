@@ -119,8 +119,6 @@ public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
 
         final int commentChar;
 
-        private final String quotes;
-
         private final boolean skipNull;
 
         final List<String> resultLines;
@@ -137,13 +135,12 @@ public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
 
         private int nullCnt;
 
-        ReadState(RConnection openConn, int nlines, int commentChar, String quotes, boolean skipNull) {
+        ReadState(RConnection openConn, int nlines, int commentChar, @SuppressWarnings("unused") String quotes, boolean skipNull) {
             this.openConn = openConn;
             this.nlines = nlines;
             this.commentChar = commentChar;
-            this.quotes = quotes;
             this.skipNull = skipNull;
-            this.resultLines = new ArrayList<String>(nlines);
+            this.resultLines = new ArrayList<>(nlines);
         }
 
         int nextChar() throws IOException {
@@ -162,76 +159,78 @@ public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
                     c = readChar();
                 } while (c != -1 && c != '\n');
             }
+
+            // TODO if (false produces ecj "dead code" warnigs so commented the whole if branch
             // The allowEscapes flag is currently not propagated into table head reading which
             // causes e.g. a header line duplication - see tests
-            if (false && c == '\\') { // Assuming escapes never allowed
-                c = readChar();
-                if ('0' <= c && c <= '8') {
-                    int octal = c - '0';
-                    if ('0' <= (c = readChar()) && c <= '8') {
-                        octal = 8 * octal + c - '0';
-                        if ('0' <= (c = readChar()) && c <= '8') {
-                            octal = 8 * octal + c - '0';
-                        } else {
-                            pushBack(c);
-                        }
-                    } else {
-                        pushBack(c);
-                    }
-                    c = octal;
-                } else if (c == -1) {
-                    c = '\\';
-                } else {
-                    switch ((char) c) {
-                        case 'a':
-                            c = '\u0007';
-                            break;
-                        case 'b':
-                            c = '\b';
-                            break;
-                        case 'f':
-                            c = '\f';
-                            break;
-                        case 'n':
-                            c = '\n';
-                            break;
-                        case 'r':
-                            c = '\r';
-                            break;
-                        case 't':
-                            c = '\t';
-                            break;
-                        case 'v':
-                            c = '\u000B';
-                            break;
-                        case 'x':
-                            int hex = 0;
-                            int ext;
-                            for (int i = 0; i < 2; i++) {
-                                c = readChar();
-                                if (c >= '0' && c <= '9') {
-                                    ext = c - '0';
-                                } else if (c >= 'A' && c <= 'F') {
-                                    ext = c - 'A' + 10;
-                                } else if (c >= 'a' && c <= 'f') {
-                                    ext = c - 'a' + 10;
-                                } else {
-                                    pushBack(c);
-                                    break;
-                                }
-                                hex = 16 * hex + ext;
-                            }
-                            c = hex;
-                            break;
-                        default:
-                            if (inQuote && quotes.indexOf(c) != -1) {
-                                pushBack(c);
-                                c = '\\';
-                            }
-                            break;
-                    }
-                }
-            }
+            // if (false && c == '\\') { // Assuming escapes never allowed
+            // c = readChar();
+            // if ('0' <= c && c <= '8') {
+            // int octal = c - '0';
+            // if ('0' <= (c = readChar()) && c <= '8') {
+            // octal = 8 * octal + c - '0';
+            // if ('0' <= (c = readChar()) && c <= '8') {
+            // octal = 8 * octal + c - '0';
+            // } else {
+            // pushBack(c);
+            // }
+            // } else {
+            // pushBack(c);
+            // }
+            // c = octal;
+            // } else if (c == -1) {
+            // c = '\\';
+            // } else {
+            // switch ((char) c) {
+            // case 'a':
+            // c = '\u0007';
+            // break;
+            // case 'b':
+            // c = '\b';
+            // break;
+            // case 'f':
+            // c = '\f';
+            // break;
+            // case 'n':
+            // c = '\n';
+            // break;
+            // case 'r':
+            // c = '\r';
+            // break;
+            // case 't':
+            // c = '\t';
+            // break;
+            // case 'v':
+            // c = '\u000B';
+            // break;
+            // case 'x':
+            // int hex = 0;
+            // int ext;
+            // for (int i = 0; i < 2; i++) {
+            // c = readChar();
+            // if (c >= '0' && c <= '9') {
+            // ext = c - '0';
+            // } else if (c >= 'A' && c <= 'F') {
+            // ext = c - 'A' + 10;
+            // } else if (c >= 'a' && c <= 'f') {
+            // ext = c - 'a' + 10;
+            // } else {
+            // pushBack(c);
+            // break;
+            // }
+            // hex = 16 * hex + ext;
+            // }
+            // c = hex;
+            // break;
+            // default:
+            // if (inQuote && quotes.indexOf(c) != -1) {
+            // pushBack(c);
+            // c = '\\';
+            // }
+            // break;
+            // }
+            // }
+            // }
             return c;
         }
 

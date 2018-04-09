@@ -32,6 +32,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
@@ -48,6 +49,9 @@ public abstract class FastROptionBuiltin extends RBuiltinNode.Arg1 {
     @Specialization
     @TruffleBoundary
     protected Object getOption(String name) {
+        if ("hostLookup".equals(name)) {
+            return RRuntime.asLogical(RContext.getInstance().getEnv().isHostLookupAllowed());
+        }
         FastROptions opt = null;
         try {
             opt = Enum.valueOf(FastROptions.class, name);

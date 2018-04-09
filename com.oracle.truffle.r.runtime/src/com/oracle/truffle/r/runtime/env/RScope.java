@@ -234,6 +234,7 @@ public final class RScope {
             @Resolve(message = "KEY_INFO")
             public abstract static class VarMapsKeyInfoNode extends Node {
 
+                @TruffleBoundary
                 protected Object access(VariablesObject receiver, String identifier) {
                     int result = KeyInfo.READABLE;
                     if (!receiver.frameAccess.bindingIsLocked(identifier)) {

@@ -1,4 +1,4 @@
-# Copyright (c) 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,14 +25,14 @@ eval(expression({
 `slot<-` <- .fastr.methods.slotassign
 
 new <- function (Class, ...) {
-    if(is.character(Class)) {
-        javaClass <- new.java.class(Class, silent=TRUE)
+    if (.fastr.option("hostLookup") && is.character(Class) && !isClass(Class)) {
+        javaClass <- java.type(Class, silent=TRUE)
         if(!is.null(javaClass)) {
             Class <- javaClass
         }
     }
-    if(is.external(Class)) {
-        new.external(Class, ...)
+    if(is.polyglot.value(Class)) {
+        .fastr.interop.new(Class, ...)
     } else {
         ClassDef <- getClass(Class, where = topenv(parent.frame()))
         value <- .Call(C_new_object, ClassDef)

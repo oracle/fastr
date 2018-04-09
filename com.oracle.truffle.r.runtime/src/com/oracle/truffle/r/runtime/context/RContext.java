@@ -29,16 +29,12 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.OutputStreamWriter;
 import java.lang.ref.WeakReference;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.net.URLClassLoader;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -60,18 +56,19 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
+import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
-import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -124,6 +121,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts can be destroyed
  */
+@SuppressWarnings("deprecation")
 public final class RContext {
 
     public static ChildContextInfo childInfo;
@@ -280,9 +278,6 @@ public final class RContext {
     private EnumSet<State> state = EnumSet.noneOf(State.class);
 
     @CompilationFinal private PrimitiveMethodsInfo primitiveMethodsInfo;
-
-    /** Class loader for Java interop. */
-    private ClassLoader interopClassLoader = FastRConfig.InternalGridAwtSupport ? getClass().getClassLoader() : null;
 
     /**
      * Set to {@code true} when in embedded mode to allow other parts of the system to determine
@@ -827,68 +822,19 @@ public final class RContext {
         }
     };
 
-    private final HashMap<String, Class<?>> classCache = new HashMap<>();
+    public TruffleObject toJavaStatic(TruffleObject obj, Node readNode, Node executeNode)
+                    throws UnknownIdentifierException, UnsupportedMessageException, UnsupportedTypeException, ArityException {
+        assert JavaInterop.isJavaObject(obj) && !JavaInterop.isJavaObject(Class.class, obj);
 
-    /**
-     * This function also takes class names with '/' instead of '.'. A null return value means that
-     * the class was not found.
-     */
-    public Class<?> loadClass(String className) {
-        if (classCache.containsKey(className)) {
-            return classCache.get(className);
+        Env e = getEnv();
+        if (e != null && e.isHostLookupAllowed()) {
+            TruffleObject gcf = (TruffleObject) ForeignAccess.sendRead(readNode, obj, "getClass");
+            TruffleObject clazz = (TruffleObject) ForeignAccess.sendExecute(executeNode, gcf);
+            TruffleObject cnf = (TruffleObject) ForeignAccess.sendRead(readNode, clazz, "getName");
+            String className = (String) ForeignAccess.sendExecute(executeNode, cnf);
+            return (TruffleObject) e.lookupHostSymbol(className);
         }
-        String demangled = className.replaceAll("/", ".");
-        Class<?> result;
-        try {
-            if (FastRConfig.InternalGridAwtSupport) {
-                result = interopClassLoader.loadClass(demangled);
-            } else {
-                result = Class.forName(demangled);
-            }
-        } catch (ClassNotFoundException e) {
-            result = null;
-        }
-        classCache.put(className, result);
-        return result;
-    }
-
-    /**
-     * Adds entries to the Java interop class loader. This will effectively create a new class
-     * loader with the previous one as parent.
-     */
-    public void addInteropClasspathEntries(String... entries) throws MalformedURLException {
-        if (!FastRConfig.InternalGridAwtSupport) {
-            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Custom class loading not supported.");
-        }
-
-        URL[] urls = new URL[entries.length];
-        for (int i = 0; i < entries.length; i++) {
-            urls[i] = Paths.get(entries[i]).toUri().toURL();
-        }
-        interopClassLoader = URLClassLoader.newInstance(urls, interopClassLoader);
-        classCache.clear();
-    }
-
-    /**
-     * Returns all entries in the Java interop class loader.
-     * 
-     * @return the CP entries
-     */
-    public String[] getInteropClasspathEntries() {
-        if (!FastRConfig.InternalGridAwtSupport) {
-            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Custom class loading not supported.");
-        }
-        if (interopClassLoader instanceof URLClassLoader) {
-            URL[] urls = ((URLClassLoader) interopClassLoader).getURLs();
-            if (urls != null) {
-                String[] ret = new String[urls.length];
-                for (int i = 0; i < urls.length; i++) {
-                    ret[i] = urls[i].getPath();
-                }
-                return ret;
-            }
-        }
-        return new String[0];
+        return null;
     }
 
     public final class ConsoleIO {

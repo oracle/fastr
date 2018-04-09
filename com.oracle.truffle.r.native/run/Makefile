@@ -69,6 +69,8 @@ rcmds: $(FASTR_BIN_DIR)/R
 
 $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp -r $(BIN_FILES) $(FASTR_BIN_DIR)
+	# cp  $(FASTR_R_HOME)/com.oracle.truffle.r.native/gnur/patch/bin-patch/* $(FASTR_BIN_DIR)
+	
     # overide bin/R
 	cp R.sh $(FASTR_BIN_DIR)/exec/R
 	# override bin/Rscript
@@ -77,8 +79,10 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	# for embedded support
 	cp Rclasspath.sh $(FASTR_BIN_DIR)/execRextras/Rclasspath
 	chmod +x $(FASTR_BIN_DIR)/exec/R $(FASTR_BIN_DIR)/execRextras/Rscript $(FASTR_BIN_DIR)/Rscript $(FASTR_BIN_DIR)/execRextras/Rclasspath
-	# update R_HOME_DIR to FastR
-	(sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' | sed -e 's/    -h.--help./    --r-help\)/') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
+	# update R_HOME_DIR to FastR, --help to -r-help because --help is handled by FastR, and pass args to Rcmd (esp. --jvm)
+	(sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' | \
+	 sed -e 's/    -h.--help./    --r-help\)/' | \
+	 sed -e 's!      exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!      FASTR_INTERNAL_ARGS="$${FASTR_INTERNAL_ARGS} $${args}" exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 
 	touch $(FASTR_ETC_DIR)/ldpaths
 	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME_BINARY)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron
@@ -86,6 +90,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
 	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
 	cp $(GNUR_HOME_BINARY)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
+	# the ed script adds -DFASTR to compiler options and removes JAVA related variables
 	ed Makeconf.etc < edMakeconf.etc
 	
 	echo $(DEFAULT_CRAN_MIRROR) > $(FASTR_ETC_DIR)/DEFAULT_CRAN_MIRROR

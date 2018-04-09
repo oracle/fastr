@@ -957,7 +957,6 @@ com.oracle.truffle.r.pkgs/rJava/src/java/ArrayDimensionException.java,rjava.copy
 com.oracle.truffle.r.pkgs/rJava/src/java/ArrayWrapper.java,rjava.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/DummyPoint.java,rjava.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/FlatException.java,rjava.copyright
-com.oracle.truffle.r.pkgs/rJava/src/java/Makefile,rjava.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/NotAnArrayException.java,rjava.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/NotComparableException.java,rjava.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/ObjectArrayException.java,rjava.copyright

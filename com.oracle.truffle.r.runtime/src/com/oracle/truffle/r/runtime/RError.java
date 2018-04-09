@@ -676,8 +676,8 @@ public final class RError extends RuntimeException implements TruffleException {
         INVALID_FORMAT_LOGICAL("invalid format '%s'; use format %%d or %%i for logical objects"),
         INVALID_FORMAT_INTEGER("invalid format '%s'; use format %%d, %%i, %%o, %%x or %%X for integer objects"),
         POS_NOT_ALLOWED_WITH_NUMERIC("pos argument not allowed with a numeric value"),
-        OBJ_CANNOT_BE_ATTRIBUTED("external object cannot be attributed"),
-        CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR("no method for coercing this external object to a %s"),
+        OBJ_CANNOT_BE_ATTRIBUTED("polyglot value cannot be attributed"),
+        CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR("no method for coercing this polyglot value to a %s"),
         NO_METHOD_ASSIGNING_SUBSET_S4("no method for assigning subsets of this S4 class"),
         CANNOT_COERCE_S4_TO_VECTOR("no method for coercing this S4 class to a vector"),
         // the following list is incomplete (but like GNU-R)

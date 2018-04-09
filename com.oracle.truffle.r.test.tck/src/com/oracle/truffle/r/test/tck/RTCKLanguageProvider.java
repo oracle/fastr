@@ -126,9 +126,12 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         TypeDescriptor numOrBoolOrArrNumBool = TypeDescriptor.union(numOrBool, arrNumBool);
         TypeDescriptor numOrBoolOrNullOrArrNumBool = TypeDescriptor.union(numOrBoolOrNull, arrNumBool);
         TypeDescriptor boolOrArrBool = TypeDescriptor.union(TypeDescriptor.BOOLEAN, TypeDescriptor.array(TypeDescriptor.BOOLEAN));
-        TypeDescriptor strOrNumOrBool = TypeDescriptor.union(TypeDescriptor.STRING, numOrBool);
-        TypeDescriptor arrStrNumBool = TypeDescriptor.array(strOrNumOrBool);
-        TypeDescriptor strOrNumOrBoolOrArrStrNumBool = TypeDescriptor.union(strOrNumOrBool, arrStrNumBool);
+
+        // TODO cause occasional and more then occasional fails on gate builds
+        // TypeDescriptor strOrNumOrBool = TypeDescriptor.union(TypeDescriptor.STRING, numOrBool);
+        // TypeDescriptor arrStrNumBool = TypeDescriptor.array(strOrNumOrBool);
+        // TypeDescriptor strOrNumOrBoolOrArrStrNumBool = TypeDescriptor.union(strOrNumOrBool,
+        // arrStrNumBool);
 
         // +
         ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
@@ -143,7 +146,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
                         RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
 
-        // TODO cause occasional and more then accasional fails on gate builds
+        // TODO cause occasional and more then occasional fails on gate builds
         // <
         // ops.add(createBinaryOperator(context, "<", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
         // strOrNumOrBoolOrArrStrNumBool,
@@ -360,7 +363,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         return opb.build();
     }
 
-    private InlineSnippet createInlineSnippet(Context context, String sourceName, int l1, int l2, String snippetName) {
+    private static InlineSnippet createInlineSnippet(Context context, String sourceName, int l1, int l2, String snippetName) {
         Snippet script = loadScript(context, sourceName, TypeDescriptor.ANY, null);
         String simpleName = sourceName.substring(sourceName.lastIndexOf('/') + 1);
         try {
@@ -447,7 +450,7 @@ public final class RTCKLanguageProvider implements LanguageProvider {
             private Builder(TypeDescriptor[] expectedParameterTypes) {
                 this.expectedParameterTypes = expectedParameterTypes;
                 chain = (valid, snippetRun) -> {
-                    ResultVerifier.getDefaultResultVerfier().accept(snippetRun);
+                    ResultVerifier.getDefaultResultVerifier().accept(snippetRun);
                     return null;
                 };
             }
@@ -482,42 +485,44 @@ public final class RTCKLanguageProvider implements LanguageProvider {
                 return this;
             }
 
+            // TODO cause occasional and more then occasional fails on gate builds
             // Todo: Is it R bug or should verifier handle this?
             // [1,"TEST"] < [1,2] works
             // [1,"TEST"] < [1,"TEST"] fails
-            Builder mixedArraysCheck() {
-                chain = new BiFunction<Boolean, SnippetRun, Void>() {
-                    private final BiFunction<Boolean, SnippetRun, Void> next = chain;
-
-                    @Override
-                    public Void apply(Boolean valid, SnippetRun sr) {
-                        if (valid && sr.getException() != null && areMixedArrays(sr.getParameters())) {
-                            return null;
-                        }
-                        return next.apply(valid, sr);
-                    }
-
-                    private boolean areMixedArrays(List<? extends Value> args) {
-                        for (Value arg : args) {
-                            if (!arg.hasArrayElements()) {
-                                return false;
-                            }
-                            boolean str = false;
-                            boolean num = false;
-                            for (int i = 0; i < arg.getArraySize(); i++) {
-                                TypeDescriptor td = TypeDescriptor.forValue(arg.getArrayElement(i));
-                                str |= TypeDescriptor.STRING.isAssignable(td);
-                                num |= TypeDescriptor.NUMBER.isAssignable(td) || TypeDescriptor.BOOLEAN.isAssignable(td);
-                            }
-                            if ((!str & !num) || (str ^ num)) {
-                                return false;
-                            }
-                        }
-                        return !args.isEmpty();
-                    }
-                };
-                return this;
-            }
+            // Builder mixedArraysCheck() {
+            // chain = new BiFunction<Boolean, SnippetRun, Void>() {
+            // private final BiFunction<Boolean, SnippetRun, Void> next = chain;
+            //
+            // @Override
+            // public Void apply(Boolean valid, SnippetRun sr) {
+            // if (valid && sr.getException() != null && areMixedArrays(sr.getParameters())) {
+            // return null;
+            // }
+            // return next.apply(valid, sr);
+            // }
+            //
+            // private boolean areMixedArrays(List<? extends Value> args) {
+            // for (Value arg : args) {
+            // if (!arg.hasArrayElements()) {
+            // return false;
+            // }
+            // boolean str = false;
+            // boolean num = false;
+            // for (int i = 0; i < arg.getArraySize(); i++) {
+            // TypeDescriptor td = TypeDescriptor.forValue(arg.getArrayElement(i));
+            // str |= TypeDescriptor.STRING.isAssignable(td);
+            // num |= TypeDescriptor.NUMBER.isAssignable(td) ||
+            // TypeDescriptor.BOOLEAN.isAssignable(td);
+            // }
+            // if ((!str & !num) || (str ^ num)) {
+            // return false;
+            // }
+            // }
+            // return !args.isEmpty();
+            // }
+            // };
+            // return this;
+            // }
 
             RResultVerifier build() {
                 return new RResultVerifier(expectedParameterTypes, chain);

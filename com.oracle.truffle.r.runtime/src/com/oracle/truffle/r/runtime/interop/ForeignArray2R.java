@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.interop;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -62,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@SuppressWarnings("deprecation")
 @ImportStatic({Message.class, RRuntime.class})
 public abstract class ForeignArray2R extends RBaseNode {
 
@@ -158,7 +158,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         try {
             return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, execute);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
-            throw error(RError.Message.GENERIC, "error while casting external object to list: " + e.getMessage());
+            throw error(RError.Message.GENERIC, "error while casting polyglot value to list: " + e.getMessage());
         }
     }
 
@@ -320,10 +320,6 @@ public abstract class ForeignArray2R extends RBaseNode {
         }
 
         return RDataFactory.createList(arrayData.elements.toArray(new Object[arrayData.elements.size()]));
-    }
-
-    private static int sizeByDims(int[] dims) {
-        return Arrays.stream(dims).reduce(1, (x, y) -> x * y);
     }
 
     @FunctionalInterface

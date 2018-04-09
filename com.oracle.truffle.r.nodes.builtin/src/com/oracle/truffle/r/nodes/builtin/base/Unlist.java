@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
+@SuppressWarnings("deprecation")
 @ImportStatic({Message.class, RRuntime.class})
 @RBuiltin(name = "unlist", kind = INTERNAL, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
 public abstract class Unlist extends RBuiltinNode.Arg3 {

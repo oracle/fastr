@@ -34,7 +34,10 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
@@ -428,6 +431,7 @@ public class IsTypeFunctions {
         }
     }
 
+    @ImportStatic({RRuntime.class, Message.class})
     @RBuiltin(name = "is.null", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsNull extends RBuiltinNode.Arg1 {
 
@@ -438,6 +442,12 @@ public class IsTypeFunctions {
         @Specialization
         protected byte isType(@SuppressWarnings("unused") RNull value) {
             return RRuntime.LOGICAL_TRUE;
+        }
+
+        @Specialization(guards = "isForeignObject(value)")
+        protected byte isType(Object value,
+                        @Cached("IS_NULL.createNode()") Node isNull) {
+            return RRuntime.asLogical(ForeignAccess.sendIsNull(isNull, (TruffleObject) value));
         }
 
         @Fallback

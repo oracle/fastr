@@ -1,6 +1,7 @@
 /^CFLAGS/s/$/ -DFASTR/
 /^CXXFLAGS/s/$/ -DFASTR/
 /^CPPFLAGS/s/$/ -DFASTR/
+g/JAVA_HOME =/d
 /LIBINTL=/
 d
 /LIBR =/

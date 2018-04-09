@@ -37,6 +37,7 @@ import com.oracle.truffle.r.library.fastrGrid.grDevices.DevSize;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.InitWindowedDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.PDF;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.SavePlot;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.SvgString;
 import com.oracle.truffle.r.library.fastrGrid.graphics.CPar;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
@@ -64,6 +65,8 @@ public final class FastRGridExternalLookup {
                 return new DevCurr();
             case "devoff":
                 return DevOff.create();
+            case "svgstring":
+                return new SvgString();
             case "PDF":
                 return new PDF();
             case "devCairo":

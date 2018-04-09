@@ -1043,7 +1043,7 @@ public class RRuntime {
 
     public static String getRTypeName(Object arg) {
         CompilerAsserts.neverPartOfCompilation();
-        return isForeignObject(arg) ? "external object" : ((RTypedValue) convertScalarVectors(arg)).getRType().getName();
+        return isForeignObject(arg) ? "polyglot.value" : ((RTypedValue) convertScalarVectors(arg)).getRType().getName();
     }
 
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -33,6 +34,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
@@ -44,18 +46,21 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@SuppressWarnings("deprecation")
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Names extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
+    @Child private Node executeNode;
 
     static {
         Casts.noCasts(Names.class);
@@ -92,12 +97,16 @@ public abstract class Names extends RBuiltinNode.Arg1 {
                 return RNull.instance;
             }
             String[] staticNames = new String[0];
-            try {
-                if (JavaInterop.isJavaObject(Object.class, obj)) {
-                    staticNames = readKeys(keysNode, toJavaClass(obj), getSizeNode, readNode);
+            if (JavaInterop.isJavaObject(obj) && !JavaInterop.isJavaObject(Class.class, obj)) {
+                if (executeNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    executeNode = insert(Message.createExecute(0).createNode());
                 }
-            } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
-                // because it is a class ... ?
+                try {
+                    TruffleObject clazzStatic = RContext.getInstance().toJavaStatic(obj, readNode, executeNode);
+                    staticNames = readKeys(keysNode, clazzStatic, getSizeNode, readNode);
+                } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
+                }
             }
             if (names.length == 0 && staticNames.length == 0) {
                 return RNull.instance;
@@ -109,11 +118,6 @@ public abstract class Names extends RBuiltinNode.Arg1 {
         } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
-    }
-
-    @TruffleBoundary
-    private static TruffleObject toJavaClass(TruffleObject obj) {
-        return JavaInterop.toJavaClass(obj);
     }
 
     private static String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode)

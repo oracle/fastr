@@ -39,7 +39,7 @@ index.search <- function (topic, paths, firstOnly = FALSE)
     res <- index.search.orig(topic, paths, firstOnly)
     
     if(length(res) == 0) {
-        fastrHelpRd <- .fastr.interop.helpPath(topic)
+        fastrHelpRd <- .fastr.helpPath(topic)
         if(!is.null(fastrHelpRd)) {
             res <- fastrHelpRd
         }
@@ -52,7 +52,7 @@ eval(expression({
 .getHelpFile.orig <- utils:::.getHelpFile
 .getHelpFile <- function (file) 
 {
-    fastrHelpRd <- .fastr.interop.helpRd(file)
+    fastrHelpRd <- .fastr.helpRd(file)
     if(!is.null(fastrHelpRd)) {
         return(tools::parse_Rd(textConnection(fastrHelpRd)))
     }

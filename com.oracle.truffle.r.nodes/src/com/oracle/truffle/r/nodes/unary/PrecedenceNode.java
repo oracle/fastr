@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@SuppressWarnings("deprecation")
 @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class, Foreign2R.class})
 public abstract class PrecedenceNode extends RBaseNode {
 
