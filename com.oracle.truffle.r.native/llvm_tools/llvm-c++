@@ -22,10 +22,22 @@
 # questions.
 #
 
+if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
+	g++ "$@"
+fi
+if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
+    exit 0
+fi
+
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 . $DIR/llvm-helper
+
+errorOccurred || {
+try
+(
+
 fortran=0
 analyze_args "$@"
 
@@ -56,10 +68,16 @@ else
     if [[ $ecode -ne 0 ]]; then
       exit $ecode
     fi
-    fake_obj
-    ecode=$?
-    if [[ $ecode -ne 0 ]]; then
-      exit $ecode
-    fi
+    #fake_obj
+    #ecode=$?
+    #if [[ $ecode -ne 0 ]]; then
+    #  exit $ecode
+    #fi
   fi
 fi
+
+) || catch || {
+	recordError
+}
+}
+

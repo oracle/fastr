@@ -36,11 +36,9 @@ LOCAL_C_SOURCES = $(wildcard *.c)
 TRUFFLE_COMMON_C_SOURCES := $(wildcard ../truffle_common/*.c)
 TRUFFLE_COMMON_H_SOURCES := $(wildcard ../truffle_common/*.h)
 C_SOURCES := $(LOCAL_C_SOURCES) $(TRUFFLE_COMMON_C_SOURCES)
-#$(info C_SOURCES=$(C_SOURCES))
 TRUFFLE_COMMON_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(TRUFFLE_COMMON_C_SOURCES:.c=.o)))
 LOCAL_C_OBJECTS := $(patsubst %.c,$(OBJ)/%.o,$(LOCAL_C_SOURCES))
 C_OBJECTS := $(LOCAL_C_OBJECTS) $(TRUFFLE_COMMON_C_OBJECTS)
-#$(info C_OBJECTS=$(C_OBJECTS))
 
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 #NFI_INCLUDES is set in environment (by mx)
