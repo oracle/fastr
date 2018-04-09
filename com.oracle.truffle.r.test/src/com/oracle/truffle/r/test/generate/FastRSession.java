@@ -128,13 +128,17 @@ public final class FastRSession implements RSession {
     }
 
     public Context createContext(ContextKind contextKind) {
+        return createContext(contextKind, true);
+    }
+
+    public Context createContext(ContextKind contextKind, boolean allowHostAccess) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(Client.R, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         Map<String, String> env = new HashMap<>();
         env.put("TZ", "GMT");
         ChildContextInfo ctx = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
         RContext.childInfo = ctx;
 
-        return Context.newBuilder("R", "llvm").allowAllAccess(true).engine(mainEngine).build();
+        return Context.newBuilder("R", "llvm").allowAllAccess(true).allowHostAccess(allowHostAccess).engine(mainEngine).build();
     }
 
     private FastRSession() {
@@ -211,12 +215,16 @@ public final class FastRSession implements RSession {
 
     @Override
     public String eval(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout) throws Throwable {
+        return eval(testClass, expression, contextKind, longTimeout, true);
+    }
+
+    public String eval(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) throws Throwable {
         assert contextKind != null;
         Timer timer = null;
         output.reset();
         input.setContents(expression);
         try {
-            Context evalContext = createContext(contextKind);
+            Context evalContext = createContext(contextKind, allowHostAccess);
             // set up some interop objects used by fastr-specific tests:
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
