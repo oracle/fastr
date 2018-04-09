@@ -59,35 +59,18 @@ FFLAGS :=
 # uncomment to see exactly where headers are being read from
 #CFLAGS := $(CFLAGS) -H
 
-#all: Makefile $(C_OBJECTS) $(GNUR_C_OBJECTS) $(GNUR_F_OBJECTS)
 all: Makefile $(C_OBJECTS)
 
 $(C_OBJECTS): | $(OBJ)
 
-#$(GNUR_C_OBJECTS): | $(OBJ)
-
-#$(GNUR_F_OBJECTS): | $(OBJ)
-
 $(OBJ):
 	mkdir -p $(OBJ)
-
-#$(OBJ)/%.bc: $(GNUR_APPL_SRC)/%.c
-#	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
-
-#$(OBJ)/%.bc: $(GNUR_MAIN_SRC)/%.c
-#	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%.bc: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h rffiutils.h $(TRUFFLE_COMMON_H_SOURCES) ../common/rffi_upcallsindex.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
-#$(OBJ)/%.bc: ../common/%.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
-#	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
-
 $(OBJ)/%.bc: ../truffle_common/%.c 
 	$(CC) $(CFLAGS) $(INCLUDES) $(SUPPRESS_WARNINGS) -c $< -o $@
-
-#$(OBJ)/%.bc: $(GNUR_APPL_SRC)/%.f
-#	$(F77) $(FFLAGS) $(FPICFLAGS) -c $< -o $@
 
 clean:
 	rm -rf $(OBJ)

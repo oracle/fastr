@@ -147,12 +147,6 @@ function mem2reg_opt() {
    fi
 }
 
-#function fake_obj() {
-#  f=`basename $llvm_ir_file`
-#  d=`dirname $llvm_ir_file`
-#  runit touch ${d}/${f%%.*}.o
-#}
-
 # Input: all the arguments to the original command line
 function create_bc_lib() {
   bcfiles=""
