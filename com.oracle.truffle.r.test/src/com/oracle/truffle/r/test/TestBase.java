@@ -142,6 +142,7 @@ public class TestBase {
 
     public enum Context implements TestTrait {
         NonShared, // Test requires a new non-shared {@link RContext}.
+        NoJavaInterop, // Test requires a {@link RContext} with disabled host access.
         LongTimeout; // Test requires a long timeout
 
         @Override
@@ -647,7 +648,7 @@ public class TestBase {
             if (skipFastREval) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout));
+                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout), !traits.context.contains(Context.NoJavaInterop));
                 CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
@@ -981,12 +982,16 @@ public class TestBase {
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
     protected String fastREval(String input, ContextKind contextKind, boolean longTimeout) {
+        return fastREval(input, contextKind, longTimeout, true);
+    }
+
+    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
         assert contextKind != null;
         microTestInfo.expression = input;
         String result;
         try {
             beforeEval();
-            result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout);
+            result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout, allowHostAccess);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
