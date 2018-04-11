@@ -302,4 +302,5 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         'link:<support>/bin/Rscript',
         'link:<support>/bin/exec/R',
     ],
+    include_in_polyglot=False,
 ), _fastr_suite)
