@@ -116,12 +116,12 @@ public class FastRInterop {
         isTesting = true;
     }
 
-    @RBuiltin(name = "eval.polyglot", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"mimeType", "source", "path"}, behavior = COMPLEX)
+    @RBuiltin(name = "eval.polyglot", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"languageId", "source", "path"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(Eval.class);
-            casts.arg("mimeType").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg("languageId").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
             casts.arg("source").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
             casts.arg("path").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
@@ -129,16 +129,16 @@ public class FastRInterop {
         @Child private SetVisibilityNode setVisibilityNode = SetVisibilityNode.create();
         @Child private Foreign2R foreign2rNode = Foreign2R.create();
 
-        protected DirectCallNode createCall(String mimeType, String source) {
-            return Truffle.getRuntime().createDirectCallNode(parse(mimeType, source));
+        protected DirectCallNode createCall(String languageId, String source) {
+            return Truffle.getRuntime().createDirectCallNode(parse(languageId, source));
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedMimeType != null", "cachedMimeType.equals(mimeType)", "cachedSource != null", "cachedSource.equals(source)"})
-        protected Object evalCached(VirtualFrame frame, String mimeType, String source, RMissing path,
-                        @Cached("mimeType") String cachedMimeType,
+        @Specialization(guards = {"cachedLanguageId != null", "cachedLanguageId.equals(languageId)", "cachedSource != null", "cachedSource.equals(source)"})
+        protected Object evalCached(VirtualFrame frame, String languageId, String source, RMissing path,
+                        @Cached("languageId") String cachedLanguageId,
                         @Cached("source") String cachedSource,
-                        @Cached("createCall(mimeType, source)") DirectCallNode call) {
+                        @Cached("createCall(languageId, source)") DirectCallNode call) {
             try {
                 return foreign2rNode.execute(call.call(EMPTY_OBJECT_ARRAY));
             } finally {
@@ -147,29 +147,29 @@ public class FastRInterop {
         }
 
         @Specialization(replaces = "evalCached")
-        protected Object eval(VirtualFrame frame, String mimeType, String source, @SuppressWarnings("unused") RMissing path) {
+        protected Object eval(VirtualFrame frame, String languageId, String source, @SuppressWarnings("unused") RMissing path) {
             try {
-                return foreign2rNode.execute(parseAndCall(source, mimeType));
+                return foreign2rNode.execute(parseAndCall(source, languageId));
             } finally {
                 setVisibilityNode.execute(frame, true);
             }
         }
 
         @TruffleBoundary
-        private Object parseAndCall(String source, String mimeType) {
-            return parse(mimeType, source).call();
+        private Object parseAndCall(String source, String languageId) {
+            return parse(languageId, source).call();
         }
 
         @Specialization()
         @TruffleBoundary
-        protected Object eval(@SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") String source, @SuppressWarnings("unused") RMissing path) {
-            throw RError.error(this, RError.Message.INVALID_ARG, "mimeType");
+        protected Object eval(@SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") String source, @SuppressWarnings("unused") RMissing path) {
+            throw RError.error(this, RError.Message.INVALID_ARG, "languageId");
         }
 
-        protected CallTarget parse(String mimeType, String source) {
+        protected CallTarget parse(String languageId, String source) {
             CompilerAsserts.neverPartOfCompilation();
 
-            Source sourceObject = RSource.fromTextInternalInvisible(source, RSource.Internal.EVAL_WRAPPER, mimeType);
+            Source sourceObject = Source.newBuilder(source).name(RSource.Internal.EVAL_WRAPPER.string).language(languageId).internal().build();
             try {
                 return RContext.getInstance().getEnv().parse(sourceObject);
             } catch (Throwable t) {
@@ -178,25 +178,25 @@ public class FastRInterop {
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, String mimeType, @SuppressWarnings("unused") String source, String path) {
+        protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") String source, String path) {
             try {
-                return foreign2rNode.execute(parseFileAndCall(path, mimeType));
+                return foreign2rNode.execute(parseFileAndCall(path, languageId));
             } finally {
                 setVisibilityNode.execute(frame, false);
             }
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, String mimeType, @SuppressWarnings("unused") RMissing source, String path) {
+        protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") RMissing source, String path) {
             try {
-                return foreign2rNode.execute(parseFileAndCall(path, mimeType));
+                return foreign2rNode.execute(parseFileAndCall(path, languageId));
             } finally {
                 setVisibilityNode.execute(frame, false);
             }
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") RMissing source, String path) {
+        protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing source, String path) {
             try {
                 return foreign2rNode.execute(parseFileAndCall(path, null));
             } finally {
@@ -205,18 +205,18 @@ public class FastRInterop {
         }
 
         @TruffleBoundary
-        private Object parseFileAndCall(String path, String mimeType) {
-            return parseFile(path, mimeType).call();
+        private Object parseFileAndCall(String path, String languageId) {
+            return parseFile(path, languageId).call();
         }
 
-        protected CallTarget parseFile(String path, String mimeType) {
+        protected CallTarget parseFile(String path, String languageId) {
             CompilerAsserts.neverPartOfCompilation();
 
             File file = new File(path);
             try {
                 Builder<IOException, RuntimeException, RuntimeException> sourceBuilder = Source.newBuilder(file).name(file.getName()).internal();
-                if (mimeType != null) {
-                    sourceBuilder.mimeType(mimeType);
+                if (languageId != null) {
+                    sourceBuilder.language(languageId);
                 }
                 Source sourceObject = sourceBuilder.build();
                 return RContext.getInstance().getEnv().parse(sourceObject);
@@ -229,7 +229,7 @@ public class FastRInterop {
 
         @Specialization
         @TruffleBoundary
-        protected Object eval(@SuppressWarnings("unused") RMissing source, @SuppressWarnings("unused") RMissing mimeType, @SuppressWarnings("unused") RMissing path) {
+        protected Object eval(@SuppressWarnings("unused") RMissing source, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing path) {
             throw RError.error(this, RError.Message.INVALID_ARG, "'source' or 'path'");
         }
     }
