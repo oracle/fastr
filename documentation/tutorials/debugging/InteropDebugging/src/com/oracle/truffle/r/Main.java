@@ -34,8 +34,6 @@ import java.io.IOException;
 
 public class Main {
 
-    private static final String R_MIME_TYPE = "application/x-r";
-
     /**
      * @param args the command line arguments
      * @throws java.io.IOException

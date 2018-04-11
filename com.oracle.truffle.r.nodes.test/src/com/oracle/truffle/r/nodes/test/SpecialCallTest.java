@@ -32,6 +32,7 @@ import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -287,8 +288,8 @@ public class SpecialCallTest extends TestBase {
         if (!FastROptions.UseSpecials.getBooleanValue()) {
             return;
         }
-        Source setupSource = Source.newBuilder("{" + setup + "}").mimeType(TruffleRLanguageImpl.MIME).name("test").build();
-        Source testSource = Source.newBuilder(test).mimeType(TruffleRLanguageImpl.MIME).name("test").build();
+        Source setupSource = Source.newBuilder("{" + setup + "}").language(RRuntime.R_LANGUAGE_ID).name("test").build();
+        Source testSource = Source.newBuilder(test).language(RRuntime.R_LANGUAGE_ID).name("test").build();
 
         RExpression setupExpression = testVMContext.getThisEngine().parse(setupSource);
         RExpression testExpression = testVMContext.getThisEngine().parse(testSource);

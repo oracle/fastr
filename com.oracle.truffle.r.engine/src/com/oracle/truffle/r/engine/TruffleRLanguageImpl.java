@@ -94,8 +94,6 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
     private static boolean systemInitialized;
 
-    public static final String MIME = RRuntime.R_APP_MIME;
-
     @Override
     protected boolean isObjectOfLanguage(Object object) {
         return object instanceof RTypedValue;

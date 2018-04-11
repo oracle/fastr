@@ -223,12 +223,12 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 assert result != null : "Source created from environment should not be null";
                 return result;
             } else {
-                return Source.newBuilder(coalescedLines).name("<parse>").mimeType(RRuntime.R_APP_MIME).build();
+                return Source.newBuilder(coalescedLines).name("<parse>").language(RRuntime.R_LANGUAGE_ID).build();
             }
         } else {
             String srcFileText = RRuntime.asString(srcFile);
             if (srcFileText.equals("<text>")) {
-                return Source.newBuilder(coalescedLines).name("<parse>").mimeType(RRuntime.R_APP_MIME).build();
+                return Source.newBuilder(coalescedLines).name("<parse>").language(RRuntime.R_LANGUAGE_ID).build();
             } else {
                 return createFileSource(ConnectionSupport.removeFileURLPrefix(srcFileText), coalescedLines, false);
             }
@@ -247,7 +247,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             return RSource.fromFileName(chars, path, internal);
         } catch (URISyntaxException e) {
             // Note: to be compatible with GnuR we construct Source even with a malformed path
-            Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(chars).name(path).mimeType(RRuntime.R_APP_MIME);
+            Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(chars).name(path).language(RRuntime.R_LANGUAGE_ID);
             if (internal) {
                 builder.internal();
             }
