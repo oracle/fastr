@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -110,7 +110,7 @@ public class RSource {
     public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
         File file = new File(path).getAbsoluteFile();
         URI uri = new URI("file://" + file.getAbsolutePath());
-        Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).content(text).uri(uri).mimeType(RRuntime.R_APP_MIME);
+        Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).content(text).uri(uri).language(RRuntime.R_LANGUAGE_ID);
         if (internal) {
             builder.internal();
         }
@@ -121,32 +121,32 @@ public class RSource {
      * Create an {@code internal} source from {@code text} and {@code description}.
      */
     public static Source fromTextInternal(String text, Internal description) {
-        return fromTextInternal(text, description, RRuntime.R_APP_MIME);
+        return fromTextInternal(text, description, RRuntime.R_LANGUAGE_ID);
     }
 
     /**
      * Create an {@code internal} source from {@code text} and {@code description}.
      */
     public static Source fromTextInternalInvisible(String text, Internal description) {
-        return fromTextInternalInvisible(text, description, RRuntime.R_APP_MIME);
+        return fromTextInternalInvisible(text, description, RRuntime.R_LANGUAGE_ID);
     }
 
     /**
      * Create an {@code internal} source from {@code text} and {@code description} of given
-     * {@code mimeType}.
+     * {@code languageId}.
      */
 
-    public static Source fromTextInternal(String text, Internal description, String mimeType) {
-        return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().interactive().build();
+    public static Source fromTextInternal(String text, Internal description, String languageId) {
+        return Source.newBuilder(text).name(description.string).language(languageId).internal().interactive().build();
     }
 
     /**
      * Create an {@code internal} source from {@code text} and {@code description} of given
-     * {@code mimeType}.
+     * {@code languageId}.
      */
 
-    public static Source fromTextInternalInvisible(String text, Internal description, String mimeType) {
-        return Source.newBuilder(text).name(description.string).mimeType(mimeType).internal().build();
+    public static Source fromTextInternalInvisible(String text, Internal description, String languageId) {
+        return Source.newBuilder(text).name(description.string).language(languageId).internal().build();
     }
 
     /**
@@ -155,7 +155,7 @@ public class RSource {
      */
     public static Source fromPackageTextInternal(String text, String packageName) {
         String name = String.format(Internal.PACKAGE.string, packageName);
-        return Source.newBuilder(text).name(name).mimeType(RRuntime.R_APP_MIME).build();
+        return Source.newBuilder(text).name(name).language(RRuntime.R_LANGUAGE_ID).build();
     }
 
     /**
@@ -167,7 +167,7 @@ public class RSource {
         if (functionName == null) {
             return fromPackageTextInternal(text, packageName);
         } else {
-            return Source.newBuilder(text).name(packageName + "::" + functionName).mimeType(RRuntime.R_APP_MIME).build();
+            return Source.newBuilder(text).name(packageName + "::" + functionName).language(RRuntime.R_LANGUAGE_ID).build();
         }
     }
 
@@ -177,7 +177,7 @@ public class RSource {
     public static Source fromFileName(String path, boolean internal) throws IOException {
         File file = new File(path);
         return getCachedByOrigin(file, origin -> {
-            Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).mimeType(RRuntime.R_APP_MIME);
+            Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).language(RRuntime.R_LANGUAGE_ID);
             if (internal) {
                 builder.internal();
             }
@@ -189,21 +189,21 @@ public class RSource {
      * Create an (external) source from the file system path denoted by {@code file}.
      */
     public static Source fromFile(File file) throws IOException {
-        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).build());
+        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).language(RRuntime.R_LANGUAGE_ID).build());
     }
 
     /**
      * Create a source from the file system path denoted by {@code file}.
      */
     public static Source fromTempFile(File file) throws IOException {
-        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).mimeType(RRuntime.R_APP_MIME).internal().build());
+        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).language(RRuntime.R_LANGUAGE_ID).internal().build());
     }
 
     /**
      * Create an (external) source from {@code url}.
      */
     public static Source fromURL(URL url, String name) throws IOException {
-        return getCachedByOrigin(url, origin -> Source.newBuilder(url).name(name).mimeType(RRuntime.R_APP_MIME).build());
+        return getCachedByOrigin(url, origin -> Source.newBuilder(url).name(name).language(RRuntime.R_LANGUAGE_ID).build());
     }
 
     /**
@@ -240,7 +240,7 @@ public class RSource {
      * Create an unknown source with the given name.
      */
     public static SourceSection createUnknown(String name) {
-        return Source.newBuilder("").name(name).mimeType(RRuntime.R_APP_MIME).build().createSection(0, 0);
+        return Source.newBuilder("").name(name).language(RRuntime.R_LANGUAGE_ID).build().createSection(0, 0);
     }
 
     /**
