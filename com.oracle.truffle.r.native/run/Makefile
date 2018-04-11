@@ -81,7 +81,7 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	# update R_HOME_DIR to FastR, --help to -r-help because --help is handled by FastR, and pass args to Rcmd (esp. --jvm)
 	(sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' | \
 	 sed -e 's/    -h.--help./    --r-help\)/' | \
-	 sed -e 's!      exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!      FASTR_INTERNAL_ARGS=`echo "$${FASTR_INTERNAL_ARGS} $${args}" | $${SED} -e 's/^[[:space:]]*//'` exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
+	 sed -e 's!      exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!      FASTR_INTERNAL_ARGS=`echo "$${FASTR_INTERNAL_ARGS} $${args}" | $${SED} -e 's/^[[:space:]]*//' | $${SED} -e 's/[[:blank:]]*$$//'` exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
 	chmod +x $(FASTR_BIN_DIR)/R 
 	touch $(FASTR_ETC_DIR)/ldpaths
 	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME_BINARY)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron
