@@ -289,7 +289,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     name='FastR',
-    id='R',
+    identifier='R',
     documentation_files=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT/README_FASTR'],
     license_files=[
         'link:<support>/COPYRIGHT_FASTR',
