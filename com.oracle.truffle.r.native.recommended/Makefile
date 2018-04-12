@@ -71,7 +71,7 @@ ifeq ($(OS_NAME),Darwin)
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
 	    if [ -e $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so ] ; then \
 			install_name_tool -id @rpath/../library/$$pkgname/libs/$$pkgname.so $(FASTR_R_HOME)/library/$$pkgname/libs/$$pkgname.so; \
-			mx rupdatelib $(FASTR_R_HOME)/library/$$pkgname/libs; \
+			mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_R_HOME)/library/$$pkgname/libs; \
 		fi \
 	done
 endif
