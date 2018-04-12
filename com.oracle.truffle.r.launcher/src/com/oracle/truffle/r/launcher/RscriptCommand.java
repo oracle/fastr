@@ -31,6 +31,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
+import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
@@ -52,13 +53,11 @@ public final class RscriptCommand extends RAbstractLauncher {
     }
 
     @Override
-    protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
-        List<String> unrecognizedArgs = super.preprocessArguments(arguments, polyglotOptions);
+    protected void validateArguments(Map<String, String> polyglotOptions) {
         try {
             this.rScriptArguments = preprocessRScriptOptions(options);
-            return unrecognizedArgs;
         } catch (PrintHelp e) {
-            return Collections.singletonList("--help");
+            printHelp(OptionCategory.USER);
         }
     }
 

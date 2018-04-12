@@ -64,7 +64,6 @@ public final class RCmdOptions {
     }
 
     public enum RCmdOption {
-        HELP(RCmdOptionType.BOOLEAN, true, "h", "help", false, "Print short help message and exit"),
         VERSION(RCmdOptionType.BOOLEAN, true, "version", false, "Print version info and exit"),
         ENCODING(RCmdOptionType.STRING, false, "encoding=ENC", null, "Specify encoding to be used for stdin"),
         SAVE(RCmdOptionType.BOOLEAN, true, "save", false, "Do save workspace at the end of the session"),
