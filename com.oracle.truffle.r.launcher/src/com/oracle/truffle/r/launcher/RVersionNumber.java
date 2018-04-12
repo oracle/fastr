@@ -60,9 +60,9 @@ public class RVersionNumber {
     }
 
     public static final String LICENSE = "This software is distributed under the terms of the GNU General Public License\n" +
-                    "Version 2, June 1991. The terms of the license are in a file called COPYING\n" +
+                    "Version 3, June 2007. The terms of the license are in a file called COPYING\n" +
                     "which you should have received with this software. A copy of the license can be\n" +
-                    "found at http://www.gnu.org/licenses/gpl-2.0.html.\n" +
+                    "found at http://www.gnu.org/licenses/gpl-3.0.html.\n" +
                     "\n" +
                     "'Share and Enjoy.'";
 }

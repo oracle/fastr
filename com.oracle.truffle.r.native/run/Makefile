@@ -102,6 +102,13 @@ endif
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
 	# TODO may need filtering
 	cp -r $(DOC_FILES) $(FASTR_DOC_DIR)
+	# override licence file to GPLv3
+	cp $(FASTR_R_HOME)/COPYING $(FASTR_DOC_DIR)
+	# simple way of prepending text without sed, drawback is we copy the file twice
+	echo 'All Oracle contributions in the FastR source code are licensed as GPL version 3, so that FastR as a whole is distributed under GPL version 3.' > $(FASTR_DOC_DIR)/COPYRIGHTS
+	echo 'The original content of the COPYRIGHTS file from GNU R follows:' >> $(FASTR_DOC_DIR)/COPYRIGHTS
+	echo '-------------------------' >> $(FASTR_DOC_DIR)/COPYRIGHTS
+	cat $(GNUR_HOME_BINARY)/doc/COPYRIGHTS >> $(FASTR_DOC_DIR)/COPYRIGHTS
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 	# record the FFI version
