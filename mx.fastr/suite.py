@@ -331,7 +331,7 @@ suite = {
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl"
       ],
-      "max_jobs" : 8,
+      "max_jobs" : "8",
       "native" : True,
       "workingSets" : "FastR",
       "buildDependencies" : ["FASTR"],
