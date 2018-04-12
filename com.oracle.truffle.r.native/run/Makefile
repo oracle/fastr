@@ -3,17 +3,17 @@
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
-# under the terms of the GNU General Public License version 2 only, as
+# under the terms of the GNU General Public License version 3 only, as
 # published by the Free Software Foundation.
 #
 # This code is distributed in the hope that it will be useful, but WITHOUT
 # ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
 # FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
-# version 2 for more details (a copy is included in the LICENSE file that
+# version 3 for more details (a copy is included in the LICENSE file that
 # accompanied this code).
 #
 # You should have received a copy of the GNU General Public License version
-# 2 along with this work; if not, write to the Free Software Foundation,
+# 3 along with this work; if not, write to the Free Software Foundation,
 # Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
 #
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
@@ -102,6 +102,13 @@ endif
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
 	# TODO may need filtering
 	cp -r $(DOC_FILES) $(FASTR_DOC_DIR)
+	# override licence file to GPLv3
+	cp $(FASTR_R_HOME)/COPYING $(FASTR_DOC_DIR)
+	# simple way of prepending text without sed, drawback is we copy the file twice
+	echo 'All Oracle contributions in the FastR source code are licensed as GPL version 3, so that FastR as a whole is distributed under GPL version 3.' > $(FASTR_DOC_DIR)/COPYRIGHTS
+	echo 'The original content of the COPYRIGHTS file from GNU R follows:' >> $(FASTR_DOC_DIR)/COPYRIGHTS
+	echo '-------------------------' >> $(FASTR_DOC_DIR)/COPYRIGHTS
+	cat $(GNUR_HOME_BINARY)/doc/COPYRIGHTS >> $(FASTR_DOC_DIR)/COPYRIGHTS
 	# overrides
 	cp examples-header.R examples-footer.R $(FASTR_SHARE_DIR)/R
 	# record the FFI version
