@@ -629,7 +629,7 @@ install.suggests <- function(pkgnames) {
 				if (anyNA(dep.status)) {
 					# case 3
 					cat("installing Suggests of:", pkgname,":",paste(suggests[is.na(dep.status)], sep=", "), "\n")
-					dependent.install.ok <- install.pkgs(suggests[is.na(dep.status)], dependents.install=T, log=F)
+					dependent.install.ok <- install.pkgs(suggests[is.na(dep.status)], dependents.install=F, log=F)
 				} else {
 					# case 1
 				}
