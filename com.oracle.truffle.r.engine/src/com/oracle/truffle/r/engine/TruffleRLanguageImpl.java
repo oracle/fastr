@@ -58,7 +58,7 @@ import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@TruffleLanguage.Registration(name = "R", id = "R", version = "3.3.2", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
+@TruffleLanguage.Registration(name = "R", id = "R", version = "3.4.0", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
 public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
