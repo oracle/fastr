@@ -25,6 +25,9 @@
 # for all packages: replace 'gnur' by '<engine>'
 .* => r/gnur/<engine>
 
+# for all packages: replace mentions of the licence
+.* => r/Version 3, 29 June 2007/Version 2, June 1991
+
 # for all packages: unify line containing 'RUNIT TEST PROTOCOL'
 .* => R/RUNIT TEST PROTOCOL -- /RUNIT TEST PROTOCOL -- <date_time>
 
@@ -34,3 +37,5 @@
 # for all packages: delete line containing 'detaching ‘package:grid’'
 .* => D/detaching ‘package:grid’
 
+# for iterators:
+iterators => D/Warning: closing unused connection 3
