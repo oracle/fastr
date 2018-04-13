@@ -272,6 +272,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                     "dependency:fastr:GNUR",
                     "file:mx.fastr/GraalCE_R_license_3rd_party_license.txt",
                 ],
+                "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE{rffi}/README.md".format(rffi=rffi),
                 "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
                 "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
                 "R-3.4.0.tar.gz" : "dependency:fastr:GNUR",
