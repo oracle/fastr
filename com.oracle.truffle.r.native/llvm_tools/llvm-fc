@@ -69,7 +69,7 @@ function ll_to_bc() {
   llvm_ir_bc_file=${d}/${f%%.*}.bc
 }
 
-runit $FASTR_LLVM_GFORTRAN -fplugin=$FASTR_LLVM_DRAGONEGG -fplugin-arg-dragonegg-emit-ir $llvm_args
+runit $FASTR_LLVM_GFORTRAN -fplugin=$FASTR_LLVM_DRAGONEGG -fplugin-arg-dragonegg-emit-ir "${llvm_args[@]}"
 ll_to_bc
 runit $FASTR_LLVM_GFORTRAN_LLVM_AS $llvm_ir_file -o $llvm_ir_bc_file
 runit rm $llvm_ir_file

@@ -51,7 +51,7 @@ then
 else
   llvm_tool=clang
   get_llvm_tool
-  runit $llvm_tool_bin $llvm_args
+  runit $llvm_tool_bin "${llvm_args[@]}"
   ecode=$?
   if [[ $ecode -ne 0 ]]; then
     exit $ecode
