@@ -53,9 +53,9 @@ else
   get_llvm_tool
   unamestr=`uname`
   if [[ "$unamestr" == 'Linux' ]]; then
-    llvm_args="-stdlib=libc++ -I/usr/include/libcxxabi $llvm_args"
+    llvm_args="-stdlib=libc++ -I/usr/include/libcxxabi ${llvm_args[@]}"
   fi
-  runit $llvm_tool_bin $llvm_args
+  runit $llvm_tool_bin "${llvm_args[@]}"
   ecode=$?
   if [[ $ecode -ne 0 ]]; then
     exit $ecode

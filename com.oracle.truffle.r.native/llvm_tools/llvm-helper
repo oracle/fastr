@@ -33,13 +33,13 @@ fi
 function runit() {
   if [ $run_mode == "echo" ]
   then
-    echo $@
+    echo "$@"
   elif [ $run_mode == "echorun" ]
   then
-    echo $@
-    $@
+    echo "$@"
+    "$@"
   else
-    $@
+    "$@"
   fi
 }
 
@@ -50,7 +50,8 @@ function runit() {
 # llvm_args: processed arguments to pass to llvm tool, e.g. clang
 
 function analyze_args() {
-  llvm_args="-g "
+  llvm_args_tmp=()	
+  llvm_args_tmp+=("-g")
   if [ $fortran -eq 1 ]
   then
     llvm_file_ext='.ll'
@@ -59,9 +60,9 @@ function analyze_args() {
   fi
 
   is_link=0
-  out_file_opt=""
+  out_file_opt=()
   llvm_ir_file=""
-  llvm_ir_file_opt=""
+  llvm_ir_file_opt=()
   c_opt_found=0
 
   while [[ $# -gt 0 ]]
@@ -69,7 +70,7 @@ function analyze_args() {
     case $1 in
       -c)
         c_opt_found=1
-        llvm_args+="$1 "
+        llvm_args_tmp+=("$1")
       ;;
       -o)
         shift
@@ -84,35 +85,42 @@ function analyze_args() {
 		then
 			llvm_ir_file=${d}/${f%%.*}
 		    llvm_ir_file="${llvm_ir_file}${llvm_file_ext}"
-         	llvm_ir_file_opt="-o ${llvm_ir_file}"
+         	llvm_ir_file_opt=("-o" $llvm_ir_file)
         else
-          out_file_opt="-o $p"
+          out_file_opt=("-o" "$p")
         fi
       ;;
       *)
-        llvm_args+="$1 "
+        llvm_args_tmp+=("$1")
       ;;
     esac
     shift
   done
 
+  llvm_args=()
   if [ $fortran -eq 1 ]
   then
     if [ $c_opt_found -eq 1 ]
     then
-      llvm_args="-S $llvm_ir_file_opt $llvm_args "
+      llvm_args+=("-S") 
+      llvm_args+=("${llvm_ir_file_opt[@]}")
+      llvm_args+=("${llvm_args_tmp[@]}")
     else
-      llvm_args="$out_file_opt $llvm_args "
+      llvm_args+=("${out_file_opt[@]}")
+      llvm_args+=("${llvm_args_tmp[@]}")
     fi
   else
     if [ $c_opt_found -eq 1 ]
     then
-      llvm_args="-emit-llvm $llvm_ir_file_opt $llvm_args "
+      llvm_args+=("-emit-llvm") 
+      llvm_args+=("${llvm_ir_file_opt[@]}")
+	  llvm_args+=("${llvm_args_tmp[@]}")
     else
-      llvm_args="$out_file_opt $llvm_args "
+      llvm_args+=("${out_file_opt[@]}")
+      llvm_args+=("${llvm_args_tmp[@]}")
     fi
   fi
-
+  
 }
 
 # Input arguments:
