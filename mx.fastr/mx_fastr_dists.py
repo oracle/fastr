@@ -300,7 +300,7 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
     support_distributions=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT'],
     provided_executables=[
         'link:<support>/bin/Rscript',
-        'link:<support>/bin/exec/R',
+        'link:<support>/bin/R',
     ],
     include_in_polyglot=False,
 ), _fastr_suite)
