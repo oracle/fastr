@@ -217,6 +217,8 @@ public final class RInternalError extends Error implements TruffleException {
                     System.err.println(message);
                 }
             }
+        } catch (ExitException | ThreadDeath t) {
+            throw t;
         } catch (Throwable t) {
             System.err.println("error while reporting internal error:");
             t.printStackTrace();
