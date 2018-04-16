@@ -73,19 +73,19 @@ function evalJS(code, echo) {
 }
 
 var rHandlerScript = fs.readFileSync( __dirname + "/handler.fr", "utf8");
-Interop.eval("application/x-r", rHandlerScript);
+Polyglot.eval("R", rHandlerScript);
 
-rParser = Interop.import('parser');
-rResult = Interop.import('result');
-rIsError = Interop.import('isError');
-deparseObject = Interop.import('deparseObject');
+rParser = Polyglot.import('parser');
+rResult = Polyglot.import('result');
+rIsError = Polyglot.import('isError');
+deparseObject = Polyglot.import('deparseObject');
 
 function evalR(code, echo) {
 	rParser(code);
 	if (echo) {
-		Interop.eval("application/x-r", "err <- TRUE; out <- tryCatch({ err <- TRUE; r <- eval(exp); err <- FALSE; r }, error = function(e) e$message)");
+		Polyglot.eval("R", "err <- TRUE; out <- tryCatch({ err <- TRUE; r <- eval(exp); err <- FALSE; r }, error = function(e) e$message)");
 	} else {
-		Interop.eval("application/x-r", "err <- TRUE; out <- tryCatch({ err <- TRUE; eval(exp); err <- FALSE; NULL }, error = function(e) e$message)");
+		Polyglot.eval("R", "err <- TRUE; out <- tryCatch({ err <- TRUE; eval(exp); err <- FALSE; NULL }, error = function(e) e$message)");
 	}
 	var res = {}
 	res.data = rResult();
@@ -94,9 +94,9 @@ function evalR(code, echo) {
 }
 
 var rubyHandlerScript = fs.readFileSync( __dirname + "/handler.rb", "utf8");
-Interop.eval("application/x-ruby", rubyHandlerScript);
-rubyStoreExpr = Interop.import('storeExpr');
-rubyToJSON = Interop.import('rubyToJSON');
+Polyglot.eval("ruby", rubyHandlerScript);
+rubyStoreExpr = Polyglot.import('storeExpr');
+rubyToJSON = Polyglot.import('rubyToJSON');
 
 function evalRuby(code, echo) {
 	rubyStoreExpr(code);
@@ -107,9 +107,9 @@ function evalRuby(code, echo) {
 		-1
 	end`;
 	if (echo) {
-		r = Interop.eval("application/x-ruby", code);
+		r = Polyglot.eval("ruby", code);
 	} else {
-		r = Interop.eval("application/x-ruby", code);
+		r = Polyglot.eval("ruby", code);
 	}
 	var res = {}
 	rJSON = rubyToJSON(r);
@@ -137,16 +137,16 @@ function processPost(request, response) {
 			//console.log("Params: " + JSON.stringify(params));
         	var echo = params.echo === "TRUE";
         	var res;
-        	if (params.mimetype == "application/x-r") {
+        	if (params.languageId == "R") {
 	        	res = evalR(params.code, echo);
-			} else if (params.mimetype == "text/javascript") {
+			} else if (params.languageId == "js") {
 	        	res = evalJS(params.code, echo);
-			} else if (params.mimetype == "application/x-ruby") {
+			} else if (params.languageId == "ruby") {
 	        	res = evalRuby(params.code, echo);
 	      	} else {
         		res = {
         			isError : true,
-        			data : deparseObject("Unsupported language: " + params.mimetype)
+        			data : deparseObject("Unsupported language: " + params.languageId)
         		}
         	}
 			if (res.isError) {
