@@ -192,7 +192,7 @@ public final class RInternalError extends Error implements TruffleException {
                     System.err.println(verboseStackTrace);
                 }
 
-                String message = "An internal error occurred: \"" + errMsg + "\"\nPlease report an issue including the commands";
+                String message = "An internal error occurred: \"" + errMsg + "\"\nPlease report an issue at https://github.com/oracle/fastr including the commands";
                 if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
                     message += " and the error log file '" + getLogFileName(contextId) + "'.";
                 } else {
