@@ -415,9 +415,7 @@ public class RDeparse {
                     }
                 }
             } catch (AccessDeniedException | FileAlreadyExistsException | IllegalArgumentException e) {
-                fixupSourcesTextInternal();
-            } catch (IOException e) {
-                RInternalError.reportError(e);
+                // do not report because these exceptions are legitimate
                 fixupSourcesTextInternal();
             } catch (Throwable e) {
                 RInternalError.reportError(e);
