@@ -56,6 +56,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.MathFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
@@ -528,7 +529,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = Rnorm.class)
     double Rf_rnorm(double a, double b);
 
-    @RFFIUpCallNode(value = RandFunctionsNodes.RfPnormBothNode.class)
+    @RFFIUpCallNode(value = MathFunctionsNodes.RfPnormBothNode.class)
     void Rf_pnorm_both(double a, @RFFICpointer Object b, @RFFICpointer Object c, int d, int e);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = LogNormal.DLNorm.class)
@@ -555,19 +556,19 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction2Node.class, functionClass = RGamma.class)
     double Rf_rgamma(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.Log1pmxNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.Log1pmxNode.class)
     double Rf_log1pmx(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.Log1pexpNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.Log1pexpNode.class)
     double Rf_log1pexp(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.Lgamma1pNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.Lgamma1pNode.class)
     double Rf_lgamma1p(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.LogspaceAddNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.LogspaceAddNode.class)
     double Rf_logspace_add(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.LogspaceSubNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.LogspaceSubNode.class)
     double Rf_logspace_sub(double a, double b);
 
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction3_1Node.class, functionClass = DBeta.class)
@@ -789,84 +790,84 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(value = RandFunctionsNodes.RandFunction1Node.class, functionClass = Signrank.RSignrank.class)
     double Rf_rsignrank(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.GammafnNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.GammafnNode.class)
     double Rf_gammafn(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.LGammafnNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.LGammafnNode.class)
     double Rf_lgammafn(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.LGammafnSignNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.LGammafnSignNode.class)
     double Rf_lgammafn_sign(double a, @RFFICpointer Object b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.DpsiFnNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.DpsiFnNode.class)
     void Rf_dpsifn(double a, int b, int c, int d, @RFFICpointer Object e, @RFFICpointer Object f, @RFFICpointer Object g);
 
-    @RFFIUpCallNode(RandFunctionsNodes.PsiGammaNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.PsiGammaNode.class)
     double Rf_psigamma(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.DiGammaNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.DiGammaNode.class)
     double Rf_digamma(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.TriGammaNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.TriGammaNode.class)
     double Rf_trigamma(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.TetraGammaNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.TetraGammaNode.class)
     double Rf_tetragamma(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.PentaGammaNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.PentaGammaNode.class)
     double Rf_pentagamma(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BetaNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BetaNode.class)
     double Rf_beta(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.LBetaNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.LBetaNode.class)
     double Rf_lbeta(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.ChooseNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.ChooseNode.class)
     double Rf_choose(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.LChooseNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.LChooseNode.class)
     double Rf_lchoose(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselINode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselINode.class)
     double Rf_bessel_i(double a, double b, double c);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselJNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselJNode.class)
     double Rf_bessel_j(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselKNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselKNode.class)
     double Rf_bessel_k(double a, double b, double c);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselYNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselYNode.class)
     double Rf_bessel_y(double a, double b);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselIExNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselIExNode.class)
     double Rf_bessel_i_ex(double a, double b, double c, @RFFICpointer Object d);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselJExNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselJExNode.class)
     double Rf_bessel_j_ex(double a, double b, @RFFICpointer Object c);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselKExNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselKExNode.class)
     double Rf_bessel_k_ex(double a, double b, double c, @RFFICpointer Object d);
 
-    @RFFIUpCallNode(RandFunctionsNodes.BesselYExNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.BesselYExNode.class)
     double Rf_bessel_y_ex(double a, double b, @RFFICpointer Object c);
 
-    @RFFIUpCallNode(RandFunctionsNodes.SignNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.SignNode.class)
     double Rf_sign(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.FPrecNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.FPrecNode.class)
     double Rf_fprec(double a, double b);
 
     double Rf_ftrunc(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.CospiNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.CospiNode.class)
     double Rf_cospi(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.SinpiNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.SinpiNode.class)
     double Rf_sinpi(double a);
 
-    @RFFIUpCallNode(RandFunctionsNodes.TanpiNode.class)
+    @RFFIUpCallNode(MathFunctionsNodes.TanpiNode.class)
     double Rf_tanpi(double a);
 
     @RFFIUpCallNode(MiscNodes.NamesGetsNode.class)
