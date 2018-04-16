@@ -45,6 +45,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
  */
 public final class RInternalError extends Error implements TruffleException {
 
+    private static final String FASTR_ERRORS_LOG = "fastr_errors.log";
+
     private static final long serialVersionUID = 80698622974155216L;
 
     private static boolean initializing = false;
@@ -154,19 +156,24 @@ public final class RInternalError extends Error implements TruffleException {
 
     @TruffleBoundary
     public static void reportErrorAndConsoleLog(Throwable throwable, int contextId) {
-        reportError(throwable, contextId);
+        reportErrorDefault(throwable, contextId);
     }
 
     @TruffleBoundary
-    public static void reportError(Throwable throwable) {
-        reportError(throwable, 0);
+    public static void reportError(Throwable t) {
+        reportErrorDefault(t, 0);
     }
 
-    private static void reportError(Throwable throwable, int contextId) {
+    @TruffleBoundary
+    private static void reportErrorDefault(Throwable t, int contextId) {
+        String errMsg = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : t.getClass().getSimpleName();
+        reportError(errMsg, t, contextId);
+    }
+
+    private static void reportError(String errMsg, Throwable throwable, int contextId) {
         try {
             Throwable t = throwable;
             if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
-
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 t.printStackTrace(new PrintStream(out));
                 String verboseStackTrace;
@@ -184,10 +191,15 @@ public final class RInternalError extends Error implements TruffleException {
                     System.err.println(out.toString());
                     System.err.println(verboseStackTrace);
                 }
-                String message = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : "internal error: " + t.getClass().getSimpleName();
+
+                String message = "An internal error occurred: \"" + errMsg + "\"\nPlease report an issue at https://github.com/oracle/fastr including the commands";
                 if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                    String suffix = contextId == 0 ? "" : "-" + Integer.toString(contextId);
-                    Path logfile = Utils.getLogPath("fastr_errors.log" + suffix);
+                    message += " and the error log file '" + getLogFileName(contextId) + "'.";
+                } else {
+                    message += ".";
+                }
+                if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
+                    Path logfile = Utils.getLogPath(getLogFileName(contextId));
                     try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
                                     StandardOpenOption.CREATE)) {
                         writer.append(new Date().toString()).append('\n');
@@ -196,7 +208,7 @@ public final class RInternalError extends Error implements TruffleException {
                     } catch (IOException e) {
                         e.printStackTrace();
                     }
-                    System.err.println(message + " (see fastr_errors.log" + suffix + ")");
+                    System.err.println(message);
                     if (RContext.isEmbedded()) {
                         RSuicide.rSuicide("FastR internal error");
                     }
@@ -205,10 +217,16 @@ public final class RInternalError extends Error implements TruffleException {
                     System.err.println(message);
                 }
             }
+        } catch (ExitException | ThreadDeath t) {
+            throw t;
         } catch (Throwable t) {
             System.err.println("error while reporting internal error:");
             t.printStackTrace();
         }
+    }
+
+    private static String getLogFileName(int contextId) {
+        return contextId == 0 ? FASTR_ERRORS_LOG : FASTR_ERRORS_LOG + "-" + Integer.toString(contextId);
     }
 
     @Override

@@ -414,13 +414,12 @@ public class RDeparse {
                         s.element.setSourceSection(source.createSection(s.start, s.length));
                     }
                 }
-            } catch (AccessDeniedException | FileAlreadyExistsException e) {
+            } catch (AccessDeniedException | FileAlreadyExistsException | IllegalArgumentException e) {
+                // do not report because these exceptions are legitimate
                 fixupSourcesTextInternal();
-            } catch (IOException e) {
+            } catch (Throwable e) {
                 RInternalError.reportError(e);
                 fixupSourcesTextInternal();
-            } catch (NoSuchAlgorithmException e) {
-                throw RInternalError.shouldNotReachHere("SHA-256 is an unknown algorithm");
             }
         }
 

@@ -204,14 +204,13 @@ def pkgtest(args):
     fastr_libinstall, fastr_install_tmp = _create_libinstall('fastr', test_installed)
     gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', test_installed)
 
+    global verbose
     if "--quiet" in args:
         global quiet
         quiet = True
     if "-v" in args or "--verbose" in args:
-        global verbose
         verbose = 1
     elif "-V" in args:
-        global verbose
         verbose = 2
 
     install_args = list(args)
