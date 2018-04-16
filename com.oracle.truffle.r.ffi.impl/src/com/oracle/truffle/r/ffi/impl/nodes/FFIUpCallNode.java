@@ -104,4 +104,13 @@ public abstract class FFIUpCallNode extends Node {
             return 6;
         }
     }
+
+    public abstract static class Arg7 extends FFIUpCallNode {
+        public abstract Object executeObject(Object arg0, Object arg1, Object arg2, Object arg3, Object arg4, Object arg5, Object arg6);
+
+        @Override
+        protected int numArgs() {
+            return 7;
+        }
+    }
 }

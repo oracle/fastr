@@ -6,7 +6,7 @@
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2012, The R Core Team
  * Copyright (c) 2004, The R Foundation
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -86,7 +86,16 @@ public final class MathConstants {
 
     public static final double DBL_EPSILON = Math.ulp(1.0);
 
+    /* Max.expon. of 10 (=308.2547) */
+    public static final int MAX10E = (int) (DBL_MAX_EXP * M_LOG10_2);
+
+    public static final long LONG_MAX = Long.MAX_VALUE;
+
     public static final double ML_NAN = Double.NaN;
+
+    public static final double ML_NEGINF = Double.NEGATIVE_INFINITY;
+
+    public static final double ML_POSINF = Double.POSITIVE_INFINITY;
 
     // Different to Double.MIN_VALUE!
     public static final double DBL_MIN = Double.MIN_NORMAL;
@@ -106,4 +115,20 @@ public final class MathConstants {
     public static double logspaceAdd(double logx, double logy) {
         return Math.max(logx, logy) + Math.log1p(Math.exp(-Math.abs(logx - logy)));
     }
+
+    /**
+     * Compute the log of a difference from logs of terms, i.e.,
+     *
+     * log (exp (logx) - exp (logy))
+     *
+     * without causing overflows and without throwing away large handfuls of accuracy.
+     */
+    public static double logspaceSub(double logx, double logy) {
+        return logx + log1Exp(logy - logx);
+    }
+
+    private static double log1Exp(double x) {
+        return (x) > -M_LN2 ? Math.log(-Math.expm1(x)) : Math.log1p(-Math.exp(x));
+    }
+
 }

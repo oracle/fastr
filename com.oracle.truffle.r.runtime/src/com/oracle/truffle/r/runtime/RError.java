@@ -963,7 +963,11 @@ public final class RError extends RuntimeException implements TruffleException {
         MUST_BE_COMPLEX_MATRIX("'%s' must be a complex matrix"),
         INVALID_FORMAL_ARG_LIST("invalid formal argument list for \"%s\""),
         SINGULAR_BACKSOLVE("singular matrix in 'backsolve'. First zero in diagonal [%d]"),
-        EOF_AFTER_BACKSLASH("\\ followed by EOF");
+        EOF_AFTER_BACKSLASH("\\ followed by EOF"),
+        DERIV_OVER_N_MAX("deriv = %d > %d (= n_max)"),
+        BESSEL_ARG_RANGE("bessel_%s(%g): ncalc (=%d) != nb (=%d); alpha=%g. Arg. out of range?"),
+        BESSEL_PRECISION_LOST("bessel_%s(%g,nu=%g): precision lost in result"),
+        BESSEL_NU_TOO_LARGE("bessel%s(x, nu): nu=%g too large for bessel_%s() algorithm");
 
         public final String message;
         final boolean hasArgs;

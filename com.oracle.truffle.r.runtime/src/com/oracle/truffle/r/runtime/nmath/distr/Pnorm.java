@@ -78,6 +78,13 @@ public final class Pnorm implements Function3_2 {
 
     public static final class PnormBoth {
 
+        public static void evaluate(double x, double[] cum, double[] ccum, boolean lowerTail, boolean logP) {
+            PnormBoth pnormBoth = new PnormBoth(cum[0]);
+            pnormBoth.pnormBoth(x, lowerTail, logP);
+            cum[0] = pnormBoth.cum;
+            ccum[0] = pnormBoth.ccum;
+        }
+
         private double cum;
         private double ccum;
 
