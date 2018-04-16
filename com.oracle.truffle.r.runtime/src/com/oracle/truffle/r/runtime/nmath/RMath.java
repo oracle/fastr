@@ -82,8 +82,9 @@ public final class RMath {
     private static final int MAX_DIGITS = 22;
 
     public static double fprec(double x, double digits) {
-        if (Double.isNaN(x) || Double.isNaN(digits))
+        if (Double.isNaN(x) || Double.isNaN(digits)) {
             return x + digits;
+        }
         if (!RRuntime.isFinite(x)) {
             return x;
         }
@@ -127,25 +128,26 @@ public final class RMath {
                 return (sgn * (rint((x / pow10)) * pow10));
             }
         } else { /* -- LARGE or small -- */
-            boolean do_round = (MAX10E - l10 >= powDi(10., -dig));
+            boolean doRound = (MAX10E - l10 >= powDi(10., -dig));
             int e2 = dig + ((e10 > 0) ? 1 : -1) * MAX_DIGITS;
             double p10 = powDi(10., e2);
             x *= p10;
-            double P10 = powDi(10., e10 - e2);
-            x *= P10;
+            double aP10 = powDi(10., e10 - e2);
+            x *= aP10;
             /*-- p10 * P10 = 10 ^ e10 */
-            if (do_round) {
+            if (doRound) {
                 x += 0.5;
             }
             x = Math.floor(x) / p10;
-            return (sgn * x / P10);
+            return (sgn * x / aP10);
         }
     }
 
     // GNUR from fround.c
 
     public static double rint(double x) {
-        double tmp, sgn = 1.0;
+        double tmp;
+        double sgn = 1.0;
         long ltmp;
 
         if (x != x) { /* NaN */
@@ -160,8 +162,9 @@ public final class RMath {
         if (x < (double) LONG_MAX) {
             ltmp = (long) (x + 0.5);
             /* implement round to even */
-            if (fabs(x + 0.5 - ltmp) < 10 * DBL_EPSILON && (ltmp % 2 == 1))
+            if (fabs(x + 0.5 - ltmp) < 10 * DBL_EPSILON && (ltmp % 2 == 1)) {
                 ltmp--;
+            }
             tmp = ltmp;
         } else {
             /* ignore round to even: too small a point to bother */

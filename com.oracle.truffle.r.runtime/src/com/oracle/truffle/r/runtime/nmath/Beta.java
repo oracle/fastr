@@ -26,14 +26,15 @@ public class Beta {
         if (Double.isNaN(a) || Double.isNaN(b)) {
             return a + b;
         }
-        if (a < 0 || b < 0)
+        if (a < 0 || b < 0) {
             return RMathError.defaultError(); // ML_ERR_return_NAN
-        else if (a == 0 || b == 0)
+        } else if (a == 0 || b == 0) {
             return ML_POSINF;
-        else if (!RRuntime.isFinite(a) || !RRuntime.isFinite(b))
+        } else if (!RRuntime.isFinite(a) || !RRuntime.isFinite(b)) {
             return 0;
+        }
 
-        if (a + b < xmax) {/* ~= 171.61 for IEEE */
+        if (a + b < xmax) { /* ~= 171.61 for IEEE */
             // return gammafn(a) * gammafn(b) / gammafn(a+b);
             /*
              * All the terms are positive, and all can be large for large or small arguments. They
