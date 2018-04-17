@@ -127,12 +127,6 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         TypeDescriptor numOrBoolOrNullOrArrNumBool = TypeDescriptor.union(numOrBoolOrNull, arrNumBool);
         TypeDescriptor boolOrArrBool = TypeDescriptor.union(TypeDescriptor.BOOLEAN, TypeDescriptor.array(TypeDescriptor.BOOLEAN));
 
-        // TODO cause occasional and more then occasional fails on gate builds
-        // TypeDescriptor strOrNumOrBool = TypeDescriptor.union(TypeDescriptor.STRING, numOrBool);
-        // TypeDescriptor arrStrNumBool = TypeDescriptor.array(strOrNumOrBool);
-        // TypeDescriptor strOrNumOrBoolOrArrStrNumBool = TypeDescriptor.union(strOrNumOrBool,
-        // arrStrNumBool);
-
         // +
         ops.add(createBinaryOperator(context, "+", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
                         RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
@@ -146,37 +140,24 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         ops.add(createBinaryOperator(context, "/", numOrBoolOrArrNumBool, numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool,
                         RResultVerifier.newBuilder(numOrBoolOrNullOrArrNumBool, numOrBoolOrNullOrArrNumBool).emptyArrayCheck().build()));
 
-        // TODO cause occasional and more then occasional fails on gate builds
         // <
-        // ops.add(createBinaryOperator(context, "<", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool,
-        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // // >
-        // ops.add(createBinaryOperator(context, ">", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool,
-        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // // <=
-        // ops.add(createBinaryOperator(context, "<=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool,
-        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // // >=
-        // ops.add(createBinaryOperator(context, ">=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool,
-        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // // ==
-        // ops.add(createBinaryOperator(context, "==", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool,
-        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
-        // // !=
-        // ops.add(createBinaryOperator(context, "!=", boolOrArrBool, strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool,
-        // RResultVerifier.newBuilder(strOrNumOrBoolOrArrStrNumBool,
-        // strOrNumOrBoolOrArrStrNumBool).mixedArraysCheck().emptyArrayCheck().build()));
+        ops.add(createBinaryOperator(context, "<", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+        // >
+        ops.add(createBinaryOperator(context, ">", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+        // <=
+        ops.add(createBinaryOperator(context, "<=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+        // >=
+        ops.add(createBinaryOperator(context, ">=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+        // ==
+        ops.add(createBinaryOperator(context, "==", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
+        // !=
+        ops.add(createBinaryOperator(context, "!=", boolOrArrBool, TypeDescriptor.ANY, TypeDescriptor.ANY,
+                        RResultVerifier.newBuilder(TypeDescriptor.ANY, TypeDescriptor.ANY).compareParametersCheck().build()));
         // // TODO &, |, &&, ||
 
         // !
@@ -485,44 +466,74 @@ public final class RTCKLanguageProvider implements LanguageProvider {
                 return this;
             }
 
-            // TODO cause occasional and more then occasional fails on gate builds
-            // Todo: Is it R bug or should verifier handle this?
-            // [1,"TEST"] < [1,2] works
-            // [1,"TEST"] < [1,"TEST"] fails
-            // Builder mixedArraysCheck() {
-            // chain = new BiFunction<Boolean, SnippetRun, Void>() {
-            // private final BiFunction<Boolean, SnippetRun, Void> next = chain;
+            // - not empty homogenous number, boolean or string arrays -> vector
+            // - any other array -> list
             //
-            // @Override
-            // public Void apply(Boolean valid, SnippetRun sr) {
-            // if (valid && sr.getException() != null && areMixedArrays(sr.getParameters())) {
-            // return null;
-            // }
-            // return next.apply(valid, sr);
-            // }
-            //
-            // private boolean areMixedArrays(List<? extends Value> args) {
-            // for (Value arg : args) {
-            // if (!arg.hasArrayElements()) {
-            // return false;
-            // }
-            // boolean str = false;
-            // boolean num = false;
-            // for (int i = 0; i < arg.getArraySize(); i++) {
-            // TypeDescriptor td = TypeDescriptor.forValue(arg.getArrayElement(i));
-            // str |= TypeDescriptor.STRING.isAssignable(td);
-            // num |= TypeDescriptor.NUMBER.isAssignable(td) ||
-            // TypeDescriptor.BOOLEAN.isAssignable(td);
-            // }
-            // if ((!str & !num) || (str ^ num)) {
-            // return false;
-            // }
-            // }
-            // return !args.isEmpty();
-            // }
-            // };
-            // return this;
-            // }
+            // comparing:
+            // - null with anything does not fail - logical(0)
+            // - empty list or vector with anything does not fail - logical(0)
+            // - atomic vectors does not fail
+            // - a list with an atomic vector does not fail
+            // - a list with another list FAILS
+            // - other kind of object with anything but null or empty list or vector FAILS
+            Builder compareParametersCheck() {
+                chain = new BiFunction<Boolean, SnippetRun, Void>() {
+                    private final BiFunction<Boolean, SnippetRun, Void> next = chain;
+
+                    @Override
+                    public Void apply(Boolean valid, SnippetRun sr) {
+                        if (valid && sr.getException() != null && expectsException(sr.getParameters())) {
+                            return null;
+                        }
+                        return next.apply(valid, sr);
+                    }
+
+                    private boolean expectsException(List<? extends Value> args) {
+                        boolean parametersValid = false;
+                        int mixed = 0;
+                        for (Value arg : args) {
+                            parametersValid = false;
+                            if (arg.isNull()) {
+                                // one of the given parameters is NULL
+                                // this is never expected to fail
+                                return false;
+                            }
+                            if (arg.isNumber() || arg.isString() || arg.isBoolean()) {
+                                parametersValid = true;
+                            } else if (arg.hasArrayElements()) {
+                                if (arg.getArraySize() == 0) {
+                                    // one of the given parameters is an emtpy list or vector,
+                                    // this is never expected to fail
+                                    return false;
+                                } else {
+                                    boolean str = false;
+                                    boolean num = false;
+                                    boolean other = false;
+                                    for (int i = 0; i < arg.getArraySize(); i++) {
+                                        TypeDescriptor td = TypeDescriptor.forValue(arg.getArrayElement(i));
+                                        if (TypeDescriptor.STRING.isAssignable(td)) {
+                                            str = true;
+                                        } else if (TypeDescriptor.NUMBER.isAssignable(td) || TypeDescriptor.BOOLEAN.isAssignable(td)) {
+                                            num = true;
+                                        } else {
+                                            other = true;
+                                        }
+                                    }
+                                    parametersValid = !other;
+                                    if (str && num) {
+                                        mixed++;
+                                    }
+                                }
+                            }
+                            if (!parametersValid) {
+                                break;
+                            }
+                        }
+                        return !(parametersValid && mixed < args.size());
+                    }
+                };
+                return this;
+            }
 
             RResultVerifier build() {
                 return new RResultVerifier(expectedParameterTypes, chain);
