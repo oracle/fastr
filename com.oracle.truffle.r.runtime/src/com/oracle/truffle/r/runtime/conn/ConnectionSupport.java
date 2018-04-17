@@ -80,11 +80,6 @@ public class ConnectionSupport {
          */
         private int hwm = 2;
 
-        /**
-         * Periodically we can poll the queue and close unused connections as per GnuR.
-         */
-        private final ReferenceQueue<BaseRConnection> refQueue = new ReferenceQueue<>();
-
         private ContextStateImpl() {
             for (int i = 0; i < MAX_CONNECTIONS; i++) {
                 allConnections.add(i, null);
@@ -112,8 +107,8 @@ public class ConnectionSupport {
         }
 
         private int setConnection(int index, BaseRConnection con) {
-            assert allConnections.get(index) == null;
-            allConnections.set(index, new WeakReference<>(con, refQueue));
+            assert allConnections.get(index) == null || allConnections.get(index).get() == null;
+            allConnections.set(index, new WeakReference<>(con));
             return index;
         }
 
@@ -141,16 +136,30 @@ public class ConnectionSupport {
         }
 
         private int setConnection(BaseRConnection con) {
-            collectUnusedConnections();
+            int i = findEmptySlot(con);
+            if (i == -1) {
+                // TODO: rewrite to ReferenceQueue
+                // We have no way of reclaiming the connection slots than GC...
+                System.gc();
+                i = findEmptySlot(con);
+            }
+            if (i >= 0) {
+                return setConnection(i, con);
+            } else {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.ALL_CONNECTIONS_IN_USE);
+            }
+        }
+
+        private int findEmptySlot(BaseRConnection con) {
             for (int i = 3; i < MAX_CONNECTIONS; i++) {
-                if (allConnections.get(i) == null) {
+                if (allConnections.get(i) == null || allConnections.get(i).get() == null) {
                     if (i > hwm) {
                         hwm = i;
                     }
-                    return setConnection(i, con);
+                    return i;
                 }
             }
-            throw RError.error(RError.SHOW_CALLER2, RError.Message.ALL_CONNECTIONS_IN_USE);
+            return -1;
         }
 
         @Override
@@ -164,24 +173,6 @@ public class ConnectionSupport {
                         closeAndDestroy(con);
                     }
                     ref.clear();
-                }
-            }
-        }
-
-        private void collectUnusedConnections() {
-            while (true) {
-                Reference<? extends BaseRConnection> ref = refQueue.poll();
-                if (ref == null) {
-                    return;
-                }
-                BaseRConnection con = ref.get();
-                if (con instanceof TextConnections.TextRConnection) {
-                    RError.warning(RError.SHOW_CALLER2, RError.Message.UNUSED_TEXTCONN, con.descriptor, ((TextConnections.TextRConnection) con).description);
-                }
-                if (con != null) {
-                    int index = con.descriptor;
-                    closeAndDestroy(con);
-                    allConnections.set(index, null);
                 }
             }
         }
