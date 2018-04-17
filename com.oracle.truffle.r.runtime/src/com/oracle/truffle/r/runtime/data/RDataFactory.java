@@ -933,6 +933,10 @@ public final class RDataFactory {
         return createStringVector(data, complete, dims, null);
     }
 
+    public static RStringVector createStringVector(CharSXPWrapper[] data, boolean complete, int[] dims) {
+        return traceDataCreated(new RStringVector(data, complete, dims, null, null));
+    }
+
     public static RStringVector createStringVector(String[] data, boolean complete, RStringVector names) {
         return createStringVector(data, complete, null, names);
     }

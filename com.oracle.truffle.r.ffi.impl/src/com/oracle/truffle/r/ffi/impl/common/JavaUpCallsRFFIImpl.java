@@ -35,6 +35,7 @@ import java.util.IdentityHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
@@ -51,6 +52,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCleanUp;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -2278,6 +2280,15 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public Object octsize(Object size) {
         throw implementedAsNode();
+    }
+
+    @Override
+    public Object FASTR_DATAPTR(Object x) {
+        if (x instanceof RStringVector) {
+            return VectorRFFIWrapper.get((RStringVector) x);
+        }
+        CompilerDirectives.transferToInterpreter();
+        throw RError.error(RError.NO_CALLER, Message.GENERIC, "DATAPTR not implemented for type " + Utils.getTypeName(x));
     }
 
     @Override

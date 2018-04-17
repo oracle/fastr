@@ -76,7 +76,7 @@ public final class StringArrayWrapper implements TruffleObject {
     }
 
     public long asPointer() {
-        address = NativeDataAccess.allocateNativeStringArray(vector.getInternalManagedData());
+        address = NativeDataAccess.allocateNativeStringArray(vector.getReadonlyStringData());
         return address;
     }
 

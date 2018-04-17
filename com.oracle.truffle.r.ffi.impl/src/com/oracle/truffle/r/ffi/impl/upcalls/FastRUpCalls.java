@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
+import com.oracle.truffle.r.ffi.processor.RFFICpointer;
+
 /**
  * Up-calls specific to FastR used in FastR native code and not exported as part of any API.
  */
@@ -41,4 +43,11 @@ public interface FastRUpCalls {
     boolean isSeekable(Object x);
 
     void restoreHandlerStacks(Object savedHandlerStack);
+
+    /**
+     * Implements {@code DATAPTR} for types that do not have specialized API function for accessing
+     * the underlying data such as {@link com.oracle.truffle.r.runtime.data.RStringVector}.
+     */
+    @RFFICpointer
+    Object FASTR_DATAPTR(Object x);
 }

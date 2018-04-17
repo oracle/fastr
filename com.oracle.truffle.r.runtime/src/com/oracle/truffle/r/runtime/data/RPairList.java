@@ -655,7 +655,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                             return ArgumentsSignature.empty(0);
                         }
                         RStringVector argsNames = ((RPairList) argsList).getNames();
-                        return ArgumentsSignature.get(argsNames.getReadonlyData());
+                        return ArgumentsSignature.get(argsNames.getReadonlyStringData());
                     }
 
                     @Override

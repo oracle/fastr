@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -148,6 +149,12 @@ public final class VectorRFFIWrapper implements TruffleObject {
             @Specialization
             @TruffleBoundary
             protected static long get(RComplexVector vector) {
+                return vector.allocateNativeContents();
+            }
+
+            @Specialization
+            @TruffleBoundary
+            protected static long get(RStringVector vector) {
                 return vector.allocateNativeContents();
             }
 
@@ -262,6 +269,12 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
             public Object access(VectorRFFIWrapper receiver, Object index) {
                 try {
+                    if (receiver.vector instanceof RStringVector) {
+                        ((RStringVector) receiver.vector).wrapStrings();
+                        // TODO: for now character vector shouldn't return plain java.lang.String,
+                        // otherwise we'd need to make sure that all the places that expect CharSXP
+                        // can also deal with java.lang.String
+                    }
                     return ForeignAccess.sendRead(readMsg, receiver.vector, index);
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw RInternalError.shouldNotReachHere(e);

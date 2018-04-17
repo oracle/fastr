@@ -1043,6 +1043,13 @@ int SETLEVELS(SEXP x, int v) {
     return 0;
 }
 
+int *FASTR_DATAPTR(SEXP x) {
+    TRACE(TARGp, x);
+    int *result = ((call_FASTR_DATAPTR) callbacks[FASTR_DATAPTR_x])(x);
+    checkExitCall();
+    return result;
+}
+
 int *FASTR_INTEGER(SEXP x) {
     TRACE(TARGp, x);
     int *result = ((call_INTEGER) callbacks[INTEGER_x])(x);
