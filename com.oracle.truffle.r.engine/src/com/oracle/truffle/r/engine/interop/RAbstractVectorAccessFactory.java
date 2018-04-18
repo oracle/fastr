@@ -325,9 +325,23 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-                return arg.getLength() == 1;
+                return arg.getLength() == 1 && isUnBoxable(arg);
             }
         });
+    }
+
+    private static boolean isUnBoxable(RAbstractVector vector) {
+        Object o = vector.getDataAtAsObject(0);
+        return isPrimitive(o);
+    }
+
+    private static boolean isPrimitive(Object element) {
+        if (element == null) {
+            return false;
+        }
+        final Class<?> elementType = element.getClass();
+        return elementType == String.class || elementType == Character.class || elementType == Boolean.class || elementType == Byte.class || elementType == Short.class ||
+                        elementType == Integer.class || elementType == Long.class || elementType == Float.class || elementType == Double.class;
     }
 
     @Override
