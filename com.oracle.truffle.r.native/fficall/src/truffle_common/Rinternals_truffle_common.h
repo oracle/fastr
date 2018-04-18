@@ -25,7 +25,7 @@
    truffle_nfi and truffle_llvm directories.
    The implementation must define the following functions:
 
-   char *ensure_truffle_chararray_n(const char *x, int n)
+   char *ensure_truffle_chararray_n(const char *x, long n)
      Ensures that the sequence of 'n' bytes starting at 'x' is in the
      appropriate representation for the implementation.
 

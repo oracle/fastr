@@ -41,6 +41,10 @@ char *ensure_truffle_chararray_n(const char *x, int n) {
 	return (char *) x;
 }
 
+char *ensure_truffle_chararray(const char *x) {
+	return (char *) x;
+}
+
 void *ensure_string(const char * x) {
 	return (void *) x;
 }

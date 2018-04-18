@@ -25,7 +25,6 @@ package com.oracle.truffle.r.ffi.impl.llvm.upcalls;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.context.RContext;
 
 @MessageResolution(receiverType = BytesToNativeCharArrayCall.class)
 public class BytesToNativeCharArrayCallMR {
@@ -33,8 +32,8 @@ public class BytesToNativeCharArrayCallMR {
     @Resolve(message = "EXECUTE")
     public abstract static class BytesToNativeCharArrayCallExecute extends Node {
         protected java.lang.Object access(BytesToNativeCharArrayCall receiver, Object[] arguments) {
-            byte[] byteArray = (byte[]) RContext.getInstance().getEnv().asHostObject(arguments[0]);
-            return receiver.upCallsImpl.bytesToNativeCharArray(byteArray);
+            String strArg = (String) arguments[0];
+            return receiver.upCallsImpl.bytesToNativeCharArray(strArg.getBytes());
         }
     }
 

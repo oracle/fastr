@@ -21,7 +21,10 @@ rffi.isRString("hello")
 rffi.isRString(NULL)
 rffi.interactive()
 x <- 1; rffi.findvar("x", globalenv())
-x <- "12345"; rffi.char_length(x)
+# See issue GR-9928
+if (Sys.info()[['sysname']] != "Darwin") {
+	x <- "12345"; rffi.char_length(x)
+}
 
 rffi.test_duplicate(quote(a[,3])[[3]], 1L) # try duplicating empty symbol
 
@@ -29,19 +32,25 @@ strVec <- rffi.getStringNA();
 stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(strVec))
 rffi.LENGTH(strVec)
-# this will call CHAR(x) on the NA string, which materializes it to native pointer...
-rffi.char_length(strVec)
+# See issue GR-9928
+if (Sys.info()[['sysname']] != "Darwin") {
+	# this will call CHAR(x) on the NA string, which materializes it to native pointer...
+	rffi.char_length(strVec)
+}
 strVec <- rffi.setStringElt(c('hello'), as.character(NA))
 stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(as.character(NA)))
 
-# Encoding tests
-rffi.getBytes('\u1F602\n')
-# ignored: FastR does not support explicit encoding yet
-# latinEncStr <- '\xFD\xDD\xD6\xF0\n'
-# Encoding(latinEncStr) <- "latin1"
-# rffi.getBytes(latinEncStr)
-rffi.getBytes('hello ascii')
+# See issue GR-9928
+if (Sys.info()[['sysname']] != "Darwin") {
+	# Encoding tests
+	rffi.getBytes('\u1F602\n')
+	# ignored: FastR does not support explicit encoding yet
+	# latinEncStr <- '\xFD\xDD\xD6\xF0\n'
+	# Encoding(latinEncStr) <- "latin1"
+	# rffi.getBytes(latinEncStr)
+	rffi.getBytes('hello ascii')
+}
 
 x <- list(1)
 attr(x, 'myattr') <- 'hello';
@@ -50,8 +59,11 @@ stopifnot(attrs[[1]] == 'hello')
 attr <- rffi.getAttrib(x, 'myattr')
 stopifnot(attr == 'hello')
 
-# loess invokes loess_raw native function passing in string value as argument and that is what we test here.
-loess(dist ~ speed, cars);
+# Enable when GR-9876 is fixed
+if (Sys.getenv("FASTR_RFFI") != "llvm") {
+	# loess invokes loess_raw native function passing in string value as argument and that is what we test here.
+	loess(dist ~ speed, cars);
+}
 
 # code snippet that simulates work with promises ala rlang package
 tmp <- c(1,2,4)

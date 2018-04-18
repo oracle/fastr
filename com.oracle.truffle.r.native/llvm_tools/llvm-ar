@@ -22,8 +22,11 @@
 # questions.
 #
 
+ORIG_CMD=$1
+shift
+
 if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
-	ar "$@"
+	${ORIG_CMD} "$@"
 fi
 if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
     exit 0

@@ -53,8 +53,8 @@ import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
@@ -66,7 +66,6 @@ import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
-import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 abstract class InteropRootNode extends RootNode {
@@ -440,7 +439,17 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
             public Object execute(VirtualFrame frame) {
-                return false;
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public CallTarget accessAsPointer() {
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return NativeDataAccess.asPointer(ForeignAccess.getReceiver(frame));
             }
         });
     }
@@ -451,7 +460,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-                return new RObjectNativeWrapper((RObject) arg);
+                return arg;
             }
         });
     }

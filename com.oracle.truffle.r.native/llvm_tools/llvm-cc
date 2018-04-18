@@ -22,8 +22,11 @@
 # questions.
 #
 
+ORIG_CMD=$1
+shift
+
 if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
-	gcc "$@"
+	${ORIG_CMD} "$@"
 fi
 if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
     exit 0
@@ -31,6 +34,16 @@ fi
 
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+SULONG_DIR=""
+if [ -f "${DIR}/../../sulong" ]
+then
+	# For a package build
+	SULONG_DIR="${DIR}/../../sulong"
+else
+	# For the FastR build
+	SULONG_DIR="${DIR}/../../../sulong"
+fi
 
 . $DIR/llvm-helper
 
@@ -51,7 +64,7 @@ then
 else
   llvm_tool=clang
   get_llvm_tool
-  runit $llvm_tool_bin "${llvm_args[@]}"
+  runit $llvm_tool_bin -DSULONG "-I${SULONG_DIR}/include" "-I${SULONG_DIR}/mxbuild/sulong-libs" "-I${SULONG_DIR}/projects/com.oracle.truffle.llvm.libraries.bitcode/include" "${llvm_args[@]}"
   ecode=$?
   if [[ $ecode -ne 0 ]]; then
     exit $ecode

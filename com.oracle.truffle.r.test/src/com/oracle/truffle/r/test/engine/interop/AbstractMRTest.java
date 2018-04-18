@@ -153,7 +153,7 @@ public abstract class AbstractMRTest {
     public void testAsNativePointer() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
             try {
-                assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.AS_POINTER.createNode(), obj));
+                assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj));
                 assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", true, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
             } catch (UnsupportedMessageException e) {
                 assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", false, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
@@ -168,7 +168,7 @@ public abstract class AbstractMRTest {
                 continue;
             }
             try {
-                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) != obj);
+                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
             } catch (UnsupportedMessageException e) {
             }
         }

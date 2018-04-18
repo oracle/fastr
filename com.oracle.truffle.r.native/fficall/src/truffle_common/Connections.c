@@ -126,8 +126,8 @@ SEXP R_new_custom_connection(const char *description, const char *mode, const ch
         error(_("allocation of %s connection failed"), class_name);
 
     SEXP addrObj = R_MakeExternalPtr(new, R_NilValue, R_NilValue);
-    SEXP fastRConn = ((call_R_new_custom_connection) callbacks[R_new_custom_connection_x])(description, mode,
-                                                                                           class_name, addrObj);
+    SEXP fastRConn = ((call_R_new_custom_connection) callbacks[R_new_custom_connection_x])(ensure_truffle_chararray(description), ensure_truffle_chararray(mode),
+                                                                                           ensure_truffle_chararray(class_name), addrObj);
     // printf("DEBUG: R_new_custom_connection address %p SEXP value %p\n", ptr, addrObj);
     if (fastRConn) {
         new->class = (char *) malloc(strlen(class_name) + 1);

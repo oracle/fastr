@@ -1,12 +1,4 @@
-/^CC =/
-d
-i
-CC = $(FASTR_NATIVE_DIR)/llvm_tools/llvm-cc
-.
-/^F77 =/
-d
-i
-F77 = $(FASTR_NATIVE_DIR)/llvm_tools/llvm-fc
-.
+,s/CC[[:space:]]=\(.*\)/CC = $(FASTR_NATIVE_DIR)\/llvm_tools\/llvm-cc\1/g
+,s/F77[[:space:]]=\(.*\)/F77 = $(FASTR_NATIVE_DIR)\/llvm_tools\/llvm-fc\1/g
 w
 q

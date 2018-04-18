@@ -42,18 +42,17 @@ import com.oracle.truffle.r.engine.interop.RS4ObjectMRFactory.RS4ObjectWriteImpl
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
-import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = RS4Object.class)
 public class RS4ObjectMR {
@@ -106,14 +105,21 @@ public class RS4ObjectMR {
     @Resolve(message = "IS_POINTER")
     public abstract static class IsPointerNode extends Node {
         protected boolean access(@SuppressWarnings("unused") Object receiver) {
-            return false;
+            return true;
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected Object access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
         }
     }
 
     @Resolve(message = "TO_NATIVE")
     public abstract static class ToNativeNode extends Node {
-        protected Object access(RObject receiver) {
-            return new RObjectNativeWrapper(receiver);
+        protected Object access(Object receiver) {
+            return receiver;
         }
     }
 

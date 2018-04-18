@@ -53,7 +53,7 @@ ETC_FILES := $(addprefix $(GNUR_HOME_BINARY)/etc/,javaconf ldpaths Renviron repo
 
 SHARE_FILES := $(addprefix $(GNUR_HOME_BINARY)/share/,R Rd make java encodings)
 
-LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/*)
+LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/llvm-*)
 
 all: rundirs rcmds includedir
 
