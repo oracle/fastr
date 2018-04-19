@@ -554,6 +554,8 @@ public class TestBuiltin_c extends TestBase {
         assertEval("c(as.symbol(1), as.symbol(1))");
         assertEval("{ setClass('foo', representation(bar = 'ANY')); c(new('foo', bar=1)) }");
         assertEval("{ setClass('foo', representation(bar = 'ANY')); c(new('foo', bar=1), new('foo', bar=1)) }");
+
+        assertEval("c(1,2,)");
     }
 
     @Test

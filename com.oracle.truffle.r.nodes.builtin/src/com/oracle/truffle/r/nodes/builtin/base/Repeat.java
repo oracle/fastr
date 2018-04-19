@@ -122,6 +122,8 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
         ARG_IDX_LENGHT_OUT = 1;
         ARG_IDX_EACH = 2;
         FORMALS = FormalArguments.createForBuiltin(new Object[]{1, RRuntime.INT_NA, 1}, signature);
+
+        // Note: repeat is happy with empty arguments in varagrs
     }
 
     @Child private FastRInternalRepeat internalNode = FastRInternalRepeatNodeGen.create();

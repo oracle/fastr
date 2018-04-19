@@ -110,6 +110,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Combine.class);
+        casts.arg("...").mustBeValidVarArgs();
         casts.arg("recursive").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
     }
 

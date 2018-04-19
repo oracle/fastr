@@ -63,6 +63,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -695,6 +696,16 @@ public final class CastBuilder {
 
         public static TypeFilter<Object, Object> anyValue() {
             return new TypeFilter<>(Object.class);
+        }
+
+        /**
+         * Valid {@link RArgsValuesAndNames} do not contain
+         * {@link com.oracle.truffle.r.runtime.data.REmpty} values.
+         */
+        @SuppressWarnings({"rawtypes", "unchecked"})
+        public static Filter<Object, RArgsValuesAndNames> validVarArgs() {
+            Filter f = integerValue().or(doubleValue()).or(logicalValue());
+            return f;
         }
 
         @SuppressWarnings({"rawtypes", "unchecked"})

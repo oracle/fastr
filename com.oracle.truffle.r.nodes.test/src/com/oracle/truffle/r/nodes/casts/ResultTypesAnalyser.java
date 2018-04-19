@@ -48,6 +48,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RVarArgsFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
@@ -78,6 +79,7 @@ import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -345,6 +347,12 @@ public class ResultTypesAnalyser extends ExecutionPathVisitor<TypeExpr> implemen
     @Override
     public TypeExpr visit(MatrixFilter<?> filter, TypeExpr previous) {
         return previous.lower(filter).and(NOT_NULL_NOT_MISSING);
+    }
+
+    @Override
+    public TypeExpr visit(RVarArgsFilter filter, TypeExpr previous) {
+        TypeExpr res = atom(RArgsValuesAndNames.class);
+        return res;
     }
 
     @Override

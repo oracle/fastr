@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -366,5 +366,7 @@ public class TestBuiltin_list extends TestBase {
         assertEval("{ x<-list(y=1, 2);  c(42, a=x) }");
         assertEval("{ x<-list(y=1, 2);  c(a=x, c(z=7,42)) }");
         assertEval("{ x<-list(y=1, 2);  c(a=x, c(y=7,z=42)) }");
+
+        assertEval("list(1,2,3,)");
     }
 }
