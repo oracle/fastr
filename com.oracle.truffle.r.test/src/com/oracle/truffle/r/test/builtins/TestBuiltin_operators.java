@@ -2079,4 +2079,11 @@ public class TestBuiltin_operators extends TestBase {
         assertEval("{ l <- list(an=T, bn=F, T, F);  l == T }");
         assertEval("{ l <- list(an=T, bn=F, T, F);  T == l }");
     }
+
+    @Test
+    public void testListWithNull() {
+        assertEval("{ list(NULL) < 1 }");
+        assertEval("{ list(1, NULL) < c(1, 1) }");
+        assertEval("{ c(1, 1) < list(1, NULL) }");
+    }
 }
