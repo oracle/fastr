@@ -745,6 +745,9 @@ public class RDeparse {
                         }
                         needsParens = mainOp.prec > arginfo.prec || (mainOp.prec == arginfo.prec && isLeft == mainOp.rightassoc);
                         break;
+                    case FUNCTION:
+                        needsParens = true;
+                        break;
                     default:
                         break;
                 }
