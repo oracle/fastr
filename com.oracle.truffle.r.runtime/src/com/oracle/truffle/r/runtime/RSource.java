@@ -121,8 +121,7 @@ public class RSource {
      * Create a cached source from {@code text} and {@code name}.
      */
     public static Source fromText(String text, String name) {
-        String uniqueText = text.intern();
-        return getCachedByOrigin(uniqueText, origin -> Source.newBuilder(uniqueText).name(name).language(RRuntime.R_LANGUAGE_ID).build());
+        return getCachedByOrigin(text, origin -> Source.newBuilder(text).name(name).language(RRuntime.R_LANGUAGE_ID).build());
     }
 
     /**
