@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -114,7 +114,8 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist19() {
-        assertEval(Ignored.ImplementationError,
+        // Quotes vs. apostrophes and whitespace diffs
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(arguments = structure('object', simpleOnly = TRUE), generic = structure(function (object) standardGeneric('show'), generic = structure('show', package = 'methods'), package = 'methods', group = list(), valueClass = character(0), signature = structure('object', simpleOnly = TRUE), default = structure(function (object) showDefault(object, FALSE), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), generic = structure('show', package = 'methods'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (object) showDefault(object, FALSE))(object)), class = structure('standardGeneric', package = 'methods')));list(argv[[1]],argv[[2]]);");
     }
 
@@ -181,7 +182,8 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist32() {
-        assertEval(Ignored.ImplementationError,
+        // Quotes vs. apostrophes and whitespace diffs
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(function (e1, e2) standardGeneric('Ops'), generic = structure('Ops', package = 'base'), package = 'base', group = list(), valueClass = character(0), signature = c('e1', 'e2'), default = quote(`\\001NULL\\001`), skeleton = quote((function (e1, e2) stop('invalid call in method dispatch to Ops (no default method)', domain = NA))(e1, e2)), groupMembers = list('Arith', 'Compare', 'Logic'), class = structure('groupGenericFunction', package = 'methods')));list(argv[[1]]);");
     }
 
@@ -342,12 +344,7 @@ public class TestBuiltin_list extends TestBase {
 
     @Test
     public void testlist65() {
-        // FIXME Besides whitespace diff in "function (x, y..." output there's
-        // at several places e.g. after '[1] "signature"' GnuR outputs
-        // attr(,"class")attr(,"package")
-        // while FastR outputs just
-        // attr(,"package")
-        assertEval(Output.IgnoreWhitespace, Ignored.OutputFormatting,
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list(ANY = structure(function (x, y = NULL) .Internal(crossprod(x, y)), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = structure('crossprod', package = 'base'), class = structure('derivedDefaultMethod', package = 'methods')));list(argv[[1]]);");
     }
 

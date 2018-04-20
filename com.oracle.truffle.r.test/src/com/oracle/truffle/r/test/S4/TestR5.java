@@ -105,6 +105,10 @@ public class TestR5 extends TestBase {
 
         // list/modify methods
         assertEval("{ clazz <- setRefClass('Foo19R5'); clazz$methods('inexistingMethod') }");
+        // FastR does not output environment info in output while GnuR does:
+        // function (object)
+        // standardGeneric("gen")
+        // <environment: 0x...>
         assertSuppress(Ignored.OutputFormatting, "clazz <- setRefClass('Foo20R5', methods = list(foo = function() NULL)); clazz$methods('foo')");
         assertSuppress("clazz <- setRefClass('Foo21R5', methods = list(foo = function() NULL)); clazz$new()$foo(); clazz$methods(foo = function(x) x); clazz$new()$foo(3)");
 
@@ -128,6 +132,7 @@ public class TestR5 extends TestBase {
         assertSuppress("A1R5 <- setRefClass('A1R5', methods = list(foo = function() { print('hello') })); B1R5 <- setRefClass('B1R5', contains = 'A1R5'); obj <- B1R5$new(); obj$foo()");
         assertSuppress("A2R5 <- setRefClass('A2R5', methods = list(foo = function() { print('hello') })); B2R5 <- setRefClass('B2R5', methods = list(foo = function() { print('world') }), contains = 'A2R5'); obj <- B2R5$new(); obj$foo()");
         assertSuppress("A3R5 <- setRefClass('A3R5', methods = list(foo = function() { print('hello') })); B3R5 <- setRefClass('B3R5', methods = list(foo = function() { callSuper(); print('world') }), contains = 'A3R5'); obj <- B3R5$new(); obj$foo()");
+        // "Class methods sorted differently => Ignored.OutputFormatting
         assertSuppress(Ignored.OutputFormatting, "{ setRefClass('A4R5', fields = c('a')); setRefClass('B4R5', contains = 'A4R5', methods = list(set_a = function(a){ a <<- a })) }");
         assertEval("A5R5 <- setRefClass('A5R5', field = c('a'), methods = list(initialize <- function() { a <<- 0 })); B5R5 <- setRefClass('B5R5', field = c('a'), methods = list(initialize <- function() { a <<- 'hello' })); C5R5 <- setRefClass('C5R5', contains = c('A5R5', 'B5R5')); obj <- C5R5$new(); obj$a <- raw(0)");
     }

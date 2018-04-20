@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -82,8 +82,10 @@ public class TestBuiltin_copyDFattr extends TestBase {
 
     @Test
     public void testcopyDFattr13() {
-        // GnuR extra attr(,"class") in output - not sure if appropriate
-        assertEval(Ignored.ReferenceError,
+        // GNU R forces row.names=c(NA, 10L) to become 1 2 3 4 5 6 7 8 9 10
+        // while FastR retains c(NA, 10L)
+        // manual says that row.names should have the same size like vector and do not contain NAs
+        assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(x = 1:10, y = c(-0.626453810742332, 0.183643324222082, -0.835628612410047, 1.59528080213779, 0.329507771815361, -0.820468384118015, 0.487429052428485, 0.738324705129217, 0.575781351653492, -0.305388387156356), z = structure(c(9L, 3L, 6L, 2L, 10L, 5L, 1L, 4L, 8L, 7L), .Label = c('a', 'c', 'f', 'h', 'i', 'p', 'v', 'x', 'y', 'z'), class = 'factor')), .Names = c('x', 'y', 'z'), row.names = c(NA, 10L), .S3Class = 'data.frame', timestamps = structure(1386392033.84327, class = c('POSIXct', 'POSIXt')), class = structure('myFrame', package = '.GlobalEnv')), structure(list(x = NULL, y = NULL, z = NULL), .Names = c('x', 'y', 'z'), row.names = c(NA, 10L), .S3Class = 'data.frame', timestamps = structure(1386392033.84327, class = c('POSIXct', 'POSIXt')), class = structure('myFrame', package = '.GlobalEnv'))); .Internal(copyDFattr(argv[[1]], argv[[2]]))");
     }
 

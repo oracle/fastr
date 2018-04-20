@@ -129,8 +129,10 @@ public class TestBuiltin_attributes extends TestBase {
 
     @Test
     public void testattributes23() {
-        // FIXME several differences in output
-        assertEval(Ignored.ImplementationError,
+        // Quotes vs. apostrophes
+        // GnuR: standardGeneric("show")
+        // FastR: standardGeneric('show')
+        assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(list(), .Names = character(0), arguments = structure('object', simpleOnly = TRUE), signatures = list(), generic = structure(function (object) standardGeneric('show'), generic = structure('show', package = 'methods'), package = 'methods', group = list(), valueClass = character(0), signature = structure('object', simpleOnly = TRUE), default = structure(function (object) showDefault(object, FALSE), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), generic = structure('show', package = 'methods'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (object) showDefault(object, FALSE))(object)), class = structure('standardGeneric', package = 'methods')), class = structure('listOfMethods', package = 'methods')));attributes(argv[[1]]);");
     }
 
