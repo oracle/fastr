@@ -392,12 +392,20 @@ public class RDeparse {
             if (FastROptions.EmitTmpSource.getBooleanValue() && deparsePath != null) {
                 fixupSourcesTempFile(deparsePath);
             } else {
-                fixupSourcesTextInternal();
+                fixupSourcesText();
             }
         }
 
-        private void fixupSourcesTextInternal() {
-            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
+        private void fixupSourcesText() {
+            RootNode rootNode = getRootNode();
+            String name = rootNode != null ? rootNode.getName() : null;
+            String text = sb.toString();
+            if (name != null && !name.isEmpty() && !name.equals("<no source>")) {
+                name = name.replace(File.separatorChar, '_') + ".r";
+            } else {
+                name = "unknown.r";
+            }
+            Source source = RSource.fromText(text, name);
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(s.start, s.length));
             }
@@ -416,10 +424,10 @@ public class RDeparse {
                 }
             } catch (AccessDeniedException | FileAlreadyExistsException | IllegalArgumentException e) {
                 // do not report because these exceptions are legitimate
-                fixupSourcesTextInternal();
+                fixupSourcesText();
             } catch (Throwable e) {
                 RInternalError.reportError(e);
-                fixupSourcesTextInternal();
+                fixupSourcesText();
             }
         }
 

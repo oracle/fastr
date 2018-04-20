@@ -118,6 +118,13 @@ public class RSource {
     }
 
     /**
+     * Create a cached source from {@code text} and {@code name}.
+     */
+    public static Source fromText(String text, String name) {
+        return getCachedByOrigin(text, origin -> Source.newBuilder(text).name(name).language(RRuntime.R_LANGUAGE_ID).build());
+    }
+
+    /**
      * Create an {@code internal} source from {@code text} and {@code description}.
      */
     public static Source fromTextInternal(String text, Internal description) {
@@ -294,7 +301,7 @@ public class RSource {
         }
     }
 
-    private static <T> Source getCachedByOrigin(T origin, SourceGenerator<T> generator) throws IOException {
+    private static <T, E extends Exception> Source getCachedByOrigin(T origin, SourceGenerator<T, E> generator) throws E {
         CompilerAsserts.neverPartOfCompilation();
         Source src;
         synchronized (deserializedSources) {
@@ -309,7 +316,7 @@ public class RSource {
     }
 
     @FunctionalInterface
-    private interface SourceGenerator<T> {
-        Source apply(T origin) throws IOException;
+    private interface SourceGenerator<T, E extends Exception> {
+        Source apply(T origin) throws E;
     }
 }
