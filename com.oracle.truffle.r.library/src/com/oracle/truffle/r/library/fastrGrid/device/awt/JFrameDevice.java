@@ -55,7 +55,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
 
     // This will be drawn on the component
     private BufferedImage componentImage;
-    // Grid draings will be made into this image, may be == componentImage if isOnHold is false
+    // Grid drawings will be made into this image, may be == componentImage if isOnHold is false
     private BufferedImage image;
     // If have we created a new image for buffering while on hold, we keep it to reuse it
     private BufferedImage cachedImage;
@@ -198,6 +198,11 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
         defaultInitGraphics(graphics);
         graphics.clearRect(0, 0, width, height);
         inner = new Graphics2DDevice(graphics, width, height, true);
+        componentImage = image;
+        cachedImage = null;
+        if (isOnHold) {
+            hold();
+        }
     }
 
     private void disposeImageDevice() {
@@ -217,7 +222,10 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
         disposeImageDevice();
         openGraphics2DDevice(newWidth, newHeight);
         if (onResize != null) {
+            // note: onResize action should take care of initiating the repaint
             onResize.run();
+        } else {
+            repaint();
         }
     }
 
