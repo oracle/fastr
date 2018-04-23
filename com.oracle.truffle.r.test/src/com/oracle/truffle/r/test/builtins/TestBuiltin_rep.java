@@ -244,5 +244,15 @@ public class TestBuiltin_rep extends TestBase {
 
         // FIXME: should not print the warnings if empty args occur in '...'
         assertEval(Output.IgnoreWarningMessage, "rep(3, 4,)");
+
+        assertEval("rep(numeric(), length.out=2)");
+        assertEval("rep(character(), length.out=2)");
+        assertEval("rep(raw(), length.out=2)");
+        assertEval("rep(complex(), length.out=2)");
+        assertEval("rep(list(), length.out=2)");
+
+        assertEval("rep(numeric(), times=3)");
+
+        assertEval("rep(NULL)");
     }
 }

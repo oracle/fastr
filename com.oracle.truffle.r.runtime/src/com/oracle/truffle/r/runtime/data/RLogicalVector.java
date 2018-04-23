@@ -154,15 +154,17 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     private byte[] copyResizedData(int size, boolean fillNA) {
-        byte[] newData = Arrays.copyOf(getReadonlyData(), size);
-        if (size > this.getLength()) {
+        byte[] localData = getReadonlyData();
+        byte[] newData = Arrays.copyOf(localData, size);
+        if (size > localData.length) {
             if (fillNA) {
-                for (int i = data.length; i < size; i++) {
+                for (int i = localData.length; i < size; i++) {
                     newData[i] = RRuntime.LOGICAL_NA;
                 }
             } else {
-                for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
-                    newData[i] = data[j];
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                    newData[i] = localData[j];
                 }
             }
         }

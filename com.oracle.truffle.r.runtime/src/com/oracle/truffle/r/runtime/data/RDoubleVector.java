@@ -178,6 +178,7 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
+                assert oldData.length > 0 : "cannot call resize on empty vector if fillNA == false";
                 for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
                     newData[i] = oldData[j];
                 }
@@ -187,8 +188,9 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     private double[] copyResizedData(int size, boolean fillNA) {
-        double[] newData = Arrays.copyOf(getReadonlyData(), size);
-        return resizeData(newData, this.data, this.getLength(), fillNA);
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, size);
+        return resizeData(newData, localData, localData.length, fillNA);
     }
 
     @Override

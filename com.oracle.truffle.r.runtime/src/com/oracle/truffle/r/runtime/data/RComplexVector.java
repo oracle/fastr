@@ -153,16 +153,18 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     private double[] copyResizedData(int size, boolean fillNA) {
         int csize = size << 1;
-        double[] newData = Arrays.copyOf(getReadonlyData(), csize);
-        if (csize > this.getLength()) {
+        double[] localData = getReadonlyData();
+        double[] newData = Arrays.copyOf(localData, csize);
+        if (csize > localData.length) {
             if (fillNA) {
-                for (int i = data.length; i < size; i++) {
+                for (int i = localData.length; i < csize; i++) {
                     newData[i] = RRuntime.DOUBLE_NA;
                 }
             } else {
-                for (int i = data.length, j = 0; i <= csize - 2; i += 2, j = Utils.incMod(j + 1, data.length)) {
-                    newData[i] = data[j];
-                    newData[i + 1] = data[j + 1];
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i <= csize - 2; i += 2, j = Utils.incMod(j + 1, localData.length)) {
+                    newData[i] = localData[j];
+                    newData[i + 1] = localData[j + 1];
                 }
             }
         }
