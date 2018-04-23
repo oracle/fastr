@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -104,7 +104,6 @@ public class TestBuiltin_setS4Object extends TestBase {
         // length of 'dimnames' [1] not equal to array extent
 
         // FastR uses apostrophes to quote string: function (object) cat('I am a \'foo\'\n')
-        // GnuR outputs several attr(,"class")attr(,"package") while GnuR just attr(,"package")
         assertEval(Ignored.ImplementationError,
                         "argv <- list(structure(list(`NA` = structure(function (object) cat('I am a \\\'foo\\\'\\n'), target = structure('foo', .Names = 'object', package = 'myTst', class = structure('signature', package = 'methods')), defined = structure('foo', .Names = 'object', package = 'myTst', class = structure('signature', package = 'methods')), generic = structure('show', package = 'methods'), class = structure('MethodDefinition', package = 'methods'))), .Names = NA_character_, arguments = structure('object', simpleOnly = TRUE), signatures = list(), generic = structure(function (object) standardGeneric('show'), generic = structure('show', package = 'methods'), package = 'methods', group = list(), valueClass = character(0), signature = structure('object', simpleOnly = TRUE), default = structure(function (object) showDefault(object, FALSE), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'object', package = 'methods'), generic = structure('show', package = 'methods'), class = structure('derivedDefaultMethod', package = 'methods')), skeleton = quote((function (object) showDefault(object, FALSE))(object)), class = structure('standardGeneric', package = 'methods')), class = structure('listOfMethods', package = 'methods')), TRUE, 0L); .Internal(setS4Object(argv[[1]], argv[[2]], argv[[3]]))");
     }

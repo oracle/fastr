@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -19,7 +19,9 @@ public class TestBuiltin_classassign extends TestBase {
 
     @Test
     public void testclassassign1() {
-        // GnuR: extra newline before '.Ignored' and several 'attr(,"class")'
+        // Quotes vs. apostrophes:
+        // GnuR: function (x, mode = "any")
+        // FastR: function (x, mode = 'any')
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(function (x, mode = 'any') .Internal(as.vector(x, mode)), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')), value = structure('MethodDefinition', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }
@@ -43,7 +45,9 @@ public class TestBuiltin_classassign extends TestBase {
 
     @Test
     public void testclassassign5() {
-        // GnuR: extra 'attr(,"class")'
+        // FastR does not output the following:
+        // attr(,"class")attr(,"package")
+        // [1] "methods"
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(character(0), .Names = character(0), package = character(0), class = structure('signature', package = 'methods')), value = structure('signature', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }
@@ -65,7 +69,9 @@ public class TestBuiltin_classassign extends TestBase {
 
     @Test
     public void testclassassign9() {
-        // GnuR: extra 'attr(,"class")'
+        // FastR does not output the following:
+        // attr(,"class")attr(,"package")
+        // [1] ".GlobalEnv"
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(c(1, 0, 0, 0, 1, 0, 0, 0, 1), .Dim = c(3L, 3L), class = structure('mmat2', package = '.GlobalEnv')), value = structure('mmat2', package = '.GlobalEnv'));`class<-`(argv[[1]],argv[[2]]);");
     }
@@ -91,14 +97,16 @@ public class TestBuiltin_classassign extends TestBase {
 
     @Test
     public void testclassassign13() {
-        // GnuR: extra 'attr(,"class")'
+        // Quotes vs. apostrophes in output
+        // Expected: "qr.fitted")attr(,"target")qr"ANY"attr(,...
+        // FastR: 'qr.fitted')attr(,"target")qr"ANY"attr(,...
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(function (qr, y, k = qr$rank) standardGeneric('qr.fitted'), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'qr', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'qr', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')), value = structure('MethodDefinition', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testclassassign14() {
-        // GnuR: extra 'attr(,"class")'
+        // Quotes vs. apostrophes in output
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(function (x = 1, nrow, ncol) standardGeneric('diag'), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')), value = structure('MethodDefinition', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }
@@ -110,28 +118,27 @@ public class TestBuiltin_classassign extends TestBase {
 
     @Test
     public void testclassassign16() {
-        // GnuR: extra 'attr(,"class")'
+        // Quotes vs. apostrophes in output
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(function (x, y, ...) standardGeneric('plot'), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')), value = structure('MethodDefinition', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testclassassign17() {
-        // GnuR: extra 'attr(,"class")'
+        // Quotes vs. apostrophes in output
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(function (x, logarithm = TRUE, ...) UseMethod('determinant'), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')), value = structure('MethodDefinition', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testclassassign18() {
-        // GnuR: extra 'attr(,"class")'
-        assertEval(Ignored.OutputFormatting,
+        assertEval(Output.IgnoreWhitespace,
                         "argv <- list(structure(function (x, y = NULL) .Internal(crossprod(x, y)), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'x', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')), value = structure('MethodDefinition', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
     public void testclassassign19() {
-        // GnuR: extra 'attr(,"class")'
+        // Quotes vs. apostrophes in output
         assertEval(Ignored.OutputFormatting,
                         "argv <- list(structure(function (obj, force = FALSE) standardGeneric('unname'), target = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'obj', package = 'methods'), defined = structure('ANY', class = structure('signature', package = 'methods'), .Names = 'obj', package = 'methods'), generic = character(0), class = structure('MethodDefinition', package = 'methods')), value = structure('MethodDefinition', package = 'methods'));`class<-`(argv[[1]],argv[[2]]);");
     }

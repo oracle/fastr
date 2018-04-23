@@ -44,7 +44,9 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
         }
 
         final StringBuilder savedBuffer = printCtx.getTagBuffer();
-        printCtx.resetTagBuffer();
+        if (printCtx.attrDepth() == 0) {
+            printCtx.resetTagBuffer();
+        }
         for (RAttributesLayout.RAttribute a : RAttributesLayout.asIterable(attrs)) {
             if (useSlots && RRuntime.CLASS_SYMBOL.equals(a.getName())) {
                 continue;
@@ -88,22 +90,25 @@ final class AttributesPrinter implements ValuePrinter<RAttributable> {
             } else {
                 tag = String.format("attr(,\"%s\")", a.getName());
             }
-            out.println(tag);
 
             StringBuilder buff = printCtx.getOrCreateTagBuffer();
             int origLen = buff.length();
             buff.append(tag);
-
-            RContext ctx = RContext.getInstance();
-            if (ctx.isMethodTableDispatchOn() && utils.isS4(a.getValue())) {
-                S4ObjectPrinter.printS4(printCtx, a.getValue());
-                // throw new UnsupportedOperationException("TODO");
-            } else {
-                if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject()) {
-                    RContext.getEngine().printResult(ctx, a.getValue());
+            out.println(buff);
+            printCtx.updateAttrDepth(+1);
+            try {
+                RContext ctx = RContext.getInstance();
+                if (ctx.isMethodTableDispatchOn() && utils.isS4(a.getValue())) {
+                    S4ObjectPrinter.printS4(printCtx, a.getValue());
                 } else {
-                    ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
+                    if (a.getValue() instanceof RAttributable && ((RAttributable) a.getValue()).isObject()) {
+                        RContext.getEngine().printResult(ctx, a.getValue());
+                    } else {
+                        ValuePrinters.INSTANCE.print(a.getValue(), printCtx);
+                    }
                 }
+            } finally {
+                printCtx.updateAttrDepth(-1);
             }
 
             // restore tag buffer to its original value
