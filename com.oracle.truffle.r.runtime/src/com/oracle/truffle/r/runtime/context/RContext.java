@@ -692,10 +692,15 @@ public final class RContext {
             // methods information
             assert contextKind != ContextKind.SHARE_NOTHING;
             assert parentContext != null;
-            return parentContext.getPrimitiveMethodsInfo();
+            return parentContext.getPrimitiveMethodsInfoWithBoundary();
         } else {
             return primitiveMethodsInfo;
         }
+    }
+
+    @TruffleBoundary
+    private PrimitiveMethodsInfo getPrimitiveMethodsInfoWithBoundary() {
+        return getPrimitiveMethodsInfo();
     }
 
     /**

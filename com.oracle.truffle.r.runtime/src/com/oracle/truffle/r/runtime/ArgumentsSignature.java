@@ -42,8 +42,10 @@ public final class ArgumentsSignature implements Iterable<String> {
      * argument can be provided with a name or without a name, or it may have default value, but
      * without any actual value provided by the caller. This is the case for {@code UNMATCHED}. Use
      * {@link #isUnmatched(int)} for checking if argument is unmatched.
+     *
+     * Note we intentionally use invalid argument name.
      */
-    public static final String UNMATCHED = new String();
+    public static final String UNMATCHED = "^";
     public static final String VARARG_NAME = "...";
     public static final int[] EMPTY_VARARGS_INDEXES = new int[0];
     public static final int NO_VARARG = -1;

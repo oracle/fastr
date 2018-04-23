@@ -56,7 +56,8 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
     @CompilationFinal private RStringVector suppliedSignatureArgNames;
 
     static {
-        Casts.noCasts(ListBuiltin.class);
+        Casts casts = new Casts(ListBuiltin.class);
+        casts.arg("...").allowMissing().mustBeValidVarArgs();
     }
 
     /**

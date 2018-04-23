@@ -177,8 +177,15 @@ public class ConditionFunctions {
         }
 
         @Specialization
-        protected RNull signalCondition(RList condition, RAbstractStringVector msg, Object call) {
-            RErrorHandling.signalCondition(condition, msg.getDataAt(0), call);
+        protected RNull signalCondition(RList condition, Object msg, Object call) {
+            String msgStr = "";
+            if (msg instanceof RAbstractStringVector) {
+                RAbstractStringVector msgVec = (RAbstractStringVector) msg;
+                if (msgVec.getLength() > 0) {
+                    msgStr = ((RAbstractStringVector) msg).getDataAt(0);
+                }
+            }
+            RErrorHandling.signalCondition(condition, msgStr, call);
             return RNull.instance;
         }
     }

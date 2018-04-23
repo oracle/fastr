@@ -718,7 +718,11 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                         } else {
                             String[] signature = new String[length - 1];
                             for (int i = 0; i < names.getLength() && i < (length - 1); i++) {
-                                signature[i] = names.getDataAt(i + 1);
+                                String name = names.getDataAt(i + 1);
+                                if (name != null && !name.isEmpty()) {
+                                    // in signatures, null is designated for unnamed arguments
+                                    signature[i] = name;
+                                }
                             }
                             return ArgumentsSignature.get(signature);
                         }

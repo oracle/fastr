@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RVarArgsFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.ResultForArg;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
@@ -82,6 +83,7 @@ import com.oracle.truffle.r.nodes.unary.FilterNode;
 import com.oracle.truffle.r.nodes.unary.FindFirstNodeGen;
 import com.oracle.truffle.r.nodes.unary.MapNode;
 import com.oracle.truffle.r.nodes.unary.NonNANodeGen;
+import com.oracle.truffle.r.nodes.unary.RVarArgsFilterNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -197,6 +199,9 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(FilterStep<?, ?> step, CastNode previous) {
+            if (step.getFilter() instanceof RVarArgsFilter) {
+                return RVarArgsFilterNode.create();
+            }
             @SuppressWarnings("unchecked")
             ArgumentFilter<Object, Object> filter = (ArgumentFilter<Object, Object>) ArgumentFilterFactoryImpl.INSTANCE.createFilter(step.getFilter());
             MessageData msg = getDefaultIfNull(step.getMessage(), step.isWarning());
@@ -260,6 +265,7 @@ public final class PipelineToCastNode {
 
         @Override
         public CastNode visit(MapIfStep<?, ?> step, CastNode previous) {
+            assert !(step.getFilter() instanceof RVarArgsFilter) : "mapIf not yet implemented for RVarArgsFilter";
             @SuppressWarnings("unchecked")
             ArgumentFilter<Object, Object> condition = (ArgumentFilter<Object, Object>) ArgumentFilterFactoryImpl.INSTANCE.createFilter(step.getFilter());
             CastNode trueCastNode = PipelineToCastNode.convert(null, step.getTrueBranch(), this);
@@ -408,6 +414,11 @@ public final class PipelineToCastNode {
         @Override
         public ArgumentFilter<?, ?> visit(MatrixFilter<?> filter, ArgumentFilter<?, ?> previous) {
             return filter.acceptOperation(this, null);
+        }
+
+        @Override
+        public ArgumentFilter<?, ?> visit(RVarArgsFilter filter, ArgumentFilter<?, ?> previous) {
+            throw RInternalError.shouldNotReachHere("This filter should be handled separately as it has its own node.");
         }
 
         @Override

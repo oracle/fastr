@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RVarArgsFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
@@ -202,6 +203,11 @@ public final class MarkLookup implements PipelineStepVisitor<Map<String, Object>
 
     @Override
     public Map<String, Object> visit(MissingFilter filter, Map<String, Object> foundMarks) {
+        return visitFilter(filter, foundMarks);
+    }
+
+    @Override
+    public Map<String, Object> visit(RVarArgsFilter filter, Map<String, Object> foundMarks) {
         return visitFilter(filter, foundMarks);
     }
 

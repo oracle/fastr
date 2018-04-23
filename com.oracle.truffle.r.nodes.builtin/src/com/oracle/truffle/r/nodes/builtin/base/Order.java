@@ -6,7 +6,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -157,6 +157,7 @@ public abstract class Order extends RPrecedenceBuiltinNode {
 
     static {
         Casts casts = new Casts(Order.class);
+        casts.arg("...").mustBeValidVarArgs();
         casts.arg("na.last").mustBe(numericValue(), INVALID_LOGICAL, "na.last").asLogicalVector().findFirst();
         casts.arg("decreasing").defaultError(INVALID_LOGICAL, "decreasing").mustBe(numericValue()).asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
     }
