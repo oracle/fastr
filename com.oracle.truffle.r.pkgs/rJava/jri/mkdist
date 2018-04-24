@@ -1,0 +1,48 @@
+#!/bin/sh
+
+PNAME=JRI
+SWD=`pwd`
+echo "Removing previous dist ..."
+rm -rf /tmp/${PNAME}
+echo "Copying package base ..."
+mkdir /tmp/${PNAME}
+cp -r . /tmp/${PNAME}
+
+rm -f /tmp/${PNAME}/mkdist
+
+cd /tmp/${PNAME}
+
+if [ -e configure ]; then
+    echo "*skipping* autoconf (configure already present)"
+else 
+    echo "Running autoconf ..."
+    rm -rf autom4te* acloc*
+    autoreconf
+#autoheader
+#autoconf
+fi
+rm -rf autom4te* acloc*
+
+echo "Compiling getsp ..."
+if [ ! -e tools/getsp.class ]; then
+    cd tools
+    javac -target 1.2 -source 1.2 getsp.java
+    cd ..
+fi
+
+echo "Removing CVS/SVN and backup stuff ..."
+rm -rf `find . -name CVS -or -name .svn -or -name \*~`
+
+echo "Updating version ..."
+VER=`sed -n -e 's/.*JRI v\([0-9.-]\{1,\}\).*/\1/p' src/jri.h`
+echo "$PNAME version ${VER}"
+# cat DESCRIPTION| sed "s/Version:.*/Version: ${VER}/" > d
+# mv d DESCRIPTION
+echo "Creating package ..."
+cd ..
+tar fcz ${PNAME}_${VER}.tar.gz ${PNAME}
+cd ${SWD}
+cp /tmp/${PNAME}_${VER}.tar.gz ..
+rm -rf /tmp/${PNAME}
+echo "Done."
+ls -l ../${PNAME}_${VER}.tar.gz

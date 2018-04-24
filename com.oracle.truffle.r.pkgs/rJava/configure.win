@@ -1,0 +1,61 @@
+#!/bin/sh
+
+echo "Generate Windows-specific files (src/jvm-w32) ..."
+make -C src/jvm-w32
+
+if [ $? != 0 ]; then
+  exit 1
+fi
+
+echo "Find Java..."
+# findjava honors JAVA_HOME environment variable, so we can safely overwite it 
+if [ -e src/jvm-w32/findjava.exe ]; then
+    JAVA_HOME=`src/jvm-w32/findjava -s -f`
+fi
+if [ x$JAVA_HOME = x ]; then
+    echo "ERROR: cannot find Java Development Kit." >&2
+    echo "       Please set JAVA_HOME to specify its location manually" >&2
+    exit 1
+fi
+
+echo "  JAVA_HOME=$JAVA_HOME"
+
+echo "JAVA_HOME:=$JAVA_HOME" > src/Makevars.java
+
+if [ -e jri/configure.win ]; then
+    echo "=== Building JRI ==="
+    CONFIGURED=1
+    export CONFIGURED
+    if [ -z "${RHOME}" ]; then
+	RHOME="${R_HOME}"
+    fi
+    R_HOME=${RHOME}
+    export R_HOME
+    export RHOME
+    export JAVA_HOME
+    cd jri
+    sh configure.win
+    make
+    BR=$?
+    cd ..
+    if [ $BR = 0 ]; then
+	echo "=== JRI built ==="
+	mkdir -p inst/jri
+	# also copy into R_ARCH is present to avoid overwriting different archs
+	if [ -n "${R_ARCH}" ]; then
+	    mkdir -p inst/jri${R_ARCH}
+	    cp jri/src/jri.dll inst/jri${R_ARCH}/
+	fi
+	# yet still install into JRI in case users get confused
+	cp -r jri/run.bat jri/src/jri.dll jri/src/JRI.jar jri/examples inst/jri/
+    else
+	echo "**** WARNING: JRI could NOT be built" >&2
+	if [ -z "$INGORE" ]; then
+	    echo "Set IGNORE=1 if you want to build rJava anyway."
+	    exit 1
+	fi
+    fi
+fi
+
+echo "Configuration done."
+
