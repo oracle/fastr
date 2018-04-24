@@ -94,7 +94,7 @@
         if(is.null(zr)) {
             return(FALSE)
         }
-    } else if(!is.external(o)) {
+    } else if(!is.polyglot.value(o)) {
         # truffle unboxes first and fastr then converts primitive types into equivalent R values
         # and the external.object attr in such a case isn't a truffle object 
         # in e.g. .jnew and .jcall rJava knows and stores the return value class name in the jclass slot,
@@ -140,10 +140,10 @@
     }
     o1 <- attr(x1, "external.object", exact=TRUE)
     o2 <- attr(x2, "external.object", exact=TRUE)
-    if(!(is.external(o1) && is.external(o2))) {
+    if(!(is.polyglot.value(o1) && is.polyglot.value(o2))) {
         return(identical(o1, o2))
     }
-    if(!is.external(o1) || !is.external(o2)) {
+    if(!is.polyglot.value(o1) || !is.polyglot.value(o2)) {
         return(NULL)
     }
     .fastr.interop.isIdentical(o1, o2)
@@ -183,36 +183,25 @@
     # truffle provides no access to j.l.Class methods
     if (method == "forName") {
         if (!is.null(clnam) && clnam %in% c("java/lang/Class", "java.lang.Class")) {
-            res <- .fastr.interop.try(function() { new.java.class(list(...)[[1]]) }, FALSE)            
+            res <- .fastr.interop.try(function() { 
+                jt <- java.type(list(...)[[1]]) 
+                jt$class
+            }, FALSE)         
             return(.fromJ(res))
         }
-    } else if (method == "getName" && !is.null(o)) {
-        if (java.class(o) %in% c("java/lang/Class", "java.lang.Class")) {
-            res <- java.class(o, T)
-            return(.fromJ(res))
-        }           
-    } else if (method == "isInstance") {
-        if (!is.external(o)) {
-            o <- new.java.class(attr(obj, "external.classname", exact=TRUE))
-        }
-        o2 <- .toJ(list(...)[[1]])
-        res <- .fastr.interop.isInstance(o, o2)
-        return(.fromJ(res))        
     } else if (method == "getClass") {
-        if(is.external(o)) {            
-            res <- .fastr.interop.getJavaClass(o)
-            return(.fromJ(res))
-        } else {
+        if(is.polyglot.value(o)) {            
             extClName <- attr(obj, "external.classname", exact=TRUE)
             if(!is.null(extClName)) {
-                res <- new.java.class(extClName)  
+                res <- java.type(extClName)
+                res <- res$class
                 return(.fromJ(res))
             }                        
         }
     } 
     # >>>>>> j.l.Class HACKs >>>>>>
     
-    if (!is.null(o) && !is.external(o)) {        
+    if (!is.null(o) && !is.polyglot.value(o)) {        
         o <- .asTruffleObject(o, attr(obj, "external.classname", exact=TRUE))
     } 
 
@@ -232,7 +221,7 @@
     if(is.null(o)) { 
         cls <- NULL
         if (!is.null(clnam)) {
-            cls <- .fastr.interop.try(function() { new.java.class(clnam) }, FALSE)
+            cls <- .fastr.interop.try(function() { java.type(clnam) }, FALSE)
         } 
         if (is.null(cls)) {
             stop("RcallMethod: cannot determine object class")
@@ -290,12 +279,12 @@
     }       
         
     if(!is.null(o)) {
-        if(!is.external(o)) {
+        if(!is.polyglot.value(o)) {
             o <- .asTruffleObject(o, externalClassName)
         }
         res <- o[name]
     } else {
-        cls <- new.java.class(clnam)
+        cls <- java.type(clnam)
         if (is.null(cls)) {
             stop("cannot determine object class")
         }
@@ -304,7 +293,7 @@
     if(is.null(res)) {
         return(.jnull())
     }
-    if(!is.external(res)) {
+    if(!is.polyglot.value(res)) {
         # TODO there are cases when the passed signature is NULL - e.g. rJavaObject$someField 
         # with truffle we have no way to defferenciate if the unboxed return value relates to an Object or primitive field
         # but the original field.c RgetField implementation checks the return type and 
@@ -315,7 +304,7 @@
         # vs fastr:
         # > rJavaObject$fieldIntegerObject
         # [1] 2147483647
-        # Note that his is not the case in rjava with method calls:
+        # Note that this is not the case in rjava with method calls:
         # > rJavaObject$methodIntegerObject()
         # [1] 2147483647
         return(res)
@@ -323,7 +312,7 @@
     
     # as opposed to RcallMethod, we have to return a S4 objects at this place
     if(trueclass) {
-        clsname <- java.class(res)
+        clsname <- res$getClass()$getName()
     } else {
         clsname <- .signatureToClassName(sig)
     }
@@ -363,7 +352,7 @@
     if(!is.null(o)) {
         o[name] <- value
     } else {
-        cls <- new.java.class(clnam)
+        cls <- java.type(clnam)
         cls[name] <- value
     }
     ref
@@ -376,12 +365,12 @@
         stop("RcreateObject: invalid class name")
     }
 
-    co <- .fastr.interop.try(function() { new.java.class(class, silent) }, FALSE)
+    co <- .fastr.interop.try(function() { java.type(class, silent) }, FALSE)
     if(is.null(co)) {
         return(NULL)
     }
     args <- .ellipsisToJ(co, ...)
-    res <- .fastr.interop.try(function() { do.call(new.external, args) }, FALSE)
+    res <- .fastr.interop.try(function() { do.call(.fastr.interop.new, args) }, FALSE)
 
     # create an external pointer even for java.lang.String & co    
     .fromJ(res, toExtPointer=TRUE)
@@ -489,7 +478,7 @@
     type <- typeof(ar)
     if(type %in% c("integer", "double", "character", "logical", "raw")) {
         ar <- .vectorToJArray(ar)
-        sig <- java.class(ar)
+        sig <- ar$getClass()$getName()
         return(new("jarrayRef", jobj=.fromJ(ar), jclass=sig, jsig=sig))
     } else if(is.list(ar)) {
 
@@ -505,8 +494,8 @@
             clsName <- "java.lang.Object"    
         }
         ar <- .listToJ(ar)
-        ar <- as.java.array(ar, clsName)
-        sig <- java.class(ar)
+        ar <- .fastr.interop.asJavaArray(ar, clsName)
+        sig <- ar$getClass()$getName()
         return(new("jarrayRef", jobj=.fromJ(ar), jclass=sig, jsig=sig))
     } 
     stop("Unsupported type to create Java array from.")
@@ -525,9 +514,11 @@
     
     if(!is.null(attr(obj, "external.object", exact=TRUE))) {
         obj <- .toJ(obj)
-        if(is.external(obj)) {
-            if(java.class(obj) == "java.lang.Class") {
-                res <- paste0("class ", java.class(obj, T))
+        if(is.polyglot.value(obj)) {
+            clsName <- obj$getClass()$getName()
+            if(clsName == "java.lang.Class") {
+                clsName <- obj$getName()
+                res <- paste0("class ", clsName)
             } else {
                 res <- obj["toString"]()
             }        
@@ -577,7 +568,7 @@
     if(is.null(x)) {
         return(.jzeroRef)
     } else {        
-        if(toExtPointer || is.external(x)) {
+        if(toExtPointer || is.polyglot.value(x)) {
             ep <- methods:::.newExternalptr() 
             attr(ep, "external.object") <- x            
             ep
@@ -613,7 +604,7 @@
             if (is.null(xo)) {
                 stop(paste0("missing 'external' attribute on: ", x))
             }
-            if (is.external(xo)) {
+            if (is.polyglot.value(xo)) {
                 return(xo)
             } else {                
                 return(.asTruffleObject(xo, attr(x, "external.classname", exact=TRUE)))
@@ -624,15 +615,15 @@
         .vectorToJArray(x)
     } else {
         if (inherits(x, "jbyte")) {
-            x <- as.external.byte(x)    
+            x <- .fastr.interop.asByte(x)    
         } else if (inherits(x, "jchar")) {
-            x <- as.external.char(x)
+            x <- .fastr.interop.asChar(x)
         } else if (inherits(x, "jfloat")) {
-            x <- as.external.float(x)
+            x <- .fastr.interop.asFloat(x)
         } else if (inherits(x, "jlong")) {
-            x <- as.external.long(x)
+            x <- .fastr.interop.asLong(x)
         } else if (inherits(x, "jshort")) {
-            x <- as.external.short(x)        
+            x <- .fastr.interop.asShort(x)
         }
         x
     }
@@ -642,12 +633,12 @@
     x # force args
 
     switch(class(x),
-        "jbyte" = as.java.array(x, "byte"),
-        "jchar" = as.java.array(x, "char"),
-        "jfloat" = as.java.array(x, "float"),
-        "jlong" = as.java.array(x, "long"),
-        "jshort" = as.java.array(x, "short"),
-        as.java.array(x)
+        "jbyte" = .fastr.interop.asJavaArray(x, "byte"),
+        "jchar" = .fastr.interop.asJavaArray(x, "char"),
+        "jfloat" = .fastr.interop.asJavaArray(x, "float"),
+        "jlong" = .fastr.interop.asJavaArray(x, "long"),
+        "jshort" = .fastr.interop.asJavaArray(x, "short"),
+        .fastr.interop.asJavaArray(x)
     )
 }
 
@@ -656,11 +647,11 @@
 
     if(!is.null(className)) {
         x <- switch(gsub("/", ".", className),
-            "java.lang.Byte" = as.external.byte(x),
-            "java.lang.Character" = as.external.char(x),
-            "java.lang.Float" = as.external.float(x),
-            "java.lang.Long" = as.external.long(x),
-            "java.lang.Short" = as.external.short(x),        
+            "java.lang.Byte" = .fastr.interop.asByte(x),
+            "java.lang.Character" = .fastr.interop.asChar(x),
+            "java.lang.Float" = .fastr.interop.asFloat(x),
+            "java.lang.Long" = .fastr.interop.asLong(x),
+            "java.lang.Short" = .fastr.interop.asShort(x),
             x
         )        
     }
