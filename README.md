@@ -60,7 +60,7 @@ FastR uses a build tool called `mx` (cf `maven`) which can be downloaded from [h
 
 ## Pre-Requisites
 FastR shares some code with GnuR, for example, the default packages and the Blas library. Therefore, a version of GnuR (currently
-R-3.3.2), is downloaded and built as part of the build. Both GNU R and FastR require access certain tools and packages that must be available
+R-3.4.0), is downloaded and built as part of the build. Both GNU R and FastR require access certain tools and packages that must be available
 prior to the build. These are:
 
     A jvmci-enabled Java JDK which is available from [pre-built binary](http://www.oracle.com/technetwork/oracle-labs/program-languages/downloads/index.html)

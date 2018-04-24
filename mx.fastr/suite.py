@@ -20,18 +20,18 @@ suite = {
   "repositories" : {
     "snapshots" : {
         "url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots",
-        "licenses" : ["GPLv2"]
+        "licenses" : ["GPLv3"]
     }
   },
 
   "licenses" : {
-    "GPLv2" : {
-      "name" : "GNU General Public License, version 2",
-      "url" : "http://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html"
+    "GPLv3" : {
+      "name" : "GNU General Public License, version 3",
+      "url" : "https://www.gnu.org/licenses/gpl-3.0.html"
     },
   },
 
-  "defaultLicense" : "GPLv2",
+  "defaultLicense" : "GPLv3",
 
   # libraries that we depend on
   # N.B. The first four with a "path" attribute must be located
@@ -44,13 +44,6 @@ suite = {
         "path" : "libdownloads/R-3.4.0.tar.gz",
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.4.0.tar.gz"],
         "sha1" : "054c1d099006354c89b195df6783b933846ced60",
-        "resource" : "true"
-    },
-
-    "GNU_ICONV" : {
-        "path" : "libdownloads/libiconv-1.14.tar.gz",
-        "urls" : ["http://ftp.gnu.org/pub/gnu/libiconv/libiconv-1.14.tar.gz"],
-        "sha1" : "be7d67e50d72ff067b2c0291311bc283add36965",
         "resource" : "true"
     },
 
@@ -279,7 +272,6 @@ suite = {
 #      "class" : "FastRNativeProject",
       "dependencies" : [
         "GNUR",
-        "GNU_ICONV",
         "truffle:TRUFFLE_NFI_NATIVE",
       ],
       "native" : True,
@@ -364,7 +356,6 @@ suite = {
         "truffle:JLINE",
         "ANTLR-3.5",
         "GNUR",
-        "GNU_ICONV",
         "XZ-1.6",
       ],
       "distDependencies" : [
