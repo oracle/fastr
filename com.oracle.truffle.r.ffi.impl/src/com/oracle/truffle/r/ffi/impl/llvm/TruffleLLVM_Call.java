@@ -31,7 +31,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_CallFactory.ToNativeNodeGen;
@@ -54,7 +53,6 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
-@SuppressWarnings("deprecation")
 final class TruffleLLVM_Call implements CallRFFI {
 
     TruffleLLVM_Call() {
@@ -95,14 +93,14 @@ final class TruffleLLVM_Call implements CallRFFI {
                 callbacksArray[Callbacks.values().length] = new BytesToNativeCharArrayCall(upCallsRFFIImpl);
                 callbacksArray[Callbacks.values().length + 1] = new CharSXPToNativeArrayCall(upCallsRFFIImpl);
 
-                callbacks = (TruffleObject) JavaInterop.asTruffleValue(callbacksArray);
+                callbacks = (TruffleObject) context.getEnv().asGuestValue(callbacksArray);
 
                 Node executeNode = Message.createExecute(0).createNode();
                 SymbolHandle symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + "Rinternals_getCallbacksAddress"));
 
                 callbacksAddress = (TruffleObject) ForeignAccess.sendExecute(executeNode, symbolHandle.asTruffleObject());
                 // Initialize the callbacks global variable
-                ForeignAccess.sendWrite(Message.WRITE.createNode(), callbacksAddress, 0, JavaInterop.asTruffleValue(new TruffleObject[0]));
+                ForeignAccess.sendWrite(Message.WRITE.createNode(), callbacksAddress, 0, context.getEnv().asGuestValue(new TruffleObject[0]));
 
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);

@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -38,7 +39,6 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@SuppressWarnings("deprecation")
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Names extends RBuiltinNode.Arg1 {
@@ -97,13 +96,15 @@ public abstract class Names extends RBuiltinNode.Arg1 {
                 return RNull.instance;
             }
             String[] staticNames = new String[0];
-            if (JavaInterop.isJavaObject(obj) && !JavaInterop.isJavaObject(Class.class, obj)) {
+            RContext context = RContext.getInstance();
+            TruffleLanguage.Env env = context.getEnv();
+            if (env.isHostObject(obj) && !(env.asHostObject(obj) instanceof Class)) {
                 if (executeNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     executeNode = insert(Message.createExecute(0).createNode());
                 }
                 try {
-                    TruffleObject clazzStatic = RContext.getInstance().toJavaStatic(obj, readNode, executeNode);
+                    TruffleObject clazzStatic = context.toJavaStatic(obj, readNode, executeNode);
                     staticNames = readKeys(keysNode, clazzStatic, getSizeNode, readNode);
                 } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
                 }

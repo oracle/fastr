@@ -63,11 +63,11 @@ import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
@@ -123,7 +123,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * {@code com.oracle.truffle.r.runime.conn}.
  *
  */
-@SuppressWarnings("deprecation")
 public abstract class ConnectionFunctions {
     @RBuiltin(name = "stdin", kind = INTERNAL, parameterNames = {}, behavior = READS_STATE)
     public abstract static class Stdin extends RBuiltinNode.Arg0 {
@@ -1385,9 +1384,13 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector channelConnection(TruffleObject channel, String open, String encoding) {
             try {
-                if (JavaInterop.isJavaObject(ByteChannel.class, channel)) {
-                    ByteChannel ch = JavaInterop.asJavaObject(ByteChannel.class, channel);
-                    return new ChannelRConnection("", ch, open, encoding).asVector();
+                TruffleLanguage.Env env = RContext.getInstance().getEnv();
+                if (env.isHostObject(channel)) {
+                    Object obj = env.asHostObject(channel);
+                    if (obj instanceof ByteChannel) {
+                        ByteChannel ch = (ByteChannel) obj;
+                        return new ChannelRConnection("", ch, open, encoding).asVector();
+                    }
                 }
                 throw error(RError.Message.INVALID_CHANNEL_OBJECT);
             } catch (IOException ex) {

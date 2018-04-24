@@ -64,7 +64,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
@@ -122,7 +121,6 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  *
  * Contexts can be destroyed
  */
-@SuppressWarnings("deprecation")
 public final class RContext {
 
     public static ChildContextInfo childInfo;
@@ -838,10 +836,10 @@ public final class RContext {
 
     public TruffleObject toJavaStatic(TruffleObject obj, Node readNode, Node executeNode)
                     throws UnknownIdentifierException, UnsupportedMessageException, UnsupportedTypeException, ArityException {
-        assert JavaInterop.isJavaObject(obj) && !JavaInterop.isJavaObject(Class.class, obj);
-
         Env e = getEnv();
-        if (e != null && e.isHostLookupAllowed()) {
+        assert e.isHostLookupAllowed() && e.isHostObject(obj) && !(e.asHostObject(obj) instanceof Class);
+
+        if (e.isHostLookupAllowed()) {
             TruffleObject gcf = (TruffleObject) ForeignAccess.sendRead(readNode, obj, "getClass");
             TruffleObject clazz = (TruffleObject) ForeignAccess.sendExecute(executeNode, gcf);
             TruffleObject cnf = (TruffleObject) ForeignAccess.sendRead(readNode, clazz, "getName");

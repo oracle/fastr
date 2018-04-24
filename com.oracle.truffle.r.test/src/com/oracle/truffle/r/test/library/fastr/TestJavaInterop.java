@@ -2374,6 +2374,18 @@ public class TestJavaInterop extends TestBase {
         public List<?> stringList3 = Arrays.asList(new List<?>[]{stringList2, stringList2});
 
         public List<?> mixedIntegerList = Arrays.asList(new Object[]{new Integer[]{1, 2, 3}, Arrays.asList(new int[]{4, 5, 6}), new int[]{7, 8, 9}, 10, 11, 12});
+
+        public int[] getIntArray() {
+            return integerArray;
+        }
+
+        public Integer[] getIntegerArray() {
+            return integerObjectArray;
+        }
+
+        public String[] getStringArray() {
+            return stringArray;
+        }
     }
 
     public static class TestMultiDimArraysClass {

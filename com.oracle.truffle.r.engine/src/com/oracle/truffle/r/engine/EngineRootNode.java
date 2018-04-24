@@ -130,7 +130,6 @@ class EngineRootNode extends RootNode {
         @ExplodeLoop
         Object execute(Object actualFrame) {
             Object lastValue = RNull.instance;
-            int lastStatus = 0;
             for (int i = 0; i < calls.length; i++) {
                 materializeCall(i);
                 lastValue = calls[i].call(new Object[]{actualFrame});

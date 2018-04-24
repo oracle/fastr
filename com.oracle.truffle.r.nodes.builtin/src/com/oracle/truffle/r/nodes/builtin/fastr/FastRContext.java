@@ -38,7 +38,6 @@ import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -65,7 +64,6 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 /**
  * The FastR builtins that allow multiple "virtual" R sessions potentially executing in parallel.
  */
-@SuppressWarnings("deprecation")
 public class FastRContext {
 
     private static final class CastsHelper {
@@ -93,7 +91,8 @@ public class FastRContext {
         @Specialization
         @TruffleBoundary
         protected TruffleObject get() {
-            return JavaInterop.asTruffleObject(RContext.getInstance());
+            RContext context = RContext.getInstance();
+            return (TruffleObject) context.getEnv().asGuestValue(context);
         }
     }
 

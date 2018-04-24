@@ -30,7 +30,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -61,7 +60,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
-@SuppressWarnings("deprecation")
 @ImportStatic({Message.class, RRuntime.class})
 @RBuiltin(name = "unlist", kind = INTERNAL, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
 public abstract class Unlist extends RBuiltinNode.Arg3 {
@@ -186,8 +184,9 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
             try {
                 int size = (int) ForeignAccess.sendGetSize(getSize, obj);
 
-                if (JavaInterop.isJavaObject(obj)) {
-                    Object o = JavaInterop.asJavaObject(Object.class, obj);
+                RContext context = RContext.getInstance();
+                if (context.getEnv().isHostObject(obj)) {
+                    Object o = context.getEnv().asHostObject(obj);
                     Class<?> ct = o.getClass().getComponentType();
                     // check array component type, if not array of:
                     // arrays, iterables or Objects then no need to recurse
