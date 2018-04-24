@@ -268,7 +268,7 @@
     externalClassName <- NULL
     o <- NULL
     if(inherits(obj, "externalptr")) {
-        o <- .toJ(obj)
+        o <- .extPointerToJ(obj)
         externalClassName <- attr(obj, "external.classname", exact=TRUE)
     } else if(is.character(obj) && length(obj) == 1) {
         clnam <- obj
@@ -366,7 +366,7 @@
     clnam <- NULL
     o <- NULL
     if(inherits(obj, "externalptr")) {
-        o <- .toJ(obj)
+        o <- .extPointerToJ(obj)
     } else if(is.character(obj) && length(obj) == 1) {
         clnam <- obj
     } else {
@@ -625,6 +625,25 @@
 .toJ <- function(x) {
     x # force args
 
+    if(is.numeric(x) || is.character(x) || is.logical(x) || is.raw(x)) {
+        if(length(x) > 1) {
+            return(.vectorToJArray(x))
+        } else {
+            if (inherits(x, "jbyte")) {
+                x <- .fastr.interop.asByte(x)
+            } else if (inherits(x, "jchar")) {
+                x <- .fastr.interop.asChar(x)
+            } else if (inherits(x, "jfloat")) {
+                x <- .fastr.interop.asFloat(x)
+            } else if (inherits(x, "jlong")) {
+                x <- .fastr.interop.asLong(x)
+            } else if (inherits(x, "jshort")) {
+                x <- .fastr.interop.asShort(x)
+            }
+            return(x)
+        }
+    }
+
     if (is(x, "jobjRef")) {
         x <- x@jobj
     } else if (is(x, "jclassName")) {
@@ -632,7 +651,7 @@
     }
     if(inherits(x, "externalptr")) {
         if(.jidenticalRef(x, .jzeroRef)) {
-            x <- NULL
+            return(NULL)
         } else {
             xo <- attr(x, "external.object", exact=TRUE)
             if (is.null(xo)) {
@@ -645,21 +664,22 @@
             }
         }
     }
-    if(length(x) > 1) {
-        .vectorToJArray(x)
+    x
+}
+
+.extPointerToJ <- function(x) {
+    if(.jidenticalRef(x, .jzeroRef)) {
+        return(NULL)
     } else {
-        if (inherits(x, "jbyte")) {
-            x <- .fastr.interop.asByte(x)    
-        } else if (inherits(x, "jchar")) {
-            x <- .fastr.interop.asChar(x)
-        } else if (inherits(x, "jfloat")) {
-            x <- .fastr.interop.asFloat(x)
-        } else if (inherits(x, "jlong")) {
-            x <- .fastr.interop.asLong(x)
-        } else if (inherits(x, "jshort")) {
-            x <- .fastr.interop.asShort(x)
+        xo <- attr(x, "external.object", exact=TRUE)
+        if (is.null(xo)) {
+            stop(paste0("missing 'external' attribute on: ", x))
         }
-        x
+        if (is.polyglot.value(xo)) {
+            return(xo)
+        } else {                
+            return(.asTruffleObject(xo, attr(x, "external.classname", exact=TRUE)))
+        }
     }
 }
 
