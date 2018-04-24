@@ -113,7 +113,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
         } else if (obj instanceof REmpty) {
             return REmptyMRForeign.ACCESS;
         } else if (obj instanceof RAbstractAtomicVector) {
-            return ForeignAccess.create(RAbstractAtomicVector.class, new RAbstractVectorAccessFactory());
+            return ForeignAccess.create(new RAbstractVectorAccessFactory(), new RAbstractVectorAccessFactory.Check());
         } else {
             ForeignAccess access = FFI_RForeignAccessFactoryImpl.getForeignAccess(obj);
             if (access != null) {
