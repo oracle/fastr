@@ -1,13 +1,23 @@
-/*
- * This material is distributed under the GNU General Public License
- * Version 2. You may review the terms of this license at
- * http://www.gnu.org/licenses/gpl-2.0.html
- *
- * Copyright (c) 2009-2010, Simon Urbanek and Romain Francois
- * Copyright (c) 2018, Oracle and/or its affiliates
- *
- * All rights reserved.
- */
+// RJavaTools.java: rJava - low level R to java interface
+//
+// :tabSize=2:indentSize=2:noTabs=false:folding=explicit:collapseFolds=1:
+//
+// Copyright (C) 2009 - 2010	Simon Urbanek and Romain Francois
+//
+// This file is part of rJava.
+//
+// rJava is free software: you can redistribute it and/or modify it
+// under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 2 of the License, or
+// (at your option) any later version.
+//
+// rJava is distributed in the hope that it will be useful, but
+// WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with rJava.  If not, see <http://www.gnu.org/licenses/>.
 
 import java.lang.reflect.Array ; 
 import java.util.Map; 

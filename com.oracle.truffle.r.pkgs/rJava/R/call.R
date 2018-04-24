@@ -1,14 +1,3 @@
-##
- # This material is distributed under the GNU General Public License
- # Version 2. You may review the terms of this license at
- # http://www.gnu.org/licenses/gpl-2.0.html
- #
- # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
- # Copyright (c) 2018, Oracle and/or its affiliates
- #
- # All rights reserved.
-##
-
 ## This file is part of the rJava package - low-level R/Java interface
 ## (C)2006 Simon Urbanek <simon.urbanek@r-project.org>
 ## For license terms see DESCRIPTION and/or LICENSE
@@ -16,12 +5,12 @@
 ## $Id$
 
 # create a new object
-.jnew <- function(class, ..., check=TRUE, silent=!check, class.loader=NULL) {
+.jnew <- function(class, ..., check=TRUE, silent=!check) {
   class <- gsub("\\.", "/", as.character(class)) # allow non-JNI specifiation
   # TODO: should this do "S" > "java/lang/String", ... like .jcall
   
   if (check) .jcheck(silent=TRUE)
-  o<-.External(RcreateObject, class, ..., silent=silent, class.loader=class.loader)
+  o<-.External(RcreateObject, class, ..., silent=silent)
   if (check) .jcheck(silent=silent)
   if (is.null(o)) {
   	  if (!silent) {
@@ -374,7 +363,11 @@ is.jnull <- function(x) {
   else
     try(a <- .jcall("java/lang/Class","Ljava/lang/Class;","forName",cl,check=FALSE))
   # this is really .jcheck but we don't want it to appear on the call stack
-  .Call(RJavaCheckExceptions, silent)
+  
+  # FASTR TODO seems the fastr .C impl meant to invoke R replacements for c functions 
+  # has a problem to accept additional .C args
+  #.C(RJavaCheckExceptions, silent, FALSE, PACKAGE = "rJava")
+  .C(RJavaCheckExceptions, silent)
   if (!silent && is.jnull(a)) stop("class not found")
   a
 }

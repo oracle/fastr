@@ -20,7 +20,7 @@
     class path}
 }
 \value{
-  \code{.jclassPath} returns a character vector listing the class path sequence.
+  \code{.jclassPath} returns a charactger vector listing the class path sequence.
 }
 %\details{
 % 
