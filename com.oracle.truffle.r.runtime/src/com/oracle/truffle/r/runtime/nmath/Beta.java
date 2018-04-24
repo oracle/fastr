@@ -18,9 +18,7 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.ML_POSINF;
 
 public class Beta {
 
-    private static final double xmin = GammaFunctions.gfn_xmin;
     private static final double xmax = GammaFunctions.gfn_xmax;
-    private static final double lnsml = -708.39641853226412;
 
     public static double beta(double a, double b) {
         if (Double.isNaN(a) || Double.isNaN(b)) {

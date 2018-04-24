@@ -81,6 +81,7 @@ public final class RMath {
 
     private static final int MAX_DIGITS = 22;
 
+    @SuppressWarnings("all")
     public static double fprec(double x, double digits) {
         if (Double.isNaN(x) || Double.isNaN(digits)) {
             return x + digits;
@@ -144,7 +145,7 @@ public final class RMath {
     }
 
     // GNUR from fround.c
-
+    @SuppressWarnings("all")
     public static double rint(double x) {
         double tmp;
         double sgn = 1.0;

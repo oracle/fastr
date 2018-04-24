@@ -25,8 +25,6 @@ package com.oracle.truffle.r.runtime.conn;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.lang.ref.Reference;
-import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
@@ -136,12 +134,12 @@ public class ConnectionSupport {
         }
 
         private int setConnection(BaseRConnection con) {
-            int i = findEmptySlot(con);
+            int i = findEmptySlot();
             if (i == -1) {
                 // TODO: rewrite to ReferenceQueue
                 // We have no way of reclaiming the connection slots than GC...
                 System.gc();
-                i = findEmptySlot(con);
+                i = findEmptySlot();
             }
             if (i >= 0) {
                 return setConnection(i, con);
@@ -150,7 +148,7 @@ public class ConnectionSupport {
             }
         }
 
-        private int findEmptySlot(BaseRConnection con) {
+        private int findEmptySlot() {
             for (int i = 3; i < MAX_CONNECTIONS; i++) {
                 if (allConnections.get(i) == null || allConnections.get(i).get() == null) {
                     if (i > hwm) {
