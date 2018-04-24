@@ -31,6 +31,8 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
 import org.graalvm.polyglot.Context;
@@ -101,7 +103,7 @@ public class RCommand extends RAbstractLauncher {
                 srcFile = new File(fileOption);
             }
 
-            return readEvalPrint(context, consoleHandler, srcFile);
+            return readEvalPrint(context, consoleHandler, srcFile, true);
         } else {
             return 0;
         }
@@ -209,8 +211,8 @@ public class RCommand extends RAbstractLauncher {
     private static final Source GET_PROMPT = Source.newBuilder("R", ".Internal(getOption('prompt'))", "<prompt>").internal(true).buildLiteral();
     private static final Source GET_CONTINUE_PROMPT = Source.newBuilder("R", ".Internal(getOption('continue'))", "<continue-prompt>").internal(true).buildLiteral();
 
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler) {
-        return readEvalPrint(context, consoleHandler, null);
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, boolean useExecutor) {
+        return readEvalPrint(context, consoleHandler, null, useExecutor);
     }
 
     /**
@@ -223,7 +225,11 @@ public class RCommand extends RAbstractLauncher {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile) {
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor) {
+        ExecutorService executor = null;
+        if (useExecutor) {
+            executor = context.eval(Source.newBuilder("R", ".fastr.getExecutor()", "<get-executor>").internal(true).buildLiteral()).asHostObject();
+        }
         int lastStatus = 0;
         try {
             while (true) { // processing inputs
@@ -253,7 +259,17 @@ public class RCommand extends RAbstractLauncher {
                             } else {
                                 src = Source.newBuilder("R", sb.toString(), "<REPL>").interactive(true).buildLiteral();
                             }
-                            context.eval(src);
+                            if (useExecutor) {
+                                try {
+                                    executor.submit(() -> context.eval(src)).get();
+                                } catch (ExecutionException ex) {
+                                    throw ex.getCause();
+                                }
+                            } else {
+                                context.eval(src);
+                            }
+                        } catch (InterruptedException ex) {
+                            throw fatal("Unexpected interrup error");
                         } catch (PolyglotException e) {
                             if (continuePrompt == null) {
                                 continuePrompt = doEcho ? getContinuePrompt(context) : null;
@@ -300,6 +316,9 @@ public class RCommand extends RAbstractLauncher {
             }
         } catch (ExitException e) {
             return e.code;
+        } catch (Throwable ex) {
+            System.err.println("Unexpected error in REPL");
+            return 1;
         }
     }
 

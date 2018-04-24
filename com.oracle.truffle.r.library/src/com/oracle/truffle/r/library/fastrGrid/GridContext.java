@@ -62,12 +62,15 @@ public final class GridContext {
         devices.add(new DeviceAndState(null, null));
     }
 
-    public static GridContext getContext() {
-        RContext rCtx = RContext.getInstance();
+    public static GridContext getContext(RContext rCtx) {
         if (rCtx.gridContext == null) {
             rCtx.gridContext = new GridContext();
         }
         return (GridContext) rCtx.gridContext;
+    }
+
+    public static GridContext getContext() {
+        return getContext(RContext.getInstance());
     }
 
     @TruffleBoundary

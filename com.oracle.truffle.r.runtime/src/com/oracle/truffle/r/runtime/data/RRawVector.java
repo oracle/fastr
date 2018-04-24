@@ -155,10 +155,12 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     private byte[] copyResizedData(int size, boolean fillNA) {
-        byte[] newData = Arrays.copyOf(getReadonlyData(), size);
+        byte[] localData = getReadonlyData();
+        byte[] newData = Arrays.copyOf(localData, size);
         if (!fillNA) {
+            assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
             // NA is 00 for raw
-            for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
+            for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
                 newData[i] = data[j];
             }
         }

@@ -73,7 +73,7 @@ public final class RscriptCommand extends RAbstractLauncher {
             if (fileOption != null) {
                 return executeFile(fileOption);
             } else {
-                return RCommand.readEvalPrint(context, consoleHandler, null);
+                return RCommand.readEvalPrint(context, consoleHandler, null, true);
             }
         } else {
             return 0;

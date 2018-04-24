@@ -181,6 +181,7 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
                     newData[i] = RRuntime.INT_NA;
                 }
             } else {
+                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
                 for (int i = oldDataLength, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldDataLength)) {
                     newData[i] = oldData[j];
                 }
@@ -190,8 +191,9 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     private int[] copyResizedData(int size, boolean fillNA) {
-        int[] newData = Arrays.copyOf(getReadonlyData(), size);
-        return resizeData(newData, this.data, this.getLength(), fillNA);
+        int[] localData = getReadonlyData();
+        int[] newData = Arrays.copyOf(localData, size);
+        return resizeData(newData, localData, localData.length, fillNA);
     }
 
     @Override

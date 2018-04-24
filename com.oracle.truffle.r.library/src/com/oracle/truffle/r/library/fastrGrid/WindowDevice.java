@@ -42,8 +42,9 @@ public final class WindowDevice {
 
     public static GridDevice createWindowDevice(int width, int height) {
         JFrameDevice frameDevice = new JFrameDevice(width, height);
-        if (RContext.getInstance().hasExecutor()) {
-            frameDevice.setResizeListener(WindowDevice::redrawAll);
+        RContext ctx = RContext.getInstance();
+        if (ctx.hasExecutor()) {
+            frameDevice.setResizeListener(() -> redrawAll(ctx));
         } else {
             noSchedulingSupportWarning();
         }
@@ -54,12 +55,13 @@ public final class WindowDevice {
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "AWT based grid devices are not supported.");
     }
 
-    private static void redrawAll() {
-        RContext ctx = RContext.getInstance();
+    private static void redrawAll(RContext ctx) {
         if (ctx.hasExecutor()) {
             // to be robust we re-check the executor availability
             ctx.schedule(() -> {
-                GridContext.getContext().evalInternalRFunction("redrawAll");
+                Object prev = ctx.getEnv().getContext().enter();
+                GridContext.getContext(ctx).evalInternalRFunction("redrawAll");
+                ctx.getEnv().getContext().leave(prev);
             });
         }
     }

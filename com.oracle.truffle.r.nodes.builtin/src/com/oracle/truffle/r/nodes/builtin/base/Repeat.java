@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -99,7 +100,7 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Repeat.class);
-        casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, typeName());
+        casts.arg("x").allowNull().mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, typeName());
 
         // prepare cast pipeline nodes for vararg matching
         PB_TIMES = new PipelineBuilder("times");
@@ -135,6 +136,11 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
     @Override
     public Object[] getDefaultParameterValues() {
         return new Object[]{RMissing.instance, RArgsValuesAndNames.EMPTY};
+    }
+
+    @Specialization
+    protected RNull repeatNull(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") RArgsValuesAndNames args) {
+        return RNull.instance;
     }
 
     @Specialization
@@ -238,7 +244,7 @@ public abstract class Repeat extends RBuiltinNode.Arg2 {
          * Extend or truncate the vector to a specified length.
          */
         private static RVector<?> handleLengthOut(RAbstractVector x, int lengthOut) {
-            return x.copyResized(lengthOut, false);
+            return x.copyResized(lengthOut, x.getLength() == 0);
         }
 
         /**

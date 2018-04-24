@@ -127,6 +127,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfoNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRegisterFunctions;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRegisterFunctionsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRGetExecutor;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSlotAssign;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSlotAssignNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSourceInfo;
@@ -436,6 +437,7 @@ public class BasePackage extends RBuiltinPackage {
         add(WithVisible.class, WithVisibleNodeGen::create, WithVisible::createSpecial);
         add(Exists.class, ExistsNodeGen::create);
         add(Expression.class, ExpressionNodeGen::create);
+        add(FastRGetExecutor.class, FastRGetExecutor::new);
         add(FastRContext.R.class, FastRContextFactory.RNodeGen::create);
         add(FastRContext.Rscript.class, FastRContextFactory.RscriptNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
