@@ -65,7 +65,7 @@ $(info GNUR_RECOMMENDED_TARS=$(GNUR_RECOMMENDED_TARS))
 ifneq ($(FASTR_RFFI),managed)
 install.recommended:
 	for pkgtar in $(GNUR_RECOMMENDED_TARS); do \
-		$(FASTR_R_HOME)/bin/R CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
+		$(FASTR_R_HOME)/bin/R --polyglot CMD INSTALL --library=$(FASTR_R_HOME)/library $$pkgtar; \
 	done
 ifeq ($(OS_NAME),Darwin)
 	for pkgname in $(GNUR_RECOMMENDED_PKGNAMES); do \
