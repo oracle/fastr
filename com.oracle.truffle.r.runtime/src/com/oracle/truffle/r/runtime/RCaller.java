@@ -51,17 +51,20 @@ public final class RCaller {
      * one, the reason are promises, which may be evaluated somewhere deep down the call stack, but
      * their parent call frame from R prespective could be much higher up the actual execution call
      * stack.
+     *
+     * Note: this is depth of the frame where this {@link RCaller} is stored, not the depth of the
+     * parent.
      */
     private final int depth;
     private boolean visibility;
     private final RCaller parent;
     /**
      * The payload can be an RSyntaxNode, a {@link Supplier}, or an {@link RCaller} (which marks
-     * promise evaluation frames). Payload represents the syntax (AST) of how the function was
-     * invoked. If the function was invoked via regular call node, then the syntax can be that call
-     * node (RSyntaxNode case), if the function was invoked by other means and we do not have the
-     * actual syntax for the invocation, we only provide it lazily via Supplier, so that we do not
-     * have to always construct the AST nodes.
+     * promise evaluation frames, see {@link #isPromise()}). Payload represents the syntax (AST) of
+     * how the function was invoked. If the function was invoked via regular call node, then the
+     * syntax can be that call node (RSyntaxNode case), if the function was invoked by other means
+     * and we do not have the actual syntax for the invocation, we only provide it lazily via
+     * Supplier, so that we do not have to always construct the AST nodes.
      */
     private final Object payload;
 
@@ -102,6 +105,29 @@ public final class RCaller {
         return payload != null;
     }
 
+    /**
+     * Promise evaluation frame is artificial frame (does not exist on the R level) that is created
+     * to evaluate a promise in its context.
+     *
+     * Terminology: actual evaluation frame is a frame of the function that created the promise and
+     * the frame in whose context the promise code should be evaluated.
+     *
+     * The artificial promise evaluation frame, marked by the {@link #isPromise()} flag, wraps the
+     * actual evaluation frame in a way that locals are delegated to the actual evaluation frame,
+     * but arguments array is altered. We cannot use the actual evaluation frame as is, because when
+     * there is a function call inside the promise code, the new frame created for the invoked
+     * function will get its {@link #parent} set to {@link RCaller} and {@code depth+1} of its
+     * caller frame. By using wrapped frame for which we set different {@link #depth} than the
+     * actual evaluation frame, we can set the {@link #depth} to the correct value, which is the
+     * {@link #depth} of the code that initiated the promise evaluation.
+     *
+     * Moreover, if the promise code invokes a function, this function should be tricked into
+     * thinking that its caller is the actual evaluation frame. Since this {@link RCaller} will be
+     * used as {@link #parent} inside the frame created for the invoked function, we use
+     * {@link #isPromise()} to find out this is artificial {@link RCaller} and we should follow the
+     * {@link #getParent()} chain until we reach the actual evaluation frame and take the real
+     * parent from there.
+     */
     public boolean isPromise() {
         return payload instanceof RCaller;
     }
