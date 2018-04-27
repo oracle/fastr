@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.SuppressFBWarnings;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -57,6 +58,11 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  * </pre>
  */
 public abstract class RVector<ArrayT> extends RSharingAttributeStorage implements RAbstractVector, RFFIAccess {
+
+    /**
+     * Dummy volatile field that can be used to create memory barrier.
+     */
+    protected static volatile int fence;
 
     protected boolean complete; // "complete" means: does not contain NAs
 
@@ -782,5 +788,16 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
             }
         }
         return str.append(']').toString();
+    }
+
+    protected boolean canBeValidStore(Object store, Object data) {
+        RContext ctx;
+        try {
+            ctx = RContext.getInstance();
+        } catch (IllegalStateException ex) {
+            return true; // no context, we cannot check anything
+        }
+        // We can be only sure if there is only one thread
+        return !ctx.isSingle() || store == data;
     }
 }
