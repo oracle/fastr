@@ -27,6 +27,12 @@ public class TestBuiltin_sysparents extends TestBase {
         assertEval("{ f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=sys.parents()) g(z) ; h() }");
 
         assertEval("{ f4 <- function() sys.parents(); f3 <- function(y) y; f2 <- function(x) x; f1 <- function() f2(f3(f4())); f1(); }");
+
+        // FIXME OptForcedEagerPromiseNode causes the promise to be evaluated in different context
+        // than it should be, yielding different results when introspecting the stack
+        assertEval(Ignored.ImplementationError, "{ u <- function() sys.parents(); g <- function(y) y; h <- function(z=u()) g(z); h(); }");
+        assertEval(Ignored.ImplementationError, "{ u <- function() sys.parents(); g <- function(y) y; h <- function(z) g(z); h(u()); }");
+
         assertEval(Ignored.ImplementationError, "{ u <- function() sys.parents() ; f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
     }
 
