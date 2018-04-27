@@ -88,7 +88,7 @@ values prior to the build, e.g.:
     export PKG_INCLUDE_FLAGS_OVERRIDE=-I/opt/local/include
     export PKG_LDFLAGS_OVERRIDE=-L/opt/local/lib
 
- Note that if more than once location must be specified, the values must be quoted, e.g., as in `export PKG_LDFLAGS_OVERRIDE="\"-Lpath1 -Lpath2\""`.
+ Note that if more than once location must be specified, the values must be quoted, e.g., as in `export PKG_LDFLAGS_OVERRIDE="-Lpath1 -Lpath2"`.
 
  The environment variable `JAVA_HOME` must be set to the location of the jvmci-enabled Java JDK.
 
