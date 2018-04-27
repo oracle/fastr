@@ -67,7 +67,7 @@ endif
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
 # check if we captured libpcre/libz, rpath those in libR
-	mx rupdatelib $(FASTR_LIB_DIR)
+	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)
 else
 	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
 ifeq ($(FASTR_RFFI),llvm)

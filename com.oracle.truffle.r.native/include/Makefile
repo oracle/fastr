@@ -47,7 +47,7 @@ all: linked
 linked:
 	mkdir -p R_ext
 	$(foreach file,$(R_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/$(file) $(file);)
-	mx edinclude $(GNUR_HOME)/include
+	mx -p $(FASTR_R_HOME) edinclude $(GNUR_HOME)/include
 	$(foreach file,$(R_EXT_HEADERS_TO_LINK),ln -sf $(GNUR_HOME)/include/R_ext/$(file) R_ext/$(file);)
 #	cp $(R_EXT_HEADERS_LOCAL) R_ext
 	touch linked
