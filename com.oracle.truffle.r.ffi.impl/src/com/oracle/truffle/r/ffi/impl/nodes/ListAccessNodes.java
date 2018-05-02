@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -79,8 +81,9 @@ public final class ListAccessNodes {
         }
 
         @Fallback
+        @TruffleBoundary
         protected Object car(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CAR only works on pair lists, language objects, argument lists, and symbols");
+            throw RInternalError.unimplemented("CAR only works on pair lists, language objects, and argument lists, type given: " + Utils.getTypeName(obj));
         }
 
         public static CARNode create() {
@@ -128,8 +131,9 @@ public final class ListAccessNodes {
         }
 
         @Fallback
+        @TruffleBoundary
         protected Object cdr(@SuppressWarnings("unused") Object obj) {
-            throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists");
+            throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists, type given: " + Utils.getTypeName(obj));
         }
 
         public static CDRNode create() {
@@ -223,8 +227,9 @@ public final class ListAccessNodes {
         }
 
         @Fallback
+        @TruffleBoundary
         protected Object car(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
-            throw RInternalError.unimplemented("SETCAR only works on pair lists or language objects");
+            throw RInternalError.unimplemented("SETCAR only works on pair lists or language objects, types given: " + Utils.getTypeName(x) + ',' + Utils.getTypeName(y));
         }
     }
 

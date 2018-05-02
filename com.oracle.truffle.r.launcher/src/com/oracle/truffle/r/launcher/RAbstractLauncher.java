@@ -106,6 +106,14 @@ public abstract class RAbstractLauncher extends AbstractLanguageLauncher impleme
     }
 
     @Override
+    protected String[] getDefaultLanguages() {
+        if ("llvm".equals(System.getenv("FASTR_RFFI"))) {
+            return new String[]{getLanguageId(), "llvm"};
+        }
+        return super.getDefaultLanguages();
+    }
+
+    @Override
     public void close() {
         if (context != null) {
             context.close();

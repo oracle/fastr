@@ -68,6 +68,15 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
     @Override
     public Object execute(final VirtualFrame frame) {
         Object value;
+        // TODO: The evaluation is too eager in some corner cases. There are ignored tests for this.
+        // This gets executed on the caller side, although it should be executed on the callee
+        // side. There can be differences in how the call stack looks like and built-in functions
+        // doing callstack introspection may give incorrect results. Moreover, functions with side
+        // effects must be invoked in the correct order. This is why we should not simply
+        // recursively evaluate the next promise unless it is again a simple expression. Moreover,
+        // when reading variables via lookups, we should create assumptions for them to re-evaluate
+        // the promise if the variable's value changes.
+
         // need to unwrap as re-wrapping happens when the value is retrieved (otherwise ref count
         // update happens twice)
         if (wrapIndex != ArgumentStatePush.INVALID_INDEX && expr instanceof WrapArgumentNode) {
