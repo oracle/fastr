@@ -909,20 +909,25 @@ def computeApiChecksum(includeDir):
     """
     m = hashlib.sha256()
     rootDir = includeDir
+    fileList = list()
     for root, _, files in os.walk(rootDir):
         mx.logvv("Visiting directory {0}".format(root))
         for f in files:
             fileName = join(root, f)
             if fileName.endswith('.h'):
-                try:
-                    mx.logvv("Including file {0}".format(fileName))
-                    with open(fileName) as f:
-                        m.update(f.read())
-                except IOError as e:
-                    # Ignore errors on broken symlinks
-                    if not os.path.islink(fileName) or os.path.exists(fileName):
-                        raise e
+                mx.logvv("Including file {0}".format(fileName))
+                fileList.append(fileName)
 
+    # sorting makes the checksum independent of the FS traversal order
+    fileList.sort()
+    for fileName in fileList:
+        try:
+            with open(fileName) as f:
+                m.update(f.read())
+        except IOError as e:
+            # Ignore errors on broken symlinks
+            if not os.path.islink(fileName) or os.path.exists(fileName):
+                raise e
 
     hxdigest = m.hexdigest()
     mx.logv("Computed API version checksum {0}".format(hxdigest))
