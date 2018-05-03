@@ -74,6 +74,8 @@ public enum FastROptions {
     // Miscellaneous
 
     IgnoreGraphicsCalls("Silently ignore unimplemented functions from graphics package", false),
+    AdditionalOptions("List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. " +
+                    "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true),
     StartupTiming("Records and prints various timestamps during initialization", false);
 
     private final String help;

@@ -18,8 +18,11 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
+import org.graalvm.nativeimage.ObjectHandle;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.launcher.RStartParams;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -179,6 +182,27 @@ public class ROptions {
         String cranMirror = REnvVars.getCRANMirror();
         if (cranMirror != null) {
             map.put("repos", cranMirror);
+        }
+
+        String additional = FastROptions.AdditionalOptions.getStringValue();
+        if (additional == null || additional.isEmpty()) {
+            return;
+        }
+
+        String[] namesValues = additional.trim().split(";");
+        for (int i = 0; i < namesValues.length; i++) {
+            String[] items = namesValues[i].trim().split(":");
+            if (items.length != 2) {
+                RError.warning(RError.NO_CALLER, Message.GENERIC, "Invalid value of AdditionalOptions option: " + namesValues[i]);
+                continue;
+            }
+            Object value = items[1].trim();
+            if (items[1].equals("T")) {
+                value = RRuntime.LOGICAL_TRUE;
+            } else if (items[1].equals("F")) {
+                value = RRuntime.LOGICAL_FALSE;
+            }
+            map.put(items[0], value);
         }
     }
 
