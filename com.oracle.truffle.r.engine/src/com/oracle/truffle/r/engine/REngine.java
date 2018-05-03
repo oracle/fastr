@@ -376,7 +376,7 @@ final class REngine implements Engine, Engine.Timings {
         String file = fullSource.getPath();
         ArrayList<RSyntaxNode> statements = new ArrayList<>(128);
         try {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(fullSource.getInputStream()))) {
+            try (BufferedReader br = new BufferedReader(fullSource.getReader())) {
                 int lineIndex = 1;
                 int startLine = lineIndex;
                 StringBuilder sb = new StringBuilder();
