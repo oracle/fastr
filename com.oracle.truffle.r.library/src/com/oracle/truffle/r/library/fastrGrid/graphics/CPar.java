@@ -24,21 +24,31 @@ package com.oracle.truffle.r.library.fastrGrid.graphics;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.library.fastrGrid.GPar;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.library.fastrGrid.GridState;
+import com.oracle.truffle.r.library.fastrGrid.LGridDirty;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.OpenDefaultDevice;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public final class CPar extends RExternalBuiltinNode {
     static {
@@ -46,15 +56,46 @@ public final class CPar extends RExternalBuiltinNode {
     }
 
     @Child private OpenDefaultDevice openDefaultDevice = new OpenDefaultDevice();
+    @Child private LGridDirty gridDirty = new LGridDirty();
+    @Child private ReadVariableNode readLibraryFun = ReadVariableNode.createFunctionLookup("library");
+    @Child private RExplicitCallNode callNode = RExplicitCallNode.create();
 
     @Override
-    public Object call(RArgsValuesAndNames args) {
+    public Object call(VirtualFrame frame, RArgsValuesAndNames args) {
         if (args.getSignature().getNonNullCount() > 0) {
             throw error(Message.GENERIC, "Using par for setting device parameters is not supported in FastR grid emulation mode.");
         }
+        initGridDevice(frame);
+        return call(args);
+    }
 
+    @Override
+    protected Object call(RArgsValuesAndNames args) {
         openDefaultDevice.execute();
         return getPar(args);
+    }
+
+    private void initGridDevice(VirtualFrame frame) {
+        RContext rCtx = RContext.getInstance();
+        GridState gridState = GridContext.getContext(rCtx).getGridState();
+        if (!gridState.isDeviceInitialized()) {
+            CompilerDirectives.transferToInterpreter();
+            gridDirty.call(getGridEnv(frame, rCtx).getFrame(), RArgsValuesAndNames.EMPTY);
+        }
+    }
+
+    private REnvironment getGridEnv(VirtualFrame frame, RContext rCtx) {
+        REnvironment gridEnv = REnvironment.getRegisteredNamespace(rCtx, "grid");
+        if (gridEnv != null) {
+            return gridEnv;
+        }
+        // evaluate "library(grid)"
+        RFunction libFun = (RFunction) readLibraryFun.execute(frame);
+        ArgumentsSignature libFunSig = ArgumentsSignature.get(null, "character.only");
+        callNode.call(frame, libFun, new RArgsValuesAndNames(new Object[]{"grid", RRuntime.LOGICAL_TRUE}, libFunSig));
+        gridEnv = REnvironment.getRegisteredNamespace(rCtx, "grid");
+        assert gridEnv != null : "grid should have been just loaded";
+        return gridEnv;
     }
 
     @TruffleBoundary
