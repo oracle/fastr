@@ -22,7 +22,6 @@
 #
 import mx
 import mx_sdk
-import mx_fastr
 import os, string, shutil
 from os.path import join, basename, isfile
 

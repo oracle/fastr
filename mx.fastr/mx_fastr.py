@@ -590,7 +590,7 @@ def mx_post_parse_cmd_line(opts):
         rec.buildDependencies += [mx.distribution('SULONG')]
 
 
-mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents
+mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
 
 mx_unittest.add_config_participant(_unittest_config_participant)
