@@ -130,7 +130,7 @@ def copylib(args):
                         return 0
 
     if os.environ.has_key('FASTR_RELEASE'):
-#        if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
+        # if args[0] == 'quadmath' and (mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris'):
         if mx.get_arch() == 'sparcv9' or mx.get_os() == 'solaris':
             return 0
         if os.environ.get('FASTR_RELEASE') == 'dev':

@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "9f0ae389ca39964e2328336ecde49982804b53f8",
+               "version" : "8ed0b0b53c7e722b0779c29d7e3532fcf27ab3ac",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -41,7 +41,7 @@ suite = {
   # properly handled by MX in all cases and causes integration problems.
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.4.0.tar.gz",
+        "path" : "libdownloads/R-3.4.0.tar.gz", # keep in sync with the GraalVM support distribution
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.4.0.tar.gz"],
         "sha1" : "054c1d099006354c89b195df6783b933846ced60",
         "resource" : "true"
@@ -234,6 +234,19 @@ suite = {
       "jacoco" : "include",
     },
 
+    "com.oracle.truffle.r.legacylauncher" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "sdk:GRAAL_SDK",
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "annotationProcessors" : [
+      ],
+      "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
+    },
+
     "com.oracle.truffle.r.ffi.impl" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
@@ -301,7 +314,7 @@ suite = {
       "sourceDirs" : ["src"],
       "buildDependencies" : ["com.oracle.truffle.r.native.recommended"],
       "class" : "FastRReleaseProject",
-      "output" : "com.oracle.truffle.r.release"
+      "output" : "com.oracle.truffle.r.release",
     },
 
     "com.oracle.truffle.r.native.recommended" : {
@@ -310,6 +323,7 @@ suite = {
         "com.oracle.truffle.r.engine",
         "com.oracle.truffle.r.ffi.impl"
       ],
+      "max_jobs" : "8",
       "native" : True,
       "workingSets" : "FastR",
       "buildDependencies" : ["FASTR"],
@@ -342,6 +356,14 @@ suite = {
       "description" : "internal support for generating FFI classes",
       "dependencies" : ["com.oracle.truffle.r.ffi.processor"],
       "maven" : "False",
+    },
+
+    "FASTR_LEGACY_LAUNCHER" : {
+      "description" : "legacy launcher for the GraalVM",
+      "dependencies" : ["com.oracle.truffle.r.legacylauncher"],
+      "distDependencies" : [
+        "sdk:GRAAL_SDK"
+      ],
     },
 
     "FASTR" : {
@@ -405,32 +427,6 @@ suite = {
       "maven" : False
     },
 
-    "FASTR_RELEASE<rffi>": {
-      "description" : "a binary release of FastR",
-      "dependencies" : ["com.oracle.truffle.r.release"],
-       "os_arch" : {
-         "linux" : {
-          "amd64" : {
-            "path" : "mxbuild/dists/linux/amd64/<rffi>/fastr-release.jar",
-          },
-          "sparcv9" : {
-            "path" : "mxbuild/dists/linux/sparcv9/<rffi>/fastr-release.jar",
-          },
-        },
-        "darwin" : {
-          "amd64" : {
-            "path" : "mxbuild/dists/darwin/amd64/<rffi>/fastr-release.jar",
-          },
-        },
-        "solaris" : {
-          "amd64" : {
-            "path" : "mxbuild/dists/solaris/amd64/<rffi>/fastr-release.jar",
-          },
-          "sparcv9" : {
-            "path" : "mxbuild/dists/solaris/sparcv9/<rffi>/fastr-release.jar",
-          },
-        },
-      },
-    },
+    # see mx_fastr_dists.mx_register_dynamic_suite_constituents for the definitions of some RFFI-dependent distributions
   },
 }

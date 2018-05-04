@@ -21,9 +21,12 @@
 # questions.
 #
 import mx
-import mx_fastr
+import mx_sdk
 import os, string, shutil
 from os.path import join, basename, isfile
+
+_fastr_suite = mx.suite('fastr')
+
 
 class FastRProjectAdapter(mx.ArchivableProject):
     def __init__(self, suite, name, deps, workingSets, theLicense, **args):
@@ -79,7 +82,7 @@ class ReleaseBuildTask(mx.NativeBuildTask):
             return
         # copy the release directories
         output_dir = self.subject.dir
-        fastr_dir = mx_fastr._fastr_suite.dir
+        fastr_dir = _fastr_suite.dir
         for d in ['bin', 'include', 'library', 'etc', 'share', 'doc']:
             target_dir = join(output_dir, d)
             if os.path.exists(target_dir):
@@ -195,14 +198,104 @@ class FastRArchiveParticipant:
             include_dir = join(release_project.dir, 'include')
             shutil.rmtree(include_dir)
 
-def mx_post_parse_cmd_line(opts):
-    if os.environ.has_key('FASTR_RFFI'):
-        val = os.environ['FASTR_RFFI']
-    else:
-        val = ""
-    mx.instantiateDistribution('FASTR_RELEASE<rffi>', dict(rffi=val))
 
-    for dist in mx_fastr._fastr_suite.dists:
+def mx_post_parse_cmd_line(opts):
+    for dist in _fastr_suite.dists:
         if isinstance(dist, mx.JARDistribution):
             dist.set_archiveparticipant(FastRArchiveParticipant(dist))
 
+
+def mx_register_dynamic_suite_constituents(register_project, register_distribution):
+    rffi = mx.get_env('FASTR_RFFI', '')
+    fastr_release_distribution = mx.JARDistribution(
+        suite=_fastr_suite,
+        name="FASTR_RELEASE" + rffi,
+        subDir=None,
+        path="mxbuild/dists/<os>/<arch>/{rffi}/fastr-release.jar".format(rffi=rffi),
+        sourcesPath=None,
+        deps=["com.oracle.truffle.r.release"],
+        mainClass=None,
+        excludedLibs=[],
+        distDependencies=[],
+        javaCompliance=None,
+        platformDependent=True,
+        theLicense=None
+    )
+    fastr_release_distribution.description = "a binary release of FastR"
+
+    fastr_graalvm_release = mx.NativeTARDistribution(
+        suite=_fastr_suite,
+        name="FASTR_GRAALVM_RELEASE" + rffi,
+        deps=["com.oracle.truffle.r.release"],
+        path=None,
+        excludedLibs=[],
+        platformDependent=True,
+        theLicense=None,
+        relpath=True,
+        output=None
+    )
+
+    register_distribution(fastr_release_distribution)
+    register_distribution(fastr_graalvm_release)
+
+    if mx.get_env('FASTR_RELEASE') == 'true':
+        fastr_graalvm_release_support = mx.LayoutTARDistribution(
+            suite=_fastr_suite,
+            name="FASTR_GRAALVM_SUPPORT" + rffi,
+            deps=[],
+            layout={
+                "./": [
+                    {
+                        "source_type": "extracted-dependency",
+                        "dependency": "FASTR_GRAALVM_RELEASE" + rffi,
+                        "path": "*",
+                        "exclude": [
+                            "COPYRIGHT",
+                            "LICENSE",
+                            "README.md",
+                            "bin/Rscript",
+                            "bin/fastr_jars",
+                            "bin/exec/R",
+                        ],
+                    },
+                    {
+                        "source_type": "extracted-dependency",
+                        "dependency": "FASTR_GRAALVM_RELEASE" + rffi,
+                        "path": "bin/fastr_jars/*",
+                        "exclude": [
+                            "bin/fastr_jars/fastr.jar",
+                            "bin/fastr_jars/truffle*",
+                            "bin/fastr_jars/graal-sdk*",
+                        ],
+                    },
+                    "dependency:fastr:GNUR",
+                    "file:mx.fastr/GraalCE_R_license_3rd_party_license.txt",
+                ],
+                "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE{rffi}/README.md".format(rffi=rffi),
+                "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
+                "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
+                "R-3.4.0.tar.gz" : "dependency:fastr:GNUR",
+                "legacy/": "dependency:fastr:FASTR_LEGACY_LAUNCHER",
+            },
+            path=None,
+            platformDependent=True,
+            theLicense=None
+        )
+        fastr_graalvm_release_support.description = "FastR support distribution for the GraalVM"
+        register_distribution(fastr_graalvm_release_support)
+
+
+mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
+    suite=_fastr_suite,
+    name='FastR',
+    short_name='R',
+    license_files=['GraalCE_R_license_3rd_party_license.txt'],
+    third_party_license_files=[],
+    truffle_jars=['fastr:FASTR'],
+    support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
+    provided_executables=[
+        'bin/Rscript',
+        'bin/R',
+    ],
+    include_in_polyglot=False,
+))

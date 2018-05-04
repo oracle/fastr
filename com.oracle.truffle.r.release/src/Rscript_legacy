@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+source="${BASH_SOURCE[0]}"
+while [ -h "$source" ] ; do
+  prev_source="$source"
+  source="$(readlink "$source")";
+  if [[ "$source" != /* ]]; then
+    # if the link was relative, it was relative to where it came from
+    dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
+    source="$dir/$source"
+  fi
+done
+BIN="$( cd -P "$( dirname "$source" )" && pwd )"
+# This script is deployed as jre/languages/R/bin/Rscript
+bin_location=jre/languages/R/bin
+slashes=${bin_location//[^\/]/}
+dir_count=${#slashes}
+JRE="$BIN"
+for i in $(seq 1 ${dir_count}); do
+  JRE="$( dirname "$JRE" )"
+done
+
+JAVA_ARGS=()
+PROGRAM_ARGS=()
+for opt in "${@:1}"
+do
+    case $opt in
+        --jvm.*)
+            opt=${opt:6}
+            JAVA_ARGS+=("-$opt") ;;
+        *)
+            PROGRAM_ARGS+=("$opt") ;;
+    esac
+done
+
+JAVA_HOME="$( dirname "$JRE" )"
+
+GRAALVMCP=""
+TMPCP="jre/languages/R/legacy/fastr-legacy-launcher.jar"
+for cp in ${TMPCP//:/ }
+do
+    GRAALVMCP="$GRAALVMCP$JAVA_HOME/$cp:"
+done
+
+# internal variable used to pass args to child R processes
+if [ -z "$FASTR_INTERNAL_ARGS" ]; then
+    FASTR_INTERNAL_ARGS=()
+fi
+
+# we can invoke FastR directly, but we do have to set R_HOME
+export R_HOME="$JRE/languages/R"
+exec "$JAVA_HOME/bin/java" -cp "$GRAALVMCP" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${JAVA_ARGS[@]}" com.oracle.truffle.r.legacylauncher.LegacyLauncher com.oracle.truffle.r.launcher.RscriptCommand "${FASTR_INTERNAL_ARGS[@]}" "${PROGRAM_ARGS[@]}"
