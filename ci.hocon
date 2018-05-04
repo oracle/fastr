@@ -18,5 +18,5 @@ builds = [
   ${rbcheck}                  {capabilities : [linux, amd64],  targets : [gate], name: "gate-rbcheck-linux-amd64"}
   ${internalPkgtest}          {capabilities : [linux, amd64],  targets : [gate], name: "gate-internal-pkgtest-linux-amd64"}
   ${gateTestJava9Linux}       {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-java9-linux-amd64"}
-  ${gnurTests}                {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-gnur-tests"}
+  # ${gnurTests}                {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-gnur-tests"}
 ]

@@ -3,3 +3,5 @@ mime
 rjson
 iterators
 OptimalCutpoints
+rjson
+RSclient

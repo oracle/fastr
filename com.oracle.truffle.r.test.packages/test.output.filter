@@ -4,18 +4,21 @@
 # filter = pkg_pattern '=>' action .
 # pkg_pattern = <REGEX>.
 # action = command '/' string ['/' string ].
-# command = 'd' | 'D' | 'r' | 'R'
+# command = 'd' | 'D' ['-N'] ['+N'] | 'r' | 'R'
 # string = <unquoted string, slashed must be escaped with backslash>
+# N = positive number
 # 
 # Command description:
-#   d   delete exact match of the specified string (i.e. replace by empty string)
-#   D   delete line containing the specified string
-#   r   replace exact match of the first argument by the second argument
-#   R   replace line containing the first argument by the second argument
+#   d      delete exact match of the specified string (i.e. replace by empty string)
+#   D      delete line containing the specified string
+#   r      replace exact match of the first argument by the second argument
+#   R      replace line containing the first argument by the second argument
+#   D+3-1  delete line containing the specified string and 1 preceding and 3 following lines
 #
 # NOTES:
 # The definition order of the filters (in this file) matters. 
 # They will be applied in order.
+# They will be applied to the outputs of both GNU R and FastR
 #
 
 
@@ -37,5 +40,20 @@
 # for all packages: delete line containing 'detaching ‘package:grid’'
 .* => D/detaching ‘package:grid’
 
-# for iterators:
+# for individual packages:
+
+# ------
 iterators => D/Warning: closing unused connection 3
+
+# ------
+# compare generates syntax error, GNUR unlike FastR provides some more details on the following 3 lines
+# FastR syntax error
+compare => D/Error in source(filename, local = TRUE) : parse error
+# GNUR syntax error does not have "parse error"
+compare => D+3/Error in source(filename, local = TRUE) :
+
+# different list elements order: list created from env with env2list(... sorted=F)
+# we remove the list item value and one line before, which will be the attribute name "$class"
+# plus we remove factor's "Levels" followed by the attribute value
+compare => D-1/[1] poor   poor   poor   middle middle middle
+compare => D/Levels: poor middle
