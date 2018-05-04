@@ -287,16 +287,16 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
 
 
 mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
+    suite=_fastr_suite,
     name='FastR',
     short_name='R',
-    documentation_files=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT/README_FASTR'],
-    license_files=['link:<support>/GraalCE_R_license_3rd_party_license.txt'],
+    license_files=['GraalCE_R_license_3rd_party_license.txt'],
     third_party_license_files=[],
-    truffle_jars=['dependency:fastr:FASTR'],
-    support_distributions=['extracted-dependency:fastr:FASTR_GRAALVM_SUPPORT'],
+    truffle_jars=['fastr:FASTR'],
+    support_distributions=['fastr:FASTR_GRAALVM_SUPPORT'],
     provided_executables=[
-        'link:<support>/bin/Rscript',
-        'link:<support>/bin/R',
+        'bin/Rscript',
+        'bin/R',
     ],
     include_in_polyglot=False,
-), _fastr_suite)
+))
