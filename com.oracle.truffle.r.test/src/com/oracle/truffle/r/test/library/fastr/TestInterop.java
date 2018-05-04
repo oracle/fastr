@@ -53,11 +53,11 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testInteropEval() {
-        assertEvalFastR("eval.polyglot('application/x-r', '14 + 2')", "16");
-        assertEvalFastR("eval.polyglot('application/x-r', '1')", "1");
-        assertEvalFastR("eval.polyglot('application/x-r', '1L')", "1L");
-        assertEvalFastR("eval.polyglot('application/x-r', 'TRUE')", "TRUE");
-        assertEvalFastR("eval.polyglot('application/x-r', 'as.character(123)')", "as.character(123)");
+        assertEvalFastR("eval.polyglot('R', '14 + 2')", "16");
+        assertEvalFastR("eval.polyglot('R', '1')", "1");
+        assertEvalFastR("eval.polyglot('R', '1L')", "1L");
+        assertEvalFastR("eval.polyglot('R', 'TRUE')", "TRUE");
+        assertEvalFastR("eval.polyglot('R', 'as.character(123)')", "as.character(123)");
     }
 
     @Test
@@ -70,7 +70,7 @@ public class TestInterop extends TestBase {
 
     @Test
     public void testInteropEvalFile() {
-        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.polyglot(mimeType=\"application/x-r\", path=\"" +
+        assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.polyglot(languageId=\"R\", path=\"" +
                         TEST_EVAL_FILE + "\")",
                         "x<-c(1);cat(x)");
         assertEvalFastR("fileConn<-file(\"" + TEST_EVAL_FILE + "\");writeLines(c(\"x<-c(1)\",\"cat(x)\"), fileConn);close(fileConn);eval.polyglot(path=\"" + TEST_EVAL_FILE + "\")",
@@ -78,7 +78,7 @@ public class TestInterop extends TestBase {
         assertEvalFastR("tryCatch(eval.polyglot(path=\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
 
         assertEvalFastR("eval.polyglot()", "cat('Error in eval.polyglot() : invalid \\'source\\' or \\'path\\' argument\\n')");
-        assertEvalFastR("eval.polyglot(,'abc',)", "cat('Error in eval.polyglot(, \"abc\", ) : invalid mimeType argument\\n')");
+        assertEvalFastR("eval.polyglot(,'abc',)", "cat('Error in eval.polyglot(, \"abc\", ) : invalid languageId argument\\n')");
     }
 
     @Test

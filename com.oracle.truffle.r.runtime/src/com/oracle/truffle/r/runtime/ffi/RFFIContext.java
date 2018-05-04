@@ -60,7 +60,7 @@ public abstract class RFFIContext extends RFFI {
 
     /**
      * The GC in GNUR is cooperative, which means that unless native code calls back to the R engine
-     * (GNUR/FastR) it may assume (and unfortunately people do that) that GC will not run and will
+     * (GNUR/FastR) one may assume (and unfortunately people do that) that GC will not run and will
      * not collect anything that may be not reachable anymore, including the result of the last
      * up-call and including the objects popped off the PROTECT/UNPROTECT stack! Moreover, some
      * R-API functions are known to be not calling GC, therefore people may (and do) count on them
@@ -68,8 +68,7 @@ public abstract class RFFIContext extends RFFI {
      * variants and for macros like {@code INTEGER}. This behavior is required e.g. for
      * {@code C_parseRd}. We keep a list of all the objects that may not be reachable anymore, but
      * must not be collected, because no garbage collecting R-API function has been called since
-     * they became unreachable. This method clears this list so that Java GC can collect the
-     * objects.
+     * they became unreachable.
      */
     public final void registerReferenceUsedInNative(Object obj) {
         protectedNativeReferences.add(obj);
@@ -91,6 +90,11 @@ public abstract class RFFIContext extends RFFI {
         // empty by default
     }
 
+    /**
+     * @param canRunGc Causes that the list of additionally protected objects is cleared so that
+     *            Java GC can collect the objects. See
+     *            {@link RFFIContext#registerReferenceUsedInNative(Object)}.
+     */
     public void afterUpcall(boolean canRunGc) {
         if (canRunGc) {
             cooperativeGc();

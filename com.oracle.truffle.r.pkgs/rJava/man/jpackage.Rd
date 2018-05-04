@@ -19,7 +19,7 @@
   \item{jars}{Java archives in the \code{java} directory of the package
     that should be added to the class path. The paths must be relative
     to package's \code{java} directory. A special value of
-    \code{'*'} adds all \code{.jar} files from the \code{java} the
+    \code{'*'} adds all \code{.jar} files form the \code{java} the
     directory.}
   \item{morePaths}{vector listing any additional entries that should
     be added to the class path.}

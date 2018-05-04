@@ -35,6 +35,7 @@ final class PrintContext {
     private final PrettyPrintWriter out;
     private final Map<String, Object> attrs = new HashMap<>();
     private StringBuilder tagbuf;
+    private int attrDepth;
 
     private static final ThreadLocal<ArrayDeque<PrintContext>> printCtxTL = new ThreadLocal<>();
 
@@ -90,6 +91,15 @@ final class PrintContext {
 
     public void setAttribute(String attrName, Object attrValue) {
         attrs.put(attrName, attrValue);
+    }
+
+    public int attrDepth() {
+        return attrDepth;
+    }
+
+    public void updateAttrDepth(int attrDepthDiff) {
+        attrDepth += attrDepthDiff;
+        assert (attrDepth >= 0) : "Invalid attrDepth=" + attrDepth;
     }
 
     public PrintContext cloneContext() {

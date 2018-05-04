@@ -314,7 +314,7 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testNewWithJavaClass() {
+    public void testNew() {
         assertEvalFastR("tc <- java.type('" + Boolean.class.getName() + "'); to <- new(tc, TRUE); to", "TRUE");
         assertEvalFastR("tc <- java.type('" + TEST_CLASS + "'); to <- new(tc); to$fieldInteger", getRValue(Integer.MAX_VALUE));
 
@@ -326,6 +326,11 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR("to <- new('" + TEST_CLASS + "'); new(to)", errorIn(".fastr.interop.new(Class, ...)", "error during Java object instantiation"));
 
         assertEvalFastR("to <- new('__bogus_class_name__');", errorIn("getClass(Class, where = topenv(parent.frame()))", "“__bogus_class_name__” is not a defined class"));
+
+        assertEvalFastR(Context.NoJavaInterop, "new('integer'); ", "cat('integer(0)'");
+        assertEvalFastR(Context.NoJavaInterop, "new('" + Boolean.class.getName() + "');",
+                        errorIn("getClass(Class, where = topenv(parent.frame()))", "“" + Boolean.class.getName() + "” is not a defined class"));
+        assertEvalFastR(Context.NoJavaInterop, "new('__bogus_class_name__');", errorIn("getClass(Class, where = topenv(parent.frame()))", "“__bogus_class_name__” is not a defined class"));
     }
 
     @Test

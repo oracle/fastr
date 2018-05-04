@@ -169,6 +169,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
                     newData[i] = RNull.instance;
                 }
             } else {
+                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
                 for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
                     newData[i] = oldData[j];
                 }

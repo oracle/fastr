@@ -59,7 +59,7 @@ ping <- function() {
 }
 
 #' Start the GraalVM agent. The agent is normally started automatically upon the first
-#' code ecxecution.
+#' code execution.
 #' @export
 graalvm.start <- function() {
 	if (!ping()) {
@@ -70,14 +70,14 @@ graalvm.start <- function() {
 		serverScriptPath <- attr(packageDescription("graalvm"), "file")
 		serverScriptPath <-	substr(serverScriptPath, 1, nchar(serverScriptPath)-16)
 		serverScriptPath <- paste0(serverScriptPath, "data/server.js")
-	
-		libEnvVar <- paste0("R_LIBS=", getOption("graalvm.rlibs"))
-	
+
+		envVars <- paste0("R_LIBS=", getOption("graalvm.rlibs"), "; R_HOME=", gHome, "/jre/languages/R")
+
 		gHost <- getOption("graalvm.host");
 		gPort <- getOption("graalvm.port");
 		javaOpts <- getOption("graalvm.javaOpts");
 	
-		nodeLaunchCmd <- paste0(libEnvVar, " ", gHome, "/bin/node ", javaOpts, " ", serverScriptPath, " ", gHost, " ", gPort, " &")
+		nodeLaunchCmd <- paste0(envVars, " ", gHome, "/bin/node --jvm --polyglot", javaOpts, " ", serverScriptPath, " ", gHost, " ", gPort, " &")
 		system(nodeLaunchCmd, ignore.stdout = TRUE, ignore.stderr = TRUE)
 	
 		attempts <- 0L
@@ -114,27 +114,27 @@ graalvm.stop <- function() {
 }
 
 #' Execute code by GraalVM using the language interpreter that corresponds
-#' to the language mimetype.
+#' to the language languageId.
 #'
 #' @param code the code to be executed. It must be a language element as long as the target
 #' language is R, otherwise it must be a string.
 #' @param echo controls whether this function returns the result of the interpreted code.
 #' The default value is TRUE.
-#' @param mimetype The mimetype of the target language. Currently supported values are
-#' "application/x-r", "text/javascript" and "application/x-ruby".
+#' @param languageId The languageId of the target language. Currently supported values are
+#' "R", "js" and "ruby".
 #' @family execution functions
 #' @examples
 #' g(runif(10^3))
 #' g(runif(10^8), echo = FALSE) # We do not want that the result is returned due to its size
-#' g("1 < 2", mimetype = "text/javascript")
+#' g("1 < 2", languageId = "js")
 #' @export
-g <- function(code, echo = TRUE, mimetype = "application/x-r") {
-	if (mimetype == "application/x-r") {
+g <- function(code, echo = TRUE, languageId = "R") {
+	if (languageId == "R") {
 		code <- deparse(substitute(code))
 	} else {
 		if (!is.character(code)) stop("The code argument must a character vector")
 	}
-	send(code, echo, mimetype)
+	send(code, echo, languageId)
 }
 
 #' Execute R code.
@@ -144,7 +144,7 @@ g <- function(code, echo = TRUE, mimetype = "application/x-r") {
 #' @export
 g.r <- function(code, echo = TRUE) {
 	if (!is.character(code)) stop("The code argument must a character vector")
-	send(code, echo, "application/x-r")
+	send(code, echo, "R")
 }
 
 #' Execute JavaScript code.
@@ -154,7 +154,7 @@ g.r <- function(code, echo = TRUE) {
 #' @export
 g.js <- function(code, echo = TRUE) {
 	if (!is.character(code)) stop("The code argument must a character vector")
-	send(code, echo, "text/javascript")
+	send(code, echo, "js")
 }
 
 #' Execute Ruby code.
@@ -164,7 +164,7 @@ g.js <- function(code, echo = TRUE) {
 #' @export
 g.rb <- function(code, echo = TRUE) {
 	if (!is.character(code)) stop("The code argument must a character vector")
-	send(code, echo, "application/x-ruby")
+	send(code, echo, "ruby")
 }
 
 #' Assign a value to a paired variable. The value is assigned both locally and remotely.
@@ -194,10 +194,10 @@ gset <- function(var, value = var) {
 			stop(paste("Unpaired variable ", varName))
 		}
 		deparsedValue = NULL
-		if (meta$mimetype == "application/x-r") {
+		if (meta$languageId == "R") {
 			deparsedValue <- paste(deparse(substitute(value)), collapse="\n")
 		}
-		setVar(varName, value, deparsedValue, meta$mimetype)
+		setVar(varName, value, deparsedValue, meta$languageId)
 	} else {
 		stop(paste("Undefined variable ", varName))
 	}
@@ -207,19 +207,19 @@ gset <- function(var, value = var) {
 #'
 #' @family paired variables
 #' @export
-gset.r <- function(var, value) setVar(deparse(substitute(var)), value, paste(deparse(substitute(value)), collapse="\n"), "application/x-r")
+gset.r <- function(var, value) setVar(deparse(substitute(var)), value, paste(deparse(substitute(value)), collapse="\n"), "R")
 
 #' Assign the value to the paired variable in Graal JS and locally.
 #'
 #' @family paired variables
 #' @export
-gset.js <- function(var, value) setVar(deparse(substitute(var)), value, NULL, "text/javascript")
+gset.js <- function(var, value) setVar(deparse(substitute(var)), value, NULL, "js")
 
 #' Assign the value to the paired variable in Graal Ruby and locally.
 #'
 #' @family paired variables
 #' @export
-gset.rb <- function(var, value) setVar(deparse(substitute(var)), value, NULL, "application/x-ruby")
+gset.rb <- function(var, value) setVar(deparse(substitute(var)), value, NULL, "ruby")
 
 #' Retrieve the variable defined in a GraalVM language. The local variable must have been 
 #' initialized by one of the language specific gget.* or ggset.* functions.
@@ -233,7 +233,7 @@ gget <- function(var) {
 		if (is.null(meta)) {
 			stop(paste("Unpaired variable ", varName))
 		}
-		getVar(varName, meta$mimetype) 
+		getVar(varName, meta$languageId) 
 	} else {
 		stop(paste("Undefined variable ", varName))
 	}
@@ -243,95 +243,95 @@ gget <- function(var) {
 #'
 #' @family paired variables
 #' @export
-gget.r <- function(var) getVar(deparse(substitute(var)), "application/x-r")
+gget.r <- function(var) getVar(deparse(substitute(var)), "R")
 
 #' Retrieve the variable defined in GraalVM JS.
 #'
 #' @family paired variables
 #' @export
-gget.js <- function(var) getVar(deparse(substitute(var)), "text/javascript")
+gget.js <- function(var) getVar(deparse(substitute(var)), "js")
 
 #' Retrieve the variable defined in GraalVM Ruby.
 #'
 #' @family paired variables
 #' @export
-gget.rb <- function(var) getVar(deparse(substitute(var)), "application/x-ruby")
+gget.rb <- function(var) getVar(deparse(substitute(var)), "ruby")
 
-setVar <- function(varName, value, deparsedValue, mimetype="application/x-r") {
+setVar <- function(varName, value, deparsedValue, languageId="R") {
 	localValue <- value
 	meta <- NULL
 	if (exists(varName)) {
 		meta <- attr(var, "graalvm")
 	} 
 	if (is.null(meta)) {
-		meta <- list(varName = varName, mimetype = mimetype)
+		meta <- list(varName = varName, languageId = languageId)
 		attr(localValue, "graalvm") <- meta
 	}
-	if (meta$mimetype == "application/x-r") {
+	if (meta$languageId == "R") {
 		code <- paste0(meta$varName, "<-", deparsedValue) 
-	} else if (meta$mimetype == "text/javascript") {
+	} else if (meta$languageId == "js") {
 		code <- paste0(meta$varName, "=", toJSON(value)) 
-	} else if (meta$mimetype == "application/x-ruby") {
+	} else if (meta$languageId == "ruby") {
 		code <- paste0("$", meta$varName, "=", toJSON(value))
 	} else {
-		stop(paste("Unsupported language mimetype:", mimetype))
+		stop(paste("Unsupported language languageId:", languageId))
 	}
-	send(code, FALSE, meta$mimetype)
+	send(code, FALSE, meta$languageId)
 	
 	assign(varName, localValue, inherits = TRUE)
 }
 
-getVar <- function(varName, mimetype="application/x-r") {
+getVar <- function(varName, languageId="R") {
 	meta <- NULL
 	if (exists(varName)) {
 		meta <- attr(var, "graalvm")
 	} 
 	if (is.null(meta)) {
-		meta <- list(varName = varName, mimetype = mimetype)
+		meta <- list(varName = varName, languageId = languageId)
 	}
-	if (meta$mimetype == "application/x-r") {
+	if (meta$languageId == "R") {
 		code <- meta$varName 
-	} else if (meta$mimetype == "text/javascript") {
+	} else if (meta$languageId == "js") {
 		code <- meta$varName 
-	} else if (meta$mimetype == "application/x-ruby") {
+	} else if (meta$languageId == "ruby") {
 		code <- paste0("$", meta$varName)
 	} else {
-		stop(paste("Unsupported language mimetype:", mimetype))
+		stop(paste("Unsupported language languageId:", languageId))
 	}
-	value <- send(code, TRUE, meta$mimetype)
+	value <- send(code, TRUE, meta$languageId)
 	
 	if (!is.null(value)) {
-		meta <- list("varName" = varName, "mimetype" = mimetype)
+		meta <- list("varName" = varName, "languageId" = languageId)
 		attr(value, "graalvm") <- meta
 	}
 	
 	assign(varName, value, inherits = TRUE)
 }
 
-send <- function(code, echo, mimetype) {
-	tryCatch(sendAttempt(code, echo, mimetype), error = function(e) {
+send <- function(code, echo, languageId) {
+	tryCatch(sendAttempt(code, echo, languageId), error = function(e) {
 		# try to restart the agent and invoke it agains
 		graalvm.start()
-		sendAttempt(code, echo, mimetype)
+		sendAttempt(code, echo, languageId)
 	})	
 }
 
-sendAttempt <- function(code, echo, mimetype) {
+sendAttempt <- function(code, echo, languageId) {
 	code <- paste(code, collapse="\n")
 	if (!graalvmEnv$status) {
 		graalvm.start()
 	}
 	h <- new_handle(failonerror = FALSE)
-	handle_setform(h, code=code, echo=as.character(echo), mimetype=mimetype)
+	handle_setform(h, code=code, echo=as.character(echo), languageId=languageId)
 	url <- commandURL("")
 	resp <- curl_fetch_memory(url, handle = h)
 	respData <- rawToChar(resp$content)
 	respData <- strsplit(respData, "\r\n")[[1]]
-	if (mimetype == "application/x-r") {
+	if (languageId == "R") {
 		respObj <- eval(parse(text=respData))
-	} else if (mimetype == "text/javascript") {
+	} else if (languageId == "js") {
 		respObj <- fromJSON(respData)
-	} else if (mimetype == "application/x-ruby") {
+	} else if (languageId == "ruby") {
 		respObj <- fromJSON(respData)
 	}
 	

@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -241,5 +241,18 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("{ rep(paste0('hello', 1:10), 1:10) }");
 
         assertEval("rep(' ', 20L, collapse = ' ')");
+
+        // FIXME: should not print the warnings if empty args occur in '...'
+        assertEval(Output.IgnoreWarningMessage, "rep(3, 4,)");
+
+        assertEval("rep(numeric(), length.out=2)");
+        assertEval("rep(character(), length.out=2)");
+        assertEval("rep(raw(), length.out=2)");
+        assertEval("rep(complex(), length.out=2)");
+        assertEval("rep(list(), length.out=2)");
+
+        assertEval("rep(numeric(), times=3)");
+
+        assertEval("rep(NULL)");
     }
 }

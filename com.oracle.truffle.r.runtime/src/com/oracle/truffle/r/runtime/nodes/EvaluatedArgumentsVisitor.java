@@ -80,7 +80,8 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                     "print", "length", "rep", "inherits", "min", "max", "matrix", "table", "is.array", "is.element", "is.character", "exp", "all", "pmin", "pmax", "as.numeric", "proc.time",
                     "as.integer", "as.character", "as.matrix", ".Call", "sum", "order", "rev", "integer", "double", "as.numeric", "as.list", "as.integer", ".Call", ".FastR", "unname", "log", "lgamma",
                     "sin", "cos", "tan", "exp", "log", "expm1", "sinh", "sinpi", "cosh", "cospi", "tanh", "tanpi", "asin", "asinh", "acos", "acosh", "atan", "atanh", "+", "-",
-                    "*", "/", "%%", "^", ":", ">=", ">", "<=", "<", "==", "!=", "||", "|", "&&", "&", "!", "%o%", "%*%", "%/%", "%in%", "{", "for", "while", "repeat", "if", "attributes", "attr"));
+                    "*", "/", "%%", "^", ":", ">=", ">", "<=", "<", "==", "!=", "||", "|", "&&", "&", "!", "%o%", "%*%", "%/%", "%in%", "{", "for", "while", "repeat", "if", "attributes", "attr",
+                    "nchar"));
 
     private EvaluatedArgumentsVisitor() {
         // private constructor

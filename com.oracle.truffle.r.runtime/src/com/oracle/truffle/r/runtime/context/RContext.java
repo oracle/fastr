@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
@@ -246,7 +247,7 @@ public final class RContext {
     private final int multiSlotIndex;
     private TruffleContext truffleContext;
 
-    public Executor executor;
+    private Executor executor;
 
     private final InputStream stdin;
     private final OutputStreamWriter stdout;
@@ -692,10 +693,15 @@ public final class RContext {
             // methods information
             assert contextKind != ContextKind.SHARE_NOTHING;
             assert parentContext != null;
-            return parentContext.getPrimitiveMethodsInfo();
+            return parentContext.getPrimitiveMethodsInfoWithBoundary();
         } else {
             return primitiveMethodsInfo;
         }
+    }
+
+    @TruffleBoundary
+    private PrimitiveMethodsInfo getPrimitiveMethodsInfoWithBoundary() {
+        return getPrimitiveMethodsInfo();
     }
 
     /**
@@ -747,8 +753,16 @@ public final class RContext {
         return startParameters;
     }
 
+    public void initExecutor() {
+        this.executor = Executors.newSingleThreadExecutor();
+    }
+
     public boolean hasExecutor() {
         return executor != null;
+    }
+
+    public Executor getExecutor() {
+        return this.executor;
     }
 
     /**

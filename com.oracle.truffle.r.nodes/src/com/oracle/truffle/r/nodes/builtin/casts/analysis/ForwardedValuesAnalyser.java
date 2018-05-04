@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RVarArgsFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
@@ -260,6 +261,11 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
 
             @Override
             public ForwardingAnalysisResult visit(MatrixFilter<?> filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
+                return new ForwardingAnalysisResult().blockAll();
+            }
+
+            @Override
+            public ForwardingAnalysisResult visit(RVarArgsFilter filter, ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().blockAll();
             }
 

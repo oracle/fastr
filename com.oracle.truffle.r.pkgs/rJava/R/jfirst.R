@@ -1,14 +1,3 @@
-##
- # This material is distributed under the GNU General Public License
- # Version 2. You may review the terms of this license at
- # http://www.gnu.org/licenses/gpl-2.0.html
- #
- # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
- # Copyright (c) 2018, Oracle and/or its affiliates
- #
- # All rights reserved.
-##
-
 # this part is common to all platforms and must be invoked
 # from .First.lib after library.dynam
 
@@ -56,7 +45,8 @@
 .registerFastrFunctions <- function() {
   # .C
   .fastr.register.functions("rJava", .env, 0, 
-        list(RclearException=.RclearException))
+        list(RJavaCheckExceptions = .RJavaCheckExceptions,
+             RclearException=.RclearException))
   # .External  
   .fastr.register.functions("rJava", .env, 3, 
         list(RcreateObject = .RcreateObject, 
@@ -66,8 +56,7 @@
              RcallMethod = .RcallMethod))
   # .Call
   .fastr.register.functions("rJava", .env, 1, 
-        list(RJavaCheckExceptions = .RJavaCheckExceptions,
-            RpollException = .RpollException,
+        list(RpollException = .RpollException,
             RthrowException = .RthrowException,                                               
             RidenticalRef = .RidenticalRef,
             RisAssignableFrom = .RisAssignableFrom,
@@ -120,44 +109,6 @@
 # - bytes converted to int
 # - chars converted to int
 
-.dispatchOverrides <- function(orig, .NAME, ...) {
-    if(is.character(.NAME)) {        
-        fun <- switch(.NAME, 
-            "RJavaCheckExceptions" = .RJavaCheckExceptions,
-            "RpollException" = .RpollException,
-            "RthrowException" = .RthrowException,
-            "RclearException" = .RclearException,                        
-            "RcallMethod" = .RcallMethod,
-            "RidenticalRef" = .RidenticalRef,
-            "RisAssignableFrom" = .RisAssignableFrom,
-            "RinitJVM" = .RinitJVM,
-            "RJava_checkJVM" = .RJava_checkJVM,
-            "RJava_needs_init" = .RJava_needs_init,
-            "initRJavaTools" = .initRJavaTools,            
-            "RJava_set_memprof" = .RJava_set_memprof,
-            "RgetStringValue" = .RgetStringValue,
-            "RcreateObject" = .RcreateObject,            
-            "RgetStringArrayCont" = .RgetStringArrayCont,
-            "RgetIntArrayCont" = .RgetIntArrayCont,                 
-            "RgetBoolArrayCont" = .RgetBoolArrayCont,
-            "RgetCharArrayCont" = .RgetCharArrayCont,
-            "RgetShortArrayCont" = .RgetShortArrayCont,
-            "RgetByteArrayCont" = .RgetByteArrayCont,
-            "RgetDoubleArrayCont" = .RgetDoubleArrayCont,
-            "RgetFloatArrayCont" = .RgetFloatArrayCont,
-            "RgetLongArrayCont" = .RgetLongArrayCont,
-            "RgetObjectArrayCont" = .RgetObjectArrayCont,
-            "RcreateArray" = .RcreateArray,
-            "RgetField" = .RgetField,
-            "RsetField" = .RsetField,
-            "RtoString" = .RtoString,
-            function(...) orig(.NAME, ...)
-        )        
-        fun(...)
-    } else {
-        orig(.NAME, ...)
-    }
-}
 
 .RJavaCheckExceptions <- function(silent) {
     silent # force args
@@ -407,8 +358,8 @@
     ref
 }    
 
-.RcreateObject <-function(class, ..., silent, class.loader) {
-    class; silent; class.loader # force args
+.RcreateObject <-function(class, ..., silent) {
+    class; silent; # force args
 
     if(!is.character(class) || length(class) != 1) {
         stop("RcreateObject: invalid class name")

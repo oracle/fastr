@@ -7,7 +7,7 @@
 	\code{.jnew} create a new Java object.
 }
 \usage{
-.jnew(class, ..., check=TRUE, silent=!check, class.loader=NULL)
+.jnew(class, ..., check=TRUE, silent=!check)
 }
 \arguments{
   \item{class}{fully qualified class name in JNI notation (e.g. \code{"java/lang/String"}).}
@@ -29,11 +29,6 @@
     \code{check=FALSE, silent=FALSE} is usually not a meaningful
     combination.
   }
-  \item{class.loader}{optional class loader to force for loading the
-    class. If not set, the rJava class loader is used first. The default
-    Java class loader is always used as a last resort. This is for
-    expert use only! If you set the class loader, the class loading
-    behavior changes - use only in very special circumstances.}
 }
 \value{
   Returns the reference (\code{jobjRef}) to the newly created object or

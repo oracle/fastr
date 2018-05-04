@@ -72,6 +72,7 @@ public class RRuntime {
     public static final boolean True = true;
     public static final boolean False = false;
 
+    public static final String R_LANGUAGE_ID = "R";
     public static final String R_APP_MIME = "application/x-r";
     public static final String R_TEXT_MIME = "text/x-r";
 

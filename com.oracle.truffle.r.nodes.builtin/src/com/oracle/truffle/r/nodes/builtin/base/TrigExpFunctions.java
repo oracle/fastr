@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Pow.CHypot;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
@@ -131,17 +132,7 @@ public class TrigExpFunctions {
     public static final class Sinpi extends UnaryArithmetic {
         @Override
         public double op(double op) {
-            double norm = op % 2d;
-            if (norm == 0d || norm == 1d || norm == -1d) {
-                return 0d;
-            }
-            if (norm == -1.5d || norm == 0.5d) {
-                return 1d;
-            }
-            if (norm == -0.5d || norm == 1.5d) {
-                return -1d;
-            }
-            return Math.sin(norm * Math.PI);
+            return RMath.sinpi(op);
         }
 
         @Override
@@ -184,17 +175,7 @@ public class TrigExpFunctions {
     public static final class Cospi extends UnaryArithmetic {
         @Override
         public double op(double op) {
-            double norm = op % 2d;
-            if (norm == 0d) {
-                return 1d;
-            }
-            if (norm == -1d || norm == 1d) {
-                return -1d;
-            }
-            if (norm == -1.5d || norm == -0.5d || norm == 0.5d || norm == 1.5d) {
-                return 0d;
-            }
-            return Math.cos(norm * Math.PI);
+            return RMath.cospi(op);
         }
 
         @Override

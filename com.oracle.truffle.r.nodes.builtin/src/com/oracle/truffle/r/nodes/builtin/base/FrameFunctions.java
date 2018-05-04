@@ -608,10 +608,11 @@ public class FrameFunctions {
                         RCaller currentCall = RArguments.getCall(f);
                         if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
                             int currentCallIdx = currentCall.getDepth() - 1;
-                            while (currentCall != null && (currentCall.isPromise())) {
-                                currentCall = currentCall.getParent();
+                            RCaller parent = currentCall.getParent();
+                            while (parent != null && (parent.isPromise())) {
+                                parent = parent.getParent();
                             }
-                            result[currentCallIdx] = currentCall == null ? 0 : currentCall.getParent().getDepth();
+                            result[currentCallIdx] = parent == null ? 0 : parent.getDepth();
                         }
                         return RArguments.getDepth(f) == 1 ? result : null;
                     }

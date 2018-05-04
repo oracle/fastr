@@ -142,6 +142,7 @@ public class TestBase {
 
     public enum Context implements TestTrait {
         NonShared, // Test requires a new non-shared {@link RContext}.
+        NoJavaInterop, // Test requires a {@link RContext} with disabled host access.
         LongTimeout; // Test requires a long timeout
 
         @Override
@@ -647,7 +648,7 @@ public class TestBase {
             if (skipFastREval) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout));
+                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout), !traits.context.contains(Context.NoJavaInterop));
                 CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
@@ -674,42 +675,48 @@ public class TestBase {
                     microTestFailed();
                     if (!ProcessFailedTests || ShowFailedTestsResults) {
                         // Show hint where first diff occurs - use preprocessed text
-                        int len = Math.min(checkResult.expected.length(), checkResult.result.length());
+                        int expectedLen = checkResult.expected.length();
+                        int testLen = checkResult.result.length();
+                        int len = Math.min(expectedLen, testLen);
                         int line = 0;
                         int col = 0;
+                        StringBuilder sb = new StringBuilder(128);
                         for (int i = 0; i < len; i++) {
                             char c = checkResult.expected.charAt(i);
                             if (c != checkResult.result.charAt(i)) {
-                                StringBuilder sb = new StringBuilder(64);
-                                sb.append("index=").append(i).append('[').append(line + 1).append(':').append(col + 1).append("] \"");
-                                int dLen = Math.min(i + 20, len);
-                                for (int j = i; j < dLen; j++) {
-                                    char ch = checkResult.expected.charAt(j);
-                                    switch (ch) {
-                                        case '\n':
-                                            sb.append("\\n");
-                                            break;
-                                        case '\r':
-                                            sb.append("\\r");
-                                            break;
-                                        case '\t':
-                                            sb.append("\\t");
-                                            break;
-                                        case '\b':
-                                            sb.append("\\b");
-                                            break;
-                                        case '\f':
-                                            sb.append("\\f");
-                                            break;
-                                        default:
-                                            sb.append(ch);
+                                sb.append("First different char index: ").append(i).append('[').append(line + 1).append(':').append(col + 1).append("]\n    Expected: ");
+                                for (int type = 0; type <= 1; type++) {
+                                    int maxLen = (type == 0) ? expectedLen : testLen;
+                                    int dLen = Math.min(i + 60, maxLen);
+                                    for (int j = i; j < dLen; j++) {
+                                        char ch = ((type == 0) ? checkResult.expected : checkResult.result).charAt(j);
+                                        switch (ch) {
+                                            case '\n':
+                                                sb.append("\\n");
+                                                break;
+                                            case '\r':
+                                                sb.append("\\r");
+                                                break;
+                                            case '\t':
+                                                sb.append("\\t");
+                                                break;
+                                            case '\b':
+                                                sb.append("\\b");
+                                                break;
+                                            case '\f':
+                                                sb.append("\\f");
+                                                break;
+                                            default:
+                                                sb.append(ch);
+                                        }
+                                    }
+                                    if (dLen < maxLen) {
+                                        sb.append("...");
+                                    }
+                                    if (type == 0) {
+                                        sb.append("\n       FastR: ");
                                     }
                                 }
-                                if (dLen < len) {
-                                    sb.append("...");
-                                }
-                                sb.append('"');
-                                System.err.printf("%16s %s%n", "Prepr.text diff:", sb);
                                 break;
                             }
                             col++;
@@ -718,6 +725,7 @@ public class TestBase {
                                 col = 0;
                             }
                         }
+                        System.err.println(sb);
                     }
 
                     if (inputs.length > 1) {
@@ -981,12 +989,16 @@ public class TestBase {
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
     protected String fastREval(String input, ContextKind contextKind, boolean longTimeout) {
+        return fastREval(input, contextKind, longTimeout, true);
+    }
+
+    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
         assert contextKind != null;
         microTestInfo.expression = input;
         String result;
         try {
             beforeEval();
-            result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout);
+            result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout, allowHostAccess);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {

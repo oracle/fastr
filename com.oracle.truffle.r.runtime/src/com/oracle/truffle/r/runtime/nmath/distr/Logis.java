@@ -5,7 +5,7 @@
  *
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2008, The R Core Team
- * Copyright (c) 2016, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -112,7 +112,7 @@ public final class Logis {
             }
         }
 
-        private static double log1pexp(double x) {
+        public static double log1pexp(double x) {
             if (x <= 18.) {
                 return RMath.log1p(Math.exp(x));
             }

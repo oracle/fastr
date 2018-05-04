@@ -4,7 +4,7 @@
  * http://www.gnu.org/licenses/gpl-2.0.html
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -213,14 +213,18 @@ public class TestFunctions extends TestBase {
         assertEval("{ f <- function(a) { g <- function(b) { a <<- 3; b } ; g(a) } ; x <- 1 ; f(x) }");
         assertEval("{ f <- function(x) { function() {x} } ; a <- 1 ; b <- f(a) ; a <- 10 ; b() }");
         assertEval("{ f <- function(x = y, y = x) { y } ; f() }");
-        assertEval("foo <- function(a,b) { x<<-4; b; }; x <- 0; foo(2, x > 2);");
+        assertEval("{ foo <- function(a,b) { x<<-4; b; }; x <- 0; foo(2, x > 2); }");
         // FIXME eager promises bug
         // Note: following test fails on the first invocation only, consequent invocations produce
         // correct result. The problem is that OptForcedEagerPromiseNode is not creating assumptions
         // that variables involved in the eagerly evaluated expression are no being updated in the
         // meantime as side effect of evaluation of some other argument.
-        assertEval(Ignored.ImplementationError, "foo <- function(x,z) x + z; x <- 4; bar <- function() { x <<- 10; 1; }; foo(bar(), x);");
-        assertEval(Ignored.ImplementationError, "foo <- function(x,z) list(x,z); x <- 4; bar <- function() { x <<- 10; 1; }; foo(bar(), x > 5);");
+        assertEval(Ignored.ImplementationError, "{ foo <- function(x,z) x + z; x <- 4; bar <- function() { x <<- 10; 1; }; foo(bar(), x); }");
+        assertEval(Ignored.ImplementationError, "{ foo <- function(x,z) list(x,z); x <- 4; bar <- function() { x <<- 10; 1; }; foo(bar(), x > 5); }");
+        // FIXME eager promises bug2
+        // If eager promise evaluates to another promise, that promise should only be evaluated if
+        // it is again a simple expression without any side effects.
+        assertEval(Ignored.ImplementationError, "{ bar <- function(x, y) { y; x; 42 }; foo <- function(a) bar(a, cat('side2')); foo(cat('side1')) }");
     }
 
     @Test

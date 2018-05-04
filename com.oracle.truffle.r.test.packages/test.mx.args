@@ -1,2 +1,3 @@
 -DR:+IgnoreGraphicsCalls
 -DR:-EmitTmpSource
+-DR:AdditionalOptions=vdiffr_skip:T

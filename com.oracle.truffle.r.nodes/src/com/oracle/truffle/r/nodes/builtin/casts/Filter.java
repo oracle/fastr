@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.ArgumentFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.FilterStep;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep.MapStep;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -82,6 +83,8 @@ public abstract class Filter<T, R extends T> {
         D visit(NullFilter filter, D previous);
 
         D visit(MissingFilter filter, D previous);
+
+        D visit(RVarArgsFilter filter, D previous);
     }
 
     /**
@@ -427,6 +430,14 @@ public abstract class Filter<T, R extends T> {
         }
 
         public abstract <D> D acceptOperation(OperationVisitor<D> visitor, D previous);
+
+        @Override
+        public <D> D accept(FilterVisitor<D> visitor, D previous) {
+            return visitor.visit(this, previous);
+        }
+    }
+
+    public static final class RVarArgsFilter extends Filter<Object, RArgsValuesAndNames> {
 
         @Override
         public <D> D accept(FilterVisitor<D> visitor, D previous) {

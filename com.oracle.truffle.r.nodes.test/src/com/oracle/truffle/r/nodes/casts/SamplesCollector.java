@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.builtin.casts.Filter.NotFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.NullFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.OrFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.RTypeFilter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RVarArgsFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter.TypeFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapByteToBoolean;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper.MapDoubleToInt;
@@ -293,6 +294,13 @@ public class SamplesCollector extends ExecutionPathVisitor<Consumer<Object>>
 
     @Override
     public Consumer<Object> visit(MatrixFilter<?> filter, Consumer<Object> previous) {
+        return s -> {
+            previous.accept(s);
+        };
+    }
+
+    @Override
+    public Consumer<Object> visit(RVarArgsFilter filter, Consumer<Object> previous) {
         return s -> {
             previous.accept(s);
         };

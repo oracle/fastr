@@ -481,9 +481,10 @@ public class DLL {
             handle = DLLRFFI.DLOpenRootNode.create(context).call(path, false, false);
         } catch (UnsatisfiedLinkError ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ".\n" +
-                            "If running on NFI backend, did you provide location of libtrufflenfi.so as value of system " +
-                            "property 'truffle.nfi.library'?\nThe current value is '" +
-                            System.getProperty("truffle.nfi.library") + "'. \nDetails: " + ex.getMessage());
+                            "If running on the NFI backend, did you provide the location of libtrufflenfi.so as the value of the system " +
+                            "property 'truffle.nfi.library'?\nThe current value is '" + System.getProperty("truffle.nfi.library") + "'.\n" +
+                            "Is the OpenMP runtime library (libgomp.so) present on your system? This library is, e.g., typically part of the GCC package.\n" +
+                            "Details: " + ex.getMessage());
         } catch (Throwable ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ". Details: " + ex.getMessage());
         }
@@ -512,7 +513,7 @@ public class DLL {
 
     public static final String R_INIT_PREFIX = "R_init_";
 
-    public static class LoadPackageDLLNode extends Node {
+    public static final class LoadPackageDLLNode extends Node {
         @Child private InvokeVoidCallNode invokeVoidCallNode;
         @Child private DLLRFFI.DLSymNode dlSymNode = RFFIFactory.getDLLRFFI().createDLSymNode();
         @Child private DLLRFFI.DLOpenNode dlOpenNode = RFFIFactory.getDLLRFFI().createDLOpenNode();

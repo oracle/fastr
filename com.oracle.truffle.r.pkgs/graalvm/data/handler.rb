@@ -33,5 +33,5 @@ def toJSON(res)
 	Truffle::Interop.to_java_string(res.to_json)
 end
 
-Truffle::Interop.export('storeExpr', method(:storeExpr))
-Truffle::Interop.export('rubyToJSON', method(:toJSON))
+Polyglot.export('storeExpr', method(:storeExpr))
+Polyglot.export('rubyToJSON', method(:toJSON))

@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RString;
@@ -174,7 +176,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
     @Specialization(guards = {"isOneList(left, right)"})
     protected Object doList(VirtualFrame frame, RAbstractVector left, RAbstractVector right,
                     @Cached("create()") CastTypeNode cast,
-                    @Cached("createRecursive()") BinaryBooleanNode recursive) {
+                    @Cached("createRecursive()") BinaryBooleanNode recursive,
+                    @Cached("create()") BranchProfile listCoercionErrorBranch) {
         Object recursiveLeft = left;
         if (isRAbstractListVector(left)) {
             if (copyAttributes == null) {
@@ -182,6 +185,10 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                 copyAttributes = insert(CopyAttributesNodeGen.create(true));
             }
             recursiveLeft = castListToAtomic((RAbstractListBaseVector) left, cast, right.getRType(), copyAttributes);
+            if (recursiveLeft == null) {
+                listCoercionErrorBranch.enter();
+                throw RError.error(RError.NO_CALLER, RError.Message.LIST_COERCION, right.getRType().getName());
+            }
         }
         Object recursiveRight = right;
         if (isRAbstractListVector(right)) {
@@ -190,6 +197,10 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
                 copyAttributes = insert(CopyAttributesNodeGen.create(true));
             }
             recursiveRight = castListToAtomic((RAbstractListBaseVector) right, cast, left.getRType(), copyAttributes);
+            if (recursiveRight == null) {
+                listCoercionErrorBranch.enter();
+                throw RError.error(RError.NO_CALLER, RError.Message.LIST_COERCION, left.getRType().getName());
+            }
         }
         return recursive.execute(frame, recursiveLeft, recursiveRight);
     }
@@ -200,6 +211,9 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         Object store = result.getInternalStore();
         for (int i = 0; i < source.getLength(); i++) {
             Object value = source.getDataAt(i);
+            if (value == RNull.instance) {
+                return null;
+            }
             if (type == RType.Character) {
                 if (!(value instanceof String)) {
                     value = RDeparse.deparse(value);

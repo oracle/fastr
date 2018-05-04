@@ -5,7 +5,7 @@
  *
  * Copyright (C) 2001-3 Paul Murrell
  * Copyright (c) 1998-2013, The R Core Team
- * Copyright (c) 2017, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2018, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -27,7 +27,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
  * initialization of the grid state and device specific grid state if the device has changed since
  * the last time.
  */
-final class LGridDirty extends RExternalBuiltinNode {
+public final class LGridDirty extends RExternalBuiltinNode {
     @Child private InitViewPortNode initViewPort = new InitViewPortNode();
     @Child private OpenDefaultDevice openDefaultDevice = new OpenDefaultDevice();
 

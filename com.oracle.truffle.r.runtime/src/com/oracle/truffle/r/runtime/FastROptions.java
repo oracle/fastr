@@ -57,7 +57,7 @@ public enum FastROptions {
     SharedContexts("Whether all child contexts are to be shared contexts", true),
     SearchPathForcePromises("Whether all promises for frames on shared path are forced in presence of shared contexts", false),
     LoadPackagesNativeCode("Load native code of packages, including builtin packages.", !FastRConfig.ManagedMode),
-    EmitTmpSource("Write deparsed source code to temporary files for better debugging.", true),
+    EmitTmpSource("Write deparsed source code to temporary files for better debugging.", false),
     EmitTmpDir("The directory where to allocate temporary files with deparsed source code.", null, true),
     EmitTmpHashed("Use an SHA-256 hash as file name to reduce temporary file creation.", true),
     SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
@@ -74,6 +74,8 @@ public enum FastROptions {
     // Miscellaneous
 
     IgnoreGraphicsCalls("Silently ignore unimplemented functions from graphics package", false),
+    AdditionalOptions("List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. " +
+                    "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true),
     StartupTiming("Records and prints various timestamps during initialization", false);
 
     private final String help;

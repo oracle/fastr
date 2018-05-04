@@ -376,7 +376,7 @@ final class REngine implements Engine, Engine.Timings {
         String file = fullSource.getPath();
         ArrayList<RSyntaxNode> statements = new ArrayList<>(128);
         try {
-            try (BufferedReader br = new BufferedReader(new InputStreamReader(fullSource.getInputStream()))) {
+            try (BufferedReader br = new BufferedReader(fullSource.getReader())) {
                 int lineIndex = 1;
                 int startLine = lineIndex;
                 StringBuilder sb = new StringBuilder();
@@ -390,7 +390,7 @@ final class REngine implements Engine, Engine.Timings {
                         break;
                     }
                     sb.append(input);
-                    Source src = Source.newBuilder(sb.toString()).mimeType(RRuntime.R_APP_MIME).name(file + "#" + startLine + "-" + lineIndex).uri(uri).build();
+                    Source src = Source.newBuilder(sb.toString()).language(RRuntime.R_LANGUAGE_ID).name(file + "#" + startLine + "-" + lineIndex).uri(uri).build();
                     lineIndex++;
                     List<RSyntaxNode> currentStmts = null;
                     try {

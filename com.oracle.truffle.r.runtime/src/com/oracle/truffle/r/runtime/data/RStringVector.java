@@ -146,15 +146,17 @@ public final class RStringVector extends RVector<String[]> implements RAbstractS
     }
 
     private String[] copyResizedData(int size, String fill) {
-        String[] newData = Arrays.copyOf(data, size);
-        if (size > this.getLength()) {
+        String[] localData = getReadonlyData();
+        String[] newData = Arrays.copyOf(localData, size);
+        if (size > localData.length) {
             if (fill != null) {
-                for (int i = data.length; i < size; i++) {
+                for (int i = localData.length; i < size; i++) {
                     newData[i] = fill;
                 }
             } else {
-                for (int i = data.length, j = 0; i < size; ++i, j = Utils.incMod(j, data.length)) {
-                    newData[i] = data[j];
+                assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = localData.length, j = 0; i < size; ++i, j = Utils.incMod(j, localData.length)) {
+                    newData[i] = localData[j];
                 }
             }
         }

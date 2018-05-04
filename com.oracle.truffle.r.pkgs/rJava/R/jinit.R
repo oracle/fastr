@@ -1,14 +1,3 @@
-##
- # This material is distributed under the GNU General Public License
- # Version 2. You may review the terms of this license at
- # http://www.gnu.org/licenses/gpl-2.0.html
- #
- # Copyright (c) 2006 Simon Urbanek <simon.urbanek@r-project.org>
- # Copyright (c) 2018, Oracle and/or its affiliates
- #
- # All rights reserved.
-##
-
 ## This file is part of the rJava package - low-level R/Java interface
 ## (C)2006 Simon Urbanek <simon.urbanek@r-project.org>
 ## For license terms see DESCRIPTION and/or LICENSE

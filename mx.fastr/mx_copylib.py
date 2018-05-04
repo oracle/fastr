@@ -165,7 +165,7 @@ def updatelib(args):
     def get_captured_libs():
         cap_libs = []
         for lib in os.listdir(fastr_libdir):
-            if not '.dylib' in lib:
+            if not ('.dylib' in lib) or '.dylibl' in lib:
                 # ignore non-libraries
                 continue
             if locally_built(lib) or os.path.islink(os.path.join(fastr_libdir, lib)):
@@ -177,7 +177,7 @@ def updatelib(args):
     cap_libs = get_captured_libs()
     libs = []
     for lib in os.listdir(libdir):
-        if not ('.dylib' in lib or '.so' in lib):
+        if (not ('.dylib' in lib or '.so' in lib)) or '.dylibl' in lib or '.sol' in lib:
             # ignore non-libraries
             continue
         if not os.path.islink(os.path.join(libdir, lib)):

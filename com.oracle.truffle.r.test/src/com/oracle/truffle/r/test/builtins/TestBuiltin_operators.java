@@ -60,13 +60,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators9() {
-        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
-        // [1] "NumericNotStructure"
-        // attr(,"class")attr(,"package")
-        // FastR outputs
-        // [1] "NumericNotStructure"
-        // attr(,"package")
-        assertEval(Ignored.OutputFormatting, "argv <- list(structure(1:10, class = structure('NumericNotStructure', package = '.GlobalEnv')), 1);`+`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(1:10, class = structure('NumericNotStructure', package = '.GlobalEnv')), 1);`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -176,13 +170,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators31() {
-        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
-        // [1] "foo"
-        // attr(,"class")attr(,"package")
-        // FastR outputs
-        // [1] "foo"
-        // attr(,"package")
-        assertEval(Ignored.OutputFormatting, "argv <- list(structure(FALSE, class = structure('foo', package = '.GlobalEnv')), NA);`+`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(FALSE, class = structure('foo', package = '.GlobalEnv')), NA);`+`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1308,14 +1296,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators257() {
-        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
-        // [1] "withId"
-        // attr(,"class")attr(,"package")
-        // FastR outputs
-        // [1] "withId"
-        // attr(,"package")
-        assertEval(Ignored.OutputFormatting,
-                        "argv <- list(structure(c(1, 1.4142135623731, 1.73205080756888, 2, 2.23606797749979, 2.44948974278318, 2.64575131106459, 2.82842712474619, 3, 3.16227766016838), id = 'test 1', class = structure('withId', package = '.GlobalEnv')), 1);`%%`(argv[[1]],argv[[2]]);");
+        assertEval("argv <- list(structure(c(1, 1.4142135623731, 1.73205080756888, 2, 2.23606797749979, 2.44948974278318, 2.64575131106459, 2.82842712474619, 3, 3.16227766016838), id = 'test 1', class = structure('withId', package = '.GlobalEnv')), 1);`%%`(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -1832,13 +1813,7 @@ public class TestBuiltin_operators extends TestBase {
 
     @Test
     public void testoperators355() {
-        // FIXME GnuR outputs extra 'attr(,"class")' for the following:
-        // [1] "Foo"
-        // attr(,"class")attr(,"package")
-        // FastR outputs
-        // [1] "Foo"
-        // attr(,"package")
-        assertEval(Ignored.OutputFormatting, "argv <- list(structure(NA, .Dim = c(1L, 1L), name = 'Sam', class = structure('Foo', package = '.GlobalEnv')));`(`(argv[[1]]);");
+        assertEval("argv <- list(structure(NA, .Dim = c(1L, 1L), name = 'Sam', class = structure('Foo', package = '.GlobalEnv')));`(`(argv[[1]]);");
     }
 
     @Test
@@ -2078,5 +2053,12 @@ public class TestBuiltin_operators extends TestBase {
         assertEval("{ l <- list(an='a', bn='b', 3, 4);  'a' == l }");
         assertEval("{ l <- list(an=T, bn=F, T, F);  l == T }");
         assertEval("{ l <- list(an=T, bn=F, T, F);  T == l }");
+    }
+
+    @Test
+    public void testListWithNull() {
+        assertEval("{ list(NULL) < 1 }");
+        assertEval("{ list(1, NULL) < c(1, 1) }");
+        assertEval("{ c(1, 1) < list(1, NULL) }");
     }
 }

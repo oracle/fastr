@@ -115,4 +115,9 @@ public class TestFormulae extends TestBase {
     public void testDotWithNoFramenames() {
         assertEval(Output.IgnoreErrorContext, "terms.formula(x ~ .^4)");
     }
+
+    @Test
+    public void testModelFrameWithWeights() {
+        assertEval("model.frame(formula = cyl ~ disp, data = mtcars[1:4,], weights = seq_len(nrow(mtcars[1:4,])))");
+    }
 }

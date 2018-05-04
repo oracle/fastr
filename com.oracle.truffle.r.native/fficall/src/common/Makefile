@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2017, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,7 @@ OBJ = ../../lib
 
 GNUR_APPL_C_FILES = pretty.c interv.c
 GNUR_APPL_SRC = $(GNUR_HOME)/src/appl
-ifneq ($(FASTR_RFFI),llvm)	
 GNUR_APPL_F_FILES := $(notdir $(wildcard $(GNUR_APPL_SRC)/d*.f))
-else
-GNUR_APPL_F_FILES :=
-endif
 
 GNUR_MAIN_C_FILES = colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
 GNUR_MAIN_SRC = $(GNUR_HOME)/src/main

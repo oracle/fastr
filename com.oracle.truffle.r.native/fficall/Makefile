@@ -36,7 +36,9 @@ endif
 C_LIBNAME := libR$(DYLIB_EXT)
 C_LIB := $(FASTR_LIB_DIR)/$(C_LIBNAME)
 R_LIBNAME := libR$(DYLIB_EXT)
+R_LIBNAME_DUMMY := libR_dummy$(DYLIB_EXT)
 R_LIB := $(FASTR_LIB_DIR)/$(R_LIBNAME)
+R_LIB_DUMMY := $(FASTR_LIB_DIR)/$(R_LIBNAME_DUMMY)
 
 ifeq ($(OS_NAME), Darwin)
 VERSION_FLAGS := -current_version $(R_VERSION) -compatibility_version $(R_VERSION)
@@ -56,16 +58,22 @@ ifeq ($(FASTR_RFFI),managed)
 	# nop
 else
 ifeq ($(OS_NAME),Darwin)
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
-ifneq ($(FASTR_RFFI),llvm)
+	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+ifeq ($(FASTR_RFFI),llvm)
+	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+	FASTR_RFFI="llvm-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) -Wl,-rpath,@loader_path/ -o $(R_LIB) $(wildcard lib/*.bc) -L$(FASTR_LIB_DIR) -ldl -lRblas -lRlapack  -lpcre -lz $(VERSION_FLAGS)
+endif
 	install_name_tool -change libRblas.dylib @rpath/libRblas.dylib $(R_LIB)
 	install_name_tool -change libRlapack.dylib @rpath/libRlapack.dylib $(R_LIB)
 	install_name_tool -id @rpath/libR.dylib $(R_LIB)
 # check if we captured libpcre/libz, rpath those in libR
 	mx -p $(FASTR_R_HOME) rupdatelib $(FASTR_LIB_DIR)
-endif
 else
-	$(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
+	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.o) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
+ifeq ($(FASTR_RFFI),llvm)
+	FASTR_RFFI="nfi-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB_DUMMY) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
+	FASTR_RFFI="llvm-only" $(DYLIB_LD) $(DYLIB_LDFLAGS) $(shell echo $(PKG_LDFLAGS_OVERRIDE)) -Wl,-rpath,'$$ORIGIN' -o $(R_LIB) $(wildcard lib/*.bc) -L$(FASTR_LIB_DIR) -lRblas -lRlapack -ldl -lpcre -lz
+endif
 endif
 endif # managed
 
@@ -82,7 +90,8 @@ else
 ifeq ($(FASTR_RFFI),llvm)
 export R_PACKAGE_DIR="lib"
 fficall.done: common.done
-	$(MAKE) -C src/truffle_llvm all
+	$(MAKE) FASTR_RFFI="nfi-only" -C src/truffle_nfi all
+	$(MAKE) FASTR_RFFI="llvm-only" -C src/truffle_llvm all
 	touch fficall.done
 else
 	$(error unknown value for FASTR_RFFI)
@@ -91,6 +100,7 @@ endif #nfi
 endif #managed
 
 common.done:
+	echo "src/common FASTR_RFFI: $(FASTR_RFFI)"
 	$(MAKE) -C src/common all
 	touch common.done
 
@@ -100,6 +110,7 @@ ifeq ($(FASTR_RFFI),nfi)
 	$(MAKE) -C src/truffle_nfi clean
 else
 ifeq ($(FASTR_RFFI),llvm)
+	$(MAKE) -C src/truffle_nfi clean
 	$(MAKE) -C src/truffle_llvm clean
 else
 ifneq ($(FASTR_RFFI),managed)
@@ -108,5 +119,7 @@ endif
 endif
 endif
 	rm -rf $(R_LIB)
+	rm -rf $(R_LIB_DUMMY)
+	rm -rf "$(R_LIB)l"
 	rm -rf fficall.done
 	rm -rf common.done

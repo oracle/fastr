@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.nmath.RMath;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
@@ -37,10 +38,6 @@ public final class Trunc extends UnaryArithmetic {
 
     @Override
     public double op(double op) {
-        if (op > 0) {
-            return Math.floor(op);
-        } else {
-            return Math.ceil(op);
-        }
+        return RMath.trunc(op);
     }
 }

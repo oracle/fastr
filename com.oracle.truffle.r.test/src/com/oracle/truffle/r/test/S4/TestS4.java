@@ -112,6 +112,9 @@ public class TestS4 extends TestRBase {
     @Test
     public void testMethods() {
         // output slightly different from GNU R even though we use R's "show" method to print it
+        // GNU R shows environment info:
+        // function(object) standardGeneric("gen")
+        // <environment: 0x...>
         assertEval(Ignored.OutputFormatting, "{ setGeneric(\"gen\", function(object) standardGeneric(\"gen\")); res<-print(gen); removeGeneric(\"gen\"); res }");
         assertEval(Ignored.OutputFormatting, "{ gen<-function(object) 0; setGeneric(\"gen\"); res<-print(gen); removeGeneric(\"gen\"); res }");
 

@@ -22,10 +22,26 @@
 # questions.
 #
 
+echo "ARGS: $@"
+
+echo "llvm-fc FASTR_RFFI $FASTR_RFFI"
+
+if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
+	gfortran "$@"
+fi
+if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
+    exit 0
+fi
+
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
 . $DIR/llvm-helper
+
+errorOccurred || {
+try
+(
+
 fortran=1
 analyze_args "$@"
 
@@ -53,8 +69,7 @@ function ll_to_bc() {
   llvm_ir_bc_file=${d}/${f%%.*}.bc
 }
 
-
-runit $FASTR_LLVM_GFORTRAN -fplugin=$FASTR_LLVM_DRAGONEGG -fplugin-arg-dragonegg-emit-ir $llvm_args
+runit $FASTR_LLVM_GFORTRAN -fplugin=$FASTR_LLVM_DRAGONEGG -fplugin-arg-dragonegg-emit-ir "${llvm_args[@]}"
 ll_to_bc
 runit $FASTR_LLVM_GFORTRAN_LLVM_AS $llvm_ir_file -o $llvm_ir_bc_file
 runit rm $llvm_ir_file
@@ -62,5 +77,10 @@ llvm_ir_file=$llvm_ir_bc_file
 # the llvm_ir_file is empty if the result is sent to stdout
 if [ -n "$llvm_ir_file" ]; then
   mem2reg_opt
-  fake_obj
+  #fake_obj
 fi
+
+) || catch || {
+	recordError
+}
+}

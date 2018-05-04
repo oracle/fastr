@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.RError;
@@ -36,7 +37,7 @@ import com.oracle.truffle.r.runtime.RError;
  */
 public abstract class CastNode extends UnaryNode {
 
-    private static boolean isTesting = false;
+    @CompilationFinal private static boolean isTesting = false;
     private static String lastWarning;
 
     private final ValueProfile classProfile = ValueProfile.createClassProfile();

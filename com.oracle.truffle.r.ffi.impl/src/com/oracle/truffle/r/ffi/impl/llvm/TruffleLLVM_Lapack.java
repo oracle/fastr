@@ -56,6 +56,8 @@ final class TruffleLLVM_Lapack {
             callTarget = openLLVMLibraries();
         } else {
             callTarget = openNativeLibraries();
+            // libR must be loaded first to put the rpath mechanism in work. It's OS X specific.
+            callTarget.call(LibPaths.getBuiltinLibPath("R_dummy"), false, false);
             callTarget.call(LibPaths.getBuiltinLibPath("gcc_s"), false, true);
             callTarget.call(LibPaths.getBuiltinLibPath("quadmath"), false, true);
             callTarget.call(LibPaths.getBuiltinLibPath("gfortran"), false, true);

@@ -392,12 +392,20 @@ public class RDeparse {
             if (FastROptions.EmitTmpSource.getBooleanValue() && deparsePath != null) {
                 fixupSourcesTempFile(deparsePath);
             } else {
-                fixupSourcesTextInternal();
+                fixupSourcesText();
             }
         }
 
-        private void fixupSourcesTextInternal() {
-            Source source = RSource.fromTextInternal(sb.toString(), RSource.Internal.DEPARSE);
+        private void fixupSourcesText() {
+            RootNode rootNode = getRootNode();
+            String name = rootNode != null ? rootNode.getName() : null;
+            String text = sb.toString();
+            if (name != null && !name.isEmpty() && !name.equals("<no source>")) {
+                name = name.replace(File.separatorChar, '_') + ".r";
+            } else {
+                name = "unknown.r";
+            }
+            Source source = RSource.fromText(text, name);
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(s.start, s.length));
             }
@@ -414,13 +422,12 @@ public class RDeparse {
                         s.element.setSourceSection(source.createSection(s.start, s.length));
                     }
                 }
-            } catch (AccessDeniedException | FileAlreadyExistsException e) {
-                fixupSourcesTextInternal();
-            } catch (IOException e) {
+            } catch (AccessDeniedException | FileAlreadyExistsException | IllegalArgumentException e) {
+                // do not report because these exceptions are legitimate
+                fixupSourcesText();
+            } catch (Throwable e) {
                 RInternalError.reportError(e);
-                fixupSourcesTextInternal();
-            } catch (NoSuchAlgorithmException e) {
-                throw RInternalError.shouldNotReachHere("SHA-256 is an unknown algorithm");
+                fixupSourcesText();
             }
         }
 
@@ -745,6 +752,9 @@ public class RDeparse {
                             break;
                         }
                         needsParens = mainOp.prec > arginfo.prec || (mainOp.prec == arginfo.prec && isLeft == mainOp.rightassoc);
+                        break;
+                    case FUNCTION:
+                        needsParens = true;
                         break;
                     default:
                         break;

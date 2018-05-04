@@ -782,7 +782,7 @@ modelframe <- function(formula, rownames, variables, varnames, dots, dotnames, s
             }
             
             data[[j]] <- dots[[i]]
-            dataNames[[j]] <- paste("(", ss, ")")
+            dataNames[[j]] <- paste0("(", ss, ")")
             j <- j + 1L
         }
     } else {

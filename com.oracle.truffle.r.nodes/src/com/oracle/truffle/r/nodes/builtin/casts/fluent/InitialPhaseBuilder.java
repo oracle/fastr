@@ -24,9 +24,11 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.casts.Filter;
+import com.oracle.truffle.r.nodes.builtin.casts.Filter.RVarArgsFilter;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineStep;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -63,6 +65,14 @@ public class InitialPhaseBuilder<T> extends ArgCastBuilder<T, InitialPhaseBuilde
     public <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls, RError.Message message, Object... messageArgs) {
         mustBe(Predef.instanceOf(cls), message, messageArgs);
         return (InitialPhaseBuilder<S>) this;
+    }
+
+    /**
+     * Valid {@link com.oracle.truffle.r.runtime.data.RArgsValuesAndNames} does not contain any
+     * {@link com.oracle.truffle.r.runtime.data.REmpty} values.
+     */
+    public void mustBeValidVarArgs() {
+        pipelineBuilder().appendMustBeStep(new RVarArgsFilter(), Message.INVALID_ARG_TYPE, new Object[0]);
     }
 
     public <S extends T> InitialPhaseBuilder<S> mustBe(Class<S> cls) {

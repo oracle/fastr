@@ -56,6 +56,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RScalar;
+import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -325,9 +328,23 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-                return arg.getLength() == 1;
+                return arg.getLength() == 1 && isUnBoxable(arg);
             }
         });
+    }
+
+    private static boolean isUnBoxable(RAbstractVector vector) {
+        Object o = vector.getDataAtAsObject(0);
+        return isPrimitive(o);
+    }
+
+    private static boolean isPrimitive(Object element) {
+        if (element == null) {
+            return false;
+        }
+        final Class<?> elementType = element.getClass();
+        return elementType == String.class || elementType == Character.class || elementType == Boolean.class || elementType == Byte.class || elementType == Short.class ||
+                        elementType == Integer.class || elementType == Long.class || elementType == Float.class || elementType == Double.class;
     }
 
     @Override
@@ -437,5 +454,24 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
                 return new RObjectNativeWrapper((RObject) arg);
             }
         });
+    }
+
+    static class Check extends RootNode {
+
+        Check() {
+            super(null);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame) {
+            final Object receiver = ForeignAccess.getReceiver(frame);
+            // TODO: RLogical has no ForeignAccess, issue: GR-9536, use RAbstractVectorAccessFactory
+            // for compatibility.
+            final boolean logical = receiver.getClass() == RLogical.class;
+            // TODO: RString has no ForeignAccess, issue: GR-9536, use RAbstractVectorAccessFactory
+            // for compatibility.
+            final boolean string = receiver.getClass() == RString.class;
+            return receiver instanceof RAbstractAtomicVector && (!(receiver instanceof RScalar) || logical || string);
+        }
     }
 }
