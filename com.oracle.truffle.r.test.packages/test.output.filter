@@ -4,18 +4,21 @@
 # filter = pkg_pattern '=>' action .
 # pkg_pattern = <REGEX>.
 # action = command '/' string ['/' string ].
-# command = 'd' | 'D' | 'r' | 'R'
+# command = 'd' | 'D' ['-N'] ['+N'] | 'r' | 'R'
 # string = <unquoted string, slashed must be escaped with backslash>
+# N = positive number
 # 
 # Command description:
-#   d   delete exact match of the specified string (i.e. replace by empty string)
-#   D   delete line containing the specified string
-#   r   replace exact match of the first argument by the second argument
-#   R   replace line containing the first argument by the second argument
+#   d      delete exact match of the specified string (i.e. replace by empty string)
+#   D      delete line containing the specified string
+#   r      replace exact match of the first argument by the second argument
+#   R      replace line containing the first argument by the second argument
+#   D+3-1  delete line containing the specified string and 1 preceding and 3 following lines
 #
 # NOTES:
 # The definition order of the filters (in this file) matters. 
 # They will be applied in order.
+# They will be applied to the outputs of both GNU R and FastR
 #
 
 

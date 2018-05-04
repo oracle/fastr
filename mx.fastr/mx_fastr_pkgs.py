@@ -42,6 +42,7 @@ import mx_fastr
 
 quiet = False
 verbose = 0
+dump_preprocessed = False
 graalvm = None
 
 def _fastr_suite_dir():
@@ -192,6 +193,7 @@ def pkgtest(args):
         --list-versions          List packages to be installed/tested without installing/testing them.
         --pkg-pattern PATTERN    A regular expression to match packages.
         --verbose, -v            Verbose output.
+        --dump-preprocessed      Dump the preprocessed output files to the current working directory.
 
     Return codes:
         0: success
@@ -205,6 +207,7 @@ def pkgtest(args):
     gnur_libinstall, gnur_install_tmp = _create_libinstall('gnur', test_installed)
 
     global verbose
+    global dump_preprocessed
     if "--quiet" in args:
         global quiet
         quiet = True
@@ -212,6 +215,9 @@ def pkgtest(args):
         verbose = 1
     elif "-V" in args:
         verbose = 2
+    if "--dump-preprocessed" in args:
+        dump_preprocessed = True
+        args.remove('--dump-preprocessed')
 
     install_args = list(args)
 
@@ -702,6 +708,11 @@ def _fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, c
     mx.logv("Using custom filters:\n" + str(custom_filters))
     gnur_content = _preprocess_content(gnur_content, custom_filters)
     fastr_content = _preprocess_content(fastr_content, custom_filters)
+    if dump_preprocessed:
+        with open(gnur_filename + '.preprocessed', 'w') as f:
+            f.writelines(gnur_content)
+        with open(fastr_filename + '.preprocessed', 'w') as f:
+            f.writelines(fastr_content)
     gnur_start = _find_start(gnur_content)
     gnur_end = _find_end(gnur_content)
     fastr_start = _find_start(fastr_content)
@@ -941,9 +952,15 @@ def _parse_filter(line):
     action_str = line[arrow_idx+2:].strip()
     action = action_str[0]
     args = []
+    remove_before = 0
+    remove_after = 0
     if action == "d" or action == "D":
-        # actions with one argument
+        # actions with one argument and possibly numbers that indicate lines to remove after/before
         slash_idx = action_str.find("/")
+        skip_before_match = re.search(r'\-(\d+)', action_str)
+        skip_after_match = re.search(r'\+(\d+)', action_str)
+        remove_before = 0 if not skip_before_match else int(skip_before_match.group(1))
+        remove_after = 0 if not skip_after_match else int(skip_after_match.group(1))
         if slash_idx < 0:
             raise InvalidFilterException("cannot find separator '/'")
         args.append(action_str[slash_idx+1:])
@@ -957,7 +974,9 @@ def _parse_filter(line):
             raise InvalidFilterException("cannot find second separator '/'")
         args.append(action_str[slash0_idx + 1:slash1_idx])
         args.append(action_str[slash1_idx + 1:])
-    return ContentFilter(pkg_pattern, action, args)
+    else:
+        raise InvalidFilterException("invalid action '" + action_str + "'")
+    return ContentFilter(pkg_pattern, action, args, remove_before, remove_after)
 
 
 def _parse_filter_file(file_path):
@@ -980,17 +999,29 @@ class ContentFilter:
     pkg_pattern = "*"
     action = "d"
     args = []
+    remove_before = 0
+    remove_after = 0
 
-    def __init__(self, pkg_pattern, action, args):
+    def __init__(self, pkg_pattern, action, args, remove_before=0, remove_after=0):
         self.pkg_pattern = pkg_pattern
         self.pkg_prog = re.compile(pkg_pattern)
         self.action = action
         self.args = args
+        self.remove_before = remove_before
+        self.remove_after = remove_after
 
     def _apply_to_lines(self, content, action):
         if action is not None:
-            for idx, val in enumerate(content):
+            idx = 0
+            while idx < len(content):
+                val = content[idx]
                 content[idx] = action(val)
+                # check if the line was removed and apply remove_before/after
+                if self.action == 'D' and val and not content[idx]:
+                    remove_count = self.remove_before + self.remove_after + 1
+                    content[idx - self.remove_before:idx + self.remove_after + 1] = [""] * remove_count
+                    idx += self.remove_after
+                idx += 1
         return content
 
     def apply(self, content):
@@ -1003,7 +1034,6 @@ class ContentFilter:
             filter_action = lambda l: self.args[1] if self.args[0] in l else l
         elif self.action == "D":
             filter_action = lambda l: "" if self.args[0] in l else l
-
         return self._apply_to_lines(content, filter_action)
 
     def applies_to_pkg(self, pkg_name):
