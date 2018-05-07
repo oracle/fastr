@@ -560,7 +560,9 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         Object p = this;
         for (int i = 0; i < newNames.getLength() && !isNull(p); i++) {
             RPairList pList = (RPairList) p;
-            pList.setTag(RDataFactory.createSymbol(newNames.getDataAt(i)));
+            String newNameVal = newNames.getDataAt(i);
+            Object newTag = newNameVal.isEmpty() ? RNull.instance : RDataFactory.createSymbolInterned(newNameVal);
+            pList.setTag(newTag);
             p = pList.cdr();
         }
     }
