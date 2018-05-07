@@ -861,8 +861,8 @@ public class RRuntime {
     public static String asString(Object obj) {
         if (obj instanceof String) {
             return (String) obj;
-        } else if (obj instanceof RStringVector) {
-            return ((RStringVector) obj).getDataAt(0);
+        } else if (obj instanceof RAbstractStringVector) {
+            return ((RAbstractStringVector) obj).getDataAt(0);
         } else {
             return null;
         }
