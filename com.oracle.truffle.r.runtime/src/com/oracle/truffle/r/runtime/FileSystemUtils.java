@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 public class FileSystemUtils {
     private static PosixFilePermission[] permissionValues = PosixFilePermission.values();
 
-    private static Set<PosixFilePermission> permissionsFromMode(int mode) {
+    public static Set<PosixFilePermission> permissionsFromMode(int mode) {
         Set<PosixFilePermission> permissions = EnumSet.noneOf(PosixFilePermission.class);
         for (int i = 0; i < permissionValues.length; i++) {
             if ((mode & (1 << (permissionValues.length - i - 1))) != 0) {

@@ -266,6 +266,21 @@ public final class BaseRFFI {
         }
     }
 
+    public static final class UmaskNode extends NativeCallNode {
+
+        private UmaskNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.umask));
+        }
+
+        public int umask(int mode) {
+            return (int) call(mode);
+        }
+
+        public static UmaskNode create() {
+            return RFFIFactory.getBaseRFFI().createUmaskNode();
+        }
+    }
+
     public GetpidNode createGetpidNode() {
         return new GetpidNode(downCallNodeFactory);
     }
@@ -300,6 +315,10 @@ public final class BaseRFFI {
 
     public ESoftVersionNode createESoftVersionNode() {
         return new ESoftVersionNode(downCallNodeFactory);
+    }
+
+    public UmaskNode createUmaskNode() {
+        return new UmaskNode(downCallNodeFactory);
     }
 
     /*

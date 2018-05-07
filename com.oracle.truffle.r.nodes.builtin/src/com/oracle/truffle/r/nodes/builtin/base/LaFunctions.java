@@ -761,7 +761,7 @@ public class LaFunctions {
                 }
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
                 if (aDn != null) {
-                    setNamesNode.setNames(b, RDataFactory.createStringVector((String) aDn.getDataAt(1)));
+                    setNamesNode.setNames(b, (RStringVector) RRuntime.asAbstractVector(aDn.getDataAt(1)));
                 }
             }
 
