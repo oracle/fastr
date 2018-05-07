@@ -221,7 +221,7 @@ public final class Unit {
             case STRINGWIDTH:
             case MYSTRINGWIDTH:
                 str = RRuntime.asString(data.getDataAt(0));
-                return value * GridUtils.getStringWidth(ctx.gpar.getDrawingContext(index), ctx.device, str);
+                return value * GridUtils.getStringWidth(ctx.gpar.getDrawingContext(index), ctx.device, str == null ? "" : str);
             case STRINGHEIGHT:
             case MYSTRINGHEIGHT:
                 str = RRuntime.asString(data.getDataAt(0));
