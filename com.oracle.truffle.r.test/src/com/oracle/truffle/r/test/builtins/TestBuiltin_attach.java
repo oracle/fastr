@@ -34,6 +34,7 @@ public class TestBuiltin_attach extends TestBase {
         assertEval("d <- list(colNameX=c(1,2,3)); attach(d); colNameX");
         assertEval("e <- attach(NULL); attr(e, 'name')");
         assertEval("d <- list(col=c(1,2,3)); e <- attach(d, name='hello'); attr(e, 'name')");
+        assertEval("attach(list())");
     }
 
     @Test
