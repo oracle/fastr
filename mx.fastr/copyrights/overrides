@@ -293,7 +293,7 @@ com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RDeparse.java,gnu_
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RError.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/RErrorHandling.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mm/MarsagliaMulticarry.java,gnu_r.copyright
-com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mt/MersenneTwister.java,hiroshima.copyright
+com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/mt/MersenneTwister.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RandomNumberGenerator.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RNGInitAdapter.java,gnu_r.copyright
 com.oracle.truffle.r.runtime/src/com/oracle/truffle/r/runtime/rng/RRNG.java,gnu_r.copyright

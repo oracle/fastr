@@ -1,8 +1,4 @@
 /*
- * This material is distributed under the GNU General Public License
- * Version 2. You may review the terms of this license at
- * http://www.gnu.org/licenses/gpl-2.0.html
- *
  * Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2014, The R Core Team
@@ -14,7 +10,19 @@
  *  and  on AS 111 (C) 1977 Royal Statistical Society
  *  and  on AS 241 (C) 1988 Royal Statistical Society
  *
- * All rights reserved.
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
+ *
+ * This program is distributed in the hope that it will be useful, but
+ * WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+ * General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, a copy is available at
+ * https://www.R-project.org/Licenses/
  */
 package com.oracle.truffle.r.runtime.nmath;
 
@@ -352,7 +360,9 @@ public abstract class GammaFunctions {
     private static final double C9 = 6.73;
     private static final double C10 = 13.32;
 
-    private static double qchisqAppr(double p, double nu, double g /* = log Gamma(nu/2) */, boolean lowerTail, boolean logp, double tol /* EPS1 */) {
+    private static double qchisqAppr(double p, double nu, double g /* = log Gamma(nu/2) */, boolean lowerTail, boolean logp, double tol /*
+                                                                                                                                         * EPS1
+                                                                                                                                         */) {
         double alpha;
         double a;
         double c;
@@ -1007,7 +1017,9 @@ public abstract class GammaFunctions {
                                                                                                    */
                     2 / 3., -4 / 135., 8 / 2835., 16 / 8505., -8992 / 12629925., -334144 / 492567075., 698752 / 1477701225.};
 
-    @CompilationFinal(dimensions = 1) private static final double[] coefs_b = new double[]{-1e99, /* placeholder */
+    @CompilationFinal(dimensions = 1) private static final double[] coefs_b = new double[]{-1e99, /*
+                                                                                                   * placeholder
+                                                                                                   */
                     1 / 12., 1 / 288., -139 / 51840., -571 / 2488320., 163879 / 209018880., 5246819 / 75246796800., -534703531 / 902961561600.};
 
     /*

@@ -1,66 +1,54 @@
 /*
- * This material is distributed under the GNU General Public License
- * Version 2. You may review the terms of this license at
- * http://www.gnu.org/licenses/gpl-2.0.html
+ * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
+ * Copyright (c) 1997-2016,  The R Core Team
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates
  *
- * Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura
- * Copyright (c) 2013, 2017, Oracle and/or its affiliates
+ * This program is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2 of the License, or
+ * (at your option) any later version.
  *
- * All rights reserved.
+ * This program is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, a copy is available at
+ * https://www.R-project.org/Licenses/
  */
 
 /*
  This is a Java reimplementation of MT19937, derived by translation from
- the C implementation, which is available from
- http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/MT2002/CODES/mt19937ar.c
- and is copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura,
- and also from the GNU R file RNG.c
+ the C implementation, which is available from the GNU R file RNG.c
 
- The original header from the C implementation by Matsumoto and Nishimura is included below.
+The RNG.c file contains the following mention:
  */
+/* ===================  Mersenne Twister ========================== */
+/* From http://www.math.keio.ac.jp/~matumoto/emt.html */
 
-/*
- A C-program for MT19937, with initialization improved 2002/1/26.
- Coded by Takuji Nishimura and Makoto Matsumoto.
+/* A C-program for MT19937: Real number version([0,1)-interval)
+   (1999/10/28)
+     genrand() generates one pseudorandom real number (double)
+   which is uniformly distributed on [0,1)-interval, for each
+   call. sgenrand(seed) sets initial values to the working area
+   of 624 words. Before genrand(), sgenrand(seed) must be
+   called once. (seed is any 32-bit integer.)
+   Integer generator is obtained by modifying two lines.
+     Coded by Takuji Nishimura, considering the suggestions by
+   Topher Cooper and Marc Rieffel in July-Aug. 1997.
 
- Before using, initialize the state by using init_genrand(seed)
- or init_by_array(init_key, key_length).
+   Copyright (C) 1997, 1999 Makoto Matsumoto and Takuji Nishimura.
+   When you use this, send an email to: matumoto@math.keio.ac.jp
+   with an appropriate reference to your work.
 
- Copyright (C) 1997 - 2002, Makoto Matsumoto and Takuji Nishimura,
- All rights reserved.
-
- Redistribution and use in source and binary forms, with or without
- modification, are permitted provided that the following conditions
- are met:
-
- 1. Redistributions of source code must retain the above copyright
- notice, this list of conditions and the following disclaimer.
-
- 2. Redistributions in binary form must reproduce the above copyright
- notice, this list of conditions and the following disclaimer in the
- documentation and/or other materials provided with the distribution.
-
- 3. The names of its contributors may not be used to endorse or promote
- products derived from this software without specific prior written
- permission.
-
- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
- "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
- A PARTICULAR PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR
- CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
- EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO,
- PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR
- PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF
- LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING
- NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS
- SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
- Any feedback is very welcome.
- http://www.math.sci.hiroshima-u.ac.jp/~m-mat/MT/emt.html
- email: m-mat @ math.sci.hiroshima-u.ac.jp (remove space)
- */
+   REFERENCE
+   M. Matsumoto and T. Nishimura,
+   "Mersenne Twister: A 623-Dimensionally Equidistributed Uniform
+   Pseudo-Random Number Generator",
+   ACM Transactions on Modeling and Computer Simulation,
+   Vol. 8, No. 1, January 1998, pp 3--30.
+*/
 package com.oracle.truffle.r.runtime.rng.mt;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
