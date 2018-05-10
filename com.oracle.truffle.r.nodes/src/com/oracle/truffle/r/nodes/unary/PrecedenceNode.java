@@ -37,11 +37,11 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
@@ -66,7 +66,6 @@ import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@SuppressWarnings("deprecation")
 @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class, Foreign2R.class})
 public abstract class PrecedenceNode extends RBaseNode {
 
@@ -290,8 +289,9 @@ public abstract class PrecedenceNode extends RBaseNode {
                     @Cached("create()") Foreign2R foreign2R) {
         int precedence = -1;
         try {
-            if (JavaInterop.isJavaObject(obj)) {
-                Object o = JavaInterop.asJavaObject(Object.class, obj);
+            RContext context = RContext.getInstance();
+            if (context.getEnv().isHostObject(obj)) {
+                Object o = context.getEnv().asHostObject(obj);
                 Class<?> ct = o.getClass().getComponentType();
                 int prc = getPrecedence(ct, recursive);
                 if (prc != -1) {

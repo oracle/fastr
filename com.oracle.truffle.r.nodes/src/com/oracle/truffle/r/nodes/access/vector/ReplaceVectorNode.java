@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -33,7 +34,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.AccessElementNode;
@@ -68,7 +68,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Syntax node for element writes.
  */
 
-@SuppressWarnings("deprecation")
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class ReplaceVectorNode extends RBaseNode {
 
@@ -311,11 +310,13 @@ public abstract class ReplaceVectorNode extends RBaseNode {
                     keyInfoNode = insert(com.oracle.truffle.api.interop.Message.KEY_INFO.createNode());
                 }
             }
+            RContext context = RContext.getInstance();
+            TruffleLanguage.Env env = context.getEnv();
             int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
             if (KeyInfo.isWritable(info) || hasSize(object)) {
                 ForeignAccess.sendWrite(foreignWrite, object, pos, value);
                 return;
-            } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(object) && !JavaInterop.isJavaObject(Class.class, object)) {
+            } else if (pos instanceof String && !KeyInfo.isExisting(info) && env.isHostObject(object) && !(env.asHostObject(object) instanceof Class)) {
                 if (classForeignWrite == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     classForeignWrite = insert(com.oracle.truffle.api.interop.Message.WRITE.createNode());
@@ -328,7 +329,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     readNode = insert(com.oracle.truffle.api.interop.Message.READ.createNode());
                 }
-                TruffleObject classStatic = RContext.getInstance().toJavaStatic(object, readNode, executeNode);
+                TruffleObject classStatic = context.toJavaStatic(object, readNode, executeNode);
                 try {
                     ForeignAccess.sendWrite(classForeignWrite, classStatic, pos, value);
                     return;

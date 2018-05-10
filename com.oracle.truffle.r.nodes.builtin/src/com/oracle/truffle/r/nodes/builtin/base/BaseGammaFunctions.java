@@ -173,8 +173,6 @@ public class BaseGammaFunctions {
             casts.arg(1).defaultError(RError.Message.NON_NUMERIC_MATH).mustBe(complexValue().not(), RError.Message.UNIMPLEMENTED_COMPLEX_FUN).mustBe(numericValue()).asDoubleVector();
         }
 
-        private final NACheck naCheck = NACheck.create();
-
         @Specialization(guards = "binaryMapNode.isSupported(x, deriv)")
         protected RAbstractDoubleVector psiGammaFast(RAbstractDoubleVector x, RAbstractDoubleVector deriv,
                         @Cached("createFastCached(x, deriv)") BinaryMapNode binaryMapNode) {

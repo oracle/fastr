@@ -22,21 +22,20 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
+import com.oracle.truffle.api.interop.TruffleObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
 import org.junit.Assert;
 import org.junit.Test;
 
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
-import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRSession;
 import java.io.File;
 import org.junit.After;
-import static org.junit.Assert.assertTrue;
 
-@SuppressWarnings("deprecation")
 public class TestInterop extends TestBase {
 
     private static final SeekableMemoryByteChannel CHANNEL = new SeekableMemoryByteChannel();
@@ -120,10 +119,15 @@ public class TestInterop extends TestBase {
     // TODO: export/importSymbol
     @Override
     public void addPolyglotSymbols(org.graalvm.polyglot.Context context) {
-        for (TestJavaObject t : TestInterop.testJavaObjects) {
-            context.exportSymbol(t.name, JavaInterop.asTruffleObject(t.object));
-        }
-        context.exportSymbol(CHANNEL_NAME, JavaInterop.asTruffleObject(CHANNEL));
+        FastRSession.execInContext(context, () -> {
+            RContext rContext = RContext.getInstance();
+            for (TestJavaObject t : TestInterop.testJavaObjects) {
+                TruffleObject tobj = (TruffleObject) rContext.getEnv().asGuestValue(t.object);
+                context.getPolyglotBindings().putMember(t.name, tobj);
+            }
+            context.getPolyglotBindings().putMember(CHANNEL_NAME, rContext.getEnv().asGuestValue(CHANNEL));
+            return null;
+        });
     }
 
     @Test

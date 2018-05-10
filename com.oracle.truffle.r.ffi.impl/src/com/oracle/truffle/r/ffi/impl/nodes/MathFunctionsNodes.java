@@ -295,7 +295,7 @@ public final class MathFunctionsNodes {
         @Child private Node ierrWrite;
 
         @Specialization
-        protected Object evaluate(double x, int n, int kode, int m, Object ans, Object nz, Object ierr) {
+        protected Object evaluate(double x, int n, int kode, @SuppressWarnings("unused") int m, Object ans, Object nz, Object ierr) {
             // ans is R/W double* size==1 and nz is R/W int* size==1
             // ierr is R/W int* size==1
             double ansIn;

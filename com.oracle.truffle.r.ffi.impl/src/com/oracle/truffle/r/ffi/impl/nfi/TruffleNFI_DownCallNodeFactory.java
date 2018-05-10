@@ -24,7 +24,6 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
@@ -32,7 +31,6 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeUInt8Array;
 
-@SuppressWarnings("deprecation")
 public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
     public static final TruffleNFI_DownCallNodeFactory INSTANCE = new TruffleNFI_DownCallNodeFactory();
 
@@ -52,11 +50,12 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
             @ExplodeLoop
             protected long beforeCall(NativeFunction fn, TruffleObject target, Object[] args) {
                 for (int i = 0; i < args.length; i++) {
+                    RContext context = RContext.getInstance();
                     Object obj = args[i];
                     if (obj instanceof double[]) {
-                        args[i] = JavaInterop.asTruffleObject(obj);
+                        args[i] = context.getEnv().asGuestValue(obj);
                     } else if (obj instanceof int[] || obj == null) {
-                        args[i] = JavaInterop.asTruffleObject(obj);
+                        args[i] = context.getEnv().asGuestValue(obj);
                     } else if (obj instanceof NativeUInt8Array) {
                         // accounts for NativeCharArray and NativeRawArray
                         // the assumption is that getValue() gives us the actual backing array and
@@ -69,7 +68,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                         } else {
                             data = nativeArr.getValue();
                         }
-                        args[i] = JavaInterop.asTruffleObject(data);
+                        args[i] = context.getEnv().asGuestValue(data);
                     }
                 }
 

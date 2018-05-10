@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.castsTests;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asBoolean;
@@ -95,6 +94,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -113,12 +113,12 @@ import com.oracle.truffle.r.runtime.env.REnvironment.NewEnv;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import java.util.Arrays;
 import java.util.List;
+import org.graalvm.polyglot.Context;
 
 /**
  * Tests the cast pipelines and also that the samples generation process matches the intended
  * semantics.
  */
-@SuppressWarnings("deprecation")
 public class CastBuilderTest {
 
     /**
@@ -910,26 +910,44 @@ public class CastBuilderTest {
 
     @Test
     public void testCastForeignArray() {
-        arg.mustBe(integerValue());
-        int[] array = new int[]{1, 2, 3};
-        Object value = cast(JavaInterop.asTruffleObject(array));
-        assertTrue(value instanceof RAbstractIntVector);
+        execInContext(() -> {
+            arg.mustBe(integerValue());
+            int[] array = new int[]{1, 2, 3};
+            Object value = cast(RContext.getInstance().getEnv().asGuestValue(array));
+            assertTrue(value instanceof RAbstractIntVector);
+        });
     }
 
     @Test
     public void testCastJavaIterable() {
-        arg.mustBe(integerValue());
-        List<Integer> list = Arrays.asList(1, 2, 3);
-        Object value = cast(JavaInterop.asTruffleObject(list));
-        assertTrue(value instanceof RAbstractIntVector);
+        execInContext(() -> {
+            arg.mustBe(integerValue());
+            List<Integer> list = Arrays.asList(1, 2, 3);
+            Object value = cast(RContext.getInstance().getEnv().asGuestValue(list));
+            assertTrue(value instanceof RAbstractIntVector);
+        });
     }
 
     @Test
     public void testCastForeignObjectDisabled() {
-        arg.castForeignObjects(false).mustBe(missingValue().not());
-        TruffleObject obj = JavaInterop.asTruffleObject(new int[]{1, 2, 3});
-        Object value = cast(obj);
-        assertTrue(value == obj);
+        execInContext(() -> {
+            arg.castForeignObjects(false).mustBe(missingValue().not());
+            TruffleObject obj = (TruffleObject) RContext.getInstance().getEnv().asGuestValue(new int[]{1, 2, 3});
+            Object value = cast(obj);
+            assertTrue(value == obj);
+        });
+    }
+
+    private static void execInContext(Runnable r) {
+        Context context = Context.newBuilder("R", "llvm").allowAllAccess(true).build();
+        context.eval("R", "1"); // initialize context
+        context.enter();
+        try {
+            r.run();
+        } finally {
+            context.leave();
+            context.close();
+        }
     }
 
     /**

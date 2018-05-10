@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
@@ -33,7 +34,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -70,7 +70,6 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R.ForeignArrayData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@SuppressWarnings("deprecation")
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class ExtractVectorNode extends RBaseNode {
 
@@ -382,15 +381,17 @@ public abstract class ExtractVectorNode extends RBaseNode {
                     keyInfoNode = insert(com.oracle.truffle.api.interop.Message.KEY_INFO.createNode());
                 }
             }
+            RContext context = RContext.getInstance();
+            TruffleLanguage.Env env = context.getEnv();
             int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
             if (KeyInfo.isReadable(info) || hasSize(object)) {
                 return ForeignAccess.sendRead(foreignRead, object, pos);
-            } else if (pos instanceof String && !KeyInfo.isExisting(info) && JavaInterop.isJavaObject(object) && !JavaInterop.isJavaObject(Class.class, object)) {
+            } else if (pos instanceof String && !KeyInfo.isExisting(info) && env.isHostObject(object) && !(env.asHostObject(object) instanceof Class)) {
                 if (classForeignRead == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     classForeignRead = insert(com.oracle.truffle.api.interop.Message.READ.createNode());
                 }
-                TruffleObject clazz = RContext.getInstance().toJavaStatic(object, classForeignRead, getExecuteNode());
+                TruffleObject clazz = context.toJavaStatic(object, classForeignRead, getExecuteNode());
                 try {
                     return ForeignAccess.sendRead(classForeignRead, clazz, pos);
                 } catch (InteropException e) {

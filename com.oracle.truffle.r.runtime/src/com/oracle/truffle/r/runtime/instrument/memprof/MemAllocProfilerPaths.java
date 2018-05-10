@@ -37,11 +37,10 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.context.RContext;
 
-@SuppressWarnings("deprecation")
 public final class MemAllocProfilerPaths {
     private final AtomicLong version = new AtomicLong();
     private final AtomicInteger idGen = new AtomicInteger();
@@ -77,11 +76,7 @@ public final class MemAllocProfilerPaths {
     }
 
     public TruffleObject toTruffleObject() {
-        return JavaInterop.asTruffleObject(this);
-    }
-
-    public static MemAllocProfilerPaths fromTruffleObject(TruffleObject to) {
-        return JavaInterop.asJavaObject(MemAllocProfilerPaths.class, to);
+        return (TruffleObject) RContext.getInstance().getEnv().asGuestValue(this);
     }
 
     /**

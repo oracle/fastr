@@ -57,7 +57,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
@@ -107,7 +106,6 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
-@SuppressWarnings("deprecation")
 public class FastRInterop {
 
     private static boolean isTesting = false;
@@ -463,8 +461,6 @@ public class FastRInterop {
             }
             if (result instanceof TruffleObject) {
                 return (TruffleObject) result;
-            } else if (result instanceof Class<?>) {
-                return JavaInterop.asTruffleObject(result);
             } else {
                 interopExceptionProfile.enter();
                 if (result instanceof RuntimeException) {
@@ -520,7 +516,8 @@ public class FastRInterop {
 
         @Specialization(guards = {"isJavaObject(x1)", "isJavaObject(x2)"})
         public byte isIdentical(TruffleObject x1, TruffleObject x2) {
-            return RRuntime.asLogical(JavaInterop.asJavaObject(Object.class, x1) == JavaInterop.asJavaObject(Object.class, x2));
+            RContext context = RContext.getInstance();
+            return RRuntime.asLogical(context.getEnv().asHostObject(x1) == context.getEnv().asHostObject(x2));
         }
 
         @Fallback
@@ -530,7 +527,7 @@ public class FastRInterop {
         }
 
         protected boolean isJavaObject(TruffleObject obj) {
-            return JavaInterop.isJavaObject(obj);
+            return RContext.getInstance().getEnv().isHostObject(obj);
         }
     }
 
@@ -544,47 +541,47 @@ public class FastRInterop {
 
         @Specialization
         public TruffleObject asTruffleObject(byte b) {
-            return JavaInterop.asTruffleObject(RRuntime.fromLogical(b));
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(RRuntime.fromLogical(b));
         }
 
         @Specialization
         public TruffleObject asTruffleObject(int i) {
-            return JavaInterop.asTruffleObject(i);
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(i);
         }
 
         @Specialization
         public TruffleObject asTruffleObject(double d) {
-            return JavaInterop.asTruffleObject(d);
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(d);
         }
 
         @Specialization
         public TruffleObject asTruffleObject(String s) {
-            return JavaInterop.asTruffleObject(s);
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(s);
         }
 
         @Specialization
         public TruffleObject asTruffleObject(RInteropByte b) {
-            return JavaInterop.asTruffleObject(b.getValue());
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(b.getValue());
         }
 
         @Specialization
         public TruffleObject asTruffleObject(RInteropChar c) {
-            return JavaInterop.asTruffleObject(c.getValue());
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(c.getValue());
         }
 
         @Specialization
         public TruffleObject asTruffleObject(RInteropFloat f) {
-            return JavaInterop.asTruffleObject(f.getValue());
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(f.getValue());
         }
 
         @Specialization
         public TruffleObject asTruffleObject(RInteropLong l) {
-            return JavaInterop.asTruffleObject(l.getValue());
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(l.getValue());
         }
 
         @Specialization
         public TruffleObject asTruffleObject(RInteropShort s) {
-            return JavaInterop.asTruffleObject(s.getValue());
+            return (TruffleObject) RContext.getInstance().getEnv().asBoxedGuestValue(s.getValue());
         }
 
         @Fallback
@@ -604,9 +601,10 @@ public class FastRInterop {
 
         @Specialization(guards = {"isJavaObject(x1)", "isJavaObject(x2)"})
         public byte isAssignable(TruffleObject x1, TruffleObject x2) {
-            Object jo1 = JavaInterop.asJavaObject(Object.class, x1);
+            RContext context = RContext.getInstance();
+            Object jo1 = context.getEnv().asHostObject(x1);
             Class<?> cl1 = (jo1 instanceof Class) ? (Class<?>) jo1 : jo1.getClass();
-            Object jo2 = JavaInterop.asJavaObject(Object.class, x2);
+            Object jo2 = context.getEnv().asHostObject(x2);
             Class<?> cl2 = (jo2 instanceof Class) ? (Class<?>) jo2 : jo2.getClass();
             return RRuntime.asLogical(cl2.isAssignableFrom(cl1));
         }
@@ -618,7 +616,7 @@ public class FastRInterop {
         }
 
         protected boolean isJavaObject(TruffleObject obj) {
-            return JavaInterop.isJavaObject(obj);
+            return RContext.getInstance().getEnv().isHostObject(obj);
         }
     }
 
@@ -632,8 +630,9 @@ public class FastRInterop {
 
         @Specialization(guards = {"isJavaObject(x1)", "isJavaObject(x2)"})
         public byte isInstance(TruffleObject x1, TruffleObject x2) {
-            Object jo1 = JavaInterop.asJavaObject(Object.class, x1);
-            Object jo2 = JavaInterop.asJavaObject(Object.class, x2);
+            RContext context = RContext.getInstance();
+            Object jo1 = context.getEnv().asHostObject(x1);
+            Object jo2 = context.getEnv().asHostObject(x2);
             if (jo1 instanceof Class) {
                 Class<?> cl1 = (Class<?>) jo1;
                 return RRuntime.asLogical(cl1.isInstance(jo2));
@@ -644,7 +643,7 @@ public class FastRInterop {
         @Specialization(guards = {"isJavaObject(x1)"})
         public byte isInstance(TruffleObject x1, RInteropScalar x2,
                         @Cached("createR2Foreign()") R2Foreign r2Foreign) {
-            Object jo1 = JavaInterop.asJavaObject(Object.class, x1);
+            Object jo1 = RContext.getInstance().getEnv().asHostObject(x1);
             if (jo1 instanceof Class) {
                 Class<?> cl1 = (Class<?>) jo1;
                 return RRuntime.asLogical(cl1.isInstance(r2Foreign.execute(x2)));
@@ -654,7 +653,7 @@ public class FastRInterop {
 
         @Specialization(guards = {"isJavaObject(x1)", "!isJavaObject(x2)", "!isInterop(x2)"})
         public byte isInstance(TruffleObject x1, Object x2) {
-            Object jo1 = JavaInterop.asJavaObject(Object.class, x1);
+            Object jo1 = RContext.getInstance().getEnv().asHostObject(x1);
             if (jo1 instanceof Class) {
                 Class<?> cl1 = (Class<?>) jo1;
                 return RRuntime.asLogical(cl1.isInstance(x2));
@@ -669,7 +668,7 @@ public class FastRInterop {
         }
 
         protected boolean isJavaObject(Object obj) {
-            return RRuntime.isForeignObject(obj) && JavaInterop.isJavaObject((TruffleObject) obj);
+            return RRuntime.isForeignObject(obj) && RContext.getInstance().getEnv().isHostObject(obj);
         }
 
         protected boolean isInterop(Object obj) {
@@ -850,13 +849,13 @@ public class FastRInterop {
                     vecToArray.toArray(array, i);
                 }
             }
-            return JavaInterop.asTruffleObject(array);
+            return RContext.getInstance().getEnv().asGuestValue(array);
         }
 
         private Object toArray(RAbstractVector vec, boolean flat, Class<?> clazz, R2Foreign r2Foreign) throws IllegalArgumentException, ArrayIndexOutOfBoundsException {
             int[] dims = getDim(flat, vec);
             final Object array = Array.newInstance(clazz, dims);
-            TruffleObject truffleArray = JavaInterop.asTruffleObject(array);
+            TruffleObject truffleArray = (TruffleObject) RContext.getInstance().getEnv().asGuestValue(array);
 
             for (int d = 0; d < dims.length; d++) {
                 int dim = dims[d];
@@ -888,11 +887,12 @@ public class FastRInterop {
                 return obj;
             }
             try {
-                Object o = JavaInterop.asJavaObject(Object.class, obj);
+                RContext context = RContext.getInstance();
+                Object o = context.getEnv().asHostObject(obj);
                 if (o == null) {
                     return obj;
                 }
-                TruffleObject array = JavaInterop.asTruffleObject(Array.newInstance(o.getClass(), 1));
+                TruffleObject array = (TruffleObject) context.getEnv().asGuestValue(Array.newInstance(o.getClass(), 1));
                 ForeignAccess.sendWrite(write, array, 0, obj);
                 return array;
             } catch (UnsupportedTypeException | UnsupportedMessageException | UnknownIdentifierException e) {
@@ -910,21 +910,23 @@ public class FastRInterop {
         private Class<?> getClazz(String className) throws RError {
             Object result = classForName(className);
 
-            if (result instanceof TruffleObject && JavaInterop.isJavaObject(Class.class, (TruffleObject) result)) {
-                return JavaInterop.asJavaObject(Class.class, (TruffleObject) result);
-            } else {
-                interopExceptionProfile.enter();
-                if (result instanceof RuntimeException) {
-                    throw RError.handleInteropException(this, (RuntimeException) result);
-                } else {
-                    assert result instanceof Throwable : "class " + className + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
-                    throw RError.handleInteropException(this, new RuntimeException((Throwable) result));
+            if (result instanceof TruffleObject) {
+                Object clazz = RContext.getInstance().getEnv().asHostObject(result);
+                if (clazz instanceof Class) {
+                    return (Class<?>) clazz;
                 }
+            }
+            interopExceptionProfile.enter();
+            if (result instanceof RuntimeException) {
+                throw RError.handleInteropException(this, (RuntimeException) result);
+            } else {
+                assert result instanceof Throwable : "class " + className + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
+                throw RError.handleInteropException(this, new RuntimeException((Throwable) result));
             }
         }
 
         protected boolean isJavaObject(TruffleObject obj) {
-            return JavaInterop.isJavaObject(obj);
+            return RContext.getInstance().getEnv().isHostObject(obj);
         }
 
         protected boolean isJavaLikeVector(RAbstractVector vec) {
@@ -989,26 +991,31 @@ public class FastRInterop {
                 Object result = ForeignAccess.sendNew(sendNew, clazz, argValues);
                 return foreign2R.execute(result);
             } catch (UnsupportedTypeException ute) {
-                if (JavaInterop.isJavaObject(Class.class, clazz)) {
-                    Class<?> cls = JavaInterop.asJavaObject(Class.class, clazz);
-                    if (cls.isArray()) {
-                        // TODO temporary hot fix
-                        // need ForeignAccess.sendNew(multiDimArrayClass, dims)
-                        Object arg0 = args.getArgument(0);
-                        if (arg0 instanceof RAbstractIntVector) {
-                            RAbstractIntVector vec = (RAbstractIntVector) arg0;
-                            int[] dims = new int[vec.getLength()];
+                RContext context = RContext.getInstance();
+                Env env = RContext.getInstance().getEnv();
+                if (env.isHostObject(clazz)) {
+                    Object obj = env.asHostObject(clazz);
+                    if (obj instanceof Class) {
+                        Class<?> cls = (Class<?>) obj;
+                        if (cls.isArray()) {
+                            // TODO temporary hot fix
+                            // need ForeignAccess.sendNew(multiDimArrayClass, dims)
+                            Object arg0 = args.getArgument(0);
+                            if (arg0 instanceof RAbstractIntVector) {
+                                RAbstractIntVector vec = (RAbstractIntVector) arg0;
+                                int[] dims = new int[vec.getLength()];
 
-                            for (int i = 0; i < vec.getLength(); i++) {
-                                Array.setInt(dims, i, vec.getDataAt(i));
-                            }
-                            cls = cls.getComponentType();
-                            while (cls.isArray()) {
+                                for (int i = 0; i < vec.getLength(); i++) {
+                                    Array.setInt(dims, i, vec.getDataAt(i));
+                                }
                                 cls = cls.getComponentType();
-                            }
+                                while (cls.isArray()) {
+                                    cls = cls.getComponentType();
+                                }
 
-                            Object a = Array.newInstance(cls, dims);
-                            return JavaInterop.asTruffleObject(a);
+                                Object a = Array.newInstance(cls, dims);
+                                return context.getEnv().asGuestValue(a);
+                            }
                         }
                     }
                 }
@@ -1159,7 +1166,7 @@ public class FastRInterop {
             if (RRuntime.fromLogical(clear)) {
                 getInteropTryState().lastException = null;
             }
-            return ret != null ? JavaInterop.asTruffleObject(ret) : RNull.instance;
+            return ret != null ? RContext.getInstance().getEnv().asGuestValue(ret) : RNull.instance;
         }
     }
 

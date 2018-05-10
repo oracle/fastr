@@ -265,7 +265,7 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
             }
 
             @Override
-            public ForwardingAnalysisResult visit(RVarArgsFilter filter, ForwardingAnalysisResult previous) {
+            public ForwardingAnalysisResult visit(RVarArgsFilter filter, @SuppressWarnings("hiding") ForwardingAnalysisResult previous) {
                 return new ForwardingAnalysisResult().blockAll();
             }
 

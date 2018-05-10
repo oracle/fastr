@@ -140,19 +140,21 @@
               # typicaly, this can happen when called from .jrcall (in cases like rJavaObject$someMethodReturningInt())
               # and .jrcall for now always simplifies the return value and dumps the class name anyway
               # so lets retrieve it "just in case"
-              if (is.character(o)) {
-                  clazzname <- "java.lang.String"
-              } else if (is.integer(o)) {
-                  clazzname <- "java.lang.Integer"
-              } else if (is.double(o)) {
-                  clazzname <- "java.lang.Double"
-              } else if (is.logical(o)) {
-                  clazzname <- "java.lang.Boolean"
+              if(is.polyglot.value(o)) {
+                clazzname <- o$getClass()$getName()
+                if(clazzname == "java.lang.Class") {
+                    clazzname <- o$getName()
+                }
               } else {
-                  clazzname <- o$getClass()$getName()
-                  if(clazzname == "java.lang.Class") {
-                      clazzname <- o$getName()
-                  }
+                if (is.character(o)) {
+                    clazzname <- "java.lang.String"
+                } else if (is.integer(o)) {
+                    clazzname <- "java.lang.Integer"
+                } else if (is.double(o)) {
+                    clazzname <- "java.lang.Double"
+                } else if (is.logical(o)) {
+                    clazzname <- "java.lang.Boolean"
+                }
               }
           }
           # FASTR >>>>>>

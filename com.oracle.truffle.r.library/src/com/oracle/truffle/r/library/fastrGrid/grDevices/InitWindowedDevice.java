@@ -27,8 +27,7 @@ import static com.oracle.truffle.r.library.fastrGrid.WindowDevice.awtNotSupporte
 import java.awt.Graphics2D;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
+import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.WindowDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
@@ -39,16 +38,15 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 
 /**
  * Node that handles the {@code C_X11} external calls. Those calls may be initiated from either the
  * {@code X11}, {@code jpeg}, {@code bmp}, {@code png} functions and from FastR specific {@code awt}
  * . The arguments determine which device should be opened.
  */
-@SuppressWarnings("deprecation")
 public final class InitWindowedDevice extends RExternalBuiltinNode {
 
     static {
@@ -79,13 +77,18 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         boolean isFastRDevice = args.getArgument(0).equals(".FASTR.AWT");
         if (isFastRDevice && args.getLength() > 3) {
             Object arg3 = args.getArgument(3);
-            boolean isTruffleObj = arg3 instanceof TruffleObject && !(arg3 instanceof RTypedValue);
-            if (isTruffleObj && JavaInterop.isJavaObject(Graphics2D.class, (TruffleObject) arg3)) {
-                Graphics2D graphics = JavaInterop.asJavaObject(Graphics2D.class, (TruffleObject) arg3);
-                Graphics2DDevice device = new Graphics2DDevice(graphics, width, height, false);
-                GridContext.getContext().setCurrentDevice("awt", device);
-                return RNull.instance;
-            } else if (isTruffleObj) {
+            boolean isForeignTruffleObj = RRuntime.isForeignObject(arg3);
+            TruffleLanguage.Env env = RContext.getInstance().getEnv();
+            if (isForeignTruffleObj && env.isHostObject(arg3)) {
+                Object hostObject = env.asHostObject(arg3);
+                if (hostObject instanceof Graphics2D) {
+                    Graphics2D graphics = (Graphics2D) hostObject;
+                    Graphics2DDevice device = new Graphics2DDevice(graphics, width, height, false);
+                    GridContext.getContext().setCurrentDevice("awt", device);
+                    return RNull.instance;
+                }
+            }
+            if (isForeignTruffleObj) {
                 warning(Message.GENERIC, "3rd argument is foreign object, but not of type Graphics2D.");
             }
         }

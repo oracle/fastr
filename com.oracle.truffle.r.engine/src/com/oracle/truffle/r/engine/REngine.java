@@ -44,7 +44,6 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.java.JavaInterop;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -110,7 +109,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
  * this class per {@link RContext}.
  */
-@SuppressWarnings("deprecation")
 final class REngine implements Engine, Engine.Timings {
 
     /**
@@ -317,7 +315,7 @@ final class REngine implements Engine, Engine.Timings {
 
                 @Override
                 public Object execute(VirtualFrame frame) {
-                    return JavaInterop.asTruffleValue(context);
+                    return context.getEnv().asGuestValue(context);
                 }
             });
         } else {

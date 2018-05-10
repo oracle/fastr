@@ -37,7 +37,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.ON;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 
 import java.io.BufferedReader;
 import java.io.IOException;

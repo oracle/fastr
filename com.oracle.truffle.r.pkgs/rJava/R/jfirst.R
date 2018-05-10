@@ -264,10 +264,11 @@
         obj <- obj@jobj
     }
     clnam <- NULL
+    cls <- NULL
     externalClassName <- NULL
     o <- NULL
     if(inherits(obj, "externalptr")) {
-        o <- .toJ(obj)
+        o <- .extPointerToJ(obj)
         externalClassName <- attr(obj, "external.classname", exact=TRUE)
     } else if(is.character(obj) && length(obj) == 1) {
         clnam <- obj
@@ -276,11 +277,11 @@
     }
     if (is.null(o) && is.null(clnam)) {
         stop("cannot access a field of a NULL object")
-    }       
+    }
         
     if(!is.null(o)) {
         if(!is.polyglot.value(o)) {
-            o <- .asTruffleObject(o, externalClassName)
+            o <- .asTruffleObject(o, externalClassName)            
         }
         res <- o[name]
     } else {
@@ -293,31 +294,58 @@
     if(is.null(res)) {
         return(.jnull())
     }
+
+    # if field is an Object then, (differently than in RcallMethod), 
+    # we have to return a S4 objects at this place
     if(!is.polyglot.value(res)) {
         # TODO there are cases when the passed signature is NULL - e.g. rJavaObject$someField 
-        # with truffle we have no way to defferenciate if the unboxed return value relates to an Object or primitive field
+        # with truffle we have no way to differentiate if the unboxed return value relates to an Object or primitive field
         # but the original field.c RgetField implementation checks the return type and 
-        # if field not primitive an "jobjRef" S4 object is returned.
-        # rjava:
-        # > rJavaObject$fieldIntegerObject
-        # [1] "Java-Object{2147483647}"
-        # vs fastr:
-        # > rJavaObject$fieldIntegerObject
-        # [1] 2147483647
-        # Note that this is not the case in rjava with method calls:
-        # > rJavaObject$methodIntegerObject()
-        # [1] 2147483647
-        return(res)
+        # if field not primitive an "jobjRef" S4 object is returned. Fortunately, there is RJavaTools.getFieldType()
+        if(trueclass) {
+            if(!is.null(cls)) {
+                clsname <- .getFieldTypeName(cls, name)
+            } else {
+                clsname <- .getFieldTypeName(o$getClass(), name)
+            }
+            if(!startsWith(clsname, "java.lang")) {
+                # not polyglot object and not java.lang - must be primitive                
+                return(res)
+            }
+            clsname <- gsub(".", "/", clsname, fixed=T)
+        } else {
+            if(is.null(sig)) {
+                if(is.null(cls)) {
+                    sig <- .getFieldTypeName(o$getClass(), name)
+                } else {                
+                    sig <- .getFieldTypeName(cls, name)
+                }
+            }
+            if(!startsWith(sig, "L") && !startsWith(sig, "java.lang")) {
+                # not polyglot object and not java.lang - must be primitive
+                return(res)
+            }
+            clsname <- gsub(".", "/", .signatureToClassName(sig), fixed=T)
+        }
+        res <- .asTruffleObject(res)
+    } else {
+        if(trueclass) {
+            clsname <- gsub(".", "/", res$getClass()$getName(), fixed=T)
+        } else {
+            if(is.null(sig)) {
+                # should not happed
+                sig <- gsub(".", "/", res$getClass()$getName(), fixed=T)
+            }            
+            clsname <- .signatureToClassName(sig)
+        }
     }
     
-    # as opposed to RcallMethod, we have to return a S4 objects at this place
-    if(trueclass) {
-        clsname <- res$getClass()$getName()
-    } else {
-        clsname <- .signatureToClassName(sig)
-    }
-    res <- .fromJ(res)
+    res <- .fromJ(res, toExtPointer=TRUE)    
     return(new("jobjRef", jobj=res, jclass=clsname))
+}
+
+.getFieldTypeName <- function(class, field) {
+    java.type("RJavaTools")$getFieldTypeName(class, field)
 }
 
 .RsetField <- function(ref, name, value) {
@@ -338,7 +366,7 @@
     clnam <- NULL
     o <- NULL
     if(inherits(obj, "externalptr")) {
-        o <- .toJ(obj)
+        o <- .extPointerToJ(obj)
     } else if(is.character(obj) && length(obj) == 1) {
         clnam <- obj
     } else {
@@ -535,8 +563,14 @@
 .RgetStringValue <- function(obj) {
     obj # force args
 
+    # expected to be always String or TruffleObject(String)
     if (inherits(obj, "externalptr")) {
-        attr(obj, "external.object", exact=TRUE)
+        obj <- attr(obj, "external.object", exact=TRUE)
+        if(is.polyglot.value(obj)) {
+            obj$toString()
+        } else {
+            obj    
+        }        
     } else {
         obj
     }
@@ -591,6 +625,25 @@
 .toJ <- function(x) {
     x # force args
 
+    if(is.numeric(x) || is.character(x) || is.logical(x) || is.raw(x)) {
+        if(length(x) > 1) {
+            return(.vectorToJArray(x))
+        } else {
+            if (inherits(x, "jbyte")) {
+                x <- .fastr.interop.asByte(x)
+            } else if (inherits(x, "jchar")) {
+                x <- .fastr.interop.asChar(x)
+            } else if (inherits(x, "jfloat")) {
+                x <- .fastr.interop.asFloat(x)
+            } else if (inherits(x, "jlong")) {
+                x <- .fastr.interop.asLong(x)
+            } else if (inherits(x, "jshort")) {
+                x <- .fastr.interop.asShort(x)
+            }
+            return(x)
+        }
+    }
+
     if (is(x, "jobjRef")) {
         x <- x@jobj
     } else if (is(x, "jclassName")) {
@@ -598,7 +651,7 @@
     }
     if(inherits(x, "externalptr")) {
         if(.jidenticalRef(x, .jzeroRef)) {
-            x <- NULL
+            return(NULL)
         } else {
             xo <- attr(x, "external.object", exact=TRUE)
             if (is.null(xo)) {
@@ -611,21 +664,22 @@
             }
         }
     }
-    if(length(x) > 1) {
-        .vectorToJArray(x)
+    x
+}
+
+.extPointerToJ <- function(x) {
+    if(.jidenticalRef(x, .jzeroRef)) {
+        return(NULL)
     } else {
-        if (inherits(x, "jbyte")) {
-            x <- .fastr.interop.asByte(x)    
-        } else if (inherits(x, "jchar")) {
-            x <- .fastr.interop.asChar(x)
-        } else if (inherits(x, "jfloat")) {
-            x <- .fastr.interop.asFloat(x)
-        } else if (inherits(x, "jlong")) {
-            x <- .fastr.interop.asLong(x)
-        } else if (inherits(x, "jshort")) {
-            x <- .fastr.interop.asShort(x)
+        xo <- attr(x, "external.object", exact=TRUE)
+        if (is.null(xo)) {
+            stop(paste0("missing 'external' attribute on: ", x))
         }
-        x
+        if (is.polyglot.value(xo)) {
+            return(xo)
+        } else {                
+            return(.asTruffleObject(xo, attr(x, "external.classname", exact=TRUE)))
+        }
     }
 }
 

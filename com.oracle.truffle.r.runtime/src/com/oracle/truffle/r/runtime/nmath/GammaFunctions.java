@@ -1247,6 +1247,7 @@ public abstract class GammaFunctions {
     }
 
     @TruffleBoundary
+    @SuppressWarnings("all")
     private static void dpsifn(double x, int n, int kode, DpsiFnResult result) {
         int mm;
         int mx;
@@ -1645,6 +1646,7 @@ public abstract class GammaFunctions {
         }
     }
 
+    @SuppressWarnings("all")
     public static double psigamma(double x, double deriv) {
         // polygamma.c
         /* n-th derivative of psi(x); e.g., psigamma(x,0) == digamma(x) */
