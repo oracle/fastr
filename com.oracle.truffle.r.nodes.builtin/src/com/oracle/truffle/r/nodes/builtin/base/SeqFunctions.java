@@ -1034,7 +1034,7 @@ public final class SeqFunctions {
         private int checkLength(Object lengthOut, AsRealNode asRealLen) {
             double len = asRealLen.execute(lengthOut);
             if (RRuntime.isNAorNaN(len) || len <= -0.5) {
-                throw error(seqFastPath ? RError.Message.MUST_BE_POSITIVE_SD : RError.Message.MUST_BE_POSITIVE, seqFastPath ? "length" : "length.out");
+                throw error(seqFastPath ? RError.Message.MUST_BE_POSITIVE_SD : RError.Message.MUST_BE_NONNEGATIVE, seqFastPath ? "length" : "length.out");
             }
             if (getLength(lengthOut) != 1) {
                 warning(RError.Message.FIRST_ELEMENT_USED, "length.out");
