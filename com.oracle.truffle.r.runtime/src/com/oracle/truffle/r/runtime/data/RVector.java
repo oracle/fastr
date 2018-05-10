@@ -791,13 +791,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     protected boolean canBeValidStore(Object store, Object data) {
-        RContext ctx;
-        try {
-            ctx = RContext.getInstance();
-        } catch (IllegalStateException ex) {
-            return true; // no context, we cannot check anything
-        }
         // We can be only sure if there is only one thread
-        return !ctx.isSingle() || store == data;
+        return !RContext.isSingle() || store == data;
     }
 }

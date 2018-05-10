@@ -46,12 +46,14 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
 
     private static final Assumption noWrappedStrings = Truffle.getRuntime().createAssumption();
 
-    private long nativeContentsAddr;
     private Object[] data;
 
     RStringVector(Object[] data, boolean complete) {
         super(complete);
         assert data instanceof String[] || data instanceof CharSXPWrapper[];
+        if (noWrappedStrings.isValid() && data instanceof CharSXPWrapper[]) {
+            noWrappedStrings.invalidate();
+        }
         this.data = data;
         assert RAbstractVector.verify(this);
     }
