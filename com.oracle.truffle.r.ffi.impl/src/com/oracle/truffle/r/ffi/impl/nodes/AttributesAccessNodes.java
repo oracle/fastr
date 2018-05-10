@@ -231,6 +231,12 @@ public final class AttributesAccessNodes {
             return RNull.instance;
         }
 
+        @Specialization
+        protected Object doIt(RSharingAttributeStorage target, RNull attributes) {
+            clearAttrs(target);
+            return RNull.instance;
+        }
+
         @Fallback
         protected Object doOthers(Object target, Object attrs) {
             throw unsupportedTypes("SET_ATTRIB", target, attrs);
