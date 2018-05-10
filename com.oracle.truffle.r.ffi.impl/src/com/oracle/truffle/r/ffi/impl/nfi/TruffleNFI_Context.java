@@ -65,6 +65,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
+import java.util.ArrayDeque;
 
 import sun.misc.Unsafe;
 
@@ -109,7 +110,7 @@ final class TruffleNFI_Context extends RFFIContext {
      * this is less efficient than GNUR's version, we may need to implement it properly should the
      * performance be a problem.
      */
-    public final ArrayList<Long> transientAllocations = new ArrayList<>();
+    public final ArrayDeque<ArrayList<Long>> transientAllocations = new ArrayDeque<>();
 
     public void setLastUpCallException(RuntimeException ex) {
         assert ex == null || lastException == null : "last up-call exception is already set";
@@ -352,8 +353,8 @@ final class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public long beforeDowncall() {
-        assert transientAllocations.size() == 0 : "transientAllocations should have been cleared in afterDowncall";
         super.beforeDowncall();
+        transientAllocations.push(new ArrayList<>());
         if (hasAccessLock) {
             acquireLock();
         }
@@ -364,10 +365,9 @@ final class TruffleNFI_Context extends RFFIContext {
     public void afterDowncall(long beforeValue) {
         super.afterDowncall(beforeValue);
         popCallbacks(beforeValue);
-        for (Long ptr : transientAllocations) {
+        for (Long ptr : transientAllocations.pop()) {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
         }
-        transientAllocations.clear();
         RuntimeException lastUpCallEx = getLastUpCallException();
         setLastUpCallException(null);
         if (hasAccessLock) {

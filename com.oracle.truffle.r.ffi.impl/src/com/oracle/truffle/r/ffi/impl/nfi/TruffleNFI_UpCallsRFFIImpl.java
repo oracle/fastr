@@ -63,7 +63,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     public Object R_alloc(int n, int size) {
         long result = UnsafeAdapter.UNSAFE.allocateMemory(n * size);
-        getContext().transientAllocations.add(result);
+        getContext().transientAllocations.peek().add(result);
         return result;
     }
 
