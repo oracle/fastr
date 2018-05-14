@@ -220,5 +220,10 @@ public class TestBuiltin_gsub extends TestBase {
         // Expected output: [1] "xaxbx"
         // FastR output: [1] "axxxxxb"
         assertEval(Ignored.ImplementationError, "{ gsub(pattern = 'Ä*', replacement = 'x', x = 'aÄÄÄÄÄb', perl = TRUE) }");
+
+        assertEval("list(gsub('>.*\\n|\\n', '', 'R> Line 1\\n Line 2\\n', perl=T), " +
+                        "gsub('>.*\\n|\\n', '', 'R> Line 1\\n Line 2\\n', perl=F))");
+        assertEval("list(gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=T)," +
+                        "gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=F))");
     }
 }
