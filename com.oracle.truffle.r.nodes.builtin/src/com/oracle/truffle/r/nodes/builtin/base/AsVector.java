@@ -359,6 +359,20 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
             private static RPairList fromVector(RAbstractContainer x) {
                 Object list = RNull.instance;
                 RStringVector names = x.getNames();
+                // "" name turns into NULL, but only if there are only "" names, otherwise "" stays
+                // see the tests for examples
+                if (names != null) {
+                    boolean allEmpty = true;
+                    for (int i = 0; i < names.getLength(); i++) {
+                        if (!names.getDataAt(i).isEmpty()) {
+                            allEmpty = false;
+                            break;
+                        }
+                    }
+                    if (allEmpty) {
+                        names = null;
+                    }
+                }
                 for (int i = x.getLength() - 1; i >= 0; i--) {
                     Object name = names == null ? RNull.instance : RDataFactory.createSymbolInterned(names.getDataAt(i));
                     Object data = x.getDataAtAsObject(i);

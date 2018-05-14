@@ -83,9 +83,11 @@ public class AttachFunctions {
         protected REnvironment doAttach(RAbstractListVector what, RAbstractIntVector pos, RAbstractStringVector name) {
             REnvironment env = RDataFactory.createNewEnv(name.getDataAt(0));
             RStringVector names = what.getNames();
-            for (int i = 0; i < names.getLength(); i++) {
-                // TODO: copy/sharing?
-                env.safePut(names.getDataAt(i), what.getDataAt(i));
+            if (names != null) {
+                for (int i = 0; i < names.getLength(); i++) {
+                    // TODO: copy/sharing?
+                    env.safePut(names.getDataAt(i), what.getDataAt(i));
+                }
             }
             doAttachEnv(pos.getDataAt(0), env);
             return env;

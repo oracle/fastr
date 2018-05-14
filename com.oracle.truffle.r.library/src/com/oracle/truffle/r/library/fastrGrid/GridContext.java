@@ -98,11 +98,12 @@ public final class GridContext {
     }
 
     public void setCurrentDevice(String name, GridDevice currentDevice, String filenamePattern) {
+        assert devices.size() == RGridGraphicsAdapter.getDevicesCount() : devices.size() + " vs " + RGridGraphicsAdapter.getDevicesCount();
         RGridGraphicsAdapter.addDevice(name);
         RGridGraphicsAdapter.setCurrentDevice(name);
         currentDeviceIdx = this.devices.size();
         this.devices.add(new DeviceAndState(currentDevice, filenamePattern));
-        assert devices.size() == RGridGraphicsAdapter.getDevicesCount();
+        assert devices.size() == RGridGraphicsAdapter.getDevicesCount() : devices.size() + " vs " + RGridGraphicsAdapter.getDevicesCount();
     }
 
     public void openDefaultDevice() {

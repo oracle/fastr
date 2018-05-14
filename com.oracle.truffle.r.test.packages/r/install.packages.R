@@ -141,6 +141,13 @@ default.packages <- c("R", "base", "grid", "splines", "utils",
 		"compiler", "grDevices", "methods", "stats", "stats4",
 		"datasets", "graphics", "parallel", "tools", "tcltk")
 
+# manually maintained list of packages that are OK to ignore when installing "suggests"
+# the name is that package and the values are regexps of suggests that can be ignored for that package
+# if this configuration gets too complex or updated too often, we can move it to separate config file
+ignore.suggests <- list(
+	rstudioapi = c('*') # rstudioapi executes almost no real tests, it is mostly just test of install & load
+)
+
 choice.depends <- function(pkg, choice=c("direct","suggests")) {
 	if (choice == "direct") {
 		depends <- c("Depends", "Imports", "LinkingTo")
@@ -607,6 +614,12 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 install.suggests <- function(pkgnames) {
 	for (pkgname in pkgnames) {
 		suggests <- install.order(avail.pkgs, avail.pkgs[pkgname, ], "suggests")
+		ignore.pattern <- ignore.suggests[pkgname]
+		if (!is.null(ignore.pattern)) {
+			ignore <- suggests[grepl(ignore.pattern, suggests)]
+			suggests <- setdiff(suggests, ignore)
+			cat("NOTE: ignoring suggested:", paste(ignore, collapse=','), '\n')
+		}
 		if (length(suggests) > 0) {
 			if (is.fastr() && !ignore.blacklist) {
 				# no point in trying to install blacklisted packages (which are likely)

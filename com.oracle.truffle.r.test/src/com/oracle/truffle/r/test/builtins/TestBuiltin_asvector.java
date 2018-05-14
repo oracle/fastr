@@ -463,6 +463,12 @@ public class TestBuiltin_asvector extends TestRBase {
         assertEval("as.pairlist(structure(1:3, myattr=42))");
         assertEval("as.vector(as.pairlist(structure(list(1,2,3), myattr=42)), 'list')");
 
+        // as.pairlist drops empty names...
+        assertEval("names(as.pairlist(structure(list(3), .Names = c(''))))");
+        // ...but only if they are all empty...
+        assertEval("names(as.pairlist(structure(list(3, 4), .Names = c('', 'abc'))))");
+        // ...like in this example
+        assertEval("names(as.pairlist(structure(list(3, 4), .Names = c('', ''))))");
     }
 
     @Test

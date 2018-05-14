@@ -30,3 +30,8 @@ l
 api.SET_TYPEOF(l, 6) # LANGSXP
 l
 eval(l)
+
+# language objects treated as pairlists:
+b <- ~fun(arg = val, arg2)
+api.TAG(api.CDR(api.CDR(api.CAR(api.CDR(b)))))
+
