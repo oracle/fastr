@@ -408,7 +408,7 @@ tilde_expr returns [T v]
     ;
 
 utilde_expr returns [T v]
-    : op=TILDE n_ l=or_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    : op=TILDE n_ l=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | l=or_expr             { $v = $l.v; }
     ;
 
