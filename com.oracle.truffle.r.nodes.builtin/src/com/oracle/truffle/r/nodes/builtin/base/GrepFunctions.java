@@ -623,6 +623,8 @@ public class GrepFunctions {
                     case ')':
                     case '[':
                     case '{':
+                    case '\n':
+                    case '\t':
                         return false;
                     case '*':
                     case '?':
