@@ -120,19 +120,62 @@ public final class REnvVars implements RContext.ContextState {
                 safeReadEnvironFile(userFile);
             }
         }
-        // Check for http proxies
-        String httpProxy = getEitherCase("http_proxy");
-        if (httpProxy != null) {
-            String port = null;
-            int portIndex = httpProxy.lastIndexOf(':');
-            if (portIndex > 0) {
-                port = httpProxy.substring(portIndex + 1);
-                httpProxy = httpProxy.substring(0, portIndex);
-            }
-            httpProxy = httpProxy.replace("http://", "");
-            System.setProperty("http.proxyHost", httpProxy);
-            if (port != null) {
-                System.setProperty("http.proxyPort", port);
+
+        // Check for proxies
+        for (String protocol : new String[]{"http", "https", "ftp"}) {
+            String javaProxyHost = System.getProperty(protocol + ".proxyHost");
+            if (javaProxyHost != null) {
+                // if java proxy props are set, then let have them precedense over env settings
+                // storing in envVars ensures they get propagated to child processes
+                String javaProxyPort = System.getProperty(protocol + ".proxyPort");
+                envVars.put(protocol + "_proxy", javaProxyHost + (javaProxyPort != null ? ":" + javaProxyPort : ""));
+
+                if ("http".equals(protocol) || "ftp".equals(protocol)) {
+                    // necessary only for http and ftp - according to
+                    // https://docs.oracle.com/javase/7/docs/api/java/net/doc-files/net-properties.html
+                    // The HTTPS handler will use the same nonProxyHosts property
+                    // as the HTTP protocol.
+                    String noProxy = System.getProperty(protocol + ".no_proxy");
+                    if (noProxy != null) {
+                        envVars.put(protocol + "_no_proxy", noProxy);
+                    } else {
+                        envVars.remove(protocol + "_no_proxy");
+                    }
+                }
+            } else {
+                // if java properties aren't set, try to use the env values
+                String proxy = getEitherCase(protocol + "_proxy");
+                if (proxy != null) {
+                    String port = null;
+                    int portIndex = proxy.lastIndexOf(':');
+                    if (portIndex > 0) {
+                        port = proxy.substring(portIndex + 1);
+                        proxy = proxy.substring(0, portIndex);
+                    }
+                    // things like https_proxy='http://proxy-server:1234' are a valid case
+                    // so always cleanup all protocal prefixes
+                    proxy = proxy.replace("http://", "").replace("https://", "").replace("ftp://", "");
+                    System.setProperty(protocol + ".proxyHost", proxy);
+
+                    if (port != null) {
+                        System.setProperty(protocol + ".proxyPort", port);
+                    } else {
+                        System.getProperties().remove(protocol + ".proxyPort");
+                    }
+
+                    if ("http".equals(protocol) || "ftp".equals(protocol)) {
+                        String noProxy = getEitherCase(protocol + "_no_proxy");
+                        if (noProxy == null) {
+                            noProxy = getEitherCase("no_proxy");
+                        }
+
+                        if (noProxy != null) {
+                            System.setProperty(protocol + ".no_proxy", noProxy);
+                        } else {
+                            System.getProperties().remove(protocol + ".no_proxy");
+                        }
+                    }
+                }
             }
         }
         return this;
