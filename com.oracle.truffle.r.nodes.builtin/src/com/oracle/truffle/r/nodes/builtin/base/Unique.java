@@ -171,7 +171,7 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
 
         public boolean contains(double val) {
             for (int i = 0; i < index; i++) {
-                if (backingArray[i] == val) {
+                if (areEqual(backingArray[i], val)) {
                     return true;
                 }
             }
@@ -187,6 +187,10 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
             System.arraycopy(backingArray, 0, newArray, 0, index);
             return newArray;
         }
+
+        private static boolean areEqual(double a, double b) {
+            return a == b || (RRuntime.isNA(a) && RRuntime.isNA(b));
+        }
     }
 
     private static class DoubleArrayForComplex {
@@ -200,7 +204,7 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
 
         public boolean contains(RComplex val) {
             for (int i = 0; i < index; i++) {
-                if (backingArray[i << 1] == val.getRealPart() && backingArray[(i << 1) + 1] == val.getImaginaryPart()) {
+                if (areEqual(backingArray[i << 1], backingArray[(i << 1) + 1], val.getRealPart(), val.getImaginaryPart())) {
                     return true;
                 }
             }
@@ -208,14 +212,20 @@ public abstract class Unique extends RBuiltinNode.Arg4 {
         }
 
         public void add(RComplex val) {
-            backingArray[index++] = val.getRealPart();
-            backingArray[index++] = val.getImaginaryPart();
+            backingArray[index << 1] = val.getRealPart();
+            backingArray[(index << 1) + 1] = val.getImaginaryPart();
+            index++;
         }
 
         public double[] toArray() {
-            double[] newArray = new double[index];
-            System.arraycopy(backingArray, 0, newArray, 0, index);
+            int size = index << 1;
+            double[] newArray = new double[size];
+            System.arraycopy(backingArray, 0, newArray, 0, size);
             return newArray;
+        }
+
+        private static boolean areEqual(double ar, double ai, double br, double bi) {
+            return (ar == br && ai == bi) || (RRuntime.isNA(ar, ai) && RRuntime.isNA(br, bi));
         }
     }
 
