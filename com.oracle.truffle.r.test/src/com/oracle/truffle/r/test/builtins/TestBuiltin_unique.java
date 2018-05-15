@@ -204,5 +204,8 @@ public class TestBuiltin_unique extends TestBase {
 
         assertEval("{ unique(c(-0.0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1)) }");
 
+        assertEval("unique(c(1, NA, NA))");
+        assertEval("unique(c(1+1i, NA, NA))");
+
     }
 }

@@ -63,10 +63,12 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
     protected final boolean throwsError;
     protected final boolean nextMethod;
+    protected final boolean defaultMethod;
 
-    private S3FunctionLookupNode(boolean throwsError, boolean nextMethod) {
+    private S3FunctionLookupNode(boolean throwsError, boolean nextMethod, boolean defaultMethod) {
         this.throwsError = throwsError;
         this.nextMethod = nextMethod;
+        this.defaultMethod = defaultMethod;
     }
 
     @ValueType
@@ -93,15 +95,19 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
     }
 
     public static S3FunctionLookupNode create(boolean throwsError, boolean nextMethod) {
-        return new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod, 0);
+        return create(throwsError, nextMethod, true);
+    }
+
+    public static S3FunctionLookupNode create(boolean throwsError, boolean nextMethod, boolean defaultMethod) {
+        return new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod, defaultMethod, 0);
     }
 
     public static S3FunctionLookupNode createWithError() {
-        return new UseMethodFunctionLookupUninitializedNode(true, false, 0);
+        return new UseMethodFunctionLookupUninitializedNode(true, false, true, 0);
     }
 
     public static S3FunctionLookupNode createWithException() {
-        return new UseMethodFunctionLookupUninitializedNode(false, false, 0);
+        return new UseMethodFunctionLookupUninitializedNode(false, false, true, 0);
     }
 
     @FunctionalInterface
@@ -115,7 +121,8 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    private static Result performLookup(MaterializedFrame callerFrame, String genericName, String groupName, RStringVector type, boolean nextMethod, LookupOperation op, GetMethodsTable getTable) {
+    private static Result performLookup(MaterializedFrame callerFrame, String genericName, String groupName, RStringVector type, boolean nextMethod, boolean defaultMethod, LookupOperation op,
+                    GetMethodsTable getTable) {
         Result result;
         Object methodsTable = getTable.get();
         if (methodsTable instanceof RPromise) {
@@ -129,13 +136,16 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         }
 
         // look for the default method
-        String functionName = genericName + RRuntime.RDOT + RRuntime.DEFAULT;
-        RFunction function = checkPromise(op.read(callerFrame, functionName, false));
-        if (function == null && methodsTableFrame != null) {
-            function = checkPromise(op.read(methodsTableFrame, functionName, true));
-        }
-        if (function != null) {
-            return new Result(genericName, function, RNull.instance, functionName, false);
+        if (defaultMethod) {
+            String functionName = genericName + RRuntime.RDOT + RRuntime.DEFAULT;
+            RFunction function = checkPromise(op.read(callerFrame, functionName, false));
+            if (function == null && methodsTableFrame != null) {
+                function = checkPromise(op.read(methodsTableFrame, functionName, true));
+            }
+
+            if (function != null) {
+                return new Result(genericName, function, RNull.instance, functionName, false);
+            }
         }
         return null;
     }
@@ -253,16 +263,17 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             }
         };
 
-        Result result = performLookup(callerFrame, genericName, group, type, next.nextMethod, op, getTable);
+        Result result = performLookup(callerFrame, genericName, group, type, next.nextMethod, next.defaultMethod, op, getTable);
 
         UseMethodFunctionLookupCachedNode cachedNode;
 
         if (result != null) {
-            cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, null, unsuccessfulReadsCaller, unsuccessfulReadsTable,
+            cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, next.defaultMethod, genericName, type, group, null, unsuccessfulReadsCaller, unsuccessfulReadsTable,
                             reads.methodsTableRead, reads.successfulRead, reads.successfulReadTable, result.function, result.clazz, result.targetFunctionName, result.groupMatch, next);
         } else {
             RFunction builtin = next.throwsError ? RContext.getInstance().lookupBuiltin(genericName) : null;
-            cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, genericName, type, group, builtin, unsuccessfulReadsCaller, unsuccessfulReadsTable,
+            cachedNode = new UseMethodFunctionLookupCachedNode(next.throwsError, next.nextMethod, next.defaultMethod, genericName, type, group, builtin, unsuccessfulReadsCaller,
+                            unsuccessfulReadsTable,
                             reads.methodsTableRead, null, null, null, null, null, false, next);
         }
         return cachedNode;
@@ -272,8 +283,8 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
     private static final class UseMethodFunctionLookupUninitializedNode extends S3FunctionLookupNode {
         private final int depth;
 
-        UseMethodFunctionLookupUninitializedNode(boolean throwsError, boolean nextMethod, int depth) {
-            super(throwsError, nextMethod);
+        UseMethodFunctionLookupUninitializedNode(boolean throwsError, boolean nextMethod, boolean defaultMethod, int depth) {
+            super(throwsError, nextMethod, defaultMethod);
             this.depth = depth;
         }
 
@@ -281,10 +292,11 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         public Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (depth > MAX_CACHE_DEPTH) {
-                return replace(new UseMethodFunctionLookupGenericNode(throwsError, nextMethod)).execute(frame, genericName, type, group, callerFrame, genericDefFrame);
+                return replace(new UseMethodFunctionLookupGenericNode(throwsError, nextMethod, defaultMethod)).execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             } else {
                 UseMethodFunctionLookupCachedNode cachedNode = replace(
-                                specialize(frame, genericName, type, group, callerFrame, genericDefFrame, new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod, depth + 1)));
+                                specialize(frame, genericName, type, group, callerFrame, genericDefFrame,
+                                                new UseMethodFunctionLookupUninitializedNode(throwsError, nextMethod, defaultMethod, depth + 1)));
                 return cachedNode.execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             }
         }
@@ -316,10 +328,10 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         private final String cachedGroup;
         private final RFunction builtin;
 
-        UseMethodFunctionLookupCachedNode(boolean throwsError, boolean nextMethod, String genericName, RStringVector type, String group, RFunction builtin,
+        UseMethodFunctionLookupCachedNode(boolean throwsError, boolean nextMethod, boolean defaultMethod, String genericName, RStringVector type, String group, RFunction builtin,
                         List<ReadVariableNode> unsuccessfulReadsCaller, List<LocalReadVariableNode> unsuccessfulReadsTable, LocalReadVariableNode readS3MethodsTable, ReadVariableNode successfulRead,
                         LocalReadVariableNode successfulReadTable, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch, S3FunctionLookupNode next) {
-            super(throwsError, nextMethod);
+            super(throwsError, nextMethod, defaultMethod);
             this.cachedGenericName = genericName;
             this.cachedGroup = group;
             this.builtin = builtin;
@@ -431,8 +443,8 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
     private static final class UseMethodFunctionLookupGenericNode extends S3FunctionLookupNode {
 
-        protected UseMethodFunctionLookupGenericNode(boolean throwsError, boolean nextMethod) {
-            super(throwsError, nextMethod);
+        protected UseMethodFunctionLookupGenericNode(boolean throwsError, boolean nextMethod, boolean defaultMethod) {
+            super(throwsError, nextMethod, defaultMethod);
         }
 
         @Override
@@ -458,7 +470,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                 }
             };
 
-            Result result = performLookup(callerFrame, genericName, group, type, nextMethod, op, getTable);
+            Result result = performLookup(callerFrame, genericName, group, type, nextMethod, defaultMethod, op, getTable);
 
             if (result == null) {
                 if (throwsError) {
