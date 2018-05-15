@@ -64,8 +64,12 @@ public class BaseGammaFunctions {
             for (int i = 0; i < x.getLength(); i++) {
                 double xv = x.getDataAt(i);
                 double val;
-                if (naValCheck.check(xv)) {
-                    val = RRuntime.DOUBLE_NA;
+                if (naValCheck.checkNAorNaN(xv)) {
+                    if (naValCheck.check(xv)) {
+                        val = RRuntime.DOUBLE_NA;
+                    } else {
+                        val = Double.NaN;
+                    }
                 } else {
                     val = scalarFunction(xv);
                     if (Double.isNaN(val)) {
