@@ -32,6 +32,10 @@ public class TestBuiltin_tilde extends TestBase {
 
     @Test
     public void testTildeDirect() {
+        assertEval("y <- x ~ q; str(y); list(y[[1]], y[[2]], y[[3]])");
+        assertEval("y <- x ~~ q; str(y); list(y[[1]], y[[2]], y[[3]], y[[3]][[1]], y[[3]][[2]])");
+        assertEval("y <- x ~~~ q; str(y); list(y[[1]], y[[2]], y[[3]], y[[3]][[1]], y[[3]][[2]], y[[3]][[2]][[1]], y[[3]][[2]][[2]])");
+        assertEval("y <- x ~~~~ q; str(y); list(y[[1]], y[[2]], y[[3]], y[[3]][[1]], y[[3]][[2]], y[[3]][[2]][[1]], y[[3]][[2]][[2]], y[[3]][[2]][[2]][[1]], y[[3]][[2]][[2]][[2]])");
         assertEval("~ x + y");
         assertEval("x ~ y + z");
         assertEval("y ~ 0 + x");
