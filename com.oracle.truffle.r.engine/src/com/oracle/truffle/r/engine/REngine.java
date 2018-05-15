@@ -301,6 +301,7 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public CallTarget parseToCallTarget(Source source, MaterializedFrame executionFrame) throws ParseException {
         if (source.getPath() != null && !source.isInteractive()) {
+            // Use RScript semantics (delay syntax errors) for non-interactive sources from file
             return Truffle.getRuntime().createCallTarget(createRScriptRoot(source, executionFrame));
         } else if (source == Engine.GET_CONTEXT) {
             /*
