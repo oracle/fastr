@@ -29,11 +29,18 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.OperatorNode;
+import com.oracle.truffle.r.nodes.function.CallMatcherNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
+import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -42,6 +49,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -193,6 +201,7 @@ public abstract class InternalNode extends OperatorNode {
         @Children protected final RNode[] arguments;
         @Child private RBuiltinNode builtin;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+        @Child private InternalGenericDispatchNode internalGenericDispatchNode;
 
         InternalCallNode(SourceSection src, RSyntaxLookup operator, ArgumentsSignature outerSignature, RSyntaxNode[] outerArgs, RBuiltinFactory factory, RSyntaxElement[] args) {
             super(src, operator, outerSignature, outerArgs);
@@ -214,11 +223,26 @@ public abstract class InternalNode extends OperatorNode {
 
         @Override
         public Object execute(VirtualFrame frame) {
-            Object result = builtin.call(frame, prepareArgs(frame));
-            assert result != null : "builtins cannot return 'null': " + factory.getName();
-            assert !(result instanceof RConnection) : "builtins cannot return connection': " + factory.getName();
-            visibility.execute(frame, factory.getVisibility());
+            Object[] args = prepareArgs(frame);
+            Object result = doInternalDispatch(frame, factory, args);
+            if (result == null) {
+                result = builtin.call(frame, prepareArgs(frame));
+                assert result != null : "builtins cannot return 'null': " + factory.getName();
+                assert !(result instanceof RConnection) : "builtins cannot return connection': " + factory.getName();
+                visibility.execute(frame, factory.getVisibility());
+            }
             return result;
+        }
+
+        private Object doInternalDispatch(VirtualFrame frame, RBuiltinFactory factory, Object[] args) {
+            if (factory.getDispatch() != RDispatch.INTERNAL_GENERIC) {
+                return null;
+            }
+            if (internalGenericDispatchNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                internalGenericDispatchNode = insert(new InternalGenericDispatchNode());
+            }
+            return internalGenericDispatchNode.doInternalDispatch(frame, factory, args);
         }
 
         @Override
@@ -316,6 +340,41 @@ public abstract class InternalNode extends OperatorNode {
             }
             args[args.length - 1] = new RArgsValuesAndNames(varArgs, ArgumentsSignature.empty(varArgs.length));
             return args;
+        }
+    }
+
+    private static final class InternalGenericDispatchNode extends Node {
+        private final ConditionProfile hasClassProfile;
+        @Child private ClassHierarchyNode classHierarchy;
+        @Child private S3FunctionLookupNode lookup;
+        @Child private CallMatcherNode callMatcher;
+
+        InternalGenericDispatchNode() {
+            classHierarchy = ClassHierarchyNodeGen.create(false, false);
+            hasClassProfile = ConditionProfile.createBinaryProfile();
+        }
+
+        protected Object doInternalDispatch(VirtualFrame frame, RBuiltinFactory factory, Object[] args) {
+            if (args.length == 0) {
+                return null;
+            }
+            Object x = args[0];
+            RStringVector clazz = classHierarchy.execute(x);
+            if (hasClassProfile.profile(clazz != null)) {
+                if (lookup == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    lookup = insert(S3FunctionLookupNode.create(false, false, false));
+                }
+                Result lookupResult = lookup.execute(frame, factory.getGenericName(), clazz, null, frame.materialize(), null);
+                if (lookupResult != null) {
+                    if (callMatcher == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        callMatcher = insert(CallMatcherNode.create(false));
+                    }
+                    return callMatcher.execute(frame, factory.getSignature(), args, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
+                }
+            }
+            return null;
         }
     }
 
