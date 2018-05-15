@@ -125,13 +125,13 @@ class EngineRootNode extends RootNode {
             this.statements = statements;
             this.calls = new DirectCallNode[statements.size()];
             this.printResult = printResult;
+            createNodes();
         }
 
         @ExplodeLoop
         Object execute(Object actualFrame) {
             Object lastValue = RNull.instance;
             for (int i = 0; i < calls.length; i++) {
-                materializeCall(i);
                 lastValue = calls[i].call(new Object[]{actualFrame});
             }
             return lastValue;
@@ -152,17 +152,8 @@ class EngineRootNode extends RootNode {
             return false;
         }
 
-        @Override
-        public InstrumentableNode materializeInstrumentableNodes(Set<Class<? extends Tag>> materializedTags) {
+        private void createNodes() {
             for (int i = 0; i < calls.length; i++) {
-                materializeCall(i);
-            }
-            return this;
-        }
-
-        protected void materializeCall(int i) {
-            if (calls[i] == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
                 RNode node = statements.get(i).asRNode();
                 calls[i] = insert(Truffle.getRuntime().createDirectCallNode(engine.doMakeCallTarget(node, RSource.Internal.REPL_WRAPPER.string, printResult, true)));
             }
