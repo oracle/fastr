@@ -51,7 +51,7 @@ public abstract class RSuicide {
     }
 
     public static RuntimeException rSuicide(RContext ctx, @SuppressWarnings("unused") Throwable cause, String msg) {
-        // TODO: output "cause"
+        RInternalError.reportError(cause);
         invokeUserDefinedSuicide(ctx, msg);
         throw rSuicideDefault(msg);
     }

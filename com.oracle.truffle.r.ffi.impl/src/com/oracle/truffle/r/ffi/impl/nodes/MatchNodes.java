@@ -22,23 +22,37 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.r.nodes.builtin.MatchInternalNode;
+import com.oracle.truffle.r.nodes.builtin.MatchInternalNodeGen;
+import com.oracle.truffle.r.runtime.RError;
+import static com.oracle.truffle.r.runtime.RError.Message.MATCH_VECTOR_ARGS;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public final class MatchNodes {
 
     @TypeSystemReference(RTypes.class)
     public abstract static class MatchNode extends FFIUpCallNode.Arg3 {
 
-        @SuppressWarnings("unused")
+        @Child MatchInternalNode match = MatchInternalNodeGen.create();
+
         @Specialization
-        Object match(Object itables, Object ix, int nmatch) {
-            throw RInternalError.unimplemented("Rf_match");
+        Object match(RAbstractVector x, RAbstractVector table, int noMatch) {
+            return match.execute(x, table, noMatch);
+        }
+
+        @SuppressWarnings("unused")
+        @Fallback
+        Object match(Object itables, Object ix, Object nmatch) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(this, MATCH_VECTOR_ARGS);
         }
 
         public static MatchNode create() {
