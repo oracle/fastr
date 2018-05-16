@@ -150,6 +150,11 @@ public class TestBuiltin_namesassign extends TestBase {
         assertEval("{ x <- quote(plot(x = age, y = weight)); names(x)<- c(\"\", \"a\", \"b\", \"d\")}");
         assertEval("{ x <- quote(plot(x = age, y = weight)); names(x)<- c(\"\", \"a\", \"b\"); x}");
         assertEval("{ x <- quote(plot(x = age, y = weight)); x$x <- \"random\"; x}");
+
+        assertEval("{ names(NULL) <- NULL}");
+        assertEval("{ names(NULL) <- 'a'}");
+        assertEval("{ nnnull <- NULL; names(nnnull) <- nnnull; nnnull}");
+        assertEval("{ nnnull <- NULL; names(nnnull) <- 'a'; nnnull}");
     }
 
     @Test

@@ -51,7 +51,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(UpdateNames.class);
-        casts.arg("x").mustNotBeNull(RError.Message.SET_ATTRIBUTES_ON_NULL);
+        casts.arg("x");
     }
 
     private Object castString(Object o) {
@@ -93,6 +93,16 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
         }
         result.setNames(stringVector);
         return result;
+    }
+
+    @Specialization
+    protected Object updateNames(RNull n, RNull names) {
+        return n;
+    }
+
+    @Specialization
+    protected Object updateNames(RNull n, Object names) {
+        return error(RError.Message.SET_ATTRIBUTES_ON_NULL);
     }
 
     @SuppressWarnings("unused")
