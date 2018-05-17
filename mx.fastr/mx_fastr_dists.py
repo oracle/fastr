@@ -167,11 +167,11 @@ R_HOME_DIR="$( dirname "$r_bin" )"
 
         # replace the mx exec scripts with native Java launchers, setting the classpath from above
         bin_exec_dir = join(bin_dir, 'exec')
-        r_launcher = join(self.subject.dir, 'src', 'R_launcher')
+        r_launcher = join(self.subject.dir, 'src', 'R_legacy')
         template_dict = {'CLASSPATH': classpath_string}
         self._template(r_launcher, join(bin_exec_dir, 'R'), template_dict)
         shutil.rmtree(join(bin_dir, 'execRextras'))
-        rscript_launcher = join(self.subject.dir, 'src', 'Rscript_launcher')
+        rscript_launcher = join(self.subject.dir, 'src', 'Rscript_legacy')
         self._template(rscript_launcher, join(bin_dir, 'Rscript'), template_dict)
 
 
