@@ -61,4 +61,13 @@ public class TestBuiltin_quote extends TestBase {
         assertEval(Ignored.ImplementationError, "typeof(quote(a[,2])[[3]])");
         assertEval(Ignored.ImplementationError, "{ res <- quote(a[,2])[[3]]; typeof(res) }");
     }
+
+    @Test
+    public void testQuoteWithFields() {
+        assertEval("quote(foo@bar)[[3]]");
+        assertEval("quote(foo$bar)[[3]]");
+        assertEval("quote(foo$'bar')[[3]]");
+        assertEval("quote(foo@'bar')[[3]]");
+        assertEval("quote(foo@bar <- 3)[[2]][[3]]");
+    }
 }

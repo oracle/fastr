@@ -85,6 +85,17 @@ public @interface RBuiltin {
     RBehavior behavior();
 
     /**
+     * Field accesses must have at leas two arguments. The call dispatching mechanism will change
+     * the second argument accordingly: if it is symbol lookup, the symbol name will be used as
+     * String constant instead, if it already is a String constant the will be used as is, otherwise
+     * error is raised. This special handling for field accessed is necessary, because they are also
+     * internal generics and the user provided overloads only accept a String as the second
+     * argument. However, there is a difference between field access with string and with a lookup
+     * as the second argument. The difference is visible to code introspection with {@code quote}.
+     */
+    boolean isFieldAccess() default false;
+
+    /**
      * Indicates whether or not function containing a call of the form
      * <code>.Internal(name(...))</code> should trigger a split of the caller at its direct call
      * sites. <code>name</code> indicates the builtin name defined in {@link #name()}.

@@ -485,7 +485,7 @@ basic_expr returns [T v]
     )
     (
       ((FIELD|AT|LBRAKET|LBB|LPAR) => (
-          (op=(FIELD|AT) n_ name=id                    { $v = builder.call(src(start, last()), operator($op), $v, builder.constant(src($name.v), $name.v.getText())); })
+          (op=(FIELD|AT) n_ name=id                    { $v = builder.call(src(start, last()), operator($op), $v, builder.lookup(src($name.v), $name.v.getText(), false)); })
         | (op=(FIELD|AT) n_ sname=conststring          { $v = builder.call(src(start, last()), operator($op), $v, $sname.v); })
         | (op=LBRAKET subset=args[$v] y=RBRAKET        {
                                                            if ($subset.v.size() == 1) {
