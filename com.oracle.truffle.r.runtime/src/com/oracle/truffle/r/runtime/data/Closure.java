@@ -164,6 +164,10 @@ public final class Closure {
         return expr.asRSyntaxNode();
     }
 
+    /**
+     * If this closure represents a lookup, this returns the looked up symbol, otherwise returns
+     * {@code null}. The string is already interned.
+     */
     public String asSymbol() {
         return symbol;
     }
