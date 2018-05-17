@@ -1,5 +1,8 @@
 #!/usr/bin/env bash
 
+# This script is a modified graal/vm/mx.vm/launcher_template.sh
+# and deployed as jre/languages/R/bin/Rscript
+
 source="${BASH_SOURCE[0]}"
 while [ -h "$source" ] ; do
   prev_source="$source"
@@ -11,7 +14,7 @@ while [ -h "$source" ] ; do
   fi
 done
 BIN="$( cd -P "$( dirname "$source" )" && pwd )"
-# This script is deployed as jre/languages/R/bin/Rscript
+
 bin_location=jre/languages/R/bin
 slashes=${bin_location//[^\/]/}
 dir_count=${#slashes}
@@ -20,27 +23,49 @@ for i in $(seq 1 ${dir_count}); do
   JRE="$( dirname "$JRE" )"
 done
 
-JAVA_ARGS=()
-PROGRAM_ARGS=()
-for opt in "${@:1}"
-do
-    case $opt in
-        --jvm.*)
-            opt=${opt:6}
-            JAVA_ARGS+=("-$opt") ;;
-        *)
-            PROGRAM_ARGS+=("$opt") ;;
-    esac
+absolute_cp=()
+jvm_args=()
+launcher_args=()
+
+# Unfortunately, parsing of `--jvm.*` arguments has to be done blind:
+# Maybe some of those arguments where not really intended for the launcher but where application arguments
+
+for o in "$@"; do
+    if [[ "$o" == "--jvm.help" ]]; then    
+      # TODO This condition should be removed when the Launcher handles --jvm.help correctly.
+      launcher_args+=("$o")
+    elif [[ "$o" == --jvm.* ]]; then
+        jvm_arg="${o#--jvm.}"
+
+        if [[ "$jvm_arg" == "cp" ]]; then
+            >&2 echo "--jvm.cp argument must be of the form --jvm.cp=<classpath>, not two separate arguments"
+            exit 1
+        fi
+        if [[ "$jvm_arg" == "classpath" ]]; then
+            >&2 echo "--jvm.classpath argument must be of the form --jvm.classpath=<classpath>, not two separate arguments"
+            exit 1
+        fi
+        if [[ "$jvm_arg" == "cp="* ]]; then
+            custom_cp=${jvm_arg#cp=}
+        elif [[ "$jvm_arg" == "classpath="* ]]; then
+            custom_cp=${jvm_arg#classpath=}
+        fi
+        if [[ -z "${custom_cp+x}" ]]; then
+            jvm_args+=("-${jvm_arg}")
+        else
+            IFS=: read -ra custom_cp_a <<< "${custom_cp}"
+            for e in "${custom_cp_a[@]}"; do
+                absolute_cp+=("${e}")
+            done
+        fi
+    else
+        launcher_args+=("$o")
+    fi
 done
 
 JAVA_HOME="$( dirname "$JRE" )"
-
-GRAALVMCP=""
-TMPCP="jre/languages/R/legacy/fastr-legacy-launcher.jar"
-for cp in ${TMPCP//:/ }
-do
-    GRAALVMCP="$GRAALVMCP$JAVA_HOME/$cp:"
-done
+cp="$(IFS=: ; echo "${absolute_cp[*]}")"
+cp="$JAVA_HOME/jre/languages/R/legacy/fastr-legacy-launcher.jar:$cp"
 
 # internal variable used to pass args to child R processes
 if [ -z "$FASTR_INTERNAL_ARGS" ]; then
@@ -49,4 +74,4 @@ fi
 
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
-exec "$JAVA_HOME/bin/java" -cp "$GRAALVMCP" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${JAVA_ARGS[@]}" com.oracle.truffle.r.legacylauncher.LegacyLauncher com.oracle.truffle.r.launcher.RscriptCommand "${FASTR_INTERNAL_ARGS[@]}" "${PROGRAM_ARGS[@]}"
+exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${jvm_args[@]}" com.oracle.truffle.r.legacylauncher.LegacyLauncher com.oracle.truffle.r.launcher.RscriptCommand "${FASTR_INTERNAL_ARGS[@]}" "${launcher_args[@]}"
