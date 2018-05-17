@@ -49,6 +49,45 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+/**
+ * Unevaluated lookups (promises) are used as arguments for slot accesses, e.g. in {@code foo@bar},
+ * the second argument to {@code `@`} won't be evaluated, but passed in as promise to {@link Slot}
+ * or {@link UpdateSlot}. This node factors out the common code to extract the String name out of
+ * the promise.
+ */
+final class PromiseAsNameNode extends Node {
+    private static final String ERROR_MARKER = new String();
+    @CompilationFinal private String value;
+
+    public String execute(Object nameObj) {
+        if (value == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            value = getValue(nameObj);
+        }
+        if (value == ERROR_MARKER) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name");
+        }
+        return value;
+    }
+
+    private static String getValue(Object nameObj) {
+        String value = null;
+        if (nameObj instanceof RPromise) {
+            RPromise promise = (RPromise) nameObj;
+            Closure closure = promise.getClosure();
+            if (closure.asStringConstant() != null) {
+                value = closure.asStringConstant();
+            } else if (closure.asSymbol() != null) {
+                value = closure.asSymbol();
+            }
+            assert value == null || Utils.isInterned(value);
+            // Note: the promise is never evaluated even in GNU R
+        }
+        return value == null ? ERROR_MARKER : value;
+    }
+}
+
 @RBuiltin(name = "@", kind = PRIMITIVE, parameterNames = {"", ""}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class Slot extends RBuiltinNode.Arg2 {
 
@@ -57,8 +96,9 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
     private static final int IS_NOT_LHS = 2;
 
     @CompilationFinal private int isLhsState = UNINITIALIZED;
-    @Child private UpdateShareableChildValueNode sharedAttrUpdate = UpdateShareableChildValueNode.create();
-    @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(true);
+    @Child private UpdateShareableChildValueNode sharedAttrUpdate;
+    @Child private AccessSlotNode accessSlotNode;
+    @Child private PromiseAsNameNode promiseAsNameNode;
 
     static {
         Casts casts = new Casts(Slot.class);
@@ -66,17 +106,11 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
     }
 
     private String getName(Object nameObj) {
-        if (nameObj instanceof RPromise) {
-            RPromise promise = (RPromise) nameObj;
-            Closure closure = promise.getClosure();
-            if (closure.asStringConstant() != null) {
-                return closure.asStringConstant();
-            } else if (closure.asSymbol() != null) {
-                return closure.asSymbol();
-            }
+        if (promiseAsNameNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            promiseAsNameNode = insert(new PromiseAsNameNode());
         }
-        CompilerDirectives.transferToInterpreter();
-        throw error(RError.Message.GENERIC, "invalid type or length for slot name");
+        return promiseAsNameNode.execute(nameObj);
     }
 
     private static boolean isLhsOfSyntaxCall(RSyntaxNode n) {
@@ -105,9 +139,7 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
     @Specialization(guards = "isLhsOfForeignCall(object)")
     protected Object getSlot(TruffleObject object, Object nameObj,
                     @Cached("createClassProfile()") ValueProfile nameObjProfile) {
-
         String name = getName(nameObjProfile.profile(nameObj));
-        assert Utils.isInterned(name);
 
         // just return evaluated receiver object and name
         return RCallNode.createDeferredMemberAccess(object, name);
@@ -117,10 +149,18 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
     protected Object getSlot(Object object, Object nameObj,
                     @Cached("createClassProfile()") ValueProfile nameObjProfile) {
         String name = getName(nameObjProfile.profile(nameObj));
-        assert Utils.isInterned(name);
+
+        if (accessSlotNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            accessSlotNode = insert(AccessSlotNodeGen.create(true));
+        }
         Object result = accessSlotNode.executeAccess(object, name);
 
         // since we give the slot away, we probably have to increase the refCount
+        if (sharedAttrUpdate == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            sharedAttrUpdate = insert(UpdateShareableChildValueNode.create());
+        }
         sharedAttrUpdate.execute(object, result);
         return result;
     }

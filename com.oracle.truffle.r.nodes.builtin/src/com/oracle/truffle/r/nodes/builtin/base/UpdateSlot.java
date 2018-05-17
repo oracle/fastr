@@ -32,51 +32,36 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 @RBuiltin(name = "@<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, nonEvalArgs = 1, behavior = COMPLEX)
 public abstract class UpdateSlot extends RBuiltinNode.Arg3 {
 
     @Child private UpdateSlotNode updateSlotNode = com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen.create();
+    @Child private PromiseAsNameNode promiseAsNameNode;
 
     static {
         Casts casts = new Casts(UpdateSlot.class);
         casts.arg(0).asAttributable(true, true, true);
     }
 
-    protected String getName(RPromise nameObj) {
-        Closure closure = nameObj.getClosure();
-        if (closure.asSymbol() != null) {
-            return closure.asSymbol();
-        } else if (closure.asStringConstant() != null) {
-            return closure.asStringConstant();
-        } else {
-            CompilerDirectives.transferToInterpreter();
-            RSyntaxElement element = closure.getExpr().asRSyntaxNode();
-            assert !(element instanceof RSyntaxLookup);
-            if (element instanceof RSyntaxConstant) {
-                throw error(RError.Message.SLOT_INVALID_TYPE, Predef.typeName().apply(((RSyntaxConstant) element).getValue()));
-            } else {
-                throw error(RError.Message.SLOT_INVALID_TYPE, "language");
-            }
+    private String getName(Object nameObj) {
+        if (promiseAsNameNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            promiseAsNameNode = insert(new PromiseAsNameNode());
         }
+        return promiseAsNameNode.execute(nameObj);
     }
 
     public static final class CheckSlotAssignNode extends RBaseNode {
