@@ -376,6 +376,17 @@ get.pkgdir <- function(pkgname) {
 	return(file.path(lib.install, pkgname))
 }
 
+equal.fastr.error.log.sizes <- function(older, newer) {
+    if (length(older) < length(newer)) {
+        # An error log file has been added; so an internal error must have occurred.
+        FALSE
+    } else {
+        # An error log file has been removed or the file list did not change.
+        # Compare sizes of the files.
+        any(older[names(newer)] == newer)
+    } 
+}
+
 installed.ok <- function(pkgname, initial_error_log_size) {
 	# try to determine if the install was successful
 	# 1. There must be a directory lib.install/pkgname
@@ -388,7 +399,8 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 	if (file.exists(get.pkgdir(paste0("00LOCK-", pkgname)))) {
 		return(FALSE)
 	}
-	if (fastr_error_log_size() != initial_error_log_size) {
+	
+	if (!equal.fastr.error.log.sizes(initial_error_log_size, fastr.errors.log.sizes())) {
 		# This is a really nasty case where the error happens during
 		# the test load step. It is not detected by the package
 		# install code and leaves no LOCK file nor does it remove
@@ -401,7 +413,7 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 }
 
 test.ok <- function(initial_error_log_size) {
-	return(fastr_error_log_size() == initial_error_log_size)
+	equal.fastr.error.log.sizes(initial_error_log_size, fastr.errors.log.sizes())
 }
 
 # For use with --use-installed.
@@ -765,19 +777,19 @@ include.package <- function(x, blacklist) {
 	return (!(x["Package"] %in% blacklist || x["Package"] %in% ok.pkg.filelist))
 }
 
-# TODO adapt to new location of 'fastr_errors.log'
-fastr_error_log_size <- function() {
-	size <- file.info("fastr_errors.log")$size
-	if (is.na(size)) {
-		return(0)
-	} else {
-		return(size)
-	}
+# Returns a vector (with names) containing the sizes of all 'fastr_errors*.log' files
+fastr.errors.log.sizes <- function() {
+    dirs <- unique(c(getwd(), R.home(), path.expand('~')))
+    listed <- list.files(dirs, full.names=T)
+    filtered <- listed[grepl("fastr_errors.*\\.log", listed)]
+    sizes <- file.info(filtered)$size
+    names(sizes) <- filtered
+    return (sizes)
 }
 
 # installs a single package or retrieves it from the cache
 install.pkg <- function(pkgname) {
-	error_log_size <- fastr_error_log_size()
+	error_log_size <- fastr.errors.log.sizes()
     rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source")[[1]], lib.install)
     success <- FALSE
     if (rc == 0L) {
@@ -832,7 +844,7 @@ test.package <- function(pkgname) {
 	check.create.dir(file.path(testdir.path, pkgname))
 	start.time <- proc.time()[[3]]
     res <- 0L
-	error_log_size <- fastr_error_log_size()
+	error_log_size <- fastr.errors.log.sizes()
 	if (run.mode == "system") {
 		res <- system.test(pkgname)
 	} else if (run.mode == "internal") {
