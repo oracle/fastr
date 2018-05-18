@@ -519,13 +519,16 @@ def _set_test_status(fastr_test_info):
                 if fastr_invalid_numbers or total_fastr > total_gnur:
                     # If FastR's numbers are invalid or GnuR ran fewer tests than FastR, we cannot trust the FastR numbers
                     fastr_testfile_status.report = 0, gnur_skipped, gnur_ok + gnur_failed
+                    fastr_test_status.status = "FAILED"
                     fastr_testfile_status.status = "FAILED"
                 elif total_fastr < total_gnur:
                     # If FastR ran fewer tests than GnuR, we complement the missing ones as failing
                     fastr_testfile_status.report = ok, skipped, failed + (total_gnur - total_fastr)
+                    fastr_test_status.status = "FAILED"
                     fastr_testfile_status.status = "FAILED"
                 else:
                     # The total numbers are equal, so we are fine.
+                    fastr_testfile_status.status = "OK"
                     fastr_testfile_status.report = ok, skipped, failed
             else:
                 result, n_tests_passed, n_tests_failed = _fuzzy_compare(gnur_content, fastr_content, gnur_testfile_status.abspath, fastr_testfile_status.abspath, custom_filters=filters)
@@ -631,7 +634,7 @@ def _parse_testthat_result(lines):
 
     # find index of line which contains 'testthat results'
     try:
-        i = next(iter(filter(lambda x: 'testthat results' in x[1], enumerate(lines))))[0]
+        i = next(iter([x for x in enumerate(lines) if 'testthat results' in x[1]]))[0]
         if i+1 < len(lines) and lines[i + 1].startswith("OK"):
             result_line = lines[i + 1]
             idx_ok = 0
@@ -658,7 +661,7 @@ def _parse_runit_result(lines):
     Number of failures: 0
     '''
     try:
-        line_idx = next(iter(filter(lambda x: "RUNIT TEST PROTOCOL" in x[1], enumerate(lines))))[0]
+        line_idx = next(iter([x for x in enumerate(lines) if 'RUNIT TEST PROTOCOL' in x[1]]))[0]
         tests_total = 0
         tests_failed = 0
         for i in range(line_idx, len(lines)):
