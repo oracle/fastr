@@ -47,5 +47,8 @@ run <- function() {
 }
 
 if (!interactive()) {
-	run()
+    tryCatch({
+	    rc <- run()
+        quit(status=rc)
+    } , error = function(e) quit(status=1))
 }
