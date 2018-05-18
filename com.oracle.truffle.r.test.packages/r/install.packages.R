@@ -383,7 +383,7 @@ equal.fastr.error.log.sizes <- function(older, newer) {
     } else {
         # An error log file has been removed or the file list did not change.
         # Compare sizes of the files.
-        any(older[names(newer)] == newer)
+        all(older[names(newer)] == newer)
     } 
 }
 
