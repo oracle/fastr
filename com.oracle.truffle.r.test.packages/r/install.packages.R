@@ -400,6 +400,10 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 	return(TRUE)
 }
 
+test.ok <- function(initial_error_log_size) {
+	return(fastr_error_log_size() == initial_error_log_size)
+}
+
 # For use with --use-installed.
 # Sets up the install.status vector by scanning the package installation
 # directory for OK and FAILED package installs.
@@ -761,6 +765,7 @@ include.package <- function(x, blacklist) {
 	return (!(x["Package"] %in% blacklist || x["Package"] %in% ok.pkg.filelist))
 }
 
+# TODO adapt to new location of 'fastr_errors.log'
 fastr_error_log_size <- function() {
 	size <- file.info("fastr_errors.log")$size
 	if (is.na(size)) {
@@ -826,15 +831,22 @@ test.package <- function(pkgname) {
 	check.create.dir(testdir.path)
 	check.create.dir(file.path(testdir.path, pkgname))
 	start.time <- proc.time()[[3]]
+    res <- 0L
+	error_log_size <- fastr_error_log_size()
 	if (run.mode == "system") {
-		system.test(pkgname)
+		res <- system.test(pkgname)
 	} else if (run.mode == "internal") {
-		tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
+		res <- tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
 	} else if (run.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
+    # be paranoid
+    if (!test.ok(error_log_size)) {
+        res <- 1L
+    }
 	end.time <- proc.time()[[3]]
 	cat("TEST_TIME:", pkgname, end.time - start.time, "\n")
+    return (res)
 }
 
 is.fastr <- function() {
