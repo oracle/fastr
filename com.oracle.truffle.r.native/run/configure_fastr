@@ -1,0 +1,23 @@
+#!/usr/bin/env bash
+
+# This script is deployed as <FASTR>/bin/configure_fastr.sh
+
+source="${BASH_SOURCE[0]}"
+# "un-link" the source path
+while [ -h "$source" ] ; do
+  prev_source="$source"
+  source="$(readlink "$source")";
+  if [[ "$source" != /* ]]; then
+    # if the link was relative, it was relative to where it came from
+    dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
+    source="$dir/$source"
+  fi
+done
+
+( 
+  cd -P "$( dirname "$source" )/../etc"
+  autoconf
+  ./configure
+  ed Makeconf < edMakeconf.etc  
+  echo "DONE"
+)
