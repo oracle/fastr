@@ -25,7 +25,7 @@ java9Downloads : {
 }
 
 logfiles : [
-    "fastr_errors.log"
+    "fastr_errors*.log"
     "results.json"
     "libdownloads/R-*/gnur_configure.log"
     "libdownloads/R-*/config.log"

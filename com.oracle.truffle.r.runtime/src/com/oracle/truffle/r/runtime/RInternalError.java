@@ -45,7 +45,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
  */
 public final class RInternalError extends Error implements TruffleException {
 
-    private static final String FASTR_ERRORS_LOG = "fastr_errors.log";
+    private static final String FASTR_ERRORS_LOG = "fastr_errors";
 
     private static final long serialVersionUID = 80698622974155216L;
 
@@ -194,7 +194,7 @@ public final class RInternalError extends Error implements TruffleException {
 
                 String message = "An internal error occurred: \"" + errMsg + "\"\nPlease report an issue at https://github.com/oracle/fastr including the commands";
                 if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                    message += " and the error log file '" + getLogFileName(contextId) + "'.";
+                    message += " and the error log file '" + Utils.getLogPath(getLogFileName(contextId)) + "'.";
                 } else {
                     message += ".";
                 }

@@ -46,7 +46,7 @@ public class RFFILog {
     /**
      * Always trace to a file because stdout is problematic for embedded mode.
      */
-    private static final String TRACEFILE = "fastr_trace_nativecalls.log";
+    private static final String TRACEFILE = "fastr_trace_nativecalls";
     private static PrintWriter traceStream;
 
     /**
