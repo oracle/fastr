@@ -37,6 +37,7 @@ import org.graalvm.polyglot.Context.Builder;
 
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import java.io.File;
 
 public abstract class RAbstractLauncher extends AbstractLanguageLauncher implements Closeable {
 
@@ -63,7 +64,12 @@ public abstract class RAbstractLauncher extends AbstractLanguageLauncher impleme
         this.options = RCmdOptions.parseArguments(client, arguments.toArray(new String[arguments.size()]), true, recognizedArgsIndices);
         List<String> unrecognizedArgs = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
-            if ("--jvm".equals(arguments.get(i))) {
+            if ("--jvm.help".equals(arguments.get(i))) {
+                // This condition should be removed when the Launcher handles --jvm.help
+                // correctly.
+                printJvmHelp();
+                throw exit();
+            } else if ("--jvm".equals(arguments.get(i))) {
                 useJVM = true;
             } else if (!recognizedArgsIndices[i]) {
                 unrecognizedArgs.add(arguments.get(i));
@@ -119,4 +125,67 @@ public abstract class RAbstractLauncher extends AbstractLanguageLauncher impleme
             context.close();
         }
     }
+
+    // The following code is copied from org.graalvm.launcher.Launcher and it should be removed
+    // when the Launcher handles --jvm.help correctly.
+
+    private static void printJvmHelp() {
+        System.out.print("JVM options:");
+        printOption("--jvm.classpath <...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's classpath");
+        printOption("--jvm.D<name>=<value>", "Set a system property");
+        printOption("--jvm.esa", "Enable system assertions");
+        printOption("--jvm.ea[:<packagename>...|:<classname>]", "Enable assertions with specified granularity");
+        printOption("--jvm.agentlib:<libname>[=<options>]", "Load native agent library <libname>");
+        printOption("--jvm.agentpath:<pathname>[=<options>]", "Load native agent library by full pathname");
+        printOption("--jvm.javaagent:<jarpath>[=<options>]", "Load Java programming language agent");
+        printOption("--jvm.Xbootclasspath/a:<...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's boot classpath");
+        printOption("--jvm.Xmx<size>", "Set maximum Java heap size");
+        printOption("--jvm.Xms<size>", "Set initial Java heap size");
+        printOption("--jvm.Xss<size>", "Set java thread stack size");
+    }
+
+    private static void printOption(String option, String description, int indentation) {
+        String indent = spaces(indentation);
+        String desc = wrap(description != null ? description : "");
+        String nl = System.lineSeparator();
+        String[] descLines = desc.split(nl);
+        int optionWidth = 45;
+        if (option.length() >= optionWidth && description != null) {
+            System.out.println(indent + option + nl + indent + spaces(optionWidth) + descLines[0]);
+        } else {
+            System.out.println(indent + option + spaces(optionWidth - option.length()) + descLines[0]);
+        }
+        for (int i = 1; i < descLines.length; i++) {
+            System.out.println(indent + spaces(optionWidth) + descLines[i]);
+        }
+    }
+
+    static void printOption(String option, String description) {
+        printOption(option, description, 2);
+    }
+
+    private static String spaces(int length) {
+        return new String(new char[length]).replace('\0', ' ');
+    }
+
+    private static String wrap(String s) {
+        final int width = 120;
+        StringBuilder sb = new StringBuilder(s);
+        int cursor = 0;
+        while (cursor + width < sb.length()) {
+            int i = sb.lastIndexOf(" ", cursor + width);
+            if (i == -1 || i < cursor) {
+                i = sb.indexOf(" ", cursor + width);
+            }
+            if (i != -1) {
+                sb.replace(i, i + 1, System.lineSeparator());
+                cursor = i;
+            } else {
+                break;
+            }
+        }
+        return sb.toString();
+    }
+
+    // End of copied code
 }
