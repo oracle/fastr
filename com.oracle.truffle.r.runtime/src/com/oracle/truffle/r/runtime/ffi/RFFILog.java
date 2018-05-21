@@ -91,10 +91,15 @@ public class RFFILog {
 
     private static void initTraceStream() {
         Path tracePath = Utils.getLogPath(TRACEFILE);
-        try {
-            traceStream = new PrintWriter(tracePath.toString());
-        } catch (IOException ex) {
-            System.err.println(ex.getMessage());
+        if (tracePath != null) {
+            try {
+                traceStream = new PrintWriter(tracePath.toString());
+            } catch (IOException ex) {
+                System.err.println(ex.getMessage());
+                System.exit(1);
+            }
+        } else {
+            System.err.println("Cannot produce trace log file at any of the standard locations. Please check directory permissions.");
             System.exit(1);
         }
     }
