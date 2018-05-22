@@ -240,7 +240,9 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                         // cannot map varargs
                         return null;
                     }
-                    if (i < evaluatedArgs) {
+                    if (i == 1 && builtinDescriptor.isFieldAccess()) {
+                        localArguments[i] = RContext.getASTBuilder().constant(arg.getSourceSection(), lookup).asRNode();
+                    } else if (i < evaluatedArgs) {
                         localArguments[i] = arg.asRNode();
                     } else {
                         localArguments[i] = new PeekLocalVariableNode(lookup);
@@ -249,6 +251,9 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
                     localArguments[i] = RContext.getASTBuilder().process(arg).asRNode();
                 } else {
                     assert arg instanceof RCallSpecialNode;
+                    if (i == 1 && builtinDescriptor.isFieldAccess()) {
+                        return null;
+                    }
                     localArguments[i] = arg.asRNode();
                 }
                 if (dispatch.isGroupGeneric() || dispatch == RDispatch.INTERNAL_GENERIC && i == 0) {

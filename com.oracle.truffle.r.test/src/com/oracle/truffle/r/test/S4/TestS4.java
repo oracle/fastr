@@ -42,7 +42,7 @@ public class TestS4 extends TestRBase {
     public void testSlotAccess() {
         assertEval("{ `@`(getClass(\"ClassUnionRepresentation\"), virtual) }");
         assertEval("{ `@`(getClass(\"ClassUnionRepresentation\"), \"virtual\") }");
-        assertEval(Output.IgnoreErrorContext, "{ `@`(getClass(\"ClassUnionRepresentation\"), c(\"virtual\", \"foo\")) }");
+        assertEval("{ `@`(getClass(\"ClassUnionRepresentation\"), c(\"virtual\", \"foo\")) }");
         assertEval("{ getClass(\"ClassUnionRepresentation\")@virtual }");
         assertEval("{ getClass(\"ClassUnionRepresentation\")@.S3Class }");
         assertEval("{ c(42)@.Data }");

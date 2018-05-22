@@ -99,6 +99,7 @@ public class ParserGeneration {
         "allow strings in :: and :::",
         "use file for interactive single-line source",
         ":: and ::: do not set argument names",
-        "refactored: use file for interactive single-line source"
+        "refactored: use file for interactive single-line source",
+        "create lookups for field accesses where appropriate",
     };
 }

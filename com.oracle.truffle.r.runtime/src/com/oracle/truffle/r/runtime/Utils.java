@@ -56,7 +56,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -685,10 +684,9 @@ public final class Utils {
         CompilerAsserts.neverPartOfCompilation();
         if (value == null) {
             return "null";
-        } else if (value instanceof RTypedValue) {
-            return ((RTypedValue) value).getRType().getName();
         }
-        return value.getClass().getSimpleName();
+        RType rType = RType.getRType(value);
+        return rType == null ? value.getClass().getSimpleName() : rType.getName();
     }
 
     private static boolean isWriteableDirectory(String path) {

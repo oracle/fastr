@@ -23,6 +23,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 
 public enum RType {
@@ -131,6 +132,22 @@ public enum RType {
                 return true;
             default:
                 return false;
+        }
+    }
+
+    public static RType getRType(Object value) {
+        if (value instanceof RTypedValue) {
+            return ((RTypedValue) value).getRType();
+        } else if (value instanceof Integer) {
+            return Integer;
+        } else if (value instanceof Double) {
+            return Double;
+        } else if (value instanceof Byte) {
+            return Logical;
+        } else if (value instanceof String) {
+            return Character;
+        } else {
+            return null;
         }
     }
 

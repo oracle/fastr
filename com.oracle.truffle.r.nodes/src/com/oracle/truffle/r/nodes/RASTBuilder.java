@@ -103,12 +103,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 switch (symbol) {
                     case "$":
                     case "@":
-                        if (args.get(1).value instanceof RSyntaxLookup) {
-                            RSyntaxLookup lookup = (RSyntaxLookup) args.get(1).value;
-                            // FastR differs from GNUR: we only use string constants to represent
-                            // field and slot lookups, while GNUR uses symbols
-                            args.set(1, RCodeBuilder.argument(args.get(1).source, args.get(1).name, constant(lookup.getLazySourceSection(), lookup.getIdentifier())));
-                        }
                         break;
                     case "while":
                         return new WhileNode(source, lhsLookup, args.get(0).value, args.get(1).value);

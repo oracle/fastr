@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
 /**
@@ -82,7 +83,7 @@ public abstract class PrepareArguments extends Node {
             this.noOpt = noOpt;
         }
 
-        protected ArgumentsAndSignature createArguments(RCallNode call, ArgumentsSignature varArgSignature, S3DefaultArguments s3DefaultArguments) {
+        protected ArgumentsAndSignature createArguments(RBaseNode call, ArgumentsSignature varArgSignature, S3DefaultArguments s3DefaultArguments) {
             Arguments<RNode> matched = ArgumentMatcher.matchArguments(target, sourceArguments, varArgSignature, s3DefaultArguments, call, noOpt);
             return new ArgumentsAndSignature(matched.getArguments(), matched.getSignature());
         }
@@ -104,7 +105,7 @@ public abstract class PrepareArguments extends Node {
 
         @Specialization(limit = "CACHE_SIZE", guards = {"cachedVarArgSignature == null || cachedVarArgSignature == varArgs.getSignature()", "cachedS3DefaultArguments == s3DefaultArguments"})
         public RArgsValuesAndNames prepare(VirtualFrame frame, RArgsValuesAndNames varArgs, @SuppressWarnings("unused") S3DefaultArguments s3DefaultArguments,
-                        @SuppressWarnings("unused") RCallNode call,
+                        @SuppressWarnings("unused") RBaseNode call,
                         @Cached("getSignatureOrNull(varArgs)") ArgumentsSignature cachedVarArgSignature,
                         @Cached("createArguments(call, cachedVarArgSignature, s3DefaultArguments)") ArgumentsAndSignature arguments,
                         @SuppressWarnings("unused") @Cached("s3DefaultArguments") S3DefaultArguments cachedS3DefaultArguments) {
@@ -134,7 +135,7 @@ public abstract class PrepareArguments extends Node {
             @Child private GenericCallEntry entry;
 
             @TruffleBoundary
-            public RArgsValuesAndNames execute(MaterializedFrame materializedFrame, S3DefaultArguments s3DefaultArguments, ArgumentsSignature varArgSignature, RCallNode call) {
+            public RArgsValuesAndNames execute(MaterializedFrame materializedFrame, S3DefaultArguments s3DefaultArguments, ArgumentsSignature varArgSignature, RBaseNode call) {
                 GenericCallEntry e = entry;
                 if (e == null || e.cachedVarArgSignature != varArgSignature || e.cachedS3DefaultArguments != s3DefaultArguments) {
                     ArgumentsAndSignature arguments = createArguments(call, varArgSignature, s3DefaultArguments);
@@ -149,7 +150,7 @@ public abstract class PrepareArguments extends Node {
         }
 
         @Specialization
-        public RArgsValuesAndNames prepareGeneric(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call,
+        public RArgsValuesAndNames prepareGeneric(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RBaseNode call,
                         @Cached("createGenericCall()") GenericCall generic) {
             ArgumentsSignature varArgSignature = varArgs == null ? null : varArgs.getSignature();
             return generic.execute(frame.materialize(), s3DefaultArguments, varArgSignature, call);
@@ -166,12 +167,12 @@ public abstract class PrepareArguments extends Node {
             this.formals = target.getFormalArguments();
         }
 
-        protected MatchPermutation createArguments(RCallNode call, ArgumentsSignature explicitArgSignature) {
+        protected MatchPermutation createArguments(RBaseNode call, ArgumentsSignature explicitArgSignature) {
             return ArgumentMatcher.matchArguments(explicitArgSignature, formals.getSignature(), call, target.getBuiltin());
         }
 
         @Specialization(limit = "CACHE_SIZE", guards = {"cachedExplicitArgSignature == explicitArgs.getSignature()"})
-        public RArgsValuesAndNames prepare(RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, @SuppressWarnings("unused") RCallNode call,
+        public RArgsValuesAndNames prepare(RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, @SuppressWarnings("unused") RBaseNode call,
                         @SuppressWarnings("unused") @Cached("explicitArgs.getSignature()") ArgumentsSignature cachedExplicitArgSignature,
                         @Cached("createArguments(call, cachedExplicitArgSignature)") MatchPermutation permutation) {
             return ArgumentMatcher.matchArgumentsEvaluated(permutation, explicitArgs.getArguments(), s3DefaultArguments, formals);
@@ -179,7 +180,7 @@ public abstract class PrepareArguments extends Node {
 
         @Specialization
         @TruffleBoundary
-        public RArgsValuesAndNames prepareGeneric(RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, @SuppressWarnings("unused") RCallNode call) {
+        public RArgsValuesAndNames prepareGeneric(RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, @SuppressWarnings("unused") RBaseNode call) {
             // Function and arguments may change every call: Flatt'n'Match on SlowPath! :-/
             return ArgumentMatcher.matchArgumentsEvaluated(target, explicitArgs, s3DefaultArguments, RError.ROOTNODE);
         }
@@ -190,7 +191,7 @@ public abstract class PrepareArguments extends Node {
      * original call signature reordered in the same way as the arguments. For s3DefaultArguments
      * motivation see {@link RCallNode#callGroupGeneric}.
      */
-    public abstract RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RCallNode call);
+    public abstract RArgsValuesAndNames execute(VirtualFrame frame, RArgsValuesAndNames varArgs, S3DefaultArguments s3DefaultArguments, RBaseNode call);
 
     public static PrepareArguments create(RRootNode target, CallArgumentsNode args, boolean noOpt) {
         return PrepareArgumentsDefaultNodeGen.create(target, args, noOpt);

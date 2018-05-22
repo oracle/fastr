@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -36,14 +35,12 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.UpdateListField;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -68,6 +65,7 @@ abstract class UpdateFieldSpecial extends RNode {
 
     @Specialization(guards = {"!list.isShared()", "isNotRNullRList(value)"})
     public Object doList(RList list, String field, Object value) {
+        // Note: special call construction turns lookups into string constants for field accesses
         if (updateListField == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateListField = insert(UpdateListField.create());
@@ -87,7 +85,7 @@ abstract class UpdateFieldSpecial extends RNode {
     }
 }
 
-@RBuiltin(name = "$<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@RBuiltin(name = "$<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, isFieldAccess = true, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateField extends RBuiltinNode.Arg3 {
 
     @Child private ReplaceVectorNode update = ReplaceVectorNode.create(ElementAccessMode.FIELD_SUBSCRIPT, true);
@@ -96,8 +94,7 @@ public abstract class UpdateField extends RBuiltinNode.Arg3 {
     private final ConditionProfile coerceList = ConditionProfile.createBinaryProfile();
 
     static {
-        Casts casts = new Casts(UpdateField.class);
-        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT).mustBe(stringValue(), Message.INVALID_SUBSCRIPT_TYPE, Predef.typeName()).asStringVector().findFirst();
+        Casts.noCasts(UpdateField.class);
     }
 
     public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {

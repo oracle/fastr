@@ -52,9 +52,10 @@ public abstract class RBuiltinDescriptor {
 
     private final int primitiveMethodIndex;
     @CompilationFinal(dimensions = 1) private final boolean[] evaluatesArgument;
+    private final boolean isFieldAccess;
 
     public RBuiltinDescriptor(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature,
-                    int[] nonEvalArgs, boolean splitCaller,
+                    int[] nonEvalArgs, boolean splitCaller, boolean isFieldAccess,
                     boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
         this.specialCall = specialCall;
         this.name = Utils.intern(name);
@@ -70,6 +71,7 @@ public abstract class RBuiltinDescriptor {
         this.dispatch = dispatch;
         this.genericName = Utils.intern(genericName);
         this.behavior = behavior;
+        this.isFieldAccess = isFieldAccess;
 
         evaluatesArgument = new boolean[signature.getLength()];
         Arrays.fill(evaluatesArgument, true);
@@ -156,5 +158,9 @@ public abstract class RBuiltinDescriptor {
     public String toString() {
         return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
                         Arrays.toString(nonEvalArgs) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + ", behavior=" + getBehavior() + "]";
+    }
+
+    public boolean isFieldAccess() {
+        return isFieldAccess;
     }
 }

@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.access.HasSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNode;
 import com.oracle.truffle.r.nodes.access.UpdateSlotNodeGen;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNode;
 import com.oracle.truffle.r.nodes.unary.CastToAttributableNodeGen;
@@ -42,15 +43,18 @@ import com.oracle.truffle.r.runtime.Utils;
 
 public class Slot {
 
+    private static void addSlotCasts(Casts casts) {
+        casts.arg(1, "name").defaultError(RError.Message.SLOT_INVALID_TYPE_OR_LEN).mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst().mustBe(Predef.lengthGt(0),
+                        RError.Message.ZERO_LENGTH_VARIABLE);
+    }
+
     public abstract static class R_getSlot extends RExternalBuiltinNode.Arg2 {
 
         @Child private AccessSlotNode accessSlotNode = AccessSlotNodeGen.create(false);
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         static {
-            Casts casts = new Casts(R_getSlot.class);
-            casts.arg(1, "name").defaultError(RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
-                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.Message.ZERO_LENGTH_VARIABLE);
+            addSlotCasts(new Casts(R_getSlot.class));
         }
 
         protected static String getInternedName(String name) {
@@ -75,9 +79,7 @@ public class Slot {
         @Child private CastToAttributableNode castAttributable = CastToAttributableNodeGen.create(true, true, true);
 
         static {
-            Casts casts = new Casts(R_setSlot.class);
-            casts.arg(1, "name").defaultError(RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
-                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.Message.ZERO_LENGTH_VARIABLE);
+            addSlotCasts(new Casts(R_setSlot.class));
         }
 
         protected static String getInternedName(String name) {
@@ -101,9 +103,7 @@ public class Slot {
         @Child private HasSlotNode hasSlotNode;
 
         static {
-            Casts casts = new Casts(R_hasSlot.class);
-            casts.arg(1, "name").defaultError(RError.Message.GENERIC, "invalid type or length for slot name").mustBe(stringValue()).asStringVector().mustBe(
-                            singleElement()).findFirst().mustBe(Predef.lengthGt(0), RError.Message.ZERO_LENGTH_VARIABLE);
+            addSlotCasts(new Casts(R_hasSlot.class));
         }
 
         protected static String getInternedName(String name) {

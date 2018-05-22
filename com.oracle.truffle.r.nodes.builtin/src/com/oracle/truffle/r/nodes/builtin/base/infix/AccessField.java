@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -41,7 +40,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.AccessListField;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -57,6 +55,7 @@ abstract class AccessFieldSpecial extends RNode {
 
     @Specialization
     public Object doList(RList list, String field) {
+        // Note: special call construction turns lookups into string constants for field accesses
         if (accessListField == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             accessListField = insert(AccessListField.create());
@@ -65,7 +64,7 @@ abstract class AccessFieldSpecial extends RNode {
         if (result == null) {
             throw RSpecialFactory.throwFullCallNeeded();
         } else {
-            return accessListField.execute(list, field);
+            return result;
         }
     }
 
@@ -76,7 +75,7 @@ abstract class AccessFieldSpecial extends RNode {
     }
 }
 
-@RBuiltin(name = "$", kind = PRIMITIVE, parameterNames = {"", ""}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@RBuiltin(name = "$", kind = PRIMITIVE, parameterNames = {"", ""}, isFieldAccess = true, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class AccessField extends RBuiltinNode.Arg2 {
 
     @Child private ExtractVectorNode extract = ExtractVectorNode.create(ElementAccessMode.FIELD_SUBSCRIPT, true);
@@ -85,8 +84,7 @@ public abstract class AccessField extends RBuiltinNode.Arg2 {
     private final BranchProfile error = BranchProfile.create();
 
     static {
-        Casts casts = new Casts(AccessField.class);
-        casts.arg(1).defaultError(Message.INVALID_SUBSCRIPT_TYPE, "language").mustBe(stringValue()).asStringVector().findFirst();
+        Casts.noCasts(AccessField.class);
     }
 
     public static RNode createSpecial(ArgumentsSignature signature, RNode[] arguments, @SuppressWarnings("unused") boolean inReplacement) {

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.Assumption;
@@ -235,6 +236,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return Arguments.create(arguments, signature);
     }
 
+    private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame, boolean ignore) {
+        return ignore ? null : lookupVarArgs(frame);
+    }
+
     private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame) {
         if (explicitArgs != null) {
             return (RArgsValuesAndNames) explicitArgs.execute(frame);
@@ -319,9 +324,19 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         FrameSlot slot = dispatchTempSlot.initialize(frame, dispatchObject);
         try {
+            boolean isFieldAccess = builtin.isFieldAccess();
             if (internalDispatchCall == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, false, slot));
+                AlteredArguments alteredArguments = null;
+                if (isFieldAccess) {
+                    RSyntaxNode[] newArgs = Arrays.copyOf(arguments, arguments.length);
+                    newArgs[1] = RContext.getASTBuilder().constant(newArgs[1].getSourceSection(), CallUtils.unevaluatedArgAsFieldName(this, newArgs[1]));
+                    // we know that there are no varargs in the signature, but this RCallNode
+                    // instance could have been confused by lookup of "..." as the field, in which
+                    // case it would think it should lookup varargs.
+                    alteredArguments = new AlteredArguments(newArgs, new int[0]);
+                }
+                internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, alteredArguments, false, slot));
             }
 
             if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
@@ -331,7 +346,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
                 Object basicFun = getBasicFunction.execute(frame, builtin.getName());
                 if (basicFun != null) {
-                    Object result = internalDispatchCall.execute(frame, (RFunction) basicFun, lookupVarArgs(frame), null, null);
+                    Object result = internalDispatchCall.execute(frame, (RFunction) basicFun, lookupVarArgs(frame, isFieldAccess), null, null);
                     if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
                         return result;
                     }
@@ -356,7 +371,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, false, slot));
             }
-            return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame), s3Args, null);
+            return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame, isFieldAccess), s3Args, null);
         } finally {
             TemporarySlotNode.cleanup(frame, dispatchObject, slot);
         }
@@ -739,6 +754,17 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     public CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll) {
+        return createArguments(tempFrameSlot, modeChange, modeChangeAppliesToAll, arguments, varArgIndexes, signature);
+    }
+
+    public CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll, AlteredArguments alteredArguments) {
+        RSyntaxNode[] args = alteredArguments == null ? arguments : alteredArguments.arguments;
+        int[] varArgIdx = alteredArguments == null ? varArgIndexes : alteredArguments.varArgIndexes;
+        return createArguments(tempFrameSlot, modeChange, modeChangeAppliesToAll, args, varArgIdx, signature);
+    }
+
+    private static CallArgumentsNode createArguments(FrameSlot tempFrameSlot, boolean modeChange, boolean modeChangeAppliesToAll, RSyntaxNode[] arguments, int[] varArgIndexes,
+                    ArgumentsSignature signature) {
         RNode[] args = new RNode[arguments.length];
         for (int i = 0; i < arguments.length; i++) {
             if (tempFrameSlot != null && i == 0) {
@@ -815,14 +841,20 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         protected static final int CACHE_SIZE = 4;
 
         private final RCallNode originalCall;
+        private final AlteredArguments alteredArguments;
         private final boolean explicitArgs;
 
         private final FrameSlot tempFrameSlot;
 
-        public FunctionDispatch(RCallNode originalCall, boolean explicitArgs, FrameSlot tempFrameSlot) {
+        public FunctionDispatch(RCallNode originalCall, AlteredArguments alteredArguments, boolean explicitArgs, FrameSlot tempFrameSlot) {
             this.originalCall = originalCall;
             this.explicitArgs = explicitArgs;
             this.tempFrameSlot = tempFrameSlot;
+            this.alteredArguments = alteredArguments;
+        }
+
+        public FunctionDispatch(RCallNode originalCall, boolean explicitArgs, FrameSlot tempFrameSlot) {
+            this(originalCall, null, explicitArgs, tempFrameSlot);
         }
 
         protected LeafCallFunctionNode createCacheNode(RootCallTarget cachedTarget) {
@@ -842,7 +874,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (explicitArgs) {
                 return PrepareArguments.createExplicit(root);
             } else {
-                CallArgumentsNode args = originalCall.createArguments(tempFrameSlot, root.getBuiltin() == null, true);
+                CallArgumentsNode args = originalCall.createArguments(tempFrameSlot, root.getBuiltin() == null, true, alteredArguments);
                 return PrepareArguments.create(root, args, noOpt);
             }
         }
@@ -1185,7 +1217,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     /**
      * Represents the LHS of a possible foreign member call.
      */
-    protected static class DeferredFunctionValue {
+    protected static final class DeferredFunctionValue {
         private final TruffleObject lhsReceiver;
         private final String lhsMember;
 
@@ -1202,6 +1234,20 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return lhsReceiver;
         }
 
+    }
+
+    /**
+     * Encapsulates alternation to {@link RCallNode} original arguments so that we do not need to
+     * create new {@link RCallNode}.
+     */
+    protected static final class AlteredArguments {
+        public final RSyntaxNode[] arguments;
+        public final int[] varArgIndexes;
+
+        public AlteredArguments(RSyntaxNode[] arguments, int[] varArgIndexes) {
+            this.arguments = arguments;
+            this.varArgIndexes = varArgIndexes;
+        }
     }
 
     public static Object createDeferredMemberAccess(TruffleObject object, String name) {
