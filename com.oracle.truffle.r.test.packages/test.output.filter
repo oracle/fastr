@@ -14,7 +14,7 @@
 #   r      replace exact match of the first argument by the second argument
 #   R      replace line containing the first argument by the second argument
 #   D+3-1  delete line containing the specified string and 1 preceding and 3 following lines
-#   s      substitute line containing the specified regular expression (use Python regex syntax)
+#   s      substitute match of the regular expression with given string (use Python regex syntax)
 #
 # NOTES:
 # The definition order of the filters (in this file) matters. 
@@ -41,7 +41,7 @@
 # for all packages: delete line containing 'detaching ‘package:grid’'
 .* => D/detaching ‘package:grid’
 
-# for all packages: delete line containing 'detaching ‘package:grid’'
+# normalize environment addresses
 .* => s/<environment: 0x[0-9A-Fa-f]*>/<environment: 0xCAFEBABE>
 
 # for individual packages:
@@ -61,3 +61,15 @@ compare => D+3/Error in source(filename, local = TRUE) :
 # plus we remove factor's "Levels" followed by the attribute value
 compare => D-1/[1] poor   poor   poor   middle middle middle
 compare => D/Levels: poor middle
+
+# ------
+# "Error in try(stop("!!")) :" vs "Error :"
+assertthat => r/Error in try(stop("!!"))/Error
+
+# differences in paths
+assertthat => s/Path '.*' does not exist/Path 'path/to/somewhere' does not exist
+assertthat => s/Path '.*' is not a directory/Path 'path/to/dir' is not a directory
+
+# different output format in GNUR and FastR
+assertthat => R/[1] "mean %has_args% \"y\" is not TRUE"/REPLACED has_args
+assertthat => R/[1] "`%has_args%`(f = mean, args = \"y\") is not TRUE"/REPLACED has_args
