@@ -99,6 +99,19 @@ ifeq ($(FASTR_RFFI),llvm)
 	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR)
 endif
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
+
+    ## prepare the configuration artefacts for the manual FastR configuration in GraalVM 
+	cp configure_fastr $(FASTR_BIN_DIR)
+	chmod +x $(FASTR_BIN_DIR)/configure_fastr
+	cp configure.ac $(FASTR_ETC_DIR)
+	cp configure.ac $(FASTR_ETC_DIR)
+	cp edMakeconf.etc $(FASTR_ETC_DIR)
+	cp edMakeconf.etc.llvm $(FASTR_ETC_DIR)
+	cp $(GNUR_HOME_BINARY)/etc/Makeconf.in $(FASTR_ETC_DIR)
+	cp $(GNUR_HOME_BINARY)/VERSION $(FASTR_ETC_DIR)
+	cp -R $(GNUR_HOME_BINARY)/m4 $(FASTR_ETC_DIR)
+	cp -R $(GNUR_HOME_BINARY)/tools $(FASTR_ETC_DIR)
+
 	cp -r $(SHARE_FILES) $(FASTR_SHARE_DIR)
 	# TODO may need filtering
 	cp -r $(DOC_FILES) $(FASTR_DOC_DIR)
