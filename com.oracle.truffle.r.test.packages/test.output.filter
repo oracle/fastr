@@ -41,6 +41,9 @@
 # for all packages: delete line containing 'detaching ‘package:grid’'
 .* => D/detaching ‘package:grid’
 
+# for all packages: delete line containing 'detaching ‘package:grid’'
+.* => s/<environment: 0x[0-9A-Fa-f]*>/<environment: 0xCAFEBABE>
+
 # for individual packages:
 
 # ------
