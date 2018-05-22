@@ -146,7 +146,7 @@ public class IsFiniteFunctions {
         }
     }
 
-    @RBuiltin(name = "is.finite", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+    @RBuiltin(name = "is.finite", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsFinite extends Adapter {
 
         static {
@@ -184,7 +184,7 @@ public class IsFiniteFunctions {
         }
     }
 
-    @RBuiltin(name = "is.infinite", kind = PRIMITIVE, parameterNames = {"x"}, behavior = PURE)
+    @RBuiltin(name = "is.infinite", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x"}, behavior = PURE)
     public abstract static class IsInfinite extends Adapter {
 
         static {

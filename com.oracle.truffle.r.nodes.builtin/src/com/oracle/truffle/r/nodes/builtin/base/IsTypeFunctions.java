@@ -136,6 +136,11 @@ public class IsTypeFunctions {
             return RRuntime.LOGICAL_FALSE;
         }
 
+        @Specialization
+        protected byte isRecursive(@SuppressWarnings("unused") RSymbol symbol) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+
         @Fallback
         protected byte isRecursiveFallback(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_TRUE;
