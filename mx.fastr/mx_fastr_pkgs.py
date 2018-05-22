@@ -592,21 +592,21 @@ def handle_output_file(test_output_file, test_output_file_lines):
     """
     mx.logv("Detecting output type of {!s}".format(test_output_file))
     detected = False
-    res = (None, None, None)
+    ok, skipped, failed = None, None, None
     try:
         if _is_testthat_result(test_output_file):
             # if "testthat results" in test_output_file_contents[i]:
             mx.log("Detected testthat summary in {!s}".format(test_output_file))
             detected = True
-            res = _parse_testthat_result(test_output_file_lines)
+            ok, skipped, failed = _parse_testthat_result(test_output_file_lines)
         elif _is_runit_result(test_output_file_lines):
             mx.log("Detected RUNIT test protocol in {!s}".format(test_output_file))
             detected = True
-            res = _parse_runit_result(test_output_file_lines)
+            ok, skipped, failed = _parse_runit_result(test_output_file_lines)
     except TestFrameworkResultException as e:
         mx.log("Error parsing test framework summary: " + str(e))
     # if this test did not use one of the known test frameworks, take the report from the fuzzy compare
-    return (detected, ) + res
+    return (detected, ok, skipped, failed)
 
 
 def _is_testthat_result(test_output_file):
