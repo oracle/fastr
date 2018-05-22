@@ -779,7 +779,7 @@ include.package <- function(x, blacklist) {
 
 # Returns a vector (with names) containing the sizes of all 'fastr_errors*.log' files
 fastr.errors.log.sizes <- function() {
-    dirs <- unique(c(getwd(), R.home(), path.expand('~')))
+    dirs <- unique(c(getwd(), R.home(), path.expand('~'), "/tmp"))
     listed <- list.files(dirs, full.names=T)
     filtered <- listed[grepl("fastr_errors.*\\.log", listed)]
     sizes <- file.info(filtered)$size
