@@ -1014,10 +1014,12 @@ def _parse_filter(line):
         if slash_idx < 0:
             raise InvalidFilterException("cannot find separator '/'")
         args.append(action_str[slash_idx+1:])
-    elif action == "r" or action == "R":
+    elif action == "r" or action == "R" or action == "s":
         # actions with two arguments
         slash0_idx = action_str.find("/")
         slash1_idx = action_str.find("/", slash0_idx+1)
+        while slash1_idx > 0 and action_str[slash1_idx-1] == '\\':
+            slash1_idx = action_str.find("/", slash1_idx+1)
         if slash0_idx < 0:
             raise InvalidFilterException("cannot find first separator '/'")
         if slash1_idx < 0:
@@ -1084,6 +1086,14 @@ class ContentFilter:
             filter_action = lambda l: self.args[1] if self.args[0] in l else l
         elif self.action == "D":
             filter_action = lambda l: "" if self.args[0] in l else l
+        elif self.action == "s":
+            class SubstituteAction:
+                def __init__(self, pattern, repl):
+                    self.compiled_regex = re.compile(pattern)
+                    self.repl = repl
+                def __call__(self, l):
+                    return re.sub(self.compiled_regex, self.repl, l)
+            filter_action = SubstituteAction(self.args[0], self.args[1])
         return self._apply_to_lines(content, filter_action)
 
     def applies_to_pkg(self, pkg_name):

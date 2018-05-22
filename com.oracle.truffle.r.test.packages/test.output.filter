@@ -4,7 +4,7 @@
 # filter = pkg_pattern '=>' action .
 # pkg_pattern = <REGEX>.
 # action = command '/' string ['/' string ].
-# command = 'd' | 'D' ['-N'] ['+N'] | 'r' | 'R'
+# command = 'd' | 'D' ['-N'] ['+N'] | 'r' | 'R' | 's'
 # string = <unquoted string, slashed must be escaped with backslash>
 # N = positive number
 # 
@@ -14,6 +14,7 @@
 #   r      replace exact match of the first argument by the second argument
 #   R      replace line containing the first argument by the second argument
 #   D+3-1  delete line containing the specified string and 1 preceding and 3 following lines
+#   s      substitute line containing the specified regular expression (use Python regex syntax)
 #
 # NOTES:
 # The definition order of the filters (in this file) matters. 
