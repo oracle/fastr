@@ -274,6 +274,7 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                 "README_FASTR": "extracted-dependency:fastr:FASTR_GRAALVM_RELEASE{rffi}/README.md".format(rffi=rffi),
                 "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
                 "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
+                "native-image.properties": "file:mx.fastr/native-image.properties",
                 "R-3.4.0.tar.gz" : "dependency:fastr:GNUR",
                 "legacy/": "dependency:fastr:FASTR_LEGACY_LAUNCHER",
             },
