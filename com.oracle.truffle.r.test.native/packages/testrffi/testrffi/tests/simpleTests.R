@@ -92,6 +92,38 @@ rffi.evalAndNativeArrays(c(F, F, F, F), as.symbol('myvar'), env);
 env$myvar <- 20L
 rffi.evalAndNativeArrays(as.raw(c(1, 3, 2)), as.symbol('myvar'), env);
 
+# Stack introspection after Rf_eval
+# Apparently parent.frame does not always give what sys.frame(sys.parent()) if the Rf_eval gets explicit environment != global env
+
+testStackIntro <- function(doSysParents) {
+    if (doSysParents) {
+        cat("sys.parents(): ", paste0(sys.parents(), collapse=","), "\n")
+    }
+    cat("sys.frame(2):", paste0(ls(sys.frame(2)), collapse=","), "\n")
+    cat("parent.frame():", paste0(ls(parent.frame()), collapse=","), "\n")
+    cat("sys.nframe():", sys.nframe(), "\n")
+    4242
+}
+rfEval <- function(expr, env, evalWrapperVar = 4422) .Call(testrffi:::C_api_Rf_eval, expr, env)
+rfEval(quote(testStackIntro(T)), list2env(list(myenv=42)))
+rfEval(quote(testStackIntro(T)), .GlobalEnv)
+
+eval(quote(testStackIntro(T)), list2env(list(myenv=42)))
+# TODO: sys.parents() give 0,1,2 in FastR instead of 0,1,0 in GNUR, but parent.frame works
+eval(quote(testStackIntro(F)), .GlobalEnv)
+
+# TODO: fix do.call in the same way
+# testStackIntro <- function(doSysParents) {
+#     cat("sys.parents(): ", paste0(sys.parents(), collapse=","), "\n")
+#     cat("sys.frame(2):", paste0(ls(sys.frame(2)), collapse=","), "\n")
+#     cat("parent.frame():", paste0(ls(parent.frame()), collapse=","), "\n")
+#     cat("sys.nframe():", sys.nframe(), "\n")
+#     4242
+# }
+#
+# do.call(testStackIntro, list(T))
+# do.call(testStackIntro, list(T), envir = list2env(list(myenv=42)))
+
 # legth tests
 env <- new.env(); env$a <- 42; env$b <- 44;
 rffi.inlined_length(env)

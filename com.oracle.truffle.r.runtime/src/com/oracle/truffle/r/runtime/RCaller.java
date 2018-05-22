@@ -25,13 +25,15 @@ package com.oracle.truffle.r.runtime;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Represents the caller of a function and stored in {@link RArguments}. A value of this type never
  * appears in a Truffle execution. Caller remembers its parent caller and frame number as described
- * in {@code sys.parent} R function documentation: frames are numbered from 0 (global environment),
- * parent does not have to have the frame with number one less, e.g. with do.call(fun, args, envir)
+ * in {@code sys.parent} R function documentation: frames are numbered from 0 (global environment).
+ * Parent does not have to have the frame with number one less, e.g. with do.call(fun, args, envir)
  * when fun asks for parent, it should get 'envir', moreover, when evaluating promises parent frame
  * and frame with number one less are typically also not the same frames. See also builtins in
  * {@code FrameFunctions} for more details.
@@ -58,26 +60,42 @@ public final class RCaller {
     private final int depth;
     private boolean visibility;
     private final RCaller parent;
+
     /**
-     * The payload can be an RSyntaxNode, a {@link Supplier}, or an {@link RCaller} (which marks
-     * promise evaluation frames, see {@link #isPromise()}). Payload represents the syntax (AST) of
-     * how the function was invoked. If the function was invoked via regular call node, then the
-     * syntax can be that call node (RSyntaxNode case), if the function was invoked by other means
-     * and we do not have the actual syntax for the invocation, we only provide it lazily via
-     * Supplier, so that we do not have to always construct the AST nodes.
+     * The payload can be
+     * <ul>
+     * <li>{@code null} for top level {@link RCaller} (~global environment)</li>
+     * <li>{@link RSyntaxNode}</li>
+     * <li>{@link Supplier} of the {@link RSyntaxNode}</li>
+     * <li>{@link RCaller} (which marks promise evaluation frames, see {@link #isPromise()})</li>
+     * <li>{@link REnvironment} (which marks promise evaluation frame with explicit "sys parent",
+     * see {@link #hasSysParent()})</li>
+     * </ul>
+     * 
+     * If the function was invoked via regular call node, then the syntax can be that call node
+     * (RSyntaxNode case), if the function was invoked by other means and we do not have the actual
+     * syntax for the invocation, we only provide it lazily via Supplier, so that we do not have to
+     * always construct the AST nodes. {@link RCaller} with other types of {@link #payload} are used
+     * for promise frames or other artificial situations.
+     *
+     * Note on promise evaluation frame with explicit "sys parent": the "sys parent" frame does not
+     * have to be explicit if the environment has valid {@link RCaller} in its arguments array,
+     * which is the case if the environment represents a frame of a function that is on the call
+     * stack. If the environment does not come from currently evaluated function (e.g. manually
+     * constructed), then we cannot use {@link RCaller} to identify it, since there's no
+     * {@link #depth} that would point to the corresponding frame.
      */
     private final Object payload;
 
-    private RCaller(Frame callingFrame, Object nodeOrSupplier) {
-        this.depth = depthFromFrame(callingFrame);
-        this.parent = parentFromFrame(callingFrame);
-        this.payload = nodeOrSupplier;
+    private RCaller(Frame callingFrame, Object payload) {
+        this(depthFromFrame(callingFrame), parentFromFrame(callingFrame), payload);
     }
 
-    private RCaller(int depth, RCaller parent, Object nodeOrSupplier) {
+    private RCaller(int depth, RCaller parent, Object payload) {
+        assert payload == null || payload instanceof Supplier<?> || payload instanceof RCaller || payload instanceof REnvironment || payload instanceof RSyntaxNode : payload;
         this.depth = depth;
         this.parent = parent;
-        this.payload = nodeOrSupplier;
+        this.payload = payload;
     }
 
     private static int depthFromFrame(Frame callingFrame) {
@@ -129,11 +147,21 @@ public final class RCaller {
      * parent from there.
      */
     public boolean isPromise() {
-        return payload instanceof RCaller;
+        return (payload instanceof RCaller) || (payload instanceof REnvironment);
     }
 
-    public RCaller getPromiseOriginalCall() {
-        return (RCaller) payload;
+    /**
+     * If the {@link RCaller} instance {@link #isPromise()}, then it may have explicitly set
+     * "sys parent", which is what {@code parent.frame} should return. See {@code ParentFrame} built
+     * in for details.
+     */
+    public boolean hasSysParent() {
+        return payload instanceof REnvironment;
+    }
+
+    public REnvironment getSysParent() {
+        assert payload instanceof REnvironment;
+        return (REnvironment) payload;
     }
 
     public static RCaller createInvalid(Frame callingFrame) {
@@ -173,6 +201,11 @@ public final class RCaller {
         int newDepth = frame == null ? 0 : RArguments.getDepth(frame);
         RCaller originalCall = frame == null ? null : RArguments.getCall(frame);
         return new RCaller(newDepth, originalCaller, originalCall);
+    }
+
+    public static RCaller createForPromise(RCaller originalCaller, Frame frame, REnvironment sysParent) {
+        int newDepth = frame == null ? 0 : RArguments.getDepth(frame);
+        return new RCaller(newDepth, originalCaller, sysParent);
     }
 
     public boolean getVisibility() {

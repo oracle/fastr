@@ -30,6 +30,7 @@ import java.util.ArrayList;
 import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -41,6 +42,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -178,7 +180,7 @@ public class FrameFunctions {
                 closure.setNeedsCallerFrame();
                 return closure.getMaterializedCallerFrame();
             }
-            assert callerFrame instanceof Frame;
+            assert callerFrame == null || callerFrame instanceof Frame;
             return (Frame) callerFrame;
         }
     }
@@ -609,10 +611,19 @@ public class FrameFunctions {
                         if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
                             int currentCallIdx = currentCall.getDepth() - 1;
                             RCaller parent = currentCall.getParent();
-                            while (parent != null && (parent.isPromise())) {
-                                parent = parent.getParent();
+                            int parentDepth;
+                            if (parent.hasSysParent()) {
+                                // parent.frame explicitly set by Rf_eval(quote(foo()), env) to env
+                                // GNU R gives parent number == frame created for calling foo().
+                                // There is no actual numbered frame that would be equal to env.
+                                parentDepth = currentCall.getDepth();
+                            } else {
+                                while (parent != null && (parent.isPromise())) {
+                                    parent = parent.getParent();
+                                }
+                                parentDepth = parent == null ? 0 : parent.getDepth();
                             }
-                            result[currentCallIdx] = parent == null ? 0 : parent.getDepth();
+                            result[currentCallIdx] = parentDepth;
                         }
                         return RArguments.getDepth(f) == 1 ? result : null;
                     }
@@ -628,11 +639,8 @@ public class FrameFunctions {
     @RBuiltin(name = "parent.frame", kind = SUBSTITUTE, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class ParentFrame extends RBuiltinNode.Arg1 {
 
-        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
-
-        private final BranchProfile nullCallerProfile = BranchProfile.create();
-        private final BranchProfile promiseProfile = BranchProfile.create();
-        private final BranchProfile nonNullCallerProfile = BranchProfile.create();
+        @Child private FrameHelper helper;
+        @Child private GetCallerFrameNode getCaller;
 
         public abstract REnvironment execute(VirtualFrame frame, int n);
 
@@ -646,20 +654,20 @@ public class FrameFunctions {
             return new Object[]{1};
         }
 
-        @Specialization(guards = "n == 1")
-        protected REnvironment parentFrameDirect(VirtualFrame frame, @SuppressWarnings("unused") int n,
-                        @Cached("new()") GetCallerFrameNode getCaller) {
-            // Note: this works even without checking the call#hasInternalParent()
-            // The environment in the arguments array is the right one even after 'do.call'.
-            return REnvironment.frameToEnvironment(getCaller.execute(frame));
-        }
-
-        @Specialization(replaces = "parentFrameDirect")
-        protected REnvironment parentFrame(VirtualFrame frame, int n) {
+        @Specialization
+        protected REnvironment parentFrame(VirtualFrame frame, int nIn,
+                        @Cached("create()") BranchProfile nullCallerProfile,
+                        @Cached("create()") BranchProfile promiseProfile,
+                        @Cached("create()") BranchProfile nonNullCallerProfile,
+                        @Cached("create()") BranchProfile explicitSysParent,
+                        @Cached("createEqualityProfile()") ValueProfile nProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile useGetCallerFrameNode) {
+            int n = nProfile.profile(nIn);
             if (n <= 0) {
                 throw error(RError.Message.INVALID_VALUE, "n");
             }
-            RCaller call = RArguments.getCall(frame);
+            RCaller originalCall = RArguments.getCall(frame);
+            RCaller call = originalCall;
             while (call.isPromise()) {
                 promiseProfile.enter();
                 call = call.getParent();
@@ -671,6 +679,12 @@ public class FrameFunctions {
                     nullCallerProfile.enter();
                     return REnvironment.globalEnv();
                 }
+                if (i == n - 1 && call.hasSysParent()) {
+                    // promise RCallers are allowed to override "parent.frame"
+                    // this is necessary for Rf_eval(expr, env), where parent.frame() should be env
+                    explicitSysParent.enter();
+                    return call.getSysParent();
+                }
                 while (call.isPromise()) {
                     promiseProfile.enter();
                     call = call.getParent();
@@ -678,15 +692,27 @@ public class FrameFunctions {
                 i++;
             }
             nonNullCallerProfile.enter();
-            // if (RArguments.getDispatchArgs(f) != null && RArguments.getDispatchArgs(f) instanceof
-            // S3Args) {
-            // /*
-            // * Skip the next frame if this frame has dispatch args, and therefore was
-            // * called by UseMethod or NextMethod.
-            // */
-            // parentDepth--;
-            // }
-            return REnvironment.frameToEnvironment(helper.getNumberedFrame(frame, call.getDepth()).materialize());
+            if (useGetCallerFrameNode.profile(originalCall.getDepth() == call.getDepth() + 1)) {
+                // If the parent frame is the caller frame, we can use more efficient code:
+                return REnvironment.frameToEnvironment(getCallerFrameNode().execute(frame));
+            }
+            return REnvironment.frameToEnvironment(getFrameHelper().getNumberedFrame(frame, call.getDepth()).materialize());
+        }
+
+        private FrameHelper getFrameHelper() {
+            if (helper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                helper = insert(new FrameHelper(FrameAccess.MATERIALIZE));
+            }
+            return helper;
+        }
+
+        private GetCallerFrameNode getCallerFrameNode() {
+            if (getCaller == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getCaller = insert(new GetCallerFrameNode());
+            }
+            return getCaller;
         }
     }
 }
