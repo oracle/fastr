@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import java.nio.file.Files;
 
 public final class Utils {
 
@@ -241,22 +242,41 @@ public final class Utils {
     }
 
     /**
-     * Returns a {@link Path} for a log file with base name {@code fileName}, taking into account
-     * whether the system is running in embedded mode. In the latter case, we can't assume that the
-     * cwd is writable. Plus some embedded apps, e.g. RStudio, spawn multiple R sub-processes
-     * concurrently so we tag the file with the pid.
+     * Returns a {@link Path} for a log file with base name {@code fileNamePrefix}, adding '_pid'
+     * and process-id and '.log' and taking into account whether the system is running in embedded
+     * mode. In the latter case, we can't assume that the cwd is writable so '/tmp' is attempted.
+     * For regular mode dirs are attempted in this order: cwd, user's home, '/tmp', rHome. If none
+     * of the dirs is writable null is returned.
      */
-    public static Path getLogPath(String fileName) {
-        String root = RContext.isEmbedded() ? "/tmp" : REnvVars.rHome();
-        String baseName;
-        if (RContext.isEmbedded()) {
-            int pid = RContext.getInitialPid();
-            String threadName = Thread.currentThread().getName();
-            baseName = fileName + "-" + Integer.toString(pid) + "-" + threadName;
-        } else {
-            baseName = fileName;
+    public static Path getLogPath(String fileNamePrefix) {
+        String dir = RContext.isEmbedded() ? "/tmp" : System.getProperty("user.dir");
+        int dirId = 0;
+        int pid = RContext.getInitialPid();
+        String baseName = fileNamePrefix + "_pid" + Integer.toString(pid) + ".log";
+        while (true) {
+            Path path = FileSystems.getDefault().getPath(dir, baseName);
+            if (Files.isWritable(path.getParent())) {
+                return path;
+            }
+            switch (dirId) {
+                case 0:
+                    if (RContext.isEmbedded()) {
+                        return null;
+                    } else {
+                        dir = System.getProperty("user.home");
+                    }
+                    break;
+                case 1:
+                    dir = "/tmp";
+                    break;
+                case 2:
+                    dir = REnvVars.rHome();
+                    break;
+                default:
+                    return null;
+            }
+            dirId++;
         }
-        return FileSystems.getDefault().getPath(root, baseName);
     }
 
     /**
