@@ -37,10 +37,13 @@ GNUR_APPL_C_FILES = pretty.c interv.c
 GNUR_APPL_SRC = $(GNUR_HOME)/src/appl
 GNUR_APPL_F_FILES := $(notdir $(wildcard $(GNUR_APPL_SRC)/d*.f))
 
-GNUR_MAIN_C_FILES = colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
+GNUR_MAIN_C_FILES = errors.c colors.c devices.c engine.c format.c graphics.c plot.c plot3d.c plotmath.c rlocale.c sort.c
 GNUR_MAIN_SRC = $(GNUR_HOME)/src/main
 
-GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_APPL_C_FILES:.c=.o) $(GNUR_MAIN_C_FILES:.c=.o))
+GNUR_UNIX_C_FILES = sys-std.c
+GNUR_UNIX_SRC = $(GNUR_HOME)/src/unix
+
+GNUR_C_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_APPL_C_FILES:.c=.o) $(GNUR_MAIN_C_FILES:.c=.o) $(GNUR_UNIX_C_FILES:.c=.o))
 GNUR_F_OBJECTS := $(addprefix $(OBJ)/, $(GNUR_APPL_F_FILES:.f=.o))
 
 C_SOURCES = $(wildcard *.c)
@@ -80,6 +83,9 @@ $(OBJ)/%.o: $(GNUR_APPL_SRC)/%.c
 
 $(OBJ)/%.o: $(GNUR_MAIN_SRC)/%.c
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
+
+$(OBJ)/%.o: $(GNUR_UNIX_SRC)/%.c
+	$(CC) $(CFLAGS) -DHAVE_CONFIG_H $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@
 
 $(OBJ)/%.o: %.c $(FASTR_NATIVE_DIR)/include/Rinternals.h
 	$(CC) $(CFLAGS) $(INCLUDES) $(GNUR_HEADER_DEFS) $(SUPPRESS_WARNINGS) -c $< -o $@

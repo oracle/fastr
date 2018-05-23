@@ -23,3 +23,5 @@
 
 // (currently) empty replacememnt for GnuR's config.h
 
+/* Define as the return type of signal handlers (`int' or `void'). */
+#define RETSIGTYPE void

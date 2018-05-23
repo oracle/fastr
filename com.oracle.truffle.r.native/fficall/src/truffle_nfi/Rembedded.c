@@ -442,15 +442,6 @@ void Rf_jump_to_toplevel() {
 
 #include <R_ext/eventloop.h>
 
-fd_set *R_checkActivity(int usec, int ignore_stdin) {
-    unimplemented("R_checkActivity");
-    return NULL;
-}
-
-void R_runHandlers(InputHandler *handlers, fd_set *mask) {
-    unimplemented("R_runHandlers");
-}
-
 // -----------------------------------------------------------------------------------------------
 // -----------------------------------------------------------------------------------------------
 // Functions that can be assigned by an embedded client to change behavior.
@@ -503,7 +494,6 @@ SEXP (*ptr_do_selectlist)(SEXP, SEXP, SEXP, SEXP) = udo_selectlist;
 SEXP (*ptr_do_dataentry)(SEXP, SEXP, SEXP, SEXP) = udo_dataentry;
 SEXP (*ptr_do_dataviewer)(SEXP, SEXP, SEXP, SEXP) = udo_dataviewer;
 void (*ptr_R_ProcessEvents)() = uR_ProcessEvents;
-void (* R_PolledEvents)(void) = uR_PolledEvents;
 
 // This call cannot be made via callbacks array because it may be invoked before FastR is fully initialized.
 void setupOverrides(void) {

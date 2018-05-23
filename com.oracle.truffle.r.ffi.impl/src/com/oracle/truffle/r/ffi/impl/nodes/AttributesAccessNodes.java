@@ -137,9 +137,7 @@ public final class AttributesAccessNodes {
 
         @Specialization
         public Object doPairlist(RPairList obj) {
-            Object result = obj.getTag();
-            assert result instanceof RSymbol || result == RNull.instance;
-            return result;
+            return obj.getTag();
         }
 
         @Specialization

@@ -208,6 +208,31 @@ public class FastRContext {
         }
     }
 
+    @RBuiltin(name = ".fastr.context.interrupt", visibility = OFF, kind = PRIMITIVE, parameterNames = {"handle"}, behavior = COMPLEX)
+    public abstract static class Interrupt extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts casts = new Casts(Interrupt.class);
+            casts.arg("handle").asIntegerVector().mustBe(notEmpty());
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RNull eval(RAbstractIntVector handle) {
+            for (int i = 0; i < handle.getLength(); i++) {
+                int id = handle.getDataAt(i);
+                Thread thread = RContext.getInstance().threads.get(id);
+                if (thread == null) {
+                    // already done
+                    continue;
+                } else {
+                    thread.interrupt();
+                }
+            }
+            return RNull.instance;
+        }
+    }
+
     /**
      * Evaluate expressions in {@code pc} new contexts of type {@code kind}, with the expression
      * taken from the expression in the usual R repeating mode. The invoking context (thread) waits
