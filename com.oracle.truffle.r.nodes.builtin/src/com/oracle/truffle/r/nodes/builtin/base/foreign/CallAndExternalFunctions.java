@@ -556,7 +556,6 @@ public class CallAndExternalFunctions {
                     return new UnimplementedExternal(name);
                 case "optim":
                 case "optimhess":
-                case "zeroin2":
                 case "dqagi":
                 case "dqags":
                 case "nlm":
@@ -908,6 +907,8 @@ public class CallAndExternalFunctions {
                 case "modelmatrix":
                 case "modelframe":
                     return getExternalModelBuiltinNode(name);
+                case "zeroin2":
+                    return StatsFunctionsNodes.Zeroin2.create();
                 default:
                     return null;
             }

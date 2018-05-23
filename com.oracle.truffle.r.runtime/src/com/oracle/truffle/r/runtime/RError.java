@@ -381,7 +381,8 @@ public final class RError extends RuntimeException implements TruffleException {
         NO_NONMISSING_MAX_NA("no non-missing arguments, returning NA"),
         NO_NONMISSING_MIN_NA("no non-missing arguments, returning NA"),
         LENGTH_NONNEGATIVE("length must be non-negative number"),
-        MUST_BE_POSITIVE("'%s' must be a non-negative number"),
+        MUST_BE_NONNEGATIVE("'%s' must be a non-negative number"),
+        MUST_BE_POSITIVE("'%s' must be positive"),
         MUST_BE_POSITIVE_INT("'%s' must be a positive integer"),
         MUST_BE_POSITIVE_SD("%s must be non-negative number"),
         MUST_BE_SQUARE("'%s' (%d x %d) must be square"),
@@ -813,6 +814,7 @@ public final class RError extends RuntimeException implements TruffleException {
         NULL_DLLINFO("NULL value passed for DllInfo"),
         REQUIRES_NAME_DLLINFO("must pass package name or DllInfo reference"),
         APPLY_NON_FUNCTION("attempt to apply non-function"),
+        MINIMIZE_NON_FUNCTION("attempt to minimize non-function"),
         NO_INDEX("no index specified"),
         INVALID_ARG_NUMBER("%s: invalid number of arguments"),
         BAD_HANDLER_DATA("bad handler data"),
@@ -975,7 +977,13 @@ public final class RError extends RuntimeException implements TruffleException {
         DERIV_OVER_N_MAX("deriv = %d > %d (= n_max)"),
         BESSEL_ARG_RANGE("bessel_%s(%g): ncalc (=%d) != nb (=%d); alpha=%g. Arg. out of range?"),
         BESSEL_PRECISION_LOST("bessel_%s(%g,nu=%g): precision lost in result"),
-        BESSEL_NU_TOO_LARGE("bessel%s(x, nu): nu=%g too large for bessel_%s() algorithm");
+        BESSEL_NU_TOO_LARGE("bessel%s(x, nu): nu=%g too large for bessel_%s() algorithm"),
+        NOT_LESS_THAN("'%s' not less than '%s'"),
+        NA_NOT_ALLOWED("NA value for '%s' is not allowed"),
+        NA_REPLACED("NA replaced by maximum positive value"),
+        NA_INF_REPLACED("-Inf replaced by maximally negative value"),
+        MINUS_INF_REPLACED("NA/Inf replaced by maximum positive value"),
+        INVALID_FUNCTION_VALUE("invalid function value in '%s'");
 
         public final String message;
         final boolean hasArgs;
