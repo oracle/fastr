@@ -76,7 +76,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
         boolean tieLast = tie == TIE_LAST;
         boolean tieRandom = tie == TIE_RANDOM;
         double[] maxVals = new double[nrows];
-        Arrays.fill(maxVals, Double.MIN_VALUE);
+        Arrays.fill(maxVals, -Double.MAX_VALUE);
         int[] cols = new int[nrows];
         int resultIdx = 0;
         int colIdx = 1; // R indexing

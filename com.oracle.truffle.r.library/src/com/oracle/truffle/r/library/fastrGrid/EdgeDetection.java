@@ -128,9 +128,9 @@ final class EdgeDetection {
     static Point polygonEdge(double[] x, double[] y, int n, double theta) {
         // centre of the polygon
         double xmin = fmin(Double.MAX_VALUE, x);
-        double xmax = fmax(Double.MIN_VALUE, x);
+        double xmax = fmax(-Double.MAX_VALUE, x);
         double ymin = fmin(Double.MAX_VALUE, y);
-        double ymax = fmax(Double.MIN_VALUE, y);
+        double ymax = fmax(-Double.MAX_VALUE, y);
         double xm = (xmin + xmax) / 2;
         double ym = (ymin + ymax) / 2;
 

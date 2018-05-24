@@ -120,9 +120,9 @@ public final class GridTextNode extends RBaseNode {
         int boundsCount = 0;
         Point edge = null;
         double xmin = Double.MAX_VALUE;
-        double xmax = Double.MIN_VALUE;
+        double xmax = -Double.MAX_VALUE;
         double ymin = Double.MAX_VALUE;
-        double ymax = Double.MIN_VALUE;
+        double ymax = -Double.MAX_VALUE;
         int ntxt = 0;   // number of texts that were actually used for bounds computation
         EdgeDetection.Rectangle[] bounds = null;
         if (checkOverlap || !draw) {
