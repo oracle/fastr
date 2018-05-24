@@ -129,7 +129,9 @@ public abstract class RFFIContext extends RFFI {
      */
     public void afterDowncall(long before) {
         callDepth--;
-        cooperativeGc();
+        if (callDepth == 0) {
+            cooperativeGc();
+        }
     }
 
     public final int getCallDepth() {
