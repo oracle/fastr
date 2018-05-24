@@ -48,10 +48,9 @@ public class TestFastrErrorsLog extends TestBase {
         boolean origValue = FastROptions.PrintErrorStacktracesToFile.getBooleanValue();
         FastROptions.setValue(FastROptions.PrintErrorStacktracesToFile.name(), true);
         try {
-            final String FASTR_ERRORS_LOG = "fastr_errors"; // Copy of
-                                                            // RInternalError.FASTR_ERRORS_LOG
+            String fastrErrorsLog = "fastr_errors"; // Copy of RInternalError.FASTR_ERRORS_LOG
             int pid = RContext.getInitialPid();
-            String baseName = FASTR_ERRORS_LOG + "_pid" + Integer.toString(pid) + ".log";
+            String baseName = fastrErrorsLog + "_pid" + Integer.toString(pid) + ".log";
             if (RContext.isEmbedded()) {
                 String dir1 = System.getProperty("java.io.tmpdir");
                 Path path1 = FileSystems.getDefault().getPath(dir1, baseName);
@@ -123,7 +122,7 @@ public class TestFastrErrorsLog extends TestBase {
         }
     }
 
-    private static final void setReadonly(Path path, boolean readonly) throws IOException {
+    private static void setReadonly(Path path, boolean readonly) throws IOException {
         Set<PosixFilePermission> perms = Files.getPosixFilePermissions(path);
         if (readonly) {
             perms.remove(PosixFilePermission.OWNER_WRITE);
@@ -133,7 +132,7 @@ public class TestFastrErrorsLog extends TestBase {
         Files.setPosixFilePermissions(path, perms);
     }
 
-    private static final void reportError() {
+    private static void reportError() {
         PrintStream temp = new PrintStream(new ByteArrayOutputStream());
         PrintStream origErr = System.err;
         System.setErr(temp);
