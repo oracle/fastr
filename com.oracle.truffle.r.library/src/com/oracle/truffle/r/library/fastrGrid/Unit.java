@@ -296,7 +296,7 @@ public final class Unit {
                         case "min":
                             return fmin(Double.MAX_VALUE, values);
                         case "max":
-                            return fmax(Double.MIN_VALUE, values);
+                            return fmax(-Double.MAX_VALUE, values);
                         case "sum":
                             return sum(values);
                     }
@@ -580,7 +580,7 @@ public final class Unit {
                 case "min":
                     return GridUtils.fmin(Double.MAX_VALUE, values);
                 case "max":
-                    return GridUtils.fmax(Double.MIN_VALUE, values);
+                    return GridUtils.fmax(-Double.MAX_VALUE, values);
                 case "sum":
                     return GridUtils.sum(values);
                 default:
