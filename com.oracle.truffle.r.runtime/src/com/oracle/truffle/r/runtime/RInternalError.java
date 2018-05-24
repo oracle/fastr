@@ -205,6 +205,8 @@ public final class RInternalError extends Error implements TruffleException {
                         } catch (IOException e) {
                             e.printStackTrace();
                         }
+                    } else {
+                        message += ". Cannot write error log file (tried current working directory, user home directory, FastR home directory).";
                     }
                     System.err.println(message);
                     if (RContext.isEmbedded()) {

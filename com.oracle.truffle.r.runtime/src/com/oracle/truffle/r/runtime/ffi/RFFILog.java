@@ -99,7 +99,7 @@ public class RFFILog {
                 System.exit(1);
             }
         } else {
-            System.err.println("Cannot produce trace log file at any of the standard locations. Please check directory permissions.");
+            System.err.println("Cannot write trace log file (tried current working directory, user home directory, FastR home directory).");
             System.exit(1);
         }
     }
