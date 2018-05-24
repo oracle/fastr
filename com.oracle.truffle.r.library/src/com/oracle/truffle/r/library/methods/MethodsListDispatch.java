@@ -22,6 +22,7 @@ package com.oracle.truffle.r.library.methods;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGte;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
@@ -42,6 +43,7 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.casts.fluent.PreinitialPhaseBuilder;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyScalarNodeGen;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -67,6 +69,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -82,16 +85,28 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public class MethodsListDispatch {
 
     private static void checkSingleString(Casts casts, int argNum, String argName, String msg, boolean nonEmpty, Function<Object, String> clsHierFn,
-                    Function<Object, Integer> vecLenFn) {
+                    Function<Object, Integer> vecLenFn, boolean allowSymbol) {
+
+        PreinitialPhaseBuilder builder = casts.arg(argNum, argName).defaultError(Message.SINGLE_STRING_WRONG_TYPE, msg, clsHierFn);
+        if (allowSymbol) {
+            builder.returnIf(instanceOf(RSymbol.class));
+        }
+        checkSingleString(builder, msg, nonEmpty, vecLenFn);
+    }
+
+    private static void checkSingleString(PreinitialPhaseBuilder builder, String msg, boolean nonEmpty, Function<Object, Integer> vecLenFn) {
         //@formatter:off
-        casts.arg(argNum, argName).
-            defaultError(RError.Message.SINGLE_STRING_WRONG_TYPE, msg, clsHierFn).
-            mustBe(stringValue()).
-            asStringVector().
-            mustBe(singleElement(),  RError.Message.SINGLE_STRING_TOO_LONG, msg, vecLenFn).
-            findFirst().
-            mustBe(nonEmpty ? lengthGt(0) : lengthGte(0),  RError.Message.NON_EMPTY_STRING, msg);
+        builder.mustBe(stringValue()).
+                asStringVector().
+                mustBe(singleElement(), RError.Message.SINGLE_STRING_TOO_LONG, msg, vecLenFn).
+                findFirst().
+                mustBe(nonEmpty ? lengthGt(0) : lengthGte(0), RError.Message.NON_EMPTY_STRING, msg);
         //@formatter:on
+    }
+
+    private static void checkSingleString(Casts casts, int argNum, String argName, String msg, boolean nonEmpty, Function<Object, String> clsHierFn,
+                    Function<Object, Integer> vecLenFn) {
+        checkSingleString(casts, argNum, argName, msg, nonEmpty, clsHierFn, vecLenFn, false);
     }
 
     public abstract static class R_initMethodDispatch extends RExternalBuiltinNode.Arg1 {
@@ -353,13 +368,18 @@ public class MethodsListDispatch {
             Function<Object, String> clsHierFn = ClassHierarchyScalarNode::get;
             Function<Object, Integer> vecLenFn = arg -> ((RAbstractStringVector) arg).getLength();
 
-            checkSingleString(casts, 0, "f", "The argument \"f\" to getGeneric", true, clsHierFn, vecLenFn);
+            checkSingleString(casts, 0, "f", "The argument \"f\" to getGeneric", true, clsHierFn, vecLenFn, true);
 
             casts.arg(1, "mustFind").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
             casts.arg(2, "env").mustBe(instanceOf(REnvironment.class));
 
             checkSingleString(casts, 3, "package", "The argument \"package\" to getGeneric", false, clsHierFn, vecLenFn);
+        }
+
+        @Specialization
+        protected Object getGeneric(RSymbol name, boolean mustFind, REnvironment env, String pckg) {
+            return getGeneric(name.getName(), mustFind, env, pckg);
         }
 
         @Specialization
@@ -399,7 +419,7 @@ public class MethodsListDispatch {
                 }
                 FrameDescriptor currentFrameDesc = currentFrame.getFrameDescriptor();
                 Object o = slotRead(currentFrame, currentFrameDesc, name);
-                if (o != null) {
+                if (o instanceof RAttributable) {
                     RAttributable vl = (RAttributable) o;
                     boolean ok = false;
                     if (vl instanceof RFunction && getGenericAttrNode.execute(vl) != null) {
@@ -420,10 +440,6 @@ public class MethodsListDispatch {
                 }
                 rho = rho.getParent();
             }
-
-            // TODO: in GNU R there is additional code here that deals with the case of "name"
-            // being a symbol but at this point this case is not handled (even possible?) in
-            // FastR
             return generic == null ? RNull.instance : generic;
         }
 

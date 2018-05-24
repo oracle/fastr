@@ -181,6 +181,7 @@ public class TestBase {
         private static File diffsOutputFile;
 
         private static final String PROP_BASE = "fastr.test.";
+        private static final String ENV_PROP_BASE = "FASTR_TEST_";
 
         private enum Props {
             GEN_EXPECTED("gen.expected"),
@@ -199,6 +200,9 @@ public class TestBase {
         private static String getProperty(String baseName) {
             String propName = PROP_BASE + baseName;
             String val = System.getProperty(propName);
+            if (val == null || val.trim().isEmpty()) {
+                val = System.getenv(ENV_PROP_BASE + baseName.replace('.', '_'));
+            }
             return val;
         }
 
