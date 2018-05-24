@@ -176,7 +176,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         if (useClosure()) {
             return (RAbstractIntVector) castWithReuse(RType.Integer, operand, naProfile.getConditionProfile());
         }
-        return vectorCopy(operand, naCheck.convertDoubleVectorToIntData(operand), naCheck.neverSeenNA());
+        return vectorCopy(operand, naCheck.convertDoubleVectorToIntData(operand), naCheck.neverSeenNAOrNaN());
     }
 
     @Specialization

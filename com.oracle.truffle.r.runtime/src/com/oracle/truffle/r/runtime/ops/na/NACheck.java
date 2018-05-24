@@ -228,6 +228,10 @@ public final class NACheck {
         return state != CHECK && !seenNaN;
     }
 
+    public boolean neverSeenNAOrNaN() {
+        return neverSeenNA() && seenNaN;
+    }
+
     public boolean hasNeverBeenTrue() {
         return neverSeenNA();
     }

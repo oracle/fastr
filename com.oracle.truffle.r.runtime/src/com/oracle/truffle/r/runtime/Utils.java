@@ -437,7 +437,7 @@ public final class Utils {
      * Retrieve the caller frame of the current frame.
      *
      * TODO Calls to this method should be validated with respect to whether promise evaluation is
-     * in progress and replaced with use of {@code FrameDepthNode}.
+     * in progress.
      */
     public static Frame getCallerFrame(RCaller caller, FrameAccess fa) {
         RCaller parent = caller;
