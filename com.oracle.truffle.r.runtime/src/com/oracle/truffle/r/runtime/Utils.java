@@ -249,13 +249,13 @@ public final class Utils {
      * of the dirs is writable null is returned.
      */
     public static Path getLogPath(String fileNamePrefix) {
-        String dir = RContext.isEmbedded() ? "/tmp" : System.getProperty("user.dir");
+        String dir = RContext.isEmbedded() ? System.getProperty("java.io.tmpdir") : System.getProperty("user.dir");
         int dirId = 0;
         int pid = RContext.getInitialPid();
         String baseName = fileNamePrefix + "_pid" + Integer.toString(pid) + ".log";
         while (true) {
             Path path = FileSystems.getDefault().getPath(dir, baseName);
-            if (Files.isWritable(path.getParent())) {
+            if (Files.isWritable(path.getParent()) && (!Files.exists(path) || Files.isWritable(path))) {
                 return path;
             }
             switch (dirId) {
@@ -267,7 +267,7 @@ public final class Utils {
                     }
                     break;
                 case 1:
-                    dir = "/tmp";
+                    dir = System.getProperty("java.io.tmpdir");
                     break;
                 case 2:
                     dir = REnvVars.rHome();

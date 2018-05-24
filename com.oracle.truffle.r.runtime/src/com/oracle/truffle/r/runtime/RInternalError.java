@@ -194,24 +194,26 @@ public final class RInternalError extends Error implements TruffleException {
 
                 String message = "An internal error occurred: \"" + errMsg + "\"\nPlease report an issue at https://github.com/oracle/fastr including the commands";
                 if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                    message += " and the error log file '" + Utils.getLogPath(getLogFileName(contextId)) + "'.";
-                } else {
-                    message += ".";
-                }
-                if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
                     Path logfile = Utils.getLogPath(getLogFileName(contextId));
-                    try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
-                                    StandardOpenOption.CREATE)) {
-                        writer.append(new Date().toString()).append('\n');
-                        writer.append(out.toString()).append('\n');
-                        writer.append(verboseStackTrace).append("\n\n");
-                    } catch (IOException e) {
-                        e.printStackTrace();
+                    if (logfile != null) {
+                        message += " and the error log file '" + logfile + "'.";
+                        try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
+                                        StandardOpenOption.CREATE)) {
+                            writer.append(new Date().toString()).append('\n');
+                            writer.append(out.toString()).append('\n');
+                            writer.append(verboseStackTrace).append("\n\n");
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                    } else {
+                        message += ". Cannot write error log file (tried current working directory, user home directory, FastR home directory).";
                     }
                     System.err.println(message);
                     if (RContext.isEmbedded()) {
                         RSuicide.rSuicide("FastR internal error");
                     }
+                } else {
+                    message += ".";
                 }
                 if (!FastROptions.PrintErrorStacktraces.getBooleanValue() && !FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
                     System.err.println(message);

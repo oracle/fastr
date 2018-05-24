@@ -91,10 +91,15 @@ public class RFFILog {
 
     private static void initTraceStream() {
         Path tracePath = Utils.getLogPath(TRACEFILE);
-        try {
-            traceStream = new PrintWriter(tracePath.toString());
-        } catch (IOException ex) {
-            System.err.println(ex.getMessage());
+        if (tracePath != null) {
+            try {
+                traceStream = new PrintWriter(tracePath.toString());
+            } catch (IOException ex) {
+                System.err.println(ex.getMessage());
+                System.exit(1);
+            }
+        } else {
+            System.err.println("Cannot write trace log file (tried current working directory, user home directory, FastR home directory).");
             System.exit(1);
         }
     }
