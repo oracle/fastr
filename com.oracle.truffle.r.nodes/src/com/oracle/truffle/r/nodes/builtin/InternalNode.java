@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
@@ -33,22 +34,30 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.control.OperatorNode;
 import com.oracle.truffle.r.nodes.function.CallMatcherNode;
+import com.oracle.truffle.r.nodes.function.CallUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
+import com.oracle.truffle.r.nodes.function.GetBasicFunction;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallNode.FunctionDispatch;
+import com.oracle.truffle.r.nodes.function.RCallNodeGen.FunctionDispatchNodeGen;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
+import com.oracle.truffle.r.nodes.function.TemporarySlotNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 import com.oracle.truffle.r.runtime.data.REmpty;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -344,37 +353,58 @@ public abstract class InternalNode extends OperatorNode {
     }
 
     private static final class InternalGenericDispatchNode extends Node {
-        private final ConditionProfile hasClassProfile;
-        @Child private ClassHierarchyNode classHierarchy;
+        private final ConditionProfile hasClassProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isAttributableProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isS4Profile = ConditionProfile.createBinaryProfile();
+
+        // For S3 dispatch
+        @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
         @Child private S3FunctionLookupNode lookup;
         @Child private CallMatcherNode callMatcher;
 
-        InternalGenericDispatchNode() {
-            classHierarchy = ClassHierarchyNodeGen.create(false, false);
-            hasClassProfile = ConditionProfile.createBinaryProfile();
-        }
+        // For S4 dispatch
+        @Child private GetBasicFunction getBasicFunction;
 
-        protected Object doInternalDispatch(VirtualFrame frame, RBuiltinFactory factory, Object[] args) {
+        protected Object doInternalDispatch(VirtualFrame frame, RBuiltinFactory builtinFactory, Object[] args) {
             if (args.length == 0) {
                 return null;
             }
             Object x = args[0];
             RStringVector clazz = classHierarchy.execute(x);
             if (hasClassProfile.profile(clazz != null)) {
+                // S4 dispatch:
+                if (isAttributableProfile.profile(x instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) x).isS4())) {
+                    if (getBasicFunction == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        getBasicFunction = insert(new GetBasicFunction());
+                    }
+                    Object basicFun = getBasicFunction.execute(frame, builtinFactory.getName());
+                    if (basicFun != null) {
+                        Object result = getCallMatcher().execute(frame, builtinFactory.getSignature(), args, (RFunction) basicFun, builtinFactory.getGenericName(), null);
+                        if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
+                            return result;
+                        }
+                    }
+                }
+                // S3 dispatch:
                 if (lookup == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     lookup = insert(S3FunctionLookupNode.create(false, false, false));
                 }
-                Result lookupResult = lookup.execute(frame, factory.getGenericName(), clazz, null, frame.materialize(), null);
+                Result lookupResult = lookup.execute(frame, builtinFactory.getGenericName(), clazz, null, frame.materialize(), null);
                 if (lookupResult != null) {
-                    if (callMatcher == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        callMatcher = insert(CallMatcherNode.create(false));
-                    }
-                    return callMatcher.execute(frame, factory.getSignature(), args, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
+                    return getCallMatcher().execute(frame, builtinFactory.getSignature(), args, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
                 }
             }
             return null;
+        }
+
+        private CallMatcherNode getCallMatcher() {
+            if (callMatcher == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                callMatcher = insert(CallMatcherNode.create(false));
+            }
+            return callMatcher;
         }
     }
 
