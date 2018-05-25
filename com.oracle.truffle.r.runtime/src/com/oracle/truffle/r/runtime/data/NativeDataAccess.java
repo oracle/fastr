@@ -166,6 +166,14 @@ public final class NativeDataAccess {
             assert this.length == 0 || dataAddress != EMPTY_DATA_ADDRESS;
         }
 
+        @TruffleBoundary
+        void allocateNative(CharSXPWrapper[] wrappers) {
+            long addr = dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(wrappers.length * Long.BYTES);
+            for (int i = 0; i < wrappers.length; i++) {
+                UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(wrappers[i]));
+            }
+        }
+
         // TODO: turn this into reference queues
         @Override
         protected void finalize() throws Throwable {
@@ -672,6 +680,17 @@ public final class NativeDataAccess {
         if (mirror.dataAddress == 0) {
             noComplexNative.invalidate();
             mirror.allocateNative(data, length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2);
+        }
+        return mirror.dataAddress;
+    }
+
+    static long allocateNativeContents(RStringVector vector, CharSXPWrapper[] charSXPdata) {
+        NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+        assert mirror != null;
+        if (mirror.dataAddress == 0) {
+            // Note: shall the character vector become writeable and not only read-only, we should
+            // crate assumption like for other vector types
+            mirror.allocateNative(charSXPdata);
         }
         return mirror.dataAddress;
     }

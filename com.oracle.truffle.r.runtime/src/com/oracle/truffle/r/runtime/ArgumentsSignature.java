@@ -79,7 +79,7 @@ public final class ArgumentsSignature implements Iterable<String> {
      */
     public static ArgumentsSignature fromNamesAttribute(RStringVector names) {
         // Note: get makes a defensive copy of names anyway
-        return names == null ? null : get(names.getReadonlyData(), true);
+        return names == null ? null : get(names.getReadonlyStringData(), true);
     }
 
     @TruffleBoundary

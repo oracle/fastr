@@ -171,6 +171,7 @@ typedef int (*call_LEVELS)(SEXP x);
 typedef int (*call_SETLEVELS)(SEXP x, int v);
 typedef int *(*call_LOGICAL)(SEXP x);
 typedef int *(*call_INTEGER)(SEXP x);
+typedef void *(*call_FASTR_DATAPTR)(SEXP x);
 typedef Rbyte *(*call_RAW)(SEXP x);
 typedef double *(*call_REAL)(SEXP x);
 typedef Rcomplex *(*call_COMPLEX)(SEXP x);

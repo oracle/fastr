@@ -21,6 +21,7 @@
  * questions.
  */
 #include <Rinternals.h>
+extern void* FASTR_DATAPTR(SEXP x);
 
 // This file includes all implementations that arise from Rinternals.h that
 // are independent, or largely independent, of the RFFI implementation.
@@ -117,13 +118,8 @@ void *DATAPTR(SEXP x) {
 	    return COMPLEX(x);
     } else if (type == CHARSXP) {
         return R_CHAR(x);
-    } else if (type == STRSXP) {
-        printf("FastR does not support DATAPTR macro with character vectors, please use SET_STRING_ELT or STRING_ELT.\n");
-        exit(1);
     } else {
-		printf("DATAPTR macro with SEXPTYPE %d is not supported.\n", type);
-		exit(1);
-		return NULL;
+        return FASTR_DATAPTR(x);
 	}
 }
 

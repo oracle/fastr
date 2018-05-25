@@ -51,7 +51,7 @@ public class RPairListTests {
     public void testToList() {
         RPairList pairList = RDataFactory.createPairList(1, RDataFactory.createPairList(2, RNull.instance, sym("name2")), sym("name1"));
         RList result = pairList.toRList();
-        assertArrayEquals(new String[]{"name1", "name2"}, result.getNames().getReadonlyData());
+        assertArrayEquals(new String[]{"name1", "name2"}, result.getNames().getReadonlyStringData());
         assertArrayEquals(new Object[]{1, 2}, result.getDataWithoutCopying());
     }
 

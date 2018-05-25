@@ -209,7 +209,7 @@ public abstract class VectorAccess extends Node {
         return clazz.cast(value);
     }
 
-    public final boolean supports(Object value) {
+    public boolean supports(Object value) {
         assert clazz != Object.class : "cannot call 'supports' on slow path vector access";
         if (value.getClass() != clazz) {
             return false;
