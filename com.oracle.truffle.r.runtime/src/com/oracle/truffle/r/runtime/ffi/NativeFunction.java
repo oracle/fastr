@@ -33,6 +33,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
  */
 public enum NativeFunction {
     // base
+    initEventLoop("(string, string): sint32", "call_base_", baseLibrary(), true),
+    dispatchHandlers("(): sint32", "call_base_", baseLibrary(), true),
     getpid("(): sint32", "call_base_"),
     getcwd("([uint8], sint32): sint32", "call_base_"),
     chdir("(string): sint32", "call_base_"),

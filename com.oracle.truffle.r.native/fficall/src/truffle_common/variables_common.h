@@ -27,10 +27,11 @@
 #include <trufflenfi.h>
 #include "../common/rffi_variablesindex.h"
 
-// various ignored flags and variables nevertheless needed to resolve symbols
-Rboolean R_Visible;
 Rboolean R_interrupts_suspended;
 int R_interrupts_pending;
+
+// various ignored flags and variables nevertheless needed to resolve symbols
+Rboolean R_Visible;
 Rboolean mbcslocale;
 Rboolean useaqua;
 char* OutDec = ".";
@@ -42,9 +43,6 @@ int max_contour_segments = 25000;
 
 // from sys-std.c
 #include <R_ext/eventloop.h>
-
-InputHandler BasicInputHandler = {2, -1, NULL};
-InputHandler *R_InputHandlers = &BasicInputHandler;
 
 char *copystring(char *value) {
 	char *result = malloc(strlen(value) + 1);

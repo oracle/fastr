@@ -24,10 +24,12 @@ package com.oracle.truffle.r.launcher;
 
 import java.io.EOFException;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -226,11 +228,15 @@ public class RCommand extends RAbstractLauncher {
      * exiting. So,in either case, we never return.
      */
     public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor) {
-        ExecutorService executor = null;
+        final ExecutorService executor;
         if (useExecutor) {
             executor = context.eval(Source.newBuilder("R", ".fastr.getExecutor()", "<get-executor>").internal(true).buildLiteral()).asHostObject();
+            initializeNativeEventLoop(context, executor);
+        } else {
+            executor = null;
         }
         int lastStatus = 0;
+
         try {
             while (true) { // processing inputs
                 boolean doEcho = doEcho(context);
@@ -319,6 +325,48 @@ public class RCommand extends RAbstractLauncher {
         } catch (Throwable ex) {
             System.err.println("Unexpected error in REPL");
             return 1;
+        }
+    }
+
+    /**
+     * See <code>FastRInitEventLoop</code> for the description of how events occurring in the native
+     * code are dispatched.
+     *
+     * @param context
+     * @param executor
+     */
+    private static void initializeNativeEventLoop(Context context, final ExecutorService executor) {
+        Path tmpDir;
+        try {
+            tmpDir = Files.createTempDirectory("fastr-fifo");
+        } catch (Exception e1) {
+            throw fatal("Cannot create temporary directory for event loop fifo");
+        }
+        final String fifoInPath = tmpDir.resolve("event-loop-fifo-in").toString();
+        final String fifoOutPath = tmpDir.resolve("event-loop-fifo-out").toString();
+        final int res = context.eval(Source.newBuilder("R", ".fastr.initEventLoop", "<init-event-loop>").internal(true).buildLiteral()).execute(fifoInPath, fifoOutPath).asInt();
+        if (res != 0) {
+            throw fatal("Event loop initialization failed. Return code: " + res);
+        } else {
+            Thread t = new Thread() {
+                @Override
+                public void run() {
+                    final File fifoFile = new File(fifoInPath);
+                    while (!Thread.currentThread().isInterrupted()) {
+                        try {
+                            final FileInputStream fis = new FileInputStream(fifoFile);
+                            fis.read();
+                            fis.close();
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+                        executor.submit(() -> {
+                            context.eval(Source.newBuilder("R", ".fastr.dispatchNativeHandlers", "<dispatch-native-handlers>").internal(true).buildLiteral()).execute().asInt();
+                        });
+                    }
+                }
+            };
+            t.start();
         }
     }
 

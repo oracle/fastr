@@ -38,11 +38,6 @@ void R_CheckUserInterrupt(void) {
     // ignored
 }
 
-void Rf_onintr() {
-    // TODO: implement interrupt handling, signal errors
-    // ignored
-}
-
 Rboolean isOrdered(SEXP s)
 {
     return (TYPEOF(s) == INTSXP

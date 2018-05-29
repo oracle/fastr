@@ -29,6 +29,10 @@
 #include <Rinternals.h>
 #include <truffle.h>
 
+extern int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam);
+
+extern int dispatchHandlers();
+
 char *ensure_truffle_chararray(const char *x);
 void *ensure_string(const char *x);
 void *ensure_function(void *fptr);
