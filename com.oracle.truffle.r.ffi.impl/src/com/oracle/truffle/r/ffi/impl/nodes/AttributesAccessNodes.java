@@ -92,14 +92,10 @@ public final class AttributesAccessNodes {
     }
 
     public abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
-        @Child private GetAttributesNode getAttributesNode;
 
         @Specialization
-        public Object doAttributable(RAttributable obj) {
-            if (getAttributesNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getAttributesNode = GetAttributesNode.create();
-            }
+        public Object doAttributable(RAttributable obj,
+                        @Cached("createWithCompactRowNames()") GetAttributesNode getAttributesNode) {
             Object resultObj = getAttributesNode.execute(obj);
             if (resultObj == RNull.instance) {
                 return resultObj;

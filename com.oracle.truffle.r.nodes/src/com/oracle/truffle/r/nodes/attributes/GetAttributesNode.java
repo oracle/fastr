@@ -60,8 +60,29 @@ public abstract class GetAttributesNode extends RBaseNode {
     @Child private SetNamesAttributeNode setNamesNode = SetNamesAttributeNode.create();
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
 
+    /**
+     * If <code>row.names</code> are an int sequence, GnuR internally represents them in a compact
+     * format - vector(NA, length). Depending on the use case, we either want to keep this or
+     * convert to a regular FastR sequence.
+     */
+    private final boolean keepCompactRowNames;
+
+    protected GetAttributesNode(boolean keepCompactRowNames) {
+        this.keepCompactRowNames = keepCompactRowNames;
+    }
+
     public static GetAttributesNode create() {
-        return GetAttributesNodeGen.create();
+        return GetAttributesNodeGen.create(false);
+    }
+
+    /**
+     * The <code>row.names</code> attribute will be kept in the compact format.
+     * 
+     * @return <code>GetAttributesNode</code>
+     * @see #keepCompactRowNames
+     */
+    public static GetAttributesNode createWithCompactRowNames() {
+        return GetAttributesNodeGen.create(true);
     }
 
     public abstract Object execute(RAttributable attributable);
@@ -103,17 +124,23 @@ public abstract class GetAttributesNode extends RBaseNode {
         }
     }
 
-    public static Object getFullRowNames(Object a) {
-        if (a == RNull.instance) {
+    /**
+     * If <code>row.names</code> are in the GnuR compact format they will be converted to an int
+     * sequence.
+     * 
+     * @see #keepCompactRowNames
+     */
+    static Object convertRowNamesToSeq(Object rowNames) {
+        if (rowNames == RNull.instance) {
             return RNull.instance;
         } else {
-            if (a instanceof RAbstractIntVector) {
-                RAbstractIntVector rowNames = (RAbstractIntVector) a;
-                if (rowNames.getLength() == 2 && RRuntime.isNA(rowNames.getDataAt(0))) {
-                    return RDataFactory.createIntSequence(1, 1, Math.abs(rowNames.getDataAt(1)));
+            if (rowNames instanceof RAbstractIntVector) {
+                RAbstractIntVector vec = (RAbstractIntVector) rowNames;
+                if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
+                    return RDataFactory.createIntSequence(1, 1, Math.abs(vec.getDataAt(1)));
                 }
             }
-            return a;
+            return rowNames;
         }
     }
 
@@ -153,7 +180,7 @@ public abstract class GetAttributesNode extends RBaseNode {
                 }
             } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 rownamesBranch.enter();
-                values[z] = getFullRowNames(attr.getValue());
+                values[z] = keepCompactRowNames ? attr.getValue() : convertRowNamesToSeq(attr.getValue());
             } else {
                 values[z] = attr.getValue();
             }
