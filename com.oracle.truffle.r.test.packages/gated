@@ -8,3 +8,4 @@ RSclient
 rstudioapi
 assertthat
 naivebayes
+glmnet

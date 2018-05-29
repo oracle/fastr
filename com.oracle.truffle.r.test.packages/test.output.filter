@@ -73,3 +73,7 @@ assertthat => s/Path '.*' is not a directory/Path 'path/to/dir' is not a directo
 # different output format in GNUR and FastR
 assertthat => R/[1] "mean %has_args% \"y\" is not TRUE"/REPLACED has_args
 assertthat => R/[1] "`%has_args%`(f = mean, args = \"y\") is not TRUE"/REPLACED has_args
+
+# --------
+# glmnet: graphics related issue, we don't implement graphics yet, just ignore
+glmnet => D+1/Error in get("par.postscript", pos = "CheckExEnv") :
