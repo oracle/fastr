@@ -161,6 +161,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
     }
 
+    // The implementation only differs in whether it has @ExplodeLoop annotation
+    // The two implementations are identical and should be kept in sync
     protected abstract void replaceMissingArguments(RFunction function, Object[] args);
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
@@ -291,6 +293,8 @@ public abstract class CallMatcherNode extends RBaseNode {
             }
         }
 
+        // The implementation only differs in whether it has @ExplodeLoop annotation
+        // The two implementations are identical and should be kept in sync
         @Override
         @ExplodeLoop
         protected void replaceMissingArguments(RFunction function, Object[] args) {
@@ -370,6 +374,8 @@ public abstract class CallMatcherNode extends RBaseNode {
             }
         }
 
+        // The implementation only differs in whether it has @ExplodeLoop annotation
+        // The two implementations are identical and should be kept in sync
         @Override
         protected void replaceMissingArguments(RFunction function, Object[] args) {
             FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
@@ -415,11 +421,11 @@ public abstract class CallMatcherNode extends RBaseNode {
                         ArgumentsSignature varArgSignature = varArgs.getSignature();
                         for (int i = 0; i < varArgs.getLength(); i++) {
                             argNames[index] = varArgSignature.getName(i);
-                            argValues[index++] = checkMissing(varArgValues[i]);
+                            argValues[index++] = varArgValues[i];
                         }
                     } else if (!paramSignature.isUnmatched(fi)) {
                         argNames[index] = paramSignature.getName(fi);
-                        argValues[index++] = checkMissing(arg);
+                        argValues[index++] = arg;
                     }
                 }
                 signature = ArgumentsSignature.get(argNames);
@@ -429,7 +435,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 int index = 0;
                 for (int i = 0; i < argCount; i++) {
                     if (!hasUnmatched || !paramSignature.isUnmatched(i)) {
-                        argValues[index] = checkMissing(args[i]);
+                        argValues[index] = args[i];
                         if (hasUnmatched) {
                             newSignature[index] = paramSignature.getName(i);
                         }
