@@ -51,4 +51,11 @@ public class TestBuiltin_mget extends TestBase {
                         "func <- function(...) find_args(...);" +
                         "%0; }", new String[]{"func()", "func(a=3)"}));
     }
+
+    @Test
+    public void testWithIfnotfound() {
+        assertEval("mget('abc', ifnotfound = list(`[`))");
+        assertEval("mget('abc', ifnotfound = list(function(x) cat('NOT FOUND', x, '\\n')))");
+        assertEval("mget('abc', ifnotfound = list(function(x, y = 'default value') cat('NOT FOUND', x, ',', y, '\\n')))");
+    }
 }

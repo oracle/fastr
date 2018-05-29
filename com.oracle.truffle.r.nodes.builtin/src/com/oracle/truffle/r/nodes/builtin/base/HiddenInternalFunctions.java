@@ -275,6 +275,10 @@ public class HiddenInternalFunctions {
                 RSerialize.CallHook callHook = new RSerialize.CallHook() {
                     @Override
                     public Object eval(Object arg) {
+                        // Note: this expects the hook to be a function with a single argument,
+                        // however, theoretically, functions with more arguments with default values
+                        // could work too. Since lazyLoadDBfetch is internal code that should be
+                        // used only from well known parts of the system, we do not support this.
                         return callCache.execute(frame, envhook, RCaller.create(frame, getOriginalCall()), new Object[]{arg}, null);
                     }
                 };
