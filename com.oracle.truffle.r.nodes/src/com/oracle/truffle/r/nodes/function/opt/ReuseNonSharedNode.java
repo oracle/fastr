@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  */
 public abstract class ReuseNonSharedNode extends Node {
 
-    protected static final int LIMIT = 5;
+    protected static final int LIMIT = DSLConfig.getCacheSize(5);
 
     public static ReuseNonSharedNode create() {
         return ReuseNonSharedNodeGen.create();

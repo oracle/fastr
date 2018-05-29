@@ -29,6 +29,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.AttrsLayout;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public abstract class AttributeIterativeAccessNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = RAttributesLayout.LAYOUTS.length;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(RAttributesLayout.LAYOUTS.length);
 
     private final ConditionProfile[] loopProfiles;
 

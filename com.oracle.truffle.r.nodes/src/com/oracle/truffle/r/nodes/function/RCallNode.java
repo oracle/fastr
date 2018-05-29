@@ -74,6 +74,7 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -816,7 +817,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
          */
         public abstract Object execute(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments);
 
-        protected static final int CACHE_SIZE = 4;
+        protected static final int CACHE_SIZE = DSLConfig.getCacheSize(4);
 
         private final RCallNode originalCall;
         private final AlteredArguments alteredArguments;

@@ -39,6 +39,11 @@ import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RFunction;
 
+/**
+ * Directly calls given function, unlike {@link RExplicitCallNode} does not go through argument
+ * matching, dispatch etc. This node cannot be used for buitins, use {@link CallRBuiltinCachedNode}
+ * instead.
+ */
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class CallRFunctionCachedNode extends CallRFunctionBaseNode {
 
@@ -51,18 +56,14 @@ public abstract class CallRFunctionCachedNode extends CallRFunctionBaseNode {
     }
 
     public final Object execute(VirtualFrame frame, RFunction function, RCaller call, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
+        assert !function.isBuiltin(); // use CallRBuiltinCachedNode
         Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame), evaluatedArgs, dispatchArgs);
-        return execute(frame, function.getTarget(), callArgs, call);
-    }
-
-    public final Object execute(VirtualFrame frame, RFunction function, RCaller call, Object[] evaluatedArgs,
-                    ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         return execute(frame, function.getTarget(), callArgs, call);
     }
 
     public final Object execute(VirtualFrame frame, RFunction function, RCaller call, MaterializedFrame callerFrame, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
+        assert !function.isBuiltin(); // use CallRBuiltinCachedNode
         boolean topLevel = call == null || call.getDepth() == 0;
         Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame, callerFrame, topLevel), evaluatedArgs, suppliedSignature, enclosingFrame, dispatchArgs);
         return execute(frame, function.getTarget(), callArgs, call);

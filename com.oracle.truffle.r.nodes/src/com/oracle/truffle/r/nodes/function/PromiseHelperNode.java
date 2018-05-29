@@ -38,6 +38,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -162,7 +163,7 @@ public final class PromiseHelperNode extends RBaseNode {
         try {
             if (promiseClosureCache == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseClosureCache = insert(InlineCacheNode.create(FastROptions.PromiseCacheSize.getNonNegativeIntValue()));
+                promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(FastROptions.PromiseCacheSize.getNonNegativeIntValue())));
             }
             promise.setUnderEvaluation();
             Frame execFrame = isInOriginFrame(frame, promise) ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));

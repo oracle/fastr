@@ -67,7 +67,7 @@ public abstract class BoxPrimitiveNode extends CastNode {
      * For the limit we use the number of primitive specializations - 1. After that its better to
      * check !isPrimitive.
      */
-    @Specialization(limit = "3", guards = "vector.getClass() == cachedClass")
+    @Specialization(limit = "getCacheSize(3)", guards = "vector.getClass() == cachedClass")
     protected static Object doCached(Object vector,
                     @Cached("vector.getClass()") Class<?> cachedClass) {
         assert (!isPrimitive(vector));

@@ -48,7 +48,7 @@ public abstract class RemoveAttributeNode extends AttributeAccessNode {
 
     public abstract void execute(Object attrs, String name);
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "getCacheSize(3)", //
                     guards = {
                                     "cachedName.equals(name)",
                                     "shapeCheck(shape, attrs)",

@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.signature.QuoteNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -44,7 +45,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = PRIMITIVE, parameterNames = {"expr"}, behavior = PURE)
 public abstract class Quote extends RBuiltinNode.Arg1 {
 
-    protected static final int LIMIT = 3;
+    protected static final int LIMIT = DSLConfig.getCacheSize(3);
 
     static {
         Casts.noCasts(Quote.class);

@@ -431,7 +431,7 @@ public class FastRInterop {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"isClass(className)", "className.equals(cachedClazz)"}, limit = "10")
+        @Specialization(guards = {"isClass(className)", "className.equals(cachedClazz)"}, limit = "getCacheSize(10)")
         public TruffleObject javaClassCached(String className, boolean silent,
                         @Cached("className") String cachedClazz,
                         @Cached("getJavaClass(className, silent)") Object result,

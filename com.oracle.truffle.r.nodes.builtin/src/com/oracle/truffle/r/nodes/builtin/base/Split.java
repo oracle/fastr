@@ -68,7 +68,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
         Casts.noCasts(Split.class);
     }
 
-    @Specialization(limit = "4", guards = {"xAccess.supports(x)", "fAccess.supports(f)"})
+    @Specialization(limit = "getCacheSize(4)", guards = {"xAccess.supports(x)", "fAccess.supports(f)"})
     protected RList split(RAbstractVector x, RAbstractIntVector f,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("f.access()") VectorAccess fAccess) {

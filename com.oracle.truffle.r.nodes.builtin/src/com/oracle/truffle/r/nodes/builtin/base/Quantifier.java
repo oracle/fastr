@@ -39,6 +39,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -50,13 +51,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Quantifier extends RBuiltinNode.Arg2 {
-    protected static final int MAX_CACHED_LENGTH = 10;
+    protected static final int MAX_CACHED_LENGTH = DSLConfig.getCacheSize(10);
 
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile trueBranch = BranchProfile.create();
     private final BranchProfile falseBranch = BranchProfile.create();
 
-    @Children private final CastNode[] argCastNodes = new CastNode[MAX_CACHED_LENGTH];
+    @Children private final CastNode[] argCastNodes = new CastNode[Math.max(1, MAX_CACHED_LENGTH)];
 
     private static final class ProfileCastNode extends CastNode {
 
@@ -103,7 +104,7 @@ public abstract class Quantifier extends RBuiltinNode.Arg2 {
         return RRuntime.asLogical(emptyVectorResult());
     }
 
-    @Specialization(limit = "1", guards = {"cachedLength == args.getLength()", "cachedLength < MAX_CACHED_LENGTH"})
+    @Specialization(limit = "getCacheSize(1)", guards = {"cachedLength == args.getLength()", "cachedLength < MAX_CACHED_LENGTH"})
     @ExplodeLoop
     protected byte opCachedLength(RArgsValuesAndNames args, boolean naRm,
                     @Cached("args.getLength()") int cachedLength) {

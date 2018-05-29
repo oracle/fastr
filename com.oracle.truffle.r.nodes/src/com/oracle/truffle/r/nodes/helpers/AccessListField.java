@@ -23,11 +23,14 @@
 package com.oracle.truffle.r.nodes.helpers;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
+@ImportStatic(DSLConfig.class)
 public abstract class AccessListField extends ListFieldNodeBase {
     @Child private ExtractListElement extractListElement = ExtractListElement.create();
 
@@ -37,7 +40,7 @@ public abstract class AccessListField extends ListFieldNodeBase {
 
     public abstract Object execute(RList list, Object field);
 
-    @Specialization(limit = "2", guards = {"getNamesNode.getNames(list) == cachedNames", "field == cachedField"})
+    @Specialization(limit = "getCacheSize(2)", guards = {"getNamesNode.getNames(list) == cachedNames", "field == cachedField"})
     Object doList(RList list, @SuppressWarnings("unused") String field,
                     @SuppressWarnings("unused") @Cached("list.getNames()") RStringVector cachedNames,
                     @SuppressWarnings("unused") @Cached("field") String cachedField,

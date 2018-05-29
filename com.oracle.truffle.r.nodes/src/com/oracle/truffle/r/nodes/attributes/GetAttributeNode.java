@@ -75,7 +75,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
         return getNamesAttributeNode.execute(attrs);
     }
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "getCacheSize(3)", //
                     guards = {"!isSpecialAttribute(name)", "cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     protected Object getAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name,

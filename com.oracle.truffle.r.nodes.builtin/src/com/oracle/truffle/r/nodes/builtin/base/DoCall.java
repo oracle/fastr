@@ -33,6 +33,7 @@ import java.util.function.Supplier;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -55,6 +56,7 @@ import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -123,6 +125,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         return internal.execute(frame, null, func, argsAsList, quote, env);
     }
 
+    @ImportStatic(DSLConfig.class)
     protected abstract static class DoCallInternal extends Node {
         @Child private GetNamesAttributeNode getNamesNode;
         @Child private SetVisibilityNode setVisibilityNode;
@@ -146,7 +149,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * expect the {@link FrameDescriptor} to never change, we're caching this AST and also
          * {@link GetVisibilityNode} for each {@link FrameDescriptor} we encounter.
          */
-        @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "20")
+        @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "getCacheSize(20)")
         public Object doFastPath(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
                         @Cached("getFrameDescriptor(env)") @SuppressWarnings("unused") FrameDescriptor fd,
                         @Cached("create()") RExplicitCallNode explicitCallNode,

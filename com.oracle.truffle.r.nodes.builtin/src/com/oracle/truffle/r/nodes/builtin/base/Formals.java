@@ -46,7 +46,7 @@ public abstract class Formals extends RBuiltinNode.Arg1 {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "3", guards = "fun == cachedFunction")
+    @Specialization(limit = "getCacheSize(3)", guards = "fun == cachedFunction")
     protected Object formalsCached(RFunction fun,
                     @Cached("fun") RFunction cachedFunction,
                     @Cached("createFormals(fun)") Object formals) {

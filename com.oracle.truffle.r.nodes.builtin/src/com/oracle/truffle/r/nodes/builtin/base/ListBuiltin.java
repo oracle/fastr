@@ -34,6 +34,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 @RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."}, behavior = PURE)
 public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
 
-    protected static final int CACHE_LIMIT = 2;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(2);
     protected static final int MAX_SHARE_OBJECT_NODES = 16;
 
     @Child private VectorFactory factory = VectorFactory.create();

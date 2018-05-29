@@ -46,6 +46,7 @@ import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.FirstStringNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -73,7 +74,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class ExtractVectorNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = 5;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(5);
 
     protected final ElementAccessMode mode;
     private final boolean recursive;
@@ -111,13 +112,16 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     protected abstract Object execute(Object vector, Object[] positions, Object exact, Object dropDimensions);
 
-    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"}, limit = "3")
+    // Note: the factory that creates cached decides whether given positions are recursive and
+    // returns null if not. RAbstractContainer is not foreign by definition.
+    @Specialization(guards = {"cached != null", "cached.isSupported(vector, positions)"}, limit = "getCacheSize(3)")
     protected Object doRecursive(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("createRecursiveCache(vector, positions)") RecursiveExtractSubscriptNode cached) {
+                    @Cached("createRecursiveCacheOrNull(vector, positions)") RecursiveExtractSubscriptNode cached) {
+        assert isRecursiveSubscript(vector, positions);
         return cached.apply(vector, positions, exact, dropDimensions);
     }
 
-    protected RecursiveExtractSubscriptNode createRecursiveCache(Object x, Object[] positions) {
+    protected RecursiveExtractSubscriptNode createRecursiveCacheOrNull(Object x, Object[] positions) {
         if (isRecursiveSubscript(x, positions)) {
             return RecursiveExtractSubscriptNode.create((RAbstractContainer) x, positions[0]);
         }
@@ -140,19 +144,28 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return !recursive && !ignoreRecursive && mode.isSubscript() && (vector instanceof RAbstractListVector || vector instanceof RPairList) && positions.length == 1;
     }
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
+    // Note: the factory that creates cached decides whether given positions are not recursive and
+    // returns null they are. RAbstractContainer is not foreign by definition.
+    @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
     protected Object doExtractDefaultCached(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
-                    @Cached("createDefaultCache(getThis(), vector, positions, exact, dropDimensions)") CachedExtractVectorNode cached) {
+                    @Cached("createDefaultCacheOrNull(getThis(), vector, positions, exact, dropDimensions)") CachedExtractVectorNode cached) {
         assert !isRecursiveSubscript(vector, positions);
         return cached.apply(vector, positions, null, exact, dropDimensions);
     }
 
+    protected CachedExtractVectorNode createDefaultCacheOrNull(ExtractVectorNode node, RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions) {
+        if (!isRecursiveSubscript(vector, positions)) {
+            return createDefaultCache(node, vector, positions, exact, dropDimensions);
+        }
+        return null;
+    }
+
     protected static CachedExtractVectorNode createDefaultCache(ExtractVectorNode node, RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions) {
-        assert !(vector instanceof REnvironment);
         return new CachedExtractVectorNode(node.getMode(), vector, positions, (RTypedValue) exact, (RTypedValue) dropDimensions, node.recursive);
     }
 
-    @Specialization(replaces = {"doExtractDefaultCached", "doRecursive"}, guards = {"!isForeignObject(vector)"})
+    // Note: RAbstractContainer is not foreign by definition.
+    @Specialization(replaces = {"doExtractDefaultCached", "doRecursive"})
     @TruffleBoundary
     protected Object doExtractDefaultGeneric(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("create()") GenericVectorExtractNode generic) {

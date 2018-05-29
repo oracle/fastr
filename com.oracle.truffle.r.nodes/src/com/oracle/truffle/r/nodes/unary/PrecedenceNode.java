@@ -125,7 +125,7 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LOGICAL_PRECEDENCE;
     }
 
-    @Specialization(guards = "vector.getClass() == clazz", limit = "16")
+    @Specialization(guards = "vector.getClass() == clazz", limit = "getCacheSize(16)")
     protected int doVector(@SuppressWarnings("unused") RAbstractAtomicVector vector, @SuppressWarnings("unused") boolean recursive,
                     @SuppressWarnings("unused") @Cached("vector.getClass()") Class<?> clazz,
                     @Cached("getVectorPrecedence(vector)") int precedence) {

@@ -41,6 +41,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
@@ -59,7 +60,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class S3FunctionLookupNode extends RBaseNode {
-    protected static final int MAX_CACHE_DEPTH = 3;
+    protected static final int MAX_CACHE_DEPTH = DSLConfig.getCacheSize(3);
 
     protected final boolean throwsError;
     protected final boolean nextMethod;

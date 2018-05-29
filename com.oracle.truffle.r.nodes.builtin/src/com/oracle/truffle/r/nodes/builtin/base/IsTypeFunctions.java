@@ -550,7 +550,7 @@ public class IsTypeFunctions {
             return RType.fromMode(mode, true);
         }
 
-        @Specialization(limit = "5", guards = "cachedMode == mode")
+        @Specialization(limit = "getCacheSize(5)", guards = "cachedMode == mode")
         protected byte isVectorCached(RAbstractVector x, @SuppressWarnings("unused") String mode,
                         @Cached("mode") @SuppressWarnings("unused") String cachedMode,
                         @Cached("typeFromMode(mode)") RType type) {

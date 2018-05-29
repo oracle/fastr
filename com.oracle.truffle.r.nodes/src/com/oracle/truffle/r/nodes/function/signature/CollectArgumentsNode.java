@@ -35,6 +35,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -43,7 +44,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class CollectArgumentsNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = 3;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
     private final ConditionProfile valueMissingProfile = ConditionProfile.createBinaryProfile();
 

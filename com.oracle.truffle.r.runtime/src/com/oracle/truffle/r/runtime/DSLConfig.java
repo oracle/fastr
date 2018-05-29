@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,22 +20,24 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.attributes;
-
-import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.Utils;
+package com.oracle.truffle.r.runtime;
 
 /**
- * The base class for the nodes that get/set/remove a fixed attribute.
+ * Class that should eventually contain all DSL (and AST rewriting) related constants.
  */
-public abstract class FixedAttributeAccessNode extends AttributeAccessNode {
+public final class DSLConfig {
+    private static final double DSL_CACHE_SIZE_FACTOR = FastROptions.DSLCacheSizeFactor.getNonNegativeDoubleValue();
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+    private DSLConfig() {
+        // only static methods
+    }
 
-    protected final String name;
-
-    protected FixedAttributeAccessNode(String name) {
-        assert Utils.isInterned(name);
-        this.name = name;
+    /**
+     * This method should be used to set any cache size that can be configured, i.e. it does not
+     * matter how large the cache is and it can even be zero. If used, make sure that there is more
+     * generic specialization available.
+     */
+    public static int getCacheSize(int suggestedSize) {
+        return (int) (suggestedSize * DSL_CACHE_SIZE_FACTOR);
     }
 }

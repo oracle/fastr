@@ -71,6 +71,8 @@ public enum FastROptions {
     EagerEvalExpressions("Enables optimistic eager evaluation of trivial expressions", false),
     PromiseCacheSize("Enables inline caches for promises evaluation", "3", true),
 
+    DSLCacheSizeFactor("Factor by which are multiplied all DSL 'limit' values where applicable.", 1.0, true),
+
     // Miscellaneous
 
     IgnoreGraphicsCalls("Silently ignore unimplemented functions from graphics package", false),
@@ -124,6 +126,10 @@ public enum FastROptions {
         }
     }
 
+    public Object getValue() {
+        return value;
+    }
+
     public int getNonNegativeIntValue() {
         assert !isBoolean;
         Object v = value;
@@ -146,7 +152,30 @@ public enum FastROptions {
         System.out.println("non negative integer option value expected with " + name());
         System.exit(2);
         return -1;
+    }
 
+    public double getNonNegativeDoubleValue() {
+        assert !isBoolean;
+        Object v = value;
+        if (v instanceof Double) {
+            return (Double) v;
+        }
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        if (v instanceof String) {
+            try {
+                double res = Double.parseDouble((String) v);
+                if (res >= 0) {
+                    value = res;
+                    return res;
+                } // else fall through to error message
+            } catch (NumberFormatException x) {
+                // fall through to error message
+            }
+        }
+
+        System.out.println("non negative double option value expected with " + name());
+        System.exit(2);
+        return -1;
     }
 
     private static FastROptions[] VALUES = values();
