@@ -33,6 +33,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.nio.charset.Charset;
 import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -139,8 +140,9 @@ public class LocaleFunctions {
         protected RList l10nInfo() {
             Object[] data = new Object[NAMES.getLength()];
             // TODO check locale properly
+            final Charset codeset = RContext.getInstance().stateRLocale.getCharset(RLocale.CTYPE);
             data[0] = RRuntime.LOGICAL_TRUE;
-            data[1] = RRuntime.LOGICAL_TRUE;
+            data[1] = codeset.toString().equalsIgnoreCase("UTF-8") ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
             data[2] = RRuntime.LOGICAL_FALSE;
             return RDataFactory.createList(data, NAMES);
         }

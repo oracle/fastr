@@ -80,6 +80,9 @@ packagesDarwin : {
 common : ${java8Downloads} ${packagesLinux}  {
   logs: ${logfiles}
   timelimit : "1:00:00"
+  environment : {
+	PKG_TEST_ENV_miniUI : "LC_ALL=C"
+  }
 }
 
 # Every "pull request" (PR) is subject to a series of "gate" commands that must pass
