@@ -972,5 +972,6 @@ com.oracle.truffle.r.pkgs/rJava/src/java/RJavaTools.java,no.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/RectangularArrayBuilder.java,no.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/RectangularArrayExamples.java,no.copyright
 com.oracle.truffle.r.pkgs/rJava/src/java/RectangularArraySummary.java,no.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_common/Applic.c,gnu_r.language.oracle
 com.oracle.truffle.r.native/gnur/patch/src/main/errors.c,gnu_r.language.oracle
 com.oracle.truffle.r.native/gnur/patch/src/unix/sys-std.c,gnu_r.language.oracle
