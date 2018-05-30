@@ -9,3 +9,4 @@ rstudioapi
 assertthat
 naivebayes
 glmnet
+nnet
