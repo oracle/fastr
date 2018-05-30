@@ -240,13 +240,19 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         if (frame != null && RArguments.isRFrame(frame)) {
             RCaller caller = RArguments.getCall(frame);
             while (caller.isPromise()) {
-                caller = caller.getParent();
+                if (!caller.hasSysParent()) {
+                    // frame created to evaluate promise via CallTarget (i.e. the PIC cache was
+                    // filled and the promise could not be evaluated while in the context of the
+                    // frame that cased its evaluation)
+                    caller = caller.getPromiseCaller();
+                } else {
+                    // NOTE: maybe we should just use the caller as is otherwise...
+                    caller = caller.getParent();
+                }
             }
             if (caller != null && caller.isValidCaller()) {
-                /*
-                 * This is where we need to ensure that we have an RLanguage object with a rep that
-                 * is an RSyntaxNode.
-                 */
+                // This is where we need to ensure that we have an RLanguage object with a rep that
+                // is an RSyntaxNode.
                 return getSyntaxCaller(caller);
             }
         }
