@@ -145,7 +145,8 @@ default.packages <- c("R", "base", "grid", "splines", "utils",
 # the name is that package and the values are regexps of suggests that can be ignored for that package
 # if this configuration gets too complex or updated too often, we can move it to separate config file
 ignore.suggests <- list(
-	rstudioapi = c('*') # rstudioapi executes almost no real tests, it is mostly just test of install & load
+	rstudioapi = c('*'), # rstudioapi executes almost no real tests, it is mostly just test of install & load
+	glmnet = c('knitr')  # probably used for vignettes only
 )
 
 choice.depends <- function(pkg, choice=c("direct","suggests")) {
