@@ -146,9 +146,9 @@ public abstract class AllNames extends RBuiltinNode.Arg4 {
     @TruffleBoundary
     protected Object doAllNames(RSymbol symbol, @SuppressWarnings("unused") byte functions, int maxNames, @SuppressWarnings("unused") byte unique) {
         if (maxNames > 0 || maxNames == -1) {
-            return RDataFactory.createEmptyStringVector();
-        } else {
             return RDataFactory.createStringVectorFromScalar(symbol.getName());
+        } else {
+            return RDataFactory.createEmptyStringVector();
         }
     }
 

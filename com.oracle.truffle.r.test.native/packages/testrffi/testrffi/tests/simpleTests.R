@@ -182,6 +182,8 @@ setAttrTarget
 typeof(api.ATTRIB(mtcars))
 api.ATTRIB(structure(c(1,2,3), myattr3 = 33))
 
+api.ATTRIB(data.frame(1, 2, 3))
+
 invisible(rffi.testDATAPTR('hello', testSingleString = T));
 rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
 

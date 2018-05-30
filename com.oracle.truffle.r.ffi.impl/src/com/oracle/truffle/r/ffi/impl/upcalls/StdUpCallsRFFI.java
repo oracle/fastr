@@ -229,10 +229,13 @@ public interface StdUpCallsRFFI {
 
     void Rf_errorcall(Object call, @RFFICstring String msg);
 
+    @RFFIRunGC
     Object Rf_allocVector(int mode, long n);
 
+    @RFFIRunGC
     Object Rf_allocArray(int mode, Object dimsObj);
 
+    @RFFIRunGC
     Object Rf_allocMatrix(int mode, int nrow, int ncol);
 
     int Rf_nrows(Object x);
@@ -376,7 +379,6 @@ public interface StdUpCallsRFFI {
 
     Object R_FindNamespace(Object name);
 
-    @RFFIRunGC
     @RFFIUpCallNode(RfEvalNode.class)
     Object Rf_eval(Object expr, Object env);
 
@@ -394,7 +396,6 @@ public interface StdUpCallsRFFI {
 
     void Rf_copyMatrix(Object s, Object t, int byrow);
 
-    @RFFIRunGC
     @RFFIUpCallNode(TryRfEvalNode.class)
     Object R_tryEval(Object expr, Object env, @RFFICpointer Object errorFlag, int silent);
 

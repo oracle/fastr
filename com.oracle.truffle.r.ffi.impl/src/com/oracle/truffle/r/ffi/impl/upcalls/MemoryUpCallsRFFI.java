@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
-import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 
 public interface MemoryUpCallsRFFI {
     // Checkstyle: stop method name check
@@ -43,6 +42,5 @@ public interface MemoryUpCallsRFFI {
     void Rf_unprotect_ptr(Object x);
 
     @RFFICpointer
-    @RFFIRunGC
     Object R_alloc(int n, int size);
 }

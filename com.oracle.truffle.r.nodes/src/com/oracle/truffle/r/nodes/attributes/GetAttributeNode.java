@@ -66,7 +66,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     @Specialization(guards = "isRowNamesAttr(name)")
     protected Object getRowNames(DynamicObject attrs, @SuppressWarnings("unused") String name,
                     @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
-        return GetAttributesNode.getFullRowNames(getRowNamesNode.execute(attrs));
+        return GetAttributesNode.convertRowNamesToSeq(getRowNamesNode.execute(attrs));
     }
 
     @Specialization(guards = "isNamesAttr(name)")
