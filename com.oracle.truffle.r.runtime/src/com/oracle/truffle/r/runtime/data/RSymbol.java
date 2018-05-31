@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.concurrent.ConcurrentHashMap;
+
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RType;
@@ -35,16 +36,17 @@ import com.oracle.truffle.r.runtime.RType;
 public final class RSymbol extends RAttributeStorage {
 
     /**
-     * Note: GnuR caches all symbols and some packages rely on their identity.
+     * Note: GnuR caches all symbols and some packages rely on their identity. Moreover, the cached
+     * symbols are never garbage collected. This table corresponds to {@code R_SymbolTable} in GNUR.
      */
-    private static final ConcurrentHashMap<String, RSymbol> symbolTable = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<String, RSymbol> symbolTable = new ConcurrentHashMap<>(1024);
 
     public static final RSymbol MISSING = RDataFactory.createSymbol("");
 
-    private final String name;
+    private final CharSXPWrapper name;
 
     private RSymbol(String name) {
-        this.name = name;
+        this.name = CharSXPWrapper.create(name);
     }
 
     @TruffleBoundary
@@ -58,15 +60,34 @@ public final class RSymbol extends RAttributeStorage {
     }
 
     public String getName() {
+        return name.getContents();
+    }
+
+    public CharSXPWrapper getWrappedName() {
         return name;
     }
 
     @Override
     public String toString() {
-        return name;
+        return getName();
     }
 
     public boolean isMissing() {
-        return name.isEmpty();
+        return getName().isEmpty();
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getName().hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) {
+            return true;
+        } else if (obj instanceof RSymbol) {
+            return ((RSymbol) obj).getName().equals(this.getName());
+        }
+        return false;
     }
 }
