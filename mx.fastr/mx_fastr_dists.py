@@ -268,7 +268,6 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                             "bin/fastr_jars/graal-sdk*",
                         ],
                     },
-                    "dependency:fastr:GNUR",
                 ],
                 "LICENSE_FASTR" : "file:LICENSE",
                 "3rd_party_licenses_fastr.txt" : "file:3rd_party_licenses.txt",
