@@ -201,4 +201,19 @@ public abstract class RForeignWrapper implements RAbstractVector {
     public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         throw RInternalError.shouldNotReachHere();
     }
+
+    @Override
+    public void setLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public int getTrueLength() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
 }

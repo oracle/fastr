@@ -34,6 +34,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionEnvironme
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionFormalsNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.OctSizeNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.TRUELENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
@@ -136,6 +137,35 @@ public final class MiscNodes {
 
         public static LENGTHNode create() {
             return LENGTHNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class TRUELENGTHNode extends FFIUpCallNode.Arg1 {
+
+        @Specialization
+        protected int truelength(@SuppressWarnings("unused") RNull obj) {
+            return 0;
+        }
+
+        @Specialization
+        protected int truelength(CharSXPWrapper obj) {
+            return obj.getTruelength();
+        }
+
+        @Specialization
+        protected int truelength(RAbstractContainer obj) {
+            return obj.getTrueLength();
+        }
+
+        @Fallback
+        protected int truelength(Object obj) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.LENGTH_MISAPPLIED, SEXPTYPE.gnuRTypeForObject(obj).name());
+        }
+
+        public static TRUELENGTHNode create() {
+            return TRUELENGTHNodeGen.create();
         }
     }
 

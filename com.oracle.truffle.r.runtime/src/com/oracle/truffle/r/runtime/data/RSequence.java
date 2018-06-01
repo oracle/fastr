@@ -52,6 +52,21 @@ public abstract class RSequence implements RAbstractVector {
     }
 
     @Override
+    public void setLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public int getTrueLength() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public RAbstractContainer resize(int size) {
         return materialize().resize(size);
     }

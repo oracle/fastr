@@ -74,6 +74,14 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         return "CHARSXP(" + getContents() + ")";
     }
 
+    public void setTruelength(int truelength) {
+        NativeDataAccess.setTrueDataLength(this, truelength);
+    }
+
+    public int getTruelength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
     public static CharSXPWrapper create(String contents) {
         if (contents == RRuntime.STRING_NA) {
             return NA;

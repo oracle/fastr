@@ -36,6 +36,12 @@ public interface RAbstractContainer extends RAttributable, RTypedValue {
 
     int getLength();
 
+    void setLength(int l);
+
+    int getTrueLength();
+
+    void setTrueLength(int l);
+
     RAbstractContainer resize(int size);
 
     boolean hasDimensions();

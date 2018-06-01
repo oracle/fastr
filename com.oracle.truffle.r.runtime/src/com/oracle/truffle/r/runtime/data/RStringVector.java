@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -115,6 +114,26 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
     @Override
     public int getLength() {
         return data.length;
+    }
+
+    @Override
+    public void setLength(int l) {
+        if (l != data.length) {
+            Object[] newData = data instanceof String[] ? new String[l] : new CharSXPWrapper[l];
+            System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
+            fence = 42; // make sure the array is really initialized before we set it to this.data
+            this.data = newData;
+        }
+    }
+
+    @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setTrueLength(int truelength) {
+        NativeDataAccess.setTrueDataLength(this, truelength);
     }
 
     @Override

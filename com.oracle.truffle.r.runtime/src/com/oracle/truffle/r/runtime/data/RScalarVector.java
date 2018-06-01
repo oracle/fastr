@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -55,6 +56,21 @@ public abstract class RScalarVector extends RScalar implements RAbstractVector {
     @Override
     public final int getLength() {
         return 1;
+    }
+
+    @Override
+    public void setLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public int getTrueLength() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        throw RInternalError.shouldNotReachHere();
     }
 
     @Override

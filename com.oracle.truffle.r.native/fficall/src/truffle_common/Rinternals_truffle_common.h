@@ -999,18 +999,17 @@ void SET_PRCODE(SEXP x, SEXP v) {
 
 int TRUELENGTH(SEXP x) {
     TRACE(TARGp, x);
-    // TODO do not throw an error for now
-    return 0;
+    return ((call_TRUELENGTH) callbacks[TRUELENGTH_x])(x);
 }
 
 void SETLENGTH(SEXP x, int v) {
     TRACE0();
-    unimplemented("SETLENGTH");
+    ((call_SETLENGTH) callbacks[SETLENGTH_x])(x, v);
 }
 
 void SET_TRUELENGTH(SEXP x, int v) {
     TRACE0();
-    unimplemented("SET_TRUELENGTH");
+    ((call_SET_TRUELENGTH) callbacks[SETTRUELENGTH_x])(x, v);
 }
 
 R_xlen_t XLENGTH(SEXP x) {
@@ -1032,9 +1031,8 @@ int IS_LONG_VEC(SEXP x) {
 }
 
 int LEVELS(SEXP x) {
-    TRACE0();
-    unimplemented("LEVELS");
-    return 0;
+    TRACE1(x);
+    return ((call_LEVELS) callbacks[LEVELS_x])(x);
 }
 
 int SETLEVELS(SEXP x, int v) {
