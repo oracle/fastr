@@ -142,7 +142,7 @@ public final class NativeDataAccess {
         void allocateNative(Object source, int len, int elementBase, int elementSize) {
             assert dataAddress == 0;
             if (len != 0) {
-                dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(len * elementSize);
+                dataAddress = allocateNativeMemory(len * elementSize);
                 UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, len * elementSize);
             } else {
                 dataAddress = EMPTY_DATA_ADDRESS;
@@ -156,7 +156,7 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNativeString(byte[] bytes) {
             assert dataAddress == 0;
-            dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(bytes.length + 1);
+            dataAddress = allocateNativeMemory(bytes.length + 1);
             UnsafeAdapter.UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, dataAddress, bytes.length);
             UnsafeAdapter.UNSAFE.putByte(dataAddress + bytes.length, (byte) 0); // C strings
                                                                                 // terminator
@@ -168,7 +168,7 @@ public final class NativeDataAccess {
 
         @TruffleBoundary
         void allocateNative(CharSXPWrapper[] wrappers) {
-            long addr = dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(wrappers.length * Long.BYTES);
+            long addr = dataAddress = allocateNativeMemory(wrappers.length * Long.BYTES);
             for (int i = 0; i < wrappers.length; i++) {
                 UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(wrappers[i]));
             }
@@ -184,7 +184,7 @@ public final class NativeDataAccess {
                 assert (dataAddress = 0xbadbad) != 0;
             } else if (dataAddress != 0) {
                 // System.out.println(String.format("freeing data at %16x", dataAddress));
-                UnsafeAdapter.UNSAFE.freeMemory(dataAddress);
+                freeNativeMemory(dataAddress);
                 assert (dataAddress = 0xbadbad) != 0;
             }
         }
@@ -721,7 +721,7 @@ public final class NativeDataAccess {
             bytes[i] = element.getBytes(StandardCharsets.US_ASCII);
             size += bytes[i].length + 1;
         }
-        long dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(size);
+        long dataAddress = allocateNativeMemory(size);
         long ptr = dataAddress + length * Long.BYTES; // start of the actual character data
         for (int i = 0; i < length; i++) {
             UnsafeAdapter.UNSAFE.putLong(dataAddress + i * 8, ptr);
@@ -744,7 +744,7 @@ public final class NativeDataAccess {
             }
             return data;
         } finally {
-            UnsafeAdapter.UNSAFE.freeMemory(address);
+            freeNativeMemory(address);
         }
     }
 
@@ -795,4 +795,16 @@ public final class NativeDataAccess {
         }
     }
 
+    private static long allocateNativeMemory(long bytes) {
+        long result = UnsafeAdapter.UNSAFE.allocateMemory(bytes);
+        // Uncomment for debugging
+        // System.out.printf("DEBUG: allocated %x, length %d\n", result, bytes);
+        return result;
+    }
+
+    private static void freeNativeMemory(long address) {
+        // Uncomment for debugging
+        // System.out.printf("DEBUG: feeing %x\n", address);
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+    }
 }

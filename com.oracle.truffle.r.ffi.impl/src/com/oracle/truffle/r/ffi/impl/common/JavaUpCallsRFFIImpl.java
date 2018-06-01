@@ -538,8 +538,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object STRING_ELT(Object x, long i) {
-        RAbstractStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractStringVector.class);
-        return CharSXPWrapper.create(vector.getDataAt((int) i));
+        RStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RStringVector.class);
+        vector.wrapStrings();
+        return vector.getWrappedDataAt((int) i);
     }
 
     @Override

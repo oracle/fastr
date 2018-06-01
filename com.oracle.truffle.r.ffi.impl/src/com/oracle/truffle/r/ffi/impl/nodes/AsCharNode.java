@@ -30,6 +30,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
@@ -47,22 +48,25 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    protected CharSXPWrapper asChar(RAbstractStringVector obj) {
+    protected CharSXPWrapper asChar(RStringVector obj) {
         if (obj.getLength() == 0) {
             return CharSXPWrapper_NA;
         } else {
-            return CharSXPWrapper.create(obj.getDataAt(0));
+            obj.wrapStrings();
+            return obj.getWrappedDataAt(0);
         }
     }
 
     @Specialization
     protected CharSXPWrapper asChar(RSymbol obj) {
-        return CharSXPWrapper.create(obj.getName());
+        return obj.getWrappedName();
     }
 
-    @Specialization(guards = "obj.getLength() > 0")
+    @Specialization(guards = {"obj.getLength() > 0", "isNotStringVec(obj)"})
     protected CharSXPWrapper asChar(RAbstractAtomicVector obj, //
                     @Cached("createNonPreserving()") CastStringNode castStringNode) {
+        // for other than character vector, symbol or CHARSXP, the cast and creation of new vector
+        // is inevitable and the user should know to take appropriate measures (i.e. PROTECT).
         Object castObj = castStringNode.executeString(obj);
         if (castObj instanceof String) {
             return CharSXPWrapper.create((String) castObj);
@@ -76,6 +80,12 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
     @Fallback
     protected CharSXPWrapper asCharFallback(@SuppressWarnings("unused") Object obj) {
         return CharSXPWrapper_NA;
+    }
+
+    protected static boolean isNotStringVec(RAbstractAtomicVector obj) {
+        // assertion: only materialized string vectors should ever appear in native code
+        assert !(obj instanceof RAbstractStringVector) || obj instanceof RStringVector : obj;
+        return !(obj instanceof RStringVector);
     }
 
     public static AsCharNode create() {

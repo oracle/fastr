@@ -67,7 +67,7 @@ public final class ListAccessNodes {
 
         @Specialization
         protected Object car(RSymbol sym) {
-            return CharSXPWrapper.create(sym.getName());
+            return sym.getWrappedName();
         }
 
         @Specialization
