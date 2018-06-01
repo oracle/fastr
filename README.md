@@ -34,23 +34,16 @@ It also explores possible solutions at a grander scale, like evolution and emula
 
 FastR is available in two forms:
 
-1. As a [pre-built binary](http://www.oracle.com/technetwork/oracle-labs/program-languages/downloads/index.html). N.B. This also includes (Truffle) implementations of Ruby and JavaScript. The pre-built binaries are available for Linux and Mac OS X. There is no Windows version available. The binary release is updated monthly.
-2. As a source release on [GitHub](http://github.com/graalvm/fastr) for developers wishing to contribute to the project and/or study the implementation. N.B. This does not contain Ruby or JavaScript. The source release is updated regularly and always contains the latest tested version.
+1. As a [pre-built binary](http://www.graalvm.org/downloads/). Note that this also includes (Truffle) implementations of JavaScript and optionally Ruby and Python. The pre-built binaries are available for Linux and Mac OS X. There is no Windows version available. The binary release is updated monthly.
+2. As a source release on [GitHub](https://github.com/graalvm/fastr) for developers wishing to contribute to the project and/or study the implementation. The source release is updated regularly and always contains the latest tested version.
+    * Note: there is a comunity provided and maintained [Dockerfile](https://github.com/nuest/fastr-docker) for FastR.
 
-## Status and Limitations
+## Documentation
 
-FastR is intended eventually to be a drop-in replacement for GNU R. Currently, however, the implementation is incomplete. Notable limitations are:
+Reference manual for FastR, its limitations, compatibility and additional functionality is
+available at [GraalVM website](http://www.graalvm.org/docs/reference-manual/languages/r/).
 
-1. Graphics support: FastR supports only grid and grid-based packages, graphics package is not supported. The FastR grid package implementation is purely Java based, see its [documentation](documentation/graphics.md) for more details and limitations.
-2. Some packages either do not install, or fail tests due to bugs and limitations in FastR. In particular support for popular packages such as `data.table` and `Rcpp` is work in progress.
-
-## Running FastR
-
-After downloading and unpacking the binary release, or compiling from source, the `bin` directory contains the `R` and `Rscript` commands and these can be used in a similar way to GNU R.
-
-## Performance
-
-FastR is primarily aimed at long-running applications. The runtime performance behavior is, like Java, based on runtime profiling and runtime compilation of the hot code paths. Therefore, there is an inevitable warm-up time before peak performance is achieved when evaluating a given expression. In addition, startup is slower than GNU R, due to the overhead from Java class loading and compilation.
+Further documentation is in the [documentation folder](documentation/Index.md) of this repository.
 
 # Building FastR from Source
 
@@ -118,10 +111,6 @@ FastR supports the same command line arguments as R, so running an R script is d
 ## IDE Usage
 
 `mx` supports IDE integration with Eclipse, Netbeans or IntelliJ and creates project metadata with the `ideinit` command (you can limit metadata creation to one IDE by setting the `MX_IDE` environment variable to, say, `eclipse`). After running this command you can import the `fastr` and `truffle` projects using the `File->Import` menu.
-
-## Further Documentation
-
-Further documentation on FastR, its limitations and additional functionality is [here](documentation/Index.md).
 
 ## Contributing
 
