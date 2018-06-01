@@ -252,7 +252,9 @@ public final class Utils {
         String dir = RContext.isEmbedded() ? System.getProperty("java.io.tmpdir") : System.getProperty("user.dir");
         int dirId = 0;
         int pid = RContext.getInitialPid();
-        String baseName = fileNamePrefix + "_pid" + Integer.toString(pid) + ".log";
+        // Do not use PID if it was not set yet (logging/error during initialization)
+        String pidStr = pid == 0 ? "" : "_pid" + Integer.toString(pid);
+        String baseName = fileNamePrefix + pidStr + ".log";
         while (true) {
             Path path = FileSystems.getDefault().getPath(dir, baseName);
             if (Files.isWritable(path.getParent()) && (!Files.exists(path) || Files.isWritable(path))) {
