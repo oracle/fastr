@@ -121,7 +121,14 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
     public String[] getDataCopy() {
         Object[] localData = data;
         String[] copy = new String[localData.length];
-        System.arraycopy(localData, 0, copy, 0, localData.length);
+        if (noWrappedStrings.isValid() || localData instanceof String[]) {
+            System.arraycopy(localData, 0, copy, 0, localData.length);
+        } else {
+            CharSXPWrapper[] wrappers = (CharSXPWrapper[]) localData;
+            for (int i = 0; i < localData.length; i++) {
+                copy[i] = wrappers[i].getContents();
+            }
+        }
         return copy;
     }
 
@@ -250,8 +257,14 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
 
     @Override
     public void setElement(int i, Object value) {
-        // Note: any writes should create a local copy of the vector
-        data[i] = (String) value;
+        if (value instanceof CharSXPWrapper) {
+            wrapStrings();
+            data[i] = value;
+        } else if (!noWrappedStrings.isValid() && data instanceof CharSXPWrapper[]) {
+            data[i] = CharSXPWrapper.create((String) value);
+        } else {
+            data[i] = value;
+        }
     }
 
     /**
