@@ -216,8 +216,9 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
         Object[] newData = Arrays.copyOf(localData, size);
         if (size > localData.length) {
             if (fill != null) {
+                Object fillObj = newData instanceof String[] ? fill : CharSXPWrapper.create(fill);
                 for (int i = localData.length; i < size; i++) {
-                    newData[i] = fill;
+                    newData[i] = fillObj;
                 }
             } else {
                 assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
