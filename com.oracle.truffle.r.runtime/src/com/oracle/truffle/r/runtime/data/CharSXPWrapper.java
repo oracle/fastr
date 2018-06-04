@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject {
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
-    private String contents;
+    private final String contents;
     private byte[] bytes;
 
     private CharSXPWrapper(String contents) {
@@ -56,7 +56,12 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
             // be true for its contents
             return RRuntime.STRING_NA;
         }
-        return NativeDataAccess.getData(this, contents);
+        // WARNING:
+        // we keep and use the contens value even in cases when contets got allocated and could be
+        // accessed via NativeDataAccess.getData():
+        // - when used with RSymbol the String has to be interned - NDA.getData() will create a new
+        // instance if already allocated
+        return contents;
     }
 
     @TruffleBoundary
@@ -94,13 +99,12 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         try {
             return NativeDataAccess.allocateNativeContents(this, getBytes());
         } finally {
-            contents = null;
             bytes = null;
         }
     }
 
     private byte[] getBytes() {
-        if (bytes == null && contents != null) {
+        if (bytes == null && !NativeDataAccess.isAllocated(this)) {
             bytes = contents.getBytes(StandardCharsets.UTF_8);
         }
         return bytes;

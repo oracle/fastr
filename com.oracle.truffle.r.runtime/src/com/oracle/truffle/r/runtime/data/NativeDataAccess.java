@@ -763,6 +763,11 @@ public final class NativeDataAccess {
         }
     }
 
+    static boolean isAllocated(RObject obj) {
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        return mirror != null && mirror.dataAddress != 0;
+    }
+
     static long allocateNativeContents(RLogicalVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
