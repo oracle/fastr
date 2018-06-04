@@ -839,6 +839,13 @@ check.create.dir <- function(name) {
 	}
 }
 
+getPkgEnv <- function(pkgname) {
+	envOneLine <- Sys.getenv(paste0("PKG_TEST_ENV_", pkgname))
+	envVars <- strsplit(envOneLine, ",")[[1]]
+	cat("Package-specific environment: ", envVars, "\n")
+	return (envVars)
+}
+
 test.package <- function(pkgname) {
 	testdir.path <- testdir
 	check.create.dir(testdir.path)
@@ -846,8 +853,9 @@ test.package <- function(pkgname) {
 	start.time <- proc.time()[[3]]
     res <- 0L
 	error_log_size <- fastr.errors.log.sizes()
+	pkgEnv <- getPkgEnv(pkgname)
 	if (run.mode == "system") {
-		res <- system.test(pkgname)
+		res <- system.test(pkgname, pkgEnv)
 	} else if (run.mode == "internal") {
 		res <- tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
 	} else if (run.mode == "context") {
@@ -866,7 +874,7 @@ is.fastr <- function() {
 	exists(".fastr.context.get", baseenv())
 }
 
-system.test <- function(pkgname) {
+system.test <- function(pkgname, pkgEnv) {
 	script <- normalizePath("com.oracle.truffle.r.test.packages/r/test.package.R")
     options <- character(0)
 	if (is.fastr()) {
@@ -881,11 +889,12 @@ system.test <- function(pkgname) {
 	# we want to stop tests that hang, but some packages have many tests
 	# each of which spawns a sub-process (over which we have no control)
 	# so we time out the entire set after 20 minutes.
-    env <- c("FASTR_PROCESS_TIMEOUT=20", 
+    genEnv <- c("FASTR_PROCESS_TIMEOUT=20",
              paste0("R_LIBS_USER=", shQuote(lib.install)),
              "R_LIBS=",
              paste0("MX_R_GLOBAL_ARGS=", fastr.test.jvm.args())
             )
+	env <- c(pkgEnv, genEnv)
 	rc <- system2(rscript, args, env=env)
 	rc
 }
