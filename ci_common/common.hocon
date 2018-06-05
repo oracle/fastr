@@ -82,6 +82,7 @@ common : ${java8Downloads} ${packagesLinux}  {
   timelimit : "1:00:00"
   environment : {
 	PKG_TEST_ENV_miniUI : "LC_ALL=C"
+	PKG_TEST_ENV_compare : "LC_ALL=C"
   }
 }
 
