@@ -71,11 +71,6 @@ public final class ListAccessNodes {
         }
 
         @Specialization
-        protected Object car(RList list) {
-            return list.getDataAt(0);
-        }
-
-        @Specialization
         protected Object car(@SuppressWarnings("unused") RNull nil) {
             return RNull.instance;
         }
@@ -102,22 +97,6 @@ public final class ListAccessNodes {
         protected Object cdr(RArgsValuesAndNames args) {
             // TODO: this is too late - "..." should be converted to pairlist earlier
             return ((RPairList) args.toPairlist()).cdr();
-        }
-
-        @Specialization
-        protected Object cdr(RList list,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") SetNamesAttributeNode setNamesNode) {
-            if (list.getLength() == 1) {
-                return RNull.instance;
-            }
-            RStringVector names = getNamesNode.getNames(list);
-            RList copy = RDataFactory.createList(list.getDataCopy());
-            if (names != null) {
-                String[] namesDataCopy = names.getDataCopy();
-                setNamesNode.setNames(copy, RDataFactory.createStringVector(namesDataCopy, true));
-            }
-            return copy;
         }
 
         @Specialization
