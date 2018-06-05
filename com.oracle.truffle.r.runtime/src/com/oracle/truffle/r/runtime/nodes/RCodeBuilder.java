@@ -32,6 +32,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 /**
@@ -160,6 +161,9 @@ public interface RCodeBuilder<T> {
 
             @Override
             protected T visit(RSyntaxLookup element) {
+                if (element.getIdentifier().isEmpty()) {
+                    return constant(element.getLazySourceSection(), REmpty.instance);
+                }
                 return lookup(element.getLazySourceSection(), element.getIdentifier(), element.isFunctionLookup());
             }
 

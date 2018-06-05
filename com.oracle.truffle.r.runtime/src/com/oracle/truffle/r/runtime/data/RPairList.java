@@ -161,7 +161,15 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         Object result = RNull.instance;
         RStringVector names = vector.getNames();
         for (int i = vector.getLength() - 1; i >= 0; i--) {
-            result = dataFactory.createPairList(vector.getDataAtAsObject(i), result, names != null ? RSymbol.install(names.getDataAt(i)) : RNull.instance, SEXPTYPE.LISTSXP);
+            Object item = vector.getDataAtAsObject(i);
+            if (item == RSymbol.MISSING || item == RMissing.instance) {
+                // This is opposite to the conversion done in RASTUtils, there REmpty and RMissing
+                // are replaced with RSymbol.MISSING. If we get directly RMissing, we convert it to
+                // REmpty, because RMissing constant should not appear in AST. See JavaDoc of REmpty
+                // for more details.
+                item = REmpty.instance;
+            }
+            result = dataFactory.createPairList(item, result, names != null ? RSymbol.install(names.getDataAt(i)) : RNull.instance, SEXPTYPE.LISTSXP);
         }
         if (result != RNull.instance) {
             RPairList list = (RPairList) result;

@@ -33,5 +33,29 @@ eval(l)
 
 # language objects treated as pairlists:
 b <- ~fun(arg = val, arg2)
-api.TAG(api.CDR(api.CDR(api.CAR(api.CDR(b)))))
+
+api.CAR(b) # symbol: `~`
+api.TAG(b) # NULL
+api.CDR(api.CDR(b)) # NULL
+api.TAG(api.CDR(b)) # NULL
+
+api.TAG(api.CDR(api.CDR(api.CAR(api.CDR(b))))) # TAG of arg2 -> NULL
+api.CAR(api.CDR(api.CDR(api.CAR(api.CDR(b))))) # CAR of arg2 -> symbol arg2
+api.TAG(api.CDR(api.CDR(api.CDR(b)))) # TAG(NULL) -> NULL
+
+api.CAR(api.CDR(api.CAR(api.CDR(b)))) # symbol: val
+api.TAG(api.CDR(api.CAR(api.CDR(b)))) # symbol: arg
+
+api.TAG(as.symbol('a')) # TAG(symbol) -> NULL
+
+g <- quote(fun(,42,'hello',3L,T,FALSE,...))
+
+api.CAR(g) # symbol: fun
+argspl <- api.CDR(g) # pairlist with the arguments
+while (!is.null(argspl)) {
+    print(api.TAG(argspl))
+    print(api.CAR(argspl))
+    print(typeof(api.CAR(argspl)))
+    argspl <- api.CDR(argspl)
+}
 

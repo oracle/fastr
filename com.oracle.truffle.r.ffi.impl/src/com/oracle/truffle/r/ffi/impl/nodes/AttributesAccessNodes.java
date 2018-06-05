@@ -151,12 +151,12 @@ public final class AttributesAccessNodes {
         }
 
         @Specialization
-        public Object doList(RList obj,
-                        @Cached("create()") GetNamesAttributeNode getNamesAttributeNode) {
-            RStringVector names = getNamesAttributeNode.getNames(obj);
-            if (names != null && names.getLength() > 0) {
-                return getSymbol(names.getDataAt(0));
-            }
+        public Object doNull(RNull x) {
+            return x;
+        }
+
+        @Specialization
+        public Object doSymbol(@SuppressWarnings("unused") RSymbol s) {
             return RNull.instance;
         }
 
