@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public abstract class RListBase extends RVector<Object[]> implements RAbstractListBaseVector {
 
-    protected final Object[] data;
+    protected Object[] data;
 
     RListBase(Object[] data) {
         super(false);
@@ -63,6 +63,26 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     @Override
     public final int getLength() {
         return data.length;
+    }
+
+    @Override
+    public void setLength(int l) {
+        if (l != data.length) {
+            Object[] newData = new Object[l];
+            System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
+            fence = 42; // make sure the array is really initialized before we set it to this.data
+            this.data = newData;
+        }
+    }
+
+    @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setTrueLength(int truelength) {
+        NativeDataAccess.setTrueDataLength(this, truelength);
     }
 
     @Override

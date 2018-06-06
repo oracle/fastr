@@ -402,6 +402,21 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     @Override
+    public void setLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public int getTrueLength() {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public RAbstractContainer resize(int size) {
         throw RInternalError.shouldNotReachHere();
     }

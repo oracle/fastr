@@ -205,6 +205,24 @@ SEXP api_LENGTH(SEXP x) {
     return ScalarInteger(LENGTH(x));
 }
 
+SEXP api_LEVELS(SEXP x) {
+    return ScalarInteger(LEVELS(x));
+}
+
+SEXP api_SETLENGTH(SEXP x, SEXP l) {
+    SETLENGTH(x, INTEGER_VALUE(l));
+    return R_NilValue;
+}
+
+SEXP api_TRUELENGTH(SEXP x) {
+    return ScalarInteger(TRUELENGTH(x));
+}
+    
+SEXP api_SET_TRUELENGTH(SEXP x, SEXP l) {
+    SET_TRUELENGTH(x, INTEGER_VALUE(l));
+    return R_NilValue;
+}
+
 SEXP api_SET_STRING_ELT(SEXP x, SEXP i, SEXP v) {
     SET_STRING_ELT(x, INTEGER_VALUE(i), v);
     return R_NilValue;

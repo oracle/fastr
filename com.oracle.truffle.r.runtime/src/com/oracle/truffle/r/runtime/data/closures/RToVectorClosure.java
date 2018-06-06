@@ -56,6 +56,21 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
+    public void setLength(int l) {
+        getVector().setLength(l);
+    }
+
+    @Override
+    public int getTrueLength() {
+        return getVector().getTrueLength();
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        getVector().setTrueLength(l);
+    }
+
+    @Override
     public final RAbstractContainer resize(int size) {
         return getVector().resize(size);
     }

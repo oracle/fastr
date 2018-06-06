@@ -128,6 +128,31 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
     }
 
     @Override
+    public void setLength(int l) {
+        try {
+            NativeDataAccess.setDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        try {
+            NativeDataAccess.setTrueDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
     public double getDataAt(int index) {
         return NativeDataAccess.getData(this, data, index);
     }
