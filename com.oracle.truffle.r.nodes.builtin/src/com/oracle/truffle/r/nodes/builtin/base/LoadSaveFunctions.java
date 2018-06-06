@@ -37,8 +37,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RSerialize;
@@ -48,6 +49,7 @@ import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -197,6 +199,8 @@ public class LoadSaveFunctions {
         private static final String ASCII_HEADER = "RDA2\n";
         private static final String XDR_HEADER = "RDX2\n";
 
+        private final ConditionProfile valueNullProfile = ConditionProfile.createBinaryProfile();
+
         static {
             Casts casts = new Casts(SaveToConn.class);
             casts.arg("list").mustBe(stringValue()).asStringVector();
@@ -209,17 +213,28 @@ public class LoadSaveFunctions {
 
         @Specialization
         protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
-                        @Cached("new()") PromiseCheckHelperNode promiseHelper) {
+                        @Cached("new()") PromiseHelperNode promiseHelper) {
             RPairList prev = null;
             Object toSave = RNull.instance;
             for (int i = 0; i < list.getLength(); i++) {
                 String varName = list.getDataAt(i);
-                Object value = envir.get(varName);
-                if (value == null) {
-                    throw error(RError.Message.UNKNOWN_OBJECT, varName);
+                Object value = null;
+                REnvironment env = envir;
+                while (env != REnvironment.emptyEnv()) {
+                    value = env.get(varName);
+                    if (value != null) {
+                        if (value instanceof RPromise) {
+                            // GNU R does not seem to honor evalPromises==false
+                            value = true || evalPromises
+                                            ? promiseHelper.evaluate(frame, (RPromise) value)
+                                            : ((RPromise) value).getRawValue();
+                        }
+                        break;
+                    }
+                    env = env.getParent();
                 }
-                if (evalPromises) {
-                    value = promiseHelper.checkEvaluate(frame, value);
+                if (valueNullProfile.profile(value == null)) {
+                    throw error(RError.Message.UNKNOWN_OBJECT, varName);
                 }
                 RPairList pl = RDataFactory.createPairList(value);
                 pl.setTag(RDataFactory.createSymbol(Utils.intern(varName)));
