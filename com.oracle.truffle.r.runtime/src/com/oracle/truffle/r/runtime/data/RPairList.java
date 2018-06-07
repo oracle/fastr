@@ -36,6 +36,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSrcref;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory.BaseVectorFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -56,6 +57,15 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * RPairList objects can represent both "normal" pairlists (which are rarely used from R directly)
  * and language objects. They are unified in one implementation class because native code often
  * changes the type of these in-place.
+ *
+ * A pair-list consists of the data in {@link #car()}, link to the next cell in {@link #cdr()},
+ * which can be {@link RNull} and optionally tag (~name) in {@link #getTag()}.
+ *
+ * Pair-lists with {@link #cdr()} different from {@link RNull} or {@link RPairList} are possible to
+ * construct internally, but not supported everywhere, e.g. built-in length fails with them.
+ * However, they are used internally during serialization and by some packages. For example, during
+ * installation of the rlang package, the following {@link SEXPTYPE} are used as {@code CDR} value
+ * in GNUR: 0, 1, 2, 6, 10, 19, 21.
  */
 public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
 
@@ -399,10 +409,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         } else {
             int result = 1;
             Object tcdr = cdr();
-            while (!isNull(tcdr)) {
-                if (tcdr instanceof RPairList) {
-                    tcdr = ((RPairList) tcdr).cdr();
-                }
+            while (!isNull(tcdr) && tcdr instanceof RPairList) {
+                tcdr = ((RPairList) tcdr).cdr();
                 result++;
             }
             return result;
@@ -505,13 +513,16 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         if (closure != null) {
             return getClosureDataAtAsObject(index);
         } else {
-            RPairList pl = this;
+            Object pl = this;
             int i = 0;
-            while (!isNull(pl) && i < index) {
-                pl = (RPairList) pl.cdr();
+            while (!isNull(pl) && i < index && pl instanceof RPairList) {
+                pl = ((RPairList) pl).cdr();
                 i++;
             }
-            return pl.car();
+            if (!(pl instanceof RPairList)) {
+                throw new IndexOutOfBoundsException("Indexing into RPairList");
+            }
+            return ((RPairList) pl).car();
         }
     }
 
