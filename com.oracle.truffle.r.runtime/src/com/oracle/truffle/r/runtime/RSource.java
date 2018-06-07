@@ -214,7 +214,8 @@ public class RSource {
     }
 
     /**
-     * Create an (external) source from an R srcfile ({@link RSrcref#createSrcfile(String)}).
+     * Create an (external) source from an R srcfile (
+     * {@link RSrcref#createSrcfile(Path, java.util.Set)}).
      */
     public static Source fromSrcfile(REnvironment env) throws IOException {
         Path filename = Paths.get(getPath(env, SrcrefFields.filename.name()));

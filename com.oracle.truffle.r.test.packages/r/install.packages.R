@@ -71,6 +71,11 @@
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
 
+# Package-specific environment variables can be specified through the PKG_TEST_ENV_<pkgname> environment variable.
+# The individual environment variable pairs are delimited by a comma, e.g.
+#   export PKG_TEST_ENV_miniUI="LANGUAGE=en,LC_ALL=C"
+# specifies the environment variables LANGUAGE and LC_ALL for the miniUI package test.
+
 # If --use-installed-pkgs is set the lib install directory is analyzed for existing (correctly) installed packages
 # and these are not re-installed.
 

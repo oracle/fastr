@@ -76,7 +76,11 @@ eval(expression({
 		# The dummy elements and the class 'recordedplot' make the display list look 
 		# like the GNUR one, which enables its use in the 'evaluate' package
 		# (used in knitr, for instance).
-		pl <- list(list(list("dummyCallX",list(list("dummyCallY")))), dl = dl, dl.idx = dl.idx)
+		if (all(sapply(dl, function (x) is.null(x)))) {
+			pl <- list(NULL)
+		} else {
+			pl <- list(list(list("dummyCallX",list(list("dummyCallY")))), dl = dl, dl.idx = dl.idx)
+		}
 		class(pl) <- "recordedplot"
 		pl
 	}

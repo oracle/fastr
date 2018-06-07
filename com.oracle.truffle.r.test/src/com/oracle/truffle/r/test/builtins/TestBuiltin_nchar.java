@@ -101,6 +101,9 @@ public class TestBuiltin_nchar extends TestBase {
     public void testNCharKeepNA() {
         assertEval("nchar(c('aasd', NA), keepNA=NA)");
         assertEval("nchar(c('aasd', NA, 'asdasd'), keepNA=TRUE)");
+        assertEval("nchar(c('aasd', NA), type='width', keepNA=TRUE)");
+        assertEval("nchar(c('aasd', NA), type='width', keepNA=FALSE)");
+        assertEval("nchar(c('aasd', NA), type='width')");
     }
 
     @Test

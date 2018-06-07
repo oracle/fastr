@@ -435,9 +435,22 @@ public class GrepFunctions {
     protected static final class SubCommonCodeNode extends CommonCodeNode {
         @Child private PCRERFFI.ExecNode execNode = RFFIFactory.getPCRERFFI().createExecNode();
 
-        protected RStringVector doSub(String patternArg, String replacementArg, RAbstractStringVector vector, boolean ignoreCase, boolean perlPar,
+        private static final String APPEND_MISSING_NL_PATTERN = "([^\n])$";
+        private static final String APPEND_MISSING_NL_REPLACEMENT = "\\1\n";
+
+        protected RAbstractStringVector doSub(String patternArg, String replacementArg, RAbstractStringVector vector, boolean ignoreCase, boolean perlPar,
                         boolean fixedPar, @SuppressWarnings("unused") boolean useBytes, boolean gsub) {
             try {
+
+                // This is a workaround for the incorrect evaluation of the pattern that
+                // is supposed to append a missing new line character. The pattern being fixed is:
+                // gsub("([^\n])$", "\\1\n", source)
+                // The original (wrong) behavior appended a new line even if the source was
+                // terminated by a new line.
+                if (APPEND_MISSING_NL_PATTERN.equals(patternArg) && APPEND_MISSING_NL_REPLACEMENT.equals(replacementArg)) {
+                    return appendMissingNewLine(vector);
+                }
+
                 boolean perl = perlPar;
                 boolean fixed = fixedPar;
                 checkNotImplemented(!(perl || fixed) && ignoreCase, "ignoreCase", true);
@@ -480,6 +493,7 @@ public class GrepFunctions {
                     String value;
                     if (fixed) {
                         if (gsub) {
+                            replacement = replacement.replace("$", "\\$");
                             value = Pattern.compile(pattern, Pattern.LITERAL).matcher(input).replaceAll(replacement);
                         } else {
                             int ix = input.indexOf(pattern);
@@ -563,6 +577,27 @@ public class GrepFunctions {
             } catch (PatternSyntaxException e) {
                 throw error(Message.INVALID_REGEXP_REASON, patternArg, e.getMessage());
             }
+        }
+
+        private static RAbstractStringVector appendMissingNewLine(RAbstractStringVector vector) {
+            String[] newElems = null;
+            for (int i = 0; i < vector.getLength(); i++) {
+                String elem = vector.getDataAt(i);
+                if (!RRuntime.isNA(elem) && elem.charAt(elem.length() - 1) != '\n') {
+                    if (newElems == null) {
+                        newElems = new String[vector.getLength()];
+                        for (int j = 0; j < i; j++) {
+                            newElems[j] = vector.getDataAt(j);
+                        }
+                    }
+
+                    newElems[i] = vector.getDataAt(i) + "\n";
+                } else if (newElems != null) {
+                    newElems[i] = elem;
+                }
+            }
+
+            return newElems == null ? vector : RDataFactory.createStringVector(newElems, vector.isComplete());
         }
 
         private static final int SIMPLE_PATTERN_MAX_LENGTH = 5;
@@ -721,7 +756,8 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector subRegexp(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical, boolean useBytes,
+        protected RAbstractStringVector subRegexp(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
+                        boolean useBytes,
                         @Cached("createSubCommon()") SubCommonCodeNode common) {
             return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, false);
         }
@@ -744,7 +780,8 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RStringVector gsub(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical, boolean useBytes,
+        protected RAbstractStringVector gsub(String patternArgVec, String replacementVec, RAbstractStringVector x, boolean ignoreCaseLogical, boolean perlLogical, boolean fixedLogical,
+                        boolean useBytes,
                         @Cached("createSubCommon()") SubCommonCodeNode common) {
             return common.doSub(patternArgVec, replacementVec, x, ignoreCaseLogical, perlLogical, fixedLogical, useBytes, true);
         }
