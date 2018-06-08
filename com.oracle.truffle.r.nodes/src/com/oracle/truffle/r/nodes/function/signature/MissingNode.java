@@ -106,7 +106,11 @@ public final class MissingNode extends OperatorNode {
         }
 
         public boolean execute(Frame frame) {
-            // Read symbols value directly
+            // Read symbols value directly: this relies on the fact that argument matching process
+            // does not create a promise node for arguments that are constant nodes with REmpty as
+            // value, but use the constant node as is, therefore when the argument value is saved
+            // into frame in function prologue, the value is already evaluated REmpty instance not a
+            // promise.
             Object value = getMissingValue.execute(frame);
             if (isNullProfile.profile(value == null)) {
                 // In case we are not able to read the symbol in current frame: This is not an

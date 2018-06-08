@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -151,12 +150,12 @@ public final class AttributesAccessNodes {
         }
 
         @Specialization
-        public Object doList(RList obj,
-                        @Cached("create()") GetNamesAttributeNode getNamesAttributeNode) {
-            RStringVector names = getNamesAttributeNode.getNames(obj);
-            if (names != null && names.getLength() > 0) {
-                return getSymbol(names.getDataAt(0));
-            }
+        public Object doNull(RNull x) {
+            return x;
+        }
+
+        @Specialization
+        public Object doSymbol(@SuppressWarnings("unused") RSymbol s) {
             return RNull.instance;
         }
 

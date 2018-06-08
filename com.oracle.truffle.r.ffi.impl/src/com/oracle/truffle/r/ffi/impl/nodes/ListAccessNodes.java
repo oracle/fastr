@@ -23,23 +23,17 @@
 package com.oracle.truffle.r.ffi.impl.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CARNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.CDRNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 
@@ -70,11 +64,6 @@ public final class ListAccessNodes {
         }
 
         @Specialization
-        protected Object car(RList list) {
-            return list.getDataAt(0);
-        }
-
-        @Specialization
         protected Object car(@SuppressWarnings("unused") RNull nil) {
             return RNull.instance;
         }
@@ -101,22 +90,6 @@ public final class ListAccessNodes {
         protected Object cdr(RArgsValuesAndNames args) {
             // TODO: this is too late - "..." should be converted to pairlist earlier
             return ((RPairList) args.toPairlist()).cdr();
-        }
-
-        @Specialization
-        protected Object cdr(RList list,
-                        @Cached("create()") GetNamesAttributeNode getNamesNode,
-                        @Cached("create()") SetNamesAttributeNode setNamesNode) {
-            if (list.getLength() == 1) {
-                return RNull.instance;
-            }
-            RStringVector names = getNamesNode.getNames(list);
-            RList copy = RDataFactory.createList(list.getDataCopy());
-            if (names != null) {
-                String[] namesDataCopy = names.getDataCopy();
-                setNamesNode.setNames(copy, RDataFactory.createStringVector(namesDataCopy, true));
-            }
-            return copy;
         }
 
         @Specialization

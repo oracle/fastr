@@ -106,7 +106,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
                 } else if (x instanceof RPairList) {
                     printer = ((RPairList) x).isLanguage() ? LanguagePrinter.INSTANCE : PairListPrinter.INSTANCE;
                 } else if (x instanceof TruffleObject) {
-                    assert !(x instanceof RTypedValue);
+                    assert !(x instanceof RTypedValue) : x;
                     printer = TruffleObjectPrinter.INSTANCE;
                 } else {
                     RInternalError.shouldNotReachHere("unexpected type: " + (x == null ? "null" : x.getClass()));

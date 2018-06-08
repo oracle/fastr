@@ -22,7 +22,6 @@ package com.oracle.truffle.r.library.methods;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGt;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.lengthGte;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.returnIf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;

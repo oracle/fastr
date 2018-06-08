@@ -502,7 +502,8 @@ public class ArgumentMatcher {
     }
 
     private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, RNodeClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath) {
-        // Create promise, unless it's the empty value
+        // Create promise, unless it's the empty value. Note that MissingNode relies no this and
+        // expects empty argument values (REmpty instances) to be never wrapped in a promise.
         if (suppliedArg instanceof ConstantNode) {
             ConstantNode a = (ConstantNode) suppliedArg;
             if (a.getValue() == REmpty.instance) {
