@@ -81,5 +81,8 @@ public class TestBuiltin_isinteger extends TestBase {
     public void testIsInteger() {
         assertEval("{ is.integer(seq(1,2)) }");
         assertEval("{ is.integer(seq(1L,2L)) }");
+
+        assertEval("{ is.integer(as.factor(c(1,2,3))) }");
+
     }
 }
