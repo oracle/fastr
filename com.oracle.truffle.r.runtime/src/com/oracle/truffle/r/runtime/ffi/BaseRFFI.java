@@ -28,10 +28,6 @@ import java.util.Map;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.base.ESoftVersionResult;
 import com.oracle.truffle.r.runtime.ffi.base.GlobResult;
 import com.oracle.truffle.r.runtime.ffi.base.ReadlinkResult;
