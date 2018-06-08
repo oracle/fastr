@@ -82,5 +82,6 @@ public class TestBuiltin_print extends TestBase {
         assertEval("{ nql <- noquote(letters); nql}");
         assertEval("{ x <- 42; attr(x,'myattr') <- list(k=3); attributes(x) }");
         assertEval("{ val <- 42L; attr(val, 'contrast') <- list(k=1); qr <- list(qr=val); qr }");
+        assertEval("{ print.mycls <- function(x, ...) { printhelper(x, ...) }; printhelper <- function(x, sec = \"\") { if (sec == \"\") print(\"sec arg filled with default\") }; a <- structure(42, class=\"mycls\"); a; }");
     }
 }
