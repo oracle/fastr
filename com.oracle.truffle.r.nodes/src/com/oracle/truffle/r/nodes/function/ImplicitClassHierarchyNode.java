@@ -91,7 +91,7 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
         return getImplicitClass(RType.Logical, forDispatch);
     }
 
-    @Specialization(limit = "5", guards = "value.getClass() == valueClass")
+    @Specialization(limit = "getCacheSize(5)", guards = "value.getClass() == valueClass")
     protected RStringVector getCachedClass(RTypedValue value,
                     @Cached("value.getClass()") Class<? extends RTypedValue> valueClass,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,
@@ -100,7 +100,7 @@ public abstract class ImplicitClassHierarchyNode extends UnaryNode {
         return getCachedType(value, valueClass.cast(value).getRType(), isArray, isMatrix, getDim);
     }
 
-    @Specialization(replaces = "getCachedClass", limit = "5", guards = "value.getRType() == type")
+    @Specialization(replaces = "getCachedClass", limit = "getCacheSize(5)", guards = "value.getRType() == type")
     protected RStringVector getCachedType(RTypedValue value,
                     @Cached("value.getRType()") RType type,
                     @Cached("createBinaryProfile()") ConditionProfile isArray,

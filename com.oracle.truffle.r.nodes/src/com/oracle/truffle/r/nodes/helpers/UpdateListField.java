@@ -24,18 +24,21 @@ package com.oracle.truffle.r.nodes.helpers;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
+@ImportStatic(DSLConfig.class)
 public abstract class UpdateListField extends ListFieldNodeBase {
     @Child private ShareObjectNode shareObject = ShareObjectNode.create();
 
     public abstract boolean execute(RList target, String field, Object value);
 
-    @Specialization(limit = "2", guards = {"getNamesNode.getNames(list) == cachedNames", "field == cachedField"})
+    @Specialization(limit = "getCacheSize(2)", guards = {"getNamesNode.getNames(list) == cachedNames", "field == cachedField"})
     boolean doList(RList list, @SuppressWarnings("unused") String field, Object value,
                     @SuppressWarnings("unused") @Cached("list.getNames()") RStringVector cachedNames,
                     @SuppressWarnings("unused") @Cached("field") String cachedField,
@@ -53,7 +56,7 @@ public abstract class UpdateListField extends ListFieldNodeBase {
         return true;
     }
 
-    @Specialization(replaces = "doList", guards = {"list.getNames() != null"})
+    @Specialization(replaces = "doList")
     boolean doListDynamic(RList list, String field, Object value) {
         int index = getIndex(getNamesNode.getNames(list), field);
         if (index == -1) {

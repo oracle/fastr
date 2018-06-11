@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.builtin.base.MatchNodeGen.ProfiledMatchInterna
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -148,7 +149,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     protected abstract static class ProfiledMatchInternalNode extends Node {
 
-        protected static final int PROFILE_LIMIT = 2;
+        protected static final int PROFILE_LIMIT = DSLConfig.getCacheSize(2);
 
         protected abstract Object execute(RAbstractVector x, RAbstractVector table, int noMatch);
 

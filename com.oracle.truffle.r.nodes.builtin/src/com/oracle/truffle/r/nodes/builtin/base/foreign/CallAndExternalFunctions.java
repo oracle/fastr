@@ -650,7 +650,7 @@ public class CallAndExternalFunctions {
          * package)
          */
         @SuppressWarnings("unused")
-        @Specialization(limit = "2", guards = {"cached == symbol", "builtin == null"})
+        @Specialization(limit = "getCacheSize(2)", guards = {"cached == symbol", "builtin == null"})
         protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,

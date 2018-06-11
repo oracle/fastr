@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -54,7 +55,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 @RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
-    protected static final int CACHE_LIMIT = 2;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(2);
 
     @Child private CastTypeNode castTypeNode;
     @Child private TypeofNode typeof;

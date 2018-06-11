@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -48,6 +49,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -109,6 +111,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
         return mApply(frame, fun, dots, RDataFactory.createList());
     }
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class MapplyInternalNode extends Node implements InternalRSyntaxNodeChildren {
 
         private static final String VECTOR_ELEMENT_PREFIX = "MAPPLY_VEC_ELEM_";
@@ -132,7 +135,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
             return extractNode.apply(dots.getDataAt(listIndex), new Object[]{i % lengths[listIndex] + 1}, RLogical.TRUE, RLogical.TRUE);
         }
 
-        @Specialization(limit = "5", guards = {"dots.getLength() == dotsLength", "moreArgs.getLength() == moreArgsLength",
+        @Specialization(limit = "getCacheSize(5)", guards = {"dots.getLength() == dotsLength", "moreArgs.getLength() == moreArgsLength",
                         "sameNames(dots, cachedDotsNames)", "sameNames(moreArgs, cachedMoreArgsNames)"})
         protected Object[] cachedMApply(VirtualFrame frame, RAbstractListVector dots, RFunction function, RAbstractListVector moreArgs,
                         @Cached("dots.getLength()") int dotsLength,

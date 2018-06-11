@@ -23,15 +23,18 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.Utils;
 
+@ImportStatic(DSLConfig.class)
 public abstract class InternStringNode extends Node {
 
     public abstract String execute(String value);
 
-    @Specialization(limit = "3", guards = "value == cachedValue")
+    @Specialization(limit = "getCacheSize(3)", guards = "value == cachedValue")
     protected static String internCached(@SuppressWarnings("unused") String value,
                     @SuppressWarnings("unused") @Cached("value") String cachedValue,
                     @Cached("intern(value)") String interned) {

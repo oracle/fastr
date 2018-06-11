@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -44,7 +45,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public abstract class PrepareMatchInternalArguments extends Node {
 
-    protected static final int CACHE_SIZE = 8;
+    protected static final int CACHE_SIZE = DSLConfig.getCacheSize(8);
 
     protected final RBaseNode callingNode;
     protected final FormalArguments formals;

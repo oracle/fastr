@@ -431,7 +431,7 @@ public class FastRInterop {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"isClass(className)", "className.equals(cachedClazz)"}, limit = "10")
+        @Specialization(guards = {"isClass(className)", "className.equals(cachedClazz)"}, limit = "getCacheSize(10)")
         public TruffleObject javaClassCached(String className, boolean silent,
                         @Cached("className") String cachedClazz,
                         @Cached("getJavaClass(className, silent)") Object result,
@@ -506,7 +506,6 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
     @RBuiltin(name = ".fastr.interop.isIdentical", visibility = ON, kind = PRIMITIVE, parameterNames = {"x1", "x2"}, behavior = COMPLEX)
     public abstract static class JavaIsIdentical extends RBuiltinNode.Arg2 {
 
@@ -531,7 +530,6 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
     @RBuiltin(name = ".fastr.interop.asJavaTruffleObject", visibility = ON, kind = PRIMITIVE, parameterNames = {"x"}, behavior = COMPLEX)
     public abstract static class JavaAsTruffleObject extends RBuiltinNode.Arg1 {
 
@@ -591,7 +589,6 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
     @RBuiltin(name = ".fastr.interop.isAssignableFrom", visibility = ON, kind = PRIMITIVE, parameterNames = {"x1", "x2"}, behavior = COMPLEX)
     public abstract static class JavaIsAssignableFrom extends RBuiltinNode.Arg2 {
 
@@ -620,7 +617,6 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
     @RBuiltin(name = ".fastr.interop.isInstance", visibility = ON, kind = PRIMITIVE, parameterNames = {"x1", "x2"}, behavior = COMPLEX)
     public abstract static class JavaIsInstance extends RBuiltinNode.Arg2 {
 
@@ -680,7 +676,7 @@ public class FastRInterop {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class})
+    @ImportStatic(Message.class)
     @RBuiltin(name = ".fastr.interop.asJavaArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"x", "className", "flat"}, behavior = COMPLEX)
     public abstract static class ToJavaArray extends RBuiltinNode.Arg3 {
 

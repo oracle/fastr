@@ -31,6 +31,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -49,7 +50,7 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 @ImportStatic(RRuntime.class)
 public abstract class ConvertBooleanNode extends RNode {
 
-    protected static final int ATOMIC_VECTOR_LIMIT = 8;
+    protected static final int ATOMIC_VECTOR_LIMIT = DSLConfig.getCacheSize(8);
 
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile invalidElementCountBranch = BranchProfile.create();

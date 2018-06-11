@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.signature.MissingNodeFactory.MissingCheckCacheNodeGen;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -55,7 +56,7 @@ public final class MissingNode extends OperatorNode {
 
     public abstract static class MissingCheckCache extends Node {
 
-        protected static final int CACHE_LIMIT = 3;
+        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
         private final int level;
 

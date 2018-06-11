@@ -50,6 +50,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -253,7 +254,7 @@ public class GetFunctions {
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
         @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
-        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
+        @Child private RExplicitCallNode explicitCallNode;
 
         static {
             Casts casts = new Casts(MGet.class);
@@ -371,13 +372,12 @@ public class GetFunctions {
         }
 
         private Object call(VirtualFrame frame, RFunction ifnFunc, String x) {
-            if (((RRootNode) ifnFunc.getRootNode()).containsDispatch()) {
-                callCache.setNeedsCallerFrame();
+            if (explicitCallNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                explicitCallNode = insert(RExplicitCallNode.create());
             }
-            FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
             RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
-            return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), new Object[]{x}, formals.getSignature(),
-                            ifnFunc.getEnclosingFrame(), null);
+            return explicitCallNode.call(frame, ifnFunc, args);
         }
 
         private static Object handleMissingAndVarargs(Object value, ConditionProfile argsAndValuesProfile, ConditionProfile missingProfile) {

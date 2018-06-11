@@ -58,7 +58,7 @@ public abstract class FastROptionBuiltin extends RBuiltinNode.Arg1 {
         } catch (IllegalArgumentException e) {
             return RNull.instance;
         }
-        return opt.isBoolean() ? RRuntime.asLogical(opt.getBooleanValue()) : opt.getStringValue();
+        return opt.isBoolean() ? RRuntime.asLogical(opt.getBooleanValue()) : opt.getValue();
     }
 
     public static FastROptionBuiltin create() {
