@@ -363,45 +363,8 @@ public class RDeparse {
 
         private static ThreadLocal<MessageDigest> digestTheadLocal = new ThreadLocal<>();
 
-        private Path emitToFile(String qualifiedFunctionName, String deparsePath) throws IOException, NoSuchAlgorithmException {
-            Path tmpDir = Paths.get(deparsePath);
-            assert Files.exists(tmpDir);
-
-            Path path;
-            if (FastROptions.EmitTmpHashed.getBooleanValue()) {
-                MessageDigest digest = digestTheadLocal.get();
-                if (digest == null) {
-                    digest = MessageDigest.getInstance("SHA-256");
-                    digestTheadLocal.set(digest);
-                }
-                String printHexBinary = Utils.toHexString(digest.digest(sb.toString().getBytes()));
-                assert printHexBinary.length() > 10;
-
-                // just use the first 10 hex digits to have a nicer file name
-                if (qualifiedFunctionName != null && !qualifiedFunctionName.isEmpty() && !qualifiedFunctionName.equals("<no source>")) {
-                    path = tmpDir.resolve(qualifiedFunctionName.replace(File.separatorChar, '_') + "-" + printHexBinary.substring(0, 10) + ".r");
-                } else {
-                    path = tmpDir.resolve(printHexBinary.substring(0, 10) + ".r");
-                }
-            } else {
-                path = Files.createTempFile("deparse-", ".r");
-            }
-            if (!Files.exists(path)) {
-                try (BufferedWriter bw = Files.newBufferedWriter(path, CREATE_NEW, WRITE)) {
-                    bw.write(sb.toString());
-                    bw.newLine();
-                }
-            }
-            return path;
-        }
-
         public void fixupSources() {
-            String deparsePath = TempPathName.deparsePath();
-            if (FastROptions.EmitTmpSource.getBooleanValue() && deparsePath != null) {
-                fixupSourcesTempFile(deparsePath);
-            } else {
-                fixupSourcesText();
-            }
+            fixupSourcesText();
         }
 
         private void fixupSourcesText() {
@@ -416,26 +379,6 @@ public class RDeparse {
             Source source = RSource.fromText(text, name);
             for (SourceSectionElement s : sources) {
                 s.element.setSourceSection(source.createSection(s.start, s.length));
-            }
-        }
-
-        private void fixupSourcesTempFile(String deparsePath) {
-            try {
-                RootNode rootNode = getRootNode();
-                String name = rootNode != null ? rootNode.getName() : null;
-                Path path = emitToFile(name, deparsePath);
-                Source source = RSource.fromFile(path.toFile());
-                for (SourceSectionElement s : sources) {
-                    if (s.element.getLazySourceSection() == null || s.element.getLazySourceSection() == RSyntaxNode.LAZY_DEPARSE) {
-                        s.element.setSourceSection(source.createSection(s.start, s.length));
-                    }
-                }
-            } catch (AccessDeniedException | FileAlreadyExistsException | IllegalArgumentException e) {
-                // do not report because these exceptions are legitimate
-                fixupSourcesText();
-            } catch (Throwable e) {
-                RInternalError.reportError(e);
-                fixupSourcesText();
             }
         }
 
@@ -1182,12 +1125,6 @@ public class RDeparse {
         SourceSection ss = node.getLazySourceSection();
         if (ss == RSyntaxNode.LAZY_DEPARSE) {
             RSyntaxElement nodeToFixup = node;
-            if (FastROptions.EmitTmpSource.getBooleanValue()) {
-                RootNode rootNode = node.asNode().getRootNode();
-                if (RContext.getRRuntimeASTAccess().isFunctionDefinitionNode(rootNode)) {
-                    nodeToFixup = (RSyntaxElement) rootNode;
-                }
-            }
             // try to generate the source from the root node and hopefully it includes this node
             new DeparseVisitor(true, RDeparse.MAX_CUTOFF, false, -1, 0).append(nodeToFixup).fixupSources();
 

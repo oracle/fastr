@@ -57,9 +57,6 @@ public enum FastROptions {
     SharedContexts("Whether all child contexts are to be shared contexts", true),
     SearchPathForcePromises("Whether all promises for frames on shared path are forced in presence of shared contexts", false),
     LoadPackagesNativeCode("Load native code of packages, including builtin packages.", !FastRConfig.ManagedMode),
-    EmitTmpSource("Write deparsed source code to temporary files for better debugging.", false),
-    EmitTmpDir("The directory where to allocate temporary files with deparsed source code.", null, true),
-    EmitTmpHashed("Use an SHA-256 hash as file name to reduce temporary file creation.", true),
     SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
     ForeignObjectWrappers("use wrappers for foreign objects (as opposed to full conversion)", false),
 
