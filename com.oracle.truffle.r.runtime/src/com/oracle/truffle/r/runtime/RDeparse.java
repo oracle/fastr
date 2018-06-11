@@ -364,10 +364,6 @@ public class RDeparse {
         private static ThreadLocal<MessageDigest> digestTheadLocal = new ThreadLocal<>();
 
         public void fixupSources() {
-            fixupSourcesText();
-        }
-
-        private void fixupSourcesText() {
             RootNode rootNode = getRootNode();
             String name = rootNode != null ? rootNode.getName() : null;
             String text = sb.toString();
