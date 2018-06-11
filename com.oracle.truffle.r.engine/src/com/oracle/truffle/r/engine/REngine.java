@@ -677,7 +677,7 @@ final class REngine implements Engine, Engine.Timings {
             } else {
                 Object printMethod = REnvironment.globalEnv().findFunction("print");
                 RFunction function = (RFunction) evaluatePromise(printMethod);
-                CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RMissing.instance}, null);
+                CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RArgsValuesAndNames.EMPTY}, null);
             }
             ShareObjectNode.unshare(resultValue);
         } else {
