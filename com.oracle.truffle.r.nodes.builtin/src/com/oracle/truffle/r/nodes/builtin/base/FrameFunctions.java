@@ -611,19 +611,20 @@ public class FrameFunctions {
                         if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
                             int currentCallIdx = currentCall.getDepth() - 1;
                             RCaller parent = currentCall.getParent();
-                            int parentDepth;
-                            if (parent.hasSysParent()) {
-                                // parent.frame explicitly set by Rf_eval(quote(foo()), env) to env
-                                // GNU R gives parent number == frame created for calling foo().
-                                // There is no actual numbered frame that would be equal to env.
-                                parentDepth = currentCall.getDepth();
-                            } else {
-                                while (parent != null && (parent.isPromise())) {
-                                    parent = parent.getParent();
+                            RCaller previous = currentCall;
+                            while (parent != null & parent.isPromise()) {
+                                if (parent.hasSysParent()) {
+                                    // parent.frame explicitly set by Rf_eval(quote(foo()), env) to
+                                    // env
+                                    // GNU R gives parent number == frame created for calling foo().
+                                    // There is no actual numbered frame that would be equal to env.
+                                    parent = previous;
+                                    break;
                                 }
-                                parentDepth = parent == null ? 0 : parent.getDepth();
+                                previous = parent;
+                                parent = parent.getParent();
                             }
-                            result[currentCallIdx] = parentDepth;
+                            result[currentCallIdx] = parent == null ? 0 : parent.getDepth();
                         }
                         return RArguments.getDepth(f) == 1 ? result : null;
                     }
@@ -679,13 +680,16 @@ public class FrameFunctions {
                     nullCallerProfile.enter();
                     return REnvironment.globalEnv();
                 }
-                if (i == n - 1 && call.hasSysParent()) {
-                    // promise RCallers are allowed to override "parent.frame"
-                    // this is necessary for Rf_eval(expr, env), where parent.frame() should be env
-                    explicitSysParent.enter();
-                    return call.getSysParent();
-                }
+                // If the frame is promise evaluation frame, we use the parent to get to the actual
+                // frame of the function where the promise should be evaluated.
                 while (call.isPromise()) {
+                    if (i == n - 1 && call.hasSysParent()) {
+                        // promise RCallers are allowed to override "parent.frame"
+                        // this is necessary for Rf_eval(expr, env), where parent.frame() should be
+                        // env
+                        explicitSysParent.enter();
+                        return call.getSysParent();
+                    }
                     promiseProfile.enter();
                     call = call.getParent();
                 }
