@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.DuplicateNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicated3NodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicatedNodeGen;
+import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSequence;
@@ -71,7 +72,7 @@ public final class DuplicateNodes {
         }
 
         protected static boolean isReusableForDuplicate(Object o) {
-            return o == RNull.instance || o instanceof REnvironment || o instanceof RSymbol;
+            return o == RNull.instance || o instanceof REnvironment || o instanceof RSymbol || RMissingHelper.isMissing(o);
         }
 
         public static DuplicateNode create() {

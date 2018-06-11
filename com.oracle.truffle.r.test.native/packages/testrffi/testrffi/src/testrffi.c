@@ -792,3 +792,12 @@ SEXP test_DATAPTR(SEXP strings, SEXP testSingleChar) {
     return R_NilValue;
 }
 
+
+SEXP test_duplicate(SEXP val, SEXP deep) {
+    if (INTEGER_VALUE(deep)) {
+        return Rf_duplicate(val);
+    } else {
+        return Rf_shallow_duplicate(val);
+    }
+}
+

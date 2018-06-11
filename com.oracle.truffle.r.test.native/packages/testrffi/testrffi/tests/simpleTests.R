@@ -23,6 +23,8 @@ rffi.interactive()
 x <- 1; rffi.findvar("x", globalenv())
 x <- "12345"; rffi.char_length(x)
 
+rffi.test_duplicate(quote(a[,3])[[3]], 1L) # try duplicating empty symbol
+
 strVec <- rffi.getStringNA();
 stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(strVec))

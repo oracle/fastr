@@ -124,3 +124,6 @@ extern SEXP test_RfRMultinom();
 extern SEXP test_RfFunctions();
 
 extern SEXP test_DATAPTR(SEXP,SEXP);
+
+extern SEXP test_duplicate(SEXP, SEXP);
+
