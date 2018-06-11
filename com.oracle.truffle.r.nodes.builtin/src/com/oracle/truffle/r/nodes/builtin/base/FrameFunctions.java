@@ -510,7 +510,7 @@ public class FrameFunctions {
                         if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
                             result = RDataFactory.createPairList(createCall(currentCall), result);
                         }
-                        return RArguments.getDepth(f) == 1 ? result : null;
+                        return (!currentCall.isPromise() && RArguments.getDepth(f) == 1) ? result : null;
                     }
                 });
                 return result;
@@ -626,7 +626,7 @@ public class FrameFunctions {
                             }
                             result[currentCallIdx] = parent == null ? 0 : parent.getDepth();
                         }
-                        return RArguments.getDepth(f) == 1 ? result : null;
+                        return (!currentCall.isPromise() && RArguments.getDepth(f) == 1) ? result : null;
                     }
                 });
                 return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
