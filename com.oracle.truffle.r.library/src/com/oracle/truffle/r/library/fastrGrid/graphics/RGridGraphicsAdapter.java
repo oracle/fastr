@@ -73,9 +73,10 @@ public final class RGridGraphicsAdapter {
         // only static members
     }
 
-    public static void initialize() {
-        REnvironment.baseEnv().safePut(DOT_DEVICES, RDataFactory.createPairList(NULL_DEVICE));
-        setCurrentDevice(NULL_DEVICE);
+    public static void initialize(RContext rCtx) {
+        REnvironment baseEnv = REnvironment.baseEnv(rCtx);
+        baseEnv.safePut(DOT_DEVICES, RDataFactory.createPairList(NULL_DEVICE));
+        setCurrentDevice(rCtx, NULL_DEVICE);
         RContext ctx = RContext.getInstance();
         ROptions.ContextStateImpl options = ctx.stateROptions;
         if (options.getValue(DEFAULT_DEVICE_OPTION) != RNull.instance) {
@@ -95,8 +96,8 @@ public final class RGridGraphicsAdapter {
      * value.
      */
     @TruffleBoundary
-    public static RPairList fixupDevicesVariable() {
-        REnvironment baseEnv = REnvironment.baseEnv();
+    public static RPairList fixupDevicesVariable(RContext rCtx) {
+        REnvironment baseEnv = REnvironment.baseEnv(rCtx);
         Object devices = baseEnv.get(DOT_DEVICES);
         if ((devices instanceof RPairList && !((RPairList) devices).isLanguage())) {
             return (RPairList) devices;
@@ -118,13 +119,13 @@ public final class RGridGraphicsAdapter {
         // reset the .Devices and .Device variables to initial values
         RPairList nullDevice = RDataFactory.createPairList(NULL_DEVICE);
         baseEnv.safePut(DOT_DEVICES, nullDevice);
-        setCurrentDevice(NULL_DEVICE);
+        setCurrentDevice(rCtx, NULL_DEVICE);
         return nullDevice;
     }
 
-    public static void removeDevice(int index) {
+    public static void removeDevice(RContext rCtx, int index) {
         assert index > 0 : "cannot remove null device";
-        RPairList devices = fixupDevicesVariable();
+        RPairList devices = fixupDevicesVariable(rCtx);
         assert index < devices.getLength() : "wrong index in removeDevice";
         RPairList prev = devices;
         for (int i = 0; i < index - 1; ++i) {
@@ -132,19 +133,19 @@ public final class RGridGraphicsAdapter {
         }
         RPairList toRemove = (RPairList) prev.cdr();
         prev.setCdr(toRemove.cdr());
-        setCurrentDevice((String) prev.car());
+        setCurrentDevice(rCtx, (String) prev.car());
     }
 
-    public static void setCurrentDevice(String name) {
-        REnvironment baseEnv = REnvironment.baseEnv();
+    public static void setCurrentDevice(RContext rCtx, String name) {
+        REnvironment baseEnv = REnvironment.baseEnv(rCtx);
         assert contains(baseEnv.get(DOT_DEVICES), name) : "setCurrentDevice can be invoked only after the device is added with addDevice";
         baseEnv.safePut(DOT_DEVICE, name);
     }
 
-    public static void addDevice(String name) {
+    public static void addDevice(RContext rCtx, String name) {
         REnvironment baseEnv = REnvironment.baseEnv();
         baseEnv.safePut(DOT_DEVICE, name);
-        RPairList dotDevices = fixupDevicesVariable();
+        RPairList dotDevices = fixupDevicesVariable(rCtx);
         dotDevices.appendToEnd(RDataFactory.createPairList(name));
     }
 

@@ -42,7 +42,7 @@ public class RGraphics {
     public static void initialize(RContext context) {
         if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
             if (!context.internalGraphicsInitialized) {
-                RGridGraphicsAdapter.initialize();
+                RGridGraphicsAdapter.initialize(context);
             }
         } else if (initialized.compareAndSet(false, true) && FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
             DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol(context, "InitGraphics");

@@ -237,8 +237,7 @@ public final class RContext {
     }
 
     /**
-     * Any context created by another has a parent. When such a context is destroyed we must reset
-     * the RContext.threadLocalContext to the parent.
+     * Any context created by another has a parent.
      */
     private final RContext parentContext;
     private final int id;
