@@ -495,8 +495,8 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
     /**
      * Reads one byte from the channel.<br>
      * <p>
-     * Should basically do the same job as {@link #getc()} but is only used by internally by this
-     * class or subclasses an may therefore produce an inconsistent state over several calls. For
+     * Should basically do the same job as {@link #getc()} but is only used internally by this class
+     * or subclasses and may therefore produce an inconsistent state over several calls. For
      * example, updating the channel's cursor position can be collapsed.
      * </p>
      */
