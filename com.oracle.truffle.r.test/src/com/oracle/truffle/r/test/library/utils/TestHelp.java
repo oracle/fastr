@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.test.library.utils;
 
-import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertThat;
 
+import org.hamcrest.CoreMatchers;
 import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -47,10 +48,10 @@ public class TestHelp extends TestBase {
 
     private static void assertHelpResult(String result, String startsWith, String... contains) {
         if (startsWith != null) {
-            assertTrue(result.startsWith(startsWith));
+            assertThat(result, CoreMatchers.startsWith(startsWith));
         }
         for (String s : contains) {
-            assertTrue(result.contains(s));
+            assertThat(result, CoreMatchers.containsString(s));
         }
     }
 }
