@@ -163,7 +163,8 @@ testLength(15) # CPLXSXP
 testLength(16) # STRSXP
 testLength(19) # VECSXP
 
-charsxp <- api.STRING_ELT(c("a"), 0)
+svec <- c("a")
+charsxp <- api.STRING_ELT(svec, 0)
 api.LENGTH(charsxp)
 # gnur returns different value
 # api.TRUELENGTH(charsxp)
@@ -173,6 +174,8 @@ api.TRUELENGTH(charsxp)
 
 # gnur returns different value
 # api.LEVELS(charsxp)
+
+identical(charsxp, api.STRING_ELT(c("a"), 0))
 
 rffi.parseVector('1+2')
 rffi.parseVector('.*/-')

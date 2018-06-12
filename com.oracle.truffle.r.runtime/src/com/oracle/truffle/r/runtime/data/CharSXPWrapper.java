@@ -26,6 +26,10 @@ import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
+import java.lang.ref.WeakReference;
+import java.util.Collections;
+import java.util.Map;
+import java.util.WeakHashMap;
 
 /**
  * Internally GNU R distinguishes "strings" and "vectors of strings" using the {@code CHARSXP} and
@@ -41,8 +45,9 @@ import com.oracle.truffle.r.runtime.RRuntime;
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject {
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
-    private String contents;
+    private final String contents;
     private byte[] bytes;
+    private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
 
     private CharSXPWrapper(String contents) {
         this.contents = contents;
@@ -56,7 +61,14 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
             // be true for its contents
             return RRuntime.STRING_NA;
         }
-        return NativeDataAccess.getData(this, contents);
+        // WARNING:
+        // we keep and use the contens value even in cases when contets got allocated and could be
+        // accessed via NativeDataAccess.getData():
+        // - when used with RSymbol the String has to be interned - NDA.getData() will create a new
+        // instance if already allocated
+        // - the contents field is also used in equals() and hashCode()
+        assert !NativeDataAccess.isAllocated(this) || contents.equals(NativeDataAccess.getData(this, contents));
+        return contents;
     }
 
     @TruffleBoundary
@@ -86,7 +98,19 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         if (contents == RRuntime.STRING_NA) {
             return NA;
         } else {
-            return new CharSXPWrapper(contents);
+            CharSXPWrapper cachedWrapper;
+            CharSXPWrapper newWrapper = new CharSXPWrapper(contents);
+            synchronized (instances) {
+                WeakReference<CharSXPWrapper> wr = instances.get(newWrapper);
+                if (wr != null) {
+                    cachedWrapper = wr.get();
+                    if (cachedWrapper != null) {
+                        return cachedWrapper;
+                    }
+                }
+                instances.put(newWrapper, new WeakReference<>(newWrapper));
+            }
+            return newWrapper;
         }
     }
 
@@ -94,15 +118,35 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         try {
             return NativeDataAccess.allocateNativeContents(this, getBytes());
         } finally {
-            contents = null;
             bytes = null;
         }
     }
 
     private byte[] getBytes() {
-        if (bytes == null && contents != null) {
+        if (bytes == null && !NativeDataAccess.isAllocated(this)) {
             bytes = contents.getBytes(StandardCharsets.UTF_8);
         }
         return bytes;
     }
+
+    @Override
+    public int hashCode() {
+        return this.contents.hashCode();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null) {
+            return false;
+        }
+        if (getClass() != obj.getClass()) {
+            return false;
+        }
+        final CharSXPWrapper other = (CharSXPWrapper) obj;
+        return this.contents.equals(other.contents);
+    }
+
 }
