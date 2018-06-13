@@ -30,38 +30,40 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseTemporaryNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.integer", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsInteger extends RBuiltinNode.Arg2 {
-
-    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
-
-    @Child private ReuseTemporaryNode reuseTemporaryNode;
 
     static {
         Casts casts = new Casts(AsInteger.class);
         casts.arg("x").returnIf(missingValue().or(nullValue()), emptyIntegerVector()).asIntegerVector();
     }
 
-    @Specialization
-    protected RAbstractIntVector asInteger(RAbstractIntVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
+    @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
+    protected RAbstractIntVector asInteger(RAbstractIntVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
+                    @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            if (reuseTemporaryNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                reuseTemporaryNode = insert(ReuseTemporaryNode.create());
-            }
-            RAbstractIntVector res = (RAbstractIntVector) reuseTemporaryNode.execute(v);
+            RAbstractIntVector res = (RAbstractIntVector) reuseTemporaryNode.getResult(v).materialize();
             res.resetAllAttributes(true);
             return res;
         }
+    }
+
+    @Specialization(replaces = "asInteger")
+    protected RAbstractIntVector asIntegerGeneric(RAbstractIntVector v, RArgsValuesAndNames dotdotdot,
+                    @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+        return asInteger(v, dotdotdot, reuseTemporaryNode, noAttributes);
     }
 }

@@ -28,22 +28,19 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseTemporaryNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.raw", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x"}, behavior = PURE)
 public abstract class AsRaw extends RBuiltinNode.Arg1 {
-
-    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
-
-    @Child private ReuseTemporaryNode reuseTemporaryNode;
 
     static {
         Casts casts = new Casts(AsRaw.class);
@@ -55,18 +52,23 @@ public abstract class AsRaw extends RBuiltinNode.Arg1 {
         return RDataFactory.createEmptyRawVector();
     }
 
-    @Specialization
-    protected RAbstractRawVector asRaw(RAbstractRawVector v) {
+    @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
+    protected RAbstractRawVector asRawVec(RAbstractRawVector v,
+                    @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            if (reuseTemporaryNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                reuseTemporaryNode = insert(ReuseTemporaryNode.create());
-            }
-            RAbstractRawVector res = (RAbstractRawVector) reuseTemporaryNode.execute(v);
+            RAbstractRawVector res = reuseTemporaryNode.getResult(v).materialize();
             res.resetAllAttributes(true);
             return res;
         }
+    }
+
+    @Specialization(replaces = "asRawVec")
+    protected RAbstractRawVector asRawVecGeneric(RAbstractRawVector v,
+                    @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+        return asRawVec(v, reuseTemporaryNode, noAttributes);
     }
 }

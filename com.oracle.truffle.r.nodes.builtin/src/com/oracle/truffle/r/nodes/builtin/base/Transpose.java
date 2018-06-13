@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -74,7 +73,6 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
     @Child private ExtractNamesAttributeNode extractAxisNamesNode = ExtractNamesAttributeNode.create();
     @Child private GetDimAttributeNode getDimNode = GetDimAttributeNode.create();
-    @Child private ReuseNonSharedNode reuseNonShared = ReuseNonSharedNode.create();
     @Child private GetNamesAttributeNode getNamesNode;
     @Child private RemoveAttributeNode removeAttributeNode;
 
@@ -221,11 +219,18 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         return transpose(x, factory, x.slowPathAccess(), VectorAccess.createSlowPathNew(x.getRType()));
     }
 
-    @Specialization(guards = {"!isMatrix(x)", "!isRExpression(x)"})
-    protected RVector<?> transposeNonMatrix(RAbstractVector x) {
-        RVector<?> reused = reuseNonShared.execute(x);
+    @Specialization(guards = {"!isMatrix(x)", "!isRExpression(x)", "reuseNonSharedNode.supports(x)"}, limit = "getVectorAccessCacheSize()")
+    protected RVector<?> transposeNonMatrix(RAbstractVector x,
+                    @Cached("createNonShared(x)") VectorReuse reuseNonSharedNode) {
+        RVector<?> reused = reuseNonSharedNode.getResult(x).materialize();
         putNewDimsFromNames(reused, reused, new int[]{1, x.getLength()});
         return reused;
+    }
+
+    @Specialization(replaces = "transposeNonMatrix", guards = {"!isMatrix(x)", "!isRExpression(x)"})
+    protected RVector<?> transposeNonMatrixGeneric(RAbstractVector x,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+        return transposeNonMatrix(x, reuseNonSharedNode);
     }
 
     private void putNewDimsFromDimnames(RAbstractVector source, RAbstractVector dest, int[] newDim) {

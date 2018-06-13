@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -54,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 // TODO: add (permuted) dimnames to the result
 @RBuiltin(name = "aperm", kind = INTERNAL, parameterNames = {"a", "perm", "resize"}, behavior = PURE)
@@ -65,7 +65,6 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
 
     @Child private SetDimNamesAttributeNode setDimNames;
     @Child private ExtractListElement extractListElement;
-    @Child private ReuseNonSharedNode reuseNonSharedNode;
 
     static {
         Casts casts = new Casts(APerm.class);
@@ -122,20 +121,15 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         return result;
     }
 
-    @Specialization(guards = "isIdentityPermutation(vector, permVector, getDimsNode)")
+    @Specialization(guards = {"isIdentityPermutation(vector, permVector, getDimsNode)", "reuseNonSharedNode.supports(vector)"}, limit = "getVectorAccessCacheSize()")
     protected RAbstractVector doIdentity(RAbstractVector vector, @SuppressWarnings("unused") RAbstractIntVector permVector, @SuppressWarnings("unused") byte resize,
                     @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
-                    @Cached("create()") GetDimAttributeNode getDimsNode) {
-
-        if (reuseNonSharedNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            reuseNonSharedNode = insert(ReuseNonSharedNode.create());
-        }
-
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
 
-        RVector<?> reused = reuseNonSharedNode.execute(vector);
+        RVector<?> reused = reuseNonSharedNode.getResult(vector).materialize();
 
         // we have to remove some attributes
         // remove all regular attributes (including the class attribute)
@@ -143,6 +137,14 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
 
         // also ensures that we do not give a closure away
         return reused;
+    }
+
+    @Specialization(replaces = "doIdentity", guards = "isIdentityPermutation(vector, permVector, getDimsNode)")
+    protected RAbstractVector doIdentityGeneric(RAbstractVector vector, RAbstractIntVector permVector, byte resize,
+                    @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+        return doIdentity(vector, permVector, resize, removeClassAttrNode, getDimsNode, reuseNonSharedNode);
     }
 
     @Specialization(guards = "!isIdentityPermutation(vector, permVector, getDimsNode)")
@@ -209,13 +211,14 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         return false;
     }
 
-    @Specialization
+    @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RAbstractVector aPerm(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
                     @Cached("createBinaryProfile()") ConditionProfile isIdentityProfile,
                     @Cached("create()") GetDimAttributeNode getDimsNode,
                     @Cached("create()") SetDimAttributeNode setDimsNode,
                     @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
-                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode) {
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
+                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         RList dimNames = getDimNamesNode.getDimNames(vector);
         if (dimNames == null) {
             // TODO: this error is reported after IS_OF_WRONG_LENGTH in GnuR
@@ -235,11 +238,22 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
 
         RIntVector permIntVector = RDataFactory.createIntVector(perm, true);
         if (isIdentityProfile.profile(isIdentityPermutation(vector, permIntVector, getDimsNode))) {
-            return doIdentity(vector, permIntVector, resize, removeClassAttrNode, getDimsNode);
+            return doIdentity(vector, permIntVector, resize, removeClassAttrNode, getDimsNode, reuseNonSharedNode);
         }
 
         // Note: if this turns out to be slow, we can cache the permutation
         return aPerm(vector, permIntVector, resize, getDimsNode, setDimsNode, getDimNamesNode);
+    }
+
+    @Specialization(replaces = "aPerm")
+    protected RAbstractVector aPermGeneric(RAbstractVector vector, RAbstractStringVector permVector, byte resize,
+                    @Cached("createBinaryProfile()") ConditionProfile isIdentityProfile,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") SetDimAttributeNode setDimsNode,
+                    @Cached("create()") RemoveRegAttributesNode removeClassAttrNode,
+                    @Cached("create()") GetDimNamesAttributeNode getDimNamesNode,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+        return aPerm(vector, permVector, resize, isIdentityProfile, getDimsNode, setDimsNode, removeClassAttrNode, getDimNamesNode, reuseNonSharedNode);
     }
 
     private static int[] getReverse(int[] dim) {
