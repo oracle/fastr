@@ -465,13 +465,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
         @Override
         public Object execute(VirtualFrame frame) {
             final Object receiver = ForeignAccess.getReceiver(frame);
-            // TODO: RLogical has no ForeignAccess, issue: GR-9536, use RAbstractVectorAccessFactory
-            // for compatibility.
-            final boolean logical = receiver.getClass() == RLogical.class;
-            // TODO: RString has no ForeignAccess, issue: GR-9536, use RAbstractVectorAccessFactory
-            // for compatibility.
-            final boolean string = receiver.getClass() == RString.class;
-            return receiver instanceof RAbstractAtomicVector && (!(receiver instanceof RScalar) || logical || string);
+            return receiver instanceof RAbstractAtomicVector && !(receiver instanceof RScalar);
         }
     }
 }
