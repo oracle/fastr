@@ -34,7 +34,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -42,11 +41,10 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateDim extends RBuiltinNode.Arg2 {
-
-    @Child private ReuseNonSharedNode reuse = ReuseNonSharedNode.create();
 
     static {
         Casts casts = new Casts(UpdateDim.class);
@@ -54,22 +52,30 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
         casts.arg("value").allowNull().asIntegerVector().mustBe(notEmpty(), LENGTH_ZERO_DIM_INVALID);
     }
 
-    @Specialization
-    protected RAbstractVector updateDim(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions) {
-        RVector<?> result = reuse.execute(vector);
+    @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getVectorAccessCacheSize()")
+    protected RAbstractVector updateDimNull(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions,
+                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
+        RVector<?> result = reuseNonSharedNode.getResult(vector).materialize();
         result.resetDimensions(null);
         return result;
     }
 
-    @Specialization
+    @Specialization(replaces = "updateDimNull")
+    protected RAbstractVector updateDimNullGeneric(RAbstractVector vector, RNull dimensions,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+        return updateDimNull(vector, dimensions, reuseNonSharedNode);
+    }
+
+    @Specialization(guards = "reuseNonSharedNode.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RAbstractVector updateDim(RAbstractVector vector, RAbstractIntVector dimensions,
                     @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                     @Cached("createDim()") SetFixedAttributeNode putDimensions,
-                    @Cached("createNames()") RemoveFixedAttributeNode removeNames) {
+                    @Cached("createNames()") RemoveFixedAttributeNode removeNames,
+                    @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         RIntVector dimensionsMaterialized = dimensions.materialize();
         int[] dimsData = dimensionsMaterialized.getDataCopy();
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
-        RVector<?> result = reuse.execute(vector);
+        RVector<?> result = reuseNonSharedNode.getResult(vector).materialize();
         removeNames.execute(result);
 
         DynamicObject attrs = result.getAttributes();
@@ -80,5 +86,14 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
             putDimensions.execute(attrs, dimensionsMaterialized);
         }
         return result;
+    }
+
+    @Specialization(replaces = "updateDim")
+    protected RAbstractVector updateDimGeneric(RAbstractVector vector, RAbstractIntVector dimensions,
+                    @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
+                    @Cached("createDim()") SetFixedAttributeNode putDimensions,
+                    @Cached("createNames()") RemoveFixedAttributeNode removeNames,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+        return updateDim(vector, dimensions, initAttrProfile, putDimensions, removeNames, reuseNonSharedNode);
     }
 }

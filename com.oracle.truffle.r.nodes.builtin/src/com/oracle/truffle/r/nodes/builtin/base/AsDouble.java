@@ -28,40 +28,41 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseTemporaryNode;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.double", aliases = {"as.numeric"}, kind = PRIMITIVE, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsDouble extends RBuiltinNode.Arg2 {
-
-    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
-
-    @Child private ReuseTemporaryNode reuseTemporaryNode;
 
     static {
         Casts casts = new Casts(AsDouble.class);
         casts.arg("x").returnIf(missingValue().or(nullValue()), emptyDoubleVector()).asDoubleVector();
     }
 
-    @Specialization
-    protected RAbstractDoubleVector asDouble(RAbstractDoubleVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
+    @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
+    protected RAbstractDoubleVector asDouble(RAbstractDoubleVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
+                    @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            if (reuseTemporaryNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                reuseTemporaryNode = insert(ReuseTemporaryNode.create());
-            }
-            RAbstractDoubleVector res = (RAbstractDoubleVector) reuseTemporaryNode.execute(v);
+            RAbstractDoubleVector res = reuseTemporaryNode.getResult(v).materialize();
             res.resetAllAttributes(true);
             return res;
         }
+    }
+
+    @Specialization(replaces = "asDouble")
+    protected RAbstractDoubleVector asDoubleGeneric(RAbstractDoubleVector v, RArgsValuesAndNames dotdotdot,
+                    @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+        return asDouble(v, dotdotdot, reuseTemporaryNode, noAttributes);
     }
 }

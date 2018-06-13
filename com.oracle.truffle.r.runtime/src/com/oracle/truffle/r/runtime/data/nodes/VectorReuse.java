@@ -28,6 +28,15 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
+/**
+ * Node that should be used whenever you want to alter some vector: if the vector is shared, then it
+ * creates a copy, otherwise it returns the vector itself. It does not increment the reference count
+ * of the result in either case, but that is typically handled by write variable node, put container
+ * element node or by put attribute node.
+ *
+ * This node can be configured to copy all non-temporary vectors, i.e. only temporary vectors will
+ * be reused, or to copy all shared vectors, i.e. non-shared and temporary vectors will be reused.
+ */
 public final class VectorReuse extends Node {
 
     @Child private VectorAccess access;
