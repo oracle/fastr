@@ -51,7 +51,9 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RShareable;
 
 /**
  * This class maintains information about the current hierarchy of environments in the system. This
@@ -482,6 +484,12 @@ public final class FrameSlotChangeMonitor {
         public void setAll(Object val) {
             Arrays.fill(data, val);
         }
+
+        public void setAllDeepCopy(RShareable val) {
+            for (int i = 0; i < data.length; i++) {
+                data[i] = val.deepCopy();
+            }
+        }
     }
 
     private static final class FrameSlotInfoImpl {
@@ -612,37 +620,53 @@ public final class FrameSlotChangeMonitor {
             CompilerAsserts.neverPartOfCompilation();
             while (true) {
                 FrameSlotInfoImpl info = (FrameSlotInfoImpl) slot.getInfo();
-                if (info.stableValue == null || !replicate) {
+                Object prevValue = frame.getValue(slot);
+                MultiSlotData prevMultiSlotVal = null;
+                // TODO: this takes assumption that the initial context has slot ID == 0, but this
+                // may not be the case in embedding scenario if the user creates more than one
+                // "initial context" in the JVM. The counters for slot index should be per "initial
+                // context".
+                if (prevValue instanceof MultiSlotData) {
+                    prevMultiSlotVal = (MultiSlotData) prevValue;
+                    prevValue = prevMultiSlotVal.get(0);
+                }
+                if (info.stableValue == null || isMutableRShareable(info.stableValue) || isMutableRShareable(prevValue) || !replicate) {
                     // create a multi slot for slots whose stableValue is null but also for all
                     // slots of the global frame (which are marked as !replicate)
                     info.stableValue = null;
                     info.nonLocalModifiedAssumption.invalidate();
                     info.noMultiSlot.invalidate();
                     info.invalidationCount = 0;
-                    MultiSlotData data = new MultiSlotData();
-                    Object prevValue = frame.getValue(slot);
+                    MultiSlotData data;
+
                     // TODO: do we have to worry that prevValue can be invalid?
-                    if (prevValue instanceof MultiSlotData) {
+                    if (prevMultiSlotVal != null) {
                         // this handles the case when we create share contexts for the second time -
                         // existing multi slots are an artifact of a previous executions and must
-                        // be extended
-                        // TODO: consider re-using multi slots but since we don't expect many of
-                        // them, perhaps it's too much work for too little gain
-                        data = new MultiSlotData((MultiSlotData) prevValue);
-                        prevValue = ((MultiSlotData) prevValue).get(0);
-
-                        // replicate value only for newly created child contexts
+                        // be kept and extended. The slots of the previous contexts must be kept
+                        // intact, so we replicate value only for newly created child contexts.
+                        data = new MultiSlotData(prevMultiSlotVal);
+                        // TODO: we just copied the data, update it, and then set it as new value
+                        // for given slot. What if some other pre-existing context updates the data
+                        // in between?
                         if (replicate) {
                             for (int i : indices) {
-                                data.set(i, prevValue);
+                                data.set(i, copyIfMutable(prevValue));
                             }
                         }
                     } else {
                         if (FastROptions.SearchPathForcePromises.getBooleanValue()) {
                             prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
                         }
+                        data = new MultiSlotData();
                         if (replicate) {
-                            data.setAll(prevValue);
+                            if (isMutableRShareable(prevValue)) {
+                                // Mutable data structures that are not synchronized need to be
+                                // copied
+                                data.setAllDeepCopy((RShareable) prevValue);
+                            } else {
+                                data.setAll(prevValue);
+                            }
                         } else {
                             data.set(0, prevValue);
                         }
@@ -656,6 +680,18 @@ public final class FrameSlotChangeMonitor {
                     // otherwise stable value may get nullified and slot turned into multi slot
                 }
             }
+        }
+
+        private static boolean isMutableRShareable(Object value) {
+            return value instanceof RPairList;
+        }
+
+        // Copies any R object that is mutable and not thread safe.
+        private static Object copyIfMutable(Object value) {
+            if (value instanceof RPairList) {
+                return ((RPairList) value).deepCopy();
+            }
+            return value;
         }
 
         @TruffleBoundary

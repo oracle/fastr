@@ -31,6 +31,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 public abstract class DevOff extends RExternalBuiltinNode.Arg1 {
@@ -46,7 +47,8 @@ public abstract class DevOff extends RExternalBuiltinNode.Arg1 {
     @Specialization
     @TruffleBoundary
     public Object devOff(int whichR) {
-        GridContext ctx = GridContext.getContext();
+        RContext rCtx = RContext.getInstance();
+        GridContext ctx = GridContext.getContext(rCtx);
         int which = Math.abs(whichR) - 1; // convert to Java index
         if (which < 0 || which >= ctx.getDevicesSize()) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, "Wrong device number.");
@@ -55,20 +57,20 @@ public abstract class DevOff extends RExternalBuiltinNode.Arg1 {
         // FastR specific special handling for SVG device, when the index is negative, return the
         // SVG code
         if (whichR < 0) {
-            return closeSvgDevice(ctx, which);
+            return closeSvgDevice(rCtx, ctx, which);
         }
 
         try {
-            ctx.closeDevice(which);
+            ctx.closeDevice(rCtx, which);
         } catch (DeviceCloseException e) {
             throw error(Message.GENERIC, "Cannot close the device. Details: " + e.getMessage());
         }
         return RNull.instance;
     }
 
-    private String closeSvgDevice(GridContext ctx, int which) {
+    private String closeSvgDevice(RContext rCtx, GridContext ctx, int which) {
         GridDevice dev = ctx.getDevice(which);
-        ctx.removeDevice(which);
+        ctx.removeDevice(rCtx, which);
         if ((dev instanceof SVGDevice)) {
             return ((SVGDevice) dev).closeAndGetContents();
         } else {
