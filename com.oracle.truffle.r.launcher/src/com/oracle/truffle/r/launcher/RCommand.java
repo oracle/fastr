@@ -239,8 +239,8 @@ public class RCommand extends RAbstractLauncher {
 
         try {
             while (true) { // processing inputs
-                boolean doEcho = doEcho(context);
-                consoleHandler.setPrompt(doEcho ? getPrompt(context) : null);
+                boolean doEcho = doEcho(executor, context);
+                consoleHandler.setPrompt(doEcho ? getPrompt(executor, context) : null);
                 try {
                     String input = consoleHandler.readLine();
                     if (input == null) {
@@ -277,10 +277,10 @@ public class RCommand extends RAbstractLauncher {
                         } catch (InterruptedException ex) {
                             throw fatal("Unexpected interrup error");
                         } catch (PolyglotException e) {
-                            if (continuePrompt == null) {
-                                continuePrompt = doEcho ? getContinuePrompt(context) : null;
-                            }
                             if (e.isIncompleteSource()) {
+                                if (continuePrompt == null) {
+                                    continuePrompt = doEcho ? getContinuePrompt(executor, context) : null;
+                                }
                                 // read another line of input
                                 consoleHandler.setPrompt(continuePrompt);
                                 String additionalInput = consoleHandler.readLine();
@@ -379,9 +379,15 @@ public class RCommand extends RAbstractLauncher {
         }
     }
 
-    private static boolean doEcho(Context context) {
+    private static boolean doEcho(ExecutorService executor, Context context) throws InterruptedException, ExecutionException {
         try {
-            return context.eval(GET_ECHO).asBoolean();
+            if (executor != null) {
+                return executor.submit(() -> doEcho(context)).get();
+            } else {
+                return doEcho(context);
+            }
+        } catch (ExecutionException ex) {
+            throw fatal(ex, "error while retrieving echo");
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
@@ -390,9 +396,19 @@ public class RCommand extends RAbstractLauncher {
         }
     }
 
-    private static String getPrompt(Context context) {
+    private static boolean doEcho(Context context) {
+        return context.eval(GET_ECHO).asBoolean();
+    }
+
+    private static String getPrompt(ExecutorService executor, Context context) throws InterruptedException {
         try {
-            return context.eval(GET_PROMPT).asString();
+            if (executor != null) {
+                return executor.submit(() -> getPrompt(context)).get();
+            } else {
+                return getPrompt(context);
+            }
+        } catch (ExecutionException ex) {
+            throw fatal(ex, "error while retrieving prompt");
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
@@ -401,9 +417,19 @@ public class RCommand extends RAbstractLauncher {
         }
     }
 
-    private static String getContinuePrompt(Context context) {
+    private static String getPrompt(Context context) {
+        return context.eval(GET_PROMPT).asString();
+    }
+
+    private static String getContinuePrompt(ExecutorService executor, Context context) throws InterruptedException {
         try {
-            return context.eval(GET_CONTINUE_PROMPT).asString();
+            if (executor != null) {
+                return executor.submit(() -> getContinuePrompt(context)).get();
+            } else {
+                return getPrompt(context);
+            }
+        } catch (ExecutionException ex) {
+            throw fatal(ex, "error while retrieving continue prompt");
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
@@ -412,4 +438,7 @@ public class RCommand extends RAbstractLauncher {
         }
     }
 
+    private static String getContinuePrompt(Context context) {
+        return context.eval(GET_CONTINUE_PROMPT).asString();
+    }
 }
