@@ -37,7 +37,10 @@ import org.graalvm.polyglot.Context.Builder;
 
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import static com.oracle.truffle.r.launcher.RCommand.fatal;
 import java.io.File;
+import java.io.IOException;
+import org.graalvm.polyglot.Source;
 
 public abstract class RAbstractLauncher extends AbstractLanguageLauncher implements Closeable {
 
@@ -87,6 +90,12 @@ public abstract class RAbstractLauncher extends AbstractLanguageLauncher impleme
         this.context = contextBuilder.allowAllAccess(true).allowHostAccess(useJVM).arguments("R", getArguments()).in(consoleHandler.createInputStream()).out(
                         outStream).err(errStream).build();
         this.consoleHandler.setContext(context);
+        try {
+            Source src = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).build();
+            context.eval(src).execute(consoleHandler);
+        } catch (IOException e) {
+            throw fatal(e, "error while setting console handler");
+        }
     }
 
     @Override

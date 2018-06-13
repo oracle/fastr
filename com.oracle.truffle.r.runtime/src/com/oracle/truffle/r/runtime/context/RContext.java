@@ -957,15 +957,16 @@ public final class RContext {
         }
 
         private final Node read = Message.READ.createNode();
-        private final Node write = Message.WRITE.createNode();
+        private final Node execute = Message.createExecute(1).createNode();
 
         @TruffleBoundary
         public String getPrompt() {
             if (handler != null) {
                 Object result;
                 try {
-                    result = ForeignAccess.sendRead(read, handler, "prompt");
-                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                    Object f = ForeignAccess.sendRead(read, handler, "getPrompt");
+                    result = ForeignAccess.sendExecute(execute, (TruffleObject) f);
+                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException | ClassCastException e) {
                     throw new RInternalError(e, "error while reading prompt");
                 }
                 return (String) result;
@@ -977,34 +978,10 @@ public final class RContext {
         public void setPrompt(String prompt) {
             if (handler != null) {
                 try {
-                    ForeignAccess.sendWrite(write, handler, "prompt", prompt);
-                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
+                    Object f = ForeignAccess.sendRead(read, handler, "setPrompt");
+                    ForeignAccess.sendExecute(execute, (TruffleObject) f, prompt);
+                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException | ClassCastException e) {
                     throw new RInternalError(e, "error while writing prompt");
-                }
-            }
-        }
-
-        @TruffleBoundary
-        public String getHistory() {
-            if (handler != null) {
-                Object result;
-                try {
-                    result = ForeignAccess.sendRead(read, handler, "history");
-                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                    throw new RInternalError(e, "error while reading history");
-                }
-                return (String) result;
-            }
-            return "";
-        }
-
-        @TruffleBoundary
-        public void setHistory(String history) {
-            if (handler != null) {
-                try {
-                    ForeignAccess.sendWrite(write, handler, "history", history);
-                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
-                    throw new RInternalError(e, "error while writing history");
                 }
             }
         }

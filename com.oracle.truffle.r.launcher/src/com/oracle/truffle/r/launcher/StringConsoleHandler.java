@@ -56,6 +56,11 @@ class StringConsoleHandler extends ConsoleHandler {
     }
 
     @Override
+    public String getPrompt() {
+        return prompt;
+    }
+
+    @Override
     public int getCurrentLineIndex() {
         return currentLine;
     }

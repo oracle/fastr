@@ -81,6 +81,11 @@ public class JLineConsoleHandler extends ConsoleHandler {
         console.setPrompt(noPrompt ? "" : prompt != null ? prompt : "");
     }
 
+    @Override
+    public String getPrompt() {
+        return console.getPrompt();
+    }
+
     public void clearHistory() {
         history.clear();
     }

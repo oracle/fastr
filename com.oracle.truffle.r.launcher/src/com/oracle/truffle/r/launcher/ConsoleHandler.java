@@ -49,6 +49,13 @@ public abstract class ConsoleHandler {
      */
     public abstract void setPrompt(String prompt);
 
+    /**
+     * Get the R prompt.
+     * 
+     * @return the prompt
+     */
+    public abstract String getPrompt();
+
     public void setContext(@SuppressWarnings("unused") Context context) {
         // ignore by default
     }
