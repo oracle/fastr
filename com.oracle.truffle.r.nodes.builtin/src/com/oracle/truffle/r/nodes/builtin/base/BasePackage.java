@@ -131,6 +131,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfoNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRegisterFunctions;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRegisterFunctionsNodeGen;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSetConsoleHandler;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRSetConsoleHandlerNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSlotAssign;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSlotAssignNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRSourceInfo;
@@ -493,6 +495,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRRefCountInfo.class, FastRRefCountInfoNodeGen::create);
         add(FastRPkgSource.class, FastRPkgSourceNodeGen::create);
         add(FastRSourceInfo.class, FastRSourceInfoNodeGen::create);
+        add(FastRSetConsoleHandler.class, FastRSetConsoleHandlerNodeGen::create);
         add(FastRStackTrace.class, FastRStackTraceNodeGen::create);
         add(FastRSlotAssign.class, FastRSlotAssignNodeGen::create);
         add(FastRSyntaxTree.class, FastRSyntaxTreeNodeGen::create);
