@@ -27,7 +27,6 @@ import java.nio.charset.StandardCharsets;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
 import java.lang.ref.WeakReference;
-import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
 
