@@ -313,10 +313,15 @@ set.repos <- function() {
 			# set the FastR internal repo
 			repos[["FASTR"]] <- paste0("file://", normalizePath("com.oracle.truffle.r.test.native/packages/repo"))
 		} else if (name == "SNAPSHOT") {
-			con <- file("etc/DEFAULT_CRAN_MIRROR", "r"); 
 			tryCatch({
+				con <- file("etc/DEFAULT_CRAN_MIRROR", "r");
 				cran.mirror <<- readLines(con)[[1]]
-			}, finally=function() close(con))
+				close(con)
+			}, error = function(err) {
+				cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory?")
+				print(err)
+				exit(1)
+			})
 			repos[["CRAN"]] <- cran.mirror
 		} else {
 			# User defined
