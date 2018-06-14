@@ -16,7 +16,6 @@ done
 
 ( 
   cd -P "$( dirname "$source" )/../etc"
-  autoconf
   ./configure
   ed Makeconf < edMakeconf.etc  
   echo "DONE"

@@ -104,7 +104,7 @@ endif
 	cp configure_fastr $(FASTR_BIN_DIR)
 	chmod +x $(FASTR_BIN_DIR)/configure_fastr
 	cp configure.ac $(FASTR_ETC_DIR)
-	cp configure.ac $(FASTR_ETC_DIR)
+	cp configure $(FASTR_ETC_DIR)
 	cp edMakeconf.etc $(FASTR_ETC_DIR)
 	cp edMakeconf.etc.llvm $(FASTR_ETC_DIR)
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf.in $(FASTR_ETC_DIR)
