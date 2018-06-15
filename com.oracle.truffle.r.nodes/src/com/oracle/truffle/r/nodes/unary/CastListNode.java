@@ -27,7 +27,6 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -43,8 +42,6 @@ import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
 @ImportStatic(RRuntime.class)
 public abstract class CastListNode extends CastBaseNode {
-
-    @Child private SetClassAttributeNode setClassAttrNode;
 
     public abstract RList executeList(Object o);
 
