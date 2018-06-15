@@ -65,6 +65,8 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
                     return new Mkdtemp();
                 } else if (function == NativeFunction.getcwd) {
                     return new Getwd();
+                } else if (function == NativeFunction.initEventLoop) {
+                    return new InitEventLoop();
                 }
                 return new DummyFunctionObject(function);
             }
@@ -95,6 +97,25 @@ public final class Managed_DownCallNodeFactory extends DownCallNodeFactory {
         @Override
         public ForeignAccess getForeignAccess() {
             return null;
+        }
+    }
+
+    private static final class InitEventLoop implements TruffleObject {
+
+        @Override
+        public ForeignAccess getForeignAccess() {
+            return ForeignAccess.create(InitEventLoop.class, new StandardFactory() {
+                @Override
+                public CallTarget accessIsExecutable() {
+                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(true));
+                }
+
+                @Override
+                public CallTarget accessExecute(int argumentsLength) {
+                    // by returning -1 we indicate that the native handlers loop is not available
+                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(-1));
+                }
+            });
         }
     }
 
