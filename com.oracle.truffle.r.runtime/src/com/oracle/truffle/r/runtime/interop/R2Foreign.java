@@ -31,11 +31,6 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
 import com.oracle.truffle.r.runtime.data.RRaw;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class R2Foreign extends RBaseNode {
@@ -65,31 +60,6 @@ public abstract class R2Foreign extends RBaseNode {
     @Specialization()
     public byte doRaw(RRaw vec) {
         return vec.getValue();
-    }
-
-    @Specialization(guards = "vec.getLength() == 1")
-    public double doDoubleVector(RAbstractDoubleVector vec) {
-        return vec.getDataAt(0);
-    }
-
-    @Specialization(guards = "vec.getLength() == 1")
-    public int doIntVector(RAbstractIntVector vec) {
-        return vec.getDataAt(0);
-    }
-
-    @Specialization(guards = "vec.getLength() == 1")
-    public boolean doLogicalVector(RAbstractLogicalVector vec) {
-        return vec.getDataAt(0) == RRuntime.LOGICAL_TRUE;
-    }
-
-    @Specialization(guards = "vec.getLength() == 1")
-    public byte doRawVector(RAbstractRawVector vec) {
-        return vec.getRawDataAt(0);
-    }
-
-    @Specialization(guards = "vec.getLength() == 1")
-    public String doStringVector(RAbstractStringVector vec) {
-        return vec.getDataAt(0);
     }
 
     @Specialization
