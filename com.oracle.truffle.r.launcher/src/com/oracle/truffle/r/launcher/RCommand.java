@@ -346,7 +346,7 @@ public class RCommand extends RAbstractLauncher {
         final String fifoOutPath = tmpDir.resolve("event-loop-fifo-out").toString();
         final int res = context.eval(Source.newBuilder("R", ".fastr.initEventLoop", "<init-event-loop>").internal(true).buildLiteral()).execute(fifoInPath, fifoOutPath).asInt();
         if (res != 0) {
-            throw fatal("Event loop initialization failed. Return code: " + res);
+            System.out.println("WARNING: Native event loop unavailable");
         } else {
             Thread t = new Thread() {
                 @Override
