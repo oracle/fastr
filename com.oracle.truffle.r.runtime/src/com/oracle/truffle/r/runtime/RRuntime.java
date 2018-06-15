@@ -774,14 +774,18 @@ public class RRuntime {
         return isNA(real) || isNA(imag);
     }
 
-    @TruffleBoundary
     public static String escapeString(String value, boolean encodeNonASCII, boolean quote) {
+        return escapeString(value, encodeNonASCII, quote, null, null);
+    }
+
+    @TruffleBoundary
+    public static String escapeString(String value, boolean encodeNonASCII, boolean quote, String leftQuote, String rightQuote) {
         if (isNA(value)) {
             return STRING_NA;
         }
         StringBuilder str = new StringBuilder(value.length() + 2);
         if (quote) {
-            str.append('\"');
+            str.append(leftQuote == null ? '\"' : leftQuote);
         }
         int offset = 0;
         while (offset < value.length()) {
@@ -837,7 +841,7 @@ public class RRuntime {
             offset += Character.charCount(codepoint);
         }
         if (quote) {
-            str.append('\"');
+            str.append(rightQuote == null ? '\"' : rightQuote);
         }
         return str.toString();
     }
