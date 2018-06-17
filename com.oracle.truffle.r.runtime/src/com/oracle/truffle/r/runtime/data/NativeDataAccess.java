@@ -212,8 +212,8 @@ public final class NativeDataAccess {
     // The counter is initialized to invalid address and incremented by 2 to always get invalid
     // address value
     private static final AtomicLong counter = new AtomicLong(0xdef000000000001L);
-    private static final ConcurrentHashMap<Long, WeakReference<RObject>> nativeMirrors = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, WeakReference<RObject>> nativeMirrors = new ConcurrentHashMap<>(512);
+    private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
     public static CallTarget createIsPointer() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
@@ -309,7 +309,7 @@ public final class NativeDataAccess {
     }
 
     private static RuntimeException reportDataAccessError(long address) {
-        RuntimeException location = nativeMirrorInfo.get(address);
+        RuntimeException location = TRACE_MIRROR_ALLOCATION_SITES ? nativeMirrorInfo.get(address) : null;
         if (location != null) {
             System.out.println("Location at which the native mirror was allocated:");
             location.printStackTrace();
