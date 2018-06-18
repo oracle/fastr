@@ -38,6 +38,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.logging.Logger;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import com.oracle.truffle.r.test.packages.analyzer.Location;
 import com.oracle.truffle.r.test.packages.analyzer.Problem;
@@ -170,7 +171,10 @@ public class HTMLDumper extends AbstractDumper {
 
     private Tag generateDistinctProblemDistribution(HTMLBuilder builder, Map<ProblemContent, List<Problem>> groupByPkg) {
         LOGGER.info("Generating distinct problem distribution table.");
-        List<ProblemContent> collect = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size())).collect(Collectors.toList());
+        long start = System.currentTimeMillis();
+        Stream<ProblemContent> sorted = groupByPkg.keySet().stream().sorted((a, b) -> Integer.compare(groupByPkg.get(b).size(), groupByPkg.get(a).size()));
+        LOGGER.info(String.format("Finished in %d ms", (System.currentTimeMillis() - start)));
+        List<ProblemContent> collect = sorted.collect(Collectors.toList());
 
         Tag table = builder.table(builder.tr(
                         builder.th("Problem"),

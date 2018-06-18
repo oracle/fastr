@@ -117,6 +117,17 @@ public abstract class Problem {
         return Math.min(Math.min(a, b), c);
     }
 
+    public static int computeLevenshteinDistanceFast(CharSequence lhs, CharSequence rhs, int maxDist) {
+        // fast path: see if we can be within the distance
+        if (Math.abs(lhs.length() - rhs.length()) > maxDist) {
+            return maxDist;
+        }
+        if (lhs.equals(rhs)) {
+            return 0;
+        }
+        return Problem.computeLevenshteinDistance(lhs, rhs);
+    }
+
     public static int computeLevenshteinDistance(CharSequence lhs, CharSequence rhs) {
         int[][] distance = new int[lhs.length() + 1][rhs.length() + 1];
 

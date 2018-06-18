@@ -31,6 +31,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Date;
 import java.util.LinkedList;
+import java.util.function.Predicate;
 import java.util.logging.Logger;
 
 import com.oracle.truffle.r.test.packages.analyzer.detectors.ConfigureErrorDetector;
@@ -55,13 +56,13 @@ public class FileTreeWalker {
     /** List of test run directories that were candidates for analysis. */
     private Collection<Path> consideredTestRuns;
 
-    public Collection<RPackage> ftw(Path root, Date sinceDate, String glob) throws IOException {
+    public Collection<RPackage> ftw(Path root, Date sinceDate, String glob, Predicate<Path> include) throws IOException {
 
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(root, glob)) {
             reset();
             Collection<RPackage> pkgs = new LinkedList<>();
             for (Path p : stream) {
-                if (Files.isDirectory(p)) {
+                if (include.test(p) && Files.isDirectory(p)) {
                     Collection<RPackage> pkgVersions = visitPackageRoot(p, sinceDate);
                     pkgs.addAll(pkgVersions);
                 }
