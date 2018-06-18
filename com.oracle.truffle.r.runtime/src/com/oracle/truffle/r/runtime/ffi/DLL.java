@@ -31,7 +31,9 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
@@ -62,6 +64,8 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Support for Dynamically Loaded Libraries.
@@ -434,9 +438,25 @@ public class DLL {
         public long asAddress() {
             if (value instanceof Long) {
                 return (Long) value;
+            } else if (value instanceof TruffleObject) {
+                return asAddressTO((TruffleObject) value);
             } else {
                 throw RInternalError.shouldNotReachHere();
             }
+        }
+
+        @TruffleBoundary
+        private static long asAddressTO(TruffleObject val) {
+            Node isPointer = com.oracle.truffle.api.interop.Message.IS_POINTER.createNode();
+            try {
+                if (ForeignAccess.sendIsPointer(isPointer, val)) {
+                    Node asPointer = com.oracle.truffle.api.interop.Message.AS_POINTER.createNode();
+                    return ForeignAccess.sendAsPointer(asPointer, val);
+                }
+            } catch (UnsupportedMessageException ex) {
+                // Let it flow to throw RInternalError
+            }
+            throw RInternalError.shouldNotReachHere();
         }
 
         public boolean isLong() {
