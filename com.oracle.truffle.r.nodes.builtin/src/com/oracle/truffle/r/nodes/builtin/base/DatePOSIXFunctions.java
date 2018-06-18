@@ -595,9 +595,14 @@ public class DatePOSIXFunctions {
                         builder.appendLiteral('\n');
                         break;
                     case 'O':
-                        if (i + 2 < format.length() && format.charAt(i + 1) == 'S' && format.charAt(i + 2) == '3') {
-                            builder.appendValue(ChronoField.SECOND_OF_MINUTE, 2).appendLiteral('.').appendValue(ChronoField.MILLI_OF_SECOND, 3);
-                            i += 2;
+                        int fLen = format.length();
+                        if (i + 1 < fLen && format.charAt(i + 1) == 'S') {
+                            builder.appendValue(ChronoField.SECOND_OF_MINUTE, 2);
+                            i++;
+                            if (i + 1 < fLen && format.charAt(i + 1) == '3') {
+                                builder.appendLiteral('.').appendValue(ChronoField.MILLI_OF_SECOND, 3);
+                                i++;
+                            }
                         } else {
                             builder.appendLiteral(c);
                         }
