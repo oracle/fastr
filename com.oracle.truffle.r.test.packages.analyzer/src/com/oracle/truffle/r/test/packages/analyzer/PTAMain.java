@@ -118,7 +118,12 @@ public class PTAMain {
 
                 String line = null;
                 while ((line = br.readLine()) != null) {
-                    includeList.add(line.trim());
+                    int commaIdx = line.indexOf(',');
+                    if (commaIdx != -1) {
+                        includeList.add(line.substring(0, commaIdx).trim());
+                    } else {
+                        includeList.add(line.trim());
+                    }
                 }
 
                 Collections.sort(includeList);
@@ -126,7 +131,7 @@ public class PTAMain {
 
                 Set<String> includeSet = new HashSet<>(includeList);
                 return p -> {
-                   return includeSet.contains(p.getFileName().toString());
+                    return includeSet.contains(p.getFileName().toString());
                 };
             } catch (IOException e) {
                 LOGGER.severe("Could not load include list file: " + includeListFile);
