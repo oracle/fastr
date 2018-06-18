@@ -24,7 +24,9 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.remote.RemoteDevice;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -41,20 +43,23 @@ public final class WindowDevice {
         // only static members
     }
 
-    public static GridDevice createWindowDevice() {
-        return createWindowDevice(GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
-    }
-
-    public static GridDevice createWindowDevice(int width, int height) {
-        JFrameDevice frameDevice = new JFrameDevice(width, height);
-        RContext ctx = RContext.getInstance();
-        if (ctx.hasExecutor()) {
-            frameDevice.setResizeListener(() -> redrawAll(ctx));
-            frameDevice.setCloseListener(() -> devOff(ctx));
-        } else {
+    public static GridDevice createWindowDevice(boolean byGridServer, int width, int height) {
+        if (FastRConfig.UseRemoteGridAwtDevice) {
             noSchedulingSupportWarning();
+            return RemoteDevice.createWindowDevice(width, height);
+        } else {
+            JFrameDevice frameDevice = new JFrameDevice(width, height);
+            RContext ctx;
+            if (!byGridServer && ((ctx = RContext.getInstance()) != null) && ctx.hasExecutor() && !FastRConfig.UseRemoteGridAwtDevice) {
+                frameDevice.setResizeListener(() -> redrawAll(ctx));
+                frameDevice.setCloseListener(() -> devOff(ctx));
+            } else {
+                if (!byGridServer) {
+                    noSchedulingSupportWarning();
+                }
+            }
+            return frameDevice;
         }
-        return frameDevice;
     }
 
     public static RError awtNotSupported() {
@@ -103,7 +108,8 @@ public final class WindowDevice {
     }
 
     private static void noSchedulingSupportWarning() {
-        // Note: the PolyglotEngine was not built with an Executor
-        RError.warning(RError.NO_CALLER, Message.GENERIC, "Grid cannot resize the drawings. If you resize the window, the content will be lost.");
+        // Note: the PolyglotEngine was not built with an Executor or we use remote grid device
+        RError.warning(RError.NO_CALLER, Message.GENERIC, "Grid cannot resize the drawings. If you resize the window, the content will be lost. " +
+                        "You can redraw the contents using: 'popViewport(0, recording = FALSE); grid:::draw.all()'.");
     }
 }
