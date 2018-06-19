@@ -190,6 +190,10 @@ public class ROptions {
             map.put("repos", cranMirror);
         }
 
+        if (FastRConfig.DefaultDownloadMethod != null && !FastRConfig.DefaultDownloadMethod.isEmpty()) {
+            map.put("download.file.method", FastRConfig.DefaultDownloadMethod);
+        }
+
         String additional = FastROptions.AdditionalOptions.getStringValue();
         if (additional == null || additional.isEmpty()) {
             return;

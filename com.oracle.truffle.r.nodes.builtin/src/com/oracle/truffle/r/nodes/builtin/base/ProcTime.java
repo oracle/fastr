@@ -29,6 +29,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.Engine;
@@ -54,8 +56,8 @@ public abstract class ProcTime extends RBuiltinNode.Arg0 {
         Engine.Timings timings = RContext.getEngine().getTimings();
         long nowInNanos = timings.elapsedTimeInNanos();
         long[] userSysTimeInNanos = timings.userSysTimeInNanos();
-        long userTimeInNanos = userSysTimeInNanos[0];
-        long sysTimeInNanos = userSysTimeInNanos[1];
+        long userTimeInNanos = userSysTimeInNanos != null ? userSysTimeInNanos[0] : -1;
+        long sysTimeInNanos = userSysTimeInNanos != null ? userSysTimeInNanos[1] : -1;
         data[0] = userTimeInNanos < 0 ? RRuntime.DOUBLE_NA : asDoubleSecs(userTimeInNanos);
         data[1] = sysTimeInNanos < 0 ? RRuntime.DOUBLE_NA : asDoubleSecs(sysTimeInNanos);
         boolean complete = userTimeInNanos >= 0 && sysTimeInNanos >= 0;
@@ -71,6 +73,9 @@ public abstract class ProcTime extends RBuiltinNode.Arg0 {
         RDoubleVector result = RDataFactory.createDoubleVector(data, complete, RNAMES);
         setClassAttrNode.execute(result, PROC_TIME_CLASS);
 
+        if (userSysTimeInNanos == null) {
+            warning(Message.GENERIC, "Retrieving user and system time is not supported in this FastR configuration.");
+        }
         return result;
     }
 
