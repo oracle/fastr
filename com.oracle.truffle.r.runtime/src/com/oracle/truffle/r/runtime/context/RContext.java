@@ -981,7 +981,7 @@ public final class RContext {
                     Object f = ForeignAccess.sendRead(read, handler, "setPrompt");
                     ForeignAccess.sendExecute(execute, (TruffleObject) f, prompt);
                 } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException | ClassCastException e) {
-                    throw new RInternalError(e, "error while writing prompt");
+                    throw new RInternalError(e, "error while writing prompt from object " + handler);
                 }
             }
         }

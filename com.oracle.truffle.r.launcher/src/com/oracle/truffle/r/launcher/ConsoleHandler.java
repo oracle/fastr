@@ -27,6 +27,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
 import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
+import org.graalvm.polyglot.proxy.ProxyObject;
 
 /**
  * The interface to a source of input/output for the context, which may have different
@@ -60,6 +63,10 @@ public abstract class ConsoleHandler {
         // ignore by default
     }
 
+    public Object getPolyglotWrapper() {
+        return new PolyglotWrapper(this);
+    }
+
     public InputStream createInputStream() {
         return new InputStream() {
             byte[] buffer = null;
@@ -83,5 +90,71 @@ public abstract class ConsoleHandler {
                 }
             }
         };
+    }
+
+    private static class PolyglotWrapper implements ProxyObject {
+        private static final String GET_PROMPT_KEY = "getPrompt";
+        private static final String SET_PROMPT_KEY = "setPrompt";
+        private static final String[] keys = new String[] { GET_PROMPT_KEY, SET_PROMPT_KEY };
+        private final GetPromptWrapper getPrompt;
+        private final SetPromptWrapper setPrompt;
+
+        private PolyglotWrapper(ConsoleHandler target) {
+            getPrompt = new GetPromptWrapper(target);
+            setPrompt = new SetPromptWrapper(target);
+        }
+
+        @Override
+        public Object getMember(String key) {
+            if (GET_PROMPT_KEY.equals(key)) {
+                return getPrompt;
+            } else if (SET_PROMPT_KEY.equals(key)) {
+                return setPrompt;
+            } else {
+                return null;
+            }
+        }
+
+        @Override
+        public Object getMemberKeys() {
+            return keys;
+        }
+
+        @Override
+        public boolean hasMember(String key) {
+            return key.contains(key);
+        }
+
+        @Override
+        public void putMember(String key, Value value) {
+            throw new UnsupportedOperationException("putMember");
+        }
+    }
+
+    private static class GetPromptWrapper implements ProxyExecutable {
+        private final ConsoleHandler target;
+
+        private GetPromptWrapper(ConsoleHandler target) {
+            this.target = target;
+        }
+
+        @Override
+        public Object execute(Value... arguments) {
+            return target.getPrompt();
+        }
+    }
+
+    private static class SetPromptWrapper implements ProxyExecutable {
+        private final ConsoleHandler target;
+
+        private SetPromptWrapper(ConsoleHandler target) {
+            this.target = target;
+        }
+
+        @Override
+        public Object execute(Value... arguments) {
+            target.setPrompt(arguments[0].asString());
+            return null;
+        }
     }
 }

@@ -92,7 +92,7 @@ public abstract class RAbstractLauncher extends AbstractLanguageLauncher impleme
         this.consoleHandler.setContext(context);
         try {
             Source src = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).build();
-            context.eval(src).execute(consoleHandler);
+            context.eval(src).execute(consoleHandler.getPolyglotWrapper());
         } catch (IOException e) {
             throw fatal(e, "error while setting console handler");
         }
