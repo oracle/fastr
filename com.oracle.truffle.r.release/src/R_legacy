@@ -23,6 +23,7 @@ for i in $(seq 1 ${dir_count}); do
   JRE="$( dirname "$JRE" )"
 done
 
+## REMOVE FOR NATIVE IMAGE: BEGIN
 absolute_cp=()
 jvm_args=()
 launcher_args=()
@@ -67,6 +68,7 @@ JAVA_HOME="$( dirname "$JRE" )"
 cp="$(IFS=: ; echo "${absolute_cp[*]}")"
 cp="$JAVA_HOME/jre/languages/R/legacy/fastr-legacy-launcher.jar:$cp"
 
+## REMOVE FOR NATIVE IMAGE: END
 # internal variable used to pass args to child R processes
 if [ -z "$FASTR_INTERNAL_ARGS" ]; then
     FASTR_INTERNAL_ARGS=()
@@ -74,4 +76,4 @@ fi
 
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
-exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx8g "${jvm_args[@]}" com.oracle.truffle.r.legacylauncher.LegacyLauncher com.oracle.truffle.r.launcher.RCommand "${FASTR_INTERNAL_ARGS[@]}" "${launcher_args[@]}"
+exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx8g "${jvm_args[@]}" com.oracle.truffle.r.legacylauncher.LegacyLauncher com.oracle.truffle.r.launcher.RMain R "${FASTR_INTERNAL_ARGS[@]}" "${launcher_args[@]}"

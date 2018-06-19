@@ -97,7 +97,7 @@ public class RStartParams {
         List<String> expressions = options.getStringList(EXPR);
         if (file != null) {
             if (expressions != null) {
-                throw RCommand.fatal("cannot use -e with -f or --file");
+                throw RMain.fatal("cannot use -e with -f or --file");
             }
             this.askForSave = false;
             this.save = false;
@@ -105,7 +105,7 @@ public class RStartParams {
                 // means stdin, but still implies NO_SAVE
                 file = null;
             } else {
-                file = RCommand.unescapeSpace(file);
+                file = REPL.unescapeSpace(file);
             }
             this.interactive = false;
         } else if (expressions != null) {

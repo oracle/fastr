@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,181 +26,22 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
 
 import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Context.Builder;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
-
-import com.oracle.truffle.r.launcher.RCmdOptions.Client;
-import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
+import org.graalvm.polyglot.Value;
 
 import jline.console.UserInterruptException;
 
-/*
- * TODO:
- *
- * - create a replacement for "executor"
- *
- * - fatal needs to be handled more carefully in nested/spawned contexts
- */
-
 /**
- * Emulates the (Gnu)R command as precisely as possible.
+ * Implements the read-eval-print loop.
+ *
+ * @see #readEvalPrint(Context, ConsoleHandler, File, boolean)
  */
-public class RCommand extends RAbstractLauncher {
-
-    RCommand(String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
-        super(Client.R, env, inStream, outStream, errStream);
-    }
-
-    @Override
-    protected String[] getArguments() {
-        return options.getArguments();
-    }
-
-    @Override
-    protected void launch(Builder contextBuilder) {
-        super.launch(contextBuilder);
-        StartupTiming.timestamp("VM Created");
-        StartupTiming.printSummary();
-    }
-
-    private int execute(String[] args) {
-        StartupTiming.timestamp("Main Entered");
-        ArrayList<String> argsList = new ArrayList<>(Arrays.asList(args));
-        if (System.console() != null) {
-            // add "--interactive" to force interactive mode
-            boolean addArg = true;
-            for (String arg : args) {
-                if ("--interactive".equals(arg)) {
-                    addArg = false;
-                    break;
-                }
-            }
-            if (addArg) {
-                if (argsList.size() == 0) {
-                    argsList.add("--interactive");
-                } else {
-                    argsList.add(1, "--interactive");
-                }
-            }
-        }
-
-        launch(argsList.toArray(new String[0]));
-        if (context != null) {
-            File srcFile = null;
-            String fileOption = options.getString(RCmdOption.FILE);
-            if (fileOption != null) {
-                srcFile = new File(fileOption);
-            }
-
-            return readEvalPrint(context, consoleHandler, srcFile, true);
-        } else {
-            return 0;
-        }
-    }
-
-    // CheckStyle: stop system..print check
-    public static RuntimeException fatal(String message, Object... args) {
-        System.out.println("FATAL: " + String.format(message, args));
-        System.exit(-1);
-        return new RuntimeException();
-    }
-
-    public static RuntimeException fatal(Throwable t, String message, Object... args) {
-        t.printStackTrace();
-        System.out.println("FATAL: " + String.format(message, args));
-        System.exit(-1);
-        return null;
-    }
-
-    static String[] prependCommand(String[] args) {
-        String[] result = new String[args.length + 1];
-        result[0] = "R";
-        System.arraycopy(args, 0, result, 1, args.length);
-        return result;
-    }
-
-    public static void main(String[] args) {
-        try {
-            System.exit(doMain(prependCommand(args), null, System.in, System.out, System.err));
-            // never returns
-            throw fatal("main should never return");
-        } catch (Throwable t) {
-            throw fatal(t, "error during REPL execution");
-        }
-    }
-
-    public static int doMain(String[] args, String[] env, InputStream inStream, OutputStream outStream, OutputStream errStream) {
-        try (RCommand rcmd = new RCommand(env, inStream, outStream, errStream)) {
-            return rcmd.execute(args);
-        }
-    }
-
-    public static ConsoleHandler createConsoleHandler(RCmdOptions options, DelegatingConsoleHandler useDelegatingWrapper, InputStream inStream, OutputStream outStream) {
-        /*
-         * Whether the input is from stdin, a file (-f), or an expression on the command line (-e)
-         * it goes through the console. N.B. -f and -e can't be used together and this is already
-         * checked.
-         */
-        RStartParams rsp = new RStartParams(options, false);
-        String fileArgument = rsp.getFileArgument();
-        if (fileArgument != null) {
-            List<String> lines;
-            try {
-                /*
-                 * If initial==false, ~ expansion will not have been done and the open will fail.
-                 * It's harmless to always do it.
-                 */
-                File file = fileArgument.startsWith("~") ? new File(System.getProperty("user.home") + fileArgument.substring(1)) : new File(fileArgument);
-                lines = Files.readAllLines(file.toPath());
-            } catch (IOException e) {
-                throw fatal("cannot open file '%s': No such file or directory", fileArgument);
-            }
-            return new StringConsoleHandler(lines, outStream);
-        } else if (options.getStringList(RCmdOption.EXPR) != null) {
-            List<String> exprs = options.getStringList(RCmdOption.EXPR);
-            for (int i = 0; i < exprs.size(); i++) {
-                exprs.set(i, unescapeSpace(exprs.get(i)));
-            }
-            return new StringConsoleHandler(exprs, outStream);
-        } else {
-            boolean isInteractive = options.getBoolean(RCmdOption.INTERACTIVE);
-            if (!isInteractive && rsp.askForSave()) {
-                throw fatal("you must specify '--save', '--no-save' or '--vanilla'");
-            }
-            boolean useReadLine = isInteractive && !rsp.noReadline();
-            if (useDelegatingWrapper != null) {
-                /*
-                 * If we are in embedded mode, the creation of ConsoleReader and the ConsoleHandler
-                 * should be lazy, as these may not be necessary and can cause hangs if stdin has
-                 * been redirected.
-                 */
-                Supplier<ConsoleHandler> delegateFactory = useReadLine ? () -> new JLineConsoleHandler(inStream, outStream, rsp.isSlave())
-                                : () -> new DefaultConsoleHandler(inStream, outStream, isInteractive);
-                useDelegatingWrapper.setDelegate(delegateFactory);
-                return useDelegatingWrapper;
-            } else {
-                if (useReadLine) {
-                    return new JLineConsoleHandler(inStream, outStream, rsp.isSlave());
-                } else {
-                    return new DefaultConsoleHandler(inStream, outStream, isInteractive);
-                }
-            }
-        }
-    }
-
+public class REPL {
     /**
      * The standard R script escapes spaces to "~+~" in "-e" and "-f" commands.
      */
@@ -275,7 +116,7 @@ public class RCommand extends RAbstractLauncher {
                                 context.eval(src);
                             }
                         } catch (InterruptedException ex) {
-                            throw fatal("Unexpected interrup error");
+                            throw RMain.fatal("Unexpected interrup error");
                         } catch (PolyglotException e) {
                             if (e.isIncompleteSource()) {
                                 if (continuePrompt == null) {
@@ -314,7 +155,7 @@ public class RCommand extends RAbstractLauncher {
                         } else if (e2.isCancelled()) {
                             continue;
                         }
-                        throw fatal(e, "error while calling quit");
+                        throw RMain.fatal(e, "error while calling quit");
                     }
                 } catch (UserInterruptException e) {
                     // interrupted by ctrl-c
@@ -374,7 +215,7 @@ public class RCommand extends RAbstractLauncher {
         }
     }
 
-    private static boolean doEcho(ExecutorService executor, Context context) throws InterruptedException, ExecutionException {
+    private static boolean doEcho(ExecutorService executor, Context context) throws InterruptedException {
         try {
             if (executor != null) {
                 return executor.submit(() -> doEcho(context)).get();
@@ -382,12 +223,12 @@ public class RCommand extends RAbstractLauncher {
                 return doEcho(context);
             }
         } catch (ExecutionException ex) {
-            throw fatal(ex, "error while retrieving echo");
+            throw RMain.fatal(ex, "error while retrieving echo");
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
             }
-            throw fatal(e, "error while retrieving echo");
+            throw RMain.fatal(e, "error while retrieving echo");
         }
     }
 
@@ -403,12 +244,12 @@ public class RCommand extends RAbstractLauncher {
                 return getPrompt(context);
             }
         } catch (ExecutionException ex) {
-            throw fatal(ex, "error while retrieving prompt");
+            throw RMain.fatal(ex, "error while retrieving prompt");
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
             }
-            throw fatal(e, "error while retrieving prompt");
+            throw RMain.fatal(e, "error while retrieving prompt");
         }
     }
 
@@ -424,12 +265,12 @@ public class RCommand extends RAbstractLauncher {
                 return getPrompt(context);
             }
         } catch (ExecutionException ex) {
-            throw fatal(ex, "error while retrieving continue prompt");
+            throw RMain.fatal(ex, "error while retrieving continue prompt");
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
             }
-            throw fatal(e, "error while retrieving continue prompt");
+            throw RMain.fatal(e, "error while retrieving continue prompt");
         }
     }
 

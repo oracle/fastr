@@ -45,10 +45,10 @@ was passed as an mx global option.
 
 _fastr_suite = mx.suite('fastr')
 
-_command_class_dict = {'r': "com.oracle.truffle.r.launcher.RCommand",
-                       'rscript': "com.oracle.truffle.r.launcher.RscriptCommand",
-                        'rrepl': "com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient",
-                        'rembed': "com.oracle.truffle.r.engine.shell.REmbedded",
+_command_class_dict = {'r': ["com.oracle.truffle.r.launcher.RMain", "R"],
+                       'rscript': ["com.oracle.truffle.r.launcher.RMain", "Rscript"],
+                        'rrepl': ["com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient"],
+                        'rembed': ["com.oracle.truffle.r.engine.shell.REmbedded"],
                     }
 # benchmarking support
 def r_path():
@@ -104,7 +104,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
     vmArgs = _sanitize_vmArgs(jdk, vmArgs)
     if command:
-        vmArgs.append(_command_class_dict[command.lower()])
+        vmArgs.extend(_command_class_dict[command.lower()])
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
 def r_classpath(args):

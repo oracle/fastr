@@ -31,7 +31,7 @@ import org.graalvm.polyglot.Source;
 
 import com.oracle.truffle.r.launcher.ConsoleHandler;
 import com.oracle.truffle.r.launcher.RCmdOptions;
-import com.oracle.truffle.r.launcher.RCommand;
+import com.oracle.truffle.r.launcher.REPL;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.RSource.Internal;
 import com.oracle.truffle.r.runtime.RSuicide;
@@ -76,7 +76,7 @@ public class REmbedded {
 
         EmbeddedConsoleHandler embeddedConsoleHandler = new EmbeddedConsoleHandler();
 
-        consoleHandler = RCommand.createConsoleHandler(options, embeddedConsoleHandler, System.in, System.out);
+        consoleHandler = ConsoleHandler.createConsoleHandler(options, embeddedConsoleHandler, System.in, System.out);
         InputStream input = consoleHandler.createInputStream();
         boolean useEmbedded = consoleHandler == embeddedConsoleHandler;
         OutputStream stdOut = useEmbedded ? embeddedConsoleHandler.createStdOutputStream(System.out) : System.out;
@@ -133,7 +133,7 @@ public class REmbedded {
         RContext ctx = RContext.getInstance();
         ctx.completeEmbeddedInitialization();
         ctx.getRFFI().initializeEmbedded(ctx);
-        int status = RCommand.readEvalPrint(context, consoleHandler, false);
+        int status = REPL.readEvalPrint(context, consoleHandler, false);
         context.leave();
         context.close();
         Utils.systemExit(status);

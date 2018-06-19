@@ -366,6 +366,14 @@ suite = {
       ],
     },
 
+    "FASTR_LAUNCHER" : {
+      "description" : "launcher for the GraalVM (at the moment used only when native image is installed)",
+      "dependencies" : ["com.oracle.truffle.r.launcher"],
+      "distDependencies" : [
+        "sdk:GRAAL_SDK"
+      ],
+    },
+
     "FASTR" : {
       "description" : "class files for compiling against FastR in a separate suite",
       "dependencies" : [
