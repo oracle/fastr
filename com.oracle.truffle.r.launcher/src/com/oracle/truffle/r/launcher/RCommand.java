@@ -336,18 +336,13 @@ public class RCommand extends RAbstractLauncher {
      * @param executor
      */
     private static void initializeNativeEventLoop(Context context, final ExecutorService executor) {
-        Path tmpDir;
-        try {
-            tmpDir = Files.createTempDirectory("fastr-fifo");
-        } catch (Exception e1) {
-            throw fatal("Cannot create temporary directory for event loop fifo");
-        }
-        final String fifoInPath = tmpDir.resolve("event-loop-fifo-in").toString();
-        final String fifoOutPath = tmpDir.resolve("event-loop-fifo-out").toString();
-        final int res = context.eval(Source.newBuilder("R", ".fastr.initEventLoop", "<init-event-loop>").internal(true).buildLiteral()).execute(fifoInPath, fifoOutPath).asInt();
-        if (res != 0) {
-            System.out.println("WARNING: Native event loop unavailable");
+        Value result = context.eval(Source.newBuilder("R", ".fastr.initEventLoop", "<init-event-loop>").internal(true).buildLiteral()).execute();
+        if (result.isNull()) {
+            return; // event loop is not configured to be run
+        } else if (result.getMember("result").asInt() != 0) {
+            System.out.println("WARNING: Native event loop unavailable. Error code: " + result.getMember("result").asInt());
         } else {
+            final String fifoInPath = result.getMember("fifoInPath").asString();
             Thread t = new Thread() {
                 @Override
                 public void run() {
