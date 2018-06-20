@@ -52,6 +52,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -442,6 +443,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile summaryGroupProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isAttributableProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isS4Profile,
+                    @Cached("createCountingProfile()") LoopConditionProfile s4ArgsProfile,
                     @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call,
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
@@ -475,7 +477,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
             isS4Dispatch = true;
         } else if (args.length > typeXIdx + 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
-            for (int i = typeXIdx + 1; i < args.length; i++) {
+            s4ArgsProfile.profileCounted(args.length - typeXIdx);
+            for (int i = typeXIdx + 1; s4ArgsProfile.inject(i < args.length); i++) {
                 Object argi = promiseHelperNode.checkEvaluate(frame, args[i]);
                 if (isAttributableProfile.profile(argi instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) argi).isS4())) {
                     isS4Dispatch = true;

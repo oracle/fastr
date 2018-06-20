@@ -38,6 +38,7 @@ import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AsRealNodeGen;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
@@ -651,6 +652,7 @@ public final class SeqFunctions {
          */
         @Specialization(guards = {"!isMissing(byObj)"})
         protected Object seqLengthMissing(Object fromObj, Object toObj, Object byObj, RMissing lengthOut, RMissing alongWith, Object dotdotdot,
+                        @Cached("createIdentityProfile()") ValueProfile allIntProfile,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("create()") AsRealNode asRealby) {
@@ -677,6 +679,7 @@ public final class SeqFunctions {
             }
             validateLength(byObj, "by");
             allInt &= isInt(byObj);
+            allInt = allIntProfile.profile(allInt);
             double by = asRealby.execute(byObj);
             return doSeqLengthMissing(from, to, by, allInt);
         }
@@ -827,10 +830,11 @@ public final class SeqFunctions {
         // common idiom
         @Specialization(guards = {"cached.fromCheck.execute(fromObj)", "cached.lengthCheck.execute(lengthOut)"}, limit = "1")
         protected RAbstractVector seqWithFromLengthIntegralNumeric(Object fromObj, RMissing toObj, RMissing byObj, Object lengthOut, RMissing alongWith, Object dotdotdot,
+                        @Cached("createBinaryProfile()") ConditionProfile loutEq0Profile,
                         @Cached("new()") SeqWithFromLengthIntegralNumericNode cached) {
             int from = cached.getIntegralNumericNode.execute(fromObj);
             int lout = cached.getIntegralNumericNode.execute(lengthOut);
-            if (lout == 0) {
+            if (loutEq0Profile.profile(lout == 0)) {
                 return RDataFactory.createEmptyIntVector();
             }
             return RDataFactory.createDoubleSequence(from, 1, lout);
@@ -851,6 +855,9 @@ public final class SeqFunctions {
         // "by" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, toObj)"})
         protected RAbstractVector seqWithLength(Object fromObj, Object toObj, RMissing byObj, Object lengthOut, Object alongWith, Object dotdotdot,
+                        @Cached("createBinaryProfile()") ConditionProfile loutGe2Profile,
+                        @Cached("createBinaryProfile()") ConditionProfile loutEq1Profile,
+                        @Cached("createBinaryProfile()") ConditionProfile useDoubleProfile,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("create()") AsRealNode asRealLen) {
@@ -871,7 +878,7 @@ public final class SeqFunctions {
             validateDoubleParam(from, fromObj, "from");
             validateDoubleParam(to, toObj, "to");
             RAbstractVector result;
-            if (lout > 2) {
+            if (loutGe2Profile.profile(lout > 2)) {
                 double by = (to - from) / (lout - 1);
                 // double computedTo = from + (lout - 1) * by;
                 /*
@@ -887,11 +894,11 @@ public final class SeqFunctions {
                 }
                 result = RDataFactory.createDoubleVector(data, RDataFactory.COMPLETE_VECTOR);
             } else {
-                if (lout == 1) {
+                if (loutEq1Profile.profile(lout == 1)) {
                     result = RDataFactory.createDoubleVectorFromScalar(from);
                 } else {
                     boolean useDouble = fromMissing && !isInt(lengthOut);
-                    if ((int) from == from && (int) to == to && !useDouble) {
+                    if (useDoubleProfile.profile((int) from == from && (int) to == to && !useDouble)) {
                         result = RDataFactory.createIntVector(new int[]{(int) from, (int) to}, RDataFactory.COMPLETE_VECTOR);
                     } else {
                         result = RDataFactory.createDoubleVector(new double[]{from, to}, RDataFactory.COMPLETE_VECTOR);
@@ -904,11 +911,13 @@ public final class SeqFunctions {
         // "to" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(fromObj, byObj)"})
         protected RAbstractVector seqWithLength(Object fromObj, RMissing toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot,
+                        @Cached("createBinaryProfile()") ConditionProfile loutEq0Profile,
+                        @Cached("createBinaryProfile()") ConditionProfile useIntVectorProfile,
                         @Cached("create()") AsRealNode asRealFrom,
                         @Cached("create()") AsRealNode asRealby,
                         @Cached("create()") AsRealNode asRealLen) {
             int lout = checkLengthAlongWith(lengthOut, alongWith, asRealLen);
-            if (lout == 0) {
+            if (loutEq0Profile.profile(lout == 0)) {
                 return RDataFactory.createEmptyIntVector();
             }
             double from;
@@ -921,7 +930,7 @@ public final class SeqFunctions {
             double by = asRealby.execute(byObj);
             validateDoubleParam(by, byObj, "by");
             double to = from + (lout - 1) * by;
-            if (useIntVector(from, to, by)) {
+            if (useIntVectorProfile.profile(useIntVector(from, to, by))) {
                 return RDataFactory.createIntSequence((int) from, (int) by, lout);
             } else {
                 return RDataFactory.createDoubleSequence(from, by, lout);
@@ -931,11 +940,13 @@ public final class SeqFunctions {
         // "from" missing
         @Specialization(guards = {"oneNotMissing(alongWith, lengthOut)", "oneNotMissing(toObj, byObj)"})
         protected RAbstractVector seqWithLength(RMissing fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith, Object dotdotdot,
+                        @Cached("createBinaryProfile()") ConditionProfile loutEq0Profile,
+                        @Cached("createBinaryProfile()") ConditionProfile useIntVectorProfile,
                         @Cached("create()") AsRealNode asRealTo,
                         @Cached("create()") AsRealNode asRealby,
                         @Cached("create()") AsRealNode asRealLen) {
             int lout = checkLengthAlongWith(lengthOut, alongWith, asRealLen);
-            if (lout == 0) {
+            if (loutEq0Profile.profile(lout == 0)) {
                 return RDataFactory.createEmptyIntVector();
             }
             double to = asRealTo.execute(toObj);
@@ -943,7 +954,7 @@ public final class SeqFunctions {
             double from = to - (lout - 1) * by;
             validateDoubleParam(to, toObj, "to");
             validateDoubleParam(by, byObj, "by");
-            if (useIntVector(from, to, by)) {
+            if (useIntVectorProfile.profile(useIntVector(from, to, by))) {
                 return RDataFactory.createIntSequence((int) from, (int) by, lout);
             } else {
                 return RDataFactory.createDoubleSequence(from, by, lout);
