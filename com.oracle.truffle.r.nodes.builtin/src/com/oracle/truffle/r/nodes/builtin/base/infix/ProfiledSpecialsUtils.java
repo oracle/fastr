@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertValue;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -98,7 +99,7 @@ public class ProfiledSpecialsUtils {
     @NodeChild(value = "index2", type = ConvertIndex.class)
     public abstract static class ProfiledSubscriptSpecial2Base extends RNode {
 
-        protected static final int CACHE_LIMIT = 3;
+        protected static final int CACHE_LIMIT = DSLConfig.getVectorAccessCacheSize();
         protected final boolean inReplacement;
 
         @Child protected SubscriptSpecial2Base defaultAccessNode;
