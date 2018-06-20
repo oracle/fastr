@@ -28,7 +28,7 @@ export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 export FASTR_NATIVE_DIR = $(TOPDIR)
 export R_VERSION = 3.4.0
-export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2018-05-23"
+export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2018-06-20"
 export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 
 ifeq ($(FASTR_RFFI),llvm)
