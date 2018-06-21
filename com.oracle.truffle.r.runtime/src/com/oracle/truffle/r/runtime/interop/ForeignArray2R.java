@@ -51,7 +51,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -85,49 +84,71 @@ public abstract class ForeignArray2R extends RBaseNode {
      * @param obj foreign array
      * @return a vector if obj is a foreign array, otherwise obj
      */
-    public Object convert(Object obj) {
+    public Object convert(TruffleObject obj) {
         return convert(obj, true);
     }
 
     /**
      * Convert the provided foreign array to a vector.
      *
-     * @param obj foreign array
+     * @param truffleObject foreign array
      * @param recursive determines whether a provided multi dimensional array should be resolved
      *            recursively or not.
      * @return a vector if obj is a foreign array, otherwise obj
      *
      */
-    public Object convert(Object obj, boolean recursive) {
-        if (FastROptions.ForeignObjectWrappers.getBooleanValue() && isForeignArray(obj)) {
-            TruffleObject truffleObject = (TruffleObject) obj;
+    public Object convert(TruffleObject truffleObject, boolean recursive) {
+        if (FastROptions.ForeignObjectWrappers.getBooleanValue() && isForeignArray(truffleObject)) {
             try {
                 int size = (int) ForeignAccess.sendGetSize(getSize, truffleObject);
                 if (size == 0) {
-                    return new RForeignListWrapper(truffleObject);
+                    // TODO not yet ready to use RForeignListWrapper
+                    // as an alternative to RList
+                    // return new RForeignListWrapper(truffleObject);
+                    return RDataFactory.createList();
                 } else {
-                    Object firstElement = ForeignAccess.sendRead(read, truffleObject, 0);
-                    if (isForeignArray(firstElement)) {
-                        throw error(RError.Message.GENERIC, "Wrapping of multi-dim arrays not supported.");
-                    }
-                    switch (InteropTypeCheck.determineType(firstElement)) {
-                        case BOOLEAN:
-                            return new RForeignBooleanWrapper(truffleObject);
-                        case DOUBLE:
-                            return new RForeignDoubleWrapper(truffleObject);
-                        case INTEGER:
-                            return new RForeignIntWrapper(truffleObject);
-                        case STRING:
-                            return new RForeignStringWrapper(truffleObject);
-                        default:
-                            return new RForeignListWrapper(truffleObject);
+                    Object result = execute(truffleObject, recursive, null, 0, true);
+                    if (result instanceof ForeignArrayData) {
+                        ForeignArrayData arrayData = (ForeignArrayData) result;
+                        if (arrayData.isOneDim()) { // can't deal with multidims
+                            InteropTypeCheck.RType type = arrayData.typeCheck.getType();
+                            switch (type) {
+                                case NONE:
+                                case NULL:
+                                    // TODO not yet ready to use RForeignListWrapper
+                                    // as an alternative to RList
+                                    // return new RForeignListWrapper(truffleObject);
+                                    return copy(truffleObject, recursive);
+                                case BOOLEAN:
+                                    return new RForeignBooleanWrapper(truffleObject);
+                                case DOUBLE:
+                                    return new RForeignDoubleWrapper(truffleObject);
+                                case INTEGER:
+                                    return new RForeignIntWrapper(truffleObject);
+                                case STRING:
+                                    return new RForeignStringWrapper(truffleObject);
+                                default:
+                                    assert false : "did not handle properly: " + type;
+                            }
+                        }
                     }
                 }
-            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+            } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
-        Object result = execute(obj, recursive, null, 0);
+        return copy(truffleObject, recursive);
+    }
+
+    /**
+     * Creates a complete copy of all foreign array elements into a R vector/list.
+     * 
+     * @param obj
+     * @param recursive
+     * @return a vector or list
+     */
+    public Object copy(TruffleObject obj, boolean recursive) {
+        Object result = execute(obj, recursive, null, 0, false);
         if (result instanceof ForeignArrayData) {
             ForeignArrayData arrayData = (ForeignArrayData) result;
             if (arrayData.elements.isEmpty()) {
@@ -138,13 +159,13 @@ public abstract class ForeignArray2R extends RBaseNode {
         return result;
     }
 
-    protected abstract Object execute(Object obj, boolean recursive, ForeignArrayData arrayData, int depth);
+    protected abstract Object execute(Object obj, boolean recursive, ForeignArrayData arrayData, int depth, boolean onlyInspect);
 
     @Specialization(guards = {"isForeignArray(obj)"})
     @TruffleBoundary
-    protected ForeignArrayData doArray(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth) {
+    protected ForeignArrayData doArray(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth, boolean onlyInspect) {
         try {
-            return collectArrayElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, recursive, depth);
+            return collectArrayElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, recursive, depth, onlyInspect);
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
         }
@@ -152,36 +173,27 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     @Specialization(guards = "isJavaIterable(obj)")
     @TruffleBoundary
-    protected ForeignArrayData doJavaIterable(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, ForeignArrayData arrayData, @SuppressWarnings("unused") int depth,
+    protected ForeignArrayData doJavaIterable(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, ForeignArrayData arrayData, @SuppressWarnings("unused") int depth, boolean onlyInspect,
                     @Cached("createExecute(0).createNode()") Node execute) {
 
         try {
-            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, execute);
+            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, execute, onlyInspect);
         } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
             throw error(RError.Message.GENERIC, "error while casting polyglot value to list: " + e.getMessage());
         }
     }
 
     @Fallback
-    protected Object doObject(Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") ForeignArrayData arrayData, @SuppressWarnings("unused") int depth) {
+    protected Object doObject(Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") ForeignArrayData arrayData, @SuppressWarnings("unused") int depth,
+                    @SuppressWarnings("unused") boolean onlyInspect) {
         return obj;
     }
 
-    private ForeignArrayData collectArrayElements(ForeignArrayData arrayData, TruffleObject obj, boolean recursive, int depth)
+    private ForeignArrayData collectArrayElements(ForeignArrayData arrayData, TruffleObject obj, boolean recursive, int depth, boolean onlyInspect)
                     throws UnsupportedMessageException, UnknownIdentifierException {
         int size = (int) ForeignAccess.sendGetSize(getSize, obj);
 
-        if (arrayData.dims != null) {
-            if (arrayData.dims.size() == depth) {
-                arrayData.dims.add(size);
-            } else if (depth < arrayData.dims.size()) {
-                if (arrayData.dims.get(depth) != size) {
-                    // had previously on the same depth an array with different length
-                    // -> not rectangular, skip the dimensions
-                    arrayData.dims = null;
-                }
-            }
-        }
+        arrayData.addDimension(depth, size);
 
         if (size == 0) {
             return arrayData;
@@ -189,15 +201,15 @@ public abstract class ForeignArray2R extends RBaseNode {
         for (int i = 0; i < size; i++) {
             Object element = ForeignAccess.sendRead(read, obj, i);
             if (recursive && (isForeignArray(element, hasSize) || isJavaIterable(element))) {
-                recurse(arrayData, element, depth);
+                recurse(arrayData, element, depth, onlyInspect);
             } else {
-                arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
+                arrayData.process(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R, onlyInspect);
             }
         }
         return arrayData;
     }
 
-    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, Node execute)
+    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, Node execute, boolean onlyInspect)
                     throws UnknownIdentifierException, ArityException, UnsupportedMessageException, UnsupportedTypeException {
         if (read == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -210,17 +222,17 @@ public abstract class ForeignArray2R extends RBaseNode {
         while ((boolean) ForeignAccess.sendExecute(execute, hasNextFunction)) {
             TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
             Object element = ForeignAccess.sendExecute(execute, nextFunction);
-            arrayData.add(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R);
+            arrayData.process(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R, onlyInspect);
         }
         return arrayData;
     }
 
-    private void recurse(ForeignArrayData arrayData, Object element, int depth) {
+    private void recurse(ForeignArrayData arrayData, Object element, int depth, boolean onlyInspect) {
         if (foreignArray2R == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             foreignArray2R = insert(create());
         }
-        foreignArray2R.execute(element, true, arrayData, depth + 1);
+        foreignArray2R.execute(element, true, arrayData, depth + 1, onlyInspect);
     }
 
     private Foreign2R getForeign2R() {
@@ -266,14 +278,16 @@ public abstract class ForeignArray2R extends RBaseNode {
         InteropTypeCheck.RType type = arrayData.typeCheck.getType();
         int size = arrayData.elements.size();
 
-        int[] dims = arrayData.dims != null && arrayData.dims.size() > 1 ? arrayData.dims.stream().mapToInt((i) -> i.intValue()).toArray() : null;
+        int[] dims = arrayData.isMultiDim() ? arrayData.dims.stream().mapToInt((i) -> i.intValue()).toArray() : null;
 
         switch (type) {
             case NONE:
+            case NULL:
                 return RDataFactory.createList(arrayData.elements.toArray(new Object[arrayData.elements.size()]));
             case BOOLEAN:
                 WriteArray<byte[]> wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
-                    array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).byteValue();
+                    Object value = arrayData.elements.get(sourceIdx);
+                    array[resultIdx] = value == RNull.instance ? RRuntime.LOGICAL_NA : ((Number) value).byteValue();
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 byte[] byteArray = new byte[size];
@@ -284,7 +298,8 @@ public abstract class ForeignArray2R extends RBaseNode {
                 }
             case DOUBLE:
                 WriteArray<double[]> wda = (array, resultIdx, sourceIdx, complete) -> {
-                    array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).doubleValue();
+                    Object value = arrayData.elements.get(sourceIdx);
+                    array[resultIdx] = value == RNull.instance ? RRuntime.DOUBLE_NA : ((Number) value).doubleValue();
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 double[] doubleArray = new double[size];
@@ -295,7 +310,8 @@ public abstract class ForeignArray2R extends RBaseNode {
                 }
             case INTEGER:
                 WriteArray<int[]> wia = (array, resultIdx, sourceIdx, complete) -> {
-                    array[resultIdx] = ((Number) arrayData.elements.get(sourceIdx)).intValue();
+                    Object value = arrayData.elements.get(sourceIdx);
+                    array[resultIdx] = value == RNull.instance ? RRuntime.INT_NA : ((Number) value).intValue();
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 int[] intArray = new int[size];
@@ -306,7 +322,8 @@ public abstract class ForeignArray2R extends RBaseNode {
                 }
             case STRING:
                 WriteArray<String[]> wsa = (array, resultIdx, sourceIdx, complete) -> {
-                    array[resultIdx] = String.valueOf(arrayData.elements.get(sourceIdx));
+                    Object value = arrayData.elements.get(sourceIdx);
+                    array[resultIdx] = value == RNull.instance ? RRuntime.STRING_NA : String.valueOf(value);
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 String[] stringArray = new String[size];
@@ -408,6 +425,7 @@ public abstract class ForeignArray2R extends RBaseNode {
             DOUBLE,
             INTEGER,
             STRING,
+            NULL,
             NONE;
         }
 
@@ -436,6 +454,8 @@ public abstract class ForeignArray2R extends RBaseNode {
                 setType(RType.DOUBLE);
             } else if (value instanceof Character || value instanceof String) {
                 setType(RType.STRING);
+            } else if (value == RNull.instance) {
+                setType(RType.NULL);
             } else {
                 this.type = RType.NONE;
             }
@@ -463,7 +483,7 @@ public abstract class ForeignArray2R extends RBaseNode {
                     this.type = check;
                 } else if (this.type == RType.INTEGER && check == RType.DOUBLE || check == RType.INTEGER && this.type == RType.DOUBLE) {
                     this.type = RType.DOUBLE;
-                } else if (this.type != check) {
+                } else if (this.type != check && check != RType.NULL) {
                     this.type = RType.NONE;
                 }
             }
@@ -479,9 +499,8 @@ public abstract class ForeignArray2R extends RBaseNode {
         private List<Object> elements = new ArrayList<>();
         private List<Integer> dims = new ArrayList<>();
 
-        public void add(Object value, Supplier<Node> getIsNull, Supplier<Node> getIsBoxed, Supplier<Node> getUnbox, Supplier<Foreign2R> getForeign2R) throws UnsupportedMessageException {
-            typeCheck.checkForeign(value);
-
+        public void process(Object value, Supplier<Node> getIsNull, Supplier<Node> getIsBoxed, Supplier<Node> getUnbox, Supplier<Foreign2R> getForeign2R, boolean onlyInspect)
+                        throws UnsupportedMessageException {
             Object unboxedValue = value;
             if (unboxedValue instanceof TruffleObject) {
                 if (ForeignAccess.sendIsNull(getIsNull.get(), (TruffleObject) unboxedValue)) {
@@ -492,10 +511,37 @@ public abstract class ForeignArray2R extends RBaseNode {
                     }
                 }
             }
-            typeCheck.checkForeign(unboxedValue);
-            unboxedValue = getForeign2R.get().execute(unboxedValue);
-
-            elements.add(unboxedValue);
+            InteropTypeCheck.RType type = typeCheck.checkForeign(unboxedValue);
+            if (onlyInspect && type == InteropTypeCheck.RType.NONE) {
+                return;
+            }
+            if (!onlyInspect) {
+                unboxedValue = getForeign2R.get().execute(unboxedValue);
+                elements.add(unboxedValue);
+            }
         }
+
+        private boolean isMultiDim() {
+            return dims != null && dims.size() > 1;
+        }
+
+        private boolean isOneDim() {
+            return dims != null && dims.size() == 1;
+        }
+
+        private void addDimension(int depth, int size) {
+            if (dims != null) {
+                if (dims.size() == depth) {
+                    dims.add(size);
+                } else if (depth < dims.size()) {
+                    if (dims.get(depth) != size) {
+                        // had previously on the same depth an array with different length
+                        // -> not rectangular, skip the dimensions
+                        dims = null;
+                    }
+                }
+            }
+        }
+
     }
 }

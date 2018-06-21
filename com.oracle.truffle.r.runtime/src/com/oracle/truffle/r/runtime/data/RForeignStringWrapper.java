@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
@@ -29,8 +30,10 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
@@ -45,7 +48,7 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
 
     @Override
     public RStringVector materialize() {
-        throw RInternalError.shouldNotReachHere();
+        return (RStringVector) copy();
     }
 
     @Override
@@ -57,8 +60,18 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
     @Override
     @TruffleBoundary
     public String getDataAt(int index) {
+        return getString(delegate, index);
+    }
+
+    private static String getString(TruffleObject truffleObject, int index) throws RuntimeException {
         try {
-            return ForeignAccess.sendRead(READ, delegate, index).toString();
+            Object value = ForeignAccess.sendRead(READ, truffleObject, index);
+            if (value instanceof TruffleObject) {
+                if (ForeignAccess.sendIsNull(IS_NULL, (TruffleObject) value)) {
+                    return RRuntime.STRING_NA;
+                }
+            }
+            return value.toString();
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -70,9 +83,11 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
             super(value);
         }
 
+        private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile resultProfile = ValueProfile.createClassProfile();
         @Child private Node getSize = Message.GET_SIZE.createNode();
         @Child private Node read = Message.READ.createNode();
+        @Child private Node isNull;
 
         @Override
         protected int getLength(RAbstractContainer vector) {
@@ -86,7 +101,17 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
         @Override
         protected String getString(Object internalStore, int index) {
             try {
-                return resultProfile.profile(ForeignAccess.sendRead(read, (TruffleObject) internalStore, index)).toString();
+                Object value = ForeignAccess.sendRead(read, (TruffleObject) internalStore, index);
+                if (isNullProfile.profile(value instanceof TruffleObject)) {
+                    if (isNull == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        isNull = Message.IS_NULL.createNode();
+                    }
+                    if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
+                        return RRuntime.STRING_NA;
+                    }
+                }
+                return resultProfile.profile(value).toString();
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -113,11 +138,7 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
         @TruffleBoundary
         protected String getString(Object store, int index) {
             RForeignStringWrapper vector = (RForeignStringWrapper) store;
-            try {
-                return ForeignAccess.sendRead(READ, vector.delegate, index).toString();
-            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
+            return RForeignStringWrapper.getString(vector.delegate, index);
         }
     };
 

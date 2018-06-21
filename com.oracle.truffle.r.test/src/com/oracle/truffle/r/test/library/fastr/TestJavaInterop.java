@@ -262,10 +262,10 @@ public class TestJavaInterop extends TestBase {
         testAsVectorFromArray("objectDoubleArray", "double");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$mixedTypesArray); is.list(v)", "TRUE");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); is.list(v)", "TRUE");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[1]", "list(1)");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[2]", "list(NULL)");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[3]", "list(3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); typeof(v)", "'integer'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[1]", "1");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[2]", "NA");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- as.vector(to$hasNullIntArray); v[3]", "3");
     }
 
     @Test
@@ -285,10 +285,10 @@ public class TestJavaInterop extends TestBase {
         testAsVectorFromArray("objectDoubleArray", "double");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$mixedTypesArray); is.list(v)", "TRUE");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); is.list(v)", "TRUE");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[1]", "list(1)");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[2]", "list(NULL)");
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[3]", "list(3)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); typeof(v)", "'integer'");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[1]", "1");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[2]", "NA");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " v <- .fastr.interop.fromArray(to$hasNullIntArray); v[3]", "3");
 
         assertEvalFastR("ja <- new(java.type('java.lang.String[]'), 0L); .fastr.interop.fromArray(ja)", "list()");
     }
@@ -680,7 +680,8 @@ public class TestJavaInterop extends TestBase {
     private static final String CREATE_TEST_ARRAYS = "ta <- new('" + TestArraysClass.class.getName() + "');";
 
     @Test
-    public void testUnlist() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
+    public void testUnlist() throws NoSuchFieldException, IllegalArgumentException,
+                    IllegalAccessException {
         assertEvalFastR(CREATE_TEST_ARRAYS + " tal <- unlist(ta); identical(ta, tal)", "TRUE");
         assertEvalFastR(CREATE_TEST_ARRAYS + " l<-list(ta, ta); ul <- unlist(l); identical(l, ul)", "TRUE");
 
@@ -1128,15 +1129,15 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testArraysWithNullConversion() throws IllegalArgumentException {
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$booleanObjectArrayWithNull)", "list(T, NULL, T)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$byteObjectArrayWithNull)", "list(1, NULL, 3)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$charObjectArrayWithNull)", "list('a', NULL, 'c')");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$doubleObjectArrayWithNull)", "list(1.1, NULL, 1.3)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$floatObjectArrayWithNull)", "list(1.1, NULL, 1.3)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$integerObjectArrayWithNull)", "list(1L, NULL, 3L)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$longObjectArrayWithNull)", "list(1, NULL, 3)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$shortObjectArrayWithNull)", "list(1L, NULL, 3L)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$stringArrayWithNull)", "list('a', NULL, 'c')");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$booleanObjectArrayWithNull)", "c(T, NA, T)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$byteObjectArrayWithNull)", "c(1, NA, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$charObjectArrayWithNull)", "c('a', NA, 'c')");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$doubleObjectArrayWithNull)", "c(1.1, NA, 1.3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$floatObjectArrayWithNull)", "c(1.1, NA, 1.3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$integerObjectArrayWithNull)", "c(1L, NA, 3L)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$longObjectArrayWithNull)", "c(1, NA, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$shortObjectArrayWithNull)", "c(1L, NA, 3L)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$stringArrayWithNull)", "c('a', NA, 'c')");
     }
 
     @Test
