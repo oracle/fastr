@@ -289,7 +289,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         try {
             for (int i = 0; i < vec.getLength(); i++) {
                 Object res = readElement.execute(vec.getDataAtAsObject(i), object);
-                arrayData.add(res, () -> isNullNode, () -> isBoxedNode, () -> unboxNode, () -> foreign2RNode);
+                arrayData.process(res, () -> isNullNode, () -> isBoxedNode, () -> unboxNode, () -> foreign2RNode, false);
             }
             return ForeignArray2R.asAbstractVector(arrayData);
         } catch (InteropException e) {

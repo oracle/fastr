@@ -32,11 +32,15 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
 public abstract class RForeignWrapper implements RAbstractVector {
 
     protected static final Node GET_SIZE = Message.GET_SIZE.createNode();
+    protected static final Node IS_NULL = Message.IS_NULL.createNode();
     protected static final Node READ = Message.READ.createNode();
+
+    private static final ForeignArray2R FOREIGN_ARRAY_2R = ForeignArray2R.create();
 
     protected final TruffleObject delegate;
 
@@ -86,7 +90,7 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     @Override
     public final RAbstractVector copy() {
-        throw RInternalError.shouldNotReachHere();
+        return (RAbstractVector) FOREIGN_ARRAY_2R.copy(delegate, true);
     }
 
     @Override
