@@ -776,8 +776,7 @@ public final class FrameSlotChangeMonitor {
      * @param invalidateProfile Used to guard the invalidation code.
      */
     private static void checkAndInvalidate(Frame curFrame, FrameSlot slot, boolean isNonLocal, BranchProfile invalidateProfile) {
-        assert curFrame.getFrameDescriptor() == slot.getFrameDescriptor();
-
+        assert curFrame.getFrameDescriptor().getSlots().contains(slot) : slot.getIdentifier();
         if (getNotChangedNonLocallyAssumption(slot).isValid()) {
             // Check whether current frame is used outside a regular stack
             if (isNonLocal || RArguments.getIsIrregular(curFrame)) {
