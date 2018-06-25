@@ -44,6 +44,7 @@ import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -99,8 +100,8 @@ public class DatePOSIXFunctions {
             // getTimeZone returns the default if the ID does not exist, by comparing the return's
             // value ID to the explicit one we can find out the if the zone was found.
             if (explicitZone.isEmpty() || realZone.getID().equals(explicitZone)) {
-                zones[1] = realZone.getDisplayName(false, TimeZone.SHORT);
-                zones[2] = realZone.useDaylightTime() ? realZone.getDisplayName(true, TimeZone.SHORT) : "";
+                zones[1] = realZone.getDisplayName(false, TimeZone.SHORT, Locale.getDefault());
+                zones[2] = realZone.useDaylightTime() ? realZone.getDisplayName(true, TimeZone.SHORT, Locale.getDefault()) : "";
             } else {
                 zones[1] = explicitZone;
                 zones[2] = "";

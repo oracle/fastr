@@ -35,18 +35,44 @@ public final class FastRConfig {
      */
     public static final boolean ManagedMode;
 
+    /**
+     * Allows FastR to use MXBeans to implement various functionality that cannot be implemented
+     * otherwise.
+     */
+    public static final boolean UseMXBeans;
+
+    /**
+     * Native event loop supports R API for event loop, for example {@code addInputHandler}. See
+     * {@code FastRInitEventLoop}.
+     */
+    public static final boolean UseNativeEventLoop;
+
+    /**
+     * If set, then used as value of the 'download.file.method' option in R.
+     */
+    public static final String DefaultDownloadMethod;
+
     static {
         String rffiVal = System.getenv("FASTR_RFFI");
         ManagedMode = rffiVal != null && rffiVal.equals("managed");
         if (ManagedMode) {
             InternalGridAwtSupport = false;
+            UseMXBeans = false;
+            UseNativeEventLoop = false;
         } else {
-            String val = System.getProperty("fastr.internal.grid.awt.support");
-            InternalGridAwtSupport = val == null || val.equals("true");
+            InternalGridAwtSupport = getBoolean("fastr.internal.grid.awt.support");
+            UseMXBeans = getBoolean("fastr.internal.usemxbeans");
+            UseNativeEventLoop = getBoolean("fastr.internal.usenativeeventloop");
         }
+        DefaultDownloadMethod = System.getProperty("fastr.internal.defaultdownloadmethod");
     }
 
     private FastRConfig() {
         // only static fields
+    }
+
+    private static boolean getBoolean(String propName) {
+        String val = System.getProperty(propName);
+        return val == null || val.equals("true");
     }
 }

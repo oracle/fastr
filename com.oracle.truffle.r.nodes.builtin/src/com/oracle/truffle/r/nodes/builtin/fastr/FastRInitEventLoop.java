@@ -25,10 +25,16 @@ package com.oracle.truffle.r.nodes.builtin.fastr;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.nio.file.Files;
+import java.nio.file.Path;
+
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.FastRConfig;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 /**
@@ -44,19 +50,31 @@ import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
  * uses the <code>fifoOut</code> named pipe to release the native event loop. The described
  * procedure ensures that the native event handlers handle events within a single FastR context
  */
-@RBuiltin(name = ".fastr.initEventLoop", kind = PRIMITIVE, behavior = COMPLEX, parameterNames = {"fifoInPath", "fifoOutPath"})
-public abstract class FastRInitEventLoop extends RBuiltinNode.Arg2 {
+@RBuiltin(name = ".fastr.initEventLoop", kind = PRIMITIVE, behavior = COMPLEX, parameterNames = {})
+public abstract class FastRInitEventLoop extends RBuiltinNode.Arg0 {
 
     static {
-        Casts casts = new Casts(FastRInitEventLoop.class);
-        casts.arg("fifoInPath").asStringVector().findFirst();
-        casts.arg("fifoOutPath").asStringVector().findFirst();
+        Casts.noCasts(FastRInitEventLoop.class);
     }
 
     @Child private BaseRFFI.InitEventLoopNode initEventLoopNode = BaseRFFI.InitEventLoopNode.create();
 
     @Specialization
-    public Object initEventLoop(String fifoInPath, String fifoOutPath) {
-        return initEventLoopNode.execute(fifoInPath, fifoOutPath);
+    public Object initEventLoop() {
+        if (FastRConfig.UseNativeEventLoop) {
+            Path tmpDir;
+            try {
+                tmpDir = Files.createTempDirectory("fastr-fifo");
+            } catch (Exception e) {
+                return RDataFactory.createList(new Object[]{1}, RDataFactory.createStringVector("result"));
+            }
+            String fifoInPath = tmpDir.resolve("event-loop-fifo-in").toString();
+            String fifoOutPath = tmpDir.resolve("event-loop-fifo-out").toString();
+            int result = initEventLoopNode.execute(fifoInPath, fifoOutPath);
+            return RDataFactory.createList(new Object[]{result, fifoInPath, fifoOutPath},
+                            RDataFactory.createStringVector(new String[]{"result", "fifoInPath", "fifoOutPath"}, RDataFactory.COMPLETE_VECTOR));
+        } else {
+            return RNull.instance;
+        }
     }
 }

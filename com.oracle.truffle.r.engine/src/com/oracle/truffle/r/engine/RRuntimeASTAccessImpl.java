@@ -38,8 +38,7 @@ import com.oracle.truffle.api.instrumentation.StandardTags.RootTag;
 import com.oracle.truffle.api.instrumentation.StandardTags.StatementTag;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
-import com.oracle.truffle.r.launcher.RCommand;
-import com.oracle.truffle.r.launcher.RscriptCommand;
+import com.oracle.truffle.r.launcher.RMain;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -353,7 +352,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public Object rcommandMain(String[] args, String[] env, boolean intern) {
         IORedirect redirect = handleIORedirect(args, intern);
-        Object result = RCommand.doMain(redirect.args, env, redirect.in, redirect.out, redirect.err);
+        assert env == null : "re-enable env arguments";
+        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err);
         return redirect.getInternResult(result);
     }
 
@@ -362,7 +362,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         IORedirect redirect = handleIORedirect(args, intern);
         // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
         // nested context
-        Object result = RscriptCommand.doMain(redirect.args, env, redirect.in, redirect.out, redirect.err);
+        assert env == null : "re-enable env arguments";
+        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err);
         return redirect.getInternResult(result);
     }
 
@@ -381,9 +382,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             this.intern = intern;
         }
 
-        private Object getInternResult(Object result) {
+        private Object getInternResult(int result) {
             if (intern) {
-                int status = (int) result;
                 ByteArrayOutputStream bos = (ByteArrayOutputStream) out;
                 String s = new String(bos.toByteArray());
                 RStringVector sresult;
@@ -393,8 +393,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     String[] lines = s.split("\n");
                     sresult = RDataFactory.createStringVector(lines, RDataFactory.COMPLETE_VECTOR);
                 }
-                if (status != 0) {
-                    setResultAttr(status, sresult);
+                if (result != 0) {
+                    setResultAttr(result, sresult);
                 }
                 return sresult;
             } else {

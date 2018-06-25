@@ -1,0 +1,61 @@
+#!/usr/bin/env bash
+
+# This script is deployed as <FASTR>/bin/install_r_native_image
+set -e
+
+source="${BASH_SOURCE[0]}"
+# "un-link" the source path
+while [ -h "$source" ] ; do
+  prev_source="$source"
+  source="$(readlink "$source")";
+  if [[ "$source" != /* ]]; then
+    # if the link was relative, it was relative to where it came from
+    dir="$( cd -P "$( dirname "$prev_source" )" && pwd )"
+    source="$dir/$source"
+  fi
+done
+fastr_home="$(dirname "$source")/.."
+
+silent=0
+uninstall=0
+for arg in "$@"; do
+    if [[ $arg == "--silent" ]]; then
+        silent=1
+    elif [[ $arg == "uninstall" ]]; then
+        uninstall=1
+    elif [[ $arg == "--help" ]]; then
+        echo "Usage: install_r_native_image [uninstall] [--silent]"
+        echo "When 'uninstall' argument is not present: builds and installs native image of the R runtime."
+        echo "When 'uninstall' argument is present: uninstalls previously installed native image of the R runtime."
+        echo "Use the --silent option to turn off the confirmation when installing."
+    fi
+done
+
+if [[ $uninstall -eq 1 ]]; then
+    echo "Uninstalling native image of R runtime..."
+    mv "$fastr_home/bin/exec_R.backup" "$fastr_home/bin/exec/R"
+    mv "$fastr_home/bin/Rscript.backup" "$fastr_home/bin/Rscript"
+    rm -f "$fastr_home/bin/RorRscriptDispatcher"
+    echo "Native image of R runtime uninstalled"
+    exit 0
+fi
+
+if [[ $silent -eq 0 ]]; then
+    echo "This script is going to build a native image of the R runtime and update the R launchers to use that image as the default, i.e., when '--jvm' option is not used."
+    echo "The build takes several minutes and needs a minimum of 6GB of RAM and 150MB of free disk space. The computer may lag during the build."
+    read -p "Are you sure you want to build and install the native image of the R runtime? (Yy/Nn) " -n 1 -r
+    echo
+    if [[ ! $REPLY =~ ^[Yy]$ ]]; then
+        echo "Installation cancelled..."
+        exit 2
+    fi
+fi
+
+cd "$fastr_home/bin"
+../../../../bin/native-image --no-server --language:R
+cp "exec/R" "exec_R.backup"
+cp "Rscript" "Rscript.backup"
+sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "exec_R.backup" | \
+    sed -e 's|^exec "$JAVA_HOME/bin/java" .*|exec "$R_HOME/bin/RMain" R "${FASTR_INTERNAL_ARGS[@]}" "$@"|' > "exec/R"
+sed -e '/^## REMOVE FOR NATIVE IMAGE: BEGIN/,/^## REMOVE FOR NATIVE IMAGE: END/d;' "Rscript.backup" | \
+    sed -e 's|^exec "$JAVA_HOME/bin/java" .*|exec "$R_HOME/bin/RMain" Rscript "${FASTR_INTERNAL_ARGS[@]}" "$@"|' > "Rscript"

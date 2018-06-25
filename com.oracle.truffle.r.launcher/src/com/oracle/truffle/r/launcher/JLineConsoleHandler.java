@@ -49,7 +49,7 @@ public class JLineConsoleHandler extends ConsoleHandler {
             console.setHandleUserInterrupt(true);
             console.setExpandEvents(false);
         } catch (IOException ex) {
-            throw RCommand.fatal(ex, "unexpected error opening console reader");
+            throw RMain.fatal(ex, "unexpected error opening console reader");
         }
     }
 
