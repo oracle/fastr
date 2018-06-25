@@ -299,4 +299,17 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
         'bin/R',
     ],
     include_in_polyglot=False,
+    post_install_msg="NOTES:\n---------------\n" +
+"Some R packages need a system-dependent configuration before they can be installed. " +
+"A generic configuration that works out of the box in most cases is provided by default. " +
+"If you wish to fine-tune the configuration to your system or should you encounter any " +
+"issues during R package installation, try running the following script that adjusts " +
+"the configuration to your system: \n" +
+"    ${graalvm_home}/jre/languages/R/bin/configure_fastr\n\n" +
+"The R component comes without native image by default. If you wish to build the native image, " +
+"which provides faster startup, but slightly slower peak performance, then run the following:\n" +
+"   ${graalvm_home}/jre/languages/R/bin/install_r_native_image\n\n" +
+"The native image is then used by default. Pass '--jvm' flag to the R or Rscript launchers to " +
+"use JVM instead of the native image.\n\n" +
+"See http://www.graalvm.org/docs/reference-manual/languages/r for more."
 ))
