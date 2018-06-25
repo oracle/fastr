@@ -32,7 +32,6 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -118,10 +117,37 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
     }
 
     @Override
+    public void setLength(int l) {
+        if (l != data.length) {
+            Object[] newData = data instanceof String[] ? new String[l] : new CharSXPWrapper[l];
+            System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
+            fence = 42; // make sure the array is really initialized before we set it to this.data
+            this.data = newData;
+        }
+    }
+
+    @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setTrueLength(int truelength) {
+        NativeDataAccess.setTrueDataLength(this, truelength);
+    }
+
+    @Override
     public String[] getDataCopy() {
         Object[] localData = data;
         String[] copy = new String[localData.length];
-        System.arraycopy(localData, 0, copy, 0, localData.length);
+        if (noWrappedStrings.isValid() || localData instanceof String[]) {
+            System.arraycopy(localData, 0, copy, 0, localData.length);
+        } else {
+            CharSXPWrapper[] wrappers = (CharSXPWrapper[]) localData;
+            for (int i = 0; i < localData.length; i++) {
+                copy[i] = wrappers[i].getContents();
+            }
+        }
         return copy;
     }
 
@@ -190,8 +216,9 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
         Object[] newData = Arrays.copyOf(localData, size);
         if (size > localData.length) {
             if (fill != null) {
+                Object fillObj = newData instanceof String[] ? fill : CharSXPWrapper.create(fill);
                 for (int i = localData.length; i < size; i++) {
-                    newData[i] = fill;
+                    newData[i] = fillObj;
                 }
             } else {
                 assert localData.length > 0 : "cannot call resize on empty vector if fillNA == false";
@@ -250,8 +277,14 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
 
     @Override
     public void setElement(int i, Object value) {
-        // Note: any writes should create a local copy of the vector
-        data[i] = (String) value;
+        if (value instanceof CharSXPWrapper) {
+            wrapStrings();
+            data[i] = value;
+        } else if (!noWrappedStrings.isValid() && data instanceof CharSXPWrapper[]) {
+            data[i] = CharSXPWrapper.create((String) value);
+        } else {
+            data[i] = value;
+        }
     }
 
     /**

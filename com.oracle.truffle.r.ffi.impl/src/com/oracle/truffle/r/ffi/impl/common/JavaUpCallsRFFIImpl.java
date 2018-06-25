@@ -92,7 +92,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -295,6 +294,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public void Rf_setAttrib(Object obj, Object name, Object val) {
+        if (obj == RNull.instance) {
+            return;
+        }
         if (obj instanceof RAttributable) {
             RAttributable attrObj = (RAttributable) obj;
             String nameAsString;
@@ -515,14 +517,52 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public int SETLENGTH(Object x, int l) {
+        RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
+        vec.setLength(l);
+        return 0;
+    }
+
+    @Override
+    public int SETTRUELENGTH(Object x, int l) {
+        if (x instanceof CharSXPWrapper) {
+            ((CharSXPWrapper) x).setTruelength(l);
+            return 0;
+        }
+        RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
+        vec.setTrueLength(l);
+        return 0;
+    }
+
+    @Override
+    public int TRUELENGTH(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int LEVELS(Object x) {
+        if (x instanceof RTypedValue) {
+            int gpBits = ((RTypedValue) x).getGPBits();
+            return gpBits;
+        } else if (x instanceof CharSXPWrapper) {
+            // TODO returning ASCII_MASK works for data.table,
+            // but properly CharSXPWrapper has to implement RTypedValue ...
+            // see also CHARSXP charset bits in include/Defn.h
+            // #define ASCII_MASK (1<<6)
+            // return 1 << 6;
+            throw RInternalError.shouldNotReachHere("Not yet implemented - CharSXPWrapper has to implement RTypedValue!");
+        }
+        throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
     public void SET_STRING_ELT(Object x, long i, Object v) {
         RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
         CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
-        String value = element.getContents();
-        if (RRuntime.isNA(value)) {
+        if (RRuntime.isNA(element.getContents())) {
             vector.setComplete(false);
         }
-        vector.setElement((int) i, value);
+        vector.setElement((int) i, element);
     }
 
     @Override
@@ -538,8 +578,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object STRING_ELT(Object x, long i) {
-        RAbstractStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RAbstractStringVector.class);
-        return CharSXPWrapper.create(vector.getDataAt((int) i));
+        RStringVector vector = guaranteeInstanceOf(RRuntime.asAbstractVector(x), RStringVector.class);
+        vector.wrapStrings();
+        return vector.getWrappedDataAt((int) i);
     }
 
     @Override

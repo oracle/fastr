@@ -33,7 +33,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.utilities.AssumedValue;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -78,9 +78,11 @@ public final class PostProcessArgumentsNode extends RNode {
                             frameSlots[i] = frame.getFrameDescriptor().findOrAddFrameSlot(mask, FrameSlotKind.Object);
                         }
                     }
-                    RShareable s;
+                    RSharingAttributeStorage s;
                     try {
-                        s = (RShareable) frame.getObject(frameSlots[i]);
+                        Object sObj = frame.getObject(frameSlots[i]);
+                        RSharingAttributeStorage.verify(sObj);
+                        s = (RSharingAttributeStorage) sObj;
                     } catch (FrameSlotTypeException e) {
                         throw RInternalError.shouldNotReachHere();
                     }

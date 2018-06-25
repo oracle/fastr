@@ -51,6 +51,7 @@ import com.oracle.truffle.r.nodes.control.BreakException;
 import com.oracle.truffle.r.nodes.control.NextException;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -355,7 +356,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 if (onExitProfile.profile(onExitSlot.hasValue(frame))) {
                     if (onExitExpressionCache == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        onExitExpressionCache = insert(InlineCacheNode.create(3));
+                        onExitExpressionCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(3)));
                     }
                     RPairList current = getCurrentOnExitList(frame, onExitSlot.executeFrameSlot(frame));
                     /*

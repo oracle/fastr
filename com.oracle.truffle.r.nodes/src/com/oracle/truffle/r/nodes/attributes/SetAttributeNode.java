@@ -62,7 +62,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
 
     public abstract void execute(Object attrs, String name, Object value);
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "getCacheSize(3)", //
                     guards = {
                                     "cachedName.equals(name)",
                                     "shapeCheck(shape, attrs)",
@@ -83,7 +83,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         }
     }
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "getCacheSize(3)", //
                     guards = {
                                     "cachedName.equals(name)",
                                     "shapeCheck(oldShape, attrs)",
@@ -122,7 +122,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         return SpecialAttributesFunctions.createSetSpecialAttributeNode(name);
     }
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "getCacheSize(3)", //
                     guards = {
                                     "isSpecialAttributeNode.execute(name)",
                                     "cachedName.equals(name)"

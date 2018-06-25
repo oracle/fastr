@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -92,14 +91,10 @@ public final class AttributesAccessNodes {
     }
 
     public abstract static class ATTRIB extends FFIUpCallNode.Arg1 {
-        @Child private GetAttributesNode getAttributesNode;
 
         @Specialization
-        public Object doAttributable(RAttributable obj) {
-            if (getAttributesNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getAttributesNode = GetAttributesNode.create();
-            }
+        public Object doAttributable(RAttributable obj,
+                        @Cached("createWithCompactRowNames()") GetAttributesNode getAttributesNode) {
             Object resultObj = getAttributesNode.execute(obj);
             if (resultObj == RNull.instance) {
                 return resultObj;
@@ -137,9 +132,7 @@ public final class AttributesAccessNodes {
 
         @Specialization
         public Object doPairlist(RPairList obj) {
-            Object result = obj.getTag();
-            assert result instanceof RSymbol || result == RNull.instance;
-            return result;
+            return obj.getTag();
         }
 
         @Specialization
@@ -157,12 +150,12 @@ public final class AttributesAccessNodes {
         }
 
         @Specialization
-        public Object doList(RList obj,
-                        @Cached("create()") GetNamesAttributeNode getNamesAttributeNode) {
-            RStringVector names = getNamesAttributeNode.getNames(obj);
-            if (names != null && names.getLength() > 0) {
-                return getSymbol(names.getDataAt(0));
-            }
+        public Object doNull(RNull x) {
+            return x;
+        }
+
+        @Specialization
+        public Object doSymbol(@SuppressWarnings("unused") RSymbol s) {
             return RNull.instance;
         }
 

@@ -53,7 +53,7 @@ public class JLineConsoleCompleter implements Completer {
             if (isTesting) {
                 throw e;
             }
-            throw RCommand.fatal(e, "error while determining completion");
+            throw RMain.fatal(e, "error while determining completion");
         }
     }
 

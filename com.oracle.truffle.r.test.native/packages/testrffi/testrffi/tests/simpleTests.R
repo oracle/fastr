@@ -23,6 +23,8 @@ rffi.interactive()
 x <- 1; rffi.findvar("x", globalenv())
 x <- "12345"; rffi.char_length(x)
 
+rffi.test_duplicate(quote(a[,3])[[3]], 1L) # try duplicating empty symbol
+
 strVec <- rffi.getStringNA();
 stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(strVec))
@@ -124,7 +126,7 @@ eval(quote(testStackIntro(F)), .GlobalEnv)
 # do.call(testStackIntro, list(T))
 # do.call(testStackIntro, list(T), envir = list2env(list(myenv=42)))
 
-# legth tests
+# length tests
 env <- new.env(); env$a <- 42; env$b <- 44;
 rffi.inlined_length(env)
 rffi.inlined_length(c(1,2,3))
@@ -140,6 +142,40 @@ rffi.inlined_length(expr[[1]])
 #
 # foo <-function(...) rffi.inlined_length(get('...'))
 # foo(a = 1, b = 2, c = 3, d = 42)
+
+testLength <- function(type) {
+    s <- api.Rf_allocVector(type, 1000) 
+    print(api.LENGTH(s))
+    print(api.TRUELENGTH(s))
+
+    api.SETLENGTH(s, 10)
+    print(api.LENGTH(s))
+    print(api.TRUELENGTH(s))
+
+    api.SET_TRUELENGTH(s, 1000)
+    print(api.LENGTH(s))
+    print(api.TRUELENGTH(s))
+}
+testLength(10) # LGLSXP
+testLength(13) # INTSXP
+testLength(14) # REALSXP
+testLength(15) # CPLXSXP
+testLength(16) # STRSXP
+testLength(19) # VECSXP
+
+svec <- c("a")
+charsxp <- api.STRING_ELT(svec, 0)
+api.LENGTH(charsxp)
+# gnur returns different value
+# api.TRUELENGTH(charsxp)
+api.SET_TRUELENGTH(charsxp, 1000)
+api.LENGTH(charsxp)
+api.TRUELENGTH(charsxp)
+
+# gnur returns different value
+# api.LEVELS(charsxp)
+
+identical(charsxp, api.STRING_ELT(c("a"), 0))
 
 rffi.parseVector('1+2')
 rffi.parseVector('.*/-')
@@ -181,6 +217,8 @@ setAttrTarget
 
 typeof(api.ATTRIB(mtcars))
 api.ATTRIB(structure(c(1,2,3), myattr3 = 33))
+
+api.ATTRIB(data.frame(1, 2, 3))
 
 invisible(rffi.testDATAPTR('hello', testSingleString = T));
 rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);

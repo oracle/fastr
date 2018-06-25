@@ -24,12 +24,14 @@ package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.instrumentation.Tag;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeVisitor;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RError.RErrorException;
@@ -80,6 +82,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
  * {@link RBaseNode}.</li>
  * </ul>
  */
+@ImportStatic(DSLConfig.class)
 public abstract class RBaseNode extends Node {
 
     @CompilationFinal(dimensions = 1) public static final RNode[] EMTPY_RNODE_ARRAY = new RNode[0];

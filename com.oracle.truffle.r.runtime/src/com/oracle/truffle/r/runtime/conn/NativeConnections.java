@@ -326,7 +326,7 @@ public class NativeConnections {
             int nread = ((RIntVector) call).getDataAt(0);
             if (nread > 0) {
                 // this should also update the buffer position
-                for (int i = 0; i < bufferVec.getLength(); i++) {
+                for (int i = 0; i < nread; i++) {
                     dst.put(bufferVec.getRawDataAt(i));
                 }
             }

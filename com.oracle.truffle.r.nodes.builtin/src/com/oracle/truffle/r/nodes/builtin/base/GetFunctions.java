@@ -40,20 +40,15 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.nodes.function.RCallerHelper;
-import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
-import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -253,7 +248,7 @@ public class GetFunctions {
         private final BranchProfile wrongLengthErrorProfile = BranchProfile.create();
 
         @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
-        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
+        @Child private RExplicitCallNode explicitCallNode;
 
         static {
             Casts casts = new Casts(MGet.class);
@@ -371,13 +366,12 @@ public class GetFunctions {
         }
 
         private Object call(VirtualFrame frame, RFunction ifnFunc, String x) {
-            if (((RRootNode) ifnFunc.getRootNode()).containsDispatch()) {
-                callCache.setNeedsCallerFrame();
+            if (explicitCallNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                explicitCallNode = insert(RExplicitCallNode.create());
             }
-            FormalArguments formals = ((RRootNode) ifnFunc.getRootNode()).getFormalArguments();
             RArgsValuesAndNames args = new RArgsValuesAndNames(new Object[]{x}, ArgumentsSignature.empty(1));
-            return callCache.execute(frame, ifnFunc, RCaller.create(frame, RCallerHelper.createFromArguments(ifnFunc, args)), new Object[]{x}, formals.getSignature(),
-                            ifnFunc.getEnclosingFrame(), null);
+            return explicitCallNode.call(frame, ifnFunc, args);
         }
 
         private static Object handleMissingAndVarargs(Object value, ConditionProfile argsAndValuesProfile, ConditionProfile missingProfile) {

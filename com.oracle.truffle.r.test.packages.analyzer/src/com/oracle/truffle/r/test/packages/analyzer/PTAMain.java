@@ -22,18 +22,26 @@
  */
 package com.oracle.truffle.r.test.packages.analyzer;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Calendar;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Date;
 import java.util.GregorianCalendar;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Set;
+import java.util.function.Predicate;
 import java.util.logging.ConsoleHandler;
 import java.util.logging.FileHandler;
 import java.util.logging.Level;
@@ -80,6 +88,7 @@ public class PTAMain {
         parser.registerOption("since", "last2weeks");
         parser.registerOption("console");
         parser.registerOption("verbose");
+        parser.registerOption("include", null);
 
         String[] remainingArgs = parser.parseOptions(args);
         if (parser.has("help")) {
@@ -97,10 +106,41 @@ public class PTAMain {
         LOGGER.info("Considering only test runs since: " + sinceDate);
 
         Path outDir = Paths.get(parser.get("outDir"));
-        ftw(Paths.get(remainingArgs[0]), outDir, sinceDate, parser.get("glob"));
+        ftw(Paths.get(remainingArgs[0]), outDir, sinceDate, parser.get("glob"), getIncludes(parser.get("include")));
     }
 
-    private static void ftw(Path root, Path outDir, Date sinceDate, String glob) {
+    private static Predicate<Path> getIncludes(String includeListFile) {
+        if (includeListFile != null) {
+            try (BufferedReader br = Files.newBufferedReader(Paths.get(includeListFile))) {
+                LOGGER.info("Loading include list file: " + includeListFile);
+
+                List<String> includeList = new ArrayList<>();
+
+                String line = null;
+                while ((line = br.readLine()) != null) {
+                    int commaIdx = line.indexOf(',');
+                    if (commaIdx != -1) {
+                        includeList.add(line.substring(0, commaIdx).trim());
+                    } else {
+                        includeList.add(line.trim());
+                    }
+                }
+
+                Collections.sort(includeList);
+                LOGGER.info("Only including packages: " + includeList);
+
+                Set<String> includeSet = new HashSet<>(includeList);
+                return p -> {
+                    return includeSet.contains(p.getFileName().toString());
+                };
+            } catch (IOException e) {
+                LOGGER.severe("Could not load include list file: " + includeListFile);
+            }
+        }
+        return p -> true;
+    }
+
+    private static void ftw(Path root, Path outDir, Date sinceDate, String glob, Predicate<Path> includes) {
         HTMLDumper htmlDumper = new HTMLDumper(outDir);
 
         // fail early
@@ -116,7 +156,7 @@ public class PTAMain {
 
         try {
             FileTreeWalker walker = new FileTreeWalker();
-            Collection<RPackage> pkgs = walker.ftw(root, sinceDate, glob);
+            Collection<RPackage> pkgs = walker.ftw(root, sinceDate, glob, includes);
             htmlDumper.dump(pkgs, walker.getParseErrors());
         } catch (IOException e) {
             LOGGER.severe("Error while traversing package test directory: " + e.getMessage());

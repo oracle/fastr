@@ -14,6 +14,8 @@
 #
 
 ## Derived from snow and parallel packages
+## Note: the same code is used in snow_overrides.R, reflect any updates in that file
+## TODO: get rid of this redundancy
 
 eval(expression({
 

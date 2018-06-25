@@ -76,5 +76,10 @@ public class TestBuiltin_allnames extends TestBase {
         assertEval("{ all.names(expression(sin(x+y+x)), unique=NA) }");
 
         assertEval("{ all.names(quote(switch(x, 'median' =, 'hello' = print('hello case')))) }");
+
+        assertEval("{ all.names(as.symbol('a'), max.names=1)}");
+        assertEval("{ all.names(as.symbol('a'), max.names=0)}");
+        assertEval("{ all.names(as.symbol('a'), max.names=-1)}");
+        assertEval("{ all.names(as.symbol('a'), max.names=-2)}");
     }
 }

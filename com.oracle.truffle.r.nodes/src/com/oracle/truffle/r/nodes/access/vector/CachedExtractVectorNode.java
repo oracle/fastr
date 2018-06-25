@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNa
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.profile.AlwaysOnBranchProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
@@ -110,9 +111,8 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
-        if (targetClass == target.getClass() && exactValue.getClass() == this.exactClass //
+        if (targetClass == target.getClass() && exactValue.getClass() == this.exactClass && dropDimensionsValue.getClass() == dropDimensionsClass //
                         && logicalAsBoolean(dropDimensionsClass.cast(dropDimensionsValue), DEFAULT_DROP_DIMENSION) == this.dropDimensions //
-                        && dropDimensionsValue.getClass() == this.dropDimensionsClass //
                         && logicalAsBoolean(exactClass.cast(exactValue), DEFAULT_EXACT) == this.exact) {
             return positionsCheckNode.isSupported(positions);
         }
@@ -457,7 +457,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
         ExtractDimNamesNode(int dimensions) {
             // Support at most 2 different kinds of cached extract nodes per dimension.
-            limit = dimensions * 2;
+            limit = DSLConfig.getCacheSize(dimensions * 2);
         }
 
         protected abstract Object execute(int dimensionIndex, RAbstractStringVector vector, Object position, PositionProfile profile);

@@ -68,6 +68,7 @@ public class InstallationProblemDetector extends LineDetector {
 
     public static class PackageInstallationProblem extends Problem {
 
+        private static final int MAX_DISTANCE = 3;
         private final String message;
 
         public PackageInstallationProblem(RPackageTestRun pkg, InstallationProblemDetector detector, Location location, String message) {
@@ -94,14 +95,14 @@ public class InstallationProblemDetector extends LineDetector {
         @Override
         public int getSimilarityTo(Problem other) {
             if (other.getClass() == PackageInstallationProblem.class) {
-                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+                return Problem.computeLevenshteinDistanceFast(getDetails().trim(), other.getDetails().trim(), MAX_DISTANCE);
             }
             return Integer.MAX_VALUE;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return getSimilarityTo(other) < 3;
+            return getSimilarityTo(other) < MAX_DISTANCE;
         }
     }
 }

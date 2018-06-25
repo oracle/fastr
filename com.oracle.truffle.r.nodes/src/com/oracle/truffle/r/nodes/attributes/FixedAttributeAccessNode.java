@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.Utils;
 
 /**
@@ -29,7 +30,7 @@ import com.oracle.truffle.r.runtime.Utils;
  */
 public abstract class FixedAttributeAccessNode extends AttributeAccessNode {
 
-    protected static final int CACHE_LIMIT = 3;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
     protected final String name;
 

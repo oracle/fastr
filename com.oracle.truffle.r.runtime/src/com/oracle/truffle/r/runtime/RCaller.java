@@ -125,7 +125,9 @@ public final class RCaller {
 
     /**
      * Promise evaluation frame is artificial frame (does not exist on the R level) that is created
-     * to evaluate a promise in its context.
+     * to evaluate a promise in its context. This trick is also used for {@code eval},
+     * {@code do.call} and similar and frames created by those builtins may also return {@code true}
+     * from {@link #isPromise()}.
      *
      * Terminology: actual evaluation frame is a frame of the function that created the promise and
      * the frame in whose context the promise code should be evaluated.
@@ -157,6 +159,15 @@ public final class RCaller {
      */
     public boolean hasSysParent() {
         return payload instanceof REnvironment;
+    }
+
+    /**
+     * {@link RCaller}s for actual promise store the original {@link RCaller} (of the frame that
+     * invoked the promise) and in such case this method is a getter for it. You should check
+     * {@link #isPromise()} and {@link #hasSysParent()} before accessing promise caller.
+     */
+    public RCaller getPromiseCaller() {
+        return (RCaller) payload;
     }
 
     public REnvironment getSysParent() {

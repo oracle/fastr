@@ -69,6 +69,7 @@ public class ConfigureErrorDetector extends LineDetector {
 
     public static class ConfigureErrorProblem extends Problem {
 
+        private static final int MAX_DISTANCE = 10;
         private final String message;
 
         protected ConfigureErrorProblem(RPackageTestRun pkg, ConfigureErrorDetector detector, Location location, String message) {
@@ -98,14 +99,14 @@ public class ConfigureErrorDetector extends LineDetector {
         @Override
         public int getSimilarityTo(Problem other) {
             if (other.getClass() == ConfigureErrorProblem.class) {
-                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+                return Problem.computeLevenshteinDistanceFast(getDetails().trim(), other.getDetails().trim(), MAX_DISTANCE);
             }
             return Integer.MAX_VALUE;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return getSimilarityTo(other) < 10;
+            return getSimilarityTo(other) < MAX_DISTANCE;
         }
 
     }

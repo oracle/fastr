@@ -30,6 +30,10 @@
 #include <Rinternals.h>
 #include <trufflenfi.h>
 
+extern int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam);
+
+extern int dispatchHandlers();
+
 extern void init_memory();
 
 extern void init_utils(TruffleEnv *env);

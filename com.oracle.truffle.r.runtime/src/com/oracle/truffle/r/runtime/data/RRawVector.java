@@ -116,6 +116,31 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
     }
 
     @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setLength(int l) {
+        try {
+            NativeDataAccess.setDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        try {
+            NativeDataAccess.setTrueDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
     public byte[] getDataCopy() {
         if (data != null) {
             return Arrays.copyOf(data, data.length);

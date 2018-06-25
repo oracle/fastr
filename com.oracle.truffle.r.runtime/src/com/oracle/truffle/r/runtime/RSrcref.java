@@ -28,6 +28,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.PosixFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.source.Source;
@@ -82,16 +83,19 @@ public class RSrcref {
     /**
      * Internal version of srcfile(path).
      */
-    public static REnvironment createSrcfile(String path) {
-        return createSrcfile(FileSystems.getDefault().getPath(Utils.tildeExpand(path)));
+    public static REnvironment createSrcfile(String path, Set<Object> envRefHolder) {
+        return createSrcfile(FileSystems.getDefault().getPath(Utils.tildeExpand(path)), envRefHolder);
     }
 
     @TruffleBoundary
-    static REnvironment createSrcfile(Path path) {
-        // A srcref is an environment
+    static REnvironment createSrcfile(Path path, Set<Object> envRefHolder) {
+        // A srcfile is an environment
         REnvironment env = RContext.getInstance().srcfileEnvironments.get(path);
         if (env == null) {
             env = RDataFactory.createNewEnv("");
+            if (envRefHolder != null) {
+                envRefHolder.add(path);
+            }
             env.safePut(SrcrefFields.Enc.name(), "unknown");
             env.safePut(SrcrefFields.encoding.name(), "native.enc");
             env.safePut(SrcrefFields.timestamp.name(), getTimestamp(path));
@@ -119,7 +123,7 @@ public class RSrcref {
      * {@code null} in which case it will be created from {@code ss}.
      */
     public static RIntVector createLloc(SourceSection ss, String path) {
-        return createLloc(ss, createSrcfile(path));
+        return createLloc(ss, createSrcfile(path, null));
     }
 
     /**

@@ -71,6 +71,11 @@
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
 
+# Package-specific environment variables can be specified through the PKG_TEST_ENV_<pkgname> environment variable.
+# The individual environment variable pairs are delimited by a comma, e.g.
+#   export PKG_TEST_ENV_miniUI="LANGUAGE=en,LC_ALL=C"
+# specifies the environment variables LANGUAGE and LC_ALL for the miniUI package test.
+
 # If --use-installed-pkgs is set the lib install directory is analyzed for existing (correctly) installed packages
 # and these are not re-installed.
 
@@ -145,7 +150,8 @@ default.packages <- c("R", "base", "grid", "splines", "utils",
 # the name is that package and the values are regexps of suggests that can be ignored for that package
 # if this configuration gets too complex or updated too often, we can move it to separate config file
 ignore.suggests <- list(
-	rstudioapi = c('*') # rstudioapi executes almost no real tests, it is mostly just test of install & load
+	rstudioapi = c('*'), # rstudioapi executes almost no real tests, it is mostly just test of install & load
+	glmnet = c('knitr')  # probably used for vignettes only
 )
 
 choice.depends <- function(pkg, choice=c("direct","suggests")) {
@@ -312,10 +318,15 @@ set.repos <- function() {
 			# set the FastR internal repo
 			repos[["FASTR"]] <- paste0("file://", normalizePath("com.oracle.truffle.r.test.native/packages/repo"))
 		} else if (name == "SNAPSHOT") {
-			con <- file("etc/DEFAULT_CRAN_MIRROR", "r"); 
 			tryCatch({
+				con <- file("etc/DEFAULT_CRAN_MIRROR", "r");
 				cran.mirror <<- readLines(con)[[1]]
-			}, finally=function() close(con))
+				close(con)
+			}, error = function(err) {
+				cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory?")
+				print(err)
+				exit(1)
+			})
 			repos[["CRAN"]] <- cran.mirror
 		} else {
 			# User defined
@@ -838,6 +849,13 @@ check.create.dir <- function(name) {
 	}
 }
 
+getPkgEnv <- function(pkgname) {
+	envOneLine <- Sys.getenv(paste0("PKG_TEST_ENV_", pkgname))
+	envVars <- strsplit(envOneLine, ",")[[1]]
+	cat("Package-specific environment: ", envVars, "\n")
+	return (envVars)
+}
+
 test.package <- function(pkgname) {
 	testdir.path <- testdir
 	check.create.dir(testdir.path)
@@ -845,8 +863,9 @@ test.package <- function(pkgname) {
 	start.time <- proc.time()[[3]]
     res <- 0L
 	error_log_size <- fastr.errors.log.sizes()
+	pkgEnv <- getPkgEnv(pkgname)
 	if (run.mode == "system") {
-		res <- system.test(pkgname)
+		res <- system.test(pkgname, pkgEnv)
 	} else if (run.mode == "internal") {
 		res <- tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
 	} else if (run.mode == "context") {
@@ -865,7 +884,7 @@ is.fastr <- function() {
 	exists(".fastr.context.get", baseenv())
 }
 
-system.test <- function(pkgname) {
+system.test <- function(pkgname, pkgEnv) {
 	script <- normalizePath("com.oracle.truffle.r.test.packages/r/test.package.R")
     options <- character(0)
 	if (is.fastr()) {
@@ -880,11 +899,12 @@ system.test <- function(pkgname) {
 	# we want to stop tests that hang, but some packages have many tests
 	# each of which spawns a sub-process (over which we have no control)
 	# so we time out the entire set after 20 minutes.
-    env <- c("FASTR_PROCESS_TIMEOUT=20", 
+    genEnv <- c("FASTR_PROCESS_TIMEOUT=20",
              paste0("R_LIBS_USER=", shQuote(lib.install)),
              "R_LIBS=",
              paste0("MX_R_GLOBAL_ARGS=", fastr.test.jvm.args())
             )
+	env <- c(pkgEnv, genEnv)
 	rc <- system2(rscript, args, env=env)
 	rc
 }

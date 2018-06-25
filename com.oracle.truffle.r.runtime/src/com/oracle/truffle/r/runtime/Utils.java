@@ -30,6 +30,7 @@ import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
 import java.nio.file.attribute.PosixFilePermission;
 import java.util.Set;
@@ -249,25 +250,37 @@ public final class Utils {
      * of the dirs is writable null is returned.
      */
     public static Path getLogPath(String fileNamePrefix) {
-        String dir = RContext.isEmbedded() ? System.getProperty("java.io.tmpdir") : System.getProperty("user.dir");
+        String tmpDir = robustGetProperty("java.io.tmpdir");
+        String dir = RContext.isEmbedded() ? tmpDir : robustGetProperty("user.dir");
         int dirId = 0;
+        if (dir != null && tmpDir != null && Paths.get(dir).startsWith(tmpDir) && dir.contains("R.INSTALL")) {
+            // Simple heuristic to find out if we are in the middle of package installation, in
+            // which case we do not want to write to the working directory, since the installation
+            // process will remove that directory when finished.
+            dirId = 1;
+            dir = robustGetProperty("user.home");
+        }
         int pid = RContext.getInitialPid();
-        String baseName = fileNamePrefix + "_pid" + Integer.toString(pid) + ".log";
+        // Do not use PID if it was not set yet (logging/error during initialization)
+        String pidStr = pid == 0 ? "" : "_pid" + Integer.toString(pid);
+        String baseName = fileNamePrefix + pidStr + ".log";
         while (true) {
-            Path path = FileSystems.getDefault().getPath(dir, baseName);
-            if (Files.isWritable(path.getParent()) && (!Files.exists(path) || Files.isWritable(path))) {
-                return path;
+            if (dir != null) {
+                Path path = FileSystems.getDefault().getPath(dir, baseName);
+                if (robustCheckWriteable(path)) {
+                    return path;
+                }
             }
             switch (dirId) {
                 case 0:
                     if (RContext.isEmbedded()) {
                         return null;
                     } else {
-                        dir = System.getProperty("user.home");
+                        dir = robustGetProperty("user.home");
                     }
                     break;
                 case 1:
-                    dir = System.getProperty("java.io.tmpdir");
+                    dir = tmpDir;
                     break;
                 case 2:
                     dir = REnvVars.rHome();
@@ -277,6 +290,31 @@ public final class Utils {
             }
             dirId++;
         }
+    }
+
+    private static String robustGetProperty(String name) {
+        try {
+            return System.getProperty(name);
+        } catch (Throwable ex) {
+            // System.getProperty may throw SecurityException, we catch all since we really need to
+            // be robust at this point
+            logGetLogPathError(ex.getMessage());
+            return null;
+        }
+    }
+
+    private static boolean robustCheckWriteable(Path logFile) {
+        try {
+            return Files.isWritable(logFile.getParent()) && (!Files.exists(logFile) || Files.isWritable(logFile));
+        } catch (Throwable ex) {
+            // may throw SecurityException, we catch all since we really need to be robust
+            logGetLogPathError(ex.getMessage());
+            return false;
+        }
+    }
+
+    private static void logGetLogPathError(String message) {
+        System.err.println("Note: error during determining the error log file location: " + message);
     }
 
     /**

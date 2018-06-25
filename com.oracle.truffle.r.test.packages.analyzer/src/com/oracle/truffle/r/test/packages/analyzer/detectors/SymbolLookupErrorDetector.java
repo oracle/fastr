@@ -71,6 +71,7 @@ public final class SymbolLookupErrorDetector extends LineDetector {
 
     public static class SymbolLookupErrorProblem extends Problem {
 
+        private static final int MAX_DISTANCE = 30;
         private final String message;
 
         protected SymbolLookupErrorProblem(RPackageTestRun pkg, SymbolLookupErrorDetector detector, Location location, String message) {
@@ -96,14 +97,14 @@ public final class SymbolLookupErrorDetector extends LineDetector {
         @Override
         public int getSimilarityTo(Problem other) {
             if (other.getClass() == SymbolLookupErrorProblem.class) {
-                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+                return Problem.computeLevenshteinDistanceFast(getDetails().trim(), other.getDetails().trim(), MAX_DISTANCE);
             }
             return Integer.MAX_VALUE;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return getSimilarityTo(other) < 30;
+            return getSimilarityTo(other) < MAX_DISTANCE;
         }
     }
 

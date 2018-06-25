@@ -34,6 +34,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveNamesAttributeNode;
@@ -146,7 +147,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                     @Cached("create(type)") DropAttributesNode drop,
                     @Cached("create()") ForeignArray2R foreignArray2R) {
         if (RRuntime.isForeignObject(x)) {
-            Object o = foreignArray2R.convert(x);
+            Object o = foreignArray2R.convert((TruffleObject) x);
             if (!RRuntime.isForeignObject(o)) {
                 return cast == null ? o : cast.doCast(o);
             }

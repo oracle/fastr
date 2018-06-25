@@ -30,6 +30,14 @@
 #include <sys/utsname.h>
 #include <errno.h>
 
+int call_base_initEventLoop(char *fifoInPath, char *fifoOutPath) {
+    return initEventLoop(fifoInPath, fifoOutPath);
+}
+
+int call_base_dispatchHandlers() {
+    return dispatchHandlers();
+}
+
 int call_base_getpid() {
     return getpid();
 }

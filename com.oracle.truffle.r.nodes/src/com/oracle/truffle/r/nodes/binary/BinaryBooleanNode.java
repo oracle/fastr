@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.attributes.CopyAttributesNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -75,7 +76,7 @@ import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
  */
 public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
 
-    protected static final int CACHE_LIMIT = 5;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(5);
 
     protected final BooleanOperationFactory factory;
 

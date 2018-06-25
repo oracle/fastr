@@ -48,6 +48,36 @@ public final class BaseRFFI {
         this.downCallNodeFactory = downCallNodeFactory;
     }
 
+    public static final class InitEventLoopNode extends NativeCallNode {
+
+        private InitEventLoopNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.initEventLoop));
+        }
+
+        public int execute(String fifoInPath, String fifoOutPath) {
+            return (int) call(fifoInPath, fifoOutPath);
+        }
+
+        public static InitEventLoopNode create() {
+            return RFFIFactory.getBaseRFFI().createInitEventLoopNode();
+        }
+    }
+
+    public static final class DispatchHandlersNode extends NativeCallNode {
+
+        private DispatchHandlersNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.dispatchHandlers));
+        }
+
+        public int execute() {
+            return (int) call();
+        }
+
+        public static DispatchHandlersNode create() {
+            return RFFIFactory.getBaseRFFI().createDispatchHandlersNode();
+        }
+    }
+
     public static final class GetpidNode extends NativeCallNode {
 
         private GetpidNode(DownCallNodeFactory parent) {
@@ -279,6 +309,14 @@ public final class BaseRFFI {
         public static UmaskNode create() {
             return RFFIFactory.getBaseRFFI().createUmaskNode();
         }
+    }
+
+    public InitEventLoopNode createInitEventLoopNode() {
+        return new InitEventLoopNode(downCallNodeFactory);
+    }
+
+    public DispatchHandlersNode createDispatchHandlersNode() {
+        return new DispatchHandlersNode(downCallNodeFactory);
     }
 
     public GetpidNode createGetpidNode() {

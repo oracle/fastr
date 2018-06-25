@@ -26,8 +26,6 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 
-import org.graalvm.nativeimage.ObjectHandle;
-
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -190,6 +188,10 @@ public class ROptions {
         String cranMirror = REnvVars.getCRANMirror();
         if (cranMirror != null) {
             map.put("repos", cranMirror);
+        }
+
+        if (FastRConfig.DefaultDownloadMethod != null && !FastRConfig.DefaultDownloadMethod.isEmpty()) {
+            map.put("download.file.method", FastRConfig.DefaultDownloadMethod);
         }
 
         String additional = FastROptions.AdditionalOptions.getStringValue();

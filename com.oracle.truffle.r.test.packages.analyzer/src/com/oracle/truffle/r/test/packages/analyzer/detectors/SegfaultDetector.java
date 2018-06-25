@@ -82,6 +82,7 @@ public class SegfaultDetector extends LineDetector {
 
     public static class SegfaultProblem extends Problem {
 
+        private static final int MAX_DISTANCE = 100;
         private final String message;
 
         protected SegfaultProblem(RPackageTestRun pkg, SegfaultDetector detector, Location location, String message) {
@@ -107,14 +108,14 @@ public class SegfaultDetector extends LineDetector {
         @Override
         public int getSimilarityTo(Problem other) {
             if (other.getClass() == SegfaultProblem.class) {
-                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+                return Problem.computeLevenshteinDistanceFast(getDetails().trim(), other.getDetails().trim(), MAX_DISTANCE);
             }
             return Integer.MAX_VALUE;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return getSimilarityTo(other) < 100;
+            return getSimilarityTo(other) < MAX_DISTANCE;
         }
     }
 

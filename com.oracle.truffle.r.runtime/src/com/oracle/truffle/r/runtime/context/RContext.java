@@ -123,6 +123,11 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
  */
 public final class RContext {
 
+    /**
+     * This is a hack that allows us to pass {@link ChildContextInfo} into {@link RContext} when it
+     * is created via Graal SDK that lacks the API to set configuration options for new contexts.
+     * See GR-10356 for details.
+     */
     public static ChildContextInfo childInfo;
 
     public enum ContextKind {
@@ -139,13 +144,15 @@ public final class RContext {
 
         /**
          * Shares the set of loaded packages of the parent context at the time the context is
-         * created. Only useful when there is a priori knowledge on the evaluation that the context
-         * will be used for. Cannot safely be used for parallel context evaluation. Must be created
-         * as a child of an existing parent context of type {@link #SHARE_NOTHING} or
-         * {@link #SHARE_PARENT_RO} and only one such child is allowed. (Strictly speaking the
-         * invariant should be only one active child, but the implementation enforces it at creation
-         * time). Evidently any changes made to the shared environment, e.g., loading a package,
-         * affect the parent.
+         * created, but creates its own custom global environment. This is used for unit testing
+         * where we do not have to load all the packages for each test, but the changes in global
+         * environment in one tests do not affect other tests.
+         *
+         * Cannot safely be used for parallel context evaluation. Must be created as a child of an
+         * existing parent context of type {@link #SHARE_NOTHING} or {@link #SHARE_PARENT_RO} and
+         * only one such child is allowed. (Strictly speaking the invariant should be only one
+         * active child, but the implementation enforces it at creation time). Evidently any changes
+         * made to the shared environment, e.g., loading a package, affect the parent.
          */
         SHARE_PARENT_RW,
 
@@ -162,7 +169,10 @@ public final class RContext {
         SHARE_PARENT_RO,
 
         /**
-         * Shares all environments on the search path.
+         * Shares all environments on the search path, but makes illusion of separation by replacing
+         * any modified value with an instance of
+         * {@link com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData} that
+         * holds separate value for each {@link RContext}.
          */
         SHARE_ALL;
     }
@@ -237,8 +247,7 @@ public final class RContext {
     }
 
     /**
-     * Any context created by another has a parent. When such a context is destroyed we must reset
-     * the RContext.threadLocalContext to the parent.
+     * Any context created by another has a parent.
      */
     private final RContext parentContext;
     private final int id;
@@ -948,15 +957,16 @@ public final class RContext {
         }
 
         private final Node read = Message.READ.createNode();
-        private final Node write = Message.WRITE.createNode();
+        private final Node execute = Message.createExecute(1).createNode();
 
         @TruffleBoundary
         public String getPrompt() {
             if (handler != null) {
                 Object result;
                 try {
-                    result = ForeignAccess.sendRead(read, handler, "prompt");
-                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
+                    Object f = ForeignAccess.sendRead(read, handler, "getPrompt");
+                    result = ForeignAccess.sendExecute(execute, (TruffleObject) f);
+                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException | ClassCastException e) {
                     throw new RInternalError(e, "error while reading prompt");
                 }
                 return (String) result;
@@ -968,34 +978,10 @@ public final class RContext {
         public void setPrompt(String prompt) {
             if (handler != null) {
                 try {
-                    ForeignAccess.sendWrite(write, handler, "prompt", prompt);
-                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
-                    throw new RInternalError(e, "error while writing prompt");
-                }
-            }
-        }
-
-        @TruffleBoundary
-        public String getHistory() {
-            if (handler != null) {
-                Object result;
-                try {
-                    result = ForeignAccess.sendRead(read, handler, "history");
-                } catch (UnknownIdentifierException | UnsupportedMessageException e) {
-                    throw new RInternalError(e, "error while reading history");
-                }
-                return (String) result;
-            }
-            return "";
-        }
-
-        @TruffleBoundary
-        public void setHistory(String history) {
-            if (handler != null) {
-                try {
-                    ForeignAccess.sendWrite(write, handler, "history", history);
-                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException e) {
-                    throw new RInternalError(e, "error while writing history");
+                    Object f = ForeignAccess.sendRead(read, handler, "setPrompt");
+                    ForeignAccess.sendExecute(execute, (TruffleObject) f, prompt);
+                } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException | ClassCastException e) {
+                    throw new RInternalError(e, "error while writing prompt from object " + handler);
                 }
             }
         }

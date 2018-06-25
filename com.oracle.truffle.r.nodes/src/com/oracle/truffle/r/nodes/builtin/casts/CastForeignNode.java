@@ -22,22 +22,41 @@
  */
 package com.oracle.truffle.r.nodes.builtin.casts;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
 public final class CastForeignNode extends CastNode {
 
-    @Child private ForeignArray2R foreignArray2R = ForeignArray2R.create();
+    @Child private ForeignArray2R foreignArray2R;
 
-    private final ConditionProfile isForeign = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile isInteropScalar = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private ConditionProfile isForeign;
+    @CompilationFinal private ConditionProfile isInteropScalar;
 
     @Override
     protected Object execute(Object obj) {
+        if (!RRuntime.isForeignObject(obj)) {
+            return obj;
+        }
+        if (foreignArray2R == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            foreignArray2R = insert(ForeignArray2R.create());
+        }
+        if (isForeign == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isForeign = ConditionProfile.createBinaryProfile();
+        }
+        if (isInteropScalar == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            isInteropScalar = ConditionProfile.createBinaryProfile();
+        }
         if (isForeign.profile(foreignArray2R.isForeignVector(obj))) {
-            return foreignArray2R.convert(obj);
+            return foreignArray2R.convert((TruffleObject) obj);
         } else if (isInteropScalar.profile(isInteropScalar(obj))) {
             return ((RInteropScalar) obj).getRValue();
         } else {

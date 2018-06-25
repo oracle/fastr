@@ -29,39 +29,40 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseTemporaryNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "as.logical", kind = PRIMITIVE, dispatch = INTERNAL_GENERIC, parameterNames = {"x", "..."}, behavior = PURE)
 public abstract class AsLogical extends RBuiltinNode.Arg2 {
-
-    private final ConditionProfile noAttributes = ConditionProfile.createBinaryProfile();
-
-    @Child private ReuseTemporaryNode reuseTemporaryNode;
 
     static {
         Casts casts = new Casts(AsLogical.class);
         casts.arg("x").returnIf(missingValue().or(nullValue()), emptyLogicalVector()).asLogicalVector();
     }
 
-    @Specialization
-    protected RAbstractLogicalVector asLogicaleger(RAbstractLogicalVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot) {
+    @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
+    protected RAbstractLogicalVector asLogical(RAbstractLogicalVector v, @SuppressWarnings("unused") RArgsValuesAndNames dotdotdot,
+                    @Cached("createTemporary(v)") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            if (reuseTemporaryNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                reuseTemporaryNode = insert(ReuseTemporaryNode.create());
-            }
-            RAbstractLogicalVector res = (RAbstractLogicalVector) reuseTemporaryNode.execute(v);
+            RAbstractLogicalVector res = reuseTemporaryNode.getResult(v).materialize();
             res.resetAllAttributes(true);
             return res;
         }
+    }
+
+    @Specialization(replaces = "asLogical")
+    protected RAbstractLogicalVector asLogicalGeneric(RAbstractLogicalVector v, RArgsValuesAndNames dotdotdot,
+                    @Cached("createTemporaryGeneric()") VectorReuse reuseTemporaryNode,
+                    @Cached("createBinaryProfile()") ConditionProfile noAttributes) {
+        return asLogical(v, dotdotdot, reuseTemporaryNode, noAttributes);
     }
 }

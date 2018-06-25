@@ -43,8 +43,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public class RMissingHelper {
 
     /**
-     * <code>true</code> if value == {@link RMissing#instance} OR value is an
-     * {@link RArgsValuesAndNames#isEmpty()} {@link RArgsValuesAndNames} (in case of "...").
+     * <code>true</code> if value == {@link RMissing#instance} OR {@link REmpty#instance} OR
+     * {@link RArgsValuesAndNames} with {@link RArgsValuesAndNames#isEmpty()} equal to {@code true}
+     * (in case of "...").
      *
      * @param value
      * @return Whether the given value represents an argument that has not been provided.

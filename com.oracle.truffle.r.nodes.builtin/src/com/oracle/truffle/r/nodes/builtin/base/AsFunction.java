@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.SaveArgumentsNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -49,7 +50,6 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -92,7 +92,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
             for (int i = 0; i < x.getLength() - 1; i++) {
                 final RNode defaultValue;
                 Object arg = x.getDataAtAsObject(i);
-                if (arg == RMissing.instance) {
+                if (RMissingHelper.isMissing(arg)) {
                     defaultValue = null;
                 } else if (arg == RNull.instance) {
                     defaultValue = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, RNull.instance).asRNode();

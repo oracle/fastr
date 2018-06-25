@@ -49,7 +49,7 @@ public class JLineConsoleHandler extends ConsoleHandler {
             console.setHandleUserInterrupt(true);
             console.setExpandEvents(false);
         } catch (IOException ex) {
-            throw RCommand.fatal(ex, "unexpected error opening console reader");
+            throw RMain.fatal(ex, "unexpected error opening console reader");
         }
     }
 
@@ -79,6 +79,11 @@ public class JLineConsoleHandler extends ConsoleHandler {
     @Override
     public void setPrompt(String prompt) {
         console.setPrompt(noPrompt ? "" : prompt != null ? prompt : "");
+    }
+
+    @Override
+    public String getPrompt() {
+        return console.getPrompt();
     }
 
     public void clearHistory() {

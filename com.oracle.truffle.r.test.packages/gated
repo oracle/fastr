@@ -1,3 +1,4 @@
+miniUI
 foreign
 mime
 rjson
@@ -8,3 +9,7 @@ RSclient
 rstudioapi
 assertthat
 naivebayes
+glmnet
+nnet
+compare
+shinythemes

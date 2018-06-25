@@ -228,3 +228,7 @@ rffi.RfFunctions <- function() {
 rffi.testDATAPTR <- function(strings, testSingleString) {
 	.Call('test_DATAPTR', strings, testSingleString)
 }
+
+rffi.test_duplicate <- function(val, deep) {
+	.Call('test_duplicate', val, deep)
+}

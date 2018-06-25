@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.engine;
 
 import java.util.List;
-import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;

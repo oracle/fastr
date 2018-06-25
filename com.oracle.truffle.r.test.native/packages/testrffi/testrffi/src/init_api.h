@@ -29,6 +29,10 @@
 // This code is '#included' into init.c 
 CALLDEF(api_OBJECT, 1),
 CALLDEF(api_LENGTH, 1),
+CALLDEF(api_LEVELS, 1),
+CALLDEF(api_SETLENGTH, 2),
+CALLDEF(api_TRUELENGTH, 1),
+CALLDEF(api_SET_TRUELENGTH, 2),
 CALLDEF(api_Rf_error, 1),
 CALLDEF(api_NAMED, 1),
 CALLDEF(api_Rf_ncols, 1),

@@ -32,6 +32,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -41,7 +42,7 @@ import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"}, behavior = PURE)
 public abstract class Vector extends RBuiltinNode.Arg2 {
 
-    private static final String CACHED_MODES_LIMIT = "3";
+    protected static final int CACHED_MODES_LIMIT = DSLConfig.getCacheSize(3);
 
     @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
@@ -59,7 +60,7 @@ public abstract class Vector extends RBuiltinNode.Arg2 {
         return type;
     }
 
-    @Specialization(guards = {"mode == cachedMode"}, limit = CACHED_MODES_LIMIT)
+    @Specialization(guards = {"mode == cachedMode"}, limit = "CACHED_MODES_LIMIT")
     Object vectorCached(@SuppressWarnings("unused") String mode, int length,
                     @SuppressWarnings("unused") @Cached("mode") String cachedMode,
                     @Cached("modeToType(mode)") RType type) {

@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -596,6 +597,7 @@ public final class SpecialAttributesFunctions {
         private final ConditionProfile nullDimsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile nonEmptyDimsProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile twoDimsOrMoreProfile = ConditionProfile.createBinaryProfile();
+        @Child private GetReadonlyData.Int getReadonlyData;
 
         protected GetDimAttributeNode() {
             super(RRuntime.DIM_ATTR_KEY);
@@ -618,8 +620,12 @@ public final class SpecialAttributesFunctions {
                 isPairListProfile.enter();
                 return ((RPairList) x).getDimensions();
             }
+            if (getReadonlyData == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getReadonlyData = insert(GetReadonlyData.Int.create());
+            }
             RIntVector dims = (RIntVector) execute(x);
-            return nullDimsProfile.profile(dims == null) ? null : dims.getReadonlyData();
+            return nullDimsProfile.profile(dims == null) ? null : getReadonlyData.execute(dims);
         }
 
         public static boolean isArray(int[] dimensions) {

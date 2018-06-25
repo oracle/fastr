@@ -50,7 +50,7 @@ public final class RCmdOptions {
         EITHER {
             @Override
             public String usage() {
-                throw RCommand.fatal("can't call usage() on Client.EITHER");
+                throw RMain.fatal("can't call usage() on Client.EITHER");
             }
         };
 
@@ -191,6 +191,21 @@ public final class RCmdOptions {
         } else {
             assert option.type == RCmdOptionType.STRING;
             optionValues.put(option, value);
+        }
+    }
+
+    public void addInteractive() {
+        setValue(RCmdOption.INTERACTIVE, true);
+        if (arguments == null || arguments.length == 0) {
+            arguments = new String[]{"--interactive"};
+        } else {
+            String[] oldArgs = arguments;
+            arguments = new String[arguments.length + 1];
+            arguments[0] = oldArgs[0];
+            arguments[1] = "--interactive";
+            for (int i = 1; i < oldArgs.length; i++) {
+                arguments[i + 1] = oldArgs[i];
+            }
         }
     }
 

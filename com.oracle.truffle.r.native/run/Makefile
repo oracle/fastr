@@ -100,11 +100,13 @@ ifeq ($(FASTR_RFFI),llvm)
 endif
 	cp Makeconf.etc $(FASTR_ETC_DIR)/Makeconf
 
+	## deploy helper script that can build native-image of FastR and update the launchers in GraalVM
+	cp install_r_native_image $(FASTR_BIN_DIR)
     ## prepare the configuration artefacts for the manual FastR configuration in GraalVM 
 	cp configure_fastr $(FASTR_BIN_DIR)
 	chmod +x $(FASTR_BIN_DIR)/configure_fastr
 	cp configure.ac $(FASTR_ETC_DIR)
-	cp configure.ac $(FASTR_ETC_DIR)
+	cp configure $(FASTR_ETC_DIR)
 	cp edMakeconf.etc $(FASTR_ETC_DIR)
 	cp edMakeconf.etc.llvm $(FASTR_ETC_DIR)
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf.in $(FASTR_ETC_DIR)

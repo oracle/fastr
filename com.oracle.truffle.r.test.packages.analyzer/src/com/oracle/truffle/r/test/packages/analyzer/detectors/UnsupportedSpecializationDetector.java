@@ -76,6 +76,8 @@ public class UnsupportedSpecializationDetector extends LineDetector {
 
     private static class UnsupportedSpecializationProblem extends Problem {
 
+        private static final int MAX_DISTANCE = 5;
+
         protected UnsupportedSpecializationProblem(RPackageTestRun pkg, UnsupportedSpecializationDetector detector, Location location, String message) {
             super(pkg, detector, location);
             this.message = message;
@@ -101,14 +103,14 @@ public class UnsupportedSpecializationDetector extends LineDetector {
         @Override
         public int getSimilarityTo(Problem other) {
             if (other.getClass() == UnsupportedSpecializationProblem.class) {
-                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+                return Problem.computeLevenshteinDistanceFast(getDetails().trim(), other.getDetails().trim(), MAX_DISTANCE);
             }
             return Integer.MAX_VALUE;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return getSimilarityTo(other) < 5;
+            return getSimilarityTo(other) < MAX_DISTANCE;
         }
     }
 

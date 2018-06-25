@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.primitive.BinaryMapNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticNodeGen;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
@@ -56,7 +57,7 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
  */
 public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
 
-    protected static final int CACHE_LIMIT = 5;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(5);
 
     protected final BinaryArithmeticFactory binary;
     private final UnaryArithmeticFactory unary;

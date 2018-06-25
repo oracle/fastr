@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
@@ -45,7 +46,7 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
 
     @Override
     public RLogicalVector materialize() {
-        throw RInternalError.shouldNotReachHere();
+        return (RLogicalVector) copy();
     }
 
     @Override
@@ -57,11 +58,24 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
     @Override
     @TruffleBoundary
     public byte getDataAt(int index) {
+        Object value = null;
         try {
-            return RRuntime.asLogical((boolean) ForeignAccess.sendRead(READ, delegate, index));
+            value = ForeignAccess.sendRead(READ, delegate, index);
+            return RRuntime.asLogical((boolean) value);
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw RInternalError.shouldNotReachHere(e);
+        } catch (ClassCastException e) {
+            return checkIsNull(value, e);
         }
+    }
+
+    private static byte checkIsNull(Object value, ClassCastException e) throws RuntimeException {
+        if (value instanceof TruffleObject) {
+            if (ForeignAccess.sendIsNull(IS_NULL, (TruffleObject) value)) {
+                return RRuntime.LOGICAL_NA;
+            }
+        }
+        throw RInternalError.shouldNotReachHere(e);
     }
 
     private static final class FastPathAccess extends FastPathFromLogicalAccess {
@@ -72,6 +86,7 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
 
         @Child private Node getSize = Message.GET_SIZE.createNode();
         @Child private Node read = Message.READ.createNode();
+        @Child private Node isNull;
 
         @Override
         protected int getLength(RAbstractContainer vector) {
@@ -84,9 +99,22 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
 
         @Override
         protected byte getLogical(Object internalStore, int index) {
+            Object value = null;
             try {
-                return RRuntime.asLogical((boolean) ForeignAccess.sendRead(read, (TruffleObject) internalStore, index));
+                value = ForeignAccess.sendRead(read, (TruffleObject) internalStore, index);
+                return RRuntime.asLogical((boolean) value);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            } catch (ClassCastException e) {
+                if (value instanceof TruffleObject) {
+                    if (isNull == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        isNull = insert(Message.IS_NULL.createNode());
+                    }
+                    if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
+                        return RRuntime.LOGICAL_NA;
+                    }
+                }
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
@@ -111,10 +139,14 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
         @Override
         protected byte getLogical(Object store, int index) {
             RForeignBooleanWrapper vector = (RForeignBooleanWrapper) store;
+            Object value = null;
             try {
-                return RRuntime.asLogical((boolean) ForeignAccess.sendRead(READ, vector.delegate, index));
+                value = ForeignAccess.sendRead(READ, vector.delegate, index);
+                return RRuntime.asLogical((boolean) value);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
+            } catch (ClassCastException e) {
+                return checkIsNull(value, e);
             }
         }
     };

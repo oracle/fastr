@@ -307,7 +307,14 @@ public abstract class REnvironment extends RAttributeStorage {
      * Value returned by {@code baseenv()}. This is the "package:base" environment.
      */
     public static REnvironment baseEnv() {
-        Base baseEnv = RContext.getInstance().stateREnvironment.getBaseEnv();
+        return baseEnv(RContext.getInstance());
+    }
+
+    /**
+     * Value returned by {@code baseenv()}. This is the "package:base" environment.
+     */
+    public static REnvironment baseEnv(RContext ctx) {
+        Base baseEnv = ctx.stateREnvironment.getBaseEnv();
         assert baseEnv != null;
         return baseEnv;
     }

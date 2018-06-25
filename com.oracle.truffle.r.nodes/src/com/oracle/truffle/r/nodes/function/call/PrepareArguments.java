@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareA
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -55,7 +56,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public abstract class PrepareArguments extends Node {
 
-    protected static final int CACHE_SIZE = 8;
+    protected static final int CACHE_SIZE = DSLConfig.getCacheSize(8);
 
     abstract static class PrepareArgumentsDefault extends PrepareArguments {
 

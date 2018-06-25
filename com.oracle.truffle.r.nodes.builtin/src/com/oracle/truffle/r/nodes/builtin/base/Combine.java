@@ -64,6 +64,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNode;
 import com.oracle.truffle.r.nodes.unary.PrecedenceNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -94,7 +95,8 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
 
     private static final ArgumentsSignature EMPTY_SIGNATURE = ArgumentsSignature.empty(1);
 
-    protected static final int COMBINE_CACHED_LIMIT = PrecedenceNode.NUMBER_OF_PRECEDENCES;
+    protected static final int COMBINE_CACHED_SIGNATURE_LIMIT = DSLConfig.getCacheSize(1);
+    protected static final int COMBINE_CACHED_PRECEDENCE_LIMIT = DSLConfig.getCacheSize(PrecedenceNode.NUMBER_OF_PRECEDENCES);
 
     private static final int MAX_PROFILES = 8;
 
@@ -147,7 +149,8 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         return cast;
     }
 
-    @Specialization(replaces = "combineSimple", limit = "1", guards = {"!recursive", "args.getSignature() == cachedSignature", "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
+    @Specialization(replaces = "combineSimple", limit = "COMBINE_CACHED_SIGNATURE_LIMIT", guards = {"!recursive", "args.getSignature() == cachedSignature",
+                    "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
     protected Object combineCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("args.getSignature()") ArgumentsSignature cachedSignature,
                     @Cached("precedence(args, cachedSignature.getLength())") int cachedPrecedence,
@@ -181,7 +184,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     }
 
     @TruffleBoundary
-    @Specialization(limit = "COMBINE_CACHED_LIMIT", replaces = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
+    @Specialization(limit = "COMBINE_CACHED_PRECEDENCE_LIMIT", replaces = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
     protected Object combine(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("precedence(args, args.getLength())") int cachedPrecedence,
                     @Cached("createCast(cachedPrecedence)") CastNode cast,

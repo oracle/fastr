@@ -35,12 +35,14 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher.MatchPermutation;
+import com.oracle.truffle.r.nodes.function.call.CallRBuiltinCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -71,7 +73,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         this.argsAreEvaluated = argsAreEvaluated;
     }
 
-    private static final int MAX_CACHE_DEPTH = 3;
+    private static final int MAX_CACHE_DEPTH = DSLConfig.getCacheSize(4);
 
     public static CallMatcherNode create(boolean argsAreEvaluated) {
         return new CallMatcherUninitializedNode(argsAreEvaluated, 0);
@@ -161,6 +163,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
     }
 
+    // The implementation only differs in whether it has @ExplodeLoop annotation
+    // The two implementations are identical and should be kept in sync
     protected abstract void replaceMissingArguments(RFunction function, Object[] args);
 
     @NodeInfo(cost = NodeCost.UNINITIALIZED)
@@ -175,7 +179,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (depth > MAX_CACHE_DEPTH) {
+            if (depth >= MAX_CACHE_DEPTH) {
                 return replace(new CallMatcherGenericNode(argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             } else {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, new CallMatcherUninitializedNode(argsAreEvaluated, depth + 1)));
@@ -291,6 +295,23 @@ public abstract class CallMatcherNode extends RBaseNode {
             }
         }
 
+        public Object[] getArgs(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
+
+            // Note: see CallMatcherNode#specialize for details on suppliedSignature/Arguments
+
+            // this unrolls all varargs instances in suppliedArgs into a flat array of arguments
+            Object[] preparedArguments = prepareSuppliedArgument(preparePermutation, suppliedArguments);
+
+            // This is then matched to formal signature: the result is non-flat array of
+            // arguments possibly containing varargs -- something that argument matching for a
+            // direct function call would create would this be a direct function call
+            RArgsValuesAndNames matchedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, null, formals);
+            Object[] reorderedArgs = matchedArgs.getArguments();
+            return reorderedArgs;
+        }
+
+        // The implementation only differs in whether it has @ExplodeLoop annotation
+        // The two implementations are identical and should be kept in sync
         @Override
         @ExplodeLoop
         protected void replaceMissingArguments(RFunction function, Object[] args) {
@@ -343,13 +364,13 @@ public abstract class CallMatcherNode extends RBaseNode {
             super(argsAreEvaluated);
         }
 
-        @Child private CallRFunctionCachedNode call = CallRFunctionCachedNodeGen.create(0);
-        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+        @Child private CallRFunctionCachedNode call = CallRFunctionCachedNodeGen.create(2);
+        @Child private CallRBuiltinCachedNode callRBuiltin = CallRBuiltinCachedNode.create(2);
 
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
             RArgsValuesAndNames reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature, this);
-            evaluatePromises(frame, function, reorderedArgs.getArguments(), reorderedArgs.getSignature().getVarArgIndex());
+            evaluatePromises(frame, function, reorderedArgs.getArguments(), ((RRootNode) function.getRootNode()).getFormalArguments().getSignature().getVarArgIndex());
 
             RCaller parent = RArguments.getCall(frame).getParent();
             String genFunctionName = functionName == null ? function.getName() : functionName;
@@ -363,13 +384,15 @@ public abstract class CallMatcherNode extends RBaseNode {
             }
 
             MaterializedFrame callerFrame = (dispatchArgs instanceof S3Args) ? ((S3Args) dispatchArgs).callEnv : null;
-            try {
+            if (function.isBuiltin()) {
+                return callRBuiltin.execute(frame, function, reorderedArgs.getArguments());
+            } else {
                 return call.execute(frame, function, caller, callerFrame, reorderedArgs.getArguments(), reorderedArgs.getSignature(), function.getEnclosingFrame(), dispatchArgs);
-            } finally {
-                visibility.executeAfterCall(frame, caller);
             }
         }
 
+        // The implementation only differs in whether it has @ExplodeLoop annotation
+        // The two implementations are identical and should be kept in sync
         @Override
         protected void replaceMissingArguments(RFunction function, Object[] args) {
             FormalArguments formals = ((RRootNode) function.getRootNode()).getFormalArguments();
@@ -415,11 +438,11 @@ public abstract class CallMatcherNode extends RBaseNode {
                         ArgumentsSignature varArgSignature = varArgs.getSignature();
                         for (int i = 0; i < varArgs.getLength(); i++) {
                             argNames[index] = varArgSignature.getName(i);
-                            argValues[index++] = checkMissing(varArgValues[i]);
+                            argValues[index++] = varArgValues[i];
                         }
                     } else if (!paramSignature.isUnmatched(fi)) {
                         argNames[index] = paramSignature.getName(fi);
-                        argValues[index++] = checkMissing(arg);
+                        argValues[index++] = arg;
                     }
                 }
                 signature = ArgumentsSignature.get(argNames);
@@ -429,7 +452,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 int index = 0;
                 for (int i = 0; i < argCount; i++) {
                     if (!hasUnmatched || !paramSignature.isUnmatched(i)) {
-                        argValues[index] = checkMissing(args[i]);
+                        argValues[index] = args[i];
                         if (hasUnmatched) {
                             newSignature[index] = paramSignature.getName(i);
                         }

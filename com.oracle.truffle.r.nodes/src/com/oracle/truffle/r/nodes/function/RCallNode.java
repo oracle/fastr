@@ -52,6 +52,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -69,14 +70,12 @@ import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArguments;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.helpers.AccessListField;
-import com.oracle.truffle.r.nodes.helpers.GetFromEnvironment;
-import com.oracle.truffle.r.nodes.helpers.GetFromEnvironmentNodeGen;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -158,25 +157,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
     @Child private GetBasicFunction getBasicFunction;
-
-    private static final class GetBasicFunction extends RBaseNode {
-        @Child private AccessListField accessListField = AccessListField.create();
-        @Child private GetFromEnvironment getMethods = GetFromEnvironmentNodeGen.create();
-        @Child private GetFromEnvironment getBasicFunsList = GetFromEnvironmentNodeGen.create();
-
-        Object execute(VirtualFrame frame, String functionName) {
-            REnvironment namespaceRegistry = REnvironment.getNamespaceRegistry();
-            Object methods = getMethods.execute(frame, namespaceRegistry, "methods");
-            if (!(methods instanceof REnvironment)) {
-                throw error(RError.Message.GENERIC, "methods namespace not found on search list");
-            }
-            Object basicFunsList = getBasicFunsList.execute(frame, (REnvironment) methods, ".BasicFunsList");
-            if (!(basicFunsList instanceof RList)) {
-                throw error(RError.Message.GENERIC, ".BasicFunsList not found in methods namespace");
-            }
-            return accessListField.execute((RList) basicFunsList, functionName);
-        }
-    }
 
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
         if (explicitArgs == null) {
@@ -463,6 +443,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile summaryGroupProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isAttributableProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isS4Profile,
+                    @Cached("createCountingProfile()") LoopConditionProfile s4ArgsProfile,
                     @Cached("createPromiseHelper()") PromiseCheckHelperNode promiseHelperNode,
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call,
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
@@ -496,7 +477,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
             isS4Dispatch = true;
         } else if (args.length > typeXIdx + 1 && dispatch == RDispatch.OPS_GROUP_GENERIC) {
-            for (int i = typeXIdx + 1; i < args.length; i++) {
+            s4ArgsProfile.profileCounted(args.length - typeXIdx);
+            for (int i = typeXIdx + 1; s4ArgsProfile.inject(i < args.length); i++) {
                 Object argi = promiseHelperNode.checkEvaluate(frame, args[i]);
                 if (isAttributableProfile.profile(argi instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) argi).isS4())) {
                     isS4Dispatch = true;
@@ -838,7 +820,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
          */
         public abstract Object execute(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments);
 
-        protected static final int CACHE_SIZE = 4;
+        protected static final int CACHE_SIZE = DSLConfig.getCacheSize(4);
 
         private final RCallNode originalCall;
         private final AlteredArguments alteredArguments;

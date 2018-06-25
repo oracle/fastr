@@ -34,10 +34,12 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Deque;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -205,6 +207,8 @@ public class RSerialize {
 
     public interface CallHook {
         Object eval(Object arg);
+
+        Object getSessionRef();
     }
 
     public static final class ContextStateImpl implements RContext.ContextState {
@@ -1391,7 +1395,7 @@ public class RSerialize {
 
         private Output(OutputStream os, int format, int version, CallHook hook) throws IOException {
             super(hook);
-            this.state = new PLState();
+            this.state = new PLState(hook != null ? hook.getSessionRef() : null);
             this.version = version;
             switch (format) {
                 case ASCII:
@@ -1805,7 +1809,7 @@ public class RSerialize {
                         // do this only for packages
                         Path relPath = relativizeLibPath(Paths.get(path));
                         if (relPath != null) {
-                            REnvironment createSrcfile = RSrcref.createSrcfile(relPath);
+                            REnvironment createSrcfile = RSrcref.createSrcfile(relPath, state.envRefHolder);
                             Object createLloc = RSrcref.createLloc(ss, createSrcfile);
                             writePairListEntry(RRuntime.R_SRCREF, createLloc);
                             writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
@@ -1885,6 +1889,30 @@ public class RSerialize {
     private abstract static class State {
 
         private final Map<String, RSymbol> symbolMap = new HashMap<>();
+
+        /**
+         * This set holds all srcfile attribute paths created during a serialization. It prevents
+         * the associated environments from being garbage-collected before the serialization
+         * finishes. The holding set is stored in the static <code>envRefHolderMap</code>, where the
+         * key is an object representing the serialization session, which usually is some hook
+         * function. See {@link RContext#srcfileEnvironments}.
+         */
+        private final Set<Object> envRefHolder;
+
+        private static final WeakHashMap<Object, Set<Object>> envRefHolderMap = new WeakHashMap<>();
+
+        private State(Object serialSessionRef) {
+            if (serialSessionRef != null) {
+                Set<Object> refHolder = envRefHolderMap.get(serialSessionRef);
+                if (refHolder == null) {
+                    refHolder = new HashSet<>();
+                    envRefHolderMap.put(serialSessionRef, refHolder);
+                }
+                envRefHolder = refHolder;
+            } else {
+                envRefHolder = new HashSet<>();
+            }
+        }
 
         /**
          * Pushes a new virtual pairlist (no type) onto the stack. An untyped pairlist is subject to
@@ -1993,6 +2021,10 @@ public class RSerialize {
     private static class PLState extends State {
         private static final RPairList NULL = RDataFactory.createPairList();
         private final Deque<RPairList> active = new LinkedList<>();
+
+        private PLState(Object serialSessionRef) {
+            super(serialSessionRef);
+        }
 
         @Override
         public State openPairList() {
@@ -2346,7 +2378,7 @@ public class RSerialize {
             }
             Object pl = state.closePairList();
             if (callElement instanceof Node && RContext.getRRuntimeASTAccess().isTaggedWith((Node) callElement, StandardTags.StatementTag.class)) {
-                attachSrcref(callElement, pl);
+                attachSrcref(callElement, pl, state);
             }
             state.setCdr(pl);
         }
@@ -2471,7 +2503,7 @@ public class RSerialize {
         Object body = visitor.visitFunctionBody(function);
 
         // convert and attach source section to srcref attribute
-        attachSrcref(function, body);
+        attachSrcref(function, body, state);
 
         state.setCdr(body);
     }
@@ -2483,7 +2515,7 @@ public class RSerialize {
      * @param syntaxElement The syntax element providing the source section.
      * @param serObj The object to attribute (most likely a pair list).
      */
-    private static void attachSrcref(RSyntaxElement syntaxElement, Object serObj) {
+    private static void attachSrcref(RSyntaxElement syntaxElement, Object serObj, State state) {
         SourceSection ss = getFileSourceSection(syntaxElement);
         if (ss != null && serObj instanceof RAttributable) {
             String pathInternal = RSource.getPathInternal(ss.getSource());
@@ -2492,7 +2524,7 @@ public class RSerialize {
             Path relPath = relativizeLibPath(Paths.get(pathInternal));
             if (relPath != null) {
                 RAttributable attributable = (RAttributable) serObj;
-                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath));
+                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath, state.envRefHolder));
                 RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
                 if (createBlockSrcrefs != null) {
                     attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);

@@ -133,6 +133,31 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
     }
 
     @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setLength(int l) {
+        try {
+            NativeDataAccess.setDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        try {
+            NativeDataAccess.setTrueDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
     public byte getDataAt(int index) {
         return NativeDataAccess.getData(this, data, index);
     }

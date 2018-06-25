@@ -131,6 +131,31 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
     }
 
     @Override
+    public void setLength(int l) {
+        try {
+            NativeDataAccess.setDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        try {
+            NativeDataAccess.setTrueDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
     public int[] getDataCopy() {
         if (data != null) {
             return Arrays.copyOf(data, data.length);

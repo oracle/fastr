@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeInfo;
@@ -45,6 +46,7 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
@@ -356,12 +358,13 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     @NodeInfo(cost = NONE)
     public abstract static class ValueProfileNode extends Node {
 
         public abstract boolean execute(boolean value);
 
-        @Specialization(limit = "1", guards = "cachedValue == value")
+        @Specialization(limit = "getCacheSize(1)", guards = "cachedValue == value")
         protected static boolean profile(@SuppressWarnings("unused") boolean value,
                         @Cached("value") boolean cachedValue) {
             return cachedValue;

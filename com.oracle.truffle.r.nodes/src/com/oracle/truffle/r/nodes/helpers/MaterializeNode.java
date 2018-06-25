@@ -32,6 +32,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.HasAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -39,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 public abstract class MaterializeNode extends Node {
 
-    protected static final int LIMIT = 10;
+    protected static final int LIMIT = DSLConfig.getCacheSize(10);
 
     @Child private HasAttributesNode hasAttributes;
     @Child private IterableAttributeNode attributesIt;

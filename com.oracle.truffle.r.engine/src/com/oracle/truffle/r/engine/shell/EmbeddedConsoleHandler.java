@@ -97,6 +97,19 @@ public final class EmbeddedConsoleHandler extends DelegatingConsoleHandler {
         }
     }
 
+    @SuppressWarnings("try")
+    @Override
+    public String getPrompt() {
+        try (ContextClose ignored = inContext()) {
+            if (!isOverridden("R_ReadConsole")) {
+                return getDelegate().getPrompt();
+            } else {
+                // TODO: get prompt
+                return "";
+            }
+        }
+    }
+
     @Override
     public InputStream createInputStream() {
         return new InputStream() {

@@ -225,5 +225,11 @@ public class TestBuiltin_gsub extends TestBase {
                         "gsub('>.*\\n|\\n', '', 'R> Line 1\\n Line 2\\n', perl=F))");
         assertEval("list(gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=T)," +
                         "gsub('>.*\\t|\\n', '', 'R> Line 1\\t Line 2\\n', perl=F))");
+
+        // Test the special case of appending a missing new line
+        assertEval("{ gsub('([^\\n])$', '\\\\1\\n', c('[1] 2', NA, 'aaaa\\n')) }");
+
+        // Test the dollar in the replacement is not treated as a group reference
+        assertEval("{ gsub('x', '$', 'x') }");
     }
 }

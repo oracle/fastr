@@ -27,12 +27,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RType;
 
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class TypeFromModeNode extends Node {
 
-    protected static final int CACHE_LIMIT = 2;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(2);
 
     public static TypeFromModeNode create() {
         return TypeFromModeNodeGen.create();

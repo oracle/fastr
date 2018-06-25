@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -45,7 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public abstract class CombineSignaturesNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = 3;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
     public abstract RArgsValuesAndNames execute(ArgumentsSignature left, Object[] leftValue, ArgumentsSignature right, Object[] rightValues);
 
@@ -73,6 +74,18 @@ public abstract class CombineSignaturesNode extends RBaseNode {
             flatLeftValues = resultCached.varArgsInfo.flattenValues(left, leftValues);
         }
         return new RArgsValuesAndNames(resultCached.getValues(flatLeftValues, rightValues, shufflingProfile), resultCached.signature);
+    }
+
+    @Specialization(replaces = "combineCached", guards = {"!right.isEmpty()", "!left.isEmpty()"})
+    protected RArgsValuesAndNames combineGeneric(ArgumentsSignature left, Object[] leftValues, ArgumentsSignature right, Object[] rightValues,
+                    @Cached("createBinaryProfile()") ConditionProfile shufflingProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile noVarArgsProfile) {
+        CombineResult result = combine(left, leftValues, right);
+        Object[] flatLeftValues = leftValues;
+        if (noVarArgsProfile.profile(result.varArgsInfo.hasVarArgs())) {
+            flatLeftValues = result.varArgsInfo.flattenValues(left, leftValues);
+        }
+        return new RArgsValuesAndNames(result.getValues(flatLeftValues, rightValues, shufflingProfile), result.signature);
     }
 
     @TruffleBoundary

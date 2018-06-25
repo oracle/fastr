@@ -35,6 +35,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.binary.BinaryBooleanScalarNodeGen.LogicalScalarCastNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -91,7 +92,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
     @ImportStatic({RRuntime.class})
     protected abstract static class LogicalScalarCastNode extends RBaseNode {
 
-        protected static final int CACHE_LIMIT = 3;
+        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
         public abstract byte executeCast(Object o);
 

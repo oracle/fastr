@@ -35,6 +35,9 @@ public class ThreadTimings {
     }
 
     public static long[] userSysTimeInNanos() {
+        if (!FastRConfig.UseMXBeans) {
+            return null;
+        }
         checkBean();
         long userTimeInNanos = bean.getCurrentThreadUserTime();
         return new long[]{userTimeInNanos, bean.getCurrentThreadCpuTime() - userTimeInNanos};

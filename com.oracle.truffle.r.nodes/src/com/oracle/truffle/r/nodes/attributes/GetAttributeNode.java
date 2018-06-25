@@ -66,7 +66,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     @Specialization(guards = "isRowNamesAttr(name)")
     protected Object getRowNames(DynamicObject attrs, @SuppressWarnings("unused") String name,
                     @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
-        return GetAttributesNode.getFullRowNames(getRowNamesNode.execute(attrs));
+        return GetAttributesNode.convertRowNamesToSeq(getRowNamesNode.execute(attrs));
     }
 
     @Specialization(guards = "isNamesAttr(name)")
@@ -75,7 +75,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
         return getNamesAttributeNode.execute(attrs);
     }
 
-    @Specialization(limit = "3", //
+    @Specialization(limit = "getCacheSize(3)", //
                     guards = {"!isSpecialAttribute(name)", "cachedName.equals(name)", "shapeCheck(shape, attrs)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     protected Object getAttrCached(DynamicObject attrs, @SuppressWarnings("unused") String name,

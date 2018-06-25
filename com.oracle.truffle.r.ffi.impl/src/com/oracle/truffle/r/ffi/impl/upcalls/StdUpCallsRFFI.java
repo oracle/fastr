@@ -63,6 +63,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
@@ -229,10 +230,13 @@ public interface StdUpCallsRFFI {
 
     void Rf_errorcall(Object call, @RFFICstring String msg);
 
+    @RFFIRunGC
     Object Rf_allocVector(int mode, long n);
 
+    @RFFIRunGC
     Object Rf_allocArray(int mode, Object dimsObj);
 
+    @RFFIRunGC
     Object Rf_allocMatrix(int mode, int nrow, int ncol);
 
     int Rf_nrows(Object x);
@@ -243,6 +247,15 @@ public interface StdUpCallsRFFI {
     int LENGTH(Object x);
 
     void SET_STRING_ELT(Object x, long i, Object v);
+
+    int /* void */ SETLENGTH(Object x, int l);
+
+    int /* void */ SETTRUELENGTH(Object x, int l);
+
+    @RFFIUpCallNode(TRUELENGTHNode.class)
+    int TRUELENGTH(Object x);
+
+    int LEVELS(Object x);
 
     void SET_VECTOR_ELT(Object x, long i, Object v);
 
@@ -376,7 +389,6 @@ public interface StdUpCallsRFFI {
 
     Object R_FindNamespace(Object name);
 
-    @RFFIRunGC
     @RFFIUpCallNode(RfEvalNode.class)
     Object Rf_eval(Object expr, Object env);
 
@@ -394,7 +406,6 @@ public interface StdUpCallsRFFI {
 
     void Rf_copyMatrix(Object s, Object t, int byrow);
 
-    @RFFIRunGC
     @RFFIUpCallNode(TryRfEvalNode.class)
     Object R_tryEval(Object expr, Object env, @RFFICpointer Object errorFlag, int silent);
 

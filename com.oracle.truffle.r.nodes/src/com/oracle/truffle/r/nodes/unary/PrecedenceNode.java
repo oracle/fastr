@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
@@ -103,6 +104,12 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization
     @SuppressWarnings("unused")
+    protected int doExternalPtr(RExternalPtr ptr, boolean recursive) {
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
     protected int doDoubleScalar(double d, boolean recursive) {
         return DOUBLE_PRECEDENCE;
     }
@@ -125,7 +132,7 @@ public abstract class PrecedenceNode extends RBaseNode {
         return LOGICAL_PRECEDENCE;
     }
 
-    @Specialization(guards = "vector.getClass() == clazz", limit = "16")
+    @Specialization(guards = "vector.getClass() == clazz", limit = "getCacheSize(16)")
     protected int doVector(@SuppressWarnings("unused") RAbstractAtomicVector vector, @SuppressWarnings("unused") boolean recursive,
                     @SuppressWarnings("unused") @Cached("vector.getClass()") Class<?> clazz,
                     @Cached("getVectorPrecedence(vector)") int precedence) {

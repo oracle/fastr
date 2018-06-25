@@ -30,27 +30,24 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.HashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.opt.ReuseNonSharedNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
 @RBuiltin(name = "make.unique", kind = INTERNAL, parameterNames = {"names", "sep"}, behavior = PURE)
 public abstract class MakeUnique extends RBuiltinNode.Arg2 {
-
-    @Child private ReuseNonSharedNode reuseNonSharedNode;
-
-    private final ConditionProfile trivialSizeProfile = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(MakeUnique.class);
@@ -65,18 +62,22 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
         return RDataFactory.createStringVectorFromScalar(names);
     }
 
-    @Specialization
-    protected RAbstractStringVector makeUnique(RStringVector names, String sep) {
+    @Specialization(guards = {"!hasCustomSpecialization(names)", "reuseNonSharedNode.supports(names)"}, limit = "getVectorAccessCacheSize()")
+    protected RAbstractStringVector makeUnique(RAbstractStringVector names, String sep,
+                    @Cached("createNonShared(names)") VectorReuse reuseNonSharedNode,
+                    @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
         if (trivialSizeProfile.profile(names.getLength() == 0 || names.getLength() == 1)) {
             return names;
         }
-        if (reuseNonSharedNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            reuseNonSharedNode = insert(ReuseNonSharedNode.create());
-        }
-
-        RStringVector reused = (RStringVector) reuseNonSharedNode.execute(names);
+        RStringVector reused = reuseNonSharedNode.getResult(names).materialize();
         return doLargeVector(reused, sep);
+    }
+
+    @Specialization(replaces = "makeUnique", guards = "!hasCustomSpecialization(names)")
+    protected RAbstractStringVector makeUniqueGeneric(RAbstractStringVector names, String sep,
+                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode,
+                    @Cached("createBinaryProfile()") ConditionProfile trivialSizeProfile) {
+        return makeUnique(names, sep, reuseNonSharedNode, trivialSizeProfile);
     }
 
     @Specialization
@@ -86,6 +87,10 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
             return names;
         }
         throw RInternalError.unimplemented("make.unique for string sequence with zero stride is not implemented");
+    }
+
+    protected static boolean hasCustomSpecialization(RAbstractStringVector vector) {
+        return vector instanceof RSequence;
     }
 
     @TruffleBoundary

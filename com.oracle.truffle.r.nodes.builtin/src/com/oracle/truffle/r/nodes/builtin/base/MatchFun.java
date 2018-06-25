@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.MatchFunNodeGen.MatchFunInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -86,7 +87,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
     @TypeSystemReference(RTypes.class)
     abstract static class MatchFunInternal extends RBaseNode {
 
-        protected static final int LIMIT = 3;
+        protected static final int LIMIT = DSLConfig.getCacheSize(3);
         private final MatchFun outer;
 
         private final BranchProfile needsMaterialize = BranchProfile.create();

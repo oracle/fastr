@@ -62,9 +62,26 @@ public final class GridContext {
         devices.add(new DeviceAndState(null, null));
     }
 
+    private GridContext(GridContext parent) {
+        // initialized grid in spawned context. Grid R code calls initGrid(gridEnv) only once and
+        // then sets global variable to remember to not call it again, but we need to initialize
+        // grid context in newly spawned context, so we do it manually here.
+        gridState.init(parent.getGridState().getGridEnv());
+        devices.add(new DeviceAndState(null, null));
+    }
+
     public static GridContext getContext(RContext rCtx) {
         if (rCtx.gridContext == null) {
-            rCtx.gridContext = new GridContext();
+            GridContext newCtx = null;
+            RContext parentRCtx = rCtx.getParent();
+            if (parentRCtx != null) {
+                assert parentRCtx != rCtx;  // would cause infinite recursion
+                rCtx.gridContext = new GridContext(getContext(parentRCtx));
+                // re-initialize local copies of .Device, .Devices etc.
+                RGridGraphicsAdapter.initialize(rCtx);
+            } else {
+                rCtx.gridContext = new GridContext();
+            }
         }
         return (GridContext) rCtx.gridContext;
     }
@@ -99,8 +116,9 @@ public final class GridContext {
 
     public void setCurrentDevice(String name, GridDevice currentDevice, String filenamePattern) {
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount() : devices.size() + " vs " + RGridGraphicsAdapter.getDevicesCount();
-        RGridGraphicsAdapter.addDevice(name);
-        RGridGraphicsAdapter.setCurrentDevice(name);
+        RContext rCtx = RContext.getInstance();
+        RGridGraphicsAdapter.addDevice(rCtx, name);
+        RGridGraphicsAdapter.setCurrentDevice(rCtx, name);
         currentDeviceIdx = this.devices.size();
         this.devices.add(new DeviceAndState(currentDevice, filenamePattern));
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount() : devices.size() + " vs " + RGridGraphicsAdapter.getDevicesCount();
@@ -129,14 +147,14 @@ public final class GridContext {
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount();
     }
 
-    public void closeDevice(int which) throws DeviceCloseException {
+    public void closeDevice(RContext rCtx, int which) throws DeviceCloseException {
         assert which >= 0 && which < devices.size();
         devices.get(which).device.close();
-        removeDevice(which);
+        removeDevice(rCtx, which);
     }
 
-    public void removeDevice(int which) {
-        RGridGraphicsAdapter.removeDevice(which);
+    public void removeDevice(RContext rCtx, int which) {
+        RGridGraphicsAdapter.removeDevice(rCtx, which);
         devices.remove(which);
         if (currentDeviceIdx >= which) {
             currentDeviceIdx--;

@@ -25,13 +25,21 @@ package com.oracle.truffle.r.runtime.data;
 import com.oracle.truffle.r.runtime.RType;
 
 /**
- * See singleton {@link #instance}.
+ * This object denotes a missing argument in a function call. The difference between
+ * {@link RMissing} is that {@link REmpty} denotes explicitly missing argument, e.g., first argument
+ * in call {@code foo(,42)}, but {@link RMissing} is produced inside FastR argument matching to
+ * denote argument that was not passed at all, e.g., second dimension in {@code bar[3]}.
+ * {@link RMissing} should never be produced by AST parser. If user attempts at setting
+ * {@link RMissing} constant to a language object via subsetting, this constant is converted to
+ * {@link REmpty}.
+ *
+ * Note: AST constant nodes with {@link REmpty} as value are not wrapped into promise nodes during
+ * argument matching, therefore in the function prologue the {@link REmpty} gets directly saved into
+ * corresponding frame slot, unlike other arguments' values which are typically wrapped in
+ * {@link RPromise}.
  */
 public final class REmpty extends RScalar {
 
-    /**
-     * This object denotes a missing argument in a function call.
-     */
     public static final REmpty instance = new REmpty();
 
     private REmpty() {

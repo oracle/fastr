@@ -89,6 +89,31 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     }
 
     @Override
+    public void setLength(int l) {
+        try {
+            NativeDataAccess.setDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setTrueLength(int l) {
+        try {
+            NativeDataAccess.setTrueDataLength(this, data, l);
+        } finally {
+            data = null;
+            complete = false;
+        }
+    }
+
+    @Override
     public RAbstractVector castSafe(RType type, ConditionProfile isNAProfile, boolean keepAttributes) {
         switch (type) {
             case Complex:

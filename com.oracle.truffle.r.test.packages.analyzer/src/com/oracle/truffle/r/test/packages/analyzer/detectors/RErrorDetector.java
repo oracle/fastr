@@ -81,6 +81,7 @@ public class RErrorDetector extends LineDetector {
 
     public static class RErrorProblem extends Problem {
 
+        private static final int MAX_DISTANCE = 10;
         private final String callString;
         private final String message;
 
@@ -111,14 +112,14 @@ public class RErrorDetector extends LineDetector {
         @Override
         public int getSimilarityTo(Problem other) {
             if (other.getClass() == RErrorProblem.class) {
-                return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim());
+                return Problem.computeLevenshteinDistanceFast(getDetails().trim(), other.getDetails().trim(), MAX_DISTANCE);
             }
             return Integer.MAX_VALUE;
         }
 
         @Override
         public boolean isSimilarTo(Problem other) {
-            return Problem.computeLevenshteinDistance(getDetails().trim(), other.getDetails().trim()) < 10;
+            return getSimilarityTo(other) < MAX_DISTANCE;
         }
     }
 

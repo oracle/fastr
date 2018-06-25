@@ -76,20 +76,6 @@ size_t Rf_ucstoutf8(char *s, const unsigned int wc) {
     return 0;
 }
 
-InputHandler *
-addInputHandler(InputHandler *handlers, int fd, InputHandlerProc handler,
-		int activity) {
-    unimplemented("addInputHandler");
-    return NULL;
-}
-
-int
-removeInputHandler(InputHandler **handlers, InputHandler *it)
-{
-    unimplemented("removeInputHandler");
-    return NULL;
-}
-
 void setup_RdotApp(void) {
 	unimplemented("setup_RdotApp");
 }

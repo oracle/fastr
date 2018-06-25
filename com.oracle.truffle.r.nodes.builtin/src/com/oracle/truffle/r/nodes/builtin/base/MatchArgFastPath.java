@@ -40,7 +40,11 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import com.oracle.truffle.r.nodes.builtin.base.MatchArgFastPathNodeGen.MatchArgInternalNodeGen;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
@@ -50,14 +54,21 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -72,24 +83,34 @@ public abstract class MatchArgFastPath extends RFastPathNode {
         @Child private Identical identical = IdenticalNodeGen.create();
 
         @Child private CastNode argCast = newCastBuilder().defaultError(Message.MUST_BE_NULL_OR_STRING, "arg").allowNull().mustBe(stringValue()).buildCastNode();
-        @Child private CastNode choicesCast = newCastBuilder().allowNull().asStringVector().buildCastNode();
+        @Child private CastNode choicesCast = newCastBuilder().allowNull().mustBe(abstractVectorValue(), Message.CANNOT_COERCE, typeName(), "character").asVector().buildCastNode();
         @Child private CastNode severalOKCast = newCastBuilder().mustBe(logicalValue()).asLogicalVector().findFirst().map(toBoolean()).buildCastNode();
+        @Child private AsCharacter asCharacterNode;
 
-        public abstract Object execute(Object arg, Object choices, Object severalOK);
+        public abstract Object execute(VirtualFrame frame, Object arg, Object choices, Object severalOK);
 
-        public final Object castAndExecute(Object arg, Object choices, Object severalOK) {
-            return execute(argCast.doCast(arg), choicesCast.doCast(choices), severalOKCast.doCast(severalOK));
+        public final Object castAndExecute(VirtualFrame frame, Object arg, Object choices, Object severalOK) {
+            return execute(frame, argCast.doCast(arg), choicesCast.doCast(choices), severalOKCast.doCast(severalOK));
         }
 
         @Specialization
-        protected Object match(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") RNull choices, @SuppressWarnings("unused") boolean severalOK) {
+        protected Object match(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") RNull choices,
+                        @SuppressWarnings("unused") boolean severalOK) {
             return RNull.instance;
         }
 
         @Specialization
-        protected String matchArgNULL(@SuppressWarnings("unused") RNull arg, RAbstractStringVector choices, @SuppressWarnings("unused") boolean severalOK,
+        protected Object matchArgNULL(@SuppressWarnings("unused") RNull arg, RList choices,
+                        @SuppressWarnings("unused") boolean severalOK,
                         @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile) {
-            return isEmptyProfile.profile(choices.getLength() == 0) ? RRuntime.STRING_NA : choices.getDataAt(0);
+            return isEmptyProfile.profile(choices.getLength() == 0) ? RDataFactory.createList(new Object[]{RNull.instance}) : RDataFactory.createList(new Object[]{choices.getDataAtAsObject(0)});
+        }
+
+        @Specialization
+        protected Object matchArgNULL(@SuppressWarnings("unused") RNull arg, RAbstractAtomicVector choices,
+                        @SuppressWarnings("unused") boolean severalOK,
+                        @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile) {
+            return isEmptyProfile.profile(choices.getLength() == 0) ? RRuntime.STRING_NA : choices.getDataAtAsObject(0);
         }
 
         private void checkEmpty(RAbstractStringVector choices, int count) {
@@ -97,7 +118,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
                 CompilerDirectives.transferToInterpreter();
                 StringBuilder choicesString = new StringBuilder();
                 for (int i = 0; i < choices.getLength(); i++) {
-                    choicesString.append(i == 0 ? "" : ", ").append(RRuntime.escapeString(choices.getDataAt(i), false, true));
+                    choicesString.append(i == 0 ? "" : ", ").append(RRuntime.escapeString(choices.getDataAt(i), false, true, "“", "”"));
                 }
                 throw RError.error(this, Message.ARG_ONE_OF, "arg", choicesString);
             }
@@ -113,53 +134,104 @@ public abstract class MatchArgFastPath extends RFastPathNode {
             return count;
         }
 
-        @Specialization(guards = "!severalOK")
-        protected String matchArg(RAbstractStringVector arg, RAbstractStringVector choices, @SuppressWarnings("unused") boolean severalOK) {
+        @Specialization(guards = {"!severalOK", "!hasS3Class(classHierarchy, choices)"})
+        protected Object matchArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+                        @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (identical.executeByte(arg, choices, true, true, true, true, true, true) == RRuntime.LOGICAL_TRUE) {
-                return choices.getDataAt(0);
+                return choices.getDataAtAsObject(0);
             }
             if (arg.getLength() != 1) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.MUST_BE_SCALAR, "arg");
             }
-            RIntVector matched = pmatch.execute(arg, choices, -1, true);
+
+            RAbstractStringVector choicesStringVector = toStringVector(frame, choices);
+
+            RIntVector matched = pmatch.execute(arg, choicesStringVector, -1, true);
             int count = count(matched);
-            checkEmpty(choices, count);
+            checkEmpty(choicesStringVector, count);
             if (count > 1) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.MORE_THAN_ONE_MATCH, "match.arg");
             }
-            return choices.getDataAt(matched.getDataAt(0) - 1);
+
+            RVector<?> resultVector = choices.createEmptySameType(count, true);
+            int matchedIdx = matched.getDataAt(0) - 1;
+            resultVector.transferElementSameType(0, choices, matchedIdx);
+            RStringVector names = choices.getNames();
+            if (names != null) {
+                resultVector.initAttributes(RAttributesLayout.createNames(RDataFactory.createStringVector(names.getDataAt(matchedIdx))));
+            }
+            return resultVector;
         }
 
-        @Specialization(guards = "severalOK")
-        protected Object matchArgSeveral(RAbstractStringVector arg, RAbstractStringVector choices, @SuppressWarnings("unused") boolean severalOK) {
+        @Specialization(guards = {"severalOK", "!hasS3Class(classHierarchy, choices)"})
+        protected Object matchArgSeveral(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+                        @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (arg.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.MUST_BE_GE_ONE, "arg");
             }
-            RIntVector matched = pmatch.execute(arg, choices, -1, true);
+
+            RAbstractStringVector choicesStringVector = toStringVector(frame, choices);
+
+            RIntVector matched = pmatch.execute(arg, choicesStringVector, -1, true);
             int count = count(matched);
-            checkEmpty(choices, count);
+            checkEmpty(choicesStringVector, count);
+            RVector<?> resultVector = choices.createEmptySameType(count, true);
             if (count == 1) {
                 for (int i = 0; i < matched.getLength(); i++) {
-                    int matchedIdx = matched.getDataAt(i);
-                    if (matchedIdx > 0) {
-                        return choices.getDataAt(matchedIdx - 1);
+                    int matchedIdx = matched.getDataAt(i) - 1;
+                    if (matchedIdx >= 0) {
+                        resultVector.transferElementSameType(0, choices, matchedIdx);
+                        RStringVector names = choices.getNames();
+                        if (names != null) {
+                            resultVector.initAttributes(RAttributesLayout.createNames(RDataFactory.createStringVector(names.getDataAt(matchedIdx))));
+                        }
+                        return resultVector;
                     }
                 }
                 assert false;
             }
-            String[] result = new String[count];
+            RStringVector namesVector = choices.getNames();
+            String[] names = namesVector != null ? new String[count] : null;
             int resultIdx = -1;
             for (int i = 0; i < matched.getLength(); i++) {
-                int matchedIdx = matched.getDataAt(i);
-                if (matchedIdx > 0) {
+                int matchedIdx = matched.getDataAt(i) - 1;
+                if (matchedIdx >= 0) {
                     resultIdx++;
-                    result[resultIdx] = choices.getDataAt(matchedIdx - 1);
+                    resultVector.transferElementSameType(resultIdx, choices, matchedIdx);
+                    if (names != null) {
+                        names[resultIdx] = namesVector.getDataAt(matchedIdx);
+                    }
                 }
             }
-            return RDataFactory.createStringVector(result, choices.isComplete());
+            if (names != null) {
+                resultVector.initAttributes(RAttributesLayout.createNames(RDataFactory.createStringVector(names, false)));
+            }
+            return resultVector;
+        }
+
+        @Specialization(guards = "hasS3Class(classHierarchy, choices)")
+        protected Object matchArgS3(RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+                        @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
+            return null;
+        }
+
+        private RAbstractStringVector toStringVector(VirtualFrame frame, RAbstractVector choices) {
+            if (asCharacterNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                asCharacterNode = insert(AsCharacterNodeGen.create());
+            }
+            return (RAbstractStringVector) asCharacterNode.call(frame, choices, RArgsValuesAndNames.EMPTY);
+        }
+
+        protected ClassHierarchyNode createClassHierarchyNode() {
+            return ClassHierarchyNodeGen.create(false, false);
+        }
+
+        protected boolean hasS3Class(ClassHierarchyNode chn, Object obj) {
+            return chn.execute(obj) != null;
         }
     }
 
@@ -216,7 +288,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
     @Specialization(limit = "1", guards = "cache.choicesValue.isSupported(frame, arg)")
     protected Object matchArg(VirtualFrame frame, RPromise arg, @SuppressWarnings("unused") RMissing choices, Object severalOK,
                     @Cached("new(frame, arg)") MatchArgNode cache) {
-        return cache.internal.castAndExecute(cache.promiseHelper.evaluate(frame, arg), cache.choicesValue.execute(frame), severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
+        return cache.internal.castAndExecute(frame, cache.promiseHelper.evaluate(frame, arg), cache.choicesValue.execute(frame), severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
     }
 
     public static final class MatchArgNode extends Node {
@@ -239,7 +311,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
     protected Object matchArg(VirtualFrame frame, RPromise arg, Object choices, Object severalOK,
                     @Cached("createInternal()") MatchArgInternal internal,
                     @Cached("new()") PromiseHelperNode promiseHelper) {
-        return internal.castAndExecute(promiseHelper.evaluate(frame, arg), choices, severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
+        return internal.castAndExecute(frame, promiseHelper.evaluate(frame, arg), choices, severalOK == RMissing.instance ? RRuntime.LOGICAL_FALSE : severalOK);
     }
 
     @SuppressWarnings("unused")

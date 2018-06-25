@@ -116,6 +116,20 @@ public final class NativeDataAccess {
         private long length;
 
         /**
+         * The truly allocated length of the native data array. Expected to be either kept at zero
+         * if not used, or to be a value &gt;= length.<br>
+         * 
+         * Expected usage in native code:
+         * 
+         * <pre>
+         * SEXP vector = allocVector(STRSXP, 1024);
+         * SETLENGTH(newnames, 10);
+         * SET_TRUELENGTH(newnames, 1024);
+         * </pre>
+         */
+        private long truelength;
+
+        /**
          * It maintains the <code>1-?</code> relationship between this object and its native wrapper
          * through which the native code accesses it. For instance, Sulong implements the "pointer"
          * equality of two objects that are not pointers (i.e. <code>IS_POINTER</code> returns
@@ -139,11 +153,11 @@ public final class NativeDataAccess {
         }
 
         @TruffleBoundary
-        void allocateNative(Object source, int len, int elementBase, int elementSize) {
+        void allocateNative(Object source, int len, int trueLen, int elementBase, int elementSize) {
             assert dataAddress == 0;
             if (len != 0) {
-                dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(len * elementSize);
-                UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, len * elementSize);
+                dataAddress = allocateNativeMemory(trueLen * elementSize);
+                UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, trueLen * elementSize);
             } else {
                 dataAddress = EMPTY_DATA_ADDRESS;
             }
@@ -156,7 +170,7 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNativeString(byte[] bytes) {
             assert dataAddress == 0;
-            dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(bytes.length + 1);
+            dataAddress = allocateNativeMemory(bytes.length + 1);
             UnsafeAdapter.UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, dataAddress, bytes.length);
             UnsafeAdapter.UNSAFE.putByte(dataAddress + bytes.length, (byte) 0); // C strings
                                                                                 // terminator
@@ -168,7 +182,7 @@ public final class NativeDataAccess {
 
         @TruffleBoundary
         void allocateNative(CharSXPWrapper[] wrappers) {
-            long addr = dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(wrappers.length * Long.BYTES);
+            long addr = dataAddress = allocateNativeMemory(wrappers.length * Long.BYTES);
             for (int i = 0; i < wrappers.length; i++) {
                 UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(wrappers[i]));
             }
@@ -184,7 +198,7 @@ public final class NativeDataAccess {
                 assert (dataAddress = 0xbadbad) != 0;
             } else if (dataAddress != 0) {
                 // System.out.println(String.format("freeing data at %16x", dataAddress));
-                UnsafeAdapter.UNSAFE.freeMemory(dataAddress);
+                freeNativeMemory(dataAddress);
                 assert (dataAddress = 0xbadbad) != 0;
             }
         }
@@ -198,8 +212,8 @@ public final class NativeDataAccess {
     // The counter is initialized to invalid address and incremented by 2 to always get invalid
     // address value
     private static final AtomicLong counter = new AtomicLong(0xdef000000000001L);
-    private static final ConcurrentHashMap<Long, WeakReference<RObject>> nativeMirrors = new ConcurrentHashMap<>();
-    private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = new ConcurrentHashMap<>();
+    private static final ConcurrentHashMap<Long, WeakReference<RObject>> nativeMirrors = new ConcurrentHashMap<>(512);
+    private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
     public static CallTarget createIsPointer() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
@@ -295,7 +309,7 @@ public final class NativeDataAccess {
     }
 
     private static RuntimeException reportDataAccessError(long address) {
-        RuntimeException location = nativeMirrorInfo.get(address);
+        RuntimeException location = TRACE_MIRROR_ALLOCATION_SITES ? nativeMirrorInfo.get(address) : null;
         if (location != null) {
             System.out.println("Location at which the native mirror was allocated:");
             location.printStackTrace();
@@ -445,6 +459,25 @@ public final class NativeDataAccess {
         }
     }
 
+    static void setDataLength(RIntVector vector, int[] data, int length) {
+        if (noIntNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, length);
+        } else {
+            ((NativeMirror) vector.getNativeMirror()).length = length;
+        }
+    }
+
+    static int getTrueDataLength(RIntVector vector) {
+        return (int) ((NativeMirror) vector.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(RIntVector vector, int[] data, int truelength) {
+        if (noIntNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, data.length);
+        }
+        ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
+    }
+
     static int getDataLengthFromMirror(Object mirror) {
         return (int) ((NativeMirror) mirror).length;
     }
@@ -487,6 +520,26 @@ public final class NativeDataAccess {
         }
     }
 
+    static void setDataLength(RLogicalVector vector, byte[] data, int length) {
+        if (noLogicalNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, length);
+        } else {
+            ((NativeMirror) vector.getNativeMirror()).length = length;
+        }
+    }
+
+    static int getTrueDataLength(RLogicalVector vector) {
+
+        return (int) ((NativeMirror) vector.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(RLogicalVector vector, byte[] data, int truelength) {
+        if (noLogicalNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, data.length);
+        }
+        ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
+    }
+
     static byte getData(RRawVector vector, byte[] data, int index) {
         if (noRawNative.isValid() || data != null) {
             return data[index];
@@ -501,6 +554,25 @@ public final class NativeDataAccess {
         } else {
             return (int) ((NativeMirror) vector.getNativeMirror()).length;
         }
+    }
+
+    static void setDataLength(RRawVector vector, byte[] data, int length) {
+        if (noRawNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, length);
+        } else {
+            ((NativeMirror) vector.getNativeMirror()).length = length;
+        }
+    }
+
+    static int getTrueDataLength(RRawVector vector) {
+        return (int) ((NativeMirror) vector.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(RRawVector vector, byte[] data, int truelength) {
+        if (noRawNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, data.length);
+        }
+        ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
     static void setData(RRawVector vector, byte[] data, int index, byte value) {
@@ -527,6 +599,25 @@ public final class NativeDataAccess {
         } else {
             return (int) ((NativeMirror) vector.getNativeMirror()).length;
         }
+    }
+
+    static void setDataLength(RDoubleVector vector, double[] data, int length) {
+        if (noDoubleNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, length);
+        } else {
+            ((NativeMirror) vector.getNativeMirror()).length = length;
+        }
+    }
+
+    static int getTrueDataLength(RDoubleVector vector) {
+        return (int) ((NativeMirror) vector.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(RDoubleVector vector, double[] data, int truelength) {
+        if (noDoubleNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, data.length);
+        }
+        ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
     }
 
     static void setData(RDoubleVector vector, double[] data, int index, double value) {
@@ -569,6 +660,25 @@ public final class NativeDataAccess {
         }
     }
 
+    static void setDataLength(RComplexVector vector, double[] data, int length) {
+        if (noComplexNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, length);
+        } else {
+            ((NativeMirror) vector.getNativeMirror()).length = length;
+        }
+    }
+
+    static int getTrueDataLength(RComplexVector vector) {
+        return (int) ((NativeMirror) vector.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(RComplexVector vector, double[] data, int truelength) {
+        if (noComplexNative.isValid() || data != null) {
+            allocateNativeContents(vector, data, data.length);
+        }
+        ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
+    }
+
     static void setData(RComplexVector vector, double[] data, int index, double re, double im) {
         if (noComplexNative.isValid() || data != null) {
             data[index * 2] = re;
@@ -581,11 +691,39 @@ public final class NativeDataAccess {
         }
     }
 
-    static String getData(CharSXPWrapper vector, String data) {
+    static void setDataLength(RStringVector vector, CharSXPWrapper[] data) {
+        ((NativeMirror) vector.getNativeMirror()).length = data.length;
+    }
+
+    static int getTrueDataLength(RStringVector vector) {
+        return (int) ((NativeMirror) vector.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(RStringVector vector, int truelength) {
+        ((NativeMirror) vector.getNativeMirror()).truelength = truelength;
+    }
+
+    static int getTrueDataLength(CharSXPWrapper charsxp) {
+        return (int) ((NativeMirror) charsxp.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(CharSXPWrapper charsxp, int truelength) {
+        ((NativeMirror) charsxp.getNativeMirror()).truelength = truelength;
+    }
+
+    static int getTrueDataLength(RListBase list) {
+        return (int) ((NativeMirror) list.getNativeMirror()).truelength;
+    }
+
+    static void setTrueDataLength(RListBase list, int truelength) {
+        ((NativeMirror) list.getNativeMirror()).truelength = truelength;
+    }
+
+    static String getData(CharSXPWrapper charSXPWrapper, String data) {
         if (noCharSXPNative.isValid() || data != null) {
             return data;
         } else {
-            NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+            NativeMirror mirror = (NativeMirror) charSXPWrapper.getNativeMirror();
             long address = mirror.dataAddress;
             assert address != 0;
             int length = 0;
@@ -598,11 +736,11 @@ public final class NativeDataAccess {
         }
     }
 
-    static byte getDataAt(CharSXPWrapper vector, byte[] data, int index) {
+    static byte getDataAt(CharSXPWrapper charSXPWrapper, byte[] data, int index) {
         if (noCharSXPNative.isValid() || data != null) {
             return data[index];
         } else {
-            NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+            NativeMirror mirror = (NativeMirror) charSXPWrapper.getNativeMirror();
             long address = mirror.dataAddress;
             assert address != 0;
             assert index < mirror.length;
@@ -610,11 +748,11 @@ public final class NativeDataAccess {
         }
     }
 
-    static int getDataLength(CharSXPWrapper vector, byte[] data) {
+    static int getDataLength(CharSXPWrapper charSXPWrapper, byte[] data) {
         if (noCharSXPNative.isValid() || data != null) {
             return data.length;
         } else {
-            NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
+            NativeMirror mirror = (NativeMirror) charSXPWrapper.getNativeMirror();
             long address = mirror.dataAddress;
             assert address != 0;
             int length = 0;
@@ -625,17 +763,23 @@ public final class NativeDataAccess {
         }
     }
 
+    static boolean isAllocated(RObject obj) {
+        NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
+        return mirror != null && mirror.dataAddress != 0;
+    }
+
     static long allocateNativeContents(RLogicalVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
         if (mirror.dataAddress == 0) {
+            assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             int[] intArray = new int[data.length];
             for (int i = 0; i < data.length; i++) {
                 intArray[i] = RRuntime.logical2int(data[i]);
             }
             noLogicalNative.invalidate();
-            mirror.allocateNative(intArray, length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+            mirror.allocateNative(intArray, length, data.length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
         }
         return mirror.dataAddress;
     }
@@ -643,10 +787,11 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RIntVector vector, int[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
         if (mirror.dataAddress == 0) {
+            assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noIntNative.invalidate();
-            mirror.allocateNative(data, length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
+            mirror.allocateNative(data, length, data.length, Unsafe.ARRAY_INT_BASE_OFFSET, Unsafe.ARRAY_INT_INDEX_SCALE);
         }
         return mirror.dataAddress;
     }
@@ -654,10 +799,11 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RRawVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
         if (mirror.dataAddress == 0) {
+            assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noRawNative.invalidate();
-            mirror.allocateNative(data, length, Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
+            mirror.allocateNative(data, length, data.length, Unsafe.ARRAY_BYTE_BASE_OFFSET, Unsafe.ARRAY_BYTE_INDEX_SCALE);
         }
         return mirror.dataAddress;
     }
@@ -665,10 +811,11 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RDoubleVector vector, double[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
         if (mirror.dataAddress == 0) {
+            assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noDoubleNative.invalidate();
-            mirror.allocateNative(data, length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+            mirror.allocateNative(data, length, data.length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
         }
         return mirror.dataAddress;
     }
@@ -676,10 +823,11 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RComplexVector vector, double[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
         if (mirror.dataAddress == 0) {
+            assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noComplexNative.invalidate();
-            mirror.allocateNative(data, length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2);
+            mirror.allocateNative(data, length, data.length, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, Unsafe.ARRAY_DOUBLE_INDEX_SCALE * 2);
         }
         return mirror.dataAddress;
     }
@@ -721,7 +869,7 @@ public final class NativeDataAccess {
             bytes[i] = element.getBytes(StandardCharsets.US_ASCII);
             size += bytes[i].length + 1;
         }
-        long dataAddress = UnsafeAdapter.UNSAFE.allocateMemory(size);
+        long dataAddress = allocateNativeMemory(size);
         long ptr = dataAddress + length * Long.BYTES; // start of the actual character data
         for (int i = 0; i < length; i++) {
             UnsafeAdapter.UNSAFE.putLong(dataAddress + i * 8, ptr);
@@ -744,7 +892,7 @@ public final class NativeDataAccess {
             }
             return data;
         } finally {
-            UnsafeAdapter.UNSAFE.freeMemory(address);
+            freeNativeMemory(address);
         }
     }
 
@@ -795,4 +943,16 @@ public final class NativeDataAccess {
         }
     }
 
+    private static long allocateNativeMemory(long bytes) {
+        long result = UnsafeAdapter.UNSAFE.allocateMemory(bytes);
+        // Uncomment for debugging
+        // System.out.printf("DEBUG: allocated %x, length %d\n", result, bytes);
+        return result;
+    }
+
+    private static void freeNativeMemory(long address) {
+        // Uncomment for debugging
+        // System.out.printf("DEBUG: feeing %x\n", address);
+        UnsafeAdapter.UNSAFE.freeMemory(address);
+    }
 }

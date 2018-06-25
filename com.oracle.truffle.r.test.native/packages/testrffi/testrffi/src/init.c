@@ -91,6 +91,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_RfRMultinom, 0),
         CALLDEF(test_RfFunctions, 0),
         CALLDEF(test_DATAPTR, 2),
+        CALLDEF(test_duplicate, 2),
         #include "init_api.h"
         {NULL, NULL, 0}
 };

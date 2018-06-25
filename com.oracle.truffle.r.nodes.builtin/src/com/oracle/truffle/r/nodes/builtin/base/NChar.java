@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -59,18 +60,26 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
         casts.arg("x").mustNotBeMissing().mapIf(integerValue(), asIntegerVector(), asStringVector(true, false, false));
         casts.arg("type").asStringVector().findFirst().mustBe(lengthGt(0));
         casts.arg("allowNA").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
-        casts.arg("keepNA").asLogicalVector().findFirst(RRuntime.LOGICAL_NA).map(toBoolean());
+        casts.arg("keepNA").asLogicalVector().findFirst(RRuntime.LOGICAL_NA);
     }
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector nchar(RNull value, String type, byte allowNA, boolean keepNA) {
+    protected RIntVector nchar(RNull value, String type, byte allowNA, byte keepNA) {
         return RDataFactory.createEmptyIntVector();
     }
 
+    private static boolean isNAKeptIn(byte keepNAInArg, int typeId) {
+        if (RRuntime.isNA(keepNAInArg)) {
+            return typeId != 2;
+        } else {
+            return keepNAInArg == RRuntime.LOGICAL_TRUE;
+        }
+    }
+
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector ncharInt(RAbstractIntVector vector, String type, byte allowNA, boolean keepNAIn,
+    protected RIntVector ncharInt(RAbstractIntVector vector, String type, byte allowNA, byte keepNAIn,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
                     @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
@@ -78,8 +87,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
                     @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
                     @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        convertType(type);
-        boolean keepNA = keepNAProfile.profile(keepNAIn);
+        boolean keepNA = keepNAProfile.profile(isNAKeptIn(keepNAIn, convertType(type)));
         int len = vector.getLength();
         int[] result = new int[len];
         boolean isComplete = true;
@@ -103,7 +111,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA, boolean keepNAIn,
+    protected RIntVector nchar(RAbstractStringVector vector, String type, byte allowNA, byte keepNAIn,
                     @Cached("createCountingProfile()") LoopConditionProfile loopProfile,
                     @Cached("createBinaryProfile()") ConditionProfile nullDimNamesProfile,
                     @Cached("createBinaryProfile()") ConditionProfile keepNAProfile,
@@ -111,8 +119,7 @@ public abstract class NChar extends RBuiltinNode.Arg4 {
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
                     @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode,
                     @Cached("create()") ExtractNamesAttributeNode extractNamesNode) {
-        convertType(type);
-        boolean keepNA = keepNAProfile.profile(keepNAIn);
+        boolean keepNA = keepNAProfile.profile(isNAKeptIn(keepNAIn, convertType(type)));
         int len = vector.getLength();
         int[] result = new int[len];
         boolean isComplete = true;

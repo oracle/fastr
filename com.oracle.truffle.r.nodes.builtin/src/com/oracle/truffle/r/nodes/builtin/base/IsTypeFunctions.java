@@ -47,6 +47,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.G
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.nodes.unary.IsFactorNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -286,13 +287,28 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isType(@SuppressWarnings("unused") RAbstractIntVector value) {
+        protected byte isInteger(@SuppressWarnings("unused") int value) {
             return RRuntime.LOGICAL_TRUE;
         }
 
+        @Specialization
+        protected byte isInteger(@SuppressWarnings("unused") RAbstractIntVector value,
+                        @Cached("createIsFactorNode()") IsFactorNode isFactorNode,
+                        @Cached("createBinaryProfile()") ConditionProfile isFactor) {
+            if (isFactor.profile(isFactorNode.executeIsFactor(value))) {
+                return RRuntime.LOGICAL_FALSE;
+            } else {
+                return RRuntime.LOGICAL_TRUE;
+            }
+        }
+
         @Fallback
-        protected byte isType(@SuppressWarnings("unused") Object value) {
+        protected byte isInteger(@SuppressWarnings("unused") Object value) {
             return RRuntime.LOGICAL_FALSE;
+        }
+
+        protected IsFactorNode createIsFactorNode() {
+            return new IsFactorNode();
         }
     }
 
@@ -550,7 +566,7 @@ public class IsTypeFunctions {
             return RType.fromMode(mode, true);
         }
 
-        @Specialization(limit = "5", guards = "cachedMode == mode")
+        @Specialization(limit = "getCacheSize(5)", guards = "cachedMode == mode")
         protected byte isVectorCached(RAbstractVector x, @SuppressWarnings("unused") String mode,
                         @Cached("mode") @SuppressWarnings("unused") String cachedMode,
                         @Cached("typeFromMode(mode)") RType type) {

@@ -77,6 +77,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
     @Override
     public synchronized void openNewPage() {
         inner.openNewPage();
+        ensureOpen();
         repaint();
     }
 
@@ -108,7 +109,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
 
     @Override
     public void close() throws DeviceCloseException {
-        disposeImageDevice();
+        disposeGraphics2DDevice();
         currentFrame.dispose();
         componentImage = null;
     }
@@ -205,7 +206,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
         }
     }
 
-    private void disposeImageDevice() {
+    private void disposeGraphics2DDevice() {
         try {
             inner.close();
         } catch (DeviceCloseException e) {
@@ -219,7 +220,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
     }
 
     private void resize(int newWidth, int newHeight) {
-        disposeImageDevice();
+        disposeGraphics2DDevice();
         openGraphics2DDevice(newWidth, newHeight);
         if (onResize != null) {
             // note: onResize action should take care of initiating the repaint
@@ -234,14 +235,13 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
             int width = inner.getWidthAwt();
             int height = inner.getHeightAwt();
             currentFrame = new FastRFrame(new FastRPanel(width, height));
-            disposeImageDevice();
+            disposeGraphics2DDevice();
             openGraphics2DDevice(width, height);
         }
     }
 
     private void repaint() {
         if (!isOnHold) {
-            ensureOpen();
             currentFrame.repaint();
         }
     }

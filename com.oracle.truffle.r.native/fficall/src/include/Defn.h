@@ -30,6 +30,15 @@
 #include <alloca.h> // Required for non gcc compilers
 #include <Rinternals.h>
 
+#ifdef R_USE_SIGNALS
+#ifdef Win32
+# include <psignal.h>
+#else
+# include <signal.h>
+# include <setjmp.h>
+#endif
+#endif
+
 // various definitions required to compile GNU-R code:
 
 #define attribute_hidden
@@ -39,6 +48,9 @@
 #define F77_QSYMBOL(x) #x
 
 #define Rexp10(x) pow(10.0, x)
+
+# define onintr			Rf_onintr
+# define onintrNoResume		Rf_onintrNoResume
 
 // no NLS:
 #ifndef _
@@ -52,6 +64,8 @@
 void sortVector(SEXP, Rboolean);
 int Scollate(SEXP a, SEXP b);
 void Rf_checkArityCall(SEXP, SEXP, SEXP);
+void onintr(void);
+void onintrNoResume(void);
 
 /* ../main/devices.c, used in memory.c, gnuwin32/extra.c */
 #define R_MaxDevices 64
@@ -64,6 +78,9 @@ extern Rboolean R_Visible;
 int	R_ReadConsole(const char *, unsigned char *, int, int);
 extern const char *R_Home;
 extern const char *R_TempDir;
+
+extern Rboolean R_interrupts_suspended;
+extern int R_interrupts_pending;
 
 //#define HAVE_MBSTATE_T 1 // actually from config.h
 
@@ -97,6 +114,24 @@ void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 # define OSTYPE      "windows"
 # define FILESEP     "/"
 #endif /* Win32 */
+
+#ifdef R_USE_SIGNALS
+#ifdef HAVE_POSIX_SETJMP
+# define SIGJMP_BUF sigjmp_buf
+# define SIGSETJMP(x,s) sigsetjmp(x,s)
+# define SIGLONGJMP(x,i) siglongjmp(x,i)
+# define JMP_BUF sigjmp_buf
+# define SETJMP(x) sigsetjmp(x,0)
+# define LONGJMP(x,i) siglongjmp(x,i)
+#else
+# define SIGJMP_BUF jmp_buf
+# define SIGSETJMP(x,s) setjmp(x)
+# define SIGLONGJMP(x,i) longjmp(x,i)
+# define JMP_BUF jmp_buf
+# define SETJMP(x) setjmp(x)
+# define LONGJMP(x,i) longjmp(x,i)
+#endif
+#endif
 
 #include <wchar.h>
 
