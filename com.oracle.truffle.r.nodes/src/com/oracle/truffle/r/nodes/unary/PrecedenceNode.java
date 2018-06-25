@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RForeignListWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
@@ -98,6 +99,12 @@ public abstract class PrecedenceNode extends RBaseNode {
     @Specialization
     @SuppressWarnings("unused")
     protected int doEnvironment(REnvironment env, boolean recursive) {
+        return LIST_PRECEDENCE;
+    }
+
+    @Specialization
+    @SuppressWarnings("unused")
+    protected int doExternalPtr(RExternalPtr ptr, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 

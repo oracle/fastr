@@ -566,6 +566,8 @@ public class TestBuiltin_c extends TestBase {
         assertEval("{ setClass('foo', representation(bar = 'ANY')); c(new('foo', bar=1), new('foo', bar=1)) }");
 
         assertEval("c(1,2,)");
+
+        assertEval("l<-c(1, methods:::.newExternalptr()); typeof(l); l[[1]]; typeof(l[[2]])");
     }
 
     @Test
