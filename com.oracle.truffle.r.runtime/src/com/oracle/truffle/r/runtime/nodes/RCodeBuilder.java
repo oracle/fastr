@@ -28,6 +28,7 @@ import java.util.Collections;
 import java.util.List;
 
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -138,7 +139,7 @@ public interface RCodeBuilder<T> {
      * functionality can be used to quickly create new AST snippets for existing code.
      */
     default T process(RSyntaxElement original) {
-        return new RSyntaxVisitor<T>() {
+        T result = new RSyntaxVisitor<T>() {
 
             @Override
             protected T visit(RSyntaxCall element) {
@@ -173,6 +174,10 @@ public interface RCodeBuilder<T> {
                 return function(RContext.getInstance().getLanguage(), element.getLazySourceSection(), params, accept(element.getSyntaxBody()), element.getSyntaxDebugName());
             }
         }.accept(original);
+        if (result instanceof Node) {
+            ((Node) result).adoptChildren();
+        }
+        return result;
     }
 
     static <T> ArrayList<Argument<T>> createArgumentList(ArgumentsSignature signature, T[] arguments) {
