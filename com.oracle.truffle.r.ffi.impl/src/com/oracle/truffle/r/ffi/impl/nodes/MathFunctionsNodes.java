@@ -84,8 +84,11 @@ public final class MathFunctionsNodes {
                 cumPtr = 0L;
                 if (cumRead == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    cumRead = Message.READ.createNode();
-                    cumWrite = Message.WRITE.createNode();
+                    cumRead = insert(Message.READ.createNode());
+                }
+                if (cumWrite == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    cumWrite = insert(Message.WRITE.createNode());
                 }
                 try {
                     cumArr[0] = ((Number) ForeignAccess.sendRead(cumRead, cumTO, 0)).doubleValue();
@@ -109,7 +112,7 @@ public final class MathFunctionsNodes {
                 ccumPtr = 0L;
                 if (ccumWrite == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ccumWrite = Message.WRITE.createNode();
+                    ccumWrite = insert(Message.WRITE.createNode());
                 }
             }
 
@@ -251,8 +254,11 @@ public final class MathFunctionsNodes {
                 sgnPtr = 0L;
                 if (sgnRead == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    sgnRead = Message.READ.createNode();
-                    sgnWrite = Message.WRITE.createNode();
+                    sgnRead = insert(Message.READ.createNode());
+                }
+                if (sgnWrite == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    sgnWrite = insert(Message.WRITE.createNode());
                 }
                 try {
                     sgnArr[0] = ((Number) ForeignAccess.sendRead(sgnRead, sgnTO, 0)).intValue();
@@ -318,8 +324,11 @@ public final class MathFunctionsNodes {
                 ansPtr = 0L;
                 if (ansRead == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ansRead = Message.READ.createNode();
-                    ansWrite = Message.WRITE.createNode();
+                    ansRead = insert(Message.READ.createNode());
+                }
+                if (ansWrite == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    ansWrite = insert(Message.WRITE.createNode());
                 }
                 try {
                     ansIn = ((Number) ForeignAccess.sendRead(ansRead, ansTO, 0)).doubleValue();
@@ -345,9 +354,13 @@ public final class MathFunctionsNodes {
                 nzPtr = 0L;
                 if (nzRead == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    nzRead = Message.READ.createNode();
-                    nzWrite = Message.WRITE.createNode();
+                    nzRead = insert(Message.READ.createNode());
                 }
+                if (nzWrite == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    nzWrite = insert(Message.WRITE.createNode());
+                }
+
                 try {
                     nzIn = ((Number) ForeignAccess.sendRead(nzRead, nzTO, 0)).intValue();
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
@@ -372,8 +385,12 @@ public final class MathFunctionsNodes {
                 ierrPtr = 0L;
                 if (ierrRead == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    ierrRead = Message.READ.createNode();
-                    ierrWrite = Message.WRITE.createNode();
+                    ierrRead = insert(Message.READ.createNode());
+
+                }
+                if (ierrWrite == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    ierrWrite = insert(Message.WRITE.createNode());
                 }
                 try {
                     ierrIn = ((Number) ForeignAccess.sendRead(ierrRead, ierrTO, 0)).intValue();
@@ -702,7 +719,7 @@ public final class MathFunctionsNodes {
             } else {
                 if (bForeignArray2R == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    bForeignArray2R = ForeignArray2R.create();
+                    bForeignArray2R = insert(ForeignArray2R.create());
                 }
                 bVec = (RAbstractDoubleVector) bForeignArray2R.convert(bTO);
             }
