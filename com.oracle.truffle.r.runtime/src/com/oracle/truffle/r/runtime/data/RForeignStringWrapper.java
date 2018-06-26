@@ -105,7 +105,7 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
                 if (isNullProfile.profile(value instanceof TruffleObject)) {
                     if (isNull == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
-                        isNull = Message.IS_NULL.createNode();
+                        isNull = insert(Message.IS_NULL.createNode());
                     }
                     if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
                         return RRuntime.STRING_NA;

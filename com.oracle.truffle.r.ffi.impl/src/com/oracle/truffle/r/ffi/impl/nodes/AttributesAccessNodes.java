@@ -183,7 +183,7 @@ public final class AttributesAccessNodes {
         public Void doRAttributeStorage(RAttributeStorage x, RAttributeStorage y) {
             if (copyRegAttributes == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                copyRegAttributes = CopyOfRegAttributesNode.create();
+                copyRegAttributes = insert(CopyOfRegAttributesNode.create());
             }
             copyRegAttributes.execute(x, y);
             return null;
