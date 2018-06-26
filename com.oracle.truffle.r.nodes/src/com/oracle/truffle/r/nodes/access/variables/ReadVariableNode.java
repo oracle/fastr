@@ -837,7 +837,7 @@ public final class ReadVariableNode extends RBaseNode {
     }
 
     private static Object getValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
+        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
         Object value = variableFrame.getValue(frameSlot);
         if (variableFrame.isObject(frameSlot)) {
             value = FrameSlotChangeMonitor.getValue(frameSlot, variableFrame);
@@ -853,7 +853,7 @@ public final class ReadVariableNode extends RBaseNode {
     }
 
     static Object profiledGetValue(boolean[] seenValueKinds, Frame variableFrame, FrameSlot frameSlot) {
-        assert variableFrame.getFrameDescriptor() == frameSlot.getFrameDescriptor();
+        assert variableFrame.getFrameDescriptor().getSlots().contains(frameSlot) : frameSlot.getIdentifier();
         try {
             if (seenValueKinds[FrameSlotKind.Object.ordinal()] && variableFrame.isObject(frameSlot)) {
                 return FrameSlotChangeMonitor.getObject(frameSlot, variableFrame);
