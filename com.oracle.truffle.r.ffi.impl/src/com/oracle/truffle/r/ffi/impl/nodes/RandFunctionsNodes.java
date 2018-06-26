@@ -239,7 +239,7 @@ public final class RandFunctionsNodes {
             } else {
                 if (probForeignArray2R == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    probForeignArray2R = ForeignArray2R.create();
+                    probForeignArray2R = insert(ForeignArray2R.create());
                 }
                 probVector = (RAbstractDoubleVector) probForeignArray2R.convert(probTO);
             }
@@ -261,9 +261,9 @@ public final class RandFunctionsNodes {
             } else {
                 if (rNForeignArray2R == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    rNForeignArray2R = ForeignArray2R.create();
+                    rNForeignArray2R = insert(ForeignArray2R.create());
                 }
-                rNVector = (RAbstractIntVector) probForeignArray2R.convert(probTO);
+                rNVector = (RAbstractIntVector) rNForeignArray2R.convert(probTO);
             }
 
             doRMultinomNode.execute(n, probVector, k, rNVector);
