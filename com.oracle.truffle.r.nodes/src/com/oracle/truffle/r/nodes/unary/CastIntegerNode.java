@@ -35,10 +35,15 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
+import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignWrapper;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -128,7 +133,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return vectorCopy(operand, idata, naCheck.neverSeenNA());
     }
 
-    @Specialization
+    @Specialization(guards = "!isForeignWrapper(operand)")
     protected RIntVector doStringVector(RAbstractStringVector operand,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
@@ -159,7 +164,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return vectorCopy(operand, idata, !seenNA);
     }
 
-    @Specialization
+    @Specialization(guards = "!isForeignWrapper(x)")
     public RAbstractIntVector doLogicalVector(RAbstractLogicalVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
         RAbstractLogicalVector operand = operandTypeProfile.profile(x);
@@ -169,7 +174,7 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return createResultVector(operand, index -> naCheck.convertLogicalToInt(operand.getDataAt(index)));
     }
 
-    @Specialization
+    @Specialization(guards = "!isForeignWrapper(x)")
     protected RAbstractIntVector doDoubleVector(RAbstractDoubleVector x,
                     @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
         RAbstractDoubleVector operand = operandTypeProfile.profile(x);
@@ -254,6 +259,25 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     @Specialization(guards = {"args.getLength() == 1", "isIntVector(args.getArgument(0))"})
     protected RIntVector doRArgsValuesAndNames(RArgsValuesAndNames args) {
         return (RIntVector) args.getArgument(0);
+    }
+
+    protected boolean isForeignWrapper(Object value) {
+        return value instanceof RForeignWrapper;
+    }
+
+    @Specialization
+    protected RAbstractIntVector doForeignWrapper(RForeignBooleanWrapper operand) {
+        return RClosures.createToIntVector(operand, true);
+    }
+
+    @Specialization
+    protected RAbstractIntVector doForeignWrapper(RForeignDoubleWrapper operand) {
+        return RClosures.createToIntVector(operand, true);
+    }
+
+    @Specialization
+    protected RAbstractIntVector doForeignWrapper(RForeignStringWrapper operand) {
+        return RClosures.createToIntVector(operand, true);
     }
 
     protected static boolean isIntVector(Object arg) {

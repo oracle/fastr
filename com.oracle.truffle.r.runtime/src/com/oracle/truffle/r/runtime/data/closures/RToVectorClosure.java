@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -38,12 +37,16 @@ abstract class RToVectorClosure implements RAbstractVector {
 
     /** If {@code true}, attributes should be preserved when materializing. */
     protected final boolean keepAttributes;
+    private final RAbstractVector vector;
 
-    protected RToVectorClosure(boolean keepAttributes) {
+    protected RToVectorClosure(RAbstractVector vector, boolean keepAttributes) {
         this.keepAttributes = keepAttributes;
+        this.vector = vector;
     }
 
-    public abstract RAbstractVector getVector();
+    public RAbstractVector getVector() {
+        return vector;
+    }
 
     @Override
     public int getLength() {
@@ -52,7 +55,7 @@ abstract class RToVectorClosure implements RAbstractVector {
 
     @Override
     public Object getInternalStore() {
-        return this;
+        return getVector().getInternalStore();
     }
 
     @Override
@@ -161,6 +164,14 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
+    public final RAbstractVector copyWithNewDimensions(int[] newDimensions) {
+        if (keepAttributes) {
+            return materialize().copyWithNewDimensions(newDimensions);
+        }
+        return this;
+    }
+
+    @Override
     public final RAbstractVector copyDropAttributes() {
         return materialize().copyDropAttributes();
     }
@@ -203,12 +214,8 @@ abstract class RToVectorClosure implements RAbstractVector {
     }
 
     @Override
-    public final VectorAccess access() {
-        throw RInternalError.shouldNotReachHere("access() for " + getClass().getSimpleName());
-    }
+    public abstract VectorAccess access();
 
     @Override
-    public final VectorAccess slowPathAccess() {
-        throw RInternalError.shouldNotReachHere("slowPathAccess() for " + getClass().getSimpleName());
-    }
+    public abstract VectorAccess slowPathAccess();
 }

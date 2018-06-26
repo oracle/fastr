@@ -35,11 +35,17 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -158,22 +164,22 @@ public abstract class CastComplexNode extends CastBaseNode {
         return ret;
     }
 
-    @Specialization
+    @Specialization(guards = "!isForeignWrapper(operand)")
     protected RComplexVector doIntVector(RAbstractIntVector operand) {
         return createResultVector(operand, index -> naCheck.convertIntToComplex(operand.getDataAt(index)));
     }
 
-    @Specialization
+    @Specialization(guards = "!isForeignWrapper(operand)")
     protected RComplexVector doDoubleVector(RAbstractDoubleVector operand) {
         return createResultVector(operand, index -> naCheck.convertDoubleToComplex(operand.getDataAt(index)));
     }
 
-    @Specialization
+    @Specialization(guards = "!isForeignWrapper(operand)")
     protected RComplexVector doLogicalVector(RAbstractLogicalVector operand) {
         return createResultVector(operand, index -> naCheck.convertLogicalToComplex(operand.getDataAt(index)));
     }
 
-    @Specialization
+    @Specialization(guards = "!isForeignWrapper(operand)")
     protected RComplexVector doStringVector(RAbstractStringVector operand,
                     @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
         naCheck.enable(operand);
@@ -267,6 +273,30 @@ public abstract class CastComplexNode extends CastBaseNode {
     @Specialization(guards = "!pairList.isLanguage()")
     protected RComplexVector doPairList(RPairList pairList) {
         return doList(pairList.toRList());
+    }
+
+    protected boolean isForeignWrapper(Object value) {
+        return value instanceof RForeignWrapper;
+    }
+
+    @Specialization
+    protected RAbstractComplexVector doForeignWrapper(RForeignBooleanWrapper operand) {
+        return RClosures.createToComplexVector(operand, true);
+    }
+
+    @Specialization
+    protected RAbstractComplexVector doForeignWrapper(RForeignIntWrapper operand) {
+        return RClosures.createToComplexVector(operand, true);
+    }
+
+    @Specialization
+    protected RAbstractComplexVector doForeignWrapper(RForeignDoubleWrapper operand) {
+        return RClosures.createToComplexVector(operand, true);
+    }
+
+    @Specialization
+    protected RAbstractComplexVector doForeignWrapper(RForeignStringWrapper operand) {
+        return RClosures.createToComplexVector(operand, true);
     }
 
     public static CastComplexNode create() {

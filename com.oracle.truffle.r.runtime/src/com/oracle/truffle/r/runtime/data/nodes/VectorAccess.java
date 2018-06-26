@@ -275,23 +275,23 @@ public abstract class VectorAccess extends Node {
 
     public abstract RType getType();
 
-    public final int getInt(SequentialIterator iter) {
+    public int getInt(SequentialIterator iter) {
         return getInt(iter.store, iter.index);
     }
 
-    public final double getDouble(SequentialIterator iter) {
+    public double getDouble(SequentialIterator iter) {
         return getDouble(iter.store, iter.index);
     }
 
-    public final RComplex getComplex(SequentialIterator iter) {
+    public RComplex getComplex(SequentialIterator iter) {
         return getComplex(iter.store, iter.index);
     }
 
-    public final double getComplexR(SequentialIterator iter) {
+    public double getComplexR(SequentialIterator iter) {
         return getComplexR(iter.store, iter.index);
     }
 
-    public final double getComplexI(SequentialIterator iter) {
+    public double getComplexI(SequentialIterator iter) {
         return getComplexI(iter.store, iter.index);
     }
 
@@ -303,7 +303,7 @@ public abstract class VectorAccess extends Node {
         return getLogical(iter.store, iter.index);
     }
 
-    public final String getString(SequentialIterator iter) {
+    public String getString(SequentialIterator iter) {
         return getString(iter.store, iter.index);
     }
 
@@ -376,23 +376,23 @@ public abstract class VectorAccess extends Node {
         return iter.length;
     }
 
-    public final int getInt(RandomIterator iter, int index) {
+    public int getInt(RandomIterator iter, int index) {
         return getInt(iter.store, index);
     }
 
-    public final double getDouble(RandomIterator iter, int index) {
+    public double getDouble(RandomIterator iter, int index) {
         return getDouble(iter.store, index);
     }
 
-    public final RComplex getComplex(RandomIterator iter, int index) {
+    public RComplex getComplex(RandomIterator iter, int index) {
         return getComplex(iter.store, index);
     }
 
-    public final double getComplexR(RandomIterator iter, int index) {
+    public double getComplexR(RandomIterator iter, int index) {
         return getComplexR(iter.store, index);
     }
 
-    public final double getComplexI(RandomIterator iter, int index) {
+    public double getComplexI(RandomIterator iter, int index) {
         return getComplexI(iter.store, index);
     }
 
@@ -404,7 +404,7 @@ public abstract class VectorAccess extends Node {
         return getLogical(iter.store, index);
     }
 
-    public final String getString(RandomIterator iter, int index) {
+    public String getString(RandomIterator iter, int index) {
         return getString(iter.store, index);
     }
 
