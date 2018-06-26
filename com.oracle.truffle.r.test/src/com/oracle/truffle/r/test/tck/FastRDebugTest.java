@@ -72,7 +72,7 @@ public class FastRDebugTest {
     public void before() {
         suspendedEvent = null;
 
-        context = Context.newBuilder("R").in(System.in).out(out).err(err).build();
+        context = Context.newBuilder("R").allowNativeAccess(true).in(System.in).out(out).err(err).build();
         debugger = context.getEngine().getInstruments().get("debugger").lookup(Debugger.class);
         debuggerSession = debugger.startSession(event -> {
             suspendedEvent = event;
@@ -777,7 +777,7 @@ public class FastRDebugTest {
                             // Trigger findSourceLocation() call
                             SourceSection sourceLocation = value.getSourceLocation();
                             if (sourceLocation != null) {
-                                Assert.assertSame("Sources differ", DebuggerTester.getSourceImpl(expectedSource), sourceLocation.getSource());
+                                Assert.assertEquals("Sources differ", DebuggerTester.getSourceImpl(expectedSource), sourceLocation.getSource());
                             }
                         }
                     }
