@@ -368,7 +368,11 @@ void uR_ClearerrConsole(void) {
 }
 
 void uR_Busy(int x) {
-    unimplemented("R_Busy");
+    // default - do nothing
+}
+
+void R_Busy(int which) {
+  ptr_R_Busy(which);
 }
 
 void R_SizeFromEnv(Rstart rs) {
