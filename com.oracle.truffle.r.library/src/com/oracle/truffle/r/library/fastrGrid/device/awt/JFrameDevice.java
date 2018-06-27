@@ -42,6 +42,7 @@ import java.util.TimerTask;
 import javax.imageio.ImageIO;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
@@ -49,7 +50,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.ImageSaver;
 
 /**
  * This device paints everything into an image, which is painted into a AWT component in its
- * {@code paint} method.
+ * {@code paint} method. Note that this class is not thread safe.
  */
 public final class JFrameDevice implements GridDevice, ImageSaver {
 
@@ -64,14 +65,26 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
     private Graphics2DDevice inner;
     private boolean isOnHold = false;
 
-    private FastRFrame currentFrame;
+    /**
+     * Value of this field is set from the AWT thread, any code using it in the main thread should
+     * first check if it is not {@code null}.
+     */
+    private volatile FastRFrame currentFrame;
+    /**
+     * The closing operation invokes {@code dev.off()} to close the device on the R side (remove it
+     * from {@code .Devices} etc.), but that eventually calls into {@link #close()} where we need to
+     * know that the AWT window is being closed by the user and so we do not need to close it.
+     */
+    private volatile boolean isClosing = false;
     private Runnable onResize;
     private Runnable onClose;
 
     public JFrameDevice(int width, int height) {
-        currentFrame = new FastRFrame(new FastRPanel(width, height));
-        openGraphics2DDevice(currentFrame.fastRComponent.getWidth(), currentFrame.fastRComponent.getHeight());
+        openGraphics2DDevice(width, height);
         componentImage = image;
+        SwingUtilities.invokeLater(() -> {
+            currentFrame = new FastRFrame(new FastRPanel(width, height));
+        });
     }
 
     @Override
@@ -110,7 +123,9 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
     @Override
     public void close() throws DeviceCloseException {
         disposeGraphics2DDevice();
-        currentFrame.dispose();
+        if (!isClosing && currentFrame != null) {
+            currentFrame.dispose();
+        }
         componentImage = null;
     }
 
@@ -231,17 +246,21 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
     }
 
     private void ensureOpen() {
-        if (!currentFrame.isVisible()) {
+        if (currentFrame != null && !currentFrame.isVisible()) {
             int width = inner.getWidthAwt();
             int height = inner.getHeightAwt();
-            currentFrame = new FastRFrame(new FastRPanel(width, height));
+            // Note: the assumption is that this class is single threaded
             disposeGraphics2DDevice();
             openGraphics2DDevice(width, height);
+            currentFrame = null;
+            SwingUtilities.invokeLater(() -> {
+                currentFrame = new FastRFrame(new FastRPanel(width, height));
+            });
         }
     }
 
     private void repaint() {
-        if (!isOnHold) {
+        if (!isOnHold && currentFrame != null) {
             currentFrame.repaint();
         }
     }
@@ -312,6 +331,7 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
         FastRFrame(FastRPanel fastRComponent) throws HeadlessException {
             super("FastR");
             this.fastRComponent = fastRComponent;
+            setDefaultCloseOperation(DISPOSE_ON_CLOSE);
             addListeners();
             getContentPane().add(fastRComponent);
             pack();
@@ -320,10 +340,12 @@ public final class JFrameDevice implements GridDevice, ImageSaver {
         }
 
         private void addListeners() {
-            addWindowFocusListener(new WindowAdapter() {
+            addWindowListener(new WindowAdapter() {
                 @Override
                 public void windowClosing(WindowEvent e) {
-                    if (onClose != null) {
+                    super.windowClosing(e);
+                    if (!isClosing && onClose != null) {
+                        isClosing = true;
                         onClose.run();
                     }
                 }
