@@ -26,6 +26,8 @@ import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
+
 import java.lang.ref.WeakReference;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -49,7 +51,7 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
     private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
 
     private CharSXPWrapper(String contents) {
-        this.contents = contents;
+        this.contents = Utils.intern(contents);
     }
 
     @TruffleBoundary
@@ -61,7 +63,7 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
             return RRuntime.STRING_NA;
         }
         // WARNING:
-        // we keep and use the contens value even in cases when contets got allocated and could be
+        // we keep and use the contents value even in cases when contents got allocated and could be
         // accessed via NativeDataAccess.getData():
         // - when used with RSymbol the String has to be interned - NDA.getData() will create a new
         // instance if already allocated
