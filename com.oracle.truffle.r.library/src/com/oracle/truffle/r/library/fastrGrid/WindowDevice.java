@@ -24,9 +24,14 @@ package com.oracle.truffle.r.library.fastrGrid;
 
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.JFrameDevice;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 
 /**
  * Contains code specific to FastR device that shows the graphical output interactively in a window.
@@ -45,6 +50,7 @@ public final class WindowDevice {
         RContext ctx = RContext.getInstance();
         if (ctx.hasExecutor()) {
             frameDevice.setResizeListener(() -> redrawAll(ctx));
+            frameDevice.setCloseListener(() -> devOff(ctx));
         } else {
             noSchedulingSupportWarning();
         }
@@ -56,14 +62,44 @@ public final class WindowDevice {
     }
 
     private static void redrawAll(RContext ctx) {
-        if (ctx.hasExecutor()) {
+        if (!ctx.hasExecutor()) {
             // to be robust we re-check the executor availability
-            ctx.schedule(() -> {
-                Object prev = ctx.getEnv().getContext().enter();
-                GridContext.getContext(ctx).evalInternalRFunction("redrawAll");
-                ctx.getEnv().getContext().leave(prev);
-            });
+            return;
         }
+        ctx.schedule(() -> {
+            Object prev = ctx.getEnv().getContext().enter();
+            GridContext.getContext(ctx).evalInternalRFunction("redrawAll");
+            ctx.getEnv().getContext().leave(prev);
+        });
+    }
+
+    private static void devOff(RContext ctx) {
+        if (!ctx.hasExecutor()) {
+            // to be robust we re-check the executor availability
+            return;
+        }
+        ctx.schedule(() -> {
+            Object prev = ctx.getEnv().getContext().enter();
+            RFunction devOffFun = getDevOffFunction(ctx);
+            if (devOffFun != null) {
+                RContext.getEngine().evalFunction(devOffFun, REnvironment.baseEnv(ctx).getFrame(), RCaller.topLevel, true, null);
+            } else {
+                RError.warning(RError.NO_CALLER, Message.GENERIC, "Could not locate grDevices::dev.off to close the window device.");
+            }
+            ctx.getEnv().getContext().leave(prev);
+        });
+    }
+
+    private static RFunction getDevOffFunction(RContext ctx) {
+        Object grDevices = ctx.stateREnvironment.getNamespaceRegistry().get("grDevices");
+        if (!(grDevices instanceof REnvironment)) {
+            return null;
+        }
+        Object devOff = ((REnvironment) grDevices).get("dev.off");
+        if (devOff instanceof RPromise) {
+            devOff = PromiseHelperNode.evaluateSlowPath((RPromise) devOff);
+        }
+        return devOff instanceof RFunction ? (RFunction) devOff : null;
     }
 
     private static void noSchedulingSupportWarning() {

@@ -1062,7 +1062,7 @@ public abstract class REnvironment extends RAttributeStorage {
     /**
      * When a function is invoked a {@link Function} environment may be created in response to the R
      * {@code environment()} base package function, and it will have an associated frame. We hide
-     * the creation of {@link Function} environments to ensure the <i>at most one>/i> invariant and
+     * the creation of {@link Function} environments to ensure the <i>at most one</i> invariant and
      * store the value in the frame immediately.
      */
     public static final class Function extends REnvironment {
