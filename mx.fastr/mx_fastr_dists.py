@@ -309,7 +309,9 @@ mx_sdk.register_graalvm_component(mx_sdk.GraalVmLanguage(
 "The R component comes without native image by default. If you wish to build the native image, " +
 "which provides faster startup, but slightly slower peak performance, then run the following:\n" +
 "   ${graalvm_home}/jre/languages/R/bin/install_r_native_image\n\n" +
-"The native image is then used by default. Pass '--jvm' flag to the R or Rscript launchers to " +
-"use JVM instead of the native image.\n\n" +
+"The native image is then used by default. Pass '--jvm' flag to the R or Rscript launcher to " +
+"use JVM instead of the native image. Note that the native image is not stable yet and is intended for evaluation " +
+"purposes and experiments. Some features may not work when the native image is installed, most notably the --polyglot switch. " +
+"The native image can be uninstalled using the installation script with 'uninstall' argument.\n\n" +
 "See http://www.graalvm.org/docs/reference-manual/languages/r for more."
 ))
