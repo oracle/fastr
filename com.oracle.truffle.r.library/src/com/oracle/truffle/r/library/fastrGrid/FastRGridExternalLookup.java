@@ -31,6 +31,7 @@ import com.oracle.truffle.r.library.fastrGrid.color.Col2RGB;
 import com.oracle.truffle.r.library.fastrGrid.color.RGB;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCairo;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.DevSet;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevOff;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevSize;
@@ -63,6 +64,8 @@ public final class FastRGridExternalLookup {
                 return new DevSize();
             case "devcur":
                 return new DevCurr();
+            case "devset":
+                return DevSet.create();
             case "devoff":
                 return DevOff.create();
             case "svgstring":

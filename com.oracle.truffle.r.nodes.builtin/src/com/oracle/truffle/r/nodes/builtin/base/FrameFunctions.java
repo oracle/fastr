@@ -507,7 +507,7 @@ public class FrameFunctions {
                     @Override
                     public Object apply(Frame f) {
                         RCaller currentCall = RArguments.getCall(f);
-                        if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
+                        if (currentCall.isValidCaller() && !currentCall.isPromise() && currentCall.getDepth() <= depth) {
                             result = RDataFactory.createPairList(createCall(currentCall), result);
                         }
                         return (!currentCall.isPromise() && RArguments.getDepth(f) == 1) ? result : null;

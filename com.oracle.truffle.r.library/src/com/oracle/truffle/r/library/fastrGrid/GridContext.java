@@ -59,7 +59,7 @@ public final class GridContext {
     private int currentDeviceIdx = 0;
 
     private GridContext() {
-        devices.add(new DeviceAndState(null, null));
+        devices.add(new DeviceAndState(null, null, null));
     }
 
     private GridContext(GridContext parent) {
@@ -67,7 +67,7 @@ public final class GridContext {
         // then sets global variable to remember to not call it again, but we need to initialize
         // grid context in newly spawned context, so we do it manually here.
         gridState.init(parent.getGridState().getGridEnv());
-        devices.add(new DeviceAndState(null, null));
+        devices.add(new DeviceAndState(null, null, null));
     }
 
     public static GridContext getContext(RContext rCtx) {
@@ -120,8 +120,15 @@ public final class GridContext {
         RGridGraphicsAdapter.addDevice(rCtx, name);
         RGridGraphicsAdapter.setCurrentDevice(rCtx, name);
         currentDeviceIdx = this.devices.size();
-        this.devices.add(new DeviceAndState(currentDevice, filenamePattern));
+        this.devices.add(new DeviceAndState(name, currentDevice, filenamePattern));
         assert devices.size() == RGridGraphicsAdapter.getDevicesCount() : devices.size() + " vs " + RGridGraphicsAdapter.getDevicesCount();
+    }
+
+    public void setCurrentDevice(int deviceIdx) {
+        assert deviceIdx > 0 && deviceIdx < this.devices.size();
+        RContext rCtx = RContext.getInstance();
+        RGridGraphicsAdapter.setCurrentDevice(rCtx, this.devices.get(deviceIdx).name);
+        currentDeviceIdx = deviceIdx;
     }
 
     public void openDefaultDevice() {
@@ -190,10 +197,12 @@ public final class GridContext {
     }
 
     private static final class DeviceAndState {
+        final String name;
         final GridDevice device;
         final GridDeviceState state;
 
-        DeviceAndState(GridDevice device, String filenamePattern) {
+        DeviceAndState(String name, GridDevice device, String filenamePattern) {
+            this.name = name;
             this.device = device;
             this.state = new GridDeviceState(filenamePattern);
         }
