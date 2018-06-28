@@ -41,6 +41,42 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * NOTE: It is important to create new caller instances for each stack frame, so that
  * {@link ReturnException#getTarget()} can uniquely identify the target frame.
  * 
+ * Example:
+ *
+ * <pre>
+ *     foo <- function(a) a
+ *     bar <- function() foo(promiseFun(1))
+ *     promiseFun <- function(a) a+1
+ *     bar()
+ * </pre>
+ *
+ * When {@code promiseFun} is entered (which is at the point where {@code a} is evaluated in
+ * {@code foo}), the stack frames will look like:
+ *
+ * <pre>
+ *   promiseFun      (depth = 3, parent = bar, payload = "promiseFun(1)")
+ *   internal frame  (depth = 2, parent = global, payload = RCaller:bar)  <-- this may not be a real Truffle execution frame!
+ *   foo             (depth = 2, parent = bar, payload = "foo(promiseFun(1))")
+ *   bar             (depth = 1, parent = global, payload = "bar()")
+ *   global          (depth = 0, parent = null, payload = null)
+ * </pre>
+ *
+ * Where the 'internal frame' wraps the frame of bar so that the promise code can access all the
+ * local variables of bar, but the {@link RCaller} can be different: the depth that would normally
+ * be 1 is 2, and parent and payload are different (see docs of {@link #isPromise()}). The purpose
+ * of {@link #payload} in such frames is that we can use it to reach the actual frame where the
+ * promise is logically evaluated, should the promise call some stack introspection built-in, e.g.
+ * {@code parent.frame()}. The reason why depths is 2 is that any consecutive function call uses
+ * current depth + 1 as the new depth and we need the new depth to be 3.
+ *
+ * Note that the 'internal frame' may not be on the real execution stack (i.e. not iterable by
+ * Truffle). The {@code InlineCacheNode} directly injects the AST of the promise into the calling
+ * function AST (foo in this case), but passes the 'internal frame' to the execute method instead of
+ * the current {@code VirtualFrame} (so that the injected AST thinks that it is executed inside bar
+ * and not foo). If the cache is full, then the {@code InlineCacheNode} creates a new
+ * {@link com.oracle.truffle.api.CallTarget} and calls it with 'internal frame', in which case the
+ * 'internal frame' appears in Truffle frames iteration.
+ *
  * @see RArguments
  */
 public final class RCaller {
