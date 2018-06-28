@@ -22,24 +22,21 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.nodes.function.RCallBaseNode;
-import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RObject;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
@@ -69,36 +66,17 @@ public class RFunctionMR {
     public abstract static class RFunctionExecuteNode extends Node {
         @Child private Foreign2R foreign2R = Foreign2RNodeGen.create();
         @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
-
-        private static final FrameDescriptor emptyFrameDescriptor = FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<interop>", new FrameDescriptor("R interop frame"));
-        private static final RFrameSlot argsIdentifier = RFrameSlot.createTemp(false);
-        private static final RFrameSlot explicitCallerId = RFrameSlot.createTemp(false);
-        private static final FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(emptyFrameDescriptor, argsIdentifier, FrameSlotKind.Object);
-        private static final FrameSlot slotCaller = FrameSlotChangeMonitor.findOrAddFrameSlot(emptyFrameDescriptor, explicitCallerId, FrameSlotKind.Object);
-
-        static {
-            FrameSlotChangeMonitor.initializeFunctionFrameDescriptor("<function>", emptyFrameDescriptor);
-        }
-
-        @Child private RCallBaseNode call = RCallNode.createExplicitCall(argsIdentifier, explicitCallerId);
+        @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
         protected Object access(RFunction receiver, Object[] arguments) {
-            Object[] dummyFrameArgs = RArguments.createUnitialized();
-            VirtualFrame dummyFrame = Truffle.getRuntime().createVirtualFrame(dummyFrameArgs, emptyFrameDescriptor);
-
             Object[] convertedArguments = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 convertedArguments[i] = foreign2R.execute(arguments[i]);
             }
-            RArgsValuesAndNames actualArgs = new RArgsValuesAndNames(convertedArguments, ArgumentsSignature.empty(arguments.length));
-            try {
-                FrameSlotChangeMonitor.setObject(dummyFrame, slot, actualArgs);
-                FrameSlotChangeMonitor.setObject(dummyFrame, slotCaller, RNull.instance);
-                Object value = call.execute(dummyFrame, receiver);
-                return r2Foreign.execute(value);
-            } finally {
-                FrameSlotChangeMonitor.setObject(dummyFrame, slot, null);
-            }
+            MaterializedFrame globalFrame = RContext.getInstance().stateREnvironment.getGlobalFrame();
+            RArgsValuesAndNames argsAndValues = new RArgsValuesAndNames(convertedArguments, ArgumentsSignature.empty(arguments.length));
+            Object result = this.call.call(globalFrame, receiver, argsAndValues);
+            return r2Foreign.execute(result);
         }
     }
 
