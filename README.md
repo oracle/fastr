@@ -119,3 +119,25 @@ We encourage contributions, and invite interested developers to join in.
 Prospective contributors need to sign the [Oracle Contributor Agreement (OCA)](http://www.oracle.com/technetwork/community/oca-486395.html).
 The access point for contributions, issues and questions about FastR is the [GitHub repository ](https://github.com/graalvm/fastr)
 
+## Troubleshooting
+
+### Build fails when generating R grammar
+
+This problem manifests by the following error message in the build output:
+
+`Parser failed to execute command`
+
+followed by a series of parser errors, such as:
+
+`error(170): R.g:<LINE>:<COL>: the .. range operator isn't allowed in parser rules`
+
+It seems to be an ANTLR issue occurring when `LANG`, `LC_ALL` and `LC_CTYPE` environment
+variables are not set to the same value.
+
+The solution is to set those variables to the same value, e.g.
+
+```
+export LANG=en_US.UTF-8
+export LC_ALL=en_US.UTF-8
+export LC_CTYPE=en_US.UTF-8
+```
