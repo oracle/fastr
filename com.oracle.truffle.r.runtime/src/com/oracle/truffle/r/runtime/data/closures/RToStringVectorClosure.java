@@ -23,29 +23,28 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RComplex;
-import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
-abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
+class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
 
-    protected RToStringVectorClosure(boolean keepAttributes) {
-        super(keepAttributes);
+    protected RToStringVectorClosure(RAbstractVector vector, boolean keepAttributes) {
+        super(vector, keepAttributes);
     }
 
     @Override
@@ -74,178 +73,73 @@ abstract class RToStringVectorClosure extends RToVectorClosure implements RAbstr
     }
 
     @Override
-    public final RAbstractStringVector copyWithNewDimensions(int[] newDimensions) {
-        if (!keepAttributes) {
-            return materialize().copyWithNewDimensions(newDimensions);
-        }
-        return this;
-    }
-}
-
-final class RLogicalToStringVectorClosure extends RToStringVectorClosure {
-
-    private final RLogicalVector vector;
-
-    RLogicalToStringVectorClosure(RLogicalVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RLogicalVector getVector() {
-        return vector;
-    }
-
-    @Override
     public String getDataAt(int index) {
-        byte data = vector.getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(data)) {
-            return RRuntime.STRING_NA;
+        VectorAccess spa = getVector().slowPathAccess();
+        return spa.getString(spa.randomAccess(getVector()), index);
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this, getVector().access());
+    }
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
+    }
+
+    private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
+        @Override
+        protected String getString(Object store, int index) {
+            RToStringVectorClosure vector = (RToStringVectorClosure) store;
+            return vector.getDataAt(index);
         }
-        return RRuntime.logicalToStringNoCheck(data);
 
-    }
-}
-
-final class RIntToStringVectorClosure extends RToStringVectorClosure {
-
-    private final RIntVector vector;
-
-    RIntToStringVectorClosure(RIntVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RIntVector getVector() {
-        return vector;
-    }
-
-    @Override
-    public String getDataAt(int index) {
-        int data = vector.getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(data)) {
-            return RRuntime.STRING_NA;
+        @Override
+        protected void setString(Object store, int index, String value) {
+            RToStringVectorClosure vector = (RToStringVectorClosure) store;
+            vector.setDataAt(vector.getInternalStore(), index, value);
         }
-        return RRuntime.intToStringNoCheck(data);
-    }
-}
+    };
 
-final class RIntSequenceToStringVectorClosure extends RToStringVectorClosure {
+    private static final class FastPathAccess extends FastPathFromStringAccess {
 
-    private final RIntSequence vector;
+        @Node.Child private VectorAccess delegate;
 
-    RIntSequenceToStringVectorClosure(RIntSequence vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RIntSequence getVector() {
-        return vector;
-    }
-
-    @Override
-    public String getDataAt(int index) {
-        int data = vector.getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(data)) {
-            return RRuntime.STRING_NA;
+        FastPathAccess(RAbstractContainer value, VectorAccess delegate) {
+            super(value);
+            this.delegate = delegate;
         }
-        return RRuntime.intToStringNoCheck(data);
-    }
-}
 
-final class RDoubleToStringVectorClosure extends RToStringVectorClosure {
-
-    private final RDoubleVector vector;
-
-    RDoubleToStringVectorClosure(RDoubleVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RDoubleVector getVector() {
-        return vector;
-    }
-
-    @Override
-    public String getDataAt(int index) {
-        double data = vector.getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(data)) {
-            return RRuntime.STRING_NA;
-        } else {
-            return RContext.getRRuntimeASTAccess().encodeDouble(data);
+        @Override
+        public boolean supports(Object value) {
+            return delegate.supports(value);
         }
-    }
-}
 
-final class RDoubleSequenceToStringVectorClosure extends RToStringVectorClosure {
-
-    private final RDoubleSequence vector;
-
-    RDoubleSequenceToStringVectorClosure(RDoubleSequence vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RDoubleSequence getVector() {
-        return vector;
-    }
-
-    @Override
-    public String getDataAt(int index) {
-        double data = vector.getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(data)) {
-            return RRuntime.STRING_NA;
-        } else {
-            return RContext.getRRuntimeASTAccess().encodeDouble(data);
+        @Override
+        protected Object getStore(RAbstractContainer vector) {
+            return super.getStore(((RToStringVectorClosure) vector).getVector());
         }
-    }
-}
 
-final class RComplexToStringVectorClosure extends RToStringVectorClosure {
-
-    private final RComplexVector vector;
-
-    RComplexToStringVectorClosure(RComplexVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RComplexVector getVector() {
-        return vector;
-    }
-
-    @Override
-    public String getDataAt(int index) {
-        RComplex data = vector.getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(data)) {
-            return RRuntime.STRING_NA;
+        @Override
+        public String getString(RandomIterator iter, int index) {
+            return delegate.getString(iter, index);
         }
-        return RContext.getRRuntimeASTAccess().encodeComplex(data);
-    }
-}
 
-final class RRawToStringVectorClosure extends RToStringVectorClosure {
+        @Override
+        public String getString(SequentialIterator iter) {
+            return delegate.getString(iter);
+        }
 
-    private final RRawVector vector;
+        @Override
+        protected String getString(Object store, int index) {
+            throw RInternalError.shouldNotReachHere();
+        }
 
-    RRawToStringVectorClosure(RRawVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RRawVector getVector() {
-        return vector;
-    }
-
-    @Override
-    public String getDataAt(int index) {
-        return RRuntime.rawToHexString(vector.getRawDataAt(index));
+        @Override
+        protected void setString(Object store, int index, String value) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 }
 
@@ -254,20 +148,13 @@ final class RRawToStringVectorClosure extends RToStringVectorClosure {
  */
 final class RFactorToStringVectorClosure extends RToStringVectorClosure {
 
-    private final RAbstractIntVector vector;
     private final RAbstractStringVector levels;
     private final boolean withNames;
 
     RFactorToStringVectorClosure(RAbstractIntVector vector, RAbstractStringVector levels, boolean withNames, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
+        super(vector, keepAttributes);
         this.levels = levels;
         this.withNames = withNames;
-    }
-
-    @Override
-    public RAbstractIntVector getVector() {
-        return vector;
     }
 
     @Override
@@ -282,8 +169,9 @@ final class RFactorToStringVectorClosure extends RToStringVectorClosure {
 
     @Override
     public String getDataAt(int index) {
-        int val = ((RIntVector) vector).getDataAt(index);
-        if (!vector.isComplete() && RRuntime.isNA(val)) {
+        VectorAccess spa = getVector().slowPathAccess();
+        int val = spa.getInt(spa.randomAccess(getVector()), index);
+        if (!getVector().isComplete() && RRuntime.isNA(val)) {
             return RRuntime.STRING_NA;
         } else {
             String l = levels.getDataAt(val - 1);

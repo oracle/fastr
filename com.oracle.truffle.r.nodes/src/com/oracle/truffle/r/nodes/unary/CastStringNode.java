@@ -32,11 +32,16 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignWrapper;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
@@ -84,7 +89,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return factory().createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
     }
 
-    @Specialization(guards = {"!isIntSequence(operandIn)", "!isRAbstractStringVector(operandIn)"})
+    @Specialization(guards = {"!isIntSequence(operandIn)", "!isRAbstractStringVector(operandIn)", "!isForeignWrapper(operandIn)"})
     protected RStringVector doAbstractContainer(RAbstractContainer operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
@@ -121,6 +126,25 @@ public abstract class CastStringNode extends CastStringBaseNode {
     @Specialization
     protected String doRSymbol(RSymbol s) {
         return s.getName();
+    }
+
+    protected boolean isForeignWrapper(Object value) {
+        return value instanceof RForeignWrapper;
+    }
+
+    @Specialization
+    protected RAbstractStringVector doForeignWrapper(RForeignBooleanWrapper operand) {
+        return RClosures.createToStringVector(operand, true);
+    }
+
+    @Specialization
+    protected RAbstractStringVector doForeignWrapper(RForeignIntWrapper operand) {
+        return RClosures.createToStringVector(operand, true);
+    }
+
+    @Specialization
+    protected RAbstractStringVector doForeignWrapper(RForeignDoubleWrapper operand) {
+        return RClosures.createToStringVector(operand, true);
     }
 
     public static CastStringNode create() {

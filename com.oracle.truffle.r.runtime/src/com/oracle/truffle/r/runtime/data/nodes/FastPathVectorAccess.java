@@ -50,7 +50,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
     }
 
     @Override
-    protected final Object getStore(RAbstractContainer vector) {
+    protected Object getStore(RAbstractContainer vector) {
         return hasStore ? vector.getInternalStore() : ((RVector<?>) vector).getNativeMirror();
     }
 
