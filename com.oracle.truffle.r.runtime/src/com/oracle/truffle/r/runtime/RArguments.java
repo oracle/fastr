@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  *                            +--------------------+
  * INDEX_FUNCTION          -> | RFunction          |
  *                            +--------------------+
- * INDEX_CALL_SRC          -> | SourceSection      |
+ * INDEX_CALL              -> | RCaller            |
  *                            +--------------------+
  * INDEX_CALLER_FRAME   ->    | MaterializedFrame  |
  *                            +--------------------+
@@ -81,11 +81,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * to how the supplied arguments were permuted. The purpose of this slot is to store the names in the
  * original signature (especially positional vs. named) for later use in UseMethod.
  *
- * N.B. The depth is always a monotonically increasing value and unique across the active set of stack frames.
- * Promise evaluation requires some special support as the stack must reflect the "logical" stack depth,
- * else code like {@code sys.frames} does not work correctly, but it must be possible to access the initial frame
- * that was associated with the promise else condition handling does not work correctly. Accordingly the
- * stack frames associated with a promise evaluation maintain the INDEX_PROMISE_FRAME field for that access.
+ * @see RCaller
  */
 // @formatter:on
 public final class RArguments {
