@@ -265,6 +265,11 @@ public class TestConnections extends TestRBase {
         assertEval("truncate(fifo('__fifo_982346798', 'r', blocking=T)); unlink('__fifo_982346798')");
     }
 
+    @Test
+    public void testSeek() {
+        assertEval("f1 <- file(open='w+b', encoding='UTF-8'); writeBin(charToRaw(\"abcd\"), f1); seek(f1); seek(f1,0); seek(f1)");
+    }
+
     private static final String[] LVAL = arr("T", "F");
 
     private static String[] arr(String... args) {
