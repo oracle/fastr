@@ -571,10 +571,9 @@ public class FileConnections {
 
         @Override
         protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            long result = raf.getFilePointer();
+            long result;
             switch (seekMode) {
                 case ENQUIRE:
-                    return result;
                 case START:
                     break;
                 default:
@@ -583,17 +582,31 @@ public class FileConnections {
             switch (seekRWMode) {
                 case LAST:
                     if (lastMode == SeekRWMode.READ) {
-                        readOffset = offset;
+                        result = readOffset;
+                        if (seekMode != SeekMode.ENQUIRE) {
+                            readOffset = offset;
+                        }
                     } else {
-                        writeOffset = offset;
+                        result = writeOffset;
+                        if (seekMode != SeekMode.ENQUIRE) {
+                            writeOffset = offset;
+                        }
                     }
                     break;
                 case READ:
-                    readOffset = offset;
+                    result = readOffset;
+                    if (seekMode != SeekMode.ENQUIRE) {
+                        readOffset = offset;
+                    }
                     break;
                 case WRITE:
-                    writeOffset = offset;
+                    result = writeOffset;
+                    if (seekMode != SeekMode.ENQUIRE) {
+                        writeOffset = offset;
+                    }
                     break;
+                default:
+                    throw RInternalError.shouldNotReachHere();
             }
             return result;
         }
@@ -601,25 +614,39 @@ public class FileConnections {
         @Override
         public String[] readLines(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
             setReadPosition();
+            // the readOffset field is updated from within super.readLines via the overridden
+            // updateReadOffset
             return super.readLines(n, warn, skipNul);
         }
 
         @Override
         public int readBin(ByteBuffer buffer) throws IOException {
             setReadPosition();
-            return super.readBin(buffer);
+            try {
+                return super.readBin(buffer);
+            } finally {
+                readOffset = raf.getFilePointer();
+            }
         }
 
         @Override
         public String readChar(int nchars, boolean useBytes) throws IOException {
             setReadPosition();
-            return super.readChar(nchars, useBytes);
+            try {
+                return super.readChar(nchars, useBytes);
+            } finally {
+                readOffset = raf.getFilePointer();
+            }
         }
 
         @Override
         public byte[] readBinChars() throws IOException {
             setReadPosition();
-            return super.readBinChars();
+            try {
+                return super.readBinChars();
+            } finally {
+                readOffset = raf.getFilePointer();
+            }
         }
 
         @TruffleBoundary
@@ -654,18 +681,21 @@ public class FileConnections {
         public void writeBin(ByteBuffer buffer) throws IOException {
             setWritePosition();
             super.writeBin(buffer);
+            writeOffset = raf.getFilePointer();
         }
 
         @Override
         public void writeChar(String s, int pad, String eos, boolean useBytes) throws IOException {
             setWritePosition();
             super.writeChar(s, pad, eos, useBytes);
+            writeOffset = raf.getFilePointer();
         }
 
         @Override
         public void writeString(String s, boolean nl) throws IOException {
             setWritePosition();
             super.writeString(s, nl);
+            writeOffset = raf.getFilePointer();
         }
 
         @Override
