@@ -1083,9 +1083,9 @@ public class TestJavaInterop extends TestBase {
             }
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
             assertEvalFastR(CREATE_TRUFFLE_OBJECT +
-                            ".fastr.inspect(as.vector(as.vector(to$fieldBooleanArray), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
+                            ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
             assertEvalFastR(CREATE_TRUFFLE_OBJECT +
-                            ".fastr.inspect(as.vector(as." + type + "(to$fieldBooleanArray), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
+                            ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
 
         }
     }
