@@ -229,9 +229,14 @@ public class FileConnections {
          */
         final RCompression.Type cTypeActual;
         if (!raw && (openMode == AbstractOpenMode.Read || openMode == AbstractOpenMode.ReadBinary)) {
-            cTypeActual = RCompression.getCompressionType(base.path);
-            if (cTypeActual != cType) {
+            RCompression.Type cTypeFound = RCompression.getCompressionType(base.path);
+            // For binary reading force file's compression type if compression exists
+            // and it conflicts with requested compression type.
+            if (cTypeFound != cType && (openMode != AbstractOpenMode.ReadBinary || cType != RCompression.Type.NONE)) {
+                cTypeActual = cTypeFound;
                 base.updateConnectionClass(mapConnectionClass(cTypeActual));
+            } else {
+                cTypeActual = cType;
             }
         } else {
             cTypeActual = cType;
