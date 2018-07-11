@@ -212,7 +212,7 @@ public class FastRInterop {
 
             File file = new File(path);
             try {
-                Builder<IOException, RuntimeException, RuntimeException> sourceBuilder = Source.newBuilder(file).name(file.getName()).internal();
+                Builder<IOException, RuntimeException, RuntimeException> sourceBuilder = Source.newBuilder(file).name(file.getName());
                 if (languageId != null) {
                     sourceBuilder.language(languageId);
                 }

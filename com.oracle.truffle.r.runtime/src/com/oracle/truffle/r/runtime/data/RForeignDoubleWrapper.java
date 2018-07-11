@@ -73,7 +73,7 @@ public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbs
     private static double checkIsNull(Object value, ClassCastException e) throws RuntimeException {
         if (value instanceof TruffleObject) {
             if (ForeignAccess.sendIsNull(IS_NULL, (TruffleObject) value)) {
-                return RRuntime.INT_NA;
+                return RRuntime.DOUBLE_NA;
             }
         }
         throw RInternalError.shouldNotReachHere(e);
