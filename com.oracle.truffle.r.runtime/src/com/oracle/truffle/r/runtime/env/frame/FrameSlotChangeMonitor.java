@@ -792,7 +792,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setBooleanAndInvalidate(Frame frame, FrameSlot frameSlot, boolean newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setBoolean(frameSlot, newValue);
@@ -806,7 +806,7 @@ public final class FrameSlotChangeMonitor {
     public static void setBoolean(Frame frame, FrameSlot frameSlot, boolean newValue) {
         if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-            if (info.possibleMultiSlot()) {
+            if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
             }
@@ -816,7 +816,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setByte(frameSlot, newValue);
@@ -830,7 +830,7 @@ public final class FrameSlotChangeMonitor {
     public static void setByte(Frame frame, FrameSlot frameSlot, byte newValue) {
         if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-            if (info.possibleMultiSlot()) {
+            if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
             }
@@ -840,7 +840,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setInt(frameSlot, newValue);
@@ -854,7 +854,7 @@ public final class FrameSlotChangeMonitor {
     public static void setInt(Frame frame, FrameSlot frameSlot, int newValue) {
         if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-            if (info.possibleMultiSlot()) {
+            if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
             }
@@ -864,7 +864,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setDouble(frameSlot, newValue);
@@ -878,7 +878,7 @@ public final class FrameSlotChangeMonitor {
     public static void setDouble(Frame frame, FrameSlot frameSlot, double newValue) {
         if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-            if (info.possibleMultiSlot()) {
+            if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
             }
@@ -893,7 +893,7 @@ public final class FrameSlotChangeMonitor {
 
     private static void setAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && info.possibleMultiSlot() && !RContext.isSingle()) {
+        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setObject(frameSlot, newValue);
@@ -907,7 +907,7 @@ public final class FrameSlotChangeMonitor {
     public static void setObject(Frame frame, FrameSlot frameSlot, Object newValue) {
         if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-            if (info.possibleMultiSlot()) {
+            if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
                 return;
             }
@@ -1021,9 +1021,13 @@ public final class FrameSlotChangeMonitor {
         }
     }
 
+    private static boolean isMultislot(FrameSlotInfoImpl info) {
+        return info.possibleMultiSlot() || !info.noMultiSlot.isValid();
+    }
+
     /**
      * Nullifies a set of slots in a {@link MultiSlotData} to avoid memory leaks. When providing
-     * {@code null} as indices, alls subslots except the first one are nullified.
+     * {@code null} as indices, all subslots except the first one are nullified.
      */
     public static void cleanMultiSlots(Frame frame, int[] indices) {
         CompilerAsserts.neverPartOfCompilation();
