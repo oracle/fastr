@@ -983,7 +983,8 @@ public final class RError extends RuntimeException implements TruffleException {
         NA_REPLACED("NA replaced by maximum positive value"),
         NA_INF_REPLACED("-Inf replaced by maximally negative value"),
         MINUS_INF_REPLACED("NA/Inf replaced by maximum positive value"),
-        INVALID_FUNCTION_VALUE("invalid function value in '%s'");
+        INVALID_FUNCTION_VALUE("invalid function value in '%s'"),
+        LINE_MALFORMED("Line starting '%s ...' is malformed!");
 
         public final String message;
         final boolean hasArgs;

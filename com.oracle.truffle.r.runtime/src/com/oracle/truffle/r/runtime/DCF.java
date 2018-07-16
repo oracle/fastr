@@ -78,7 +78,9 @@ public class DCF {
                     continue;
                 }
                 int ix = line.indexOf(':');
-                assert (ix > 0);
+                if (ix <= 0) {
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.LINE_MALFORMED, line);
+                }
                 fieldName = line.substring(0, ix);
                 // There may be no content on this line, all on a continuation line
                 if (ix < line.length() - 1) {
