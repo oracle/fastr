@@ -102,11 +102,10 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         FrameSlotKind valueSlotKind = RRuntime.getSlotKind(value);
         FrameDescriptor fd = frame.getFrameDescriptor();
         FrameSlot slot = FrameSlotChangeMonitor.findOrAddFrameSlot(fd, key, valueSlotKind);
-
-        if (valueSlotKind != slot.getKind()) {
+        if (valueSlotKind != fd.getFrameSlotKind(slot)) {
             // we must not toggle between slot kinds, so go to Object
             valueSlotKind = FrameSlotKind.Object;
-            slot.setKind(valueSlotKind);
+            fd.setFrameSlotKind(slot, valueSlotKind);
         }
 
         switch (valueSlotKind) {
@@ -155,8 +154,8 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
             // TODO: also throw this error when slot contains "null" value
             throw new PutException(RError.Message.UNKNOWN_OBJECT, key);
         } else {
-            if (slot.getKind() != FrameSlotKind.Object) {
-                slot.setKind(FrameSlotKind.Object);
+            if (fd.getFrameSlotKind(slot) != FrameSlotKind.Object) {
+                fd.setFrameSlotKind(slot, FrameSlotKind.Object);
             }
 
             Assumption containsNoActiveBindingAssumption = FrameSlotChangeMonitor.getContainsNoActiveBindingAssumption(fd);

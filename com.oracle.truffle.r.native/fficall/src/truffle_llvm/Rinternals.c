@@ -49,8 +49,8 @@ void Rinternals_addCallback(void** theCallbacks, int index, void *callback) {
 	callbacks[index] = callback;
 }
 
-void*** Rinternals_getCallbacksAddress() {
-        return &callbacks;
+void Rinternals_setCallbacksAddress(void** theCallbacks) {
+	callbacks = theCallbacks;
 }
 
 typedef SEXP (*call_Test)(const char *name);

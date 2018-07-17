@@ -155,39 +155,42 @@ rffi.inlined_length(expr[[1]])
 # foo <-function(...) rffi.inlined_length(get('...'))
 # foo(a = 1, b = 2, c = 3, d = 42)
 
-testLength <- function(type) {
-    s <- api.Rf_allocVector(type, 1000) 
-    print(api.LENGTH(s))
-    print(api.TRUELENGTH(s))
+# Enable when GR-10914 is fixed
+if (Sys.getenv("FASTR_RFFI") != "llvm") {
+	testLength <- function(type) {
+    	s <- api.Rf_allocVector(type, 1000) 
+	    print(api.LENGTH(s))
+	    print(api.TRUELENGTH(s))
 
-    api.SETLENGTH(s, 10)
-    print(api.LENGTH(s))
-    print(api.TRUELENGTH(s))
+    	api.SETLENGTH(s, 10)
+	    print(api.LENGTH(s))
+	    print(api.TRUELENGTH(s))
 
-    api.SET_TRUELENGTH(s, 1000)
-    print(api.LENGTH(s))
-    print(api.TRUELENGTH(s))
+	    api.SET_TRUELENGTH(s, 1000)
+	    print(api.LENGTH(s))
+	    print(api.TRUELENGTH(s))
+	}
+	testLength(10) # LGLSXP
+	testLength(13) # INTSXP
+	testLength(14) # REALSXP
+	testLength(15) # CPLXSXP
+	testLength(16) # STRSXP
+	testLength(19) # VECSXP
+
+	svec <- c("a")
+	charsxp <- api.STRING_ELT(svec, 0)
+	api.LENGTH(charsxp)
+	# gnur returns different value
+	# api.TRUELENGTH(charsxp)
+	api.SET_TRUELENGTH(charsxp, 1000)
+	api.LENGTH(charsxp)
+	api.TRUELENGTH(charsxp)
+
+	# gnur returns different value
+	# api.LEVELS(charsxp)
+
+	identical(charsxp, api.STRING_ELT(c("a"), 0))
 }
-testLength(10) # LGLSXP
-testLength(13) # INTSXP
-testLength(14) # REALSXP
-testLength(15) # CPLXSXP
-testLength(16) # STRSXP
-testLength(19) # VECSXP
-
-svec <- c("a")
-charsxp <- api.STRING_ELT(svec, 0)
-api.LENGTH(charsxp)
-# gnur returns different value
-# api.TRUELENGTH(charsxp)
-api.SET_TRUELENGTH(charsxp, 1000)
-api.LENGTH(charsxp)
-api.TRUELENGTH(charsxp)
-
-# gnur returns different value
-# api.LEVELS(charsxp)
-
-identical(charsxp, api.STRING_ELT(c("a"), 0))
 
 rffi.parseVector('1+2')
 rffi.parseVector('.*/-')
@@ -233,7 +236,10 @@ api.ATTRIB(structure(c(1,2,3), myattr3 = 33))
 api.ATTRIB(data.frame(1, 2, 3))
 
 invisible(rffi.testDATAPTR('hello', testSingleString = T));
-rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
+# See issue GR-9928
+if (Sys.info()[['sysname']] != "Darwin") {
+	rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
+}
 
 # SET_OBJECT
 # FastR does not fully support the SET_OBJECT fully,
