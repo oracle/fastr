@@ -96,7 +96,7 @@ public abstract class BaseAccessSlotNode extends RBaseNode {
         }
         if (value instanceof RSymbol) {
             symbolValue.enter();
-            if (((RSymbol) value).getName() == RRuntime.PSEUDO_NULL.getName()) {
+            if (value == RRuntime.PSEUDO_NULL) {
                 return RNull.instance;
             }
         }

@@ -22,11 +22,13 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 
 /**
  * Denotes an R "symbol" or "name". Its rep is a {@code String} but it's a different type in the
@@ -39,14 +41,15 @@ public final class RSymbol extends RAttributeStorage {
      * Note: GnuR caches all symbols and some packages rely on their identity. Moreover, the cached
      * symbols are never garbage collected. This table corresponds to {@code R_SymbolTable} in GNUR.
      */
-    private static final ConcurrentHashMap<String, RSymbol> symbolTable = new ConcurrentHashMap<>(1024);
+    private static final ConcurrentHashMap<String, RSymbol> symbolTable = new ConcurrentHashMap<>(2551);
 
     public static final RSymbol MISSING = RDataFactory.createSymbol("");
 
-    private final CharSXPWrapper name;
+    private final String name;
+    private CharSXPWrapper nameWrapper;
 
     private RSymbol(String name) {
-        this.name = CharSXPWrapper.create(name);
+        this.name = Utils.intern(name);
     }
 
     @TruffleBoundary
@@ -60,11 +63,14 @@ public final class RSymbol extends RAttributeStorage {
     }
 
     public String getName() {
-        return name.getContents();
+        return name;
     }
 
     public CharSXPWrapper getWrappedName() {
-        return name;
+        if (nameWrapper == null) {
+            nameWrapper = CharSXPWrapper.createInterned(name);
+        }
+        return nameWrapper;
     }
 
     @Override
@@ -78,7 +84,7 @@ public final class RSymbol extends RAttributeStorage {
 
     @Override
     public int hashCode() {
-        return this.getName().hashCode();
+        return System.identityHashCode(this.getName());
     }
 
     @Override
@@ -86,7 +92,7 @@ public final class RSymbol extends RAttributeStorage {
         if (obj == this) {
             return true;
         } else if (obj instanceof RSymbol) {
-            return ((RSymbol) obj).getName().equals(this.getName());
+            return ((RSymbol) obj).getName() == this.name;
         }
         return false;
     }
