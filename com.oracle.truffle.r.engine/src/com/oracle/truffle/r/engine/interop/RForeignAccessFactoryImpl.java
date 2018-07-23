@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -118,6 +119,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RMissingMRForeign.ACCESS;
         } else if (obj instanceof REmpty) {
             return REmptyMRForeign.ACCESS;
+        } else if (obj instanceof RInteropNA) {
+            return RInteropNAMRForeign.ACCESS;
         } else if (obj instanceof RAbstractAtomicVector) {
             return ForeignAccess.create(new RAbstractVectorAccessFactory(), new RAbstractVectorAccessFactory.Check());
         } else {

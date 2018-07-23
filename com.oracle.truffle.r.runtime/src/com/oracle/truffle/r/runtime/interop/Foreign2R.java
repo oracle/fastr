@@ -33,6 +33,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -78,6 +79,11 @@ public abstract class Foreign2R extends RBaseNode {
     @Specialization
     public String doChar(char obj) {
         return ((Character) obj).toString();
+    }
+
+    @Specialization
+    public Object doInteropNA(RInteropNA interopNA) {
+        return interopNA.getValue();
     }
 
     @Specialization(guards = "isNull(obj)")

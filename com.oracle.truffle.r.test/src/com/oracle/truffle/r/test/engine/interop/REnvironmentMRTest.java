@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -44,29 +43,28 @@ public class REnvironmentMRTest extends AbstractMRTest {
     public void testReadWrite() throws Exception {
         REnvironment e = (REnvironment) createTruffleObjects()[0];
 
-        assertEquals("aaa", ForeignAccess.sendRead(Message.READ.createNode(), e, "s"));
-        assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), e, "i"));
-        assertEquals(123.1, ForeignAccess.sendRead(Message.READ.createNode(), e, "d"));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), e, "b"));
+        assertSingletonVector("aaa", ForeignAccess.sendRead(Message.READ.createNode(), e, "s"));
+        assertSingletonVector(123, ForeignAccess.sendRead(Message.READ.createNode(), e, "i"));
+        assertSingletonVector(123.1, ForeignAccess.sendRead(Message.READ.createNode(), e, "d"));
+        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), e, "b"));
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, "nnnoooonnne"), UnknownIdentifierException.class);
 
         TruffleObject obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "s", "abc");
         Object value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "s");
-        assertEquals("abc", value);
+        assertSingletonVector("abc", value);
 
         obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "b", false);
         value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "b");
-        assertEquals(false, value);
+        assertSingletonVector(false, value);
 
         obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "i", (short) 1234);
         value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "i");
-        assertTrue(value instanceof Integer);
-        assertEquals(1234, value);
+        assertSingletonVector(1234, value);
 
         obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "newnew", "nneeww");
         value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "newnew");
-        assertEquals("nneeww", value);
+        assertSingletonVector("nneeww", value);
 
         assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "l", 667), UnsupportedMessageException.class);
 
@@ -135,12 +133,12 @@ public class REnvironmentMRTest extends AbstractMRTest {
         REnvironment e = (REnvironment) createTruffleObjects()[0];
         assertInteropException(() -> ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "nnoonnee"), UnknownIdentifierException.class);
 
-        assertEquals("aaa", ForeignAccess.sendRead(Message.READ.createNode(), e, "s"));
-        assertEquals(true, ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "s"));
+        assertSingletonVector("aaa", ForeignAccess.sendRead(Message.READ.createNode(), e, "s"));
+        assertTrue(ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "s"));
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, "s"), UnknownIdentifierException.class);
 
         e.lock(true);
-        assertEquals(false, ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "i"));
+        assertFalse(ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "i"));
     }
 
     @Override

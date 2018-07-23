@@ -104,7 +104,6 @@ import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
-import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 public class FastRInterop {
 
@@ -818,7 +817,7 @@ public class FastRInterop {
         }
 
         protected R2Foreign createR2Foreign() {
-            return R2Foreign.create();
+            return R2Foreign.createNoBox();
         }
 
         private static int[] getDim(boolean flat, RAbstractVector vec) {

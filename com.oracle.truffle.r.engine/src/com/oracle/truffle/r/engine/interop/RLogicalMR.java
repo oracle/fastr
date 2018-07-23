@@ -23,18 +23,22 @@
 package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 @MessageResolution(receiverType = RLogical.class)
 public class RLogicalMR {
     @Resolve(message = "IS_BOXED")
     public abstract static class RLogicalIsBoxedNode extends Node {
         protected Object access(@SuppressWarnings("unused") RLogical receiver) {
-            return true;
+            return !RRuntime.isNA(receiver.getValue());
         }
     }
 
@@ -47,8 +51,8 @@ public class RLogicalMR {
 
     @Resolve(message = "UNBOX")
     public abstract static class RLogicalUnboxNode extends Node {
-        protected byte access(RLogical receiver) {
-            return receiver.getValue();
+        protected Object access(RLogical receiver) {
+            return unboxLogical(receiver.getValue());
         }
     }
 
@@ -57,5 +61,16 @@ public class RLogicalMR {
         protected static boolean test(TruffleObject receiver) {
             return receiver instanceof RLogical;
         }
+    }
+
+    public static boolean isUnboxable(byte value) {
+        return !RRuntime.isNA(value);
+    }
+
+    public static Object unboxLogical(byte value) {
+        if (!isUnboxable(value)) {
+            throw UnsupportedMessageException.raise(Message.UNBOX);
+        }
+        return RRuntime.fromLogical(value);
     }
 }

@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -33,10 +36,14 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import static org.junit.Assert.assertEquals;
 
 public class VectorMRTest extends AbstractMRTest {
 
@@ -69,6 +76,28 @@ public class VectorMRTest extends AbstractMRTest {
     }
 
     @Test
+    public void testReadingNAReturnsTruffleObjectThatIsNull() throws Exception {
+        final TruffleObject vi = RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR);
+        assertEquals(42, ForeignAccess.sendRead(Message.READ.createNode(), vi, 0));
+        Object expectedNA = ForeignAccess.sendRead(Message.READ.createNode(), vi, 1);
+        assertEquals(true, ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) expectedNA));
+
+        final TruffleObject vlogical = RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE, RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR);
+        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), vlogical, 0));
+        expectedNA = ForeignAccess.sendRead(Message.READ.createNode(), vlogical, 1);
+        assertEquals(true, ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) expectedNA));
+    }
+
+    @Test
+    public void testReadingNAAndWritingNABackKeepsNA() throws Exception {
+        final TruffleObject vi = RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR);
+        Object naInteropValue = ForeignAccess.sendRead(Message.READ.createNode(), vi, 1);
+        Object result = ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, 0, naInteropValue);
+        assertThat(result, instanceOf(RAbstractIntVector.class));
+        assertTrue("index 0 is NA in the updated vector", RRuntime.isNA(((RAbstractIntVector) result).getDataAt(0)));
+    }
+
+    @Test
     public void testKeyInfo() throws Exception {
         TruffleObject v = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
         assertInteropException(() -> ForeignAccess.sendKeys(Message.KEYS.createNode(), v), UnsupportedMessageException.class);
@@ -86,7 +115,17 @@ public class VectorMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RDataFactory.createDoubleVector(new double[]{1}, true), RDataFactory.createDoubleSequence(1, 1, 10), createEmptyTruffleObject()};
+        // Note: single value vectors are unboxable, unless they contain NA
+        return new TruffleObject[]{
+                        RDataFactory.createDoubleVector(new double[]{1}, true),
+                        RDataFactory.createDoubleVector(new double[]{1, RRuntime.DOUBLE_NA}, RDataFactory.INCOMPLETE_VECTOR),
+                        RDataFactory.createLogicalVector(new byte[]{1, 0}, RDataFactory.INCOMPLETE_VECTOR),
+                        RDataFactory.createLogicalVector(new byte[]{1, RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR),
+                        RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_NA}, RDataFactory.INCOMPLETE_VECTOR),
+                        RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_TRUE}, RDataFactory.INCOMPLETE_VECTOR),
+                        RDataFactory.createLogicalVector(new byte[]{RRuntime.LOGICAL_FALSE}, RDataFactory.INCOMPLETE_VECTOR),
+                        RDataFactory.createDoubleSequence(1, 1, 10), createEmptyTruffleObject()
+        };
     }
 
     @Override
@@ -101,8 +140,26 @@ public class VectorMRTest extends AbstractMRTest {
 
     @Override
     protected Object getUnboxed(TruffleObject obj) {
-        assertTrue(((RAbstractVector) obj).getLength() == 1);
-        return ((RAbstractVector) obj).getDataAtAsObject(0);
+        RAbstractVector vec = (RAbstractVector) obj;
+        assertTrue(vec.getLength() == 1 && !isNA(vec));
+        if (vec instanceof RAbstractLogicalVector) {
+            return RRuntime.fromLogical(((RAbstractLogicalVector) vec).getDataAt(0));
+        }
+        return vec.getDataAtAsObject(0);
+    }
+
+    private static boolean isNA(RAbstractVector vec) {
+        if (vec instanceof RAbstractDoubleVector) {
+            return RRuntime.isNA(((RAbstractDoubleVector) vec).getDataAt(0));
+        } else if (vec instanceof RAbstractIntVector) {
+            return RRuntime.isNA(((RAbstractIntVector) vec).getDataAt(0));
+        } else if (vec instanceof RAbstractLogicalVector) {
+            return RRuntime.isNA(((RAbstractLogicalVector) vec).getDataAt(0));
+        } else if (vec instanceof RAbstractStringVector) {
+            return RRuntime.isNA(((RAbstractStringVector) vec).getDataAt(0));
+        }
+        assertTrue("unexpected type of RAbstractVector " + vec != null ? vec.getClass().getSimpleName() : "null", false);
+        return false;
     }
 
     @Override
