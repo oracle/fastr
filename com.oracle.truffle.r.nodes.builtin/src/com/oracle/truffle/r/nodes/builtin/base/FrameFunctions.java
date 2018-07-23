@@ -114,13 +114,23 @@ public class FrameFunctions {
          */
         private final FrameAccess access;
 
+        private final boolean ignoreDotInternal;
+
         public FrameHelper(FrameAccess access) {
+            this(access, false);
+        }
+
+        public FrameHelper(FrameAccess access, boolean ignoreDotInternal) {
             this.access = access;
+            this.ignoreDotInternal = ignoreDotInternal;
         }
 
         protected Frame getFrame(VirtualFrame frame, int n) {
-            int actualFrame = decodeFrameNumber(RArguments.getCall(frame), n);
-            return RInternalError.guaranteeNonNull(getNumberedFrame(frame, actualFrame));
+            RCaller c = RArguments.getCall(frame);
+            int actualFrame = decodeFrameNumber(c, n);
+            Frame numberedFrame = getNumberedFrame(frame, actualFrame);
+            Frame ret = RInternalError.guaranteeNonNull(numberedFrame);
+            return ret;
         }
 
         protected RCaller getCall(VirtualFrame frame, int n) {
@@ -135,7 +145,10 @@ public class FrameFunctions {
          */
         private int decodeFrameNumber(RCaller currentCall, int n) {
             RCaller call = currentCall;
-            call = call.getParent(); // skip the .Internal function
+            if (!ignoreDotInternal) {
+                call = call.getParent();
+            }
+
             while (call.isPromise()) {
                 call = call.getParent();
             }
@@ -417,15 +430,28 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
     public abstract static class SysFrame extends RBuiltinNode.Arg1 {
 
-        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
+        @Child private FrameHelper helper;
         @Child private PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
+        private final boolean skipDotInternal;
+
+        public SysFrame() {
+            this(false);
+        }
+
+        public SysFrame(boolean skipDotInternal) {
+            this.skipDotInternal = skipDotInternal;
+        }
 
         public abstract REnvironment executeInt(VirtualFrame frame, int which);
 
         public static SysFrame create() {
             return SysFrameNodeGen.create();
+        }
+
+        public static SysFrame create(boolean skipDotInternal) {
+            return SysFrameNodeGen.create(skipDotInternal);
         }
 
         static {
@@ -439,13 +465,21 @@ public class FrameFunctions {
             if (zeroProfile.profile(which == 0)) {
                 result = REnvironment.globalEnv();
             } else {
-                Frame callerFrame = helper.getFrame(frame, which);
+                Frame callerFrame = getFrameHelper().getFrame(frame, which);
                 result = REnvironment.frameToEnvironment(callerFrame.materialize());
             }
 
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             deoptFrameNode.deoptimizeFrame(RArguments.getArguments(result.getFrame()));
             return result;
+        }
+
+        private FrameHelper getFrameHelper() {
+            if (helper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                helper = insert(new FrameHelper(FrameAccess.MATERIALIZE, skipDotInternal));
+            }
+            return helper;
         }
     }
 
