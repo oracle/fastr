@@ -16,7 +16,7 @@ done
 
 ( 
   cd -P "$( dirname "$source" )/../etc"
-  ./configure
+  ./configure --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2 $@
   ed Makeconf < edMakeconf.etc  
   echo "DONE"
 )
