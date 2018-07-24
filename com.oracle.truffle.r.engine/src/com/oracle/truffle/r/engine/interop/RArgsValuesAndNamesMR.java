@@ -120,7 +120,7 @@ public class RArgsValuesAndNamesMR {
     }
 
     abstract static class RArgsValuesAndNamesReadImplNode extends Node {
-        @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
+        @Child private R2Foreign r2Foreign = R2Foreign.create();
 
         private final ConditionProfile unknownIdentifier = ConditionProfile.createBinaryProfile();
 

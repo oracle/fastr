@@ -672,7 +672,7 @@ public class FastRInterop {
         }
 
         protected R2Foreign createR2Foreign() {
-            return R2ForeignNodeGen.create();
+            return R2Foreign.create();
         }
     }
 
@@ -818,7 +818,7 @@ public class FastRInterop {
         }
 
         protected R2Foreign createR2Foreign() {
-            return R2ForeignNodeGen.create();
+            return R2Foreign.create();
         }
 
         private static int[] getDim(boolean flat, RAbstractVector vec) {

@@ -395,7 +395,7 @@ public class ListMR {
         private void initR2ForeignNode() {
             if (r2Foreign == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                r2Foreign = insert(R2ForeignNodeGen.create());
+                r2Foreign = insert(R2Foreign.create());
             }
         }
 
