@@ -164,9 +164,6 @@ public class FastRDebugTest {
         assertEquals("Factorial computed OK", 2, i);
     }
 
-    /**
-     * Test is currently ignored because of missing functionality in Truffle.
-     */
     @Test
     public void testConditionalBreakpoint() throws Throwable {
         final Source source = sourceFromText("main <- function() { res <- 0;\n" +
