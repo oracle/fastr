@@ -146,8 +146,8 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
         }
 
         @Override
-        protected double getDouble(Object store, int index) {
-            RDoubleSequence vector = (RDoubleSequence) store;
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+            RDoubleSequence vector = (RDoubleSequence) accessIter.getStore();
             assert index >= 0 && index < vector.getLength();
             return vector.start + vector.stride * index;
         }
@@ -160,8 +160,8 @@ public final class RDoubleSequence extends RSequence implements RAbstractDoubleV
 
     private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
         @Override
-        protected double getDouble(Object store, int index) {
-            RDoubleSequence vector = (RDoubleSequence) store;
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+            RDoubleSequence vector = (RDoubleSequence) accessIter.getStore();
             assert index >= 0 && index < vector.getLength();
             return vector.start + vector.stride * index;
         }

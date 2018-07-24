@@ -235,22 +235,23 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         }
 
         @Override
-        protected RComplex getComplex(Object store, int index) {
-            return RComplex.valueOf(getComplexR(store, index), getComplexI(store, index));
+        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            return RComplex.valueOf(getComplexRImpl(accessIter, index), getComplexIImpl(accessIter, index));
         }
 
         @Override
-        protected double getComplexR(Object store, int index) {
-            return hasStore ? ((double[]) store)[index * 2] : NativeDataAccess.getDoubleNativeMirrorData(store, index * 2);
+        protected double getComplexRImpl(AccessIterator accessIter, int index) {
+            return hasStore ? ((double[]) accessIter.getStore())[index * 2] : NativeDataAccess.getDoubleNativeMirrorData(accessIter.getStore(), index * 2);
         }
 
         @Override
-        protected double getComplexI(Object store, int index) {
-            return hasStore ? ((double[]) store)[index * 2 + 1] : NativeDataAccess.getDoubleNativeMirrorData(store, index * 2 + 1);
+        protected double getComplexIImpl(AccessIterator accessIter, int index) {
+            return hasStore ? ((double[]) accessIter.getStore())[index * 2 + 1] : NativeDataAccess.getDoubleNativeMirrorData(accessIter.getStore(), index * 2 + 1);
         }
 
         @Override
-        protected void setComplex(Object store, int index, double real, double imaginary) {
+        protected void setComplexImpl(AccessIterator accessIter, int index, double real, double imaginary) {
+            Object store = accessIter.getStore();
             if (hasStore) {
                 ((double[]) store)[index * 2] = real;
                 ((double[]) store)[index * 2 + 1] = imaginary;
@@ -268,26 +269,26 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     private static final SlowPathFromComplexAccess SLOW_PATH_ACCESS = new SlowPathFromComplexAccess() {
         @Override
-        protected RComplex getComplex(Object store, int index) {
-            RComplexVector vector = (RComplexVector) store;
+        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            RComplexVector vector = (RComplexVector) accessIter.getStore();
             return NativeDataAccess.getData(vector, vector.data, index);
         }
 
         @Override
-        protected double getComplexR(Object store, int index) {
-            RComplexVector vector = (RComplexVector) store;
+        protected double getComplexRImpl(AccessIterator accessIter, int index) {
+            RComplexVector vector = (RComplexVector) accessIter.getStore();
             return NativeDataAccess.getDataR(vector, vector.data, index);
         }
 
         @Override
-        protected double getComplexI(Object store, int index) {
-            RComplexVector vector = (RComplexVector) store;
+        protected double getComplexIImpl(AccessIterator accessIter, int index) {
+            RComplexVector vector = (RComplexVector) accessIter.getStore();
             return NativeDataAccess.getDataI(vector, vector.data, index);
         }
 
         @Override
-        protected void setComplex(Object store, int index, double real, double imaginary) {
-            RComplexVector vector = (RComplexVector) store;
+        protected void setComplexImpl(AccessIterator accessIter, int index, double real, double imaginary) {
+            RComplexVector vector = (RComplexVector) accessIter.getStore();
             NativeDataAccess.setData(vector, vector.data, index, real, imaginary);
         }
     };

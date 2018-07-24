@@ -90,9 +90,9 @@ public final class RForeignListWrapper extends RForeignWrapper implements RAbstr
         }
 
         @Override
-        protected Object getListElement(Object internalStore, int index) {
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
             try {
-                return foreign2r.execute(ForeignAccess.sendRead(read, (TruffleObject) internalStore, index));
+                return foreign2r.execute(ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -124,8 +124,8 @@ public final class RForeignListWrapper extends RForeignWrapper implements RAbstr
         }
 
         @Override
-        protected Object getListElement(Object store, int index) {
-            RForeignListWrapper vector = (RForeignListWrapper) store;
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
+            RForeignListWrapper vector = (RForeignListWrapper) accessIter.getStore();
             try {
                 return FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, vector.delegate, index));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {

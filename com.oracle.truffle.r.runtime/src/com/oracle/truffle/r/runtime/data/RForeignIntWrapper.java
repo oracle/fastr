@@ -100,10 +100,10 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
         }
 
         @Override
-        protected int getInt(Object internalStore, int index) {
+        public int getIntImpl(AccessIterator accessIter, int index) {
             Object value = null;
             try {
-                value = ForeignAccess.sendRead(read, (TruffleObject) internalStore, index);
+                value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
                 return ((Number) resultProfile.profile(value)).intValue();
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -139,8 +139,8 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
         }
 
         @Override
-        protected int getInt(Object store, int index) {
-            RForeignIntWrapper vector = (RForeignIntWrapper) store;
+        public int getIntImpl(AccessIterator accessIter, int index) {
+            RForeignIntWrapper vector = (RForeignIntWrapper) accessIter.getStore();
             Object value = null;
             try {
                 value = ForeignAccess.sendRead(READ, vector.delegate, index);

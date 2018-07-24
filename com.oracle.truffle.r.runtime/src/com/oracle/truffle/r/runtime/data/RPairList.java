@@ -907,8 +907,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
         @TruffleBoundary
         @Override
-        protected Object getListElement(Object store, int index) {
-            return ((RPairList) store).getDataAtAsObject(index);
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
+            return ((RPairList) accessIter.getStore()).getDataAtAsObject(index);
         }
     }
 
@@ -925,8 +925,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
         @TruffleBoundary
         @Override
-        protected Object getListElement(Object store, int index) {
-            return ((RPairList) store).getDataAtAsObject(index);
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
+            return ((RPairList) accessIter.getStore()).getDataAtAsObject(index);
         }
     };
 

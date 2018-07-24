@@ -155,8 +155,8 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
         }
 
         @Override
-        protected int getInt(Object store, int index) {
-            RIntSequence vector = (RIntSequence) store;
+        public int getIntImpl(AccessIterator accessIter, int index) {
+            RIntSequence vector = (RIntSequence) accessIter.getStore();
             assert index >= 0 && index < vector.getLength();
             return vector.start + vector.stride * index;
         }
@@ -169,8 +169,8 @@ public final class RIntSequence extends RSequence implements RAbstractIntVector 
 
     private static final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
         @Override
-        protected int getInt(Object store, int index) {
-            RIntSequence vector = (RIntSequence) store;
+        public int getIntImpl(AccessIterator accessIter, int index) {
+            RIntSequence vector = (RIntSequence) accessIter.getStore();
             assert index >= 0 && index < vector.getLength();
             return vector.start + vector.stride * index;
         }

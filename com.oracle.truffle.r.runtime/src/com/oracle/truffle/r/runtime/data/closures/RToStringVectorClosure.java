@@ -38,8 +38,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 
 class RToStringVectorClosure extends RToVectorClosure implements RAbstractStringVector {
 
@@ -90,14 +89,14 @@ class RToStringVectorClosure extends RToVectorClosure implements RAbstractString
 
     private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
         @Override
-        protected String getString(Object store, int index) {
-            RToStringVectorClosure vector = (RToStringVectorClosure) store;
+        protected String getStringImpl(AccessIterator accessIter, int index) {
+            RToStringVectorClosure vector = (RToStringVectorClosure) accessIter.getStore();
             return vector.getDataAt(index);
         }
 
         @Override
-        protected void setString(Object store, int index, String value) {
-            RToStringVectorClosure vector = (RToStringVectorClosure) store;
+        protected void setStringImpl(AccessIterator accessIter, int index, String value) {
+            RToStringVectorClosure vector = (RToStringVectorClosure) accessIter.getStore();
             vector.setDataAt(vector.getInternalStore(), index, value);
         }
     };
@@ -132,12 +131,12 @@ class RToStringVectorClosure extends RToVectorClosure implements RAbstractString
         }
 
         @Override
-        protected String getString(Object store, int index) {
+        protected String getStringImpl(AccessIterator accessIterator, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected void setString(Object store, int index, String value) {
+        protected void setStringImpl(AccessIterator accessIterator, int index, String value) {
             throw RInternalError.shouldNotReachHere();
         }
     }

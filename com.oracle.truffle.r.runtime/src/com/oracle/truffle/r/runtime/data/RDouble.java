@@ -111,9 +111,9 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
         }
 
         @Override
-        protected double getDouble(Object store, int index) {
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RDouble) store).value;
+            return ((RDouble) accessIter.getStore()).value;
         }
     }
 
@@ -124,9 +124,9 @@ public final class RDouble extends RScalarVector implements RAbstractDoubleVecto
 
     private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
         @Override
-        protected double getDouble(Object store, int index) {
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RDouble) store).value;
+            return ((RDouble) accessIter.getStore()).value;
         }
     };
 
