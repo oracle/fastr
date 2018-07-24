@@ -31,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -293,10 +294,33 @@ public class ArgumentMatcher {
             CompilerAsserts.neverPartOfCompilation();
             Frame frame = Utils.getActualCurrentFrame();
             try {
-                // TODO: this error handling code takes many assumptions about the argument types
+                // TODO: GNUR would show "name = value" in the error, but here we seem to be getting
+                // only the value.
                 FrameSlot frameSlot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
-                RArgsValuesAndNames varArg = (RArgsValuesAndNames) FrameSlotChangeMonitor.getObject(frameSlot, frame);
-                RPromise promise = (RPromise) varArg.getArguments()[((VarArgNode) node).getIndex()];
+                if (frameSlot == null) {
+                    // If the formal signature does not have "...", but the actual does pass
+                    // "...", then the current frame will not contain slot for "..." and we should
+                    // reach
+                    // to caller frame to get it.
+                    frame = Utils.getCallerFrame(RArguments.getCall(frame), FrameAccess.READ_ONLY);
+                    frameSlot = frame.getFrameDescriptor().findFrameSlot(ArgumentsSignature.VARARG_NAME);
+                }
+                if (frameSlot == null) {
+                    assert false : "could not find frame slot for ...";
+                    return "<unknown from ...>";
+                }
+                Object varArgObj = FrameSlotChangeMonitor.getObject(frameSlot, frame);
+                if (!(varArgObj instanceof RArgsValuesAndNames)) {
+                    assert false : "frame slot for ... does not contain RArgsValuesAndNames";
+                    return "<unknown from ...>";
+                }
+                RArgsValuesAndNames varArgs = (RArgsValuesAndNames) varArgObj;
+                Object varArg = varArgs.getArguments()[((VarArgNode) node).getIndex()];
+                if (!(varArg instanceof RPromise)) {
+                    assert false : "... did not contain promise as the value at index " + ((VarArgNode) node).getIndex();
+                    return "<unknown from ...>";
+                }
+                RPromise promise = (RPromise) varArg;
                 return RDeparse.deparseSyntaxElement(promise.getRep().asRSyntaxNode());
             } catch (FrameSlotTypeException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere();
