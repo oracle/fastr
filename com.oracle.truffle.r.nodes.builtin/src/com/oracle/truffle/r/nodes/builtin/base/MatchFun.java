@@ -112,10 +112,6 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
             return vec.getDataAt(0);
         }
 
-        protected static String firstString(RSymbol symbol) {
-            return symbol.getName();
-        }
-
         private RFunction checkResult(Object result) {
             if (result instanceof RFunction) {
                 return (RFunction) result;
@@ -140,11 +136,11 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "LIMIT", guards = {"funValue.getName() == cachedName", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
+        @Specialization(limit = "LIMIT", guards = {"funValue == cachedFunValue", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
         protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend,
-                        @Cached("firstString(funValue)") String cachedName,
+                        @Cached("funValue") RSymbol cachedFunValue,
                         @Cached("getCallerFrameDescriptor(frame)") FrameDescriptor cachedCallerFrameDescriptor,
-                        @Cached("createLookup(cachedName, descend)") ReadVariableNode lookup) {
+                        @Cached("createLookup(cachedFunValue.getName(), descend)") ReadVariableNode lookup) {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }
 
