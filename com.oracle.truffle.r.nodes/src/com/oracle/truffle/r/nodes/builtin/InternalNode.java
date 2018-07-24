@@ -432,7 +432,7 @@ public abstract class InternalNode extends OperatorNode {
                     "phyper", "qhyper", "dnbeta", "pnbeta", "qnbeta", "dnf", "pnf", "qnf", "dtukey", "ptukey", "qtukey", "rchisq", "rexp", "rgeom", "rpois", "rt", "rsignrank", "rbeta", "rbinom",
                     "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper",
                     "grepRaw", "regexec", "adist", "aregexec", "chartr", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo",
-                    "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply", "inspect",
+                    "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply",
                     "mem.limits", "capabilitiesX11", "Cstack_info", "file.choose", "polyroot",
                     "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",
                     "rawConnectionValue", "sockSelect", "gzcon", "memCompress", "memDecompress", "mkUnbound", "env.profile", "setSessionTimeLimit", "icuSetCollate", "findInterval", "rowsum_df",

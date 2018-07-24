@@ -576,6 +576,7 @@ public class BasePackage extends RBuiltinPackage {
         add(IConv.class, IConvNodeGen::create);
         add(Identical.class, Identical::create);
         add(InheritsBuiltin.class, InheritsBuiltinNodeGen::create);
+        add(Inspect.class, InspectNodeGen::create);
         add(Interactive.class, InteractiveNodeGen::create);
         add(Internal.class, InternalNodeGen::create);
         add(InternalsID.class, InternalsIDNodeGen::create);

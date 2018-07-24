@@ -507,6 +507,7 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_ide
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_ifelse.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_Im.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_inherits.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_inspect.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_integer.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_interaction.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_interactive.java,purdue.copyright
