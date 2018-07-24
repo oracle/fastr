@@ -28,9 +28,9 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
-import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = RNull.class)
 public class RNullMR {
@@ -49,17 +49,24 @@ public class RNullMR {
         }
     }
 
-    @Resolve(message = "TO_NATIVE")
-    public abstract static class RNullToNativeNode extends Node {
-        protected Object access(RNull receiver) {
-            return new RObjectNativeWrapper(receiver);
-        }
-    }
-
     @Resolve(message = "IS_POINTER")
     public abstract static class IsPointerNode extends Node {
         protected boolean access(@SuppressWarnings("unused") Object receiver) {
-            return false;
+            return true;
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected Object access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
+        }
+    }
+
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class ToNativeNode extends Node {
+        protected Object access(Object receiver) {
+            return receiver;
         }
     }
 

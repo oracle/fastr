@@ -364,6 +364,7 @@ public final class RCmdOptions {
 
         // adjust for inserted executable name
         return new RCmdOptions(options, args, firstNonOptionArgIndex);
+
     }
 
     public String[] getArguments() {

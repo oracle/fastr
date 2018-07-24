@@ -84,7 +84,7 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
  * `GNUR_CONFIG_FLAGS` constructed and passed over to the configure utility that generates the `Makeconf` file for GNUR
 	 * the output in `$(GNUR_HOME_BINARY)/gnur_configure.log`
  * optionally (Linux, SunOS) patches the generated `$(GNUR_HOME_BINARY)/Makeconf` by `$(GNUR_HOME_BINARY)/Makeconf < edMakeconf` (adds `-fPIC` to `CFLAGS` and `FFLAGS`, i.e. enables Position Independent Code)
- * builds GNUR in `libdownloads/R-$(R_VERSION)` using special compiler options
+ * builds GNUR in `libdownloads/R-$(R_VERSION)` using special compiler options. **Note: the output is redirected to `libdownloads/R-3.4.0/gnur_make.log` in order not to pollute the main build output.**
  * A special configuration for Solaris:
   1. the default `iconv` utility is inadequate and has to be replaced by GNU `iconv`
   2. the solaris studio compilers must be used, assumed to be on the `PATH`

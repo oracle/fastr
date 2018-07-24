@@ -26,6 +26,7 @@
 #include <rffiutils.h>
 #include <Rinternals_common.h>
 #include <truffle.h>
+#include <polyglot.h>
 #include "../common/rffi_upcalls.h"
 
 // Most everything in RInternals.h
@@ -48,8 +49,8 @@ void Rinternals_addCallback(void** theCallbacks, int index, void *callback) {
 	callbacks[index] = callback;
 }
 
-void*** Rinternals_getCallbacksAddress() {
-        return &callbacks;
+void Rinternals_setCallbacksAddress(void** theCallbacks) {
+	callbacks = theCallbacks;
 }
 
 typedef SEXP (*call_Test)(const char *name);
@@ -59,11 +60,11 @@ SEXP Rinternals_invoke(int index) {
 	return ((call_Test) callback)("aaa");
 }
 
-static char *ensure_truffle_chararray_n(const char *x, int n) {
+static char *ensure_truffle_chararray_n(const char *x, long n) {
 	if (truffle_is_truffle_object(x)) {
 		return x;
 	} else {
-		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(truffle_read_n_bytes(x, n));
+		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(polyglot_from_string_n(x, n, "ascii"));
 	}
 }
 
@@ -71,7 +72,7 @@ char *ensure_truffle_chararray(const char *x) {
 	if (truffle_is_truffle_object(x)) {
 		return (char *)x;
 	} else {
-		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(truffle_read_n_bytes(x, strlen(x)));
+		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(polyglot_from_string_n(x, strlen(x), "ascii"));
   }
 }
 

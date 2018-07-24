@@ -63,7 +63,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         private final TruffleLLVM_UpCallsRFFIImpl upCallsRFFIImpl = new TruffleLLVM_UpCallsRFFIImpl();
         private RContext context;
         private boolean initVarsDone;
-        private TruffleObject callbacksAddress;
+        private TruffleObject setCallbacksAddress;
         private TruffleObject callbacks;
 
         @Override
@@ -95,13 +95,11 @@ final class TruffleLLVM_Call implements CallRFFI {
 
                 callbacks = (TruffleObject) context.getEnv().asGuestValue(callbacksArray);
 
-                Node executeNode = Message.createExecute(0).createNode();
-                SymbolHandle symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + "Rinternals_getCallbacksAddress"));
-
-                callbacksAddress = (TruffleObject) ForeignAccess.sendExecute(executeNode, symbolHandle.asTruffleObject());
+                Node setClbkAddrExecuteNode = Message.createExecute(1).createNode();
+                SymbolHandle setClbkAddrSymbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + "Rinternals_setCallbacksAddress"));
+                setCallbacksAddress = setClbkAddrSymbolHandle.asTruffleObject();
                 // Initialize the callbacks global variable
-                ForeignAccess.sendWrite(Message.WRITE.createNode(), callbacksAddress, 0, context.getEnv().asGuestValue(new TruffleObject[0]));
-
+                ForeignAccess.sendExecute(setClbkAddrExecuteNode, setCallbacksAddress, context.getEnv().asGuestValue(new TruffleObject[0]));
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }
@@ -219,7 +217,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         @Override
         public Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
             TruffleLLVM_Context rffiCtx = TruffleLLVM_Context.getContextState();
-            pushCallbacks.execute(rffiCtx.callState.callbacksAddress, rffiCtx.callState.callbacks);
+            pushCallbacks.execute(rffiCtx.callState.setCallbacksAddress, rffiCtx.callState.callbacks);
             try {
                 return InvokeCallNode.super.dispatch(nativeCallInfo, args);
             } finally {
@@ -316,11 +314,11 @@ final class TruffleLLVM_Call implements CallRFFI {
 
     public static final class PushCallbacksNode extends Node {
         @Child private Node readPreviousCallbacks = Message.READ.createNode();
-        @Child private Node setCallbacks = Message.WRITE.createNode();
+        @Child private Node setCallbacksNode = Message.createExecute(1).createNode();
 
-        public void execute(TruffleObject callbacksAddress, TruffleObject callbacks) {
+        public void execute(TruffleObject setCallbacksAddress, TruffleObject callbacks) {
             try {
-                ForeignAccess.sendWrite(setCallbacks, callbacksAddress, 0, callbacks);
+                ForeignAccess.sendExecute(setCallbacksNode, setCallbacksAddress, callbacks);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             }

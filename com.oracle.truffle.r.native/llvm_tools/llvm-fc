@@ -22,12 +22,11 @@
 # questions.
 #
 
-echo "ARGS: $@"
-
-echo "llvm-fc FASTR_RFFI $FASTR_RFFI"
+ORIG_CMD=$1
+shift
 
 if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
-	gfortran "$@"
+	${ORIG_CMD} "$@"
 fi
 if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
     exit 0
@@ -36,49 +35,63 @@ fi
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
 
+F2C=""
+F2C_H_INCLUDE="${DIR}/../include/"
+if [ -f "${DIR}/f2c" ]
+then
+	# For a package build
+	F2C="${DIR}/../f2c/f2c/f2c"
+else
+	# For the FastR build
+	F2C="${DIR}/../../bin/f2c"
+fi
+
 . $DIR/llvm-helper
 
 errorOccurred || {
 try
 (
 
-fortran=1
-analyze_args "$@"
+  find_source_and_target "$@"
 
-if [ -z "$FASTR_LLVM_GFORTRAN" ]
-then
-  echo FASTR_LLVM_GFORTRAN must be set
-  exit 1
-fi
+  target_file=`basename ${source_file}`
+  target_file=${target_file%%.*}
+  target_file="${target_dir}/${target_file}.c"
 
-if [ -z "$FASTR_LLVM_GFORTRAN_LLVM_AS" ]
-then
-  echo FASTR_LLVM_GFORTRAN_LLVM_AS must be set
-  exit 1
-fi
+  if [ -f "${source_file}_c" ]
+  then
+  	# Just copy the patched pre-transformed C source to the target dir,
+  	# simulating so the f2c transformation
+  	cp "${source_file}_c" "${target_file}"
+  else
+	$F2C "${source_file}" "-d${target_dir}"
+	ecode=$?
+	if [[ $ecode -ne 0 ]]; then
+	  exit $ecode
+	fi
+  fi
+  
+  replace_arg_from="${source_file}"
+  replace_arg_to="${target_file}"
+  fortran=1
+  analyze_args "$@"
 
-if [ -z "$FASTR_LLVM_DRAGONEGG" ]
-then
-  echo FASTR_DRAGONEGG must be set
-  exit 1
-fi
+  llvm_tool=clang
+  get_llvm_tool
+  runit $llvm_tool_bin -I${F2C_H_INCLUDE} "${llvm_args[@]}"
+  ecode=$?
+  if [[ $ecode -ne 0 ]]; then
+    exit $ecode
+  fi
 
-function ll_to_bc() {
-  f=`basename $llvm_ir_file`
-  d=`dirname $llvm_ir_file`
-  llvm_ir_bc_file=${d}/${f%%.*}.bc
-}
-
-runit $FASTR_LLVM_GFORTRAN -fplugin=$FASTR_LLVM_DRAGONEGG -fplugin-arg-dragonegg-emit-ir "${llvm_args[@]}"
-ll_to_bc
-runit $FASTR_LLVM_GFORTRAN_LLVM_AS $llvm_ir_file -o $llvm_ir_bc_file
-runit rm $llvm_ir_file
-llvm_ir_file=$llvm_ir_bc_file
-# the llvm_ir_file is empty if the result is sent to stdout
-if [ -n "$llvm_ir_file" ]; then
-  mem2reg_opt
-  #fake_obj
-fi
+  # the llvm_ir_file is empty if the result is sent to stdout
+  if [ -n "$llvm_ir_file" ]; then
+    mem2reg_opt
+    ecode=$?
+    if [[ $ecode -ne 0 ]]; then
+      exit $ecode
+    fi
+  fi
 
 ) || catch || {
 	recordError

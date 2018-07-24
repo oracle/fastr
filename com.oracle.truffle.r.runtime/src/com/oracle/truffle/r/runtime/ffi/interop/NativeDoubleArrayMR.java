@@ -36,12 +36,21 @@ public class NativeDoubleArrayMR {
         protected double access(NativeDoubleArray receiver, int index) {
             return receiver.read(index);
         }
+
+        protected double access(NativeDoubleArray receiver, long index) {
+            return receiver.read((int) index);
+        }
     }
 
     @Resolve(message = "WRITE")
     public abstract static class NDAWriteNode extends Node {
         protected double access(NativeDoubleArray receiver, int index, double value) {
             receiver.write(index, value);
+            return value;
+        }
+
+        protected double access(NativeDoubleArray receiver, long index, double value) {
+            receiver.write((int) index, value);
             return value;
         }
     }

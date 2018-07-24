@@ -50,7 +50,7 @@ public class ListMRTest extends AbstractMRTest {
     @Test
     public void testNativePointer() throws UnsupportedMessageException, UnknownIdentifierException, UnsupportedTypeException {
         for (TruffleObject obj : new TruffleObject[]{create("list", testValues), create("pairlist", testValues)}) {
-            assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) != obj);
+            assertTrue(ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
         }
     }
 

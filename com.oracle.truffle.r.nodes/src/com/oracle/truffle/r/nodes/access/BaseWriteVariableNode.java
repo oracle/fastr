@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -134,30 +135,30 @@ abstract class BaseWriteVariableNode extends WriteVariableNode {
      * The frame parameters are needed to keep the guards from being considered static.
      */
 
-    protected boolean isLogicalKind(@SuppressWarnings("unused") Frame frame, FrameSlot frameSlot) {
-        return isKind(frameSlot, FrameSlotKind.Boolean);
+    protected boolean isLogicalKind(Frame frame, FrameSlot frameSlot) {
+        return isKind(frame.getFrameDescriptor(), frameSlot, FrameSlotKind.Boolean);
     }
 
-    protected boolean isIntegerKind(@SuppressWarnings("unused") Frame frame, FrameSlot frameSlot) {
-        return isKind(frameSlot, FrameSlotKind.Int);
+    protected boolean isIntegerKind(Frame frame, FrameSlot frameSlot) {
+        return isKind(frame.getFrameDescriptor(), frameSlot, FrameSlotKind.Int);
     }
 
-    protected boolean isDoubleKind(@SuppressWarnings("unused") Frame frame, FrameSlot frameSlot) {
-        return isKind(frameSlot, FrameSlotKind.Double);
+    protected boolean isDoubleKind(Frame frame, FrameSlot frameSlot) {
+        return isKind(frame.getFrameDescriptor(), frameSlot, FrameSlotKind.Double);
     }
 
-    protected boolean isKind(FrameSlot frameSlot, FrameSlotKind kind) {
-        if (frameSlot.getKind() == kind) {
+    protected boolean isKind(FrameDescriptor fd, FrameSlot frameSlot, FrameSlotKind kind) {
+        if (fd.getFrameSlotKind(frameSlot) == kind) {
             return true;
         } else {
             initialSetKindProfile.enter();
-            return initialSetKind(frameSlot, kind);
+            return initialSetKind(fd, frameSlot, kind);
         }
     }
 
-    private static boolean initialSetKind(FrameSlot frameSlot, FrameSlotKind kind) {
-        if (frameSlot.getKind() == FrameSlotKind.Illegal) {
-            frameSlot.setKind(kind);
+    private static boolean initialSetKind(FrameDescriptor fd, FrameSlot frameSlot, FrameSlotKind kind) {
+        if (fd.getFrameSlotKind(frameSlot) == FrameSlotKind.Illegal) {
+            fd.setFrameSlotKind(frameSlot, kind);
             return true;
         }
         return false;

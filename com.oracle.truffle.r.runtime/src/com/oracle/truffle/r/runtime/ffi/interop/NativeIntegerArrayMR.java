@@ -36,12 +36,21 @@ public class NativeIntegerArrayMR {
         protected int access(NativeIntegerArray receiver, int index) {
             return receiver.read(index);
         }
+
+        protected int access(NativeIntegerArray receiver, long index) {
+            return receiver.read((int) index);
+        }
     }
 
     @Resolve(message = "WRITE")
     public abstract static class NIAWriteNode extends Node {
         protected int access(NativeIntegerArray receiver, int index, int value) {
             receiver.write(index, value);
+            return value;
+        }
+
+        protected int access(NativeIntegerArray receiver, long index, int value) {
+            receiver.write((int) index, value);
             return value;
         }
     }
