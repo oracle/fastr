@@ -35,12 +35,23 @@ eval(expression({
         }
 
         if (.fastr.option('IgnoreGraphicsCalls')) {
-            # we evaluate the arguments to simulate the function effects
-            # some arguments must be ignored, because they are a promise
-            # to value that will be calculated inside the function before
-            # the argument is accessed
+            # We evaluate the non-missing arguments to simulate the function effects.
+            # Some arguments must be ignored, because they are a promise to a value
+            # that will be calculated inside the function before the argument is accessed
             sigNames <- setdiff(base::names(sig), ignore)
-            replacementFun <- function(...) { if (is.null(sigNames)) list(...) else mget(sigNames, ifnotfound=as.list(rep(42, length(sigNames)))); invisible(NULL); }
+            replacementFun <- function(...) {
+                if (is.null(sigNames)) {
+                    return(invisible(list(...)));
+                }
+                missingExpr <- quote(missing(x))
+                for (n in sigNames) {
+                    missingExpr[[2]] <- as.symbol(n)
+                    if (!eval(missingExpr)) {
+                        get(n)
+                    }
+                }
+                invisible(NULL);
+            }
         } else {
             replacementFun <- function(...) {
                 warning(paste0(name, " not supported.", " Note: FastR does not support graphics package and most of its functions. Please use grid package or grid based packages like lattice instead."))
