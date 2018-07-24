@@ -61,8 +61,9 @@ public class DCF {
             if (line.startsWith("#")) {
                 continue;
             }
-            if (isContinuation(line)) {
-                fieldContent.append(line.substring(1));
+            final int wsLen = getWhiteSpaceHeadLength(line);
+            if (wsLen > 0) {
+                fieldContent.append('\n').append(line.substring(wsLen));
             } else {
                 // should start a field, finish off any current one
                 if (fieldName != null) {
@@ -108,12 +109,11 @@ public class DCF {
         return paragraphs;
     }
 
-    private static boolean isContinuation(String line) {
-        if (line.length() == 0) {
-            return false;
+    private static int getWhiteSpaceHeadLength(String line) {
+        int i;
+        for (i = 0; i < line.length() && (line.charAt(i) == ' ' || line.charAt(i) == '\t'); i++) {
         }
-        char ch = line.charAt(0);
-        return ch == ' ' || ch == '\t';
+        return i;
     }
 
     private static boolean endOfParagraph(String line) {

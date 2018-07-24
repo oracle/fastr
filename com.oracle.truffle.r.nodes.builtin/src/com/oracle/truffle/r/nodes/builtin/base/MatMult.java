@@ -27,6 +27,8 @@ import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -343,6 +345,25 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 }
                 return doubleMatrixMultiply(a, b, aRows, aCols, bRows, bCols);
             } else {
+                if (a.getLength() == 1) {
+                    na.enable(a);
+                    na.enable(b);
+                    double aValue = a.getDataAt(0);
+                    double[] result = new double[b.getLength()];
+                    if (na.check(aValue)) {
+                        Arrays.fill(result, RRuntime.DOUBLE_NA);
+                    } else {
+                        for (int k = 0; k < b.getLength(); k++) {
+                            double bValue = b.getDataAt(k);
+                            if (na.check(bValue)) {
+                                result[k] = RRuntime.DOUBLE_NA;
+                            } else {
+                                result[k] = mult.applyDouble(aValue, bValue);
+                            }
+                        }
+                    }
+                    return RDataFactory.createDoubleVector(result, na.neverSeenNA(), new int[]{1, b.getLength()});
+                }
                 if (a.getLength() != b.getLength()) {
                     throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
@@ -475,6 +496,23 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                     return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
                 }
             } else {
+                if (a.getLength() == 1) {
+                    na.enable(a);
+                    na.enable(b);
+                    RComplex aValue = a.getDataAt(0);
+                    double[] result = new double[2 * b.getLength()];
+                    if (na.check(aValue)) {
+                        Arrays.fill(result, RRuntime.DOUBLE_NA);
+                    } else {
+                        for (int k = 0; k < b.getLength(); k++) {
+                            RComplex res = mult.applyComplex(aValue, b.getDataAt(k));
+                            result[2 * k] = res.getRealPart();
+                            result[2 * k + 1] = res.getImaginaryPart();
+                        }
+                    }
+                    return RDataFactory.createComplexVector(result, na.neverSeenNA(), new int[]{1, b.getLength()});
+                }
+
                 if (a.getLength() != b.getLength()) {
                     throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
@@ -597,6 +635,26 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                     return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{a.getLength(), bCols});
                 }
             } else {
+                if (a.getLength() == 1) {
+                    na.enable(a);
+                    na.enable(b);
+                    int aValue = a.getDataAt(0);
+                    int[] result = new int[b.getLength()];
+                    if (na.check(aValue)) {
+                        Arrays.fill(result, RRuntime.INT_NA);
+                    } else {
+                        for (int k = 0; k < b.getLength(); k++) {
+                            int bValue = b.getDataAt(k);
+                            if (na.check(bValue)) {
+                                result[k] = RRuntime.INT_NA;
+                            } else {
+                                result[k] = mult.applyInteger(aValue, bValue);
+                            }
+                        }
+                    }
+                    return RDataFactory.createIntVector(result, na.neverSeenNA(), new int[]{1, b.getLength()});
+                }
+
                 if (a.getLength() != b.getLength()) {
                     throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }

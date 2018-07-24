@@ -596,7 +596,7 @@ add_operator returns [Token v]
     ;
 
 mult_operator returns [Token v]
-    : op=(MULT | DIV | MOD ) { $v = $op; }
+    : op=(MULT | DIV) { $v = $op; }
     ;
 
 power_operator returns [Token v]
@@ -667,7 +667,6 @@ NOT   : '!' ;
 QM    : '?' ;
 PLUS  : '+' ;
 MULT  : '*' ;
-MOD   : '%%' ;
 DIV   : '/' ;
 MINUS : '-' ;
 
@@ -727,7 +726,7 @@ ID
     | '`' BACKTICK_NAME
     ;
 
-OP : '%' (~('%' | '\n' | '\r' | '\f'))+ '%' ;
+OP : '%' (~('%' | '\n' | '\r' | '\f'))* '%' ;
 
 fragment BACKTICK_NAME
     @init { final StringBuilder buf = new StringBuilder(); }

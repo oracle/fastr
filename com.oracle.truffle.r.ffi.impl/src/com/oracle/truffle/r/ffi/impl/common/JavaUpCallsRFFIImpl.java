@@ -45,6 +45,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
+import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -556,6 +557,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public void SETLEVELS(Object x, int gpbits) {
+        if (x instanceof RTypedValue) {
+            ((RTypedValue) x).setGPBits(gpbits);
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    @TruffleBoundary
+    public int Rf_isObject(Object x) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public void SET_STRING_ELT(Object x, long i, Object v) {
         RStringVector vector = guaranteeInstanceOf(x, RStringVector.class);
         CharSXPWrapper element = guaranteeInstanceOf(v, CharSXPWrapper.class);
@@ -1004,6 +1020,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             result = RNull.instance;
         }
         return result;
+    }
+
+    @Override
+    @TruffleBoundary
+    public void SET_ENCLOS(Object x, Object enc) {
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
+        REnvironment enclosing = guaranteeInstanceOf(enc, REnvironment.class);
+        env.setParent(enclosing);
     }
 
     @Override
@@ -2366,6 +2390,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void Rf_PrintValue(Object value) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int R_nchar(@RFFICstring Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object R_forceAndCall(Object e, Object f, int n, Object args) {
         throw implementedAsNode();
     }
 

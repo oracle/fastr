@@ -2071,4 +2071,9 @@ public class TestBuiltin_operators extends TestBase {
         assertEval("{ list(1, NULL) < c(1, 1) }");
         assertEval("{ c(1, 1) < list(1, NULL) }");
     }
+
+    @Test
+    public void testPrecedence() {
+        assertEval("{ 3 %% 2 %in% 1}");
+    }
 }
