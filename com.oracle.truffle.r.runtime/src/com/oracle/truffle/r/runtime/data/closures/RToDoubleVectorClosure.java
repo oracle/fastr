@@ -33,8 +33,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 
 class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
 
@@ -86,14 +85,14 @@ class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDouble
 
     private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
         @Override
-        protected double getDouble(Object store, int index) {
-            RToDoubleVectorClosure vector = (RToDoubleVectorClosure) store;
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+            RToDoubleVectorClosure vector = (RToDoubleVectorClosure) accessIter.getStore();
             return vector.getDataAt(index);
         }
 
         @Override
-        protected void setDouble(Object store, int index, double value) {
-            RToDoubleVectorClosure vector = (RToDoubleVectorClosure) store;
+        protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
+            RToDoubleVectorClosure vector = (RToDoubleVectorClosure) accessIter.getStore();
             vector.setDataAt(vector.getInternalStore(), index, value);
         }
     };
@@ -128,12 +127,12 @@ class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDouble
         }
 
         @Override
-        protected double getDouble(Object store, int index) {
+        protected double getDoubleImpl(AccessIterator accessIterator, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected void setDouble(Object store, int index, double value) {
+        protected void setDoubleImpl(AccessIterator accessIterator, int index, double value) {
             throw RInternalError.shouldNotReachHere();
         }
     }

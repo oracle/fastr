@@ -107,9 +107,9 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
         }
 
         @Override
-        protected String getString(Object store, int index) {
+        protected String getStringImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RString) store).value;
+            return ((RString) accessIter.getStore()).value;
         }
     }
 
@@ -120,9 +120,9 @@ public final class RString extends RScalarVector implements RAbstractStringVecto
 
     private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
         @Override
-        protected String getString(Object store, int index) {
+        protected String getStringImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RString) store).value;
+            return ((RString) accessIter.getStore()).value;
         }
     };
 

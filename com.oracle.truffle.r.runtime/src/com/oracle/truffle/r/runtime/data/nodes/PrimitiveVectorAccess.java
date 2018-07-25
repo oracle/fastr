@@ -42,29 +42,29 @@ public abstract class PrimitiveVectorAccess {
         if (value instanceof Integer) {
             return new FastPathFromIntAccess(value) {
                 @Override
-                protected int getInt(Object store, int index) {
-                    return (Integer) store;
+                public int getIntImpl(AccessIterator accessIter, int index) {
+                    return (Integer) accessIter.getStore();
                 }
             };
         } else if (value instanceof Double) {
             return new FastPathFromDoubleAccess(value) {
                 @Override
-                protected double getDouble(Object store, int index) {
-                    return (Double) store;
+                public double getDoubleImpl(AccessIterator accessIter, int index) {
+                    return (Double) accessIter.getStore();
                 }
             };
         } else if (value instanceof Byte) {
             return new FastPathFromLogicalAccess(value) {
                 @Override
-                protected byte getLogical(Object store, int index) {
-                    return (Byte) store;
+                public byte getLogicalImpl(AccessIterator accessIter, int index) {
+                    return (Byte) accessIter.getStore();
                 }
             };
         } else if (value instanceof String) {
             return new FastPathFromStringAccess(value) {
                 @Override
-                protected String getString(Object store, int index) {
-                    return (String) store;
+                public String getStringImpl(AccessIterator accessIter, int index) {
+                    return (String) accessIter.getStore();
                 }
             };
         } else if (value instanceof RNull) {
@@ -80,7 +80,7 @@ public abstract class PrimitiveVectorAccess {
                 }
 
                 @Override
-                protected Object getListElement(Object store, int index) {
+                public Object getListElementImpl(AccessIterator accessIter, int index) {
                     throw RInternalError.shouldNotReachHere();
                 }
             };
@@ -91,26 +91,26 @@ public abstract class PrimitiveVectorAccess {
 
     private static final SlowPathFromIntAccess SLOW_PATH_INT = new SlowPathFromIntAccess() {
         @Override
-        protected int getInt(Object store, int index) {
-            return (Integer) store;
+        public int getIntImpl(AccessIterator accessIter, int index) {
+            return (Integer) accessIter.getStore();
         }
     };
     private static final SlowPathFromDoubleAccess SLOW_PATH_DOUBLE = new SlowPathFromDoubleAccess() {
         @Override
-        protected double getDouble(Object store, int index) {
-            return (Double) store;
+        public double getDoubleImpl(AccessIterator accessIter, int index) {
+            return (Double) accessIter.getStore();
         }
     };
     private static final SlowPathFromLogicalAccess SLOW_PATH_LOGICAL = new SlowPathFromLogicalAccess() {
         @Override
-        protected byte getLogical(Object store, int index) {
-            return (Byte) store;
+        public byte getLogicalImpl(AccessIterator accessIter, int index) {
+            return (Byte) accessIter.getStore();
         }
     };
     private static final SlowPathFromStringAccess SLOW_PATH_STRING = new SlowPathFromStringAccess() {
         @Override
-        protected String getString(Object store, int index) {
-            return (String) store;
+        public String getStringImpl(AccessIterator accessIter, int index) {
+            return (String) accessIter.getStore();
         }
     };
     private static final SlowPathFromListAccess SLOW_PATH_NULL = new SlowPathFromListAccess() {
@@ -125,7 +125,7 @@ public abstract class PrimitiveVectorAccess {
         }
 
         @Override
-        protected Object getListElement(Object store, int index) {
+        public Object getListElementImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
     };

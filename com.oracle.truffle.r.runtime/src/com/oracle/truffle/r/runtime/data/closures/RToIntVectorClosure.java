@@ -34,8 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 
 class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector {
 
@@ -87,14 +86,14 @@ class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector
 
     private static final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
         @Override
-        protected int getInt(Object store, int index) {
-            RToIntVectorClosure vector = (RToIntVectorClosure) store;
+        protected int getIntImpl(AccessIterator accessIter, int index) {
+            RToIntVectorClosure vector = (RToIntVectorClosure) accessIter.getStore();
             return vector.getDataAt(index);
         }
 
         @Override
-        protected void setInt(Object store, int index, int value) {
-            RToIntVectorClosure vector = (RToIntVectorClosure) store;
+        protected void setIntImpl(AccessIterator accessIter, int index, int value) {
+            RToIntVectorClosure vector = (RToIntVectorClosure) accessIter.getStore();
             vector.setDataAt(vector.getInternalStore(), index, value);
         }
     };
@@ -129,12 +128,12 @@ class RToIntVectorClosure extends RToVectorClosure implements RAbstractIntVector
         }
 
         @Override
-        protected int getInt(Object store, int index) {
+        protected int getIntImpl(AccessIterator accessIterator, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected void setInt(Object store, int index, int value) {
+        protected void setIntImpl(AccessIterator accessIterator, int index, int value) {
             throw RInternalError.shouldNotReachHere();
         }
     }

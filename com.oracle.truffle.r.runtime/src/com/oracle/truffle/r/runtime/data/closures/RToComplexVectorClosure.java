@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromComplexAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 
 class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
 
@@ -89,26 +90,26 @@ class RToComplexVectorClosure extends RToVectorClosure implements RAbstractCompl
     private static final SlowPathFromComplexAccess SLOW_PATH_ACCESS = new SlowPathFromComplexAccess() {
 
         @Override
-        protected RComplex getComplex(Object store, int index) {
-            RToComplexVectorClosure vector = (RToComplexVectorClosure) store;
+        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
             return vector.getDataAt(index);
         }
 
         @Override
-        protected double getComplexR(Object store, int index) {
-            RToComplexVectorClosure vector = (RToComplexVectorClosure) store;
+        protected double getComplexRImpl(AccessIterator accessIter, int index) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
             return vector.getDataAt(index).getRealPart();
         }
 
         @Override
-        protected double getComplexI(Object store, int index) {
-            RToComplexVectorClosure vector = (RToComplexVectorClosure) store;
+        protected double getComplexIImpl(AccessIterator accessIter, int index) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
             return vector.getDataAt(index).getImaginaryPart();
         }
 
         @Override
-        protected void setComplex(Object store, int index, double real, double imaginary) {
-            RToComplexVectorClosure vector = (RToComplexVectorClosure) store;
+        protected void setComplexImpl(AccessIterator accessIter, int index, double real, double imaginary) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
             vector.setDataAt(vector.getInternalStore(), index, RComplex.valueOf(real, imaginary));
         }
     };
@@ -163,22 +164,22 @@ class RToComplexVectorClosure extends RToVectorClosure implements RAbstractCompl
         }
 
         @Override
-        protected RComplex getComplex(Object store, int index) {
+        protected RComplex getComplexImpl(AccessIterator accessIterator, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected double getComplexR(Object store, int index) {
+        protected double getComplexRImpl(AccessIterator accessIterator, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected double getComplexI(Object store, int index) {
+        protected double getComplexIImpl(AccessIterator accessIterator, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected void setComplex(Object store, int index, double real, double imaginary) {
+        protected void setComplexImpl(AccessIterator accessIterator, int index, double real, double imaginary) {
             throw RInternalError.shouldNotReachHere();
         }
     }

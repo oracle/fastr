@@ -180,8 +180,8 @@ public final class RStringSequence extends RSequence implements RAbstractStringV
         }
 
         @Override
-        protected String getString(Object store, int index) {
-            RStringSequence vector = (RStringSequence) store;
+        protected String getStringImpl(AccessIterator accessIter, int index) {
+            RStringSequence vector = (RStringSequence) accessIter.getStore();
             assert index >= 0 && index < vector.getLength();
             return vector.prefix + (vector.start + vector.stride * index) + vector.suffix;
         }
@@ -194,8 +194,8 @@ public final class RStringSequence extends RSequence implements RAbstractStringV
 
     private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
         @Override
-        protected String getString(Object store, int index) {
-            RStringSequence vector = (RStringSequence) store;
+        protected String getStringImpl(AccessIterator accessIter, int index) {
+            RStringSequence vector = (RStringSequence) accessIter.getStore();
             assert index >= 0 && index < vector.getLength();
             return vector.prefix + (vector.start + vector.stride * index) + vector.suffix;
         }

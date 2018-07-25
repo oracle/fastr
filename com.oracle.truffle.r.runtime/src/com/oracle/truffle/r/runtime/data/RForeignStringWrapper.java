@@ -99,9 +99,9 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
         }
 
         @Override
-        protected String getString(Object internalStore, int index) {
+        protected String getStringImpl(AccessIterator accessIter, int index) {
             try {
-                Object value = ForeignAccess.sendRead(read, (TruffleObject) internalStore, index);
+                Object value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
                 if (isNullProfile.profile(value instanceof TruffleObject)) {
                     if (isNull == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -136,8 +136,8 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
 
         @Override
         @TruffleBoundary
-        protected String getString(Object store, int index) {
-            RForeignStringWrapper vector = (RForeignStringWrapper) store;
+        protected String getStringImpl(AccessIterator accessIter, int index) {
+            RForeignStringWrapper vector = (RForeignStringWrapper) accessIter.getStore();
             return RForeignStringWrapper.getString(vector.delegate, index);
         }
     };

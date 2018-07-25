@@ -101,13 +101,13 @@ public final class RExpression extends RListBase implements RAbstractVector {
         }
 
         @Override
-        protected Object getListElement(Object store, int index) {
-            return ((Object[]) store)[index];
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
+            return ((Object[]) accessIter.getStore())[index];
         }
 
         @Override
-        protected void setListElement(Object store, int index, Object value) {
-            ((Object[]) store)[index] = value;
+        protected void setListElementImpl(AccessIterator accessIter, int index, Object value) {
+            ((Object[]) accessIter.getStore())[index] = value;
         }
     }
 
@@ -123,13 +123,13 @@ public final class RExpression extends RListBase implements RAbstractVector {
         }
 
         @Override
-        protected Object getListElement(Object store, int index) {
-            return ((RExpression) store).data[index];
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
+            return ((RExpression) accessIter.getStore()).data[index];
         }
 
         @Override
-        protected void setListElement(Object store, int index, Object value) {
-            ((RExpression) store).data[index] = value;
+        protected void setListElementImpl(AccessIterator accessIter, int index, Object value) {
+            ((RExpression) accessIter.getStore()).data[index] = value;
         }
     };
 

@@ -98,10 +98,10 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
         }
 
         @Override
-        protected byte getLogical(Object internalStore, int index) {
+        protected byte getLogicalImpl(AccessIterator accessIter, int index) {
             Object value = null;
             try {
-                value = ForeignAccess.sendRead(read, (TruffleObject) internalStore, index);
+                value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
                 return RRuntime.asLogical((boolean) value);
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -137,8 +137,8 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
         }
 
         @Override
-        protected byte getLogical(Object store, int index) {
-            RForeignBooleanWrapper vector = (RForeignBooleanWrapper) store;
+        protected byte getLogicalImpl(AccessIterator accessIter, int index) {
+            RForeignBooleanWrapper vector = (RForeignBooleanWrapper) accessIter.getStore();
             Object value = null;
             try {
                 value = ForeignAccess.sendRead(READ, vector.delegate, index);

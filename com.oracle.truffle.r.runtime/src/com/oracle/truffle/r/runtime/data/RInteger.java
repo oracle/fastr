@@ -107,9 +107,9 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
         }
 
         @Override
-        protected int getInt(Object store, int index) {
+        public int getIntImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RInteger) store).value;
+            return ((RInteger) accessIter.getStore()).value;
         }
     }
 
@@ -120,9 +120,9 @@ public final class RInteger extends RScalarVector implements RAbstractIntVector 
 
     private static final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
         @Override
-        protected int getInt(Object store, int index) {
+        public int getIntImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RInteger) store).value;
+            return ((RInteger) accessIter.getStore()).value;
         }
     };
 
