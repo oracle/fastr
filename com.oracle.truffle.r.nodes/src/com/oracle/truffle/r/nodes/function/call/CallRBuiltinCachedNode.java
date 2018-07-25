@@ -57,8 +57,8 @@ public abstract class CallRBuiltinCachedNode extends CallRFunctionBaseNode {
     public abstract Object execute(VirtualFrame frame, RFunction fun, Object[] arguments);
 
     @Specialization(guards = "builtin == fun.getRBuiltin()", limit = "cacheLimit")
-    protected Object callBuiltin(VirtualFrame frame, RFunction fun, Object[] arguments,
-                    @SuppressWarnings("unused") @Cached("fun.getRBuiltin()") RBuiltinDescriptor builtin,
+    protected Object callBuiltin(VirtualFrame frame, @SuppressWarnings("unused") RFunction fun, Object[] arguments,
+                    @Cached("fun.getRBuiltin()") RBuiltinDescriptor builtin,
                     @Cached("createBuiltinInline(builtin)") RBuiltinNode callBuiltin) {
         try {
             return callBuiltin.call(frame, arguments);

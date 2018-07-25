@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNa
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
-import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
@@ -65,7 +64,6 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
     @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
     @Child private CastToVectorNode castVector;
-    @Child private CastListNode castList;
     @Child private SetClassAttributeNode setClassAttrNode;
     @Child private SetRowNamesAttributeNode setRowNamesAttrNode;
     @Child private SetAttributeNode setGenAttrNode;

@@ -31,13 +31,12 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 
 @MessageResolution(receiverType = RLogical.class)
 public class RLogicalMR {
     @Resolve(message = "IS_BOXED")
     public abstract static class RLogicalIsBoxedNode extends Node {
-        protected Object access(@SuppressWarnings("unused") RLogical receiver) {
+        protected Object access(RLogical receiver) {
             return !RRuntime.isNA(receiver.getValue());
         }
     }

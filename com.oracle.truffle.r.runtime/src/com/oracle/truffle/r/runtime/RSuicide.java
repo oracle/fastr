@@ -50,7 +50,7 @@ public abstract class RSuicide {
         throw rSuicideDefault(msg);
     }
 
-    public static RuntimeException rSuicide(RContext ctx, @SuppressWarnings("unused") Throwable cause, String msg) {
+    public static RuntimeException rSuicide(RContext ctx, Throwable cause, String msg) {
         RInternalError.reportError(cause);
         invokeUserDefinedSuicide(ctx, msg);
         throw rSuicideDefault(msg);

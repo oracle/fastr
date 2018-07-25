@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
-import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;

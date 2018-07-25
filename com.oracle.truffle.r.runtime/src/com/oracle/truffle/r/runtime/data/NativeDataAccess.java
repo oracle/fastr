@@ -310,11 +310,15 @@ public final class NativeDataAccess {
 
     private static RuntimeException reportDataAccessError(long address) {
         RuntimeException location = TRACE_MIRROR_ALLOCATION_SITES ? nativeMirrorInfo.get(address) : null;
+        printDataAccessErrorLocation(location);
+        throw RInternalError.shouldNotReachHere("unknown native reference " + address + "L / 0x" + Long.toHexString(address) + " (current id count: " + Long.toHexString(counter.get()) + ")");
+    }
+
+    private static void printDataAccessErrorLocation(RuntimeException location) {
         if (location != null) {
             System.out.println("Location at which the native mirror was allocated:");
             location.printStackTrace();
         }
-        throw RInternalError.shouldNotReachHere("unknown native reference " + address + "L / 0x" + Long.toHexString(address) + " (current id count: " + Long.toHexString(counter.get()) + ")");
     }
 
     // methods operating on the native mirror object directly:

@@ -295,21 +295,6 @@ public abstract class CallMatcherNode extends RBaseNode {
             }
         }
 
-        public Object[] getArgs(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
-
-            // Note: see CallMatcherNode#specialize for details on suppliedSignature/Arguments
-
-            // this unrolls all varargs instances in suppliedArgs into a flat array of arguments
-            Object[] preparedArguments = prepareSuppliedArgument(preparePermutation, suppliedArguments);
-
-            // This is then matched to formal signature: the result is non-flat array of
-            // arguments possibly containing varargs -- something that argument matching for a
-            // direct function call would create would this be a direct function call
-            RArgsValuesAndNames matchedArgs = ArgumentMatcher.matchArgumentsEvaluated(permutation, preparedArguments, null, formals);
-            Object[] reorderedArgs = matchedArgs.getArguments();
-            return reorderedArgs;
-        }
-
         // The implementation only differs in whether it has @ExplodeLoop annotation
         // The two implementations are identical and should be kept in sync
         @Override

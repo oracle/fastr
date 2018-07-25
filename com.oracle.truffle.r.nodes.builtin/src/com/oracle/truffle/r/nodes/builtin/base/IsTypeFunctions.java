@@ -292,7 +292,7 @@ public class IsTypeFunctions {
         }
 
         @Specialization
-        protected byte isInteger(@SuppressWarnings("unused") RAbstractIntVector value,
+        protected byte isInteger(RAbstractIntVector value,
                         @Cached("createIsFactorNode()") IsFactorNode isFactorNode,
                         @Cached("createBinaryProfile()") ConditionProfile isFactor) {
             if (isFactor.profile(isFactorNode.executeIsFactor(value))) {

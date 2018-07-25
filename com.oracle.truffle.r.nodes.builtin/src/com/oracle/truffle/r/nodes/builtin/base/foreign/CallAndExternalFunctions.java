@@ -739,8 +739,6 @@ public class CallAndExternalFunctions {
     @com.oracle.truffle.r.runtime.builtins.RBuiltin(name = ".External", kind = RBuiltinKind.PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = RBehavior.COMPLEX)
     public abstract static class DotExternal extends Dot {
 
-        @Child private RExplicitCallNode explicitCall;
-
         static {
             Casts.noCasts(DotExternal.class);
         }

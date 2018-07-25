@@ -58,7 +58,6 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
     @Child private GetDimNamesAttributeNode getYDimNames = GetDimNamesAttributeNode.create();
     @Child private SetDimNamesAttributeNode setDimNames = SetDimNamesAttributeNode.create();
     @Child private ExtractListElement getRowNames = ExtractListElement.create();
-    @Child private ExtractListElement colRowNames = ExtractListElement.create();
     private final ConditionProfile anyDimNames = ConditionProfile.createBinaryProfile();
     private final boolean transposeX;
 

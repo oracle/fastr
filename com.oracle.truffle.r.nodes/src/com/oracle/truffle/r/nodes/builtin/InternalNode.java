@@ -228,7 +228,7 @@ public abstract class InternalNode extends OperatorNode {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = prepareArgs(frame);
-            Object result = doInternalDispatch(frame, factory, args);
+            Object result = doInternalDispatch(frame, args);
             if (result == null) {
                 result = builtin.call(frame, prepareArgs(frame));
                 assert result != null : "builtins cannot return 'null': " + factory.getName();
@@ -238,7 +238,7 @@ public abstract class InternalNode extends OperatorNode {
             return result;
         }
 
-        private Object doInternalDispatch(VirtualFrame frame, RBuiltinFactory factory, Object[] args) {
+        private Object doInternalDispatch(VirtualFrame frame, Object[] args) {
             if (factory.getDispatch() != RDispatch.INTERNAL_GENERIC) {
                 return null;
             }

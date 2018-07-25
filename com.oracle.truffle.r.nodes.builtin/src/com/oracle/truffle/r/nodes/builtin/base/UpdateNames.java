@@ -96,18 +96,17 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object updateNames(RNull n, RNull names) {
+    protected Object updateNames(RNull n, @SuppressWarnings("unused") RNull names) {
         return n;
     }
 
     @Specialization
-    protected Object updateNames(RNull n, Object names) {
+    protected Object updateNames(@SuppressWarnings("unused") RNull n, @SuppressWarnings("unused") Object names) {
         return error(RError.Message.SET_ATTRIBUTES_ON_NULL);
     }
 
-    @SuppressWarnings("unused")
     @Fallback
-    protected Object doOthers(Object target, Object names) {
+    protected Object doOthers(@SuppressWarnings("unused") Object target, @SuppressWarnings("unused") Object names) {
         throw error(Message.NAMES_NONVECTOR);
     }
 }

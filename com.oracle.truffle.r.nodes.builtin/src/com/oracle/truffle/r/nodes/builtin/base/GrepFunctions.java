@@ -1021,7 +1021,6 @@ public class GrepFunctions {
 
         @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
         @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
-        @Child private SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
 
         static {
             Casts casts = new Casts(Regexec.class);

@@ -72,7 +72,6 @@ public final class GridContext {
 
     public static GridContext getContext(RContext rCtx) {
         if (rCtx.gridContext == null) {
-            GridContext newCtx = null;
             RContext parentRCtx = rCtx.getParent();
             if (parentRCtx != null) {
                 assert parentRCtx != rCtx;  // would cause infinite recursion

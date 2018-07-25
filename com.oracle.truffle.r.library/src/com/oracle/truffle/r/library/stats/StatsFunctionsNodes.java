@@ -511,7 +511,8 @@ public final class StatsFunctionsNodes {
             casts.arg(6).asIntegerVector().findFirst().mustBe(gt0(), Message.MUST_BE_POSITIVE, "maxiter");
         }
 
-        @Specialization()
+        @SuppressWarnings("all")
+        @Specialization
         protected RAbstractDoubleVector zeroin2(RFunction f, double xmin, double xmax, double fax, double fbx, double tol, int maxIter) {
             if (xmin >= xmax) {
                 error(Message.NOT_LESS_THAN, "xmin", "xmax");
