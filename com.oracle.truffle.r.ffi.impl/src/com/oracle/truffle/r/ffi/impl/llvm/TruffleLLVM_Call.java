@@ -313,7 +313,6 @@ final class TruffleLLVM_Call implements CallRFFI {
     }
 
     public static final class PushCallbacksNode extends Node {
-        @Child private Node readPreviousCallbacks = Message.READ.createNode();
         @Child private Node setCallbacksNode = Message.createExecute(1).createNode();
 
         public void execute(TruffleObject setCallbacksAddress, TruffleObject callbacks) {
@@ -326,8 +325,6 @@ final class TruffleLLVM_Call implements CallRFFI {
     }
 
     public static final class PopCallbacksNode extends Node {
-        @Child private Node setCallbacks = Message.WRITE.createNode();
-
         public void execute() {
         }
     }

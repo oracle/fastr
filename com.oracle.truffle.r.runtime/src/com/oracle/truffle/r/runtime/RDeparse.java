@@ -20,7 +20,6 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.File;
-import java.security.MessageDigest;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -349,8 +348,6 @@ public class RDeparse {
                 };
             }
         }
-
-        private static ThreadLocal<MessageDigest> digestTheadLocal = new ThreadLocal<>();
 
         public void fixupSources() {
             RootNode rootNode = getRootNode();

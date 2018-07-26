@@ -26,7 +26,6 @@ import java.util.HashMap;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 public abstract class Str2TypeNode extends FFIUpCallNode.Arg1 {
@@ -64,8 +63,6 @@ public abstract class Str2TypeNode extends FFIUpCallNode.Arg1 {
         name2typeTable.put("numeric", SEXPTYPE.REALSXP.code);
         name2typeTable.put("name", SEXPTYPE.SYMSXP.code);
     }
-
-    @Child private Node clazzIsPtrNode;
 
     public static Str2TypeNode create() {
         return Str2TypeNodeGen.create();

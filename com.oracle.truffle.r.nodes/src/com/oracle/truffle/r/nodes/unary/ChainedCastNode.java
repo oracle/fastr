@@ -29,11 +29,6 @@ import com.oracle.truffle.r.nodes.unary.ConditionalMapNode.PipelineReturnExcepti
 @NodeInfo(cost = NodeCost.NONE)
 public final class ChainedCastNode extends CastNode {
 
-    @FunctionalInterface
-    public interface CastNodeFactory {
-        CastNode create();
-    }
-
     @Child private CastNode firstCast;
     @Child private CastNode secondCast;
 

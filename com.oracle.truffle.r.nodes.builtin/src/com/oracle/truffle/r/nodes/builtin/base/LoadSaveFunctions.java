@@ -211,8 +211,9 @@ public class LoadSaveFunctions {
             casts.arg("eval.promises").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
+        @SuppressWarnings("all")
         @Specialization
-        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
+        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, RNull version, REnvironment envir, boolean evalPromises,
                         @Cached("new()") PromiseHelperNode promiseHelper) {
             RPairList prev = null;
             Object toSave = RNull.instance;

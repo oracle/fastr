@@ -39,7 +39,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RStringVector extends RVector<Object[]> implements RAbstractStringVector {

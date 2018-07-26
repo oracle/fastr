@@ -47,7 +47,7 @@ public abstract class FastRInspect extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    public Object call(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+    public Object call(RArgsValuesAndNames args) {
         for (int i = 0; i < args.getLength(); i++) {
             writeString(args.getArgument(i).getClass().getName(), true);
         }

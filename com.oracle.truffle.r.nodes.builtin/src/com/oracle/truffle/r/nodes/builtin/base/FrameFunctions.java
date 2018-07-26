@@ -230,8 +230,6 @@ public class FrameFunctions {
     @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"}, behavior = COMPLEX)
     public abstract static class MatchCall extends RBuiltinNode.Arg4 {
 
-        @Child private FrameHelper helper = new FrameHelper(FrameAccess.READ_ONLY);
-
         static {
             Casts casts = new Casts(MatchCall.class);
             casts.arg("definition").mustBe(RFunction.class);

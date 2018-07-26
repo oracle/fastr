@@ -53,7 +53,7 @@ public abstract class AsInteger extends RBuiltinNode.Arg2 {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RAbstractIntVector res = (RAbstractIntVector) reuseTemporaryNode.getResult(v).materialize();
+            RAbstractIntVector res = reuseTemporaryNode.getResult(v).materialize();
             res.resetAllAttributes(true);
             return res;
         }
