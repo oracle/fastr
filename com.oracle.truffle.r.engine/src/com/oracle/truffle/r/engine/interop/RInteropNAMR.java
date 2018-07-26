@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,37 +20,28 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.test.engine.interop;
+package com.oracle.truffle.r.engine.interop;
 
-import static org.junit.Assert.assertFalse;
-
+import com.oracle.truffle.api.interop.CanResolve;
+import com.oracle.truffle.api.interop.MessageResolution;
+import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.data.RLogical;
-import org.junit.Test;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
 
-public class RLogicalMRTest extends AbstractMRTest {
-
-    @Test
-    @Override
-    public void testIsNull() throws Exception {
-        super.testIsNull(); // force inherited tests from AbstractMRTest
+@MessageResolution(receiverType = RInteropNA.class)
+public class RInteropNAMR {
+    @Resolve(message = "IS_NULL")
+    public abstract static class RInteropNAIsNullNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RInteropNA receiver) {
+            return true;
+        }
     }
 
-    @Override
-    protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RLogical.valueOf(true), RLogical.valueOf(false), RLogical.valueOf(RRuntime.LOGICAL_NA)};
-    }
-
-    @Override
-    protected Object getUnboxed(TruffleObject obj) {
-        byte result = ((RLogical) obj).getValue();
-        assertFalse(RRuntime.isNA(result));
-        return RRuntime.fromLogical(result);
-    }
-
-    @Override
-    protected TruffleObject createEmptyTruffleObject() throws Exception {
-        return null;
+    @CanResolve
+    public abstract static class RInteropNACheck extends Node {
+        protected static boolean test(TruffleObject receiver) {
+            return receiver instanceof RInteropNA;
+        }
     }
 }

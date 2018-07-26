@@ -157,7 +157,7 @@ public class RS4ObjectMR {
 
             if (r2Foreign == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                r2Foreign = insert(R2ForeignNodeGen.create());
+                r2Foreign = insert(R2Foreign.create());
             }
             return r2Foreign.execute(value);
         }

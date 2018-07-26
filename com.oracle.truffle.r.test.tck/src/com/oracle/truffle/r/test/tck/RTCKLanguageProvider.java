@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.test.tck;
 
+import static org.graalvm.polyglot.tck.TypeDescriptor.array;
+import static org.graalvm.polyglot.tck.TypeDescriptor.intersection;
+
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
@@ -95,12 +98,12 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         List<Snippet> vals = new ArrayList<>();
 
         // Scalar types
-        vals.add(createValueConstructor(context, "1L", TypeDescriptor.NUMBER));
-        vals.add(createValueConstructor(context, "1.42", TypeDescriptor.NUMBER));
-        vals.add(createValueConstructor(context, "FALSE", TypeDescriptor.BOOLEAN));
-        vals.add(createValueConstructor(context, "'TEST'", TypeDescriptor.STRING));
-        vals.add(createValueConstructor(context, "1+1i", TypeDescriptor.intersection())); // generic
-                                                                                          // type
+        vals.add(createValueConstructor(context, "1L", intersection(TypeDescriptor.NUMBER, array(TypeDescriptor.NUMBER))));
+        vals.add(createValueConstructor(context, "1.42", intersection(TypeDescriptor.NUMBER, array(TypeDescriptor.NUMBER))));
+        vals.add(createValueConstructor(context, "FALSE", intersection(TypeDescriptor.BOOLEAN, array(TypeDescriptor.BOOLEAN))));
+        vals.add(createValueConstructor(context, "'TEST'", intersection(TypeDescriptor.STRING, array(TypeDescriptor.STRING))));
+        vals.add(createValueConstructor(context, "1+1i", intersection())); // generic
+                                                                           // type
 
         // TODO NULL, raw, s4, env, list, empty, ...
         // vals.add(createValueConstructor(context, "NULL", TypeDescriptor.NULL));

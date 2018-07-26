@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
@@ -63,15 +62,15 @@ public class ListMRTest extends AbstractMRTest {
     private void testKeysReadWrite(String createFun) throws Exception {
         RAbstractContainer l = create(createFun, testValues);
 
-        assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), l, "i"));
-        assertEquals(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, "d"));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), l, "b"));
+        assertSingletonVector(1, ForeignAccess.sendRead(Message.READ.createNode(), l, "i"));
+        assertSingletonVector(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, "d"));
+        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), l, "b"));
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, "n") instanceof RNull);
 
-        assertEquals(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0));
-        assertEquals(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
-        assertEquals(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 5d));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
+        assertSingletonVector(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0));
+        assertSingletonVector(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
+        assertSingletonVector(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 5d));
+        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, 4) instanceof RNull);
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, -1), UnknownIdentifierException.class);
@@ -81,13 +80,13 @@ public class ListMRTest extends AbstractMRTest {
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 100), UnknownIdentifierException.class);
 
         TruffleObject obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "d", 123.1);
-        assertEquals(123.1, ForeignAccess.sendRead(Message.READ.createNode(), obj, "d"));
+        assertSingletonVector(123.1, ForeignAccess.sendRead(Message.READ.createNode(), obj, "d"));
 
         obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 2, false);
-        assertEquals(false, ForeignAccess.sendRead(Message.READ.createNode(), obj, "b"));
+        assertSingletonVector(false, ForeignAccess.sendRead(Message.READ.createNode(), obj, "b"));
 
         obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "newnew", "nneeww");
-        assertEquals("nneeww", ForeignAccess.sendRead(Message.READ.createNode(), obj, "newnew"));
+        assertSingletonVector("nneeww", ForeignAccess.sendRead(Message.READ.createNode(), obj, "newnew"));
 
         assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0f, false), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0d, false), UnknownIdentifierException.class);

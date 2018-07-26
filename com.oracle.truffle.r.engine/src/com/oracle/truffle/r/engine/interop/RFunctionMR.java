@@ -59,7 +59,7 @@ public class RFunctionMR {
     @Resolve(message = "EXECUTE")
     public abstract static class RFunctionExecuteNode extends Node {
         @Child private Foreign2R foreign2R = Foreign2RNodeGen.create();
-        @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
+        @Child private R2Foreign r2Foreign = R2Foreign.create();
         @Child private RExplicitCallNode call = RExplicitCallNode.create();
 
         protected Object access(RFunction receiver, Object[] arguments) {

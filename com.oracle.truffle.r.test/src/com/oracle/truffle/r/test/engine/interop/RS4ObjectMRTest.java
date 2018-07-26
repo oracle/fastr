@@ -85,10 +85,10 @@ public class RS4ObjectMRTest extends AbstractMRTest {
     public void testReadWrite() throws Exception {
         TruffleObject s4 = createTruffleObjects()[0];
 
-        assertEquals("aaa", ForeignAccess.sendRead(Message.READ.createNode(), s4, "s"));
-        assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), s4, "i"));
-        assertEquals(1.1, ForeignAccess.sendRead(Message.READ.createNode(), s4, "d"));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), s4, "b"));
+        assertSingletonVector("aaa", ForeignAccess.sendRead(Message.READ.createNode(), s4, "s"));
+        assertSingletonVector(123, ForeignAccess.sendRead(Message.READ.createNode(), s4, "i"));
+        assertSingletonVector(1.1, ForeignAccess.sendRead(Message.READ.createNode(), s4, "d"));
+        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), s4, "b"));
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, "nnnoooonnne"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), s4, 0), UnknownIdentifierException.class);
@@ -102,14 +102,18 @@ public class RS4ObjectMRTest extends AbstractMRTest {
 
         ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "s", "abc");
         Object value = ForeignAccess.sendRead(Message.READ.createNode(), s4, "s");
-        assertEquals("abc", value);
+        assertSingletonVector("abc", value);
+        assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) value, 0));
 
         ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "b", false);
         value = ForeignAccess.sendRead(Message.READ.createNode(), s4, "b");
-        assertEquals(false, value);
+        assertSingletonVector(false, value);
+        assertEquals(false, ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) value, 0));
 
         ForeignAccess.sendWrite(Message.WRITE.createNode(), s4, "i", (short) 1234);
         value = ForeignAccess.sendRead(Message.READ.createNode(), s4, "i");
+        assertSingletonVector(1234, value);
+        value = ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) value, 0);
         assertTrue(value instanceof Integer);
         assertEquals(1234, value);
 
