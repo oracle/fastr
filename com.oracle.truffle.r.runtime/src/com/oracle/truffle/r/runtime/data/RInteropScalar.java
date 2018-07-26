@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 
 @ValueType
@@ -225,6 +226,28 @@ public abstract class RInteropScalar extends RScalar {
         @Override
         public Class<?> getJavaType() {
             return Short.TYPE;
+        }
+    }
+
+    /**
+     * Represents an {@code NA} value passed to the interop. This value should never appear in the
+     * FastR execution, it is only passed to interop and converted back to primitive value if passed
+     * back to FastR.
+     */
+    public static final class RInteropNA implements RTruffleObject {
+        public static final RInteropNA INT = new RInteropNA(RRuntime.INT_NA);
+        public static final RInteropNA DOUBLE = new RInteropNA(RRuntime.DOUBLE_NA);
+        public static final RInteropNA STRING = new RInteropNA(RRuntime.STRING_NA);
+        public static final RInteropNA LOGICAL = new RInteropNA(RRuntime.LOGICAL_NA);
+
+        private final Object value;
+
+        public RInteropNA(Object value) {
+            this.value = value;
+        }
+
+        public Object getValue() {
+            return value;
         }
     }
 }

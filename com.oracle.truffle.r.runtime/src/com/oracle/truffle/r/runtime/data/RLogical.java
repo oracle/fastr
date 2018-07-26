@@ -117,9 +117,9 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
         }
 
         @Override
-        protected byte getLogical(Object store, int index) {
+        protected byte getLogicalImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RLogical) store).value;
+            return ((RLogical) accessIter.getStore()).value;
         }
     }
 
@@ -130,9 +130,9 @@ public final class RLogical extends RScalarVector implements RAbstractLogicalVec
 
     private static final SlowPathFromLogicalAccess SLOW_PATH_ACCESS = new SlowPathFromLogicalAccess() {
         @Override
-        protected byte getLogical(Object store, int index) {
+        protected byte getLogicalImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RLogical) store).value;
+            return ((RLogical) accessIter.getStore()).value;
         }
     };
 

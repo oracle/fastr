@@ -181,7 +181,9 @@ public class REPL {
         if (result.isNull()) {
             return; // event loop is not configured to be run
         } else if (result.getMember("result").asInt() != 0) {
-            System.out.println("WARNING: Native event loop unavailable. Error code: " + result.getMember("result").asInt());
+            // TODO: it breaks pkgtest when parsing output
+            // System.err.println("WARNING: Native event loop unavailable. Error code: " +
+            // result.getMember("result").asInt());
         } else {
             final String fifoInPath = result.getMember("fifoInPath").asString();
             Thread t = new Thread() {

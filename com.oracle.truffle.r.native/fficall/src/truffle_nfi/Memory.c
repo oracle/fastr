@@ -33,7 +33,7 @@ char *R_alloc(size_t n, int size) {
 // This is S compatible version of R_alloc
 char *S_alloc(long n, int size) {
     char *p = R_alloc(n, size);
-    memset(p, 0, n);
+    memset(p, 0, n * size);
     return p;
 }
 

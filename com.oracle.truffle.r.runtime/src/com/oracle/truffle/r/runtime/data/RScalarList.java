@@ -104,9 +104,9 @@ public final class RScalarList extends RScalarVector implements RAbstractListVec
         }
 
         @Override
-        protected Object getListElement(Object store, int index) {
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RScalarList) store).value;
+            return ((RScalarList) accessIter.getStore()).value;
         }
     }
 
@@ -122,9 +122,9 @@ public final class RScalarList extends RScalarVector implements RAbstractListVec
         }
 
         @Override
-        protected Object getListElement(Object store, int index) {
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RScalarList) store).value;
+            return ((RScalarList) accessIter.getStore()).value;
         }
     };
 

@@ -51,13 +51,14 @@ import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.IsNA;
+import com.oracle.truffle.r.nodes.builtin.base.IsNANodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalar;
-import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -66,7 +67,6 @@ import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
-import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 abstract class InteropRootNode extends RootNode {
@@ -80,6 +80,9 @@ abstract class InteropRootNode extends RootNode {
     }
 }
 
+/**
+ * Implements interop messages for all {@link RAbstractAtomicVector} subclasses.
+ */
 public final class RAbstractVectorAccessFactory implements StandardFactory {
 
     abstract static class VectorReadImplNode extends InteropRootNode {
@@ -128,7 +131,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             Object value = extract.apply(receiver, positions, RLogical.TRUE, RLogical.TRUE);
             if (r2Foreign == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                r2Foreign = insert(R2ForeignNodeGen.create());
+                r2Foreign = insert(R2Foreign.createNoBox());
             }
             return r2Foreign.execute(value);
         }
@@ -325,26 +328,23 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
     @Override
     public CallTarget accessIsBoxed() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Child IsNA isNANode = IsNANodeGen.create();
+            private final ConditionProfile isEmpty = ConditionProfile.createBinaryProfile();
+
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-                return arg.getLength() == 1 && isUnBoxable(arg);
+                if (isEmpty.profile(arg.getLength() == 0)) {
+                    return false;
+                }
+                Object o = arg.getDataAtAsObject(0);
+                return arg.getLength() == 1 && !isNA(isNANode, o);
             }
         });
     }
 
-    private static boolean isUnBoxable(RAbstractVector vector) {
-        Object o = vector.getDataAtAsObject(0);
-        return isPrimitive(o);
-    }
-
-    private static boolean isPrimitive(Object element) {
-        if (element == null) {
-            return false;
-        }
-        final Class<?> elementType = element.getClass();
-        return elementType == String.class || elementType == Character.class || elementType == Boolean.class || elementType == Byte.class || elementType == Short.class ||
-                        elementType == Integer.class || elementType == Long.class || elementType == Float.class || elementType == Double.class;
+    private static boolean isNA(IsNA isNANode, Object value) {
+        return RRuntime.fromLogical((Byte) isNANode.execute(value));
     }
 
     @Override
@@ -383,14 +383,21 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
     @Override
     public CallTarget accessUnbox() {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Child IsNA isNANode = IsNANodeGen.create();
+            private final ConditionProfile isLogical = ConditionProfile.createBinaryProfile();
+
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
                 if (arg.getLength() == 1) {
-                    return arg.getDataAtAsObject(0);
-                } else {
-                    throw UnsupportedMessageException.raise(Message.UNBOX);
+                    Object value = arg.getDataAtAsObject(0);
+                    if (isLogical.profile(arg instanceof RAbstractLogicalVector)) {
+                        return RLogicalMR.unboxLogical((Byte) value);
+                    } else if (!isNA(isNANode, value)) {
+                        return value;
+                    }
                 }
+                throw UnsupportedMessageException.raise(Message.UNBOX);
             }
         });
     }
@@ -440,7 +447,17 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
         return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
             @Override
             public Object execute(VirtualFrame frame) {
-                return false;
+                return true;
+            }
+        });
+    }
+
+    @Override
+    public CallTarget accessAsPointer() {
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                return NativeDataAccess.asPointer(ForeignAccess.getReceiver(frame));
             }
         });
     }
@@ -451,7 +468,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             @Override
             public Object execute(VirtualFrame frame) {
                 RAbstractVector arg = (RAbstractVector) ForeignAccess.getReceiver(frame);
-                return new RObjectNativeWrapper((RObject) arg);
+                return arg;
             }
         });
     }

@@ -103,9 +103,9 @@ public final class RForeignNamedListWrapper extends RForeignWrapper implements R
         }
 
         @Override
-        protected Object getListElement(Object internalStore, int index) {
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
             try {
-                RForeignNamedListWrapper wrapper = (RForeignNamedListWrapper) internalStore;
+                RForeignNamedListWrapper wrapper = (RForeignNamedListWrapper) accessIter.getStore();
                 return foreign2r.execute(ForeignAccess.sendRead(read, wrapper.delegate, wrapper.names.getDataAt(index)));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -133,8 +133,8 @@ public final class RForeignNamedListWrapper extends RForeignWrapper implements R
         }
 
         @Override
-        protected Object getListElement(Object store, int index) {
-            RForeignNamedListWrapper vector = (RForeignNamedListWrapper) store;
+        protected Object getListElementImpl(AccessIterator accessIter, int index) {
+            RForeignNamedListWrapper vector = (RForeignNamedListWrapper) accessIter.getStore();
             try {
                 return FOREIGN_TO_R.execute(ForeignAccess.sendRead(READ, vector.delegate, vector.names.getDataAt(index)));
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {

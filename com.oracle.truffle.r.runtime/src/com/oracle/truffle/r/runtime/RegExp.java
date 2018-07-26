@@ -118,7 +118,17 @@ public class RegExp {
                     }
                     break;
                 case ']':
-                    withinCharClass = false;
+                    // Detecting that the current ']' closes "empty brackets '[]'
+                    boolean closingEmptyBrackets = (i > 0 && result.charAt(i - 1) == '[' &&
+                                    (i < 2 || result.charAt(i - 2) != '\\'));
+                    // To leave a character class open we must already be within some and the
+                    // current ']' must be closing empty brackets.
+                    // Examples:
+                    // ] - there is no character class, so the current ']' has no effect
+                    // [\[] - the ']' closes the character class
+                    // []\[] - the 1st ']' leaves the character class open, while the 2nd one closes
+                    // it
+                    withinCharClass &= closingEmptyBrackets;
                     break;
             }
             i++;

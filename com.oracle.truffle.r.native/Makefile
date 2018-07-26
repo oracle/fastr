@@ -31,15 +31,6 @@ export R_VERSION = 3.4.0
 export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2018-06-20"
 export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 
-ifeq ($(FASTR_RFFI),llvm)
-ifndef FASTR_LLVM_TOOLS
-ifdef FASTR_LLVM_FOR_DRAGONEGG_HOME
-export FASTR_LLVM_TOOLS = $(FASTR_LLVM_FOR_DRAGONEGG_HOME)/bin
-$(info FASTR_LLVM_TOOLS set to $(FASTR_LLVM_TOOLS))
-endif
-endif
-endif
-
 $(info R_VERSION: $(R_VERSION))
 $(info GNUR_HOME: $(GNUR_HOME))
 
@@ -56,6 +47,25 @@ endif
 # to force a clean build, and elsewhere use sentinels to avoid rebuilding when we can't compute the
 # dependencies accurately.
 
+ifeq ($(FASTR_RFFI),llvm)
+all: checkversion
+	$(MAKE) -C gnur
+	$(MAKE) -C ../f2c/f2c
+	FASTR_RFFI=llvm-only $(MAKE) -C ../f2c/libf2c
+	$(MAKE) -C include
+	$(MAKE) -C fficall
+	$(MAKE) -C $(GNUR_HOME)/src/library
+	$(MAKE) -C run
+	cp version.source version.built
+
+clean:
+	$(MAKE) -C include clean
+	$(MAKE) -C fficall clean
+	$(MAKE) -C run clean
+	$(MAKE) -C ../f2c/libf2c clean
+	$(MAKE) -C ../f2c/f2c clean		
+	$(MAKE) -C gnur clean
+else
 all: checkversion
 	$(MAKE) -C gnur
 	$(MAKE) -C include
@@ -69,6 +79,7 @@ clean:
 	$(MAKE) -C fficall clean
 	$(MAKE) -C run clean
 	$(MAKE) -C gnur clean
+endif
 
 version.source := $(shell cat version.source)
 

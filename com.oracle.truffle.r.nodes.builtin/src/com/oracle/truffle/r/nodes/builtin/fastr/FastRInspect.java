@@ -22,15 +22,19 @@
  */
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
+import java.io.IOException;
 
 /**
  * Just a convenient way to inspect values in the Java debugger from the R shell.
@@ -44,6 +48,18 @@ public abstract class FastRInspect extends RBuiltinNode.Arg1 {
 
     @Specialization
     public Object call(@SuppressWarnings("unused") RArgsValuesAndNames args) {
+        for (int i = 0; i < args.getLength(); i++) {
+            writeString(args.getArgument(i).getClass().getName(), true);
+        }
         return RNull.instance;
+    }
+
+    @TruffleBoundary
+    private static void writeString(String msg, boolean nl) {
+        try {
+            StdConnections.getStdout().writeString(msg, nl);
+        } catch (IOException ex) {
+            throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, ex.getMessage() == null ? ex : ex.getMessage());
+        }
     }
 }

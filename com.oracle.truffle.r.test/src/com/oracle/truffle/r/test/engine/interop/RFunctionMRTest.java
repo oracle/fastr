@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import org.graalvm.polyglot.Source;
@@ -46,22 +45,31 @@ public class RFunctionMRTest extends AbstractMRTest {
         assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), result));
 
         f = create("function() {1L}");
-        assertEquals(1, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        assertSingletonVector(1, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
         f = create("function() {1}");
-        assertEquals(1.0, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        assertSingletonVector(1.0, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
         f = create("function() {TRUE}");
-        assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        assertSingletonVector(true, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
 
         f = create("function(a) {a}");
-        assertEquals("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));
+        assertSingletonVector("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));
 
         f = create("function(a) { is.logical(a) }");
-        assertEquals(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
+        assertSingletonVector(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
 
         f = create("function(a) { .fastr.interop.asShort(a) }");
         assertTrue(ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, 123) instanceof Short);
+
+        f = create("function(a) { NA }");
+        Object naVectorResult = ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true);
+        Object naValue = ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) naVectorResult, 0);
+        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) naValue));
+
+        f = create("function(a) { NULL }");
+        Object nullResult = ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true);
+        assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) nullResult));
     }
 
     @Override

@@ -29,7 +29,6 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = CharSXPWrapper.class)
 public class CharSXPWrapperMR {
@@ -37,14 +36,21 @@ public class CharSXPWrapperMR {
     @Resolve(message = "IS_POINTER")
     public abstract static class IsPointerNode extends Node {
         protected boolean access(@SuppressWarnings("unused") Object receiver) {
-            return false;
+            return true;
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected Object access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
         }
     }
 
     @Resolve(message = "TO_NATIVE")
     public abstract static class ToNativeNode extends Node {
-        protected Object access(RObject receiver) {
-            return new RObjectNativeWrapper(receiver);
+        protected Object access(Object receiver) {
+            return receiver;
         }
     }
 

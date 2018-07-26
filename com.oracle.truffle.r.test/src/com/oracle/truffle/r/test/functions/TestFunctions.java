@@ -274,6 +274,10 @@ public class TestFunctions extends TestBase {
         assertEval("{ foo <- function(xaaa, ...) list(xaa=xaaa, ...); foo(xa=4,xaa=5); }");
         assertEval("list(`...`=NULL);");
         assertEval("`$<-`(someNonesense = list(), anotherNonesense = 'foo', 42)");
+
+        // Unmatched argument from delegated "..."
+        // FastR does not provide "c=3", but only "3" in the error message
+        assertEval(Output.IgnoreErrorMessage, "foo <- function(...) bar(...); bar <- function(a,b) list(a,b); foo(a=1,b=2,c=3);");
     }
 
     @Test

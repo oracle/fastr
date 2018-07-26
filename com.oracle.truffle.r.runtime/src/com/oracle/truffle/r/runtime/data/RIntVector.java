@@ -268,16 +268,16 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
         }
 
         @Override
-        protected int getInt(Object store, int index) {
-            return hasStore ? ((int[]) store)[index] : NativeDataAccess.getIntNativeMirrorData(store, index);
+        public int getIntImpl(AccessIterator accessIter, int index) {
+            return hasStore ? ((int[]) accessIter.getStore())[index] : NativeDataAccess.getIntNativeMirrorData(accessIter.getStore(), index);
         }
 
         @Override
-        protected void setInt(Object store, int index, int value) {
+        protected void setIntImpl(AccessIterator accessIter, int index, int value) {
             if (hasStore) {
-                ((int[]) store)[index] = value;
+                ((int[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorIntData(store, index, value);
+                NativeDataAccess.setNativeMirrorIntData(accessIter.getStore(), index, value);
             }
         }
     }
@@ -289,14 +289,14 @@ public final class RIntVector extends RVector<int[]> implements RAbstractIntVect
 
     private static final SlowPathFromIntAccess SLOW_PATH_ACCESS = new SlowPathFromIntAccess() {
         @Override
-        protected int getInt(Object store, int index) {
-            RIntVector vector = (RIntVector) store;
+        public int getIntImpl(AccessIterator accessIter, int index) {
+            RIntVector vector = (RIntVector) accessIter.getStore();
             return NativeDataAccess.getData(vector, vector.data, index);
         }
 
         @Override
-        protected void setInt(Object store, int index, int value) {
-            RIntVector vector = (RIntVector) store;
+        protected void setIntImpl(AccessIterator accessIter, int index, int value) {
+            RIntVector vector = (RIntVector) accessIter.getStore();
             NativeDataAccess.setData(vector, vector.data, index, value);
         }
     };

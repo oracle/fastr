@@ -64,6 +64,9 @@ eval(expression({
 	    if (!missing(displaylist)) {
 	        displaylist <- match.arg(displaylist)
         	grid::grid.display.list(displaylist == "enable")
+        	if (displaylist == "enable") {
+	        	.Call(grid:::C_initDisplayList)
+        	}
     	}
 	    else stop("argument is missing with no default")
     	invisible()
@@ -73,12 +76,12 @@ eval(expression({
     recordPlot <- function() {
 		dl <- grid:::grid.Call(grid:::C_getDisplayList)
 		dl.idx <- grid:::grid.Call(grid:::C_getDLindex)
-		# The dummy elements and the class 'recordedplot' make the display list look 
-		# like the GNUR one, which enables its use in the 'evaluate' package
-		# (used in knitr, for instance).
-		if (all(sapply(dl, function (x) is.null(x)))) {
+		if (all(sapply(dl[-1], function (x) is.null(x)))) {
 			pl <- list(NULL)
 		} else {
+			# The dummy elements and the class 'recordedplot' make the display list look 
+			# like the GNUR one, which enables its use in the 'evaluate' package
+			# (used in knitr, for instance).
 			pl <- list(list(list("dummyCallX",list(list("dummyCallY")))), dl = dl, dl.idx = dl.idx)
 		}
 		class(pl) <- "recordedplot"

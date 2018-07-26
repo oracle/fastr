@@ -46,13 +46,10 @@ LOCAL_C_OBJECTS := $(addprefix $(OBJ)/, $(LOCAL_C_SOURCES:.c=.bc))
 TRUFFLE_COMMON_C_OBJECTS := $(addprefix $(OBJ)/, $(notdir $(TRUFFLE_COMMON_C_SOURCES:.c=.bc)))
 C_OBJECTS := $(LOCAL_C_OBJECTS) $(TRUFFLE_COMMON_C_OBJECTS)
 
-SULONG_DIR = $(abspath $(FASTR_R_HOME)/../sulong)
-
-SULONG_INCLUDES = -I$(SULONG_DIR)/include
 FFI_INCLUDES = -I$(TOPDIR)/include -I$(TOPDIR)/include/R_ext
 LOCAL_INCLUDES = -I . -I $(abspath ../include) -I $(abspath ../common) 
 
-INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(SULONG_INCLUDES) $(NFI_INCLUDES)
+INCLUDES := $(LOCAL_INCLUDES) $(FFI_INCLUDES) $(NFI_INCLUDES)
 
 FFLAGS :=
 

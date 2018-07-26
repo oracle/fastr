@@ -23,20 +23,22 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromDoubleAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromDoubleAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 
-abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
+class RToDoubleVectorClosure extends RToVectorClosure implements RAbstractDoubleVector {
 
-    protected RToDoubleVectorClosure(boolean keepAttributes) {
-        super(keepAttributes);
+    protected RToDoubleVectorClosure(RAbstractVector vector, boolean keepAttributes) {
+        super(vector, keepAttributes);
     }
 
     @Override
@@ -65,102 +67,73 @@ abstract class RToDoubleVectorClosure extends RToVectorClosure implements RAbstr
     }
 
     @Override
-    public final RAbstractDoubleVector copyWithNewDimensions(int[] newDimensions) {
-        if (keepAttributes) {
-            return materialize().copyWithNewDimensions(newDimensions);
-        }
-        return this;
-    }
-}
-
-final class RLogicalToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
-
-    private final RLogicalVector vector;
-
-    RLogicalToDoubleVectorClosure(RLogicalVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RLogicalVector getVector() {
-        return vector;
-    }
-
-    @Override
     public double getDataAt(int index) {
-        byte data = vector.getDataAt(index);
-        if (RRuntime.isNA(data)) {
-            return RRuntime.DOUBLE_NA;
+        RAbstractVector v = getVector();
+        VectorAccess spa = v.slowPathAccess();
+        return spa.getDouble(spa.randomAccess(v), index);
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this, getVector().access());
+    }
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
+    }
+
+    private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
+        @Override
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+            RToDoubleVectorClosure vector = (RToDoubleVectorClosure) accessIter.getStore();
+            return vector.getDataAt(index);
         }
-        return RRuntime.logical2doubleNoCheck(data);
-    }
-}
 
-final class RIntToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
-
-    private final RIntVector vector;
-
-    RIntToDoubleVectorClosure(RIntVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RIntVector getVector() {
-        return vector;
-    }
-
-    @Override
-    public double getDataAt(int index) {
-        int data = vector.getDataAt(index);
-        if (RRuntime.isNA(data)) {
-            return RRuntime.DOUBLE_NA;
+        @Override
+        protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
+            RToDoubleVectorClosure vector = (RToDoubleVectorClosure) accessIter.getStore();
+            vector.setDataAt(vector.getInternalStore(), index, value);
         }
-        return RRuntime.int2doubleNoCheck(data);
-    }
-}
+    };
 
-final class RIntSequenceToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
+    private static final class FastPathAccess extends FastPathFromDoubleAccess {
 
-    private final RIntSequence vector;
+        @Child private VectorAccess delegate;
 
-    RIntSequenceToDoubleVectorClosure(RIntSequence vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RIntSequence getVector() {
-        return vector;
-    }
-
-    @Override
-    public double getDataAt(int index) {
-        int data = vector.getDataAt(index);
-        if (RRuntime.isNA(data)) {
-            return RRuntime.DOUBLE_NA;
+        FastPathAccess(RAbstractContainer value, VectorAccess delegate) {
+            super(value);
+            this.delegate = delegate;
         }
-        return RRuntime.int2doubleNoCheck(data);
-    }
-}
 
-final class RRawToDoubleVectorClosure extends RToDoubleVectorClosure implements RAbstractDoubleVector {
+        @Override
+        public boolean supports(Object value) {
+            return delegate.supports(value);
+        }
 
-    private final RRawVector vector;
+        @Override
+        protected Object getStore(RAbstractContainer vector) {
+            return super.getStore(((RToDoubleVectorClosure) vector).getVector());
+        }
 
-    RRawToDoubleVectorClosure(RRawVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
+        @Override
+        public double getDouble(RandomIterator iter, int index) {
+            return delegate.getDouble(iter, index);
+        }
 
-    @Override
-    public RRawVector getVector() {
-        return vector;
-    }
+        @Override
+        public double getDouble(SequentialIterator iter) {
+            return delegate.getDouble(iter);
+        }
 
-    @Override
-    public double getDataAt(int index) {
-        return RRuntime.raw2double(vector.getRawDataAt(index));
+        @Override
+        protected double getDoubleImpl(AccessIterator accessIterator, int index) {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        protected void setDoubleImpl(AccessIterator accessIterator, int index, double value) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 }

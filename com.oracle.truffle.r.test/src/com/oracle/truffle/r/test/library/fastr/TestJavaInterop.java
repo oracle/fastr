@@ -1024,7 +1024,7 @@ public class TestJavaInterop extends TestBase {
         if (!(asXXX.equals("as.complex") || asXXX.equals("as.integer") || asXXX.equals("as.raw") || asXXX.equals("as.double"))) {
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringBooleanArray);", toRVector(t.fieldStringBooleanArray, asXXX));
         } else {
-            assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringBooleanArray);", toRVector(t.fieldStringBooleanArray, asXXX));
+            assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$fieldStringBooleanArray);", toRVector(t.fieldStringBooleanArray, asXXX));
         }
 
         // tests lists
@@ -1045,7 +1045,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listLong);", toRVector(t.listLong, asXXX));
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listShort);", toRVector(t.listShort, asXXX));
         if (!(asXXX.equals("as.character") || asXXX.equals("as.expression") || asXXX.equals("as.logical") || asXXX.equals("as.symbol") || asXXX.equals("as.vector"))) {
-            assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
+            assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
         } else {
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listString);", toRVector(t.listString, asXXX));
         }
@@ -1054,7 +1054,7 @@ public class TestJavaInterop extends TestBase {
         if (!(asXXX.equals("as.complex") || asXXX.equals("as.integer") || asXXX.equals("as.raw") || asXXX.equals("as.double"))) {
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
         } else {
-            assertEvalFastR(Output.IgnoreWarningContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
+            assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + asXXX + "(to$listStringBoolean);", toRVector(t.listStringBoolean, asXXX));
         }
 
         if (asXXX.equals("as.expression")) {
@@ -1063,6 +1063,30 @@ public class TestJavaInterop extends TestBase {
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "cannot coerce type 'truffleobject' to vector of type '" + type + "'"));
         } else {
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this polyglot value to a vector"));
+        }
+    }
+
+    @Test
+    public void testNoCopyOncast() throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+        testNoCopyOncast("integer", "RToIntVectorClosure", new String[]{"fieldBooleanArray", "fieldDoubleArray", "fieldStringArray"});
+        testNoCopyOncast("double", "RToDoubleVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldStringArray"});
+        testNoCopyOncast("complex", "RToComplexVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray", "fieldStringArray"});
+        testNoCopyOncast("character", "RToStringVectorClosure", new String[]{"fieldBooleanArray", "fieldIntegerArray", "fieldDoubleArray"});
+    }
+
+    public void testNoCopyOncast(String type, String closure, String... fields) throws IllegalArgumentException, NoSuchFieldException, IllegalAccessException {
+        for (String field : fields) {
+            if (!"character".equals(type) && field.contains("String")) {
+                assertEvalFastR(Output.IgnoreWarningMessage, CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));", "as." + type + "(" + toRVector(new TestClass(), field) + ")");
+            } else {
+                assertEvalFastR(CREATE_TRUFFLE_OBJECT + "as." + type + "(as.vector(to$" + field + "));", "as." + type + "(" + toRVector(new TestClass(), field) + ")");
+            }
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + ".fastr.inspect(as." + type + "(as.vector(to$" + field + ")));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT +
+                            ".fastr.inspect(as.vector(as.vector(to$" + field + "), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT +
+                            ".fastr.inspect(as.vector(as." + type + "(to$" + field + "), '" + type + "'));", "cat('com.oracle.truffle.r.runtime.data.closures." + closure + "\n')");
+
         }
     }
 

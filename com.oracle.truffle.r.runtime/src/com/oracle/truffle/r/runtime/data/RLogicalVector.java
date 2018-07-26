@@ -271,16 +271,16 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
         }
 
         @Override
-        protected byte getLogical(Object store, int index) {
-            return hasStore ? ((byte[]) store)[index] : NativeDataAccess.getLogicalNativeMirrorData(store, index);
+        protected byte getLogicalImpl(AccessIterator accessIter, int index) {
+            return hasStore ? ((byte[]) accessIter.getStore())[index] : NativeDataAccess.getLogicalNativeMirrorData(accessIter.getStore(), index);
         }
 
         @Override
-        protected void setLogical(Object store, int index, byte value) {
+        protected void setLogicalImpl(AccessIterator accessIter, int index, byte value) {
             if (hasStore) {
-                ((byte[]) store)[index] = value;
+                ((byte[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorLogicalData(store, index, value);
+                NativeDataAccess.setNativeMirrorLogicalData(accessIter.getStore(), index, value);
             }
         }
     }
@@ -292,14 +292,14 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     private static final SlowPathFromLogicalAccess SLOW_PATH_ACCESS = new SlowPathFromLogicalAccess() {
         @Override
-        protected byte getLogical(Object store, int index) {
-            RLogicalVector vector = (RLogicalVector) store;
+        protected byte getLogicalImpl(AccessIterator accessIter, int index) {
+            RLogicalVector vector = (RLogicalVector) accessIter.getStore();
             return NativeDataAccess.getData(vector, vector.data, index);
         }
 
         @Override
-        protected void setLogical(Object store, int index, byte value) {
-            RLogicalVector vector = (RLogicalVector) store;
+        protected void setLogicalImpl(AccessIterator accessIter, int index, byte value) {
+            RLogicalVector vector = (RLogicalVector) accessIter.getStore();
             NativeDataAccess.setData(vector, vector.data, index, value);
         }
     };

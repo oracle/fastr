@@ -229,8 +229,7 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(RSymbol x, RSymbol y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
-        assert Utils.isInterned(x.getName()) && Utils.isInterned(y.getName());
-        return RRuntime.asLogical(x.getName() == y.getName());
+        return RRuntime.asLogical(x == y);
     }
 
     @Specialization
@@ -343,10 +342,7 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
                         return RRuntime.LOGICAL_FALSE;
                     } else {
                         if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
-                            String xTagName = ((RSymbol) xSubList.getTag()).getName();
-                            String yTagName = ((RSymbol) ySubList.getTag()).getName();
-                            assert Utils.isInterned(xTagName) && Utils.isInterned(yTagName);
-                            if (xTagName != yTagName) {
+                            if (xSubList.getTag() != ySubList.getTag()) {
                                 return RRuntime.LOGICAL_FALSE;
                             }
                         } else {

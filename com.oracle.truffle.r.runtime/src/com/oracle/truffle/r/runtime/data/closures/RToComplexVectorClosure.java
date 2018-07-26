@@ -23,23 +23,24 @@
 package com.oracle.truffle.r.runtime.data.closures;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleSequence;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
-import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromComplexAccess;
+import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromComplexAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 
-abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
+class RToComplexVectorClosure extends RToVectorClosure implements RAbstractComplexVector {
 
-    protected RToComplexVectorClosure(boolean keepAttributes) {
-        super(keepAttributes);
+    protected RToComplexVectorClosure(RAbstractVector vector, boolean keepAttributes) {
+        super(vector, keepAttributes);
     }
 
     @Override
@@ -70,135 +71,116 @@ abstract class RToComplexVectorClosure extends RToVectorClosure implements RAbst
     }
 
     @Override
-    public final RAbstractComplexVector copyWithNewDimensions(int[] newDimensions) {
-        if (keepAttributes) {
-            return materialize().copyWithNewDimensions(newDimensions);
+    public RComplex getDataAt(int index) {
+        RAbstractVector v = getVector();
+        VectorAccess spa = v.slowPathAccess();
+        return spa.getComplex(spa.randomAccess(v), index);
+    }
+
+    @Override
+    public VectorAccess access() {
+        return new FastPathAccess(this, getVector().access());
+    }
+
+    @Override
+    public VectorAccess slowPathAccess() {
+        return SLOW_PATH_ACCESS;
+    }
+
+    private static final SlowPathFromComplexAccess SLOW_PATH_ACCESS = new SlowPathFromComplexAccess() {
+
+        @Override
+        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
+            return vector.getDataAt(index);
         }
-        return this;
-    }
-}
 
-final class RLogicalToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+        @Override
+        protected double getComplexRImpl(AccessIterator accessIter, int index) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
+            return vector.getDataAt(index).getRealPart();
+        }
 
-    private final RLogicalVector vector;
+        @Override
+        protected double getComplexIImpl(AccessIterator accessIter, int index) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
+            return vector.getDataAt(index).getImaginaryPart();
+        }
 
-    RLogicalToComplexVectorClosure(RLogicalVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
+        @Override
+        protected void setComplexImpl(AccessIterator accessIter, int index, double real, double imaginary) {
+            RToComplexVectorClosure vector = (RToComplexVectorClosure) accessIter.getStore();
+            vector.setDataAt(vector.getInternalStore(), index, RComplex.valueOf(real, imaginary));
+        }
+    };
 
-    @Override
-    public RLogicalVector getVector() {
-        return vector;
-    }
+    private static final class FastPathAccess extends FastPathFromComplexAccess {
 
-    @Override
-    public RComplex getDataAt(int index) {
-        byte real = vector.getDataAt(index);
-        return RRuntime.isNA(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
-    }
-}
+        @Node.Child private VectorAccess delegate;
 
-final class RIntToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+        FastPathAccess(RAbstractContainer value, VectorAccess delegate) {
+            super(value);
+            this.delegate = delegate;
+        }
 
-    private final RIntVector vector;
+        @Override
+        public boolean supports(Object value) {
+            return delegate.supports(value);
+        }
 
-    RIntToComplexVectorClosure(RIntVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
+        @Override
+        protected Object getStore(RAbstractContainer vector) {
+            return super.getStore(((RToComplexVectorClosure) vector).getVector());
+        }
 
-    @Override
-    public RIntVector getVector() {
-        return vector;
-    }
+        @Override
+        public RComplex getComplex(RandomIterator iter, int index) {
+            return delegate.getComplex(iter, index);
+        }
 
-    @Override
-    public RComplex getDataAt(int index) {
-        int real = vector.getDataAt(index);
-        return RRuntime.isNA(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
-    }
-}
+        @Override
+        public double getComplexR(RandomIterator iter, int index) {
+            return delegate.getComplexR(iter, index);
+        }
 
-final class RIntSequenceToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+        @Override
+        public double getComplexI(RandomIterator iter, int index) {
+            return delegate.getComplexI(iter, index);
+        }
 
-    private final RIntSequence vector;
+        @Override
+        public RComplex getComplex(SequentialIterator iter) {
+            return delegate.getComplex(iter);
+        }
 
-    RIntSequenceToComplexVectorClosure(RIntSequence vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
+        @Override
+        public double getComplexR(SequentialIterator iter) {
+            return delegate.getComplexR(iter);
+        }
 
-    @Override
-    public RIntSequence getVector() {
-        return vector;
-    }
+        @Override
+        public double getComplexI(SequentialIterator iter) {
+            return delegate.getComplexI(iter);
+        }
 
-    @Override
-    public RComplex getDataAt(int index) {
-        int real = vector.getDataAt(index);
-        return RRuntime.isNA(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
-    }
-}
+        @Override
+        protected RComplex getComplexImpl(AccessIterator accessIterator, int index) {
+            throw RInternalError.shouldNotReachHere();
+        }
 
-final class RDoubleToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
+        @Override
+        protected double getComplexRImpl(AccessIterator accessIterator, int index) {
+            throw RInternalError.shouldNotReachHere();
+        }
 
-    private final RDoubleVector vector;
+        @Override
+        protected double getComplexIImpl(AccessIterator accessIterator, int index) {
+            throw RInternalError.shouldNotReachHere();
+        }
 
-    RDoubleToComplexVectorClosure(RDoubleVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RDoubleVector getVector() {
-        return vector;
-    }
-
-    @Override
-    public RComplex getDataAt(int index) {
-        double real = vector.getDataAt(index);
-        return Double.isNaN(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
-    }
-}
-
-final class RDoubleSequenceToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
-
-    private final RDoubleSequence vector;
-
-    RDoubleSequenceToComplexVectorClosure(RDoubleSequence vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RDoubleSequence getVector() {
-        return vector;
-    }
-
-    @Override
-    public RComplex getDataAt(int index) {
-        double real = vector.getDataAt(index);
-        return Double.isNaN(real) ? RComplex.createNA() : RDataFactory.createComplex(real, 0.0);
-    }
-}
-
-final class RRawToComplexVectorClosure extends RToComplexVectorClosure implements RAbstractComplexVector {
-
-    private final RRawVector vector;
-
-    RRawToComplexVectorClosure(RRawVector vector, boolean keepAttributes) {
-        super(keepAttributes);
-        this.vector = vector;
-    }
-
-    @Override
-    public RRawVector getVector() {
-        return vector;
-    }
-
-    @Override
-    public RComplex getDataAt(int index) {
-        return RRuntime.raw2complex(vector.getRawDataAt(index));
+        @Override
+        protected void setComplexImpl(AccessIterator accessIterator, int index, double real, double imaginary) {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 }

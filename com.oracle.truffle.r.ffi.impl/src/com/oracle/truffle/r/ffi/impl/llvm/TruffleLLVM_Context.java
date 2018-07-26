@@ -22,12 +22,16 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import java.nio.file.FileSystems;
+
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
@@ -64,10 +68,16 @@ final class TruffleLLVM_Context extends RFFIContext {
 
     @Override
     public ContextState initialize(RContext context) {
+
+        // Load the f2c runtime library
+        String libf2cPath = FileSystems.getDefault().getPath(REnvVars.rHome(), "lib", "libf2c.so").toString();
+        DLLRFFI.DLOpenRootNode.create(context).call(libf2cPath, false, false);
+
         if (context.isInitial()) {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
             DLL.loadLibR(context, librffiPath);
         }
+
         dllState.initialize(context);
         callState.initialize(context);
         return this;

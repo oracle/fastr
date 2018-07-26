@@ -26,10 +26,15 @@ import static com.oracle.truffle.r.runtime.ffi.NativeFunction.anyLibrary;
 
 import java.nio.charset.StandardCharsets;
 
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -55,6 +60,10 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
         return new DownCallNode(f) {
             @Override
             protected TruffleObject getTarget(NativeFunction fn) {
+                if (fn == NativeFunction.initEventLoop) {
+                    return new InitEventLoop();
+                }
+
                 CompilerAsserts.neverPartOfCompilation();
                 String library = fn.getLibrary();
                 DLLInfo dllInfo = null;
@@ -107,4 +116,25 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
             }
         };
     }
+
+    private static final class InitEventLoop implements TruffleObject {
+
+        @Override
+        public ForeignAccess getForeignAccess() {
+            return ForeignAccess.create(InitEventLoop.class, new StandardFactory() {
+                @Override
+                public CallTarget accessIsExecutable() {
+                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(true));
+                }
+
+                @Override
+                public CallTarget accessExecute(int argumentsLength) {
+                    // TODO:
+                    // by returning -1 we indicate that the native handlers loop is not available
+                    return Truffle.getRuntime().createCallTarget(RootNode.createConstantNode(-1));
+                }
+            });
+        }
+    }
+
 }

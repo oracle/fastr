@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromStringAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.AccessIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class RStringVector extends RVector<Object[]> implements RAbstractStringVector {
@@ -345,22 +346,22 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
         }
 
         @Override
-        protected String getString(Object store, int index) {
+        protected String getStringImpl(AccessIterator accessIter, int index) {
             assert hasStore;
             if (containsWrappers) {
-                return ((CharSXPWrapper[]) store)[index].getContents();
+                return ((CharSXPWrapper[]) accessIter.getStore())[index].getContents();
             } else {
-                return ((String[]) store)[index];
+                return ((String[]) accessIter.getStore())[index];
             }
         }
 
         @Override
-        protected void setString(Object store, int index, String value) {
+        protected void setStringImpl(AccessIterator accessIter, int index, String value) {
             assert hasStore;
             if (containsWrappers) {
-                ((CharSXPWrapper[]) store)[index] = CharSXPWrapper.create(value);
+                ((CharSXPWrapper[]) accessIter.getStore())[index] = CharSXPWrapper.create(value);
             } else {
-                ((String[]) store)[index] = value;
+                ((String[]) accessIter.getStore())[index] = value;
             }
         }
     }
@@ -372,12 +373,13 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
 
     private static final SlowPathFromStringAccess SLOW_PATH_ACCESS = new SlowPathFromStringAccess() {
         @Override
-        protected String getString(Object store, int index) {
-            return ((RStringVector) store).getDataAt(index);
+        protected String getStringImpl(AccessIterator accessIter, int index) {
+            return ((RStringVector) accessIter.getStore()).getDataAt(index);
         }
 
         @Override
-        protected void setString(Object store, int index, String value) {
+        protected void setStringImpl(AccessIterator accessIter, int index, String value) {
+            Object store = accessIter.getStore();
             ((RStringVector) store).setDataAt(((RStringVector) store).getInternalStore(), index, value);
         }
     };

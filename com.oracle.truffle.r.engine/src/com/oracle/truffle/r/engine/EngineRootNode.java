@@ -58,7 +58,7 @@ class EngineRootNode extends RootNode {
     private final ContextReference<RContext> contextReference;
 
     @Child private EngineBodyNode bodyNode;
-    @Child private R2Foreign r2Foreign = R2ForeignNodeGen.create();
+    @Child private R2Foreign r2Foreign = R2Foreign.create();
 
     EngineRootNode(EngineBodyNode bodyNode, RContext context, SourceSection sourceSection, MaterializedFrame executionFrame) {
         super(context.getLanguage());

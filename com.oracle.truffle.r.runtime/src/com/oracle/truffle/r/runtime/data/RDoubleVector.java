@@ -260,16 +260,16 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
         }
 
         @Override
-        protected double getDouble(Object store, int index) {
-            return hasStore ? ((double[]) store)[index] : NativeDataAccess.getDoubleNativeMirrorData(store, index);
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+            return hasStore ? ((double[]) accessIter.getStore())[index] : NativeDataAccess.getDoubleNativeMirrorData(accessIter.getStore(), index);
         }
 
         @Override
-        protected void setDouble(Object store, int index, double value) {
+        protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
             if (hasStore) {
-                ((double[]) store)[index] = value;
+                ((double[]) accessIter.getStore())[index] = value;
             } else {
-                NativeDataAccess.setNativeMirrorDoubleData(store, index, value);
+                NativeDataAccess.setNativeMirrorDoubleData(accessIter.getStore(), index, value);
             }
         }
     }
@@ -281,14 +281,14 @@ public final class RDoubleVector extends RVector<double[]> implements RAbstractD
 
     private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
         @Override
-        protected double getDouble(Object store, int index) {
-            RDoubleVector vector = (RDoubleVector) store;
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+            RDoubleVector vector = (RDoubleVector) accessIter.getStore();
             return NativeDataAccess.getData(vector, vector.data, index);
         }
 
         @Override
-        protected void setDouble(Object store, int index, double value) {
-            RDoubleVector vector = (RDoubleVector) store;
+        protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
+            RDoubleVector vector = (RDoubleVector) accessIter.getStore();
             NativeDataAccess.setData(vector, vector.data, index, value);
         }
     };

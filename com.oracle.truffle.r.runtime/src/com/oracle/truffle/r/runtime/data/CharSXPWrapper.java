@@ -46,7 +46,7 @@ import java.util.WeakHashMap;
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject {
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
-    private final String contents;
+    private String contents;
     private byte[] bytes;
     private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
 
@@ -96,6 +96,16 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
     }
 
     public static CharSXPWrapper create(String contents) {
+        return create(contents, false);
+    }
+
+    public static CharSXPWrapper createInterned(String contents) {
+        assert Utils.isInterned(contents);
+        return create(contents, true);
+    }
+
+    private static CharSXPWrapper create(String contents, boolean intern) {
+        assert !intern || Utils.isInterned(contents);
         if (contents == RRuntime.STRING_NA) {
             return NA;
         } else {
@@ -106,6 +116,9 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
                 if (wr != null) {
                     cachedWrapper = wr.get();
                     if (cachedWrapper != null) {
+                        if (intern) {
+                            cachedWrapper.contents = contents;
+                        }
                         return cachedWrapper;
                     }
                 }

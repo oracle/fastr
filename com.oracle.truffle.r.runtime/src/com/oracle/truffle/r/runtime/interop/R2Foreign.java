@@ -22,44 +22,105 @@
  */
 package com.oracle.truffle.r.runtime.interop;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropChar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropFloat;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropLong;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropShort;
-import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * Normalizes the internal FastR data representation for the outside world. From the outside the
+ * only values appearing in FastR are vectors, so we convert scalars to them. Moreover, there are
+ * few FastR types used to explicitly choose a specific type for interop, e.g. {@link RInteropByte}.
+ *
+ * All the objects passed to the outside are maked as shared permanent as FastR looses the control
+ * over all their possible references.
+ */
 public abstract class R2Foreign extends RBaseNode {
+
+    protected final boolean boxPrimitives;
+
+    protected R2Foreign(boolean boxPrimitives) {
+        this.boxPrimitives = boxPrimitives;
+    }
 
     public abstract Object execute(Object obj);
 
-    @Specialization
-    public boolean doByte(byte obj) {
+    @Specialization(guards = "boxPrimitives")
+    public RLogicalVector doByte(byte obj) {
+        RLogicalVector result = RDataFactory.createLogicalVectorFromScalar(obj);
+        result.makeSharedPermanent();
+        return result;
+    }
+
+    @Specialization(guards = "boxPrimitives")
+    public RDoubleVector doDouble(double vec) {
+        RDoubleVector result = RDataFactory.createDoubleVectorFromScalar(vec);
+        result.makeSharedPermanent();
+        return result;
+    }
+
+    @Specialization(guards = "boxPrimitives")
+    public RIntVector doInt(int vec) {
+        RIntVector result = RDataFactory.createIntVectorFromScalar(vec);
+        result.makeSharedPermanent();
+        return result;
+    }
+
+    @Specialization(guards = "boxPrimitives")
+    public RStringVector doString(String vec) {
+        RStringVector result = RDataFactory.createStringVectorFromScalar(vec);
+        result.makeSharedPermanent();
+        return result;
+    }
+
+    @Specialization(guards = "!boxPrimitives")
+    public Object doByteNoBox(byte obj,
+                    @Cached("createBinaryProfile()") ConditionProfile isNaProfile) {
+        if (isNaProfile.profile(RRuntime.isNA(obj))) {
+            return RInteropNA.LOGICAL;
+        }
         return RRuntime.fromLogical(obj);
     }
 
-    @Specialization()
-    public double doDouble(double vec) {
+    @Specialization(guards = "!boxPrimitives")
+    public Object doDoubleNoBox(double vec,
+                    @Cached("createBinaryProfile()") ConditionProfile isNaProfile) {
+        if (isNaProfile.profile(RRuntime.isNA(vec))) {
+            return RInteropNA.DOUBLE;
+        }
         return vec;
     }
 
-    @Specialization()
-    public int doInt(int vec) {
+    @Specialization(guards = "!boxPrimitives")
+    public Object doIntNoBox(int vec,
+                    @Cached("createBinaryProfile()") ConditionProfile isNaProfile) {
+        if (isNaProfile.profile(RRuntime.isNA(vec))) {
+            return RInteropNA.INT;
+        }
         return vec;
     }
 
-    @Specialization()
-    public String doString(String vec) {
+    @Specialization(guards = "!boxPrimitives")
+    public Object doStringNoBox(String vec,
+                    @Cached("createBinaryProfile()") ConditionProfile isNaProfile) {
+        if (isNaProfile.profile(RRuntime.isNA(vec))) {
+            return RInteropNA.STRING;
+        }
         return vec;
-    }
-
-    @Specialization()
-    public byte doRaw(RRaw vec) {
-        return vec.getValue();
     }
 
     @Specialization
@@ -87,12 +148,27 @@ public abstract class R2Foreign extends RBaseNode {
         return obj.getValue();
     }
 
+    @Specialization
+    public static Object doShareable(RSharingAttributeStorage shareable) {
+        return shareable.makeSharedPermanent();
+    }
+
     @Fallback
-    public static Object doObject(Object obj) {
+    public static Object doOther(Object obj) {
+        RSharingAttributeStorage.verify(obj);
         return obj;
     }
 
     public static R2Foreign create() {
-        return R2ForeignNodeGen.create();
+        return R2ForeignNodeGen.create(true);
+    }
+
+    /**
+     * Primitive values not wrapped in
+     * {@link com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector} are only returned from
+     * {@code READ} on a primitive vector.
+     */
+    public static R2Foreign createNoBox() {
+        return R2ForeignNodeGen.create(false);
     }
 }

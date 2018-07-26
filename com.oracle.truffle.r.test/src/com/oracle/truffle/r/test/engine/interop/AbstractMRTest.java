@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import java.util.HashSet;
@@ -45,6 +47,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public abstract class AbstractMRTest {
 
@@ -153,7 +156,7 @@ public abstract class AbstractMRTest {
     public void testAsNativePointer() throws Exception {
         for (TruffleObject obj : createTruffleObjects()) {
             try {
-                assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.AS_POINTER.createNode(), obj));
+                assertNotNull(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj));
                 assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", true, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
             } catch (UnsupportedMessageException e) {
                 assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_POINTER", false, ForeignAccess.sendIsPointer(Message.IS_POINTER.createNode(), obj));
@@ -168,7 +171,7 @@ public abstract class AbstractMRTest {
                 continue;
             }
             try {
-                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) != obj);
+                assertTrue(obj.getClass().getSimpleName(), ForeignAccess.sendToNative(Message.TO_NATIVE.createNode(), obj) == obj);
             } catch (UnsupportedMessageException e) {
             }
         }
@@ -272,5 +275,13 @@ public abstract class AbstractMRTest {
         } else {
             Assert.fail("InteropException was expected");
         }
+    }
+
+    protected void assertSingletonVector(Object expected, Object vector) throws UnsupportedMessageException, UnknownIdentifierException {
+        assertThat(vector, instanceOf(RAbstractVector.class));
+        RAbstractVector vec = (RAbstractVector) vector;
+        assertTrue(vec.getLength() == 1);
+        Object actual = ForeignAccess.sendRead(Message.READ.createNode(), vec, 0);
+        assertEquals("Value returned from vector " + vec, expected, actual);
     }
 }

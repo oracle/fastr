@@ -27,8 +27,8 @@ import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
-import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
 
 @MessageResolution(receiverType = RUnboundValue.class)
 public class RUnboundValueMR {
@@ -43,14 +43,21 @@ public class RUnboundValueMR {
     @Resolve(message = "IS_POINTER")
     public abstract static class IsPointerNode extends Node {
         protected boolean access(@SuppressWarnings("unused") Object receiver) {
-            return false;
+            return true;
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected Object access(Object receiver) {
+            return NativeDataAccess.asPointer(receiver);
         }
     }
 
     @Resolve(message = "TO_NATIVE")
     public abstract static class ToNativeNode extends Node {
-        protected Object access(RUnboundValue receiver) {
-            return new RObjectNativeWrapper(receiver);
+        protected Object access(Object receiver) {
+            return receiver;
         }
     }
 

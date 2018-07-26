@@ -72,7 +72,7 @@ public class FastRDebugTest {
     public void before() {
         suspendedEvent = null;
 
-        context = Context.newBuilder("R").in(System.in).out(out).err(err).build();
+        context = Context.newBuilder("R").allowNativeAccess(true).in(System.in).out(out).err(err).build();
         debugger = context.getEngine().getInstruments().get("debugger").lookup(Debugger.class);
         debuggerSession = debugger.startSession(event -> {
             suspendedEvent = event;
@@ -164,9 +164,6 @@ public class FastRDebugTest {
         assertEquals("Factorial computed OK", 2, i);
     }
 
-    /**
-     * Test is currently ignored because of missing functionality in Truffle.
-     */
     @Test
     public void testConditionalBreakpoint() throws Throwable {
         final Source source = sourceFromText("main <- function() { res <- 0;\n" +
@@ -777,7 +774,7 @@ public class FastRDebugTest {
                             // Trigger findSourceLocation() call
                             SourceSection sourceLocation = value.getSourceLocation();
                             if (sourceLocation != null) {
-                                Assert.assertSame("Sources differ", DebuggerTester.getSourceImpl(expectedSource), sourceLocation.getSource());
+                                Assert.assertEquals("Sources differ", DebuggerTester.getSourceImpl(expectedSource), sourceLocation.getSource());
                             }
                         }
                     }

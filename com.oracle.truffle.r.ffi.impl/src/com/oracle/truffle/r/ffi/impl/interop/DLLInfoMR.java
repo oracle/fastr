@@ -28,10 +28,10 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
-import com.oracle.truffle.r.runtime.interop.RObjectNativeWrapper;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 
 @MessageResolution(receiverType = DLL.DLLInfo.class)
 public class DLLInfoMR {
@@ -43,10 +43,24 @@ public class DLLInfoMR {
         }
     }
 
-    @Resolve(message = "TO_NATIVE")
+    @Resolve(message = "IS_POINTER")
+    public abstract static class IsPointerNode extends Node {
+        protected boolean access(@SuppressWarnings("unused") Object receiver) {
+            return true;
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
     public abstract static class AsPointerNode extends Node {
         protected Object access(Object receiver) {
-            return new RObjectNativeWrapper((DLLInfo) receiver);
+            return NativeDataAccess.asPointer(receiver);
+        }
+    }
+
+    @Resolve(message = "TO_NATIVE")
+    public abstract static class ToNativeNode extends Node {
+        protected Object access(Object receiver) {
+            return receiver;
         }
     }
 

@@ -306,17 +306,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         try {
             boolean isFieldAccess = builtin.isFieldAccess();
             if (internalDispatchCall == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                AlteredArguments alteredArguments = null;
-                if (isFieldAccess) {
-                    RSyntaxNode[] newArgs = Arrays.copyOf(arguments, arguments.length);
-                    newArgs[1] = RContext.getASTBuilder().constant(newArgs[1].getSourceSection(), CallUtils.unevaluatedArgAsFieldName(this, newArgs[1]));
-                    // we know that there are no varargs in the signature, but this RCallNode
-                    // instance could have been confused by lookup of "..." as the field, in which
-                    // case it would think it should lookup varargs.
-                    alteredArguments = new AlteredArguments(newArgs, new int[0]);
-                }
-                internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, alteredArguments, false, slot));
+                createInternDispatchCall(isFieldAccess, slot);
             }
 
             if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
@@ -348,13 +338,26 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 resultFunction = function;
             }
             if (internalDispatchCall == null || internalDispatchCall.tempFrameSlot != slot) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, false, slot));
+                createInternDispatchCall(isFieldAccess, slot);
             }
             return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame, isFieldAccess), s3Args, null);
         } finally {
             TemporarySlotNode.cleanup(frame, dispatchObject, slot);
         }
+    }
+
+    private void createInternDispatchCall(boolean isFieldAccess, FrameSlot slot) {
+        CompilerDirectives.transferToInterpreterAndInvalidate();
+        AlteredArguments alteredArguments = null;
+        if (isFieldAccess) {
+            RSyntaxNode[] newArgs = Arrays.copyOf(arguments, arguments.length);
+            newArgs[1] = RContext.getASTBuilder().constant(newArgs[1].getSourceSection(), CallUtils.unevaluatedArgAsFieldName(this, newArgs[1]));
+            // we know that there are no varargs in the signature, but this RCallNode
+            // instance could have been confused by lookup of "..." as the field, in which
+            // case it would think it should lookup varargs.
+            alteredArguments = new AlteredArguments(newArgs, new int[0]);
+        }
+        internalDispatchCall = insert(FunctionDispatchNodeGen.create(this, alteredArguments, false, slot));
     }
 
     @Specialization(guards = {"explicitArgs != null", "isInternalGenericDispatch(function)"})

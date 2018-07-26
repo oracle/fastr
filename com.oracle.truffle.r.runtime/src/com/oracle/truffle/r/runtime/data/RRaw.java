@@ -111,9 +111,9 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
         }
 
         @Override
-        protected byte getRaw(Object store, int index) {
+        protected byte getRawImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RRaw) store).value;
+            return ((RRaw) accessIter.getStore()).value;
         }
     }
 
@@ -124,9 +124,9 @@ public final class RRaw extends RScalarVector implements RAbstractRawVector {
 
     private static final SlowPathFromRawAccess SLOW_PATH_ACCESS = new SlowPathFromRawAccess() {
         @Override
-        protected byte getRaw(Object store, int index) {
+        protected byte getRawImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RRaw) store).value;
+            return ((RRaw) accessIter.getStore()).value;
         }
     };
 

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -40,8 +39,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
  */
 public abstract class SlowPathVectorAccess extends VectorAccess {
 
-    protected boolean naReported; // TODO: move this into the iterator
-    private final BranchProfile warningReportedProfile = BranchProfile.create();
+    protected final BranchProfile warningReportedProfile = BranchProfile.create();
 
     protected SlowPathVectorAccess() {
         // VectorAccess.supports has an assertion that relies on this being Object.class
@@ -49,16 +47,8 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
     }
 
     @Override
-    protected final Object getStore(RAbstractContainer vector) {
+    protected Object getStore(RAbstractContainer vector) {
         return vector;
-    }
-
-    protected final void warning(RError.Message message) {
-        if (!naReported) {
-            warningReportedProfile.enter();
-            RError.warning(RError.SHOW_CALLER, message);
-            naReported = true;
-        }
     }
 
     public abstract static class SlowPathFromIntAccess extends SlowPathVectorAccess {
@@ -69,75 +59,77 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         }
 
         @Override
-        protected final double getDouble(Object store, int index) {
-            int value = getInt(store, index);
+        protected final double getDoubleImpl(AccessIterator accessIter, int index) {
+            int value = getIntImpl(accessIter, index);
             return na.check(value) ? RRuntime.DOUBLE_NA : RRuntime.int2doubleNoCheck(value);
         }
 
         @Override
-        protected final byte getRaw(Object store, int index) {
-            int value = getInt(store, index);
+        protected final byte getRawImpl(AccessIterator accessIter, int index) {
+            int value = getIntImpl(accessIter, index);
             byte result = (byte) value;
             if ((result & 0xff) != value) {
-                warning(Message.OUT_OF_RANGE);
+                if (accessIter.warning(Message.OUT_OF_RANGE)) {
+                    warningReportedProfile.enter();
+                }
                 return 0;
             }
             return result;
         }
 
         @Override
-        protected final byte getLogical(Object store, int index) {
-            int value = getInt(store, index);
+        protected final byte getLogicalImpl(AccessIterator accessIter, int index) {
+            int value = getIntImpl(accessIter, index);
             return na.check(value) ? RRuntime.LOGICAL_NA : RRuntime.int2logicalNoCheck(value);
         }
 
         @Override
-        protected final RComplex getComplex(Object store, int index) {
-            int value = getInt(store, index);
+        protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            int value = getIntImpl(accessIter, index);
             return na.check(value) ? RComplex.createNA() : RRuntime.int2complexNoCheck(value);
         }
 
         @Override
-        protected final double getComplexR(Object store, int index) {
-            int value = getInt(store, index);
+        protected final double getComplexRImpl(AccessIterator accessIter, int index) {
+            int value = getIntImpl(accessIter, index);
             return na.check(value) ? RRuntime.COMPLEX_NA_REAL_PART : value;
         }
 
         @Override
-        protected final double getComplexI(Object store, int index) {
-            int value = getInt(store, index);
+        protected final double getComplexIImpl(AccessIterator accessIter, int index) {
+            int value = getIntImpl(accessIter, index);
             return na.check(value) ? RRuntime.COMPLEX_NA_IMAGINARY_PART : 0;
         }
 
         @Override
-        protected final String getString(Object store, int index) {
-            int value = getInt(store, index);
+        protected final String getStringImpl(AccessIterator accessIter, int index) {
+            int value = getIntImpl(accessIter, index);
             return na.check(value) ? RRuntime.STRING_NA : RRuntime.intToStringNoCheck(value);
         }
 
         @Override
-        protected final Object getListElement(Object store, int index) {
-            return getInt(store, index);
+        protected final Object getListElementImpl(AccessIterator accessIter, int index) {
+            return getIntImpl(accessIter, index);
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-            setInt(store, index, sourceAccess.getInt(sourceIter));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+            setIntImpl(accessIter, index, sourceAccess.getInt(sourceIter));
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-            setInt(store, index, sourceAccess.getInt(sourceIter, sourceIndex));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+            setIntImpl(accessIter, index, sourceAccess.getInt(sourceIter, sourceIndex));
         }
 
         @Override
-        protected void setNA(Object store, int index) {
-            setInt(store, index, RRuntime.INT_NA);
+        protected void setNAImpl(AccessIterator accessIter, int index) {
+            setIntImpl(accessIter, index, RRuntime.INT_NA);
         }
 
         @Override
-        protected boolean isNA(Object store, int index) {
-            return na.check(getInt(store, index));
+        protected boolean isNAImpl(AccessIterator accessIter, int index) {
+            return na.check(getIntImpl(accessIter, index));
         }
     }
 
@@ -149,84 +141,88 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         }
 
         @Override
-        protected final int getInt(Object store, int index) {
-            double value = getDouble(store, index);
+        protected final int getIntImpl(AccessIterator accessIter, int index) {
+            double value = getDoubleImpl(accessIter, index);
             if (Double.isNaN(value)) {
                 na.enable(true);
                 return RRuntime.INT_NA;
             }
             if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
                 na.enable(true);
-                warning(Message.NA_INTRODUCED_COERCION_INT);
+                if (accessIter.warning(Message.NA_INTRODUCED_COERCION_INT)) {
+                    warningReportedProfile.enter();
+                }
                 return RRuntime.INT_NA;
             }
             return (int) value;
         }
 
         @Override
-        protected final byte getRaw(Object store, int index) {
-            int value = (int) getDouble(store, index);
+        protected final byte getRawImpl(AccessIterator accessIter, int index) {
+            int value = (int) getDoubleImpl(accessIter, index);
             byte result = (byte) value;
             if ((result & 0xff) != value) {
-                warning(Message.OUT_OF_RANGE);
+                if (accessIter.warning(Message.OUT_OF_RANGE)) {
+                    warningReportedProfile.enter();
+                }
                 return 0;
             }
             return result;
         }
 
         @Override
-        protected final byte getLogical(Object store, int index) {
-            double value = getDouble(store, index);
+        protected final byte getLogicalImpl(AccessIterator accessIter, int index) {
+            double value = getDoubleImpl(accessIter, index);
             return na.check(value) ? RRuntime.LOGICAL_NA : RRuntime.double2logicalNoCheck(value);
         }
 
         @Override
-        protected final RComplex getComplex(Object store, int index) {
-            double value = getDouble(store, index);
+        protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            double value = getDoubleImpl(accessIter, index);
             return na.check(value) ? RComplex.createNA() : RRuntime.double2complexNoCheck(value);
         }
 
         @Override
-        protected final double getComplexR(Object store, int index) {
-            double value = getDouble(store, index);
+        protected final double getComplexRImpl(AccessIterator accessIter, int index) {
+            double value = getDoubleImpl(accessIter, index);
             return na.check(value) ? RRuntime.COMPLEX_NA_REAL_PART : value;
         }
 
         @Override
-        protected final double getComplexI(Object store, int index) {
-            double value = getDouble(store, index);
+        protected final double getComplexIImpl(AccessIterator accessIter, int index) {
+            double value = getDoubleImpl(accessIter, index);
             return na.check(value) ? RRuntime.COMPLEX_NA_IMAGINARY_PART : 0;
         }
 
         @Override
-        protected final String getString(Object store, int index) {
-            double value = getDouble(store, index);
+        protected final String getStringImpl(AccessIterator accessIter, int index) {
+            double value = getDoubleImpl(accessIter, index);
             return na.check(value) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeDouble(value);
         }
 
         @Override
-        protected final Object getListElement(Object store, int index) {
-            return getDouble(store, index);
+        protected final Object getListElementImpl(AccessIterator accessIter, int index) {
+            return getDoubleImpl(accessIter, index);
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-            setDouble(store, index, sourceAccess.getDouble(sourceIter));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+            setDoubleImpl(accessIter, index, sourceAccess.getDouble(sourceIter));
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-            setDouble(store, index, sourceAccess.getDouble(sourceIter, sourceIndex));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+            setDoubleImpl(accessIter, index, sourceAccess.getDouble(sourceIter, sourceIndex));
         }
 
         @Override
-        protected void setNA(Object store, int index) {
-            setDouble(store, index, RRuntime.DOUBLE_NA);
+        protected void setNAImpl(AccessIterator accessIter, int index) {
+            setDoubleImpl(accessIter, index, RRuntime.DOUBLE_NA);
         }
 
         @Override
-        protected boolean isNA(Object store, int index) {
-            return na.check(getDouble(store, index));
+        protected boolean isNAImpl(AccessIterator accessIter, int index) {
+            return na.check(getDoubleImpl(accessIter, index));
         }
     }
 
@@ -238,74 +234,76 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         }
 
         @Override
-        protected final int getInt(Object store, int index) {
-            byte value = getLogical(store, index);
+        protected final int getIntImpl(AccessIterator accessIter, int index) {
+            byte value = getLogicalImpl(accessIter, index);
             return na.check(value) ? RRuntime.INT_NA : RRuntime.logical2intNoCheck(value);
         }
 
         @Override
-        protected final double getDouble(Object store, int index) {
-            byte value = getLogical(store, index);
+        protected final double getDoubleImpl(AccessIterator accessIter, int index) {
+            byte value = getLogicalImpl(accessIter, index);
             return na.check(value) ? RRuntime.DOUBLE_NA : RRuntime.logical2doubleNoCheck(value);
         }
 
         @Override
-        protected final byte getRaw(Object store, int index) {
-            byte value = getLogical(store, index);
+        protected final byte getRawImpl(AccessIterator accessIter, int index) {
+            byte value = getLogicalImpl(accessIter, index);
             if (na.check(value)) {
-                warning(Message.OUT_OF_RANGE);
+                if (accessIter.warning(Message.OUT_OF_RANGE)) {
+                    warningReportedProfile.enter();
+                }
                 return 0;
             }
             return value;
         }
 
         @Override
-        protected final RComplex getComplex(Object store, int index) {
-            byte value = getLogical(store, index);
+        protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            byte value = getLogicalImpl(accessIter, index);
             return na.check(value) ? RComplex.createNA() : RRuntime.logical2complexNoCheck(value);
         }
 
         @Override
-        protected final double getComplexR(Object store, int index) {
-            byte value = getLogical(store, index);
+        protected final double getComplexRImpl(AccessIterator accessIter, int index) {
+            byte value = getLogicalImpl(accessIter, index);
             return na.check(value) ? RRuntime.COMPLEX_NA_REAL_PART : value;
         }
 
         @Override
-        protected final double getComplexI(Object store, int index) {
-            byte value = getLogical(store, index);
+        protected final double getComplexIImpl(AccessIterator accessIter, int index) {
+            byte value = getLogicalImpl(accessIter, index);
             return na.check(value) ? RRuntime.COMPLEX_NA_IMAGINARY_PART : 0;
         }
 
         @Override
-        protected final String getString(Object store, int index) {
-            byte value = getLogical(store, index);
+        protected final String getStringImpl(AccessIterator accessIter, int index) {
+            byte value = getLogicalImpl(accessIter, index);
             return na.check(value) ? RRuntime.STRING_NA : RRuntime.logicalToStringNoCheck(value);
         }
 
         @Override
-        protected final Object getListElement(Object store, int index) {
-            return getLogical(store, index);
+        protected final Object getListElementImpl(AccessIterator accessIter, int index) {
+            return getLogicalImpl(accessIter, index);
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-            setLogical(store, index, sourceAccess.getLogical(sourceIter));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+            setLogicalImpl(accessIter, index, sourceAccess.getLogical(sourceIter));
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-            setLogical(store, index, sourceAccess.getLogical(sourceIter, sourceIndex));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+            setLogicalImpl(accessIter, index, sourceAccess.getLogical(sourceIter, sourceIndex));
         }
 
         @Override
-        protected void setNA(Object store, int index) {
-            setLogical(store, index, RRuntime.LOGICAL_NA);
+        protected void setNAImpl(AccessIterator accessIter, int index) {
+            setLogicalImpl(accessIter, index, RRuntime.LOGICAL_NA);
         }
 
         @Override
-        protected boolean isNA(Object store, int index) {
-            return na.check(getLogical(store, index));
+        protected boolean isNAImpl(AccessIterator accessIter, int index) {
+            return na.check(getLogicalImpl(accessIter, index));
         }
     }
 
@@ -317,65 +315,65 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         }
 
         @Override
-        protected final int getInt(Object store, int index) {
-            return getRaw(store, index) & 0xff;
+        protected final int getIntImpl(AccessIterator accessIter, int index) {
+            return getRawImpl(accessIter, index) & 0xff;
         }
 
         @Override
-        protected final double getDouble(Object store, int index) {
-            return getRaw(store, index) & 0xff;
+        protected final double getDoubleImpl(AccessIterator accessIter, int index) {
+            return getRawImpl(accessIter, index) & 0xff;
         }
 
         @Override
-        protected final byte getLogical(Object store, int index) {
-            return getRaw(store, index) == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
+        protected final byte getLogicalImpl(AccessIterator accessIter, int index) {
+            return getRawImpl(accessIter, index) == 0 ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE;
         }
 
         @Override
-        protected final RComplex getComplex(Object store, int index) {
-            return RComplex.valueOf(getRaw(store, index) & 0xff, 0);
+        protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            return RComplex.valueOf(getRawImpl(accessIter, index) & 0xff, 0);
         }
 
         @Override
-        protected final double getComplexR(Object store, int index) {
-            return getRaw(store, index) & 0xff;
+        protected final double getComplexRImpl(AccessIterator accessIter, int index) {
+            return getRawImpl(accessIter, index) & 0xff;
         }
 
         @Override
-        protected final double getComplexI(Object store, int index) {
+        protected final double getComplexIImpl(AccessIterator accessIter, int index) {
             return 0;
         }
 
         @Override
-        protected final String getString(Object store, int index) {
-            return RRuntime.rawToHexString(getRaw(store, index));
+        protected final String getStringImpl(AccessIterator accessIter, int index) {
+            return RRuntime.rawToHexString(getRawImpl(accessIter, index));
         }
 
         @Override
-        protected final Object getListElement(Object store, int index) {
-            return getRaw(store, index);
+        protected final Object getListElementImpl(AccessIterator accessIter, int index) {
+            return getRawImpl(accessIter, index);
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-            setRaw(store, index, sourceAccess.getRaw(sourceIter));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+            setRawImpl(accessIter, index, sourceAccess.getRaw(sourceIter));
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-            setRaw(store, index, sourceAccess.getRaw(sourceIter, sourceIndex));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+            setRawImpl(accessIter, index, sourceAccess.getRaw(sourceIter, sourceIndex));
         }
 
         @Override
-        protected void setNA(Object store, int index) {
+        protected void setNAImpl(AccessIterator accessIter, int index) {
             /*
              * There is no raw NA, but places that write NA for other types usually write 0 for raw.
              */
-            setRaw(store, index, (byte) 0);
+            setRawImpl(accessIter, index, (byte) 0);
         }
 
         @Override
-        protected boolean isNA(Object store, int index) {
+        protected boolean isNAImpl(AccessIterator accessIter, int index) {
             return false;
         }
     }
@@ -388,84 +386,94 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         }
 
         @Override
-        protected final int getInt(Object store, int index) {
-            double value = getComplexR(store, index);
+        protected final int getIntImpl(AccessIterator accessIter, int index) {
+            double value = getComplexRImpl(accessIter, index);
             if (Double.isNaN(value)) {
                 na.enable(true);
                 return RRuntime.INT_NA;
             }
             if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
                 na.enable(true);
-                warning(Message.NA_INTRODUCED_COERCION_INT);
+                if (accessIter.warning(Message.NA_INTRODUCED_COERCION_INT)) {
+                    warningReportedProfile.enter();
+                }
                 return RRuntime.INT_NA;
             }
-            if (getComplexI(store, index) != 0) {
-                warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            if (getComplexIImpl(accessIter, index) != 0) {
+                if (accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION)) {
+                    warningReportedProfile.enter();
+                }
             }
             return (int) value;
         }
 
         @Override
-        protected final double getDouble(Object store, int index) {
-            double value = getComplexR(store, index);
+        protected final double getDoubleImpl(AccessIterator accessIter, int index) {
+            double value = getComplexRImpl(accessIter, index);
             if (Double.isNaN(value)) {
                 na.enable(true);
                 return RRuntime.DOUBLE_NA;
             }
-            if (getComplexI(store, index) != 0) {
-                warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            if (getComplexIImpl(accessIter, index) != 0) {
+                if (accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION)) {
+                    warningReportedProfile.enter();
+                }
             }
             return value;
         }
 
         @Override
-        protected final byte getRaw(Object store, int index) {
-            double value = getComplexR(store, index);
+        protected final byte getRawImpl(AccessIterator accessIter, int index) {
+            double value = getComplexRImpl(accessIter, index);
             if (Double.isNaN(value) || value < 0 || value >= 256) {
-                warning(Message.OUT_OF_RANGE);
+                if (accessIter.warning(Message.OUT_OF_RANGE)) {
+                    warningReportedProfile.enter();
+                }
                 return 0;
             }
-            if (getComplexI(store, index) != 0) {
-                warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+            if (getComplexIImpl(accessIter, index) != 0) {
+                if (accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION)) {
+                    warningReportedProfile.enter();
+                }
             }
             return (byte) value;
         }
 
         @Override
-        protected final byte getLogical(Object store, int index) {
-            RComplex value = getComplex(store, index);
+        protected final byte getLogicalImpl(AccessIterator accessIter, int index) {
+            RComplex value = getComplexImpl(accessIter, index);
             return na.check(value) ? RRuntime.LOGICAL_NA : RRuntime.complex2logicalNoCheck(value);
         }
 
         @Override
-        protected final String getString(Object store, int index) {
-            RComplex value = getComplex(store, index);
+        protected final String getStringImpl(AccessIterator accessIter, int index) {
+            RComplex value = getComplexImpl(accessIter, index);
             return na.check(value) ? RRuntime.STRING_NA : RContext.getRRuntimeASTAccess().encodeComplex(value);
         }
 
         @Override
-        protected final Object getListElement(Object store, int index) {
-            return getComplex(store, index);
+        protected final Object getListElementImpl(AccessIterator accessIter, int index) {
+            return getComplexImpl(accessIter, index);
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-            setComplex(store, index, sourceAccess.getComplexR(sourceIter), sourceAccess.getComplexI(sourceIter));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+            setComplexImpl(accessIter, index, sourceAccess.getComplexR(sourceIter), sourceAccess.getComplexI(sourceIter));
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-            setComplex(store, index, sourceAccess.getComplexR(sourceIter, sourceIndex), sourceAccess.getComplexI(sourceIter, sourceIndex));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+            setComplexImpl(accessIter, index, sourceAccess.getComplexR(sourceIter, sourceIndex), sourceAccess.getComplexI(sourceIter, sourceIndex));
         }
 
         @Override
-        protected void setNA(Object store, int index) {
-            setComplex(store, index, RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
+        protected void setNAImpl(AccessIterator accessIter, int index) {
+            setComplexImpl(accessIter, index, RRuntime.COMPLEX_NA_REAL_PART, RRuntime.COMPLEX_NA_IMAGINARY_PART);
         }
 
         @Override
-        protected boolean isNA(Object store, int index) {
-            return na.check(getComplexR(store, index), getComplexI(store, index));
+        protected boolean isNAImpl(AccessIterator accessIter, int index) {
+            return na.check(getComplexRImpl(accessIter, index), getComplexIImpl(accessIter, index));
         }
     }
 
@@ -477,131 +485,131 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         }
 
         @Override
-        protected final int getInt(Object store, int index) {
-            return na.convertStringToInt(getString(store, index));
+        protected final int getIntImpl(AccessIterator accessIter, int index) {
+            return na.convertStringToInt(getStringImpl(accessIter, index));
         }
 
         @Override
-        protected final double getDouble(Object store, int index) {
-            return na.convertStringToDouble(getString(store, index));
+        protected final double getDoubleImpl(AccessIterator accessIter, int index) {
+            return na.convertStringToDouble(getStringImpl(accessIter, index));
         }
 
         @Override
-        protected final byte getRaw(Object store, int index) {
-            int value = na.convertStringToInt(getString(store, index));
+        protected final byte getRawImpl(AccessIterator accessIter, int index) {
+            int value = na.convertStringToInt(getStringImpl(accessIter, index));
             return value >= 0 && value <= 255 ? (byte) value : 0;
         }
 
         @Override
-        protected final byte getLogical(Object store, int index) {
-            return na.convertStringToLogical(getString(store, index));
+        protected final byte getLogicalImpl(AccessIterator accessIter, int index) {
+            return na.convertStringToLogical(getStringImpl(accessIter, index));
         }
 
         @Override
-        protected final RComplex getComplex(Object store, int index) {
-            return na.convertStringToComplex(getString(store, index));
+        protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
+            return na.convertStringToComplex(getStringImpl(accessIter, index));
         }
 
         @Override
-        protected final double getComplexR(Object store, int index) {
-            return na.convertStringToComplex(getString(store, index)).getRealPart();
+        protected final double getComplexRImpl(AccessIterator accessIter, int index) {
+            return na.convertStringToComplex(getStringImpl(accessIter, index)).getRealPart();
         }
 
         @Override
-        protected final double getComplexI(Object store, int index) {
-            return na.convertStringToComplex(getString(store, index)).getImaginaryPart();
+        protected final double getComplexIImpl(AccessIterator accessIter, int index) {
+            return na.convertStringToComplex(getStringImpl(accessIter, index)).getImaginaryPart();
         }
 
         @Override
-        protected final Object getListElement(Object store, int index) {
-            return getString(store, index);
+        protected final Object getListElementImpl(AccessIterator accessIter, int index) {
+            return getStringImpl(accessIter, index);
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-            setString(store, index, sourceAccess.getString(sourceIter));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+            setStringImpl(accessIter, index, sourceAccess.getString(sourceIter));
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-            setString(store, index, sourceAccess.getString(sourceIter, sourceIndex));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+            setStringImpl(accessIter, index, sourceAccess.getString(sourceIter, sourceIndex));
         }
 
         @Override
-        protected void setNA(Object store, int index) {
-            setString(store, index, RRuntime.STRING_NA);
+        protected void setNAImpl(AccessIterator accessIter, int index) {
+            setStringImpl(accessIter, index, RRuntime.STRING_NA);
         }
 
         @Override
-        protected boolean isNA(Object store, int index) {
-            return na.check(getString(store, index));
+        protected boolean isNAImpl(AccessIterator accessIter, int index) {
+            return na.check(getStringImpl(accessIter, index));
         }
     }
 
     public abstract static class SlowPathFromListAccess extends SlowPathVectorAccess {
 
         @Override
-        protected final int getInt(Object store, int index) {
+        protected final int getIntImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final double getDouble(Object store, int index) {
+        protected final double getDoubleImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final byte getRaw(Object store, int index) {
+        protected final byte getRawImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final byte getLogical(Object store, int index) {
+        protected final byte getLogicalImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final RComplex getComplex(Object store, int index) {
+        protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final double getComplexR(Object store, int index) {
+        protected final double getComplexRImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final double getComplexI(Object store, int index) {
+        protected final double getComplexIImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final String getString(Object store, int index) {
+        protected final String getStringImpl(AccessIterator accessIter, int index) {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-            setListElement(store, index, sourceAccess.getListElement(sourceIter));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+            setListElementImpl(accessIter, index, sourceAccess.getListElement(sourceIter));
         }
 
         @Override
-        protected final void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-            setListElement(store, index, sourceAccess.getListElement(sourceIter, sourceIndex));
+        protected final void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+            setListElementImpl(accessIter, index, sourceAccess.getListElement(sourceIter, sourceIndex));
         }
 
         @Override
-        protected void setNA(Object store, int index) {
+        protected void setNAImpl(AccessIterator accessIter, int index) {
             /*
              * There is no list NA, but places that write NA for other types usually write NULL for
              * lists.
              */
-            setListElement(store, index, RNull.instance);
+            setListElementImpl(accessIter, index, RNull.instance);
         }
 
         @Override
-        protected boolean isNA(Object store, int index) {
-            return na.checkListElement(getListElement(store, index));
+        protected boolean isNAImpl(AccessIterator accessIter, int index) {
+            return na.checkListElement(getListElementImpl(accessIter, index));
         }
     }
 }

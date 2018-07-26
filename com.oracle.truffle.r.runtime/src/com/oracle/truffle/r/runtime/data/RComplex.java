@@ -155,21 +155,21 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
         }
 
         @Override
-        protected RComplex getComplex(Object store, int index) {
+        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return (RComplex) store;
+            return (RComplex) accessIter.getStore();
         }
 
         @Override
-        protected double getComplexR(Object store, int index) {
+        protected double getComplexRImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RComplex) store).realPart;
+            return ((RComplex) accessIter.getStore()).realPart;
         }
 
         @Override
-        protected double getComplexI(Object store, int index) {
+        protected double getComplexIImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RComplex) store).imaginaryPart;
+            return ((RComplex) accessIter.getStore()).imaginaryPart;
         }
     }
 
@@ -180,21 +180,21 @@ public final class RComplex extends RScalarVector implements RAbstractComplexVec
 
     private static final SlowPathFromComplexAccess SLOW_PATH_ACCESS = new SlowPathFromComplexAccess() {
         @Override
-        protected RComplex getComplex(Object store, int index) {
+        protected RComplex getComplexImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return (RComplex) store;
+            return (RComplex) accessIter.getStore();
         }
 
         @Override
-        protected double getComplexR(Object store, int index) {
+        protected double getComplexRImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RComplex) store).realPart;
+            return ((RComplex) accessIter.getStore()).realPart;
         }
 
         @Override
-        protected double getComplexI(Object store, int index) {
+        protected double getComplexIImpl(AccessIterator accessIter, int index) {
             assert index == 0;
-            return ((RComplex) store).imaginaryPart;
+            return ((RComplex) accessIter.getStore()).imaginaryPart;
         }
     };
 

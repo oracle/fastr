@@ -73,7 +73,7 @@ public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbs
     private static double checkIsNull(Object value, ClassCastException e) throws RuntimeException {
         if (value instanceof TruffleObject) {
             if (ForeignAccess.sendIsNull(IS_NULL, (TruffleObject) value)) {
-                return RRuntime.INT_NA;
+                return RRuntime.DOUBLE_NA;
             }
         }
         throw RInternalError.shouldNotReachHere(e);
@@ -101,10 +101,10 @@ public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbs
         }
 
         @Override
-        protected double getDouble(Object internalStore, int index) {
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
             Object value = null;
             try {
-                value = ForeignAccess.sendRead(read, (TruffleObject) internalStore, index);
+                value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
                 return ((Number) resultProfile.profile(value)).doubleValue();
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -131,7 +131,7 @@ public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbs
     private static final SlowPathFromDoubleAccess SLOW_PATH_ACCESS = new SlowPathFromDoubleAccess() {
         @Override
         @TruffleBoundary
-        protected int getLength(RAbstractContainer vector) {
+        public int getLength(RAbstractContainer vector) {
             try {
                 return (int) ForeignAccess.sendGetSize(GET_SIZE, ((RForeignDoubleWrapper) vector).delegate);
             } catch (UnsupportedMessageException e) {
@@ -140,8 +140,8 @@ public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbs
         }
 
         @Override
-        protected double getDouble(Object store, int index) {
-            RForeignDoubleWrapper vector = (RForeignDoubleWrapper) store;
+        protected double getDoubleImpl(AccessIterator accessIter, int index) {
+            RForeignDoubleWrapper vector = (RForeignDoubleWrapper) accessIter.getStore();
             Object value = null;
             try {
                 value = ForeignAccess.sendRead(READ, vector.delegate, index);

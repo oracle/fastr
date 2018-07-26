@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
-import static org.junit.Assert.assertEquals;
+
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import org.junit.Test;
@@ -52,10 +52,10 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, -1), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, 100), UnknownIdentifierException.class);
 
-        assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), args, 0));
-        assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), args, 1));
-        assertEquals(1.1, ForeignAccess.sendRead(Message.READ.createNode(), args, 2));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), args, 3));
+        assertSingletonVector("abc", ForeignAccess.sendRead(Message.READ.createNode(), args, 0));
+        assertSingletonVector(123, ForeignAccess.sendRead(Message.READ.createNode(), args, 1));
+        assertSingletonVector(1.1, ForeignAccess.sendRead(Message.READ.createNode(), args, 2));
+        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), args, 3));
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), args, 4) instanceof RFunction);
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), args, 5) instanceof RNull);
 
@@ -71,10 +71,10 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, "nnnnooooonnnneee"), UnknownIdentifierException.class);
 
-        assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), args, "s"));
-        assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), args, "i"));
-        assertEquals(1.1, ForeignAccess.sendRead(Message.READ.createNode(), args, "d"));
-        assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), args, "b"));
+        assertSingletonVector("abc", ForeignAccess.sendRead(Message.READ.createNode(), args, "s"));
+        assertSingletonVector(123, ForeignAccess.sendRead(Message.READ.createNode(), args, "i"));
+        assertSingletonVector(1.1, ForeignAccess.sendRead(Message.READ.createNode(), args, "d"));
+        assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), args, "b"));
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), args, "fn") instanceof RFunction);
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), args, "n") instanceof RNull);
 

@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -42,6 +43,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+import java.util.HashSet;
+import java.util.Set;
 
 /**
  * This class is the main access point for reading and writing vectors. Every implementation of
@@ -79,15 +82,40 @@ public abstract class VectorAccess extends Node {
         this.hasStore = hasStore;
     }
 
-    public static final class SequentialIterator implements AutoCloseable {
+    public abstract static class AccessIterator {
+        private Set<RError.Message> reportedWarnings;
 
         protected final Object store; // internal store, native mirror or vector
         protected final int length;
+
+        protected AccessIterator(Object store, int length) {
+            this.store = store;
+            this.length = length;
+        }
+
+        public final Object getStore() {
+            return store;
+        }
+
+        @TruffleBoundary
+        public final boolean warning(RError.Message message) {
+            if (reportedWarnings == null) {
+                reportedWarnings = new HashSet<>();
+            }
+            if (reportedWarnings.add(message)) {
+                RError.warning(RError.SHOW_CALLER, message);
+                return true;
+            }
+            return false;
+        }
+    }
+
+    public static final class SequentialIterator extends AccessIterator implements AutoCloseable {
+
         protected int index;
 
         private SequentialIterator(Object store, int length) {
-            this.store = store;
-            this.length = length;
+            super(store, length);
             this.index = -1;
         }
 
@@ -100,33 +128,21 @@ public abstract class VectorAccess extends Node {
             return index;
         }
 
-        Object getStore() {
-            return store;
-        }
-
         @Override
         public String toString() {
             return String.format("<iterator %d of %d, %s>", index, length, store == null ? "null" : store.getClass().getSimpleName());
         }
     }
 
-    public static final class RandomIterator implements AutoCloseable {
-
-        protected final Object store; // internal store, native mirror or vector
-        protected final int length;
+    public static final class RandomIterator extends AccessIterator implements AutoCloseable {
 
         private RandomIterator(Object store, int length) {
-            this.store = store;
-            this.length = length;
+            super(store, length);
         }
 
         @Override
         public void close() {
             // nothing to do
-        }
-
-        Object getStore() {
-            return store;
         }
 
         @Override
@@ -135,75 +151,75 @@ public abstract class VectorAccess extends Node {
         }
     }
 
-    protected abstract int getInt(Object store, int index);
+    protected abstract int getIntImpl(AccessIterator accessIter, int index);
 
-    protected abstract double getDouble(Object store, int index);
+    protected abstract double getDoubleImpl(AccessIterator accessIter, int index);
 
-    protected abstract RComplex getComplex(Object store, int index);
+    protected abstract RComplex getComplexImpl(AccessIterator accessIter, int index);
 
-    protected abstract double getComplexR(Object store, int index);
+    protected abstract double getComplexRImpl(AccessIterator accessIter, int index);
 
-    protected abstract double getComplexI(Object store, int index);
+    protected abstract double getComplexIImpl(AccessIterator accessIter, int index);
 
-    protected abstract byte getRaw(Object store, int index);
+    protected abstract byte getRawImpl(AccessIterator accessIter, int index);
 
-    protected abstract byte getLogical(Object store, int index);
+    protected abstract byte getLogicalImpl(AccessIterator accessIter, int index);
 
-    protected abstract String getString(Object store, int index);
+    protected abstract String getStringImpl(AccessIterator accessIter, int index);
 
-    protected abstract Object getListElement(Object store, int index);
+    protected abstract Object getListElementImpl(AccessIterator accessIter, int index);
 
     @SuppressWarnings("unused")
-    protected void setInt(Object store, int index, int value) {
+    protected void setIntImpl(AccessIterator accessIter, int index, int value) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setDouble(Object store, int index, double value) {
+    protected void setDoubleImpl(AccessIterator accessIter, int index, double value) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setComplex(Object store, int index, double real, double imaginary) {
+    protected void setComplexImpl(AccessIterator accessIter, int index, double real, double imaginary) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setRaw(Object store, int index, byte value) {
+    protected void setRawImpl(AccessIterator accessIter, int index, byte value) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setLogical(Object store, int index, byte value) {
+    protected void setLogicalImpl(AccessIterator accessIter, int index, byte value) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setString(Object store, int index, String value) {
+    protected void setStringImpl(AccessIterator accessIter, int index, String value) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setListElement(Object store, int index, Object value) {
+    protected void setListElementImpl(AccessIterator accessIter, int index, Object value) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setFromSameType(Object store, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
+    protected void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setFromSameType(Object store, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
+    protected void setFromSameTypeImpl(AccessIterator accessIter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
         throw RInternalError.shouldNotReachHere();
     }
 
     @SuppressWarnings("unused")
-    protected void setNA(Object store, int index) {
+    protected void setNAImpl(AccessIterator accessIter, int index) {
         throw RInternalError.shouldNotReachHere();
     }
 
-    protected abstract boolean isNA(Object store, int index);
+    protected abstract boolean isNAImpl(AccessIterator accessIter, int index);
 
     public final Object cast(Object value) {
         return clazz.cast(value);
@@ -275,84 +291,86 @@ public abstract class VectorAccess extends Node {
 
     public abstract RType getType();
 
-    public final int getInt(SequentialIterator iter) {
-        return getInt(iter.store, iter.index);
+    public int getInt(SequentialIterator iter) {
+        return getIntImpl(iter, iter.index);
     }
 
-    public final double getDouble(SequentialIterator iter) {
-        return getDouble(iter.store, iter.index);
+    public double getDouble(SequentialIterator iter) {
+        return getDoubleImpl(iter, iter.index);
     }
 
-    public final RComplex getComplex(SequentialIterator iter) {
-        return getComplex(iter.store, iter.index);
+    public RComplex getComplex(SequentialIterator iter) {
+        return getComplexImpl(iter, iter.index);
     }
 
-    public final double getComplexR(SequentialIterator iter) {
-        return getComplexR(iter.store, iter.index);
+    public double getComplexR(SequentialIterator iter) {
+        return getComplexRImpl(iter, iter.index);
     }
 
-    public final double getComplexI(SequentialIterator iter) {
-        return getComplexI(iter.store, iter.index);
+    public double getComplexI(SequentialIterator iter) {
+        return getComplexIImpl(iter, iter.index);
     }
 
     public final byte getRaw(SequentialIterator iter) {
-        return getRaw(iter.store, iter.index);
+        return getRawImpl(iter, iter.index);
     }
 
     public final byte getLogical(SequentialIterator iter) {
-        return getLogical(iter.store, iter.index);
+        return getLogicalImpl(iter, iter.index);
     }
 
-    public final String getString(SequentialIterator iter) {
-        return getString(iter.store, iter.index);
+    public String getString(SequentialIterator iter) {
+        return getStringImpl(iter, iter.index);
     }
 
     public final Object getListElement(SequentialIterator iter) {
-        return getListElement(iter.store, iter.index);
+        return getListElementImpl(iter, iter.index);
     }
 
     public final void setInt(SequentialIterator iter, int value) {
-        setInt(iter.store, iter.index, value);
+        setIntImpl(iter, iter.index, value);
     }
 
     public final void setDouble(SequentialIterator iter, double value) {
-        setDouble(iter.store, iter.index, value);
+        setDoubleImpl(iter, iter.index, value);
     }
 
     public final void setComplex(SequentialIterator iter, double real, double imaginary) {
-        setComplex(iter.store, iter.index, real, imaginary);
+        setComplexImpl(iter, iter.index, real, imaginary);
     }
 
     public final void setRaw(SequentialIterator iter, byte value) {
-        setRaw(iter.store, iter.index, value);
+        setRawImpl(iter, iter.index, value);
     }
 
     public final void setLogical(SequentialIterator iter, byte value) {
-        setLogical(iter.store, iter.index, value);
+        setLogicalImpl(iter, iter.index, value);
     }
 
     public final void setString(SequentialIterator iter, String value) {
-        setString(iter.store, iter.index, value);
+        setStringImpl(iter, iter.index, value);
     }
 
     public final void setListElement(SequentialIterator iter, Object value) {
-        setListElement(iter.store, iter.index, value);
+        setListElementImpl(iter, iter.index, value);
     }
 
-    public final void setFromSameType(SequentialIterator iter, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-        setFromSameType(iter.store, iter.index, sourceAccess, sourceIter);
+    public final void setFromSameType(SequentialIterator iter, VectorAccess sourceAccess,
+                    SequentialIterator sourceIter) {
+        setFromSameTypeImpl(iter, iter.index, sourceAccess, sourceIter);
     }
 
-    public final void setFromSameType(SequentialIterator iter, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-        setFromSameType(iter.store, iter.index, sourceAccess, sourceIter, sourceIndex);
+    public final void setFromSameType(SequentialIterator iter, VectorAccess sourceAccess,
+                    RandomIterator sourceIter, int sourceIndex) {
+        setFromSameTypeImpl(iter, iter.index, sourceAccess, sourceIter, sourceIndex);
     }
 
     public final void setNA(SequentialIterator iter) {
-        setNA(iter.store, iter.index);
+        setNAImpl(iter, iter.index);
     }
 
     public final boolean isNA(SequentialIterator iter) {
-        return isNA(iter.store, iter.index);
+        return isNAImpl(iter, iter.index);
     }
 
     /**
@@ -376,84 +394,84 @@ public abstract class VectorAccess extends Node {
         return iter.length;
     }
 
-    public final int getInt(RandomIterator iter, int index) {
-        return getInt(iter.store, index);
+    public int getInt(RandomIterator iter, int index) {
+        return getIntImpl(iter, index);
     }
 
-    public final double getDouble(RandomIterator iter, int index) {
-        return getDouble(iter.store, index);
+    public double getDouble(RandomIterator iter, int index) {
+        return getDoubleImpl(iter, index);
     }
 
-    public final RComplex getComplex(RandomIterator iter, int index) {
-        return getComplex(iter.store, index);
+    public RComplex getComplex(RandomIterator iter, int index) {
+        return getComplexImpl(iter, index);
     }
 
-    public final double getComplexR(RandomIterator iter, int index) {
-        return getComplexR(iter.store, index);
+    public double getComplexR(RandomIterator iter, int index) {
+        return getComplexRImpl(iter, index);
     }
 
-    public final double getComplexI(RandomIterator iter, int index) {
-        return getComplexI(iter.store, index);
+    public double getComplexI(RandomIterator iter, int index) {
+        return getComplexIImpl(iter, index);
     }
 
     public final byte getRaw(RandomIterator iter, int index) {
-        return getRaw(iter.store, index);
+        return getRawImpl(iter, index);
     }
 
     public final byte getLogical(RandomIterator iter, int index) {
-        return getLogical(iter.store, index);
+        return getLogicalImpl(iter, index);
     }
 
-    public final String getString(RandomIterator iter, int index) {
-        return getString(iter.store, index);
+    public String getString(RandomIterator iter, int index) {
+        return getStringImpl(iter, index);
     }
 
     public final Object getListElement(RandomIterator iter, int index) {
-        return getListElement(iter.store, index);
+        return getListElementImpl(iter, index);
     }
 
     public final void setInt(RandomIterator iter, int index, int value) {
-        setInt(iter.store, index, value);
+        setIntImpl(iter, index, value);
     }
 
     public final void setDouble(RandomIterator iter, int index, double value) {
-        setDouble(iter.store, index, value);
+        setDoubleImpl(iter, index, value);
     }
 
     public final void setComplex(RandomIterator iter, int index, double real, double imaginary) {
-        setComplex(iter.store, index, real, imaginary);
+        setComplexImpl(iter, index, real, imaginary);
     }
 
     public final void setRaw(RandomIterator iter, int index, byte value) {
-        setRaw(iter.store, index, value);
+        setRawImpl(iter, index, value);
     }
 
     public final void setLogical(RandomIterator iter, int index, byte value) {
-        setLogical(iter.store, index, value);
+        setLogicalImpl(iter, index, value);
     }
 
     public final void setString(RandomIterator iter, int index, String value) {
-        setString(iter.store, index, value);
+        setStringImpl(iter, index, value);
     }
 
     public final void setListElement(RandomIterator iter, int index, Object value) {
-        setListElement(iter.store, index, value);
+        setListElementImpl(iter, index, value);
     }
 
     public final void setFromSameType(RandomIterator iter, int index, VectorAccess sourceAccess, SequentialIterator sourceIter) {
-        setFromSameType(iter.store, index, sourceAccess, sourceIter);
+        setFromSameTypeImpl(iter, index, sourceAccess, sourceIter);
     }
 
     public final void setFromSameType(RandomIterator iter, int index, VectorAccess sourceAccess, RandomIterator sourceIter, int sourceIndex) {
-        setFromSameType(iter.store, index, sourceAccess, sourceIter, sourceIndex);
+        setFromSameTypeImpl(iter, index, sourceAccess, sourceIter, sourceIndex);
     }
 
     public final void setNA(RandomIterator iter, int index) {
-        setNA(iter.store, index);
+        setNAImpl(iter, index);
     }
 
     public final boolean isNA(RandomIterator iter, int index) {
-        return isNA(iter.store, index);
+        return isNAImpl(iter, index);
     }
 
     /**

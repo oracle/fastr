@@ -29,9 +29,35 @@ import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
 @MessageResolution(receiverType = StringArrayWrapper.class)
 final class StringArrayWrapperMR {
+
+    @Resolve(message = "READ")
+    public abstract static class StringArrayWrapperReadNode extends Node {
+        protected Object access(StringArrayWrapper receiver, int index) {
+            return receiver.getNativeCharArray(index);
+        }
+
+        protected Object access(StringArrayWrapper receiver, long index) {
+            return receiver.getNativeCharArray((int) index);
+        }
+    }
+
+    @Resolve(message = "HAS_SIZE")
+    public abstract static class StringArrayWrapperHasSizeNode extends Node {
+        protected boolean access(@SuppressWarnings("unused") StringArrayWrapper receiver) {
+            return true;
+        }
+    }
+
+    @Resolve(message = "GET_SIZE")
+    public abstract static class StringArrayWrapperGetSizeNode extends Node {
+        protected int access(StringArrayWrapper receiver) {
+            return receiver.getLength();
+        }
+    }
 
     @Resolve(message = "IS_POINTER")
     public abstract static class StringArrayWrapperIsPointerNode extends Node {
@@ -65,6 +91,7 @@ public final class StringArrayWrapper implements TruffleObject {
 
     long address;
     private final RStringVector vector;
+    private NativeCharArray[] nativeCharArrays = null;
 
     public StringArrayWrapper(RStringVector vector) {
         this.vector = vector;
@@ -82,7 +109,23 @@ public final class StringArrayWrapper implements TruffleObject {
 
     public RStringVector copyBackFromNative() {
         if (address == 0) {
-            return vector;
+            if (nativeCharArrays != null) {
+                String[] contents = new String[vector.getLength()];
+                for (int i = 0; i < contents.length; i++) {
+                    NativeCharArray nativeCharArray = nativeCharArrays[i];
+                    if (nativeCharArray == null) {
+                        contents[i] = vector.getDataAt(i);
+                    } else {
+                        contents[i] = nativeCharArray.getString();
+                    }
+                }
+                address = 0;
+                RStringVector copy = new RStringVector(contents, false);
+                copy.copyAttributesFrom(vector);
+                return copy;
+            } else {
+                return vector;
+            }
         } else {
             String[] contents = NativeDataAccess.releaseNativeStringArray(address, vector.getLength());
             address = 0;
@@ -90,6 +133,22 @@ public final class StringArrayWrapper implements TruffleObject {
             copy.copyAttributesFrom(vector);
             return copy;
         }
+    }
+
+    public int getLength() {
+        return vector.getLength();
+    }
+
+    public NativeCharArray getNativeCharArray(int index) {
+        if (nativeCharArrays == null) {
+            nativeCharArrays = new NativeCharArray[vector.getLength()];
+        }
+        NativeCharArray nativeCharArray = nativeCharArrays[index];
+        if (nativeCharArray == null) {
+            nativeCharArray = new NativeCharArray(vector.getDataAt(index));
+            nativeCharArrays[index] = nativeCharArray;
+        }
+        return nativeCharArray;
     }
 
 }

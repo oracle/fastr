@@ -22,7 +22,10 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
+import static org.junit.Assert.assertFalse;
+
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import org.junit.Test;
 
@@ -36,12 +39,14 @@ public class RLogicalMRTest extends AbstractMRTest {
 
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{RLogical.valueOf(true), RLogical.valueOf(false)};
+        return new TruffleObject[]{RLogical.valueOf(true), RLogical.valueOf(false), RLogical.valueOf(RRuntime.LOGICAL_NA)};
     }
 
     @Override
     protected Object getUnboxed(TruffleObject obj) {
-        return ((RLogical) obj).getValue();
+        byte result = ((RLogical) obj).getValue();
+        assertFalse(RRuntime.isNA(result));
+        return RRuntime.fromLogical(result);
     }
 
     @Override

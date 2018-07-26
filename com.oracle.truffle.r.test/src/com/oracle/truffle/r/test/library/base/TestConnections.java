@@ -247,6 +247,7 @@ public class TestConnections extends TestRBase {
         assertEval("conn <- rawConnection(raw(0), \"wb\"); value <- list(a=c(1,2,3), b='foo'); save(value, file=conn); rawConnectionValue(conn)");
         // ignored because save refuses to write to a rawConnection that is not configured to binary
         assertEval(Ignored.ImplementationError, "conn <- rawConnection(raw(0), \"w\"); value <- c(1,2,3); save(value, file=conn); rawConnectionValue(conn)");
+        assertEval("f <- tempfile(); unlink(f); x <- 1:10; save(x, file=f); con <- file(f, 'rb'); dput(class(con))");
     }
 
     @Test
@@ -263,6 +264,11 @@ public class TestConnections extends TestRBase {
         assertEval("zz <- rawConnection(raw(0), 'r+'); writeLines(c('hello', 'world'), zz); rawConnectionValue(zz); seek(zz, 5); truncate(zz); rawConnectionValue(zz); close(zz)");
         assertEval("truncate(fifo('__fifo_872636743', 'w+', blocking=T)); unlink('__fifo_872636743')");
         assertEval("truncate(fifo('__fifo_982346798', 'r', blocking=T)); unlink('__fifo_982346798')");
+    }
+
+    @Test
+    public void testSeek() {
+        assertEval("f1 <- file(open='w+b', encoding='UTF-8'); writeBin(charToRaw(\"abcd\"), f1); seek(f1); seek(f1,0); seek(f1)");
     }
 
     private static final String[] LVAL = arr("T", "F");
