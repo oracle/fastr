@@ -53,4 +53,10 @@ public class TestBuiltin_extract_replace extends TestBase {
     public void replaceWithPositionNames() {
         assertEval("{ foo <- function(x, idx) { x[idx] <- F; x }; foo(c(T,T,T,T), structure(c('a'), .Names = c('a'))); r <- foo(c(T,T,T,T), structure(c('a', 'b'), .Names = c('a', 'b'))); r }");
     }
+
+    @Test
+    public void extractReplaceIntroducesNA() {
+        assertEval("{ x <- c(1,2,3); x[[2147483648]] }");
+        assertEval(Output.IgnoreWhitespace, "{ x <- c(1,2,3); x[[2147483648]] <- 42 }");
+    }
 }

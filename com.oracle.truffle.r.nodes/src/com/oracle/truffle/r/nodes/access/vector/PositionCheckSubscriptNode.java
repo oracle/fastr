@@ -168,9 +168,9 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
                 message = RError.Message.SUBSCRIPT_BOUNDS_SUB;
             } else {
                 if (dimSize < 2) {
-                    message = RError.Message.SELECT_LESS_1;
+                    message = RError.Message.SELECT_LESS_1_IN_ONE_INDEX;
                 } else {
-                    message = RError.Message.SELECT_MORE_1;
+                    message = RError.Message.SELECT_MORE_1_IN_ONE_INDEX;
                 }
             }
             throw error(message);
