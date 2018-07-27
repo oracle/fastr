@@ -93,6 +93,10 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         public S3Args createS3Args(Frame frame) {
             return new S3Args(generic, clazz, targetFunctionName, frame.materialize(), null, null);
         }
+
+        public S3Args createS3Args(Object dotMethod, MaterializedFrame frame, MaterializedFrame defEnv, String group) {
+            return new S3Args(generic, clazz, dotMethod, frame.materialize(), defEnv, group);
+        }
     }
 
     public static S3FunctionLookupNode create(boolean throwsError, boolean nextMethod) {

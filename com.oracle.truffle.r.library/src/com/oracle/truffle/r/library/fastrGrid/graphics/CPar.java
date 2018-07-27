@@ -158,6 +158,10 @@ public final class CPar extends RExternalBuiltinNode {
             case "page":
                 // TODO:
                 return RDataFactory.createLogicalVectorFromScalar(false);
+            case "xaxp":
+            case "yaxp":
+                // TODO:
+                return RDataFactory.createDoubleVector(new double[]{0., 1., 5.}, RDataFactory.COMPLETE_VECTOR);
             default:
                 if (!FastROptions.IgnoreGraphicsCalls.getBooleanValue()) {
                     throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");

@@ -110,6 +110,14 @@ public class TestS3Dispatch extends TestRBase {
         assertEval("{x<-1;y<-7;class(x)<-\"foo\";class(y)<-\"foo\";\"^.foo\"<-function(e1,e2){e1+e2};x^y}");
 
         assertEval("{x<-1;class(x)<-\"foo\";\"!.foo\"<-function(e1,e2){x};!x}");
+
+        String methodsDef = "{ Ops.c1 <- function(a,b) list(c1 = .Method, c2 = NextMethod()); Ops.c2 <- function(a,b) .Method;";
+        assertEval(methodsDef + "44 == structure(42, class = c('c1', 'c2')); }");
+        assertEval(methodsDef + "structure(42, class = c('c1', 'c2')) == 44; }");
+        assertEval(methodsDef + "structure(42, class = c('c1', 'c2')) == structure(42, class = c('c1', 'c2')); }");
+        // Note: this looks like a bug, but probably due to the similar way we implement this, FastR
+        // and GNU-R give the same results:
+        assertEval(methodsDef + "structure(42, class = c('c1', 'c2')) == structure(42, class = c('c1')); }");
     }
 
     @Test

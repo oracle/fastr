@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -48,6 +49,7 @@ import com.oracle.truffle.r.nodes.function.signature.CombineSignaturesNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
+import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.ReturnException;
@@ -67,6 +69,9 @@ public abstract class S3DispatchFunctions {
     private static final class Helper extends RBaseNode {
         @Child private S3FunctionLookupNode methodLookup;
         @Child private CallMatcherNode callMatcher;
+        private final ConditionProfile isOpsGeneric = ConditionProfile.createBinaryProfile();
+        @CompilationFinal private ValueProfile dotMethodClassProfile;
+        @Child private LocalReadVariableNode rvnMethod;
 
         protected Helper(boolean nextMethod) {
             methodLookup = S3FunctionLookupNode.create(true, nextMethod);
@@ -77,9 +82,52 @@ public abstract class S3DispatchFunctions {
                         ArgumentsSignature suppliedSignature, Object[] suppliedArguments) {
             Result lookupResult = methodLookup.execute(frame, generic, type, group, callerFrame, genericDefFrame);
 
-            S3Args s3Args = new S3Args(lookupResult.generic, lookupResult.clazz, lookupResult.targetFunctionName, callerFrame, genericDefFrame, group);
+            Object dotMethod = lookupResult.targetFunctionName;
+            if (isOpsGeneric.profile(group == RDispatch.OPS_GROUP_GENERIC.getGroupGenericName())) {
+                dotMethod = patchDotMethod(frame, lookupResult, dotMethod);
+            }
+            S3Args s3Args = lookupResult.createS3Args(dotMethod, callerFrame, genericDefFrame, group);
             Object result = callMatcher.execute(frame, suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName, s3Args);
             return result;
+        }
+
+        private Object patchDotMethod(VirtualFrame frame, Result lookupResult, Object dotMethod) {
+            // ".Method" variable should be vector of two strings for Ops group. If the first
+            // argument's class was used for dispatch, then the value is ["the-class", ""]. Both
+            // argument's classes can be used for dispatch as long as they are equal.
+            //
+            // Here we do not know which of the two argument's were used for the dispatch, but we
+            // can find out by inspecting the ".Method" variable.
+            Object origDotMethod = readDotMethod(frame);
+            if (!(origDotMethod instanceof RAbstractStringVector)) {
+                assert false : "Unexpected value of .Method in Ops generic after NextMethod or UseMethod: " + origDotMethod;
+                return dotMethod;
+            }
+            RAbstractStringVector origVec = profileDotMethod(origDotMethod);
+            if (origVec.getLength() != 2) {
+                assert false : "Unexpected length of .Method: " + origVec.getLength();
+                return dotMethod;
+            }
+            String[] data = new String[2];
+            data[0] = origVec.getDataAt(0).isEmpty() ? "" : lookupResult.targetFunctionName;
+            data[1] = origVec.getDataAt(1).isEmpty() ? "" : lookupResult.targetFunctionName;
+            return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
+        }
+
+        private Object readDotMethod(VirtualFrame frame) {
+            if (rvnMethod == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                rvnMethod = insert(LocalReadVariableNode.create(RRuntime.R_DOT_METHOD, false));
+            }
+            return rvnMethod.execute(frame);
+        }
+
+        private RAbstractStringVector profileDotMethod(Object origDotMethod) {
+            if (dotMethodClassProfile == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                dotMethodClassProfile = ValueProfile.createClassProfile();
+            }
+            return dotMethodClassProfile.profile((RAbstractStringVector) origDotMethod);
         }
     }
 

@@ -330,7 +330,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                     s3Args = null;
                 } else {
-                    s3Args = new S3Args(result.generic, result.clazz, result.targetFunctionName, frame.materialize(), null, null);
+                    s3Args = result.createS3Args(frame);
                 }
                 resultFunction = result.function;
             } else {
@@ -400,7 +400,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (resultIsBuiltinProfile.profile(result.function.isBuiltin())) {
                 s3Args = null;
             } else {
-                s3Args = new S3Args(result.generic, result.clazz, result.targetFunctionName, frame.materialize(), null, null);
+                s3Args = result.createS3Args(frame);
             }
             resultFunction = result.function;
         } else {
