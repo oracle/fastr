@@ -211,9 +211,8 @@ public class LoadSaveFunctions {
             casts.arg("eval.promises").asLogicalVector().findFirst().mustNotBeNA().map(toBoolean());
         }
 
-        @SuppressWarnings("all")
         @Specialization
-        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, RNull version, REnvironment envir, boolean evalPromises,
+        protected Object saveToConn(VirtualFrame frame, RAbstractStringVector list, int con, boolean ascii, @SuppressWarnings("unused") RNull version, REnvironment envir, boolean evalPromises,
                         @Cached("new()") PromiseHelperNode promiseHelper) {
             RPairList prev = null;
             Object toSave = RNull.instance;
@@ -225,8 +224,7 @@ public class LoadSaveFunctions {
                     value = env.get(varName);
                     if (value != null) {
                         if (value instanceof RPromise) {
-                            // GNU R does not seem to honor evalPromises==false
-                            value = true || evalPromises
+                            value = evalPromises
                                             ? promiseHelper.evaluate(frame, (RPromise) value)
                                             : ((RPromise) value).getRawValue();
                         }

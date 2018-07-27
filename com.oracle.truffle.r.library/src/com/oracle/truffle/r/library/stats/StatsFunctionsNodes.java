@@ -511,9 +511,12 @@ public final class StatsFunctionsNodes {
             casts.arg(6).asIntegerVector().findFirst().mustBe(gt0(), Message.MUST_BE_POSITIVE, "maxiter");
         }
 
-        @SuppressWarnings("all")
         @Specialization
-        protected RAbstractDoubleVector zeroin2(RFunction f, double xmin, double xmax, double fax, double fbx, double tol, int maxIter) {
+        protected RAbstractDoubleVector zeroin2(RFunction f, double xmin, double xmax, double faxArg, double fbxArg, double tolArg, int maxIterArg) {
+            double fax = faxArg;
+            double fbx = fbxArg;
+            double tol = tolArg;
+            int maxIter = maxIterArg;
             if (xmin >= xmax) {
                 error(Message.NOT_LESS_THAN, "xmin", "xmax");
             }
@@ -563,7 +566,7 @@ public final class StatsFunctionsNodes {
                     tolAct = 2 * EPSILON * fabs(b) + tol / 2;
                     newStep = (c - b) / 2;
 
-                    if (fabs(newStep) <= tolAct || fbx == (double) 0) {
+                    if (fabs(newStep) <= tolAct || fbx == 0.0d) {
                         maxIter -= maxit;
                         tol = fabs(c - b);
                         res = b;
@@ -591,7 +594,7 @@ public final class StatsFunctionsNodes {
                             p = t2 * (cb * q * (q - t1) - (b - a) * (t1 - 1.0));
                             q = (q - 1.0) * (t1 - 1.0) * (t2 - 1.0);
                         }
-                        if (p > (double) 0) { /* p was calculated with the */
+                        if (p > 0.0d) { /* p was calculated with the */
                             q = -q; /* opposite sign; make p positive */
                         } else { /* and assign possible minus to */
                             p = -p; /* q */
@@ -610,7 +613,7 @@ public final class StatsFunctionsNodes {
                     }
 
                     if (fabs(newStep) < tolAct) { /* Adjust the step to be not less */
-                        if (newStep > (double) 0) { /* than tolerance */
+                        if (newStep > 0.0d) { /* than tolerance */
                             newStep = tolAct;
                         } else {
                             newStep = -tolAct;
@@ -640,7 +643,7 @@ public final class StatsFunctionsNodes {
                             warning(Message.NA_REPLACED);
                             fbx = DBL_MAX;
                         } else {
-                            fbx = (double) i;
+                            fbx = i;
                         }
                     } else if (fRes instanceof Double) {
                         double d = (Double) fRes;
