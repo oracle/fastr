@@ -38,6 +38,8 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     protected static final Node GET_SIZE = Message.GET_SIZE.createNode();
     protected static final Node IS_NULL = Message.IS_NULL.createNode();
+    protected static final Node IS_BOXED = Message.IS_BOXED.createNode();
+    protected static final Node UNBOX = Message.UNBOX.createNode();
     protected static final Node READ = Message.READ.createNode();
 
     private static final ForeignArray2R FOREIGN_ARRAY_2R = ForeignArray2R.create();

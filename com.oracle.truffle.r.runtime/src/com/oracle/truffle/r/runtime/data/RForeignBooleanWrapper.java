@@ -30,6 +30,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -65,14 +66,22 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw RInternalError.shouldNotReachHere(e);
         } catch (ClassCastException e) {
-            return checkIsNull(value, e);
+            if (value instanceof TruffleObject) {
+                return unbox((TruffleObject) value, e);
+            }
+            throw RInternalError.shouldNotReachHere(e);
         }
     }
 
-    private static byte checkIsNull(Object value, ClassCastException e) throws RuntimeException {
-        if (value instanceof TruffleObject) {
-            if (ForeignAccess.sendIsNull(IS_NULL, (TruffleObject) value)) {
-                return RRuntime.LOGICAL_NA;
+    private static byte unbox(TruffleObject value, ClassCastException e) throws RuntimeException {
+        if (ForeignAccess.sendIsNull(IS_NULL, value)) {
+            return RRuntime.LOGICAL_NA;
+        }
+        if (ForeignAccess.sendIsBoxed(IS_BOXED, value)) {
+            try {
+                return RRuntime.asLogical((boolean) ForeignAccess.sendUnbox(UNBOX, value));
+            } catch (UnsupportedMessageException | ClassCastException ex) {
+                throw RInternalError.shouldNotReachHere(e);
             }
         }
         throw RInternalError.shouldNotReachHere(e);
@@ -84,9 +93,12 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
             super(value);
         }
 
+        private final ConditionProfile isTruffleObjectProfile = ConditionProfile.createBinaryProfile();
         @Child private Node getSize = Message.GET_SIZE.createNode();
         @Child private Node read = Message.READ.createNode();
         @Child private Node isNull;
+        @Child private Node isBoxed;
+        @Child private Node unbox;
 
         @Override
         protected int getLength(RAbstractContainer vector) {
@@ -99,14 +111,9 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
 
         @Override
         protected byte getLogicalImpl(AccessIterator accessIter, int index) {
-            Object value = null;
             try {
-                value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
-                return RRuntime.asLogical((boolean) value);
-            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } catch (ClassCastException e) {
-                if (value instanceof TruffleObject) {
+                Object value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
+                if (isTruffleObjectProfile.profile(value instanceof TruffleObject)) {
                     if (isNull == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         isNull = insert(Message.IS_NULL.createNode());
@@ -114,7 +121,20 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
                     if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
                         return RRuntime.LOGICAL_NA;
                     }
+                    if (isBoxed == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        isBoxed = insert(Message.IS_BOXED.createNode());
+                    }
+                    if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) value)) {
+                        if (unbox == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            unbox = insert(Message.UNBOX.createNode());
+                        }
+                        value = ForeignAccess.sendUnbox(unbox, (TruffleObject) value);
+                    }
                 }
+                return RRuntime.asLogical((boolean) value);
+            } catch (UnsupportedMessageException | UnknownIdentifierException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
@@ -146,7 +166,10 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } catch (ClassCastException e) {
-                return checkIsNull(value, e);
+                if (value instanceof TruffleObject) {
+                    return unbox((TruffleObject) value, e);
+                }
+                throw RInternalError.shouldNotReachHere(e);
             }
         }
     };
