@@ -30,6 +30,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -66,14 +67,22 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw RInternalError.shouldNotReachHere(e);
         } catch (ClassCastException e) {
-            return checkIsNull(value, e);
+            if (value instanceof TruffleObject) {
+                return unbox((TruffleObject) value, e);
+            }
+            throw RInternalError.shouldNotReachHere(e);
         }
     }
 
-    private static int checkIsNull(Object value, ClassCastException e) throws RuntimeException {
-        if (value instanceof TruffleObject) {
-            if (ForeignAccess.sendIsNull(IS_NULL, (TruffleObject) value)) {
-                return RRuntime.INT_NA;
+    private static int unbox(TruffleObject value, ClassCastException e) throws RuntimeException {
+        if (ForeignAccess.sendIsNull(IS_NULL, value)) {
+            return RRuntime.INT_NA;
+        }
+        if (ForeignAccess.sendIsBoxed(IS_BOXED, value)) {
+            try {
+                return ((Number) ForeignAccess.sendUnbox(UNBOX, value)).intValue();
+            } catch (UnsupportedMessageException | ClassCastException ex) {
+                throw RInternalError.shouldNotReachHere(e);
             }
         }
         throw RInternalError.shouldNotReachHere(e);
@@ -86,9 +95,12 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
         }
 
         private final ValueProfile resultProfile = ValueProfile.createClassProfile();
+        private final ConditionProfile isTruffleObjectProfile = ConditionProfile.createBinaryProfile();
         @Child private Node getSize = Message.GET_SIZE.createNode();
         @Child private Node read = Message.READ.createNode();
         @Child private Node isNull;
+        @Child private Node isBoxed;
+        @Child private Node unbox;
 
         @Override
         protected int getLength(RAbstractContainer vector) {
@@ -101,14 +113,10 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
 
         @Override
         public int getIntImpl(AccessIterator accessIter, int index) {
-            Object value = null;
+            Object value;
             try {
                 value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
-                return ((Number) resultProfile.profile(value)).intValue();
-            } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            } catch (ClassCastException e) {
-                if (value instanceof TruffleObject) {
+                if (isTruffleObjectProfile.profile(value instanceof TruffleObject)) {
                     if (isNull == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         isNull = insert(Message.IS_NULL.createNode());
@@ -116,7 +124,20 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
                     if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
                         return RRuntime.INT_NA;
                     }
+                    if (isBoxed == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        isBoxed = insert(Message.IS_BOXED.createNode());
+                    }
+                    if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) value)) {
+                        if (unbox == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            unbox = insert(Message.UNBOX.createNode());
+                        }
+                        value = ForeignAccess.sendUnbox(unbox, (TruffleObject) value);
+                    }
                 }
+                return ((Number) resultProfile.profile(value)).intValue();
+            } catch (UnsupportedMessageException | UnknownIdentifierException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
         }
@@ -148,7 +169,10 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
             } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                 throw RInternalError.shouldNotReachHere(e);
             } catch (ClassCastException e) {
-                return checkIsNull(value, e);
+                if (value instanceof TruffleObject) {
+                    return unbox((TruffleObject) value, e);
+                }
+                throw RInternalError.shouldNotReachHere(e);
             }
         }
     };

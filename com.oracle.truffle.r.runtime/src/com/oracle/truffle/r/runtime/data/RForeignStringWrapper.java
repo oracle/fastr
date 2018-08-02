@@ -63,15 +63,23 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
         return getString(delegate, index);
     }
 
-    private static String getString(TruffleObject truffleObject, int index) throws RuntimeException {
+    private static String getString(TruffleObject truffleObjectIn, int index) throws RuntimeException {
         try {
-            Object value = ForeignAccess.sendRead(READ, truffleObject, index);
-            if (value instanceof TruffleObject) {
-                if (ForeignAccess.sendIsNull(IS_NULL, (TruffleObject) value)) {
+            Object result = ForeignAccess.sendRead(READ, truffleObjectIn, index);
+            if (result instanceof TruffleObject) {
+                TruffleObject truffleObject = (TruffleObject) result;
+                if (ForeignAccess.sendIsNull(IS_NULL, truffleObject)) {
                     return RRuntime.STRING_NA;
                 }
+                if (ForeignAccess.sendIsBoxed(IS_BOXED, truffleObject)) {
+                    try {
+                        result = ForeignAccess.sendUnbox(UNBOX, truffleObject);
+                    } catch (UnsupportedMessageException | ClassCastException ex) {
+                        throw RInternalError.shouldNotReachHere(ex);
+                    }
+                }
             }
-            return value.toString();
+            return result.toString();
         } catch (UnsupportedMessageException | UnknownIdentifierException e) {
             throw RInternalError.shouldNotReachHere(e);
         }
@@ -83,11 +91,13 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
             super(value);
         }
 
-        private final ConditionProfile isNullProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isTruffleObjectProfile = ConditionProfile.createBinaryProfile();
         private final ValueProfile resultProfile = ValueProfile.createClassProfile();
         @Child private Node getSize = Message.GET_SIZE.createNode();
         @Child private Node read = Message.READ.createNode();
         @Child private Node isNull;
+        @Child private Node isBoxed;
+        @Child private Node unbox;
 
         @Override
         protected int getLength(RAbstractContainer vector) {
@@ -102,13 +112,24 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
         protected String getStringImpl(AccessIterator accessIter, int index) {
             try {
                 Object value = ForeignAccess.sendRead(read, (TruffleObject) accessIter.getStore(), index);
-                if (isNullProfile.profile(value instanceof TruffleObject)) {
+                if (isTruffleObjectProfile.profile(value instanceof TruffleObject)) {
                     if (isNull == null) {
                         CompilerDirectives.transferToInterpreterAndInvalidate();
                         isNull = insert(Message.IS_NULL.createNode());
                     }
                     if (ForeignAccess.sendIsNull(isNull, (TruffleObject) value)) {
                         return RRuntime.STRING_NA;
+                    }
+                    if (isBoxed == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        isBoxed = insert(Message.IS_BOXED.createNode());
+                    }
+                    if (ForeignAccess.sendIsBoxed(isBoxed, (TruffleObject) value)) {
+                        if (unbox == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            unbox = insert(Message.UNBOX.createNode());
+                        }
+                        value = ForeignAccess.sendUnbox(unbox, (TruffleObject) value);
                     }
                 }
                 return resultProfile.profile(value).toString();
