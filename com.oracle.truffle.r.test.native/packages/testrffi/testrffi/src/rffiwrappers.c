@@ -91,6 +91,10 @@ SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding) {
     return Rf_mkCharLenCE(R_CHAR(STRING_ELT(bytes, 0)), INTEGER_VALUE(len), INTEGER_VALUE(encoding));
 }
 
+SEXP api_Rf_cons(SEXP car, SEXP cdr) {
+    return Rf_cons(car, cdr);
+}
+
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg) {
     Rf_defineVar(symbolArg, value, envArg);
     return R_NilValue;
@@ -211,8 +215,11 @@ SEXP api_SET_STRING_ELT(SEXP x, SEXP i, SEXP v) {
 }
 
 SEXP api_SETLENGTH(SEXP x, SEXP l) {
-    SETLENGTH(x, INTEGER_VALUE(l));
-    return R_NilValue;
+    return ScalarInteger(SETLENGTH(x, INTEGER_VALUE(l)));
+}
+
+SEXP api_SETTRUELENGTH(SEXP x, SEXP l) {
+    return ScalarInteger(SETTRUELENGTH(x, INTEGER_VALUE(l)));
 }
 
 SEXP api_SET_TRUELENGTH(SEXP x, SEXP l) {
@@ -1066,6 +1073,18 @@ SEXP api_Rf_fprec(SEXP a, SEXP b) {
 
 SEXP api_Rf_ftrunc(SEXP a) {
     return ScalarReal(Rf_ftrunc(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_cospi(SEXP a) {
+    return ScalarReal(Rf_cospi(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_sinpi(SEXP a) {
+    return ScalarReal(Rf_sinpi(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_tanpi(SEXP a) {
+    return ScalarReal(Rf_tanpi(NUMERIC_VALUE(a)));
 }
 
 SEXP api_Rf_namesgets(SEXP vec, SEXP val) {
