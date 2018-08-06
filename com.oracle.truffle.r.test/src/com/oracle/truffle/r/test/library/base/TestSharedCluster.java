@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.test.library.base;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
@@ -37,9 +36,7 @@ public class TestSharedCluster extends TestBase {
     }
 
     @Test
-    @Ignore("Transient hangs")
     public void testSharedCluster() {
-        // TODO: debug and unignore
         assertEval(TestBase.template(
                         "library(parallel); fun <- function(data) { cl <- makeCluster(%0, ifelse(exists('engine', where=R.version),'SHARED','PSOCK')); parLapply(cl, data, function(x) x+1); stopCluster(cl) }; fun(1:100)",
                         "123456789".split("")));
