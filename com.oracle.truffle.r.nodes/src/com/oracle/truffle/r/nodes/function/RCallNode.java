@@ -140,7 +140,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return this;
     }
 
@@ -978,7 +978,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @Override
-        protected RBaseNode getErrorContext() {
+        public RBaseNode getErrorContext() {
             return builtin.getErrorContext();
         }
 

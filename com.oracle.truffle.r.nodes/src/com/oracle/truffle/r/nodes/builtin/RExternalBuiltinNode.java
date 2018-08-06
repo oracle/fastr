@@ -43,7 +43,7 @@ public abstract class RExternalBuiltinNode extends RBuiltinBaseNode implements N
     protected abstract Object call(RArgsValuesAndNames args);
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return RError.NO_CALLER;
     }
 

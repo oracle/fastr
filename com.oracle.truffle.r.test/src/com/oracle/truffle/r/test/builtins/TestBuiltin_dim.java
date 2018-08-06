@@ -197,8 +197,12 @@ public class TestBuiltin_dim extends TestBase {
 
         assertEval("{ x<-1:12; dim(x)<-c(12); x }");
         assertEval("{ x<-1:12; dim(x)<-c(12+10i); x }");
+        assertEval("{ x<-1:12; dim(x)<-c(12+10i, 12+10i); x }");
+        assertEval("{ x<-1:12; dim(x)<-c(2147483648); x }");
+        assertEval("{ x<-1:12; dim(x)<-c(2147483648, 2147483648); x }");
         assertEval("{ x<-1:12; dim(x)<-c(as.raw(12)); x }");
-        assertEval("{ x<-1:12; dim(x)<-c(\"12\"); x }");
+        assertEval("{ x<-1:12; dim(x)<-c('12'); x }");
+        assertEval("{ x<-1:12; dim(x)<-c('12', '12'); x }");
         assertEval("{ x<-1:1; dim(x)<-c(TRUE); x }");
 
         assertEval("{ x<-1:12; dim(x)<-c(3, 4); attr(x, \"dim\") }");

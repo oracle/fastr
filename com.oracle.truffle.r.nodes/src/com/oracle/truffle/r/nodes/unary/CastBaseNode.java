@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNa
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -75,20 +76,30 @@ public abstract class CastBaseNode extends CastNode {
      */
     private final boolean forRFFI;
 
+    /**
+     * Context to be used in warnings.
+     */
+    private final ErrorContext warningContext;
+
     protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         this(preserveNames, preserveDimensions, preserveAttributes, false);
     }
 
     protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
-        this(preserveNames, preserveDimensions, preserveAttributes, forRFFI, false);
+        this(preserveNames, preserveDimensions, preserveAttributes, forRFFI, false, null);
     }
 
     protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
+        this(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, null);
+    }
+
+    protected CastBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure, ErrorContext warningContext) {
         this.preserveNames = preserveNames;
         this.preserveDimensions = preserveDimensions;
         this.preserveAttributes = preserveAttributes;
         this.forRFFI = forRFFI;
         this.useClosure = useClosure;
+        this.warningContext = warningContext;
         reuseClassProfile = useClosure ? ValueProfile.createClassProfile() : null;
     }
 
@@ -118,6 +129,10 @@ public abstract class CastBaseNode extends CastNode {
 
     public final boolean reuseNonShared() {
         return useClosure;
+    }
+
+    public final ErrorContext warningContext() {
+        return warningContext;
     }
 
     protected abstract RType getTargetType();

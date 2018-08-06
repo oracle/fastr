@@ -30,6 +30,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 /**
@@ -143,7 +144,7 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         @Override
         protected final int getIntImpl(AccessIterator accessIter, int index) {
             double value = getDoubleImpl(accessIter, index);
-            if (Double.isNaN(value)) {
+            if (na.checkNAorNaN(value)) {
                 na.enable(true);
                 return RRuntime.INT_NA;
             }
@@ -351,7 +352,7 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
 
         @Override
         protected final Object getListElementImpl(AccessIterator accessIter, int index) {
-            return getRawImpl(accessIter, index);
+            return RRaw.valueOf(getRawImpl(accessIter, index));
         }
 
         @Override
@@ -486,7 +487,20 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
 
         @Override
         protected final int getIntImpl(AccessIterator accessIter, int index) {
-            return na.convertStringToInt(getStringImpl(accessIter, index));
+            String str = getStringImpl(accessIter, index);
+            if (na.check(str) || str.isEmpty()) {
+                na.enable(true);
+                return RRuntime.INT_NA;
+            }
+            int value = na.convertStringToInt(str);
+            if (RRuntime.isNA(value)) {
+                na.enable(true);
+                if (accessIter.warning(Message.NA_INTRODUCED_COERCION)) {
+                    warningReportedProfile.enter();
+                }
+                return RRuntime.INT_NA;
+            }
+            return value;
         }
 
         @Override

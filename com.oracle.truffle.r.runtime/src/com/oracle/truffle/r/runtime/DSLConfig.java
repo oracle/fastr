@@ -41,6 +41,16 @@ public final class DSLConfig {
     }
 
     /**
+     * This method should be used to set any cache size that is used to create variants of vector
+     * access nodes like {@link com.oracle.truffle.r.runtime.data.nodes.VectorAccess} when based on
+     * an abstract vector type like e.g.
+     * {@link com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector}.
+     */
+    public static int getGenericVectorAccessCacheSize() {
+        return getCacheSize(8);
+    }
+
+    /**
      * This method should be used to set any cache size that can be configured, i.e. it does not
      * matter how large the cache is and it can even be zero. If used, make sure that there is more
      * generic specialization available.

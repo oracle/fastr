@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.casts;
 
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.PipelineConfigBuilder;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 
 /**
  * Immutable class with configuration of the pipeline. Create using {@link PipelineConfigBuilder}.
@@ -35,12 +36,14 @@ public class PipelineConfig {
     private final String argumentName;
     private final MessageData defaultError;
     private final MessageData defaultWarning;
+    private final ErrorContext defaultWarningContext;
     private final boolean valueForwarding;
     private final boolean castForeign;
 
-    public PipelineConfig(String argumentName, MessageData defaultError, MessageData defaultWarning, boolean valueForwarding, boolean castForeign) {
+    public PipelineConfig(String argumentName, MessageData defaultError, MessageData defaultWarning, ErrorContext defaultWarningContext, boolean valueForwarding, boolean castForeign) {
         this.defaultError = defaultError;
         this.defaultWarning = defaultWarning;
+        this.defaultWarningContext = defaultWarningContext;
         this.valueForwarding = valueForwarding;
         this.castForeign = castForeign;
         this.argumentName = argumentName;
@@ -60,6 +63,10 @@ public class PipelineConfig {
 
     public MessageData getDefaultWarning() {
         return defaultWarning;
+    }
+
+    public ErrorContext getDefaultWarningContext() {
+        return defaultWarningContext;
     }
 
     public boolean getValueForwarding() {

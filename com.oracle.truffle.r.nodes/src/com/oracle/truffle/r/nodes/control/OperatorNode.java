@@ -44,7 +44,7 @@ public abstract class OperatorNode extends RSourceSectionNode implements RSyntax
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return this;
     }
 }

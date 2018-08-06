@@ -54,9 +54,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * way of a {@link Node} value (which may be indirectly related to the actual builtin due to AST
  * transformations) and the Truffle {@link Frame} stack. Mostly the {@link Node} value and
  * {@link Frame} are sufficient to reconstruct the context, but there are some special cases that
- * might require more information to disambiguate. Rather than create a new class to carry that, we
- * would simply create an instance of a {@link RBaseNode} subclass with the additional state.
- * Currently,there are no such cases.
+ * might require more information to disambiguate, one such example is {@link ShowCallerOf}.
  */
 @SuppressWarnings("serial")
 public final class RError extends RuntimeException implements TruffleException {
@@ -90,7 +88,7 @@ public final class RError extends RuntimeException implements TruffleException {
         }
 
         @Override
-        protected RBaseNode getErrorContext() {
+        public RBaseNode getErrorContext() {
             return this;
         }
 

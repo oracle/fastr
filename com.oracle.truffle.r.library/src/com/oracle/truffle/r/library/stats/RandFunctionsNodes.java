@@ -128,7 +128,7 @@ public final class RandFunctionsNodes {
         private final VectorLengthProfile resultVectorLengthProfile = VectorLengthProfile.create();
 
         @Override
-        protected final RBaseNode getErrorContext() {
+        public final RBaseNode getErrorContext() {
             return RError.SHOW_CALLER;
         }
 

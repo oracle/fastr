@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -74,9 +75,8 @@ public abstract class FastPathVectorAccess extends VectorAccess {
             int value = getIntImpl(accessIter, index);
             byte result = (byte) value;
             if ((result & 0xff) != value) {
-                if (accessIter.warning(Message.OUT_OF_RANGE)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.OUT_OF_RANGE);
                 return 0;
             }
             return result;
@@ -140,6 +140,8 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromDoubleAccess extends FastPathVectorAccess {
 
+        private final BranchProfile conversionOverflowReached = BranchProfile.create();
+
         public FastPathFromDoubleAccess(Object value) {
             super(value);
         }
@@ -152,15 +154,15 @@ public abstract class FastPathVectorAccess extends VectorAccess {
         @Override
         protected final int getIntImpl(AccessIterator accessIter, int index) {
             double value = getDoubleImpl(accessIter, index);
-            if (Double.isNaN(value)) {
+            if (na.checkNAorNaN(value)) {
                 na.enable(true);
                 return RRuntime.INT_NA;
             }
             if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
+                conversionOverflowReached.enter();
                 na.enable(true);
-                if (accessIter.warning(Message.NA_INTRODUCED_COERCION_INT)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.NA_INTRODUCED_COERCION_INT);
                 return RRuntime.INT_NA;
             }
             return (int) value;
@@ -171,9 +173,8 @@ public abstract class FastPathVectorAccess extends VectorAccess {
             int value = (int) getDoubleImpl(accessIter, index);
             byte result = (byte) value;
             if ((result & 0xff) != value) {
-                if (accessIter.warning(Message.OUT_OF_RANGE)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.OUT_OF_RANGE);
                 return 0;
             }
             return result;
@@ -262,9 +263,8 @@ public abstract class FastPathVectorAccess extends VectorAccess {
         protected final byte getRawImpl(AccessIterator accessIter, int index) {
             byte value = getLogicalImpl(accessIter, index);
             if (na.check(value)) {
-                if (accessIter.warning(Message.OUT_OF_RANGE)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.OUT_OF_RANGE);
                 return 0;
             }
             return value;
@@ -415,15 +415,13 @@ public abstract class FastPathVectorAccess extends VectorAccess {
             }
             if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
                 na.enable(true);
-                if (accessIter.warning(Message.NA_INTRODUCED_COERCION_INT)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.NA_INTRODUCED_COERCION_INT);
                 return RRuntime.INT_NA;
             }
             if (getComplexIImpl(accessIter, index) != 0) {
-                if (accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
             }
             return (int) value;
         }
@@ -436,9 +434,9 @@ public abstract class FastPathVectorAccess extends VectorAccess {
                 return RRuntime.DOUBLE_NA;
             }
             if (getComplexIImpl(accessIter, index) != 0) {
-                if (accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+
             }
             return value;
         }
@@ -447,15 +445,13 @@ public abstract class FastPathVectorAccess extends VectorAccess {
         protected final byte getRawImpl(AccessIterator accessIter, int index) {
             double value = getComplexRImpl(accessIter, index);
             if (Double.isNaN(value) || value < 0 || value >= 256) {
-                if (accessIter.warning(Message.OUT_OF_RANGE)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.OUT_OF_RANGE);
                 return 0;
             }
             if (getComplexIImpl(accessIter, index) != 0) {
-                if (accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION)) {
-                    warningReportedProfile.enter();
-                }
+                warningReportedProfile.enter();
+                accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
             }
             return (byte) value;
         }
@@ -500,6 +496,8 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
     public abstract static class FastPathFromStringAccess extends FastPathVectorAccess {
 
+        ConditionProfile emptyStringProfile = ConditionProfile.createBinaryProfile();
+
         public FastPathFromStringAccess(Object value) {
             super(value);
         }
@@ -511,7 +509,19 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
         @Override
         protected final int getIntImpl(AccessIterator accessIter, int index) {
-            return na.convertStringToInt(getStringImpl(accessIter, index));
+            String str = getStringImpl(accessIter, index);
+            if (na.check(str) || emptyStringProfile.profile(str.isEmpty())) {
+                na.enable(true);
+                return RRuntime.INT_NA;
+            }
+            int value = na.convertStringToInt(str);
+            if (RRuntime.isNA(value)) {
+                na.enable(true);
+                warningReportedProfile.enter();
+                accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                return RRuntime.INT_NA;
+            }
+            return value;
         }
 
         @Override

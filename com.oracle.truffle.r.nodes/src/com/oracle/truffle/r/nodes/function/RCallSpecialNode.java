@@ -132,7 +132,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return this;
     }
 
