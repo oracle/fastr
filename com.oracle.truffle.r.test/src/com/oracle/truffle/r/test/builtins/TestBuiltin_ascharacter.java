@@ -264,6 +264,7 @@ public class TestBuiltin_ascharacter extends TestBase {
         assertEval("{ as.character(1L) }");
         assertEval("{ as.character(TRUE) }");
         assertEval("{ as.character(1:3) }");
+        assertEval("{ as.character(1.1:3.1) }");
         assertEval("{ as.character(NULL) }");
 
         assertEval("{ as.character(list(1,2,3)) }");

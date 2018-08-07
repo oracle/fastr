@@ -64,7 +64,7 @@ public abstract class MatchInternalNode extends RBaseNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             castString = insert(CastStringNodeGen.create(false, false, false));
         }
-        return (RAbstractStringVector) castString.doCast(operand);
+        return (RAbstractStringVector) RRuntime.asAbstractVector(castString.doCast(operand));
     }
 
     protected boolean isSequence(RAbstractVector vec) {
