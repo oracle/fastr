@@ -96,6 +96,14 @@ public @interface RBuiltin {
     boolean isFieldAccess() default false;
 
     /**
+     * If {@code true} the runtime should lookup the '...' symbol in the caller frame to pass it to
+     * the builtin. The only example of {@code false} is builtin '~', where '...' among actual
+     * arguments is interpreted only on syntax level and should not case the actual lookup of '...'
+     * in the caller frame.
+     */
+    boolean lookupVarArgs() default true;
+
+    /**
      * Indicates whether or not function containing a call of the form
      * <code>.Internal(name(...))</code> should trigger a split of the caller at its direct call
      * sites. <code>name</code> indicates the builtin name defined in {@link #name()}.

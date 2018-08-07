@@ -120,4 +120,11 @@ public class TestFormulae extends TestBase {
     public void testModelFrameWithWeights() {
         assertEval("model.frame(formula = cyl ~ disp, data = mtcars[1:4,], weights = seq_len(nrow(mtcars[1:4,])))");
     }
+
+    @Test
+    public void testFormulaeWithDotdotdot() {
+        assertEval("terms.formula(... ~ w)");
+        assertEval("{ f <- function(w,...) model.frame(terms.formula(... ~ w)); f(1, a=3); }");
+        assertEval(Output.IgnoreErrorContext, "{ f <- function(w,...) model.frame(terms.formula(... ~ w)); f(1, a=3, b=4); }");
+    }
 }

@@ -216,24 +216,26 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return Arguments.create(arguments, signature);
     }
 
-    private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame, boolean ignore) {
-        return ignore ? null : lookupVarArgs(frame);
+    private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame, boolean ignore, RBuiltinDescriptor builtin) {
+        return ignore ? null : lookupVarArgs(frame, builtin);
     }
 
-    private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame) {
+    private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame, RBuiltinDescriptor builtin) {
         if (explicitArgs != null) {
             return (RArgsValuesAndNames) explicitArgs.execute(frame);
         }
         if (lookupVarArgs == null) {
             return null;
-        } else {
-            Object varArgs = lookupVarArgs.execute(frame);
-            if (!(varArgs instanceof RArgsValuesAndNames)) {
-                CompilerDirectives.transferToInterpreter();
-                throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
-            }
-            return (RArgsValuesAndNames) varArgs;
         }
+        if (builtin != null && !builtin.lookupVarArgs()) {
+            return null;
+        }
+        Object varArgs = lookupVarArgs.execute(frame);
+        if (!(varArgs instanceof RArgsValuesAndNames)) {
+            CompilerDirectives.transferToInterpreter();
+            throw RError.error(RError.SHOW_CALLER, RError.Message.NO_DOT_DOT_DOT);
+        }
+        return (RArgsValuesAndNames) varArgs;
     }
 
     protected FunctionDispatch createUninitializedCall() {
@@ -255,8 +257,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     @Specialization(guards = "isDefaultDispatch(function)")
     public Object call(VirtualFrame frame, RFunction function,
-                    @Cached("createUninitializedCall()") FunctionDispatch call) {
-        return call.execute(frame, function, lookupVarArgs(frame), null, null);
+                    @Cached("createUninitializedCall()") FunctionDispatch call,
+                    @Cached("createIdentityProfile()") ValueProfile builtinValueProfile) {
+        RBuiltinDescriptor builtin = builtinValueProfile.profile(function.getRBuiltin());
+        return call.execute(frame, function, lookupVarArgs(frame, builtin), null, null);
     }
 
     @Specialization
@@ -316,7 +320,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
                 Object basicFun = getBasicFunction.execute(frame, builtin.getName());
                 if (basicFun != null) {
-                    Object result = internalDispatchCall.execute(frame, (RFunction) basicFun, lookupVarArgs(frame, isFieldAccess), null, null);
+                    Object result = internalDispatchCall.execute(frame, (RFunction) basicFun, lookupVarArgs(frame, isFieldAccess, builtin), null, null);
                     if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
                         return result;
                     }
@@ -340,7 +344,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             if (internalDispatchCall == null || internalDispatchCall.tempFrameSlot != slot) {
                 createInternDispatchCall(isFieldAccess, slot);
             }
-            return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame, isFieldAccess), s3Args, null);
+            return internalDispatchCall.execute(frame, resultFunction, lookupVarArgs(frame, isFieldAccess, builtin), s3Args, null);
         } finally {
             TemporarySlotNode.cleanup(frame, dispatchObject, slot);
         }
@@ -451,17 +455,16 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createUninitializedExplicitCall()") FunctionDispatch call,
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
 
-        Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame));
-        ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame));
+        RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
+        Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame, builtin));
+        ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame, builtin));
 
         if (emptyArgumentsProfile.profile(args.length == 0)) {
             // nothing to dispatch on, this is a valid situation, e.g. prod() == 1
             return call.execute(frame, function, new RArgsValuesAndNames(args, argsSignature), null, null);
         }
 
-        RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
         RDispatch dispatch = builtin.getDispatch();
-
         // max(na.rm=TRUE,arg1) dispatches to whatever is class of arg1 not taking the
         // named argument 'na.rm' into account. Note: signatures should be interned, identity
         // comparison is enough. Signature length > 0, because we dispatched on at least one arg
@@ -594,7 +597,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         protected Object[] evaluateArgs(VirtualFrame frame) {
             return originalCall.explicitArgs != null ? ((RArgsValuesAndNames) originalCall.explicitArgs.execute(frame)).getArguments()
-                            : arguments.evaluateFlattenObjects(frame, originalCall.lookupVarArgs(frame));
+                            : arguments.evaluateFlattenObjects(frame, originalCall.lookupVarArgs(frame, null));
         }
 
         protected Foreign2R getForeign2RNode() {
