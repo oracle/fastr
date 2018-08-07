@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.Eval.EvalEnvCast;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
@@ -51,7 +52,6 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -189,10 +189,11 @@ public class GetFunctions {
             return get(frame, x, (REnvironment) s4ToEnv.execute(s4Envir), mode, inherits);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object get(VirtualFrame frame, String x, int envir, String mode, boolean inherits) {
-            throw RInternalError.unimplemented();
+        protected Object get(VirtualFrame frame, String x, int envir, String mode, boolean inherits,
+                        @Cached("create()") EvalEnvCast envCast) {
+            Object env = envCast.execute(frame, envir, RMissing.instance);
+            return get(frame, x, (REnvironment) env, mode, inherits);
         }
     }
 
@@ -233,10 +234,11 @@ public class GetFunctions {
             return get0(frame, x, (REnvironment) s4ToEnv.execute(s4Envir), mode, inherits, ifnotfound);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected Object get(VirtualFrame frame, String x, int envir, String mode, boolean inherits, Object ifnotfound) {
-            throw RInternalError.unimplemented();
+        protected Object get0(VirtualFrame frame, String x, int envir, String mode, boolean inherits, Object ifnotfound,
+                        @Cached("create()") EvalEnvCast envCast) {
+            Object env = envCast.execute(frame, envir, RMissing.instance);
+            return get0(frame, x, (REnvironment) env, mode, inherits, ifnotfound);
         }
     }
 

@@ -88,6 +88,10 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
         @Child private RList2EnvNode rList2EnvNode;
 
+        public static EvalEnvCast create() {
+            return EvalEnvCastNodeGen.create();
+        }
+
         public abstract REnvironment execute(VirtualFrame frame, Object env, Object enclos);
 
         @Specialization
@@ -148,15 +152,15 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         }
 
         @Specialization
-        protected REnvironment cast(VirtualFrame frame, int envirIn, @SuppressWarnings("unused") Object enclos,
-                        @Cached("create()") SysFrame sysFrameNode) {
-            int envir = envirIn;
-            if (envirIn != 0) {
-                // because we are invoking SysFrame directly and normally SysFrame skips its
-                // .Internal frame
-                envir = envirIn < 0 ? envirIn + 1 : envirIn - 1;
-            }
+        protected REnvironment cast(VirtualFrame frame, int envir, @SuppressWarnings("unused") Object enclos,
+                        @Cached("createSysFrame()") SysFrame sysFrameNode) {
             return sysFrameNode.executeInt(frame, envir);
+        }
+
+        protected static SysFrame createSysFrame() {
+            // SysFrame.create(skipDotInternal=true) because we are invoking SysFrame directly and
+            // normally SysFrame skips its .Internal frame
+            return SysFrame.create(true);
         }
     }
 
