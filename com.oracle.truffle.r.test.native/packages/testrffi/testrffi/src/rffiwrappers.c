@@ -43,20 +43,12 @@
 
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 
-SEXP api_OBJECT(SEXP x) {
-    return ScalarInteger(OBJECT(x));
+SEXP api_Rf_ScalarInteger(SEXP value) {
+    return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
 
 SEXP api_Rf_ScalarLogical(SEXP value) {
     return Rf_ScalarLogical(INTEGER_VALUE(value));
-}
-
-SEXP api_Rf_cons(SEXP car, SEXP cdr) {
-    return Rf_cons(car, cdr);
-}
-
-SEXP api_Rf_ScalarInteger(SEXP value) {
-    return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
 
 SEXP api_Rf_ScalarReal(SEXP value) {
@@ -215,11 +207,8 @@ SEXP api_SET_STRING_ELT(SEXP x, SEXP i, SEXP v) {
 }
 
 SEXP api_SETLENGTH(SEXP x, SEXP l) {
-    return ScalarInteger(SETLENGTH(x, INTEGER_VALUE(l)));
-}
-
-SEXP api_SETTRUELENGTH(SEXP x, SEXP l) {
-    return ScalarInteger(SETTRUELENGTH(x, INTEGER_VALUE(l)));
+    SETLENGTH(x, INTEGER_VALUE(l));
+    return R_NilValue;
 }
 
 SEXP api_SET_TRUELENGTH(SEXP x, SEXP l) {
@@ -1075,18 +1064,6 @@ SEXP api_Rf_ftrunc(SEXP a) {
     return ScalarReal(Rf_ftrunc(NUMERIC_VALUE(a)));
 }
 
-SEXP api_Rf_cospi(SEXP a) {
-    return ScalarReal(Rf_cospi(NUMERIC_VALUE(a)));
-}
-
-SEXP api_Rf_sinpi(SEXP a) {
-    return ScalarReal(Rf_sinpi(NUMERIC_VALUE(a)));
-}
-
-SEXP api_Rf_tanpi(SEXP a) {
-    return ScalarReal(Rf_tanpi(NUMERIC_VALUE(a)));
-}
-
 SEXP api_Rf_namesgets(SEXP vec, SEXP val) {
     return Rf_namesgets(vec, val);
 }
@@ -1122,11 +1099,15 @@ SEXP api_Rf_PrintValue(SEXP value) {
 }
 
 SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName) {
-    return ScalarInteger(R_nchar(R_CHAR(STRING_ELT(string, 0)), INTEGER_VALUE(type), INTEGER_VALUE(allowNA), INTEGER_VALUE(keepNA), R_CHAR(STRING_ELT(msgName, 0))));
+    return ScalarInteger(R_nchar(string, INTEGER_VALUE(type), INTEGER_VALUE(allowNA), INTEGER_VALUE(keepNA), R_CHAR(STRING_ELT(msgName, 0))));
 }
 
 SEXP api_Rf_isObject(SEXP x) {
     return ScalarInteger(Rf_isObject(x));
+}
+
+SEXP api_OBJECT(SEXP x) {
+    return ScalarInteger(OBJECT(x));
 }
 
 #pragma GCC diagnostic pop

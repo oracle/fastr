@@ -38,12 +38,6 @@ SEXP api_Rf_ScalarInteger(SEXP value);
 
 SEXP api_Rf_ScalarLogical(SEXP value);
 
-SEXP api_Rf_cons(SEXP car, SEXP cdr);
-
-SEXP api_Rf_ScalarInteger(SEXP value);
-
-SEXP api_Rf_ScalarLogical(SEXP value);
-
 SEXP api_Rf_ScalarReal(SEXP value);
 
 SEXP api_Rf_ScalarString(SEXP value);
@@ -532,12 +526,6 @@ SEXP api_Rf_fprec(SEXP a, SEXP b);
 
 SEXP api_Rf_ftrunc(SEXP a);
 
-SEXP api_Rf_cospi(SEXP a);
-
-SEXP api_Rf_sinpi(SEXP a);
-
-SEXP api_Rf_tanpi(SEXP a);
-
 SEXP api_Rf_namesgets(SEXP vec, SEXP val);
 
 SEXP api_Rf_copyMostAttrib(SEXP x, SEXP y);
@@ -557,4 +545,6 @@ SEXP api_Rf_PrintValue(SEXP value);
 SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName);
 
 SEXP api_Rf_isObject(SEXP x);
+
+SEXP api_OBJECT(SEXP x);
 
