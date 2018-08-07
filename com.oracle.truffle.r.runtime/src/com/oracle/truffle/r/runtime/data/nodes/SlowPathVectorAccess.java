@@ -521,7 +521,18 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
 
         @Override
         protected final RComplex getComplexImpl(AccessIterator accessIter, int index) {
-            return na.convertStringToComplex(getStringImpl(accessIter, index));
+            String value = getStringImpl(accessIter, index);
+            RComplex complexValue;
+            if (na.check(value) || value.isEmpty()) {
+                complexValue = RComplex.createNA();
+            } else {
+                complexValue = RRuntime.string2complexNoCheck(value);
+                if (complexValue.isNA()) {
+                    na.enable(true);
+                    accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                }
+            }
+            return complexValue;
         }
 
         @Override
