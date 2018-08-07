@@ -518,21 +518,19 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int SETLENGTH(Object x, int l) {
+    public void SETLENGTH(Object x, int l) {
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         vec.setLength(l);
-        return 0;
     }
 
     @Override
-    public int SETTRUELENGTH(Object x, int l) {
+    public void SET_TRUELENGTH(Object x, int l) {
         if (x instanceof CharSXPWrapper) {
             ((CharSXPWrapper) x).setTruelength(l);
-            return 0;
+            return;
         }
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         vec.setTrueLength(l);
-        return 0;
     }
 
     @Override

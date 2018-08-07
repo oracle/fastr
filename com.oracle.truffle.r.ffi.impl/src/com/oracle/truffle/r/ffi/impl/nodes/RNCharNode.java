@@ -26,6 +26,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 
 public abstract class RNCharNode extends FFIUpCallNode.Arg5 {
 
@@ -42,14 +43,15 @@ public abstract class RNCharNode extends FFIUpCallNode.Arg5 {
     }
 
     @Specialization
-    int handleString(String x, int type, @SuppressWarnings("unused") int allowNA, int keepNAIn, @SuppressWarnings("unused") String msgName,
+    int handleString(CharSXPWrapper x, int type, @SuppressWarnings("unused") int allowNA, int keepNAIn, @SuppressWarnings("unused") String msgName,
                     @Cached("createBinaryProfile()") ConditionProfile keepNAProfile) {
         boolean keepNA = keepNAProfile.profile(isNAKeptIn(keepNAIn, type));
         int result;
-        if (RRuntime.isNA(x)) {
+        String s = x.getContents();
+        if (RRuntime.isNA(s)) {
             result = keepNA ? RRuntime.INT_NA : 2;
         } else {
-            result = x.length();
+            result = s.length();
         }
 
         return result;

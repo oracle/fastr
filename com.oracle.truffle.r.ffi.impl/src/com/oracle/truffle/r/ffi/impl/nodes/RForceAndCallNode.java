@@ -26,24 +26,27 @@ import java.util.LinkedList;
 import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.InlineCacheNodeGen;
+import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
@@ -61,16 +64,17 @@ public abstract class RForceAndCallNode extends RBaseNode {
     public abstract Object executeObject(Object e, Object f, int n, Object env);
 
     @Specialization
-    Object forceAndCall(Object e, RFunction fun, int n, REnvironment env) {
+    Object forceAndCall(Object e, RFunction fun, int n, REnvironment env,
+                    @Cached("createClassProfile()") ValueProfile accessProfile) {
         Object el = ((RPairList) e).cdr();
         List<Object> argValues = new LinkedList<>();
         RArgsValuesAndNames dotArgs = null;
         while (el != RNull.instance) {
             assert el instanceof RPairList;
             Object arg = ((RPairList) el).car();
-            Object argVal = null;
+            Object argVal = arg;
             if (arg instanceof RSymbol) {
-                Object a = env.get(((RSymbol) arg).getName());
+                Object a = ReadVariableNode.lookupAny(((RSymbol) arg).getName(), env.getFrame(accessProfile), false);
                 if (a instanceof RArgsValuesAndNames) {
                     dotArgs = (RArgsValuesAndNames) a;
                 } else {
@@ -80,12 +84,9 @@ public abstract class RForceAndCallNode extends RBaseNode {
             } else if (arg instanceof RPairList) {
                 RPairList argPL = (RPairList) arg;
                 argPL = RDataFactory.createPairList(argPL.car(), argPL.cdr(), argPL.getTag(), SEXPTYPE.LANGSXP);
-                final Closure argClosure = argPL.getClosure();
-                argVal = closureEvalNode.execute(env.getFrame(), argClosure);
+                argVal = RDataFactory.createPromise(PromiseState.Supplied, argPL.getClosure(), env.getFrame());
             }
-            if (argVal != null) {
-                argValues.add(argVal);
-            }
+            argValues.add(argVal);
             el = ((RPairList) el).cdr();
         }
 
@@ -106,10 +107,10 @@ public abstract class RForceAndCallNode extends RBaseNode {
 
     private static RArgsValuesAndNames createArgsAndNames(List<Object> argValues, RArgsValuesAndNames dotArgs) {
         final RArgsValuesAndNames argsAndNames;
-        Object[] argValuesEx = new Object[argValues.size() + dotArgs.getLength()];
-        String[] argNamesEx = new String[argValues.size() + dotArgs.getLength()];
-        System.arraycopy(argValues.toArray(), 0, argValuesEx, 0, argValues.size());
-        System.arraycopy(dotArgs.getArguments(), 0, argValuesEx, argValues.size(), dotArgs.getLength());
+        Object[] argValuesEx = new Object[argValues.size() + dotArgs.getLength() - 1];
+        String[] argNamesEx = new String[argValues.size() + dotArgs.getLength() - 1];
+        System.arraycopy(argValues.toArray(), 0, argValuesEx, 0, argValues.size() - 1);
+        System.arraycopy(dotArgs.getArguments(), 0, argValuesEx, argValues.size() - 1, dotArgs.getLength());
         final String[] argNames = dotArgs.getSignature().getNames();
         if (argNames != null) {
             System.arraycopy(argNames, 0, argNamesEx, argValues.size(), dotArgs.getLength());
@@ -127,13 +128,13 @@ public abstract class RForceAndCallNode extends RBaseNode {
         // In GnuR there appears to be no error checks on n > args.length
         if (args.getLength() < n) {
             CompilerDirectives.transferToInterpreter();
-            throw RError.nyi(this, "callAndForce with insufficient arguments");
+            throw RError.nyi(this, "forceAndCall with insufficient arguments");
         }
         for (int i = 0; i < n; i++) {
             Object arg = args.getArgument(i);
             if (arg instanceof RArgsValuesAndNames) {
                 CompilerDirectives.transferToInterpreter();
-                throw RError.nyi(this, "callAndForce trying to force varargs");
+                throw RError.nyi(this, "forceAndCall trying to force varargs");
             }
             if (arg instanceof RPromise) {
                 promiseHelper.evaluate(frame, (RPromise) arg);

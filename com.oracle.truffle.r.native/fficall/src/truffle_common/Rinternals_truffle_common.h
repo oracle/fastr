@@ -1011,7 +1011,7 @@ void SETLENGTH(SEXP x, int v) {
 
 void SET_TRUELENGTH(SEXP x, int v) {
     TRACE0();
-    ((call_SET_TRUELENGTH) callbacks[SETTRUELENGTH_x])(x, v);
+    ((call_SET_TRUELENGTH) callbacks[SET_TRUELENGTH_x])(x, v);
 }
 
 R_xlen_t XLENGTH(SEXP x) {
@@ -1770,7 +1770,7 @@ DL_FUNC R_FindSymbol(char const *name, char const *pkg, R_RegisteredNativeSymbol
 
 int R_nchar(SEXP string, nchar_type type_, Rboolean allowNA, Rboolean keepNA, const char* msg_name) {	    
     TRACE0();
-	int res = ((call_R_nchar) callbacks[R_nchar_x])(string, type_, allowNA, keepNA, msg_name);
+	int res = ((call_R_nchar) callbacks[R_nchar_x])(string, type_, allowNA, keepNA, ensure_string(msg_name));
     checkExitCall();
 	return res;
 }

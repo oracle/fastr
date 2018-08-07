@@ -251,9 +251,9 @@ public interface StdUpCallsRFFI {
 
     void SET_STRING_ELT(Object x, long i, Object v);
 
-    int /* void */ SETLENGTH(Object x, int l);
+    void SETLENGTH(Object x, int l);
 
-    int /* void */ SETTRUELENGTH(Object x, int l);
+    void SET_TRUELENGTH(Object x, int l);
 
     @RFFIUpCallNode(TRUELENGTHNode.class)
     int TRUELENGTH(Object x);
@@ -917,7 +917,7 @@ public interface StdUpCallsRFFI {
     void Rf_PrintValue(Object value);
 
     @RFFIUpCallNode(RNCharNode.class)
-    int R_nchar(@RFFICstring Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName);
+    int R_nchar(Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName);
 
     @RFFIUpCallNode(RForceAndCallNode.class)
     Object R_forceAndCall(Object e, Object f, int n, Object args);
