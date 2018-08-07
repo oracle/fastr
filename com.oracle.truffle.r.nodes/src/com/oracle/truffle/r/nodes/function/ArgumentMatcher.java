@@ -153,17 +153,17 @@ public class ArgumentMatcher {
     public static Arguments<RNode> matchArguments(RRootNode target, CallArgumentsNode arguments, ArgumentsSignature varArgSignature, S3DefaultArguments s3DefaultArguments, RBaseNode callingNode,
                     boolean noOpt) {
         CompilerAsserts.neverPartOfCompilation();
-        assert arguments.containsVarArgsSymbol() == (varArgSignature != null);
+        assert !RBuiltinDescriptor.lookupVarArgs(target.getBuiltin()) || arguments.containsVarArgsSymbol() == (varArgSignature != null);
 
         RNode[] argNodes;
         ArgumentsSignature signature;
-        if (!arguments.containsVarArgsSymbol()) {
-            argNodes = arguments.getArguments();
-            signature = arguments.getSignature();
-        } else {
+        if (arguments.containsVarArgsSymbol() && RBuiltinDescriptor.lookupVarArgs(target.getBuiltin())) {
             Arguments<RNode> suppliedArgs = arguments.unrollArguments(varArgSignature);
             argNodes = suppliedArgs.getArguments();
             signature = suppliedArgs.getSignature();
+        } else {
+            argNodes = arguments.getArguments();
+            signature = arguments.getSignature();
         }
         return ArgumentMatcher.matchNodes(target, argNodes, signature, s3DefaultArguments, callingNode, arguments.getClosureCache(), noOpt);
     }

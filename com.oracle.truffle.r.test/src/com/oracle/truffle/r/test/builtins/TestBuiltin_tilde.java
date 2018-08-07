@@ -39,6 +39,9 @@ public class TestBuiltin_tilde extends TestBase {
         assertEval("~ x + y");
         assertEval("x ~ y + z");
         assertEval("y ~ 0 + x");
+        assertEval("... ~ 0 + x");
+        assertEval("y ~ ...");
+        assertEval("y ~ ... + 2");
     }
 
     @Test
