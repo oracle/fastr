@@ -45,6 +45,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
+import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -517,21 +518,19 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int SETLENGTH(Object x, int l) {
+    public void SETLENGTH(Object x, int l) {
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         vec.setLength(l);
-        return 0;
     }
 
     @Override
-    public int SETTRUELENGTH(Object x, int l) {
+    public void SET_TRUELENGTH(Object x, int l) {
         if (x instanceof CharSXPWrapper) {
             ((CharSXPWrapper) x).setTruelength(l);
-            return 0;
+            return;
         }
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         vec.setTrueLength(l);
-        return 0;
     }
 
     @Override
@@ -553,6 +552,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             throw RInternalError.shouldNotReachHere("Not yet implemented - CharSXPWrapper has to implement RTypedValue!");
         }
         throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void SETLEVELS(Object x, int gpbits) {
+        if (x instanceof RTypedValue) {
+            ((RTypedValue) x).setGPBits(gpbits);
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    @TruffleBoundary
+    public int Rf_isObject(Object x) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1004,6 +1018,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             result = RNull.instance;
         }
         return result;
+    }
+
+    @Override
+    @TruffleBoundary
+    public void SET_ENCLOS(Object x, Object enc) {
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
+        REnvironment enclosing = guaranteeInstanceOf(enc, REnvironment.class);
+        env.setParent(enclosing);
     }
 
     @Override
@@ -2366,6 +2388,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void Rf_PrintValue(Object value) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int R_nchar(@RFFICstring Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object R_forceAndCall(Object e, Object f, int n, Object args) {
         throw implementedAsNode();
     }
 

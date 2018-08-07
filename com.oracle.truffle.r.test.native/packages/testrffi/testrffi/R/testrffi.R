@@ -232,3 +232,11 @@ rffi.testDATAPTR <- function(strings, testSingleString) {
 rffi.test_duplicate <- function(val, deep) {
 	.Call('test_duplicate', val, deep)
 }
+
+rffi.test_R_nchar <- function(x) {
+	.Call('test_R_nchar', x)
+}
+
+rffi.test_forceAndCall <- function(call, args, rho) {
+	.Call('test_forceAndCall', call, args, rho)
+}

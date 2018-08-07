@@ -492,8 +492,9 @@ Rboolean Rf_inherits(SEXP x, const char * klass) {
 
 Rboolean Rf_isObject(SEXP s) {
     TRACE0();
-    unimplemented("Rf_isObject");
-    return FALSE;
+    Rboolean result = (Rboolean) ((call_Rf_isObject) callbacks[Rf_isObject_x])(s);
+    checkExitCall();
+    return result;
 }
 
 void Rf_PrintValue(SEXP x) {
@@ -918,6 +919,12 @@ SEXP ENCLOS(SEXP x) {
     return result;
 }
 
+void SET_ENCLOS(SEXP x, SEXP v) {
+    TRACE0();
+    ((call_SET_ENCLOS) callbacks[SET_ENCLOS_x])(x, v);
+    checkExitCall();
+}
+
 SEXP HASHTAB(SEXP x) {
     TRACE0();
     return unimplemented("HASHTAB");
@@ -937,11 +944,6 @@ void SET_ENVFLAGS(SEXP x, int v) {
 void SET_FRAME(SEXP x, SEXP v) {
     TRACE0();
     unimplemented("SET_FRAME");
-}
-
-void SET_ENCLOS(SEXP x, SEXP v) {
-    TRACE0();
-    unimplemented("SET_ENCLOS");
 }
 
 void SET_HASHTAB(SEXP x, SEXP v) {
@@ -1009,7 +1011,7 @@ void SETLENGTH(SEXP x, int v) {
 
 void SET_TRUELENGTH(SEXP x, int v) {
     TRACE0();
-    ((call_SET_TRUELENGTH) callbacks[SETTRUELENGTH_x])(x, v);
+    ((call_SET_TRUELENGTH) callbacks[SET_TRUELENGTH_x])(x, v);
 }
 
 R_xlen_t XLENGTH(SEXP x) {
@@ -1035,10 +1037,10 @@ int LEVELS(SEXP x) {
     return ((call_LEVELS) callbacks[LEVELS_x])(x);
 }
 
-int SETLEVELS(SEXP x, int v) {
+int SETLEVELS(SEXP x, int gpbits) {
     TRACE0();
-    unimplemented("SETLEVELS");
-    return 0;
+	((call_SETLEVELS) callbacks[SETLEVELS_x])(x, gpbits);
+    return gpbits;
 }
 
 int *FASTR_DATAPTR(SEXP x) {
@@ -1430,7 +1432,21 @@ SEXP R_ClosureExpr(SEXP x) {
 
 SEXP R_forceAndCall(SEXP e, int n, SEXP rho) {
     TRACE0();
-    return unimplemented("R_forceAndCall");
+    
+	SEXP fun;
+    if (TYPEOF(CAR(e)) == SYMSXP) {
+		PROTECT(fun = findFun(CAR(e), rho));
+    } else {
+		PROTECT(fun = eval(CAR(e), rho));
+    }
+    
+	SEXP res = ((call_R_forceAndCall) callbacks[R_forceAndCall_x])(e, fun, n, rho);
+
+	UNPROTECT(1);
+
+    checkExitCall();
+
+    return res;
 }
 
 SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
@@ -1441,7 +1457,6 @@ SEXP R_MakeExternalPtr(void *p, SEXP tag, SEXP prot) {
 }
 
 void *R_ExternalPtrAddr(SEXP s) {
-
     TRACE0();
     SEXP result = ((call_R_ExternalPtrAddr) callbacks[R_ExternalPtrAddr_x])(s);
     checkExitCall();
@@ -1751,4 +1766,11 @@ DL_FUNC R_GetCCallable(const char *package, const char *name) {
 DL_FUNC R_FindSymbol(char const *name, char const *pkg, R_RegisteredNativeSymbol *symbol) {
     TRACE0();
     return unimplemented("R_FindSymbol");
+}
+
+int R_nchar(SEXP string, nchar_type type_, Rboolean allowNA, Rboolean keepNA, const char* msg_name) {	    
+    TRACE0();
+	int res = ((call_R_nchar) callbacks[R_nchar_x])(string, type_, allowNA, keepNA, ensure_string(msg_name));
+    checkExitCall();
+	return res;
 }

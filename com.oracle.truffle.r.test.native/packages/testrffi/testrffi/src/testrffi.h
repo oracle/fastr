@@ -127,3 +127,6 @@ extern SEXP test_DATAPTR(SEXP,SEXP);
 
 extern SEXP test_duplicate(SEXP, SEXP);
 
+extern SEXP test_R_nchar(SEXP x);
+
+extern SEXP test_forceAndCall(SEXP call, SEXP args, SEXP rho);

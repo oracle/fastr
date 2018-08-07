@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.RError;
 import static com.oracle.truffle.r.runtime.RError.Message.MATCH_VECTOR_ARGS;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -69,6 +70,14 @@ public final class MatchNodes {
                 return RRuntime.LOGICAL_FALSE;
             }
             return RRuntime.asLogical(s.getDataAt(0).equals(t.getDataAt(0)));
+        }
+
+        @Specialization
+        Object match(CharSXPWrapper s, CharSXPWrapper t) {
+            if (s.getContents() == RRuntime.STRING_NA || t.getContents() == RRuntime.STRING_NA) {
+                return RRuntime.LOGICAL_FALSE;
+            }
+            return RRuntime.asLogical(s.getContents().equals(t.getContents()));
         }
 
         @Fallback

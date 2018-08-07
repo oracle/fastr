@@ -84,7 +84,7 @@ public final class LocalReadVariableNode extends Node {
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
         Frame profiledVariableFrame = frameProfile.profile(variableFrame);
-        if (frameSlot == null && notInFrame == null) {
+        if (frameSlot == null && notInFrame == null || (frameSlot != null && frameSlot.getFrameDescriptor() != variableFrame.getFrameDescriptor())) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (identifier.toString().isEmpty()) {
                 throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);

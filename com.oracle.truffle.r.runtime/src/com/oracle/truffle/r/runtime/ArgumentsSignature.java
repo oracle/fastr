@@ -45,7 +45,7 @@ public final class ArgumentsSignature implements Iterable<String> {
      *
      * Note we intentionally use invalid argument name.
      */
-    public static final String UNMATCHED = "^";
+    public static final String UNMATCHED = "<<UNMATCHED>>";
     public static final String VARARG_NAME = "...";
     public static final int[] EMPTY_VARARGS_INDEXES = new int[0];
     public static final int NO_VARARG = -1;
