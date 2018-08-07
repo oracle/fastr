@@ -22,7 +22,9 @@
 #
 stopifnot(require(methods))
 stopifnot(require(tests4))
-setClass("User", representation(name = "character", pin = "numeric"))
-setClass("SuperUser", representation(lastLogin = "numeric", adminOf = "User"), contains = "User")
-print(new("User", name = "username", pin = 3121))
 
+tests4:::processOrder(new("Laptop", name = 'super T500', price=444), new("LicensingProcessor"))
+tests4:::processOrder(new("TV", name = 'mega TV v2', price=4455), new("LicensingProcessor"))
+
+tests4:::processOrder(new("TV", name = 'mega TV', price=445), new("OrderProcessor"))
+tests4:::processOrder(new("Laptop", name = 'super T501', price=4444), new("OrderProcessor"))
