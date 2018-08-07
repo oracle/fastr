@@ -34,10 +34,6 @@
 #include <R_ext/Connections.h>
 #include <Rmath.h>
 
-SEXP api_OBJECT(SEXP x);
-
-SEXP api_Rf_cons(SEXP car, SEXP cdr);
-
 SEXP api_Rf_ScalarInteger(SEXP value);
 
 SEXP api_Rf_ScalarLogical(SEXP value);
@@ -57,6 +53,8 @@ SEXP api_Rf_asChar(SEXP x);
 SEXP api_Rf_coerceVector(SEXP x, SEXP mode);
 
 SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding);
+
+SEXP api_Rf_cons(SEXP car, SEXP cdr);
 
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg);
 
@@ -547,4 +545,6 @@ SEXP api_Rf_PrintValue(SEXP value);
 SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName);
 
 SEXP api_Rf_isObject(SEXP x);
+
+SEXP api_OBJECT(SEXP x);
 

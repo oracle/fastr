@@ -1,3 +1,4 @@
+# Note: taken from GNU-R sources tests/Embedding
 foo <-
 function(...)
 {

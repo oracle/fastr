@@ -1,4 +1,5 @@
-# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+#
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -18,4 +19,12 @@
 # Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
 # or visit www.oracle.com if you need additional information or have any
 # questions.
-(sum(M) - r + i) / count
+#
+stopifnot(require(methods))
+stopifnot(require(tests4))
+
+tests4:::processOrder(new("Laptop", name = 'super T500', price=444), new("LicensingProcessor"))
+tests4:::processOrder(new("TV", name = 'mega TV v2', price=4455), new("LicensingProcessor"))
+
+tests4:::processOrder(new("TV", name = 'mega TV', price=445), new("OrderProcessor"))
+tests4:::processOrder(new("Laptop", name = 'super T501', price=4444), new("OrderProcessor"))

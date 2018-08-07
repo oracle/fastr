@@ -66,28 +66,7 @@ public class TestRBase extends TestBase {
             String entryValue = entry.getValue();
             explicitTestContext = entryName;
             String[] lines = entryValue.split("\n");
-            String l = lines[0].trim();
-            TestTrait testTrait = null;
-            if (l.startsWith("#")) {
-                // check the first line for configuration options
-                if (l.contains("IgnoreErrorContext")) {
-                    testTrait = Output.IgnoreErrorContext;
-                } else if (l.contains("IgnoreWarningContext")) {
-                    testTrait = Output.IgnoreWarningContext;
-                } else if (l.contains("IgnoreWarningMessage")) {
-                    testTrait = Output.IgnoreWarningMessage;
-                } else if (l.contains("Ignored")) {
-                    for (Ignored ignoredType : Ignored.values()) {
-                        if (l.contains("Ignored." + ignoredType.name())) {
-                            testTrait = ignoredType;
-                            break;
-                        }
-                    }
-                    if (testTrait == null) {
-                        testTrait = Ignored.Unknown; // Retain old way for compatibility
-                    }
-                }
-            }
+            TestTrait testTrait = getTestTrait(lines);
             try {
                 Path dir = TestBase.createTestDir(getTestDir());
                 Path p = dir.resolve(Paths.get(entryName).getFileName());
@@ -102,5 +81,30 @@ public class TestRBase extends TestBase {
             }
             explicitTestContext = null;
         }
+    }
+
+    private static TestTrait getTestTrait(String[] lines) {
+        for (int i = 0; i < lines.length; i++) {
+            String l = lines[i].trim();
+            if (!l.startsWith("#")) {
+                return null;
+            }
+            // check the first line for configuration options
+            if (l.contains("IgnoreErrorContext")) {
+                return Output.IgnoreErrorContext;
+            } else if (l.contains("IgnoreWarningContext")) {
+                return Output.IgnoreWarningContext;
+            } else if (l.contains("IgnoreWarningMessage")) {
+                return Output.IgnoreWarningMessage;
+            } else if (l.contains("Ignored")) {
+                for (Ignored ignoredType : Ignored.values()) {
+                    if (l.contains("Ignored." + ignoredType.name())) {
+                        return ignoredType;
+                    }
+                }
+                return Ignored.Unknown; // Retain old way for compatibility
+            }
+        }
+        return null;
     }
 }
