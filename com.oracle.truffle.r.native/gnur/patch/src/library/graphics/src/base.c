@@ -387,14 +387,12 @@ GPar* gpptr(pGEDevDesc dd) {
     return &(bss->gp);
 }
 
-/* It's already defined in src/main/devices.c
 GPar* dpptr(pGEDevDesc dd) {
     if (baseRegisterIndex == -1)
 	error(_("the base graphics system is not registered"));
     baseSystemState *bss = dd->gesd[baseRegisterIndex]->systemSpecific;
     return &(bss->dp);
 }
-*/
 
 /* called in GNewPlot to mark device as 'dirty' */
 void Rf_setBaseDevice(Rboolean val, pGEDevDesc dd) {

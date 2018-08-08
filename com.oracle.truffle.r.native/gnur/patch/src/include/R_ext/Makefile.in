@@ -15,6 +15,7 @@ distdir = $(top_builddir)/$(PACKAGE)-$(VERSION)/$(subdir)
 ## Partially included by the API (1) headers in .., but not part of the
 ## API per se. 
 R_EXT_HEADERS = \
+  Altrep.h \
   Applic.h Arith.h BLAS.h Boolean.h Callbacks.h Complex.h Connections.h \
   Constants.h Error.h GetX11Image.h \
   GraphicsDevice.h GraphicsEngine.h Itermacros.h \
@@ -56,7 +57,7 @@ installdirs:
 install-strip:
 	$(MAKE) INSTALL_PROGRAM="${INSTALL_PROGRAM} -s" install
 uninstall:
-	@rm -rf "$(DESTDIR)$(rincludedir)/R_ext"
+	@rm -Rf "$(DESTDIR)$(rincludedir)/R_ext"
 
 mostlyclean: clean
 clean:

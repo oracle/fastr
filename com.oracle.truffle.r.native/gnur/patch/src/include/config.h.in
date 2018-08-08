@@ -380,6 +380,9 @@
 /* Define if you have the `iconvlist' function. */
 #undef HAVE_ICONVLIST
 
+/* Define if `iconv' accepts "CP1252". */
+#undef HAVE_ICONV_CP1252
+
 /* Define to 1 if you have the <iconv.h> header file. */
 #undef HAVE_ICONV_H
 
@@ -576,6 +579,9 @@
 /* Define to 1 if you have pangocairo. */
 #undef HAVE_PANGOCAIRO
 
+/* Define if your system has pcre2. */
+#undef HAVE_PCRE2
+
 /* Define to 1 if you have the <pcre.h> header file. */
 #undef HAVE_PCRE_H
 
@@ -636,9 +642,6 @@
 /* Define to 1 if you have the `realpath' function. */
 #undef HAVE_REALPATH
 
-/* Define to 1 if you have the `rint' function. */
-#undef HAVE_RINT
-
 /* Define to 1 if you have the `rintl' function. */
 #undef HAVE_RINTL
 
@@ -674,6 +677,9 @@
 
 /* Define to 1 if you have the `setlocale' function. */
 #undef HAVE_SETLOCALE
+
+/* Define to 1 if you have the `setrlimit' function. */
+#undef HAVE_SETRLIMIT
 
 /* Define to 1 if you have the `sigaction' function. */
 #undef HAVE_SIGACTION
@@ -805,6 +811,12 @@
    to be built. */
 #undef HAVE_TCLTK
 
+/* Define to 1 if you have the <thread.h> header file. */
+#undef HAVE_THREAD_H
+
+/* Define to 1 if you have the `thr_stksegment' function. */
+#undef HAVE_THR_STKSEGMENT
+
 /* Define this if libtiff is available. */
 #undef HAVE_TIFF
 
@@ -931,6 +943,9 @@
 /* Define if calloc(0) returns a null pointer. */
 #undef HAVE_WORKING_CALLOC
 
+/* Define if ctanh() exists and is working correctly. */
+#undef HAVE_WORKING_CTANH
+
 /* Define if your ftell works correctly on files opened for append. */
 #undef HAVE_WORKING_FTELL
 
@@ -977,6 +992,9 @@
 /* Define to the sub-directory where libtool stores uninstalled libraries. */
 #undef LT_OBJDIR
 
+/* macOS 10.12 (Sierra) or earlier */
+#undef MACOS_SIERRA
+
 /* Define if mktime sets errno. */
 #undef MKTIME_SETS_ERRNO
 
@@ -1009,6 +1027,9 @@
 
 /* Define to the version of this package. */
 #undef PACKAGE_VERSION
+
+/* PCRE2 code unit width wanted. */
+#undef PCRE2_CODE_UNIT_WIDTH
 
 /* Define if <inttypes.h> exists and defines unusable PRI* macros. (For intl)
    */

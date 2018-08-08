@@ -1,6 +1,6 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
- *  Copyright (C) 1995--2017  The R Core Team.
+ *  Copyright (C) 1995--2018  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -128,9 +128,7 @@ void R_CheckUserInterrupt(void)
        concurrency support. LT */
 
     R_ProcessEvents(); /* Also processes timing limits */
-#ifndef Win32
     if (R_interrupts_pending) onintr();
-#endif
 }
 
 static SEXP getInterruptCondition();
@@ -605,6 +603,8 @@ static SEXP GetSrcLoc(SEXP srcref)
 
 static char errbuf[BUFSIZE];
 
+#define ERRBUFCAT(txt) strncat(errbuf, txt, BUFSIZE - 1 - strlen(errbuf))
+
 const char *R_curErrorBuf() {
     return (const char *)errbuf;
 }
@@ -707,18 +707,18 @@ verrorcall_dflt(SEXP call, const char *format, va_list ap)
 		    *p = '\n';
 		} else msgline1 = wd(tmp);
 		if (14 + wd(dcall) + msgline1 > LONGWARN)
-		    strcat(errbuf, tail);
+		    ERRBUFCAT(tail);
 	    } else {
 		size_t msgline1 = strlen(tmp);
 		char *p = strchr(tmp, '\n');
 		if (p) msgline1 = (int)(p - tmp);
 		if (14 + strlen(dcall) + msgline1 > LONGWARN)
-		    strcat(errbuf, tail);
+		    ERRBUFCAT(tail);
 	    }
-	    strcat(errbuf, tmp);
+	    ERRBUFCAT(tmp);
 	} else {
 	    snprintf(errbuf, BUFSIZE, _("Error: "));
-	    strcat(errbuf, tmp); // FIXME
+	    ERRBUFCAT(tmp); // FIXME
 	}
 	UNPROTECT(protected);
     }
@@ -728,17 +728,26 @@ verrorcall_dflt(SEXP call, const char *format, va_list ap)
 	Rvsnprintf(p, min(BUFSIZE, R_WarnLength) - strlen(errbuf), format, ap);
     }
 
-    p = errbuf + strlen(errbuf) - 1;
-    if(*p != '\n') strcat(errbuf, "\n");
+    size_t nc = strlen(errbuf);
+    if (nc == BUFSIZE - 1) {
+	errbuf[BUFSIZE - 4] = '.';
+	errbuf[BUFSIZE - 3] = '.';
+	errbuf[BUFSIZE - 2] = '.';
+	errbuf[BUFSIZE - 1] = '\n';
+    }
+    else {
+	p = errbuf + nc - 1;
+	if(*p != '\n') ERRBUFCAT("\n");
+    }
 
     if(R_ShowErrorCalls && call != R_NilValue) {  /* assume we want to avoid deparse */
 	tr = R_ConciseTraceback(call, 0);
 	size_t nc = strlen(tr);
 	if (nc && nc + strlen(errbuf) + 8 < BUFSIZE) {
-	    strcat(errbuf, _("Calls:"));
-	    strcat(errbuf, " ");
-	    strcat(errbuf, tr);
-	    strcat(errbuf, "\n");
+	    ERRBUFCAT(_("Calls:"));
+	    ERRBUFCAT(" ");
+	    ERRBUFCAT(tr);
+	    ERRBUFCAT("\n");
 	}
     }
     if (R_ShowErrorMessages) REprintf("%s", errbuf);
@@ -806,12 +815,11 @@ void NORET errorcall_cpy(SEXP call, const char *format, ...)
     errorcall(call, "%s", buf);
 }
 
+// geterrmessage(): Return (the global) 'errbuf' as R string
 SEXP attribute_hidden do_geterrmessage(SEXP call, SEXP op, SEXP args, SEXP env)
 {
-    SEXP res;
-
     checkArity(op, args);
-    PROTECT(res = allocVector(STRSXP, 1));
+    SEXP res = PROTECT(allocVector(STRSXP, 1));
     SET_STRING_ELT(res, 0, mkChar(errbuf));
     UNPROTECT(1);
     return res;
@@ -1300,7 +1308,7 @@ void WarningMessage(SEXP call, R_WARNING which_warn, ...)
     }
 
 /* clang pre-3.9.0 says
-      warning: passing an object that undergoes default argument promotion to 
+      warning: passing an object that undergoes default argument promotion to
       'va_start' has undefined behavior [-Wvarargs]
 */
     va_start(ap, which_warn);
@@ -1398,7 +1406,7 @@ SEXP R_GetTraceback(int skip)
 	    if (skip > 0)
 		skip--;
 	    else {
-		SETCAR(t, deparse1(c->call, 0, DEFAULTDEPARSE));
+		SETCAR(t, deparse1m(c->call, 0, DEFAULTDEPARSE));
 		if (c->srcref && !isNull(c->srcref)) {
 		    SEXP sref;
 		    if (c->srcref == R_InBCInterpreter)
@@ -1511,13 +1519,41 @@ static SEXP mkHandlerEntry(SEXP klass, SEXP parentenv, SEXP handler, SEXP rho,
 #define ENTRY_TARGET_ENVIR(e) VECTOR_ELT(e, 3)
 #define ENTRY_RETURN_RESULT(e) VECTOR_ELT(e, 4)
 
-#define RESULT_SIZE 3
+#define RESULT_SIZE 4
+
+static SEXP R_HandlerResultToken = NULL;
+
+void attribute_hidden R_FixupExitingHandlerResult(SEXP result)
+{
+    /* The internal error handling mechanism stores the error message
+       in 'errbuf'.  If an on.exit() action is processed while jumping
+       to an exiting handler for such an error, then endcontext()
+       calls R_FixupExitingHandlerResult to save the error message
+       currently in the buffer before processing the on.exit
+       action. This is in case an error occurs in the on.exit action
+       that over-writes the buffer. The allocation should occur in a
+       more favorable stack context than before the jump. The
+       R_HandlerResultToken is used to make sure the result being
+       modified is associated with jumping to an exiting handler. */
+    if (result != NULL &&
+	TYPEOF(result) == VECSXP &&
+	XLENGTH(result) == RESULT_SIZE &&
+	VECTOR_ELT(result, 0) == R_NilValue &&
+	VECTOR_ELT(result, RESULT_SIZE - 1) == R_HandlerResultToken) {
+	SET_VECTOR_ELT(result, 0, mkString(errbuf));
+    }
+}
 
 SEXP attribute_hidden do_addCondHands(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
     SEXP classes, handlers, parentenv, target, oldstack, newstack, result;
     int calling, i, n;
     PROTECT_INDEX osi;
+
+    if (R_HandlerResultToken == NULL) {
+	R_HandlerResultToken = allocVector(VECSXP, 1);
+	R_PreserveObject(R_HandlerResultToken);
+    }
 
     checkArity(op, args);
 
@@ -1538,6 +1574,7 @@ SEXP attribute_hidden do_addCondHands(SEXP call, SEXP op, SEXP args, SEXP rho)
     oldstack = R_HandlerStack;
 
     PROTECT(result = allocVector(VECSXP, RESULT_SIZE));
+    SET_VECTOR_ELT(result, RESULT_SIZE - 1, R_HandlerResultToken);
     PROTECT_WITH_INDEX(newstack = oldstack, &osi);
 
     for (i = n - 1; i >= 0; i--) {
@@ -2016,6 +2053,7 @@ typedef struct {
     void *hdata;
     void (*finally)(void *);
     void *fdata;
+    int suspended;
 } tryCatchData_t;
 
 static SEXP default_tryCatch_handler(SEXP cond, void *data)
@@ -2054,22 +2092,32 @@ SEXP R_tryCatch(SEXP (*body)(void *), void *bdata,
 					      R_BaseNamespace);
 	R_PreserveObject(trycatch_callback);
     }
-    
+
     tryCatchData_t tcd = {
 	.body = body,
 	.bdata = bdata,
 	.handler = handler != NULL ? handler : default_tryCatch_handler,
 	.hdata = hdata,
 	.finally = finally != NULL ? finally : default_tryCatch_finally,
-	.fdata = fdata
+	.fdata = fdata,
+	.suspended = R_interrupts_suspended
     };
 
+    /* Interrupts are suspended while in the infrastructure R code and
+       enabled, if the were on entry to R_TryCatch, while calling the
+       body function in do_tryCatchHelper */
+
+    R_interrupts_suspended = TRUE;
+
+    if (conds == NULL) conds = allocVector(STRSXP, 0);
+    PROTECT(conds);
     SEXP fin = finally != NULL ? R_TrueValue : R_FalseValue;
     SEXP tcdptr = R_MakeExternalPtr(&tcd, R_NilValue, R_NilValue);
     SEXP expr = lang4(trycatch_callback, tcdptr, conds, fin);
     PROTECT(expr);
     SEXP val = eval(expr, R_GlobalEnv);
-    UNPROTECT(1); /* expr */
+    UNPROTECT(2); /* conds, expr */
+    R_interrupts_suspended = tcd.suspended;
     return val;
 }
 
@@ -2078,7 +2126,7 @@ SEXP do_tryCatchHelper(SEXP call, SEXP op, SEXP args, SEXP env)
     SEXP eptr = CAR(args);
     SEXP sw = CADR(args);
     SEXP cond = CADDR(args);
-    
+
     if (TYPEOF(eptr) != EXTPTRSXP)
 	error("not an external pointer");
 
@@ -2086,7 +2134,20 @@ SEXP do_tryCatchHelper(SEXP call, SEXP op, SEXP args, SEXP env)
 
     switch (asInteger(sw)) {
     case 0:
-	return ptcd->body(ptcd->bdata);
+	if (ptcd->suspended)
+	    /* Interrupts were suspended for the call to R_TryCatch,
+	       so leave them that way */
+	    return ptcd->body(ptcd->bdata);
+	else {
+	    /* Interrupts were not suspended for the call to
+	       R_TryCatch, but were suspended for the call through
+	       R. So enable them for the body and suspend again on the
+	       way out. */
+	    R_interrupts_suspended = FALSE;
+	    SEXP val = ptcd->body(ptcd->bdata);
+	    R_interrupts_suspended = TRUE;
+	    return val;
+	}
     case 1:
 	if (ptcd->handler != NULL)
 	    return ptcd->handler(cond, ptcd->hdata);
