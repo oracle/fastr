@@ -167,4 +167,10 @@ public class TestBuiltin_namesassign extends TestBase {
     public void testUpdateDimnamesPairlist() {
         assertEval("{ l <- vector('pairlist',2); names(l)<-c('a','b'); l; }");
     }
+
+    @Test
+    public void testUpdateNamesByFactors() {
+        assertEval("{ x <- c(1,2,1,3); f <- factor(x, labels = c(\"a\",\"b\",\"c\")); names(x)<-f; x; }");
+    }
+
 }

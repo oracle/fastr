@@ -26,6 +26,7 @@ import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -59,6 +60,7 @@ public final class LocalReadVariableNode extends Node {
     @CompilationFinal private ConditionProfile isPromiseProfile;
 
     @CompilationFinal private FrameSlot frameSlot;
+    @CompilationFinal private FrameDescriptor frameDescriptor;
     @CompilationFinal private Assumption notInFrame;
     @CompilationFinal private Assumption containsNoActiveBindingAssumption;
 
@@ -84,12 +86,13 @@ public final class LocalReadVariableNode extends Node {
 
     public Object execute(VirtualFrame frame, Frame variableFrame) {
         Frame profiledVariableFrame = frameProfile.profile(variableFrame);
-        if (frameSlot == null && notInFrame == null || (frameSlot != null && frameSlot.getFrameDescriptor() != variableFrame.getFrameDescriptor())) {
+        if (frameSlot == null && notInFrame == null || (frameSlot != null && frameDescriptor != variableFrame.getFrameDescriptor())) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (identifier.toString().isEmpty()) {
                 throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             }
-            frameSlot = profiledVariableFrame.getFrameDescriptor().findFrameSlot(identifier);
+            frameDescriptor = profiledVariableFrame.getFrameDescriptor();
+            frameSlot = frameDescriptor.findFrameSlot(identifier);
             notInFrame = frameSlot == null ? profiledVariableFrame.getFrameDescriptor().getNotInFrameAssumption(identifier) : null;
         }
         // check if the slot is missing / wrong type in current frame
