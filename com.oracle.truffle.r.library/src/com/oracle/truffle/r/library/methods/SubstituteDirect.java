@@ -49,7 +49,7 @@ public abstract class SubstituteDirect extends RExternalBuiltinNode.Arg2 {
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return RError.SHOW_CALLER;
     }
 

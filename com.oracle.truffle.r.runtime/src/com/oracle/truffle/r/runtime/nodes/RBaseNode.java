@@ -309,7 +309,7 @@ public abstract class RBaseNode extends Node {
      *
      * Certain types of nodes, e.g., builtins, will supply the correct context for themselves.
      */
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         Node node = getParent();
         while (node != null) {
             if (node instanceof RBaseNode) {
@@ -398,11 +398,15 @@ public abstract class RBaseNode extends Node {
      * this node before.
      */
     public final void warning(Message msg) {
+        warning((RBaseNode) null, msg);
+    }
+
+    public final void warning(RBaseNode ctx, Message msg) {
         if (!hasSeenWarning) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             hasSeenWarning = true;
         }
-        RError.warning(getErrorContext(), msg);
+        RError.warning(ctx != null ? ctx : getErrorContext(), msg);
     }
 
     /**

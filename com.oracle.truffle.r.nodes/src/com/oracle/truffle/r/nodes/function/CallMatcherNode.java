@@ -244,7 +244,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @Override
-        protected RBaseNode getErrorContext() {
+        public RBaseNode getErrorContext() {
             return builtin == null ? super.getErrorContext() : builtin.getErrorContext();
         }
 

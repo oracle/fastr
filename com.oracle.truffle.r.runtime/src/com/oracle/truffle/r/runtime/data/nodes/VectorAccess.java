@@ -26,8 +26,8 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -69,7 +69,7 @@ import java.util.Set;
  * specialization with the slow path vector access.</li>
  * </ul>
  */
-public abstract class VectorAccess extends Node {
+public abstract class VectorAccess extends RBaseNode {
 
     public final NACheck na = NACheck.create();
 
@@ -87,23 +87,31 @@ public abstract class VectorAccess extends Node {
 
         protected final Object store; // internal store, native mirror or vector
         protected final int length;
+        private final RBaseNode warningContext;
 
-        protected AccessIterator(Object store, int length) {
+        private AccessIterator(Object store, int length, RBaseNode warningContext) {
             this.store = store;
             this.length = length;
+            this.warningContext = warningContext != null ? warningContext : RError.SHOW_CALLER;
         }
 
         public final Object getStore() {
             return store;
         }
 
+        /**
+         * Generates a warning once for a AccessIterator instance.
+         * 
+         * @param message
+         * @return <code>true</code> if a warning was generated, otherwise <code>false</code>
+         */
         @TruffleBoundary
         public final boolean warning(RError.Message message) {
             if (reportedWarnings == null) {
                 reportedWarnings = new HashSet<>();
             }
             if (reportedWarnings.add(message)) {
-                RError.warning(RError.SHOW_CALLER, message);
+                RError.warning(warningContext instanceof ErrorContext ? warningContext : warningContext.getErrorContext(), message);
                 return true;
             }
             return false;
@@ -114,8 +122,8 @@ public abstract class VectorAccess extends Node {
 
         protected int index;
 
-        private SequentialIterator(Object store, int length) {
-            super(store, length);
+        private SequentialIterator(Object store, int length, RBaseNode warningContext) {
+            super(store, length, warningContext);
             this.index = -1;
         }
 
@@ -136,8 +144,8 @@ public abstract class VectorAccess extends Node {
 
     public static final class RandomIterator extends AccessIterator implements AutoCloseable {
 
-        private RandomIterator(Object store, int length) {
-            super(store, length);
+        private RandomIterator(Object store, int length, RBaseNode warningContext) {
+            super(store, length, warningContext);
         }
 
         @Override
@@ -246,19 +254,38 @@ public abstract class VectorAccess extends Node {
 
     /**
      * Creates a new iterator that will point to before the beginning of the vector, so that
-     * {@link #next(SequentialIterator)} will move it to the first element.
+     * {@link #next(SequentialIterator)} will move it to the first element. <br>
+     * In case a warning is generated while accessing data from the vector then
+     * {@link RError#SHOW_CALLER} will be used to determine the warning message caller context.
+     * 
+     * @param vector
+     * 
      */
     public final SequentialIterator access(Object vector) {
+        return access(vector, null);
+    }
+
+    /**
+     * Creates a new iterator that will point to before the beginning of the vector, so that
+     * {@link #next(SequentialIterator)} will move it to the first element.
+     * 
+     * @param vector
+     * @param warningContext determines the caller context in a warning message in case a warning is
+     *            generated while accessing data from the vector. <br>
+     *            Possible values are either an instance {@link ErrorContext} or the actual
+     *            accessing node, in which case {@link RBaseNode#getErrorContext()} will be used.
+     */
+    public final SequentialIterator access(Object vector, RBaseNode warningContext) {
         Object castVector = cast(vector);
         if (castVector instanceof RAbstractContainer) {
             RAbstractContainer container = (RAbstractContainer) castVector;
             int length = getLength(container);
             RBaseNode.reportWork(this, length);
             na.enable(container);
-            return new SequentialIterator(getStore(container), length);
+            return new SequentialIterator(getStore(container), length, warningContext);
         } else {
             na.enable(true);
-            return new SequentialIterator(castVector, getLength(castVector));
+            return new SequentialIterator(castVector, getLength(castVector), warningContext);
         }
     }
 
@@ -374,18 +401,33 @@ public abstract class VectorAccess extends Node {
     }
 
     /**
-     * Creates a new random access on the given vector.
+     * Creates a new random access on the given vector. <br>
+     * In case a warning is generated while accessing data from the vector then
+     * {@link RError#SHOW_CALLER} will be used to determine the warning message caller context.
      */
     public final RandomIterator randomAccess(RAbstractContainer vector) {
+        return randomAccess(vector, null);
+    }
+
+    /**
+     * Creates a new random access on the given vector.
+     * 
+     * @param vector
+     * @param warningContext determines the caller context in a warning message in case a warning is
+     *            generated while accessing data from the vector. <br>
+     *            Possible values are either an instance {@link ErrorContext} or the actual
+     *            accessing node, in which case {@link RBaseNode#getErrorContext()} will be used.
+     */
+    public final RandomIterator randomAccess(RAbstractContainer vector, RBaseNode warningContext) {
         Object castVector = cast(vector);
         if (castVector instanceof RAbstractContainer) {
             RAbstractContainer container = (RAbstractContainer) castVector;
             int length = getLength(container);
             na.enable(container);
-            return new RandomIterator(getStore(container), length);
+            return new RandomIterator(getStore(container), length, warningContext);
         } else {
             na.enable(true);
-            return new RandomIterator(castVector, getLength(castVector));
+            return new RandomIterator(castVector, getLength(castVector), warningContext);
         }
     }
 

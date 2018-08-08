@@ -52,7 +52,7 @@ public class TestMiscBuiltins extends TestBase {
     public void testCasts() {
         // shortcuts in views (only some combinations)
         assertEval("{ as.complex(as.character(c(1+1i,1+1i))) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.complex(as.integer(c(1+1i,1+1i))) }");
+        assertEval("{ as.complex(as.integer(c(1+1i,1+1i))) }");
         assertEval("{ as.complex(as.logical(c(1+1i,1+1i))) }");
 
         assertEval("{ as.double(as.logical(c(10,10))) }");

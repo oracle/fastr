@@ -219,7 +219,7 @@ public abstract class InternalNode extends OperatorNode {
         }
 
         @Override
-        protected RBaseNode getErrorContext() {
+        public RBaseNode getErrorContext() {
             return builtin.getErrorContext();
         }
 

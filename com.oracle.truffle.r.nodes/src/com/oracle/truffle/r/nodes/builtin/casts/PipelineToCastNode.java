@@ -85,6 +85,7 @@ import com.oracle.truffle.r.nodes.unary.MapNode;
 import com.oracle.truffle.r.nodes.unary.NonNANodeGen;
 import com.oracle.truffle.r.nodes.unary.RVarArgsFilterNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -120,7 +121,7 @@ public final class PipelineToCastNode {
 
         CastNode firstCastNode = config.getCastForeign() ? new CastForeignNode() : null;
         Supplier<CastNode> originalPipelineFactory = () -> convert(firstCastNode, firstStep,
-                        new CastNodeFactory(config.getDefaultError(), config.getDefaultWarning(), config.getDefaultDefaultMessage()));
+                        new CastNodeFactory(config.getDefaultError(), config.getDefaultWarning(), config.getDefaultWarningContext(), config.getDefaultDefaultMessage()));
 
         if (!config.getValueForwarding()) {
             return originalPipelineFactory.get();
@@ -163,11 +164,13 @@ public final class PipelineToCastNode {
 
         private final MessageData defaultError;
         private final MessageData defaultWarning;
+        private final ErrorContext warningContext;
 
-        CastNodeFactory(MessageData defaultError, MessageData defaultWarning, MessageData defaultMessage) {
+        CastNodeFactory(MessageData defaultError, MessageData defaultWarning, ErrorContext warningContext, MessageData defaultMessage) {
             assert defaultMessage != null : "defaultMessage is null";
             this.defaultError = MessageData.getFirstNonNull(defaultError, defaultMessage);
             this.defaultWarning = MessageData.getFirstNonNull(defaultWarning, defaultMessage);
+            this.warningContext = warningContext;
         }
 
         @Override
@@ -231,8 +234,8 @@ public final class PipelineToCastNode {
             RType type = step.getType();
             switch (type) {
                 case Integer:
-                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure)
-                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure);
+                    return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext)
+                                    : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext);
                 case Double:
                     return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure)
                                     : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure);
