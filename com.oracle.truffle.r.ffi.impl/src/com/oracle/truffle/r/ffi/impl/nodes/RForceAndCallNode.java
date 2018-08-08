@@ -31,8 +31,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.InlineCacheNode;
-import com.oracle.truffle.r.nodes.InlineCacheNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
@@ -58,7 +56,6 @@ public abstract class RForceAndCallNode extends RBaseNode {
         return RForceAndCallNodeGen.create();
     }
 
-    @Child private InlineCacheNode closureEvalNode = InlineCacheNodeGen.create(10);
     @Child private PromiseHelperNode promiseHelper = new PromiseHelperNode();
 
     public abstract Object executeObject(Object e, Object f, int n, Object env);
