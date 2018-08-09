@@ -24,6 +24,7 @@ package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -526,7 +527,19 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
         @Override
         protected final double getDoubleImpl(AccessIterator accessIter, int index) {
-            return na.convertStringToDouble(getStringImpl(accessIter, index));
+            String str = getStringImpl(accessIter, index);
+            if (na.check(str) || emptyStringProfile.profile(str.isEmpty())) {
+                na.enable(true);
+                return RRuntime.DOUBLE_NA;
+            }
+            double value = na.convertStringToDouble(str);
+            if (RRuntime.isNA(value)) {
+                na.enable(true);
+                warningReportedProfile.enter();
+                accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                return RRuntime.DOUBLE_NA;
+            }
+            return value;
         }
 
         @Override

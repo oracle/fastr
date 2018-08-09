@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -32,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
@@ -46,6 +48,10 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
 
     protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure);
+    }
+
+    protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, warningContext);
     }
 
     @Override
@@ -82,14 +88,18 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
         return operand;
     }
 
-    @Specialization
-    protected double doDouble(RComplex operand) {
-        naCheck.enable(operand);
-        double result = naCheck.convertComplexToDouble(operand, false);
-        if (operand.getImaginaryPart() != 0.0) {
-            warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+    @Specialization(guards = "uAccess.supports(operand)", limit = "getVectorAccessCacheSize()")
+    protected double doComplex(RComplex operand,
+                    @Cached("operand.access()") VectorAccess uAccess) {
+        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
+            uAccess.next(sIter);
+            return uAccess.getDouble(sIter);
         }
-        return result;
+    }
+
+    @Specialization(replaces = "doComplex")
+    protected double doComplexGeneric(RComplex operand) {
+        return doComplex(operand, operand.slowPathAccess());
     }
 
     @Specialization
@@ -106,7 +116,7 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
         }
         double result = RRuntime.string2doubleNoCheck(operand);
         if (RRuntime.isNA(result)) {
-            warning(RError.Message.NA_INTRODUCED_COERCION);
+            warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
