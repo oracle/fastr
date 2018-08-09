@@ -32,19 +32,19 @@ package com.oracle.truffle.r.launcher;
  */
 public class RVersionNumber {
     public static final String MAJOR = "3";
-    public static final String MINOR = "4";
-    public static final String PATCH = "0";
+    public static final String MINOR = "5";
+    public static final String PATCH = "1";
 
-    public static final int R_VERSION = (3 << 16) + (4 << 8) + 0;
+    public static final int R_VERSION = (3 << 16) + (5 << 8) + 1;
 
     public static final String MAJOR_MINOR = MAJOR + "." + MINOR;
     public static final String MINOR_PATCH = MINOR + "." + PATCH;
     public static final String FULL = MAJOR + "." + MINOR + "." + PATCH;
     public static final String R_HYPHEN_FULL = "R-" + FULL;
 
-    public static final String RELEASE_YEAR = "2017";
-    public static final String RELEASE_MONTH = "04";
-    public static final String RELEASE_DAY = "21";
+    public static final String RELEASE_YEAR = "2018";
+    public static final String RELEASE_MONTH = "07";
+    public static final String RELEASE_DAY = "02";
 
     public static final String RELEASE_DATE = " (" + RELEASE_YEAR + "-" + RELEASE_MONTH + "-" + RELEASE_DAY + ")";
 
@@ -53,7 +53,7 @@ public class RVersionNumber {
     /**
      * From {@code Rinternals.h} and {@code library.R}.
      */
-    public static final String INTERNALS_UID = "0310d4b8-ccb1-4bb8-ba94-d36a55f60262";
+    public static final String INTERNALS_UID = "2fdf6c18-697a-4ba7-b8ef-11c0d92f1327";
 
     public static void main(String[] args) {
         System.out.printf("R version %s", FULL);
