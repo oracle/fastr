@@ -26,6 +26,7 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 
@@ -53,6 +54,8 @@ public class REPL {
     private static final Source QUIT_EOF = Source.newBuilder("R", ".Internal(quit('default', 0L, TRUE))", "<quit-on-eof>").internal(true).buildLiteral();
     private static final Source GET_PROMPT = Source.newBuilder("R", ".Internal(getOption('prompt'))", "<prompt>").internal(true).buildLiteral();
     private static final Source GET_CONTINUE_PROMPT = Source.newBuilder("R", ".Internal(getOption('continue'))", "<continue-prompt>").internal(true).buildLiteral();
+    private static final Source SET_CONSOLE_PROMPT_HANDLER = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).buildLiteral();
+    private static final Source GET_EXECUTOR = Source.newBuilder("R", ".fastr.getExecutor()", "<get-executor>").internal(true).buildLiteral();
 
     public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, boolean useExecutor) {
         return readEvalPrint(context, consoleHandler, null, useExecutor);
@@ -71,11 +74,12 @@ public class REPL {
     public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor) {
         final ExecutorService executor;
         if (useExecutor) {
-            executor = context.eval(Source.newBuilder("R", ".fastr.getExecutor()", "<get-executor>").internal(true).buildLiteral()).asHostObject();
+            executor = context.eval(GET_EXECUTOR).asHostObject();
             initializeNativeEventLoop(context, executor);
         } else {
             executor = null;
         }
+        run(executor, () -> context.eval(SET_CONSOLE_PROMPT_HANDLER).execute(consoleHandler.getPolyglotWrapper()));
         int lastStatus = 0;
 
         try {
@@ -147,7 +151,7 @@ public class REPL {
                     }
                 } catch (EOFException e) {
                     try {
-                        context.eval(QUIT_EOF);
+                        run(executor, () -> context.eval(QUIT_EOF));
                     } catch (PolyglotException e2) {
                         if (e2.isExit()) {
                             // don't use the exit code from the PolyglotException
@@ -165,6 +169,7 @@ public class REPL {
             return e.code;
         } catch (Throwable ex) {
             System.err.println("Unexpected error in REPL");
+            ex.printStackTrace();
             return 1;
         }
     }
@@ -177,7 +182,8 @@ public class REPL {
      * @param executor
      */
     private static void initializeNativeEventLoop(Context context, final ExecutorService executor) {
-        Value result = context.eval(Source.newBuilder("R", ".fastr.initEventLoop", "<init-event-loop>").internal(true).buildLiteral()).execute();
+        Source initEventLoopSource = Source.newBuilder("R", ".fastr.initEventLoop", "<init-event-loop>").internal(true).buildLiteral();
+        Value result = context.eval(initEventLoopSource).execute();
         if (result.isNull()) {
             return; // event loop is not configured to be run
         } else if (result.getMember("result").asInt() != 0) {
@@ -217,66 +223,40 @@ public class REPL {
         }
     }
 
-    private static boolean doEcho(ExecutorService executor, Context context) throws InterruptedException {
+    private static boolean doEcho(ExecutorService executor, Context context) {
+        return run(executor, () -> context.eval(GET_ECHO).asBoolean());
+    }
+
+    private static String getPrompt(ExecutorService executor, Context context) {
+        return run(executor, () -> context.eval(GET_PROMPT).asString());
+    }
+
+    private static String getContinuePrompt(ExecutorService executor, Context context) {
+        return run(executor, () -> context.eval(GET_CONTINUE_PROMPT).asString());
+    }
+
+    private static <T> T run(ExecutorService executor, Callable<T> run) {
         try {
             if (executor != null) {
-                return executor.submit(() -> doEcho(context)).get();
+                try {
+                    return executor.submit(run).get();
+                } catch (ExecutionException ex) {
+                    Throwable cause = ex.getCause();
+                    if (cause instanceof RuntimeException) {
+                        throw (RuntimeException) cause;
+                    }
+                    throw RMain.fatal(ex, "Unexpected error " + cause.getMessage());
+                }
             } else {
-                return doEcho(context);
+                return run.call();
             }
-        } catch (ExecutionException ex) {
-            throw RMain.fatal(ex, "error while retrieving echo");
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
             }
-            throw RMain.fatal(e, "error while retrieving echo");
+            throw RMain.fatal(e, "Unexpected error " + e.getMessage());
+        } catch (Exception e) {
+            throw RMain.fatal(e, "Unexpected error " + e.getMessage());
         }
-    }
-
-    private static boolean doEcho(Context context) {
-        return context.eval(GET_ECHO).asBoolean();
-    }
-
-    private static String getPrompt(ExecutorService executor, Context context) throws InterruptedException {
-        try {
-            if (executor != null) {
-                return executor.submit(() -> getPrompt(context)).get();
-            } else {
-                return getPrompt(context);
-            }
-        } catch (ExecutionException ex) {
-            throw RMain.fatal(ex, "error while retrieving prompt");
-        } catch (PolyglotException e) {
-            if (e.isExit()) {
-                throw new ExitException(e.getExitStatus());
-            }
-            throw RMain.fatal(e, "error while retrieving prompt");
-        }
-    }
-
-    private static String getPrompt(Context context) {
-        return context.eval(GET_PROMPT).asString();
-    }
-
-    private static String getContinuePrompt(ExecutorService executor, Context context) throws InterruptedException {
-        try {
-            if (executor != null) {
-                return executor.submit(() -> getContinuePrompt(context)).get();
-            } else {
-                return getPrompt(context);
-            }
-        } catch (ExecutionException ex) {
-            throw RMain.fatal(ex, "error while retrieving continue prompt");
-        } catch (PolyglotException e) {
-            if (e.isExit()) {
-                throw new ExitException(e.getExitStatus());
-            }
-            throw RMain.fatal(e, "error while retrieving continue prompt");
-        }
-    }
-
-    private static String getContinuePrompt(Context context) {
-        return context.eval(GET_CONTINUE_PROMPT).asString();
     }
 }
