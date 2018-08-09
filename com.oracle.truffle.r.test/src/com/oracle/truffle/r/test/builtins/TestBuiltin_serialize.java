@@ -113,7 +113,7 @@ public class TestBuiltin_serialize extends TestBase {
 
         assertEval("{ options(keep.source=FALSE); f <- function() NULL; attributes(f) <- list(skeleton=quote(`<undef>`())); data <- serialize(f, conn=NULL); unserialize(conn=data) }");
         assertEval("serialize('foo', NULL, version=2)");
-        assertEval("serialize('foo', NULL, version=3)");
+        assertEval(Ignored.NewRVersionMigration, "serialize('foo', NULL, version=3)");
     }
 
     @Test

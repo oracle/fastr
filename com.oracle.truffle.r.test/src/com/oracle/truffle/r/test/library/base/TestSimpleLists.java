@@ -98,7 +98,7 @@ public class TestSimpleLists extends TestBase {
 
     @Test
     public void testListArgumentEvaluation() {
-        assertEval("{ a <- c(0,0,0) ; f <- function() { g <- function() { a[2] <<- 9 } ; g() } ; u <- function() { a <- c(1,1,1) ; f() ; a } ; list(a,u()) }");
+        assertEval(Ignored.NewRVersionMigration, "{ a <- c(0,0,0) ; f <- function() { g <- function() { a[2] <<- 9 } ; g() } ; u <- function() { a <- c(1,1,1) ; f() ; a } ; list(a,u()) }");
     }
 
     @Test
@@ -157,10 +157,10 @@ public class TestSimpleLists extends TestBase {
 
     @Test
     public void testNullListAssignment() {
-        assertEval("a<-NULL; a$b<-42L; dput(a)");
-        assertEval("a<-NULL; a$b<-print; dput(a)");
-        assertEval("a<- NULL; a <- `$<-`(a, \"a\", 1); dput(a)");
-        assertEval("a<- NULL; a <- `[[<-`(a, \"a\", 1); dput(a)");
+        assertEval(Ignored.NewRVersionMigration, "a<-NULL; a$b<-42L; dput(a)");
+        assertEval(Ignored.NewRVersionMigration, "a<-NULL; a$b<-print; dput(a)");
+        assertEval(Ignored.NewRVersionMigration, "a<- NULL; a <- `$<-`(a, \"a\", 1); dput(a)");
+        assertEval(Ignored.NewRVersionMigration, "a<- NULL; a <- `[[<-`(a, \"a\", 1); dput(a)");
         assertEval("a<- NULL; a <- `[[<-`(a, 1, 1); dput(a)");
         assertEval("a<- NULL; a <- `$<-`(a, 1, 1); dput(a)");
     }

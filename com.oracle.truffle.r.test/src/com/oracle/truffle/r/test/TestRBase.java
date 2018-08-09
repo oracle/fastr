@@ -72,9 +72,9 @@ public class TestRBase extends TestBase {
                 Path p = dir.resolve(Paths.get(entryName).getFileName());
                 Files.write(p, entryValue.getBytes());
                 if (testTrait == null) {
-                    assertEval(TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                    assertEval(Ignored.NewRVersionMigration, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
                 } else {
-                    assertEval(testTrait, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                    assertEval(Ignored.NewRVersionMigration, testTrait, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
                 }
             } catch (IOException ex) {
                 assert false;

@@ -54,7 +54,7 @@ public class TestBuiltin_dput extends TestBase {
 
     @Test
     public void testdput6() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), structure(1L, class = c('terminal', 'connection')), 69); .Internal(dput(argv[[1]], argv[[2]], argv[[3]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), structure(1L, class = c('terminal', 'connection')), 69); .Internal(dput(argv[[1]], argv[[2]], argv[[3]]))");
     }
 
     @Test
@@ -69,7 +69,7 @@ public class TestBuiltin_dput extends TestBase {
 
     @Test
     public void testdput() {
-        assertEval(Output.IgnoreWhitespace,
+        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreWhitespace,*/
                         "x <- structure(list(A = c(1L, 1L), B = structure(c(1L, 1L), .Label = c('G', 'D'), class = 'factor'), C = structure(c(1L, 1L), .Label = c('G', 'D'), class = 'factor')), .Names = c('A', 'B', 'C'), row.names = 1:2, class = 'data.frame'); dput(x)");
     }
 }

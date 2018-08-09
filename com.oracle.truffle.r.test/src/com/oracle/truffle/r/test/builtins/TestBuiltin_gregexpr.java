@@ -29,17 +29,17 @@ public class TestBuiltin_gregexpr extends TestBase {
 
     @Test
     public void testgregexpr1() {
-        assertEval("argv <- list('', 'abc', FALSE, FALSE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('', 'abc', FALSE, FALSE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testgregexpr2() {
-        assertEval("argv <- list('[^\\\\.\\\\w:?$@[\\\\]]+', 'version$m', FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('[^\\\\.\\\\w:?$@[\\\\]]+', 'version$m', FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testgregexpr3() {
-        assertEval("argv <- list('$', 'version$m', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('$', 'version$m', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -51,12 +51,12 @@ public class TestBuiltin_gregexpr extends TestBase {
 
     @Test
     public void testgregexpr5() {
-        assertEval("argv <- list('', 'abc', FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('', 'abc', FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testgregexpr6() {
-        assertEval("argv <- list('', 'abc', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('', 'abc', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -73,42 +73,42 @@ public class TestBuiltin_gregexpr extends TestBase {
 
     @Test
     public void testgregexpr9() {
-        assertEval("argv <- list('\\\\[[^]]*\\\\]', 'FALSE', FALSE, FALSE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('\\\\[[^]]*\\\\]', 'FALSE', FALSE, FALSE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testgregexpr10() {
-        assertEval("argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testgregexpr11() {
-        assertEval("argv <- list('?', 'utils::data', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('?', 'utils::data', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testgregexpr12() {
-        assertEval("argv <- list('[[', 'utils:::.show_help_on_topic_', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('[[', 'utils:::.show_help_on_topic_', FALSE, FALSE, TRUE, FALSE); .Internal(gregexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testgregexpr14() {
-        assertEval("argv <- structure(list(pattern = '', text = 'abc', fixed = TRUE),     .Names = c('pattern', 'text', 'fixed'));do.call('gregexpr', argv)");
+        assertEval(Ignored.NewRVersionMigration, "argv <- structure(list(pattern = '', text = 'abc', fixed = TRUE),     .Names = c('pattern', 'text', 'fixed'));do.call('gregexpr', argv)");
     }
 
     @Test
     public void testgregexpr15() {
-        assertEval("argv <- structure(list(pattern = '', text = 'abc'), .Names = c('pattern',     'text'));do.call('gregexpr', argv)");
+        assertEval(Ignored.NewRVersionMigration, "argv <- structure(list(pattern = '', text = 'abc'), .Names = c('pattern',     'text'));do.call('gregexpr', argv)");
     }
 
     @Test
     public void testgregexpr16() {
-        assertEval("argv <- structure(list(pattern = '', text = 'abc', perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('gregexpr', argv)");
+        assertEval(Ignored.NewRVersionMigration, "argv <- structure(list(pattern = '', text = 'abc', perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('gregexpr', argv)");
     }
 
     @Test
     public void testRegExpr() {
-        assertEval("gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))");
+        assertEval(Ignored.NewRVersionMigration, "gregexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))");
         // NOTE: this is without attributes
         // gregexpr help does not comment x == NA and GnuR returns NA
         // while FastR returns -1
@@ -124,18 +124,18 @@ public class TestBuiltin_gregexpr extends TestBase {
         assertEval("{ .Internal(gregexpr(character(), \"42\", F, F, F, F)) }");
         assertEval("{ .Internal(gregexpr(\"7\", 42, F, F, F, F)) }");
 
-        assertEval("{ argv <- structure(list(pattern = '', text = c('abc', 'defg'), perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('gregexpr', argv) }");
-        assertEval("{ x<-c(\"Aaa Bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
-        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa Bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
-        assertEval("{ x<-c(\"Aaa bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\", \"Aaa bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
-        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ argv <- structure(list(pattern = '', text = c('abc', 'defg'), perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('gregexpr', argv) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(\"Aaa Bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa Bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(\"Aaa bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\", \"Aaa bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; gregexpr(p, x, perl=TRUE) }");
 
-        assertEval("gregexpr(')', 'abc()', fixed = TRUE)");
-        assertEval("gregexpr('(', 'abc()', fixed = TRUE)");
-        assertEval("gregexpr(')', 'abc()', fixed = FALSE)");
-        assertEval("gregexpr('\\\\)', 'abc()', fixed = FALSE)");
+        assertEval(Ignored.NewRVersionMigration, "gregexpr(')', 'abc()', fixed = TRUE)");
+        assertEval(Ignored.NewRVersionMigration, "gregexpr('(', 'abc()', fixed = TRUE)");
+        assertEval(Ignored.NewRVersionMigration, "gregexpr(')', 'abc()', fixed = FALSE)");
+        assertEval(Ignored.NewRVersionMigration, "gregexpr('\\\\)', 'abc()', fixed = FALSE)");
         assertEval(Output.IgnoreErrorMessage, "gregexpr('(', 'abc()', fixed = FALSE)");
-        assertEval("gregexpr('\\\\(', 'abc()', fixed = FALSE)");
+        assertEval(Ignored.NewRVersionMigration, "gregexpr('\\\\(', 'abc()', fixed = FALSE)");
 
     }
 }

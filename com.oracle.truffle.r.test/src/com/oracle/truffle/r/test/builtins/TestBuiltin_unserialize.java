@@ -88,7 +88,7 @@ public class TestBuiltin_unserialize extends TestBase {
         assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y,...) { 1 }), connection=NULL))");
         assertEval(Output.IgnoreWhitespace, "options(keep.source=FALSE); unserialize(serialize(quote(function(x,y=1,...) { NA }), connection=NULL))");
         assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { NA }), connection=NULL))");
-        assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !!NA }), connection=NULL))");
+        assertEval(Ignored.NewRVersionMigration, "options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !!NA }), connection=NULL))");
         assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y,...) { !1+5i }), connection=NULL))");
         assertEval("options(keep.source=FALSE); unserialize(serialize(quote(function(x={1 + a},y=c(1,2,3),z=\"foo\",...) { !1+5i }), connection=NULL))");
 

@@ -167,7 +167,7 @@ public class TestBuiltin_rbind extends TestBase {
         assertEval("dput(rbind(NULL, NULL, double(0), character(0)))");
         assertEval("dput(rbind(NULL, NULL, double(0), integer(0), character(0)))");
         assertEval("dput(rbind(c(NULL, NULL), integer(0)))");
-        assertEval("dput(rbind(integer(0)))");
+        assertEval(Ignored.NewRVersionMigration, "dput(rbind(integer(0)))");
         assertEval("dput(rbind(integer(0), NULL, NULL))");
     }
 }

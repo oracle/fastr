@@ -68,7 +68,7 @@ public class TestSimpleArrays extends TestBase {
 
         assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); dim(x[0,0,0]) }");
         assertEval("{ x<-(1:8); dim(x)<-c(2, 2, 2); x[0,0,1] }");
-        assertEval("{ x<-1:8; dim(x)<-c(2,2,2); x[[, 1, 1]] }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-1:8; dim(x)<-c(2,2,2); x[[, 1, 1]] }");
 
         assertEval("{ v<-c(\"a\", \"b\"); dim(v)<-c(1,2); dimnames(v)<-list(\"x\", c(\"y\", \"z\")); v[1, c(1,2), drop=FALSE] }");
 
@@ -182,7 +182,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ array(1,c(3,3,3))[[1,1,1]] }");
 
         // selection on multiple elements fails in arrays
-        assertEval("{ array(1,c(3,3,3))[[,,]]; }");
+        assertEval(Ignored.NewRVersionMigration, "{ array(1,c(3,3,3))[[,,]]; }");
 
         // selection on multiple elements fails in arrays
         assertEval(Output.IgnoreErrorContext, "{ array(1,c(3,3,3))[[c(1,2),1,1]]; }");
@@ -203,7 +203,7 @@ public class TestSimpleArrays extends TestBase {
         assertEval("{ matrix(1,3,3)[[1,1]] }");
 
         // selection on multiple elements fails in matrices with empty selector
-        assertEval("{ matrix(1,3,3)[[,]]; }");
+        assertEval(Ignored.NewRVersionMigration, "{ matrix(1,3,3)[[,]]; }");
 
         // selection on multiple elements fails in matrices
         assertEval(Output.IgnoreErrorContext, "{ matrix(1,3,3)[[c(1,2),1]]; }");

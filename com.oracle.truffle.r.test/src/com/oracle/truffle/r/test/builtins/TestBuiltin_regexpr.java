@@ -29,7 +29,7 @@ public class TestBuiltin_regexpr extends TestBase {
 
     @Test
     public void testregexpr1() {
-        assertEval("argv <- list('package:', 'exNSS4', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('package:', 'exNSS4', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -41,42 +41,42 @@ public class TestBuiltin_regexpr extends TestBase {
 
     @Test
     public void testregexpr3() {
-        assertEval("argv <- list('package:', 'graphics', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('package:', 'graphics', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testregexpr4() {
-        assertEval("argv <- list('^.*\\\\{n', 'my(ugly[file{name', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('^.*\\\\{n', 'my(ugly[file{name', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testregexpr5() {
-        assertEval("argv <- list('(\\\\\\\\S4method\\\\{([._[:alnum:]]*|\\\\$|\\\\[\\\\[?|\\\\+|\\\\-|\\\\*|\\\\/|\\\\^|<=?|>=?|!=?|==|\\\\&|\\\\||\\\\%[[:alnum:][:punct:]]*\\\\%)\\\\}\\\\{((([._[:alnum:]]+|`[^`]+`),)*([._[:alnum:]]+|`[^`]+`))\\\\})', '\\nread.00Index(file)\\n', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('(\\\\\\\\S4method\\\\{([._[:alnum:]]*|\\\\$|\\\\[\\\\[?|\\\\+|\\\\-|\\\\*|\\\\/|\\\\^|<=?|>=?|!=?|==|\\\\&|\\\\||\\\\%[[:alnum:][:punct:]]*\\\\%)\\\\}\\\\{((([._[:alnum:]]+|`[^`]+`),)*([._[:alnum:]]+|`[^`]+`))\\\\})', '\\nread.00Index(file)\\n', FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testregexpr6() {
-        assertEval("argv <- list('\\\\.([[:alnum:]]+)$', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('\\\\.([[:alnum:]]+)$', character(0), FALSE, FALSE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testregexpr7() {
-        assertEval("argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)', c('  Ben Franklin and Jefferson Davis', '\\tMillard Fillmore'), FALSE, TRUE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testregexpr8() {
-        assertEval("argv <- list('^[[:space:]]*@(?i)attribute', '% 4. Relevant Information Paragraph:', FALSE, TRUE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('^[[:space:]]*@(?i)attribute', '% 4. Relevant Information Paragraph:', FALSE, TRUE, FALSE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testregexpr9() {
-        assertEval("argv <- list('package:', 'dummy', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('package:', 'dummy', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
     public void testregexpr10() {
-        assertEval("argv <- list('package:', 'environmental', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list('package:', 'environmental', FALSE, FALSE, TRUE, FALSE); .Internal(regexpr(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]]))");
     }
 
     @Test
@@ -97,16 +97,16 @@ public class TestBuiltin_regexpr extends TestBase {
 
     @Test
     public void testRegExpr() {
-        assertEval("regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))");
+        assertEval(Ignored.NewRVersionMigration, "regexpr(\"e\",c(\"arm\",\"foot\",\"lefroo\", \"bafoobar\"))");
         // NOTE: this is without attributes
         // FIXME NA should be the match for NA (not -1)
         // Expected output: [1] 6 1 NA
         // FastR output: [1] 6 1 -1
         assertEval(Ignored.ImplementationError, "regexpr(\"(a)[^a]\\\\1\", c(\"andrea apart\", \"amadeus\", NA))");
 
-        assertEval("{ regexpr(\"aaa\", \"bbbaaaccc\", fixed=TRUE)  }");
-        assertEval("{ regexpr(\"aaa\", c(\"bbbaaaccc\", \"haaah\"), fixed=TRUE) }");
-        assertEval("{ regexpr(\"aaa\", c(\"bbbaaaccc\", \"hah\"), fixed=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ regexpr(\"aaa\", \"bbbaaaccc\", fixed=TRUE)  }");
+        assertEval(Ignored.NewRVersionMigration, "{ regexpr(\"aaa\", c(\"bbbaaaccc\", \"haaah\"), fixed=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ regexpr(\"aaa\", c(\"bbbaaaccc\", \"hah\"), fixed=TRUE) }");
 
         assertEval("{ x<-regexpr(\"aaa\", \"bbbaaaccc\", fixed=TRUE); c(x[1])  }");
         assertEval("{ x<-regexpr(\"aaa\", c(\"bbbaaaccc\", \"haaah\"), fixed=TRUE); c(x[1], x[2]) }");
@@ -123,16 +123,16 @@ public class TestBuiltin_regexpr extends TestBase {
         assertEval("{ .Internal(regexpr(character(), \"42\", F, F, F, F)) }");
         assertEval("{ .Internal(regexpr(\"7\", 42, F, F, F, F)) }");
 
-        assertEval("{ argv <- structure(list(pattern = '', text = c('abc', 'defg'), perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('regexpr', argv) }");
-        assertEval("{ x<-c(\"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
-        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
-        assertEval("{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ argv <- structure(list(pattern = '', text = c('abc', 'defg'), perl = TRUE),     .Names = c('pattern', 'text', 'perl'));do.call('regexpr', argv) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(\"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(\"Aaa bbb Aaa bbb\", \"Aaa Bbb Aaa Bbb\", \"Aaa bbb Aaa bbb\"); p<-\"(?<first>[[:upper:]][[:lower:]]+) (?<last>[[:upper:]][[:lower:]]+)\"; regexpr(p, x, perl=TRUE) }");
 
-        assertEval("regexpr(')', 'abc()', fixed = TRUE)");
-        assertEval("regexpr('(', 'abc()', fixed = TRUE)");
-        assertEval("regexpr(')', 'abc()', fixed = FALSE)");
-        assertEval("regexpr('\\\\)', 'abc()', fixed = FALSE)");
+        assertEval(Ignored.NewRVersionMigration, "regexpr(')', 'abc()', fixed = TRUE)");
+        assertEval(Ignored.NewRVersionMigration, "regexpr('(', 'abc()', fixed = TRUE)");
+        assertEval(Ignored.NewRVersionMigration, "regexpr(')', 'abc()', fixed = FALSE)");
+        assertEval(Ignored.NewRVersionMigration, "regexpr('\\\\)', 'abc()', fixed = FALSE)");
         assertEval(Output.IgnoreErrorMessage, "regexpr('(', 'abc()', fixed = FALSE)");
-        assertEval("regexpr('\\\\(', 'abc()', fixed = FALSE)");
+        assertEval(Ignored.NewRVersionMigration, "regexpr('\\\\(', 'abc()', fixed = FALSE)");
     }
 }

@@ -32,7 +32,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_deparse extends TestBase {
 
     private void assertEvalDeparsed(String snippet) {
-        assertEval(Output.IgnoreWhitespace, "cat({" + snippet + "})");
+        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreWhitespace,*/"cat({" + snippet + "})");
     }
 
     @Test
@@ -229,7 +229,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse38() {
-        assertEval("argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.NewRVersionMigration, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test
@@ -298,7 +298,7 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testDeparse() {
-        assertEval(template("deparse(%0)", VALUES));
+        assertEval(Ignored.NewRVersionMigration, template("deparse(%0)", VALUES));
         assertEval(template("deparse(quote(cat(%0)))", VALUES));
         assertEval("deparse(1.53160350210786e-322)");
         assertEval("{ deparse(new.env()) }");
@@ -316,19 +316,19 @@ public class TestBuiltin_deparse extends TestBase {
         assertEval("{ f <- function() 23 ; deparse(f) }");
         assertEval("{ deparse(nrow) }");
         // should deparse as structure(...
-        assertEval("{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
+        assertEval(Ignored.NewRVersionMigration, "{ e <- new.env(); assign(\"a\", 1, e); assign(\"b\", 2, e); le <- as.list(e); deparse(le)}");
         assertEval("{ deparse(function (a1, a2, a3) if (!(a1 || a2) && a3) 42 else 7) }");
 
         assertEval("unserialize(serialize(quote(!(a <- TRUE)), NULL))");
         assertEval("unserialize(serialize(quote(a[a <- TRUE]), NULL))");
 
-        assertEval("{ x<-c(a=42, b=7); deparse(x) }");
+        assertEval(Ignored.NewRVersionMigration, "{ x<-c(a=42, b=7); deparse(x) }");
 
         assertEval("deparse(quote(1/0))");
 
         assertEval("e <- quote(a <- 1); e[[3]] <- as.raw(c(1,6,9,254)); e");
 
-        assertEval("deparse(list(`x y`=1))");
+        assertEval(Ignored.NewRVersionMigration, "deparse(list(`x y`=1))");
     }
 
     @Test

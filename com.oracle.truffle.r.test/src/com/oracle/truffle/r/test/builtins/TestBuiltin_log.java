@@ -123,7 +123,7 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ log(complex(real=1, imaginary=NA)) }");
         assertEval("{ log(complex(real=NA, imaginary=NA)) }");
         assertEval("{ log(NA_complex_) }");
-        assertEval("{ log(1+1i, NA_complex_) }");
+        assertEval(Ignored.NewRVersionMigration, "{ log(1+1i, NA_complex_) }");
         assertEval("{ log(c(1+1i, NA_complex_)) }");
         assertEval("{ log(1+1i, 0) }");
 
@@ -138,13 +138,13 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ log(c(1+1i)) }");
         assertEval("{ log(c(1+1i), 0) }");
 
-        assertEval("{ log(c(1+1i, 2+2i), NA) }");
+        assertEval(Ignored.NewRVersionMigration, "{ log(c(1+1i, 2+2i), NA) }");
         assertEval("{ log(c(1+1i, 2+2i), NaN) }");
         assertEval("{ log(c(1+1i, 2+2i), complex(real=1, imaginary=NaN)) }");
         assertEval("{ log(c(1+1i, 2+2i), complex(real=NaN, imaginary=1)) }");
         assertEval("{ log(c(1+1i, 2+2i), complex(real=NaN, imaginary=NaN)) }");
-        assertEval("{ log(c(1+1i, 2+2i), complex(real=1, imaginary=NA)) }");
-        assertEval("{ log(c(1+1i, 2+2i), complex(real=NA, imaginary=1)) }");
+        assertEval(Ignored.NewRVersionMigration, "{ log(c(1+1i, 2+2i), complex(real=1, imaginary=NA)) }");
+        assertEval(Ignored.NewRVersionMigration, "{ log(c(1+1i, 2+2i), complex(real=NA, imaginary=1)) }");
         assertEval("{ log(c(1+1i, 2+2i, complex(real=NA, imaginary=NA))) }");
 
         assertEval("{ log(c(10+1i, 10), 10) }");

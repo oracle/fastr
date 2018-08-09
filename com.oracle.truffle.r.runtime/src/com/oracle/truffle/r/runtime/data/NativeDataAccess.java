@@ -95,7 +95,7 @@ public final class NativeDataAccess {
         long getCustomMirrorAddress();
     }
 
-    private static final boolean TRACE_MIRROR_ALLOCATION_SITES = true;
+    private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
     private static final long EMPTY_DATA_ADDRESS = 0xBAD;
 

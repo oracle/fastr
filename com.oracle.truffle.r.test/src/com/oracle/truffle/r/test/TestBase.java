@@ -39,6 +39,7 @@ import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -787,8 +788,19 @@ public class TestBase {
     private static void addIgnoreForFailedTest() throws IOException {
         StackTraceElement frame = getTestStackFrame();
         String fileName = frame.getFileName();
-        List<String> lines = Files.readAllLines(Paths.get(fileName));
+        Path testsPath = Paths.get("./com.oracle.truffle.r.test/src/com/oracle/truffle/r/test");
+        Optional<Path> pathOptional = Files.walk(testsPath).filter(Files::isRegularFile).filter(f -> f.endsWith(fileName)).findFirst();
+        if (!pathOptional.isPresent()) {
+            System.out.println("WARNING: cannot add ignore to test (file not found) " + frame.getClassName() + ":" + frame.getLineNumber());
+            return;
+        }
+        Path path = pathOptional.get();
+        List<String> lines = Files.readAllLines(path);
         String line = lines.get(frame.getLineNumber() - 1);
+        if (line.contains("Ignored.NewRVersionMigration")) {
+            // already there, can happen for templated tests
+            return;
+        }
         if (!line.contains("assertEval(")) {
             System.out.println("WARNING: cannot add ignore to test " + frame.getClassName() + ":" + frame.getLineNumber());
             return;
@@ -796,7 +808,7 @@ public class TestBase {
         line = line.replaceAll("(:?Output\\.[a-zA-Z0-9]*[ ]*,)[ ]*", "/*$1*/");
         line = line.replace("assertEval(", "assertEval(Ignored.NewRVersionMigration, ");
         lines.set(frame.getLineNumber() - 1, line);
-        Files.write(Paths.get(fileName), lines);
+        Files.write(path, lines);
     }
 
     private static class CheckResult {

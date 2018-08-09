@@ -527,7 +527,8 @@ static void testrfficonn_close(Rconnection conn) {
     if (conn != customConn) {
         printNow("ERROR: close function did not receive expected argument\n");
     } else {
-        printNow("Custom connection closed\n");
+        // TODO: GR-11213
+        // printNow("Custom connection closed\n");
     }
 }
 
