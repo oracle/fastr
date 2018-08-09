@@ -613,6 +613,9 @@ public class BasePackage extends RBuiltinPackage {
         add(IsTypeFunctions.IsRecursive.class, IsTypeFunctionsFactory.IsRecursiveNodeGen::create);
         add(IsTypeFunctions.IsVector.class, IsTypeFunctionsFactory.IsVectorNodeGen::create);
         add(IsUnsorted.class, IsUnsortedNodeGen::create);
+        add(SortedFastPass.class, SortedFastPass::create);
+        add(WrapMeta.class, WrapMeta::create);
+        add(DotDotDotElt.class, DotDotDotElt::create);
         add(LaFunctions.DetGeReal.class, LaFunctionsFactory.DetGeRealNodeGen::create);
         add(LaFunctions.LaChol.class, LaFunctionsFactory.LaCholNodeGen::create);
         add(LaFunctions.LaChol2Inv.class, LaFunctionsFactory.LaChol2InvNodeGen::create);

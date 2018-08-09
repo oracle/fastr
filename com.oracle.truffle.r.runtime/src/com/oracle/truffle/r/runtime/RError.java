@@ -706,6 +706,7 @@ public final class RError extends RuntimeException implements TruffleException {
         INVALID_TYPE_IN("invalid '%s' type in 'x %s y'"),
         DOT_DOT_MISSING("'..%d' is missing"),
         DOT_DOT_SHORT("the ... list does not contain %d elements"),
+        DOT_DOT_NONE("the ... list does not contain any elements"),
         NO_DOT_DOT("..%d used in an incorrect context, no ... to look in"),
         NO_DOT_DOT_DOT("'...' used in an incorrect context"),
         NO_LIST_FOR_CDR("'nthcdr' needs a list to CDR down"),

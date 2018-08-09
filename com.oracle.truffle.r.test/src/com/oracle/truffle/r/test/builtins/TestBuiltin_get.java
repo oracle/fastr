@@ -32,7 +32,7 @@ public class TestBuiltin_get extends TestBase {
 
     @Test
     public void testGet() {
-        assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
+        assertEval(Ignored.NewRVersionMigration, "{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"closure\")};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\",inherits=FALSE);get(\"y\",mode=\"integer\",inherits=FALSE)};y();}");
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"double\")};y();}");

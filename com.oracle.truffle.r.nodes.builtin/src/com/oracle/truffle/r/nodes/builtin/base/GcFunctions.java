@@ -43,18 +43,19 @@ import java.util.Arrays;
 
 public final class GcFunctions {
 
-    @RBuiltin(name = "gc", kind = INTERNAL, parameterNames = {"verbose", "reset"}, behavior = COMPLEX)
-    public abstract static class Gc extends RBuiltinNode.Arg2 {
+    @RBuiltin(name = "gc", kind = INTERNAL, parameterNames = {"verbose", "reset", "full"}, behavior = COMPLEX)
+    public abstract static class Gc extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(Gc.class);
             casts.arg("verbose").asLogicalVector().findFirst().map(toBoolean());
             casts.arg("reset").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("full").asLogicalVector().findFirst().map(toBoolean());
         }
 
         @SuppressWarnings("unused")
         @Specialization
-        protected RDoubleVector gc(boolean verbose, boolean reset) {
+        protected RDoubleVector gc(boolean verbose, boolean reset, boolean full) {
             /*
              * It is rarely advisable to actually force a gc in Java, therefore we simply ignore
              * this builtin.

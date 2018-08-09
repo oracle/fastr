@@ -35,8 +35,8 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern"}, behavior = COMPLEX)
-public abstract class SystemFunction extends RBuiltinNode.Arg2 {
+@RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern", "timeout"}, behavior = COMPLEX)
+public abstract class SystemFunction extends RBuiltinNode.Arg3 {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     static {
@@ -46,7 +46,7 @@ public abstract class SystemFunction extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object system(VirtualFrame frame, String command, boolean intern) {
+    protected Object system(VirtualFrame frame, String command, boolean intern, @SuppressWarnings("unused") Object timeout) {
         Object result = SystemFunctionFactory.getInstance().execute(frame, command.trim(), intern);
         visibility.execute(frame, intern);
         return result;

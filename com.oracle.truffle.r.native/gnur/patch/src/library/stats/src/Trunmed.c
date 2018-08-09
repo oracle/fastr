@@ -44,6 +44,7 @@
  * ...		 j	2nd permuter  X[i +j[m]] == H[m]
  */
 
+#include <Rinternals.h>
 #include <math.h>
 
 static void

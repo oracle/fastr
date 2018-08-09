@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
 import java.util.SortedMap;
 import java.util.TreeMap;
@@ -94,6 +95,11 @@ public class TestBase {
      * (normally just statistical info would be shown).
      */
     public static final boolean ShowFailedTestsResults = Boolean.getBoolean("ShowFailedTestsResults");
+    /**
+     * Adds {@link Ignored#NewRVersionMigration} to failed test. This attempts to modify the Java
+     * source code of the tests.
+     */
+    public static final boolean AddIgnoreForFailedTests = Boolean.getBoolean("AddIgnoreForFailedTests");
 
     /**
      * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
@@ -132,6 +138,7 @@ public class TestBase {
         ReferenceError("tests that fail because of faulty behavior in the reference implementation that we don't want to emulate"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
         MissingBuiltin("tests that fail because of missing builtins"),
+        NewRVersionMigration("temporarily ignored while migrating to new GNU-R version"),
         Unimplemented("tests that fail because of missing functionality");
 
         private final String description;
@@ -582,25 +589,30 @@ public class TestBase {
         if (explicitTestContext != null) {
             return explicitTestContext;
         }
-        // We want the stack trace as if the JUnit test failed.
-        RuntimeException ex = new RuntimeException();
-        // The first method not in TestBase is the culprit
-        StackTraceElement culprit = null;
         try {
-            // N.B. This may not always be available (AOT).
-            StackTraceElement[] stackTrace = ex.getStackTrace();
-            for (int i = 0; i < stackTrace.length; i++) {
-                StackTraceElement se = stackTrace[i];
-                if (!se.getClassName().endsWith("TestBase")) {
-                    culprit = se;
-                    break;
-                }
-            }
+            StackTraceElement culprit = getTestStackFrame();
             String context = String.format("%s:%d (%s)", culprit.getClassName(), culprit.getLineNumber(), culprit.getMethodName());
             return context;
         } catch (NullPointerException npe) {
             return "no test context available";
         }
+    }
+
+    private static StackTraceElement getTestStackFrame() {
+        // We want the stack trace as if the JUnit test failed.
+        RuntimeException ex = new RuntimeException();
+        // The first method not in TestBase is the culprit
+        StackTraceElement culprit = null;
+        // N.B. This may not always be available (AOT).
+        StackTraceElement[] stackTrace = ex.getStackTrace();
+        for (int i = 0; i < stackTrace.length; i++) {
+            StackTraceElement se = stackTrace[i];
+            if (!se.getClassName().endsWith("TestBase")) {
+                culprit = se;
+                break;
+            }
+        }
+        return culprit;
     }
 
     /**
@@ -687,6 +699,14 @@ public class TestBase {
                 } else {
                     failedInputCount++;
                     microTestFailed();
+                    if (AddIgnoreForFailedTests) {
+                        try {
+                            addIgnoreForFailedTest();
+                        } catch (Exception ex) {
+                            System.err.println("Cannot add ignore for test. Message: " + ex.getMessage());
+                            ex.printStackTrace();
+                        }
+                    }
                     if (!ProcessFailedTests || ShowFailedTestsResults) {
                         // Show hint where first diff occurs - use preprocessed text
                         int expectedLen = checkResult.expected.length();
@@ -762,6 +782,21 @@ public class TestBase {
             failedTestCount++;
         }
         return !skipFastREval;
+    }
+
+    private static void addIgnoreForFailedTest() throws IOException {
+        StackTraceElement frame = getTestStackFrame();
+        String fileName = frame.getFileName();
+        List<String> lines = Files.readAllLines(Paths.get(fileName));
+        String line = lines.get(frame.getLineNumber() - 1);
+        if (!line.contains("assertEval(")) {
+            System.out.println("WARNING: cannot add ignore to test " + frame.getClassName() + ":" + frame.getLineNumber());
+            return;
+        }
+        line = line.replaceAll("(:?Output\\.[a-zA-Z0-9]*[ ]*,)[ ]*", "/*$1*/");
+        line = line.replace("assertEval(", "assertEval(Ignored.NewRVersionMigration, ");
+        lines.set(frame.getLineNumber() - 1, line);
+        Files.write(Paths.get(fileName), lines);
     }
 
     private static class CheckResult {

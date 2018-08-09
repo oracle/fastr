@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,31 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.TempPathName;
-import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 
-@RBuiltin(name = "tempdir", kind = INTERNAL, parameterNames = {"check"}, behavior = RBehavior.READS_STATE)
-public abstract class TempDir extends RBuiltinNode.Arg1 {
+/**
+ * In GNU-R this creates an {@code ALTREP} object, which corresponds to FastR's
+ * {@link com.oracle.truffle.r.runtime.data.Closure}, i.e. deferred coercion of a vector. The
+ * contract seems to be that if the vector cannot be wrapped, then the original vector is returned.
+ */
+@RBuiltin(name = "wrap_meta", kind = INTERNAL, parameterNames = {"x", "srt", "no_na"}, behavior = PURE)
+public class WrapMeta extends RBuiltinNode.Arg3 {
 
     static {
-        Casts.noCasts(TempDir.class);
+        Casts.noCasts(WrapMeta.class);
     }
 
-    @Specialization
-    protected Object tempdir(@SuppressWarnings("unused") Object check) {
-        return RDataFactory.createStringVectorFromScalar(TempPathName.tempDirPath());
+    @Override
+    public Object execute(VirtualFrame frame, Object arg1, Object arg2, Object arg3) {
+        return arg1;
+    }
+
+    public static WrapMeta create() {
+        return new WrapMeta();
     }
 }

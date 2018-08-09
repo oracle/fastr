@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,24 +22,31 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
-import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.TempPathName;
-import com.oracle.truffle.r.runtime.builtins.RBehavior;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 
-@RBuiltin(name = "tempdir", kind = INTERNAL, parameterNames = {"check"}, behavior = RBehavior.READS_STATE)
-public abstract class TempDir extends RBuiltinNode.Arg1 {
+/**
+ * Fast path check if a vector is already sorted. For now we simply return {@code FALSE}. This
+ * should be improved.
+ */
+@RBuiltin(name = "sorted_fpass", kind = INTERNAL, parameterNames = {"x", "decr", "nalast"}, behavior = PURE)
+public class SortedFastPass extends RBuiltinNode.Arg3 {
 
     static {
-        Casts.noCasts(TempDir.class);
+        Casts.noCasts(SortedFastPass.class);
     }
 
-    @Specialization
-    protected Object tempdir(@SuppressWarnings("unused") Object check) {
-        return RDataFactory.createStringVectorFromScalar(TempPathName.tempDirPath());
+    @Override
+    public Object execute(VirtualFrame frame, Object arg1, Object arg2, Object arg3) {
+        return RRuntime.LOGICAL_FALSE;
+    }
+
+    public static SortedFastPass create() {
+        return new SortedFastPass();
     }
 }
