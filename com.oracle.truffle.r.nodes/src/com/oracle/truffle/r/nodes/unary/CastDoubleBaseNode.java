@@ -40,7 +40,6 @@ import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 public abstract class CastDoubleBaseNode extends CastBaseNode {
 
     protected final NACheck naCheck = NACheck.create();
-    protected final NAProfile naProfile = NAProfile.create();
 
     protected CastDoubleBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
         super(preserveNames, preserveDimensions, preserveAttributes);
@@ -110,7 +109,8 @@ public abstract class CastDoubleBaseNode extends CastBaseNode {
 
     @Specialization
     protected double doString(String operand,
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile,
+                    @Cached("create()") NAProfile naProfile) {
         if (naProfile.isNA(operand) || emptyStringProfile.profile(operand.isEmpty())) {
             return RRuntime.DOUBLE_NA;
         }
