@@ -22,19 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.function.IntFunction;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
@@ -46,22 +44,15 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
-import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 public abstract class CastComplexNode extends CastBaseNode {
-
-    private final NACheck naCheck = NACheck.create();
-    private final NAProfile naProfile = NAProfile.create();
-    private final BranchProfile warningBranch = BranchProfile.create();
 
     public abstract Object executeComplex(int o);
 
@@ -77,6 +68,10 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    }
+
+    protected CastComplexNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, false, warningContext);
     }
 
     @Child private CastComplexNode recursiveCastComplex;
@@ -105,19 +100,22 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RComplex doInt(int operand) {
+    protected RComplex doInt(int operand,
+                    @Cached("create()") NACheck naCheck) {
         naCheck.enable(operand);
         return naCheck.convertIntToComplex(operand);
     }
 
     @Specialization
-    protected RComplex doDouble(double operand) {
+    protected RComplex doDouble(double operand,
+                    @Cached("create()") NACheck naCheck) {
         naCheck.enable(operand);
         return naCheck.convertDoubleToComplex(operand);
     }
 
     @Specialization
-    protected RComplex doLogical(byte operand) {
+    protected RComplex doLogical(byte operand,
+                    @Cached("create()") NACheck naCheck) {
         naCheck.enable(operand);
         return naCheck.convertLogicalToComplex(operand);
     }
@@ -134,86 +132,45 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     @Specialization
     protected RComplex doCharacter(String operand,
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
+                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile,
+                    @Cached("create()") NACheck naCheck) {
         naCheck.enable(operand);
         if (naCheck.check(operand) || emptyStringProfile.profile(operand.isEmpty())) {
             return RComplex.createNA();
         }
         RComplex result = RRuntime.string2complexNoCheck(operand);
         if (RRuntime.isNA(result) && !operand.equals(RRuntime.STRING_NaN)) {
-            warning(RError.Message.NA_INTRODUCED_COERCION);
+            warning(warningContext(), RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
 
-    private RComplexVector createResultVector(RAbstractVector operand, IntFunction<RComplex> elementFunction) {
-        naCheck.enable(operand);
+    private RComplexVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
         double[] ddata = new double[operand.getLength() << 1];
-        boolean seenNA = false;
-        for (int i = 0; i < operand.getLength(); i++) {
-            RComplex complexValue = elementFunction.apply(i);
-            int index = i << 1;
-            ddata[index] = complexValue.getRealPart();
-            ddata[index + 1] = complexValue.getImaginaryPart();
-            seenNA = seenNA || naProfile.isNA(complexValue);
-        }
-        RComplexVector ret = factory().createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
-        if (preserveRegAttributes()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization(guards = "!isForeignWrapper(operand)")
-    protected RComplexVector doIntVector(RAbstractIntVector operand) {
-        return createResultVector(operand, index -> naCheck.convertIntToComplex(operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isForeignWrapper(operand)")
-    protected RComplexVector doDoubleVector(RAbstractDoubleVector operand) {
-        return createResultVector(operand, index -> naCheck.convertDoubleToComplex(operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isForeignWrapper(operand)")
-    protected RComplexVector doLogicalVector(RAbstractLogicalVector operand) {
-        return createResultVector(operand, index -> naCheck.convertLogicalToComplex(operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isForeignWrapper(operand)")
-    protected RComplexVector doStringVector(RAbstractStringVector operand,
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile) {
-        naCheck.enable(operand);
-        double[] ddata = new double[operand.getLength() << 1];
-        boolean seenNA = false;
-        boolean warning = false;
-        for (int i = 0; i < operand.getLength(); i++) {
-            String value = operand.getDataAt(i);
-            RComplex complexValue;
-            if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
-                complexValue = RComplex.createNA();
-                seenNA = true;
-            } else {
-                complexValue = RRuntime.string2complexNoCheck(value);
-                if (naProfile.isNA(complexValue)) {
-                    seenNA = true;
-                    if (!value.isEmpty()) {
-                        warningBranch.enter();
-                        warning = true;
-                    }
-                }
+        try (SequentialIterator sIter = uAccess.access(operand, warningContext())) {
+            while (uAccess.next(sIter)) {
+                RComplex complexValue = uAccess.getComplex(sIter);
+                int index = sIter.getIndex() << 1;
+                ddata[index] = complexValue.getRealPart();
+                ddata[index + 1] = complexValue.getImaginaryPart();
             }
-            int index = i << 1;
-            ddata[index] = complexValue.getRealPart();
-            ddata[index + 1] = complexValue.getImaginaryPart();
         }
-        if (warning) {
-            warning(RError.Message.NA_INTRODUCED_COERCION);
-        }
-        RComplexVector ret = factory().createComplexVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
+        RComplexVector ret = factory().createComplexVector(ddata, !uAccess.na.isEnabled(), getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
+    }
+
+    @Specialization(guards = {"uAccess.supports(operand)", "isAbstractAtomicVector(operand)"}, limit = "getGenericVectorAccessSize()")
+    protected RComplexVector doAbstractVector(RAbstractAtomicVector operand,
+                    @Cached("operand.access()") VectorAccess uAccess) {
+        return createResultVector(operand, uAccess);
+    }
+
+    @Specialization(replaces = "doAbstractVector", guards = "isAbstractAtomicVector(operand)")
+    protected RComplexVector doAbstractVectorGeneric(RAbstractAtomicVector operand) {
+        return doAbstractVector(operand, operand.slowPathAccess());
     }
 
     @Specialization
@@ -221,45 +178,44 @@ public abstract class CastComplexNode extends CastBaseNode {
         return vector;
     }
 
-    @Specialization
-    protected RComplexVector doRawVector(RAbstractRawVector operand) {
-        return createResultVector(operand, index -> RDataFactory.createComplex(operand.getRawDataAt(index), 0));
-    }
-
-    @Specialization
-    protected RComplexVector doList(RAbstractListVector list) {
+    @Specialization(guards = "uAccess.supports(list)", limit = "getVectorAccessCacheSize()")
+    protected RComplexVector doList(RAbstractListVector list,
+                    @Cached("list.access()") VectorAccess uAccess) {
         int length = list.getLength();
         double[] result = new double[length * 2];
         boolean seenNA = false;
-        for (int i = 0, j = 0; i < length; i++, j += 2) {
-            Object entry = list.getDataAt(i);
-            if (entry instanceof RList) {
-                result[j] = RRuntime.DOUBLE_NA;
-                result[j + 1] = RRuntime.DOUBLE_NA;
-                seenNA = true;
-            } else {
-                Object castEntry = castComplexRecursive(entry);
-                if (castEntry instanceof RComplex) {
-                    RComplex value = (RComplex) castEntry;
-                    result[j] = value.getRealPart();
-                    result[j + 1] = value.getImaginaryPart();
-                    seenNA = seenNA || RRuntime.isNA(value);
-                } else if (castEntry instanceof RComplexVector) {
-                    RComplexVector complexVector = (RComplexVector) castEntry;
-                    if (complexVector.getLength() == 1) {
-                        RComplex value = complexVector.getDataAt(0);
-                        result[j] = value.getRealPart();
-                        result[j + 1] = value.getImaginaryPart();
+        try (SequentialIterator sIter = uAccess.access(list, warningContext())) {
+            while (uAccess.next(sIter)) {
+                int i = sIter.getIndex() << 1;
+                Object entry = uAccess.getListElement(sIter);
+                if (entry instanceof RList) {
+                    result[i] = RRuntime.DOUBLE_NA;
+                    result[i + 1] = RRuntime.DOUBLE_NA;
+                    seenNA = true;
+                } else {
+                    Object castEntry = castComplexRecursive(entry);
+                    if (castEntry instanceof RComplex) {
+                        RComplex value = (RComplex) castEntry;
+                        result[i] = value.getRealPart();
+                        result[i + 1] = value.getImaginaryPart();
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (complexVector.getLength() == 0) {
-                        result[j] = RRuntime.DOUBLE_NA;
-                        result[j + 1] = RRuntime.DOUBLE_NA;
-                        seenNA = true;
+                    } else if (castEntry instanceof RComplexVector) {
+                        RComplexVector complexVector = (RComplexVector) castEntry;
+                        if (complexVector.getLength() == 1) {
+                            RComplex value = complexVector.getDataAt(0);
+                            result[i] = value.getRealPart();
+                            result[i + 1] = value.getImaginaryPart();
+                            seenNA = seenNA || RRuntime.isNA(value);
+                        } else if (complexVector.getLength() == 0) {
+                            result[i] = RRuntime.DOUBLE_NA;
+                            result[i + 1] = RRuntime.DOUBLE_NA;
+                            seenNA = true;
+                        } else {
+                            throw throwCannotCoerceListError("complex");
+                        }
                     } else {
                         throw throwCannotCoerceListError("complex");
                     }
-                } else {
-                    throw throwCannotCoerceListError("complex");
                 }
             }
         }
@@ -270,13 +226,18 @@ public abstract class CastComplexNode extends CastBaseNode {
         return ret;
     }
 
-    @Specialization(guards = "!pairList.isLanguage()")
-    protected RComplexVector doPairList(RPairList pairList) {
-        return doList(pairList.toRList());
+    @Specialization(replaces = "doList")
+    protected RComplexVector doListGeneric(RAbstractListVector list) {
+        return doList(list, list.slowPathAccess());
     }
 
-    protected boolean isForeignWrapper(Object value) {
-        return value instanceof RForeignWrapper;
+    @Specialization(guards = "!pairList.isLanguage()")
+    protected RComplexVector doPairList(RPairList pairList) {
+        return (RComplexVector) castComplexRecursive(pairList.toRList());
+    }
+
+    protected boolean isAbstractAtomicVector(RAbstractAtomicVector value) {
+        return !(value instanceof RForeignWrapper) && !(value instanceof RAbstractComplexVector);
     }
 
     @Specialization
@@ -309,5 +270,13 @@ public abstract class CastComplexNode extends CastBaseNode {
 
     public static CastComplexNode createNonPreserving() {
         return CastComplexNodeGen.create(false, false, false);
+    }
+
+    protected int getVectorAccessCacheSize() {
+        return DSLConfig.getVectorAccessCacheSize();
+    }
+
+    protected int getGenericVectorAccessSize() {
+        return DSLConfig.getVectorAccessCacheSize() * 6;
     }
 }
