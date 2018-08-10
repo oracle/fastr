@@ -243,8 +243,8 @@ public final class PipelineToCastNode {
                     return step.vectorCoercion ? CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext)
                                     : CastStringBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext);
                 case Logical:
-                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
-                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext)
+                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext);
                 case Complex:
                     return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.useClosure, warningContext);
                 case Raw:
