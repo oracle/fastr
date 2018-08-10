@@ -982,7 +982,7 @@ public class TestJavaInterop extends TestBase {
                     assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
                 } else if (asXXX.equals("as.expression") && (name.contains("Long") || name.contains("Double"))) {
                     assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
-                } else if (asXXX.equals("as.raw") && (name.contains("Short") || name.contains("Integer") || name.contains("Long") || name.contains("Double") || name.contains("NaN"))) {
+                } else if (asXXX.equals("as.raw") && (name.contains("Long") || name.contains("Double") || name.contains("NaN"))) {
                     assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
                 } else if (asXXX.equals("as.symbol") && (name.contains("Long") || name.contains("Double") || name.contains("Float"))) {
                     assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));

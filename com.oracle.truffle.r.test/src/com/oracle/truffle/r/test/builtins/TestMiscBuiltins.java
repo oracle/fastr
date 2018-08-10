@@ -110,7 +110,7 @@ public class TestMiscBuiltins extends TestBase {
         assertEval("{ x <- 1:3 ; attr(x,\"my\") <- 10 ; attributes(as.matrix(x)) }");
 
         assertEval("{ as.complex(as.double(c(1+1i,1+1i))) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.complex(as.raw(c(1+1i,1+1i))) }");
+        assertEval("{ as.complex(as.raw(c(1+1i,1+1i))) }");
     }
 
     @Test

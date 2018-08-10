@@ -43,7 +43,7 @@ public abstract class AsRaw extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(AsRaw.class);
-        casts.arg("x").mustBe(missingValue().not(), RError.Message.ARGUMENTS_PASSED, 0, "'as.raw'", 1).asRawVector();
+        casts.arg("x").defaultWarningContext(RError.NO_CALLER).mustBe(missingValue().not(), RError.Message.ARGUMENTS_PASSED, 0, "'as.raw'", 1).asRawVector();
     }
 
     @Specialization

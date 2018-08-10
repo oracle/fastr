@@ -63,25 +63,55 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval("{ as.raw(NULL) }");
         assertEval("{ as.raw(1) }");
         assertEval("{ as.raw(1L) }");
+        assertEval("{ as.raw(TRUE) }");
+        assertEval("{ as.raw(c(TRUE, FALSE)) }");
+        assertEval("{ as.raw(NA_integer_) }");
         assertEval("{ as.raw(1.1) }");
         assertEval("{ as.raw(c(1, 2, 3)) }");
         assertEval("{ as.raw(c(1L, 2L, 3L)) }");
+        assertEval("{ as.raw(c(1L, 2L, NA_integer_)) }");
         assertEval("{ as.raw(list(1,2,3)) }");
         assertEval("{ as.raw(list(\"1\", 2L, 3.4)) }");
+        assertEval("{ as.raw(as.raw(list(1, 2, c(1, 2, 3))) }");
+        assertEval("{ as.raw(as.raw(list(1, 2, new.env())) }");
+        assertEval("{ as.raw(as.raw(list(1, 10000000000000)) }");
+        assertEval("{ as.raw(as.raw(list(1, 1+1i)) }");
+        assertEval("{ as.raw(as.raw(list(1, 10000000000000, 1+1i)) }");
+        assertEval("{ as.raw(as.raw(list(1, NA)) }");
+        assertEval("{ as.raw(as.raw(list(1, NA, list(1))) }");
+        assertEval("{ as.raw(as.raw(list(1, NA, list(1, 2, 3))) }");
         assertEval("{ as.raw.cls <- function(x) 42; as.raw(structure(c(1,2), class='cls')); }");
 
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(1+1i) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(-1) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(-1L) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(NA) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(\"test\") }");
+        assertEval("{ as.raw(1+1i) }");
+        assertEval("{ as.raw(-1) }");
+        assertEval("{ as.raw(-1L) }");
+        assertEval("{ as.raw(NA) }");
+        assertEval("{ as.raw(1000L) }");
+        assertEval("{ as.raw(1000) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(10000000000000000) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw('test') }");
+        assertEval("{ as.raw('1') }");
+        assertEval("{ as.raw('1000') }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw('10000000000000000') }");
+        assertEval("{ as.raw(c('1', '2')) }");
+        assertEval("{ as.raw(c('1', '1000')) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(c('10000000000000000', '1000')) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(c('10000000000000000', '1')) }");
         assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1+3i, -2-1i, NA)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1, -2, 3)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1,1000,NA)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1L, -2L, 3L)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c(1L, -2L, NA)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw('10000001') }");
-        assertEval(Output.IgnoreWarningContext, "{ as.raw(c('10000001', '42')) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(10000000000000000+1i) }");
+        assertEval("{ as.raw(NA_complex_) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(1000+1i) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(c(10000000000000000+1i, 1+1i)) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(c(NA_complex_, 1+1i)) }");
+        // gnur has a fixed warnign order,
+        // no matter how they are encountered while traversing the vector
+        assertEval(Output.IgnoreWarningMessage, "{ as.raw(c(1000L, 1+1i)) }");
+        assertEval(Output.IgnoreWarningMessage, "{ as.raw(c(1000, 1+1i)) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(c(10000000000000000+1i, 1000+1i, NA_complex_, 1+1i)) }");
+        assertEval("{ as.raw(c(1, -2, 3)) }");
+        assertEval("{ as.raw(c(1,1000,NA)) }");
+        assertEval("{ as.raw(c(1L, -2L, 3L)) }");
+        assertEval("{ as.raw(c(1L, -2L, NA)) }");
         assertEval("{ y <- as.raw(c(5L, 6L)); attr(y, 'someAttr') <- 'someValue'; x <- as.raw(y); x[[1]] <- as.raw(42); y }");
     }
 }

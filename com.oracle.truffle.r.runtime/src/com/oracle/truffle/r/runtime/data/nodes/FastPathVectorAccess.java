@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 /**
  * Base classes for {@link VectorAccess} implementations that are used on the fast path. For
@@ -444,17 +445,28 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
         @Override
         protected final byte getRawImpl(AccessIterator accessIter, int index) {
-            double value = getComplexRImpl(accessIter, index);
-            if (Double.isNaN(value) || value < 0 || value >= 256) {
+            RComplex value = getComplexImpl(accessIter, index);
+
+            double realPart = value.getRealPart();
+            double realResult = realPart;
+
+            if (realPart > Integer.MAX_VALUE || realPart <= Integer.MIN_VALUE) {
                 warningReportedProfile.enter();
-                accessIter.warning(Message.OUT_OF_RANGE);
-                return 0;
+                accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+                realResult = 0;
             }
+
             if (getComplexIImpl(accessIter, index) != 0) {
                 warningReportedProfile.enter();
                 accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
             }
-            return (byte) value;
+
+            if (Double.isNaN(realPart) || realPart < 0 || realPart >= 256) {
+                warningReportedProfile.enter();
+                accessIter.warning(Message.OUT_OF_RANGE);
+                realResult = 0;
+            }
+            return (byte) RRuntime.double2rawIntValue(realResult);
         }
 
         @Override
@@ -498,6 +510,7 @@ public abstract class FastPathVectorAccess extends VectorAccess {
     public abstract static class FastPathFromStringAccess extends FastPathVectorAccess {
 
         ConditionProfile emptyStringProfile = ConditionProfile.createBinaryProfile();
+        private NAProfile naProfile = NAProfile.create();
 
         public FastPathFromStringAccess(Object value) {
             super(value);
@@ -544,8 +557,31 @@ public abstract class FastPathVectorAccess extends VectorAccess {
 
         @Override
         protected final byte getRawImpl(AccessIterator accessIter, int index) {
-            int value = na.convertStringToInt(getStringImpl(accessIter, index));
-            return value >= 0 && value <= 255 ? (byte) value : 0;
+            String value = getStringImpl(accessIter, index);
+            int intValue;
+            if (na.check(value) || emptyStringProfile.profile(value.isEmpty())) {
+                intValue = RRuntime.INT_NA;
+            } else {
+                intValue = RRuntime.string2intNoCheck(value);
+                if (naProfile.isNA(intValue)) {
+                    if (!value.isEmpty()) {
+                        warningReportedProfile.enter();
+                        try {
+                            Double.parseDouble(value);
+                            accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
+                        } catch (NumberFormatException e) {
+                            accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
+                        }
+                    }
+                }
+                int intRawValue = RRuntime.int2rawIntValue(intValue);
+                if (intValue != intRawValue) {
+                    warningReportedProfile.enter();
+                    accessIter.warning(Message.OUT_OF_RANGE);
+                    intValue = 0;
+                }
+            }
+            return intValue >= 0 && intValue <= 255 ? (byte) intValue : 0;
         }
 
         @Override
