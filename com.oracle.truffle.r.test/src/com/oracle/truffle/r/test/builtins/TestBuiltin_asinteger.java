@@ -163,4 +163,10 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA)) }");
         assertEval("{ y <- c(3L, 4L); attr(y, 'someAttr') <- 'someValue'; x <- as.integer(y); x[[1]] <- 42L; y }");
     }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c(1L, 3L); .fastr.identity(x) == .fastr.identity(as.integer(x)); }", "[1] TRUE");
+        assertEvalFastR("{ x <- 1:10; .fastr.identity(x) == .fastr.identity(as.integer(x)); }", "[1] TRUE");
+    }
 }

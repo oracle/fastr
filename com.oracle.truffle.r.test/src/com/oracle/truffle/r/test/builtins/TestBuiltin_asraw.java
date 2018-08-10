@@ -114,4 +114,9 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval("{ as.raw(c(1L, -2L, NA)) }");
         assertEval("{ y <- as.raw(c(5L, 6L)); attr(y, 'someAttr') <- 'someValue'; x <- as.raw(y); x[[1]] <- as.raw(42); y }");
     }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- as.raw(c(1, 3)); .fastr.identity(x) == .fastr.identity(as.raw(x)); }", "[1] TRUE");
+    }
 }

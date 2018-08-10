@@ -198,4 +198,9 @@ public class TestBuiltin_asdouble extends TestBase {
         assertEval("{ as.double.cls <- function(x) 42; as.double(structure(c(1,2), class='cls')); }");
         assertEval("{ y <- c(3.1, 3.2); attr(y, 'someAttr') <- 'someValue'; x <- as.double(y); x[[1]] <- 42; y }");
     }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c(1, 3.5); .fastr.identity(x) == .fastr.identity(as.double(x)); }", "[1] TRUE");
+    }
 }

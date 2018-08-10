@@ -281,4 +281,9 @@ public class TestBuiltin_ascharacter extends TestBase {
         assertEval("{ as.character.cls <- function(x) 42; as.character(structure(c(1,2), class='cls')); }");
         assertEval("{ y <- c('a', 'b'); attr(y, 'someAttr') <- 'someValue'; x <- as.character(y); x[[1]] <- '42'; y }");
     }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c('a', 'abc'); .fastr.identity(x) == .fastr.identity(as.character(x)); }", "[1] TRUE");
+    }
 }

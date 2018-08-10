@@ -116,4 +116,9 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval(Output.IgnoreWarningContext, "{ as.complex(list(\"foo\")) }");
         assertEval("{ as.complex.cls <- function(x) 42; as.complex(structure(c(1,2), class='cls')); }");
     }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c(1+2i, 3.5+3i); .fastr.identity(x) == .fastr.identity(as.complex(x)); }", "[1] TRUE");
+    }
 }
