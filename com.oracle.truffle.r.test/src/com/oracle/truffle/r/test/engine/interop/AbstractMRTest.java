@@ -127,7 +127,7 @@ public abstract class AbstractMRTest {
         for (TruffleObject obj : createTruffleObjects()) {
             try {
                 // TODO if the need appears, also provide for args for execute
-                ForeignAccess.sendExecute(Message.createExecute(0).createNode(), obj);
+                ForeignAccess.sendExecute(Message.EXECUTE.createNode(), obj);
                 assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_EXECUTABLE", true, ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), obj));
             } catch (UnsupportedTypeException | ArityException e) {
                 throw e;
@@ -142,7 +142,7 @@ public abstract class AbstractMRTest {
         for (TruffleObject obj : createTruffleObjects()) {
             try {
                 // TODO if the need appears, also provide for args for new
-                ForeignAccess.sendNew(Message.createNew(0).createNode(), obj);
+                ForeignAccess.sendNew(Message.NEW.createNode(), obj);
                 assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_INSTANTIABLE", true, ForeignAccess.sendIsInstantiable(Message.IS_INSTANTIABLE.createNode(), obj));
             } catch (UnsupportedTypeException | ArityException e) {
                 throw e;
