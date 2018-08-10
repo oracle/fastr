@@ -41,17 +41,17 @@ public class RFunctionMRTest extends AbstractMRTest {
         RFunction f = create("function() {}");
         assertTrue(ForeignAccess.sendIsExecutable(Message.IS_EXECUTABLE.createNode(), f));
 
-        TruffleObject result = (TruffleObject) ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f);
+        TruffleObject result = (TruffleObject) ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f);
         assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), result));
 
         f = create("function() {1L}");
-        assertSingletonVector(1, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        assertSingletonVector(1, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f));
 
         f = create("function() {1}");
-        assertSingletonVector(1.0, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        assertSingletonVector(1.0, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f));
 
         f = create("function() {TRUE}");
-        assertSingletonVector(true, ForeignAccess.sendExecute(Message.createExecute(0).createNode(), f));
+        assertSingletonVector(true, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f));
 
         f = create("function(a) {a}");
         assertSingletonVector("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));

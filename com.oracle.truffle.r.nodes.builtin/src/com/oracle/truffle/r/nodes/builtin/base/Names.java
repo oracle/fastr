@@ -101,7 +101,7 @@ public abstract class Names extends RBuiltinNode.Arg1 {
             if (env.isHostObject(obj) && !(env.asHostObject(obj) instanceof Class)) {
                 if (executeNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    executeNode = insert(Message.createExecute(0).createNode());
+                    executeNode = insert(Message.EXECUTE.createNode());
                 }
                 try {
                     TruffleObject clazzStatic = context.toJavaStatic(obj, readNode, executeNode);
