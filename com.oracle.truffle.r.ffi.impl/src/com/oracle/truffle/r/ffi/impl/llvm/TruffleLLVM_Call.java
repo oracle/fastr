@@ -95,7 +95,7 @@ final class TruffleLLVM_Call implements CallRFFI {
 
                 callbacks = (TruffleObject) context.getEnv().asGuestValue(callbacksArray);
 
-                Node setClbkAddrExecuteNode = Message.createExecute(1).createNode();
+                Node setClbkAddrExecuteNode = Message.EXECUTE.createNode();
                 SymbolHandle setClbkAddrSymbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + "Rinternals_setCallbacksAddress"));
                 setCallbacksAddress = setClbkAddrSymbolHandle.asTruffleObject();
                 // Initialize the callbacks global variable
@@ -126,7 +126,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         for (INIT_VAR_FUN initVarFun : INIT_VAR_FUN.values()) {
             initVarFun.symbolHandle = new SymbolHandle(context.getEnv().importSymbol("@" + initVarFun.funName));
         }
-        Node executeNode = Message.createExecute(2).createNode();
+        Node executeNode = Message.EXECUTE.createNode();
         RFFIVariables[] variables = RFFIVariables.initialize(context);
         boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
         try {
@@ -229,7 +229,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args,
                         @SuppressWarnings("unused") @Cached("nativeCallInfo") NativeCallInfo cachedNativeCallInfo,
                         @SuppressWarnings("unused") @Cached("argCount(args)") int cachedArgCount,
-                        @Cached("createMessageNode(args)") Node cachedMessageNode,
+                        @Cached("createMessageNode()") Node cachedMessageNode,
                         @Cached("createConvertNodes(cachedArgCount)") ToNativeNode[] convert) {
             return doInvoke(cachedMessageNode, nativeCallInfo, args, convert);
         }
@@ -237,7 +237,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         @Specialization(replaces = "invokeCallCached")
         @TruffleBoundary
         protected Object invokeCallNormal(NativeCallInfo nativeCallInfo, Object[] args) {
-            return doInvoke(Message.createExecute(args.length).createNode(), nativeCallInfo, args, null);
+            return doInvoke(Message.EXECUTE.createNode(), nativeCallInfo, args, null);
         }
 
         @ExplodeLoop
@@ -273,8 +273,8 @@ final class TruffleLLVM_Call implements CallRFFI {
             return args.length;
         }
 
-        public Node createMessageNode(Object[] args) {
-            return Message.createExecute(args.length).createNode();
+        public Node createMessageNode() {
+            return Message.EXECUTE.createNode();
         }
     }
 
@@ -313,7 +313,7 @@ final class TruffleLLVM_Call implements CallRFFI {
     }
 
     public static final class PushCallbacksNode extends Node {
-        @Child private Node setCallbacksNode = Message.createExecute(1).createNode();
+        @Child private Node setCallbacksNode = Message.EXECUTE.createNode();
 
         public void execute(TruffleObject setCallbacksAddress, TruffleObject callbacks) {
             try {

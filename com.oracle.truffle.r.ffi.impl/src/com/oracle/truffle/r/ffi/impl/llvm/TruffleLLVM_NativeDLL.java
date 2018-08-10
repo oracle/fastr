@@ -45,14 +45,14 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
  */
 class TruffleLLVM_NativeDLL {
     enum Function {
-        dlopen(3),
-        dlclose(1);
+        dlopen,
+        dlclose;
 
         private final Node executeNode;
         private final String callName;
 
-        Function(int argCount) {
-            executeNode = Message.createExecute(argCount).createNode();
+        Function() {
+            executeNode = Message.EXECUTE.createNode();
             callName = "call_" + name();
         }
     }

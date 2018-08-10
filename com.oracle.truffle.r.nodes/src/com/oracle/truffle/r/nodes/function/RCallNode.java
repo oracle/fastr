@@ -655,13 +655,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         public abstract Object execute(TruffleObject function, Object[] args);
 
-        protected static Node createMessageNode(int argsLen) {
-            return Message.createExecute(argsLen).createNode();
+        protected static Node createMessageNode() {
+            return Message.EXECUTE.createNode();
         }
 
         @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "8")
         protected Object doCached(TruffleObject function, Object[] argumentsArray,
-                        @Cached("createMessageNode(argumentsArray.length)") Node messageNode,
+                        @Cached("createMessageNode()") Node messageNode,
                         @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
             try {
                 return ForeignAccess.sendExecute(messageNode, function, args2Foreign(argumentsArray));
@@ -677,7 +677,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Specialization(replaces = "doCached")
         @TruffleBoundary
         protected Object doGeneric(TruffleObject function, Object[] argumentsArray) {
-            return doCached(function, argumentsArray, createMessageNode(argumentsArray.length), argumentsArray.length);
+            return doCached(function, argumentsArray, createMessageNode(), argumentsArray.length);
         }
     }
 
@@ -688,13 +688,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         public abstract Object execute(DeferredFunctionValue function, Object[] args);
 
-        protected static Node createMessageNode(int argsLen) {
-            return Message.createInvoke(argsLen).createNode();
+        protected static Node createMessageNode() {
+            return Message.INVOKE.createNode();
         }
 
         @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "8")
         protected Object doCached(DeferredFunctionValue lhs, Object[] argumentsArray,
-                        @Cached("createMessageNode(argumentsArray.length)") Node messageNode,
+                        @Cached("createMessageNode()") Node messageNode,
                         @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
             TruffleObject receiver = lhs.getLHSReceiver();
             String member = lhs.getLHSMember();
@@ -710,7 +710,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         @Specialization(replaces = "doCached")
         @TruffleBoundary
         protected Object doGeneric(DeferredFunctionValue lhs, Object[] argumentsArray) {
-            return doCached(lhs, argumentsArray, createMessageNode(argumentsArray.length), argumentsArray.length);
+            return doCached(lhs, argumentsArray, createMessageNode(), argumentsArray.length);
         }
     }
 

@@ -306,7 +306,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Resolve(message = "EXECUTE")
         abstract static class VectorWrapperExecuteNode extends Node {
-            @Child private Node execMsg = Message.createExecute(0).createNode();
+            @Child private Node execMsg = Message.EXECUTE.createNode();
 
             protected Object access(VectorRFFIWrapper receiver, Object[] arguments) {
                 try {

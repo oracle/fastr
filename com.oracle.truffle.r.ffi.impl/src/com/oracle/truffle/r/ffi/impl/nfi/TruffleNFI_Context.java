@@ -148,7 +148,7 @@ final class TruffleNFI_Context extends RFFIContext {
             }
             try {
                 TruffleObject symbol = ((TruffleObject) ForeignAccess.sendRead(Message.READ.createNode(), dllInfo, function.getCallName()));
-                TruffleObject target = (TruffleObject) ForeignAccess.sendInvoke(Message.createInvoke(1).createNode(), symbol, "bind", function.getSignature());
+                TruffleObject target = (TruffleObject) ForeignAccess.sendInvoke(Message.INVOKE.createNode(), symbol, "bind", function.getSignature());
                 nativeFunctions.put(function, target);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
@@ -166,7 +166,7 @@ final class TruffleNFI_Context extends RFFIContext {
         synchronized (TruffleNFI_Context.class) {
             if (!variablesInitialized) {
                 variablesInitialized = true;
-                Node executeNode = Message.createExecute(2).createNode();
+                Node executeNode = Message.EXECUTE.createNode();
                 RFFIVariables[] variables = RFFIVariables.initialize(context);
                 boolean isNullSetting = RContext.getRForeignAccessFactory().setIsNull(false);
                 try {
@@ -206,8 +206,8 @@ final class TruffleNFI_Context extends RFFIContext {
     private static long initCallbacksAddress() {
         // get the address of the native thread local
         try {
-            Node bind = Message.createInvoke(1).createNode();
-            Node executeNode = Message.createExecute(1).createNode();
+            Node bind = Message.INVOKE.createNode();
+            Node executeNode = Message.EXECUTE.createNode();
             TruffleObject getCallbacksAddressFunction = (TruffleObject) ForeignAccess.sendInvoke(bind, DLL.findSymbol("Rinternals_getCallbacksAddress", null).asTruffleObject(), "bind", "(): sint64");
             return (long) ForeignAccess.sendExecute(executeNode, getCallbacksAddressFunction);
         } catch (InteropException ex) {
@@ -219,8 +219,8 @@ final class TruffleNFI_Context extends RFFIContext {
         if (context.getKind() == ContextKind.SHARE_NOTHING) {
             // create and fill a new callbacks table
             callbacks = UnsafeAdapter.UNSAFE.allocateMemory(Callbacks.values().length * Unsafe.ARRAY_LONG_INDEX_SCALE);
-            Node bind = Message.createInvoke(1).createNode();
-            Node executeNode = Message.createExecute(1).createNode();
+            Node bind = Message.INVOKE.createNode();
+            Node executeNode = Message.EXECUTE.createNode();
             SymbolHandle symbolHandle = DLL.findSymbol("Rinternals_addCallback", null);
             try {
                 Callbacks.createCalls(new TruffleNFI_UpCallsRFFIImpl());
