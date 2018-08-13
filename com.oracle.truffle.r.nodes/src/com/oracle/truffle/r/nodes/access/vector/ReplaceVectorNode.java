@@ -323,7 +323,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
                 }
                 if (executeNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    executeNode = insert(com.oracle.truffle.api.interop.Message.createExecute(0).createNode());
+                    executeNode = insert(com.oracle.truffle.api.interop.Message.EXECUTE.createNode());
                 }
                 if (readNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();

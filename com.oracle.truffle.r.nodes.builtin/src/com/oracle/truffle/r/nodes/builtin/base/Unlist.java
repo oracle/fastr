@@ -219,7 +219,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         @Specialization(guards = {"isJavaIterable(obj)", "!isForeignArray(obj, hasSize)"})
         protected int getJavaIterableLength(TruffleObject obj,
                         @Cached("READ.createNode()") Node read,
-                        @Cached("createExecute(0).createNode()") Node execute,
+                        @Cached("EXECUTE.createNode()") Node execute,
                         @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("create()") Foreign2R foreign2R) {
             int totalSize = 0;

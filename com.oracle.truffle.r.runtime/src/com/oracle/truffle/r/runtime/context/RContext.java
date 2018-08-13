@@ -957,7 +957,7 @@ public final class RContext {
         }
 
         private final Node read = Message.READ.createNode();
-        private final Node execute = Message.createExecute(1).createNode();
+        private final Node execute = Message.EXECUTE.createNode();
 
         @TruffleBoundary
         public String getPrompt() {

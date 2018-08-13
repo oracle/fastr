@@ -133,7 +133,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     protected Object setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        Node executeNode = Message.createExecute(4).createNode();
+        Node executeNode = Message.EXECUTE.createNode();
         try {
             return FFIUnwrapNode.unwrap(ForeignAccess.sendExecute(executeNode, setSymbolHandle, dllInfo, nstOrd, routines, index));
         } catch (InteropException ex) {

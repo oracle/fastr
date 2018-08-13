@@ -54,21 +54,21 @@ public class RFunctionMRTest extends AbstractMRTest {
         assertSingletonVector(true, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f));
 
         f = create("function(a) {a}");
-        assertSingletonVector("abc", ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, "abc"));
+        assertSingletonVector("abc", ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, "abc"));
 
         f = create("function(a) { is.logical(a) }");
-        assertSingletonVector(true, ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true));
+        assertSingletonVector(true, ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, true));
 
         f = create("function(a) { .fastr.interop.asShort(a) }");
-        assertTrue(ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, 123) instanceof Short);
+        assertTrue(ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, 123) instanceof Short);
 
         f = create("function(a) { NA }");
-        Object naVectorResult = ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true);
+        Object naVectorResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, true);
         Object naValue = ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) naVectorResult, 0);
         assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) naValue));
 
         f = create("function(a) { NULL }");
-        Object nullResult = ForeignAccess.sendExecute(Message.createExecute(1).createNode(), f, true);
+        Object nullResult = ForeignAccess.sendExecute(Message.EXECUTE.createNode(), f, true);
         assertTrue(ForeignAccess.sendIsNull(Message.IS_NULL.createNode(), (TruffleObject) nullResult));
     }
 

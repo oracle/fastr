@@ -174,7 +174,7 @@ public abstract class ForeignArray2R extends RBaseNode {
     @Specialization(guards = "isJavaIterable(obj)")
     @TruffleBoundary
     protected ForeignArrayData doJavaIterable(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, ForeignArrayData arrayData, @SuppressWarnings("unused") int depth, boolean onlyInspect,
-                    @Cached("createExecute(0).createNode()") Node execute) {
+                    @Cached("EXECUTE.createNode()") Node execute) {
 
         try {
             return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, execute, onlyInspect);

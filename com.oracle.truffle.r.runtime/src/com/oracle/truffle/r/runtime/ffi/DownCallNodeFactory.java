@@ -69,7 +69,7 @@ public abstract class DownCallNodeFactory {
             try {
                 if (message == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    message = insert(Message.createExecute(function.getArgumentCount()).createNode());
+                    message = insert(Message.EXECUTE.createNode());
                 }
                 if (target == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();

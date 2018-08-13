@@ -47,7 +47,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
         protected void init(NativeFunction userFunction, NativeFunction readFunction) {
             if (userFunctionNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                userFunctionNode = insert(Message.createExecute(userFunction.getArgumentCount()).createNode());
+                userFunctionNode = insert(Message.EXECUTE.createNode());
             }
             if (userFunctionTarget == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -56,7 +56,7 @@ public class TruffleNFI_UserRng implements UserRngRFFI {
             if (readFunction != null) {
                 if (readPointerNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    readPointerNode = insert(Message.createExecute(readFunction.getArgumentCount()).createNode());
+                    readPointerNode = insert(Message.EXECUTE.createNode());
                 }
                 if (readPointerTarget == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();

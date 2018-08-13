@@ -421,7 +421,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         private Node getExecuteNode() {
             if (executeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                executeNode = insert(com.oracle.truffle.api.interop.Message.createExecute(0).createNode());
+                executeNode = insert(com.oracle.truffle.api.interop.Message.EXECUTE.createNode());
             }
             return executeNode;
         }
