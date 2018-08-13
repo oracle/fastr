@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -284,7 +285,11 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
 
     @Specialization(guards = {"!isRAttributable(o)", "!isScalar(o)"})
     protected Object doFallback(@SuppressWarnings("unused") Object o, @SuppressWarnings("unused") Object operand) {
-        throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        if (o == RNull.instance) {
+            return (operand != RNull.instance) ? doOtherNull(RDataFactory.createList(), operand) : o;
+        } else {
+            throw error(RError.Message.INVALID_OR_UNIMPLEMENTED_ARGUMENTS);
+        }
     }
 
     protected static boolean isScalar(Object o) {
