@@ -30,7 +30,9 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -38,21 +40,17 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@ImportStatic(RRuntime.class)
+@ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class CastLogicalNode extends CastLogicalBaseNode {
-
-    private final NAProfile naProfile = NAProfile.create();
 
     @Child private CastLogicalNode recursiveCastLogical;
     @Child private InheritsCheckNode inheritsFactorCheck;
@@ -65,6 +63,10 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
     }
 
+    protected CastLogicalNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, warningContext);
+    }
+
     protected Object castLogicalRecursive(Object o) {
         if (recursiveCastLogical == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -73,22 +75,9 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return recursiveCastLogical.execute(o);
     }
 
-    protected boolean isFactor(Object o) {
-        if (inheritsFactorCheck == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            inheritsFactorCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));
-        }
-        return inheritsFactorCheck.execute(o);
-    }
-
     @Specialization
     protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
         return RNull.instance;
-    }
-
-    @FunctionalInterface
-    private interface IntToByteFunction {
-        byte apply(int value);
     }
 
     private RLogicalVector vectorCopy(RAbstractVector operand, byte[] bdata, boolean isComplete) {
@@ -99,16 +88,14 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return ret;
     }
 
-    private RLogicalVector createResultVector(RAbstractVector operand, IntToByteFunction elementFunction) {
-        naCheck.enable(operand);
+    private RLogicalVector createResultVector(RAbstractVector operand, VectorAccess uAccess) {
         byte[] bdata = new byte[operand.getLength()];
-        boolean seenNA = false;
-        for (int i = 0; i < operand.getLength(); i++) {
-            byte value = elementFunction.apply(i);
-            bdata[i] = value;
-            seenNA = seenNA || naProfile.isNA(value);
+        try (SequentialIterator sIter = uAccess.access(operand, warningContext())) {
+            while (uAccess.next(sIter)) {
+                bdata[sIter.getIndex()] = uAccess.getLogical(sIter);
+            }
         }
-        return vectorCopy(operand, bdata, !seenNA);
+        return vectorCopy(operand, bdata, uAccess.na.neverSeenNAOrNaN());
     }
 
     @Specialization
@@ -116,9 +103,15 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return operand;
     }
 
-    @Specialization(guards = "!isFactor(operand)")
-    protected RLogicalVector doIntVector(RAbstractIntVector operand) {
-        return createResultVector(operand, index -> naCheck.convertIntToLogical(operand.getDataAt(index)));
+    @Specialization(guards = {"uAccess.supports(operand)", "useVectorAccess(operand)"}, limit = "getGenericVectorAccessCacheSize()")
+    protected RLogicalVector doAbstractVector(RAbstractAtomicVector operand,
+                    @Cached("operand.access()") VectorAccess uAccess) {
+        return createResultVector(operand, uAccess);
+    }
+
+    @Specialization(replaces = "doAbstractVector", guards = {"useVectorAccess(operand)"})
+    protected RLogicalVector doAbstractVectorGeneric(RAbstractAtomicVector operand) {
+        return createResultVector(operand, operand.slowPathAccess());
     }
 
     @Specialization(guards = "isFactor(factor)")
@@ -128,56 +121,40 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return factory().createLogicalVector(data, RDataFactory.INCOMPLETE_VECTOR);
     }
 
-    @Specialization
-    protected RLogicalVector doDoubleVector(RAbstractDoubleVector operand) {
-        return createResultVector(operand, index -> naCheck.convertDoubleToLogical(operand.getDataAt(index)));
-    }
-
-    @Specialization
-    protected RLogicalVector doStringVector(RAbstractStringVector operand) {
-        return createResultVector(operand, index -> naCheck.convertStringToLogical(operand.getDataAt(index)));
-    }
-
-    @Specialization
-    protected RLogicalVector doComplexVector(RAbstractComplexVector operand) {
-        return createResultVector(operand, index -> naCheck.convertComplexToLogical(operand.getDataAt(index)));
-    }
-
-    @Specialization
-    protected RLogicalVector doRawVectorDims(RAbstractRawVector operand) {
-        return createResultVector(operand, index -> RRuntime.raw2logical(operand.getRawDataAt(index)));
-    }
-
-    @Specialization
-    protected RLogicalVector doList(RAbstractListVector list) {
+    @Specialization(guards = "uAccess.supports(list)", limit = "getVectorAccessCacheSize()")
+    protected RLogicalVector doList(RAbstractListVector list,
+                    @Cached("list.access()") VectorAccess uAccess) {
         int length = list.getLength();
         byte[] result = new byte[length];
         boolean seenNA = false;
-        for (int i = 0; i < length; i++) {
-            Object entry = list.getDataAt(i);
-            if (entry instanceof RList) {
-                result[i] = RRuntime.LOGICAL_NA;
-                seenNA = true;
-            } else {
-                Object castEntry = castLogicalRecursive(entry);
-                if (castEntry instanceof Byte) {
-                    byte value = (Byte) castEntry;
-                    result[i] = value;
-                    seenNA = seenNA || RRuntime.isNA(value);
-                } else if (castEntry instanceof RLogicalVector) {
-                    RLogicalVector logicalVector = (RLogicalVector) castEntry;
-                    if (logicalVector.getLength() == 1) {
-                        byte value = logicalVector.getDataAt(0);
+        try (SequentialIterator sIter = uAccess.access(list, warningContext())) {
+            while (uAccess.next(sIter)) {
+                int i = sIter.getIndex();
+                Object entry = uAccess.getListElement(sIter);
+                if (entry instanceof RList) {
+                    result[i] = RRuntime.LOGICAL_NA;
+                    seenNA = true;
+                } else {
+                    Object castEntry = castLogicalRecursive(entry);
+                    if (castEntry instanceof Byte) {
+                        byte value = (Byte) castEntry;
                         result[i] = value;
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (logicalVector.getLength() == 0) {
-                        result[i] = RRuntime.LOGICAL_NA;
-                        seenNA = true;
+                    } else if (castEntry instanceof RLogicalVector) {
+                        RLogicalVector logicalVector = (RLogicalVector) castEntry;
+                        if (logicalVector.getLength() == 1) {
+                            byte value = logicalVector.getDataAt(0);
+                            result[i] = value;
+                            seenNA = seenNA || RRuntime.isNA(value);
+                        } else if (logicalVector.getLength() == 0) {
+                            result[i] = RRuntime.LOGICAL_NA;
+                            seenNA = true;
+                        } else {
+                            throw throwCannotCoerceListError("logical");
+                        }
                     } else {
                         throw throwCannotCoerceListError("logical");
                     }
-                } else {
-                    throw throwCannotCoerceListError("logical");
                 }
             }
         }
@@ -188,9 +165,14 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
         return ret;
     }
 
+    @Specialization(replaces = "doList")
+    protected RLogicalVector doListGeneric(RAbstractListVector list) {
+        return doList(list, list.slowPathAccess());
+    }
+
     @Specialization(guards = "!pairList.isLanguage()")
     protected RLogicalVector doPairList(RPairList pairList) {
-        return doList(pairList.toRList());
+        return (RLogicalVector) castLogicalRecursive(pairList.toRList());
     }
 
     @Specialization
@@ -224,5 +206,20 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     public static CastLogicalNode createNonPreserving() {
         return CastLogicalNodeGen.create(false, false, false);
+    }
+
+    protected boolean isFactor(RAbstractIntVector o) {
+        if (inheritsFactorCheck == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            inheritsFactorCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));
+        }
+        return inheritsFactorCheck.execute(o);
+    }
+
+    protected boolean useVectorAccess(RAbstractAtomicVector x) {
+        if (x instanceof RAbstractIntVector && isFactor((RAbstractIntVector) x)) {
+            return false;
+        }
+        return !(x instanceof RAbstractLogicalVector);
     }
 }

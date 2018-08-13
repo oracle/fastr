@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -32,6 +33,10 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
 public abstract class CastLogicalBaseNode extends CastBaseNode {
 
     protected final NACheck naCheck = NACheck.create();
+
+    protected CastLogicalBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, warningContext);
+    }
 
     protected CastLogicalBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);

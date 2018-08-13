@@ -241,10 +241,10 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
     }
 
     protected boolean useClosure(RAbstractAtomicVector x) {
-        return !isForeignWrapper(x) && useClosure() && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+        return useClosure() && !isForeignWrapper(x) && !(x instanceof RAbstractIntVector) && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }
 
     protected boolean noClosure(RAbstractAtomicVector x) {
-        return !isForeignWrapper(x) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+        return !isForeignWrapper(x) && !(x instanceof RAbstractIntVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }
 }

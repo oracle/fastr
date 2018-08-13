@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -38,10 +39,12 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
-@ImportStatic(RRuntime.class)
+@ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class CastListNode extends CastBaseNode {
 
     public abstract RList executeList(Object o);
@@ -74,19 +77,29 @@ public abstract class CastListNode extends CastBaseNode {
         return factory().createList(new Object[]{operand});
     }
 
-    @Specialization
+    @Specialization(guards = "uAccess.supports(operand)", limit = "getVectorAccessCacheSize()")
     protected RList doAbstractVector(RAbstractVector operand,
+                    @Cached("operand.access()") VectorAccess uAccess,
                     @Cached("createClassProfile()") ValueProfile vectorClassProfile) {
         RAbstractVector profiledOperand = vectorClassProfile.profile(operand);
         Object[] data = new Object[profiledOperand.getLength()];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = profiledOperand.getDataAtAsObject(i);
+
+        try (SequentialIterator sIter = uAccess.access(profiledOperand, warningContext())) {
+            while (uAccess.next(sIter)) {
+                data[sIter.getIndex()] = uAccess.getListElement(sIter);
+            }
         }
         RList ret = factory().createList(data, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
         if (preserveRegAttributes()) {
             ret.copyRegAttributesFrom(operand);
         }
         return ret;
+    }
+
+    @Specialization(replaces = "doAbstractVector")
+    protected RList doAbstractVectorGeneric(RAbstractVector operand,
+                    @Cached("createClassProfile()") ValueProfile vectorClassProfile) {
+        return doAbstractVector(operand, operand.slowPathAccess(), vectorClassProfile);
     }
 
     @Specialization

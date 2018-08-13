@@ -978,11 +978,11 @@ public class TestJavaInterop extends TestBase {
             if (name.startsWith("fieldStatic") && name.endsWith("Object")) {
                 if (asXXX.equals("as.character") && name.contains("Long")) {
                     assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
-                } else if ((asXXX.equals("as.double") || asXXX.equals("as.raw")) && (name.contains("String") || name.contains("Char"))) {
+                } else if ((asXXX.equals("as.raw")) && (name.contains("String") || name.contains("Char"))) {
                     assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
                 } else if (asXXX.equals("as.expression") && (name.contains("Long") || name.contains("Double"))) {
                     assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));
-                } else if (asXXX.equals("as.raw") && (name.contains("Short") || name.contains("Integer") || name.contains("Long") || name.contains("Double") || name.contains("NaN"))) {
+                } else if (asXXX.equals("as.raw") && (name.contains("Long") || name.contains("Double") || name.contains("NaN"))) {
                     assertEvalFastR(Output.IgnoreWarningMessage, expr, getAsXXX(f.get(t), asXXX));
                 } else if (asXXX.equals("as.symbol") && (name.contains("Long") || name.contains("Double") || name.contains("Float"))) {
                     assertEvalFastR(Ignored.ImplementationError, expr, getAsXXX(f.get(t), asXXX));

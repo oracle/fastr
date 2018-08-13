@@ -237,18 +237,18 @@ public final class PipelineToCastNode {
                     return step.vectorCoercion ? CastIntegerNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext)
                                     : CastIntegerBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext);
                 case Double:
-                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure)
-                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure);
+                    return step.vectorCoercion ? CastDoubleNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext)
+                                    : CastDoubleBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext);
                 case Character:
-                    return step.vectorCoercion ? CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, false, warningContext)
-                                    : CastStringBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, false, warningContext);
+                    return step.vectorCoercion ? CastStringNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext)
+                                    : CastStringBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext);
                 case Logical:
-                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes)
-                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                    return step.vectorCoercion ? CastLogicalNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext)
+                                    : CastLogicalBaseNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, step.useClosure, warningContext);
                 case Complex:
-                    return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, false, warningContext);
+                    return CastComplexNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.useClosure, warningContext);
                 case Raw:
-                    return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes);
+                    return CastRawNodeGen.create(step.preserveNames, step.preserveDimensions, step.preserveAttributes, step.useClosure, step.useClosure, warningContext);
                 case Any:
                     return CastToVectorNodeGen.create(step.preserveNonVector);
                 default:

@@ -69,7 +69,7 @@ public class TestBuiltin_asdouble extends TestBase {
 
     @Test
     public void testasdouble9() {
-        assertEval(Output.IgnoreWarningContext, "argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
+        assertEval("argv <- list(c('-.1', ' 2.7 ', 'B'));as.double(argv[[1]]);");
     }
 
     @Test
@@ -188,14 +188,19 @@ public class TestBuiltin_asdouble extends TestBase {
         assertEval("{ as.double(\"1.27\") }");
         assertEval("{ as.double(1L) }");
         assertEval("{ as.double(as.raw(1)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.double(c(\"1\",\"hello\")) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.double(\"TRUE\") }");
-        assertEval(Output.IgnoreWarningContext, "{ as.double(10+2i) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.double(c(3+3i, 4+4i)) }");
+        assertEval("{ as.double(c('1','hello')) }");
+        assertEval("{ as.double('TRUE') }");
+        assertEval("{ as.double(10+2i) }");
+        assertEval("{ as.double(c(3+3i, 4+4i)) }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.double(x); attributes(y) }");
         assertEval("{ as.double(NULL) }");
         assertEval("{ as.double.cls <- function(x) 42; as.double(structure(c(1,2), class='cls')); }");
         assertEval("{ y <- c(3.1, 3.2); attr(y, 'someAttr') <- 'someValue'; x <- as.double(y); x[[1]] <- 42; y }");
+    }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c(1, 3.5); .fastr.identity(x) == .fastr.identity(as.double(x)); }", "[1] TRUE");
     }
 }

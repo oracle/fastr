@@ -22,20 +22,17 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import java.util.function.IntToDoubleFunction;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
@@ -44,19 +41,23 @@ import com.oracle.truffle.r.runtime.data.RForeignWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@ImportStatic(RRuntime.class)
+@ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class CastDoubleNode extends CastDoubleBaseNode {
+
+    protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean withReuse, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, withReuse, warningContext);
+    }
 
     protected CastDoubleNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean withReuse) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, withReuse);
@@ -84,100 +85,36 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return ret;
     }
 
-    private RDoubleVector createResultVector(RAbstractVector operand, IntToDoubleFunction elementFunction) {
-        naCheck.enable(operand);
-        double[] ddata = new double[operand.getLength()];
-        boolean seenNA = false;
-        for (int i = 0; i < operand.getLength(); i++) {
-            double value = elementFunction.applyAsDouble(i);
-            ddata[i] = value;
-            seenNA = seenNA || naProfile.isNA(value);
-        }
-        return vectorCopy(operand, ddata, !seenNA);
-    }
-
-    @Specialization(guards = "!isForeignWrapper(x)")
-    protected RAbstractDoubleVector doIntVector(RAbstractIntVector x,
-                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
-        RAbstractIntVector operand = operandTypeProfile.profile(x);
-        if (useClosure()) {
-            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
-        }
-        return createResultVector(operand, index -> naCheck.convertIntToDouble(operand.getDataAt(index)));
-    }
-
-    @Specialization(guards = "!isForeignWrapper(x)")
-    protected RAbstractDoubleVector doLogicalVector(RAbstractLogicalVector x,
-                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
-        RAbstractLogicalVector operand = operandTypeProfile.profile(x);
-        if (useClosure()) {
-            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
-        }
-        return createResultVector(operand, index -> naCheck.convertLogicalToDouble(operand.getDataAt(index)));
-    }
-
-    @Specialization
-    protected RAbstractDoubleVector doRawVector(RAbstractRawVector x,
-                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
-        RAbstractRawVector operand = operandTypeProfile.profile(x);
-        if (useClosure()) {
-            return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
-        }
-        return createResultVector(operand, index -> RRuntime.raw2double(operand.getRawDataAt(index)));
-    }
-
-    @Specialization(guards = "!isForeignWrapper(operand)")
-    protected RDoubleVector doStringVector(RAbstractStringVector operand,
-                    @Cached("createBinaryProfile()") ConditionProfile emptyStringProfile,
-                    @Cached("create()") BranchProfile warningBranch) {
-        naCheck.enable(operand);
-        double[] ddata = new double[operand.getLength()];
-        boolean seenNA = false;
-        boolean warning = false;
-        for (int i = 0; i < operand.getLength(); i++) {
-            String value = operand.getDataAt(i);
-            double doubleValue;
-            if (naCheck.check(value) || emptyStringProfile.profile(value.isEmpty())) {
-                doubleValue = RRuntime.DOUBLE_NA;
-                seenNA = true;
-            } else {
-                doubleValue = RRuntime.string2doubleNoCheck(value);
-                if (naProfile.isNA(doubleValue)) {
-                    seenNA = true;
-                    if (!value.isEmpty()) {
-                        warningBranch.enter();
-                        warning = true;
-                    }
-                }
-            }
-            ddata[i] = doubleValue;
-        }
-        if (warning) {
-            warning(RError.Message.NA_INTRODUCED_COERCION);
-        }
-        RDoubleVector ret = factory().createDoubleVector(ddata, !seenNA, getPreservedDimensions(operand), getPreservedNames(operand), getPreservedDimNames(operand));
-        if (preserveRegAttributes()) {
-            ret.copyRegAttributesFrom(operand);
-        }
-        return ret;
-    }
-
-    @Specialization
-    protected RDoubleVector doComplexVector(RAbstractComplexVector operand) {
-        naCheck.enable(operand);
-        double[] ddata = new double[operand.getLength()];
-        boolean warning = false;
-        for (int i = 0; i < operand.getLength(); i++) {
-            RComplex value = operand.getDataAt(i);
-            ddata[i] = naCheck.convertComplexToDouble(value, false);
-            if (value.getImaginaryPart() != 0.0) {
-                warning = true;
+    private RDoubleVector createResultVector(RAbstractAtomicVector operand, VectorAccess uAccess) {
+        double[] idata = new double[operand.getLength()];
+        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
+            while (uAccess.next(sIter)) {
+                idata[sIter.getIndex()] = uAccess.getDouble(sIter);
             }
         }
-        if (warning) {
-            warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
-        return vectorCopy(operand, ddata, naCheck.neverSeenNA());
+        return vectorCopy(operand, idata, uAccess.na.neverSeenNAOrNaN());
+    }
+
+    @Specialization(guards = {"uAccess.supports(x)", "noClosure(x)"}, limit = "getGenericVectorAccessCacheSize()")
+    protected RAbstractDoubleVector doAbstractVector(RAbstractAtomicVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile,
+                    @Cached("x.access()") VectorAccess uAccess) {
+        RAbstractAtomicVector operand = operandTypeProfile.profile(x);
+        return createResultVector(operand, uAccess);
+    }
+
+    @Specialization(replaces = "doAbstractVector", guards = "noClosure(x)")
+    protected RAbstractDoubleVector doAbstractVectorGeneric(RAbstractAtomicVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile) {
+        return doAbstractVector(x, operandTypeProfile, x.slowPathAccess());
+    }
+
+    @Specialization(guards = {"useClosure(x)"})
+    public RAbstractDoubleVector doAbstractVectorClosure(RAbstractAtomicVector x,
+                    @Cached("createClassProfile()") ValueProfile operandTypeProfile,
+                    @Cached("create()") NAProfile naProfile) {
+        RAbstractAtomicVector operand = operandTypeProfile.profile(x);
+        return (RAbstractDoubleVector) castWithReuse(RType.Double, operand, naProfile.getConditionProfile());
     }
 
     @Specialization
@@ -185,36 +122,40 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return operand;
     }
 
-    @Specialization
-    protected RDoubleVector doList(RAbstractListVector list) {
+    @Specialization(guards = "uAccess.supports(list)", limit = "getVectorAccessCacheSize()")
+    protected RDoubleVector doList(RAbstractListVector list,
+                    @Cached("list.access()") VectorAccess uAccess) {
         int length = list.getLength();
         double[] result = new double[length];
         boolean seenNA = false;
-        for (int i = 0; i < length; i++) {
-            Object entry = list.getDataAt(i);
-            if (entry instanceof RList) {
-                result[i] = RRuntime.DOUBLE_NA;
-                seenNA = true;
-            } else {
-                Object castEntry = castDoubleRecursive(entry);
-                if (castEntry instanceof Double) {
-                    double value = (Double) castEntry;
-                    result[i] = value;
-                    seenNA = seenNA || RRuntime.isNA(value);
-                } else if (castEntry instanceof RDoubleVector) {
-                    RDoubleVector doubleVector = (RDoubleVector) castEntry;
-                    if (doubleVector.getLength() == 1) {
-                        double value = doubleVector.getDataAt(0);
+        try (SequentialIterator sIter = uAccess.access(list, warningContext())) {
+            while (uAccess.next(sIter)) {
+                int i = sIter.getIndex();
+                Object entry = uAccess.getListElement(sIter);
+                if (entry instanceof RList) {
+                    result[i] = RRuntime.DOUBLE_NA;
+                    seenNA = true;
+                } else {
+                    Object castEntry = castDoubleRecursive(entry);
+                    if (castEntry instanceof Double) {
+                        double value = (Double) castEntry;
                         result[i] = value;
                         seenNA = seenNA || RRuntime.isNA(value);
-                    } else if (doubleVector.getLength() == 0) {
-                        result[i] = RRuntime.DOUBLE_NA;
-                        seenNA = true;
+                    } else if (castEntry instanceof RDoubleVector) {
+                        RDoubleVector doubleVector = (RDoubleVector) castEntry;
+                        if (doubleVector.getLength() == 1) {
+                            double value = doubleVector.getDataAt(0);
+                            result[i] = value;
+                            seenNA = seenNA || RRuntime.isNA(value);
+                        } else if (doubleVector.getLength() == 0) {
+                            result[i] = RRuntime.DOUBLE_NA;
+                            seenNA = true;
+                        } else {
+                            throw throwCannotCoerceListError("numeric");
+                        }
                     } else {
                         throw throwCannotCoerceListError("numeric");
                     }
-                } else {
-                    throw throwCannotCoerceListError("numeric");
                 }
             }
         }
@@ -225,9 +166,14 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
         return ret;
     }
 
+    @Specialization(replaces = "doList")
+    protected RDoubleVector doListGeneric(RAbstractListVector list) {
+        return doList(list, list.slowPathAccess());
+    }
+
     @Specialization(guards = "!pairList.isLanguage()")
     protected RDoubleVector doPairList(RPairList pairList) {
-        return doList(pairList.toRList());
+        return (RDoubleVector) castDoubleRecursive(pairList.toRList());
     }
 
     @Specialization(guards = "isForeignObject(obj)")
@@ -279,5 +225,13 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
 
     public static CastDoubleNode createNonPreserving() {
         return CastDoubleNodeGen.create(false, false, false, false, false);
+    }
+
+    protected boolean useClosure(RAbstractAtomicVector x) {
+        return useClosure() && !isForeignWrapper(x) && !(x instanceof RAbstractDoubleVector) && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
+    }
+
+    protected boolean noClosure(RAbstractAtomicVector x) {
+        return !isForeignWrapper(x) && !(x instanceof RAbstractDoubleVector) && (!useClosure() || x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }
 }
