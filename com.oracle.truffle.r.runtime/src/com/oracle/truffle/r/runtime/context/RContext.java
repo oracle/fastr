@@ -768,8 +768,8 @@ public final class RContext {
         return executor != null;
     }
 
-    public Executor getExecutor() {
-        return this.executor;
+    public Object getExecutor() {
+        return env.asGuestValue(this.executor);
     }
 
     /**
