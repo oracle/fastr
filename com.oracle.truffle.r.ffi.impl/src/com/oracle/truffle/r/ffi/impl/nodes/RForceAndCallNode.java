@@ -110,7 +110,7 @@ public abstract class RForceAndCallNode extends RBaseNode {
         System.arraycopy(dotArgs.getArguments(), 0, argValuesEx, argValues.size() - 1, dotArgs.getLength());
         final String[] argNames = dotArgs.getSignature().getNames();
         if (argNames != null) {
-            System.arraycopy(argNames, 0, argNamesEx, argValues.size(), dotArgs.getLength());
+            System.arraycopy(argNames, 0, argNamesEx, argValues.size() - 1, dotArgs.getLength());
         }
         argsAndNames = new RArgsValuesAndNames(argValuesEx, ArgumentsSignature.get(argNamesEx));
         return argsAndNames;

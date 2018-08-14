@@ -461,6 +461,7 @@ colon_expr returns [T v]
 
 unary_expression returns [T v]
     : op=(PLUS | MINUS | NOT | QM) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
+	| op=(TILDE) n_ l=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | b=power_expr                                  { $v = $b.v; }
     ;
 
