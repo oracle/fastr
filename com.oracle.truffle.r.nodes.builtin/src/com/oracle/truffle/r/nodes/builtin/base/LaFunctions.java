@@ -593,7 +593,7 @@ public class LaFunctions {
             }
 
             RDoubleVector result = (RDoubleVector) copyAttributesNode.execute(RDataFactory.createDoubleVector(aData, RDataFactory.INCOMPLETE_VECTOR), aIn);
-            setPivotAttrNode.execute(result, RRuntime.asLogical(piv));
+            setPivotAttrNode.execute(result, RDataFactory.createIntVector(ipiv, false));
             setRankAttrNode.execute(result, rank[0]);
             RList dn = getDimNamesNode.getDimNames(aIn);
             if (dn != null && dn.getDataAt(0) != null) {
