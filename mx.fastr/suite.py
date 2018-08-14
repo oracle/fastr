@@ -162,6 +162,7 @@ suite = {
       "output" : "com.oracle.truffle.r.test.native",
       "results" :[
          "urand/lib/liburand.so",
+         "urand/lib/liburand.sol",
        ],
       "workingSets" : "FastR",
     },

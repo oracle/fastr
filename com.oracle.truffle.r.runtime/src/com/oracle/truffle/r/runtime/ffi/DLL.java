@@ -829,6 +829,10 @@ public class DLL {
         return null;
     }
 
+    public static DLLInfo getRdllInfo() {
+        return ContextStateImpl.libRdllInfo;
+    }
+
     /**
      * Search for symbol {@code name} in library defined by {@code dllInfo}, or {@code null} for
      * search in all loaded libraries. Used in the rare cases where no Truffle execution context
