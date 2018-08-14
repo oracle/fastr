@@ -197,7 +197,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         # Create version directory if inexisting
         if (!dir.exists(version.dir)) {
             log.message("creating version directory ", version.dir, level=1)
-            dir.create(version.dir)
+            dir.create(version.dir, recursive=T)
         }
 
         # lock version directory
@@ -308,7 +308,7 @@ pkg.cache.init <- function(cache.dir, version, table.file.name, cache.size) {
         log.message("creating cache directory ", cache.dir, level=1)
 
         tryCatch({
-            dir.create(cache.dir)
+            dir.create(cache.dir, recursive=T)
         }, error = function(e) {
             log.message("could create package cache dir '", cache.dir, "' because: ", e$message)
         })
