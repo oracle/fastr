@@ -48,6 +48,7 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
@@ -121,6 +122,12 @@ public final class VectorRFFIWrapper implements TruffleObject {
             private static final long EMPTY_DATA_ADDRESS = 0x1BAD;
 
             public abstract long execute(Object vector);
+
+            @Specialization
+            @TruffleBoundary
+            protected static long get(RList list) {
+                return list.allocateNativeContents();
+            }
 
             @Specialization
             @TruffleBoundary
