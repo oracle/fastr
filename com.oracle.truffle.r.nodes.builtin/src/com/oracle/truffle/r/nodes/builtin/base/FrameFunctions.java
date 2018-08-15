@@ -106,6 +106,7 @@ public class FrameFunctions {
     public static final class FrameHelper extends RBaseNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile globalFrameProfile = ConditionProfile.createBinaryProfile();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
@@ -187,6 +188,11 @@ public class FrameFunctions {
         protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame, boolean materialize) {
             if (currentFrameProfile.profile(RArguments.getDepth(frame) == actualFrame)) {
                 return materialize ? frame.materialize() : frame;
+            } else if (globalFrameProfile.profile(actualFrame == 0)) {
+                // Note: this is optimization and necessity, because in the case of invocation of R
+                // function from another "master" language, there will be no actual Truffle frame
+                // for global environment
+                return REnvironment.globalEnv().getFrame();
             } else {
                 if (RArguments.getDepth(frame) - actualFrame <= ITERATE_LEVELS) {
                     Frame current = frame;
