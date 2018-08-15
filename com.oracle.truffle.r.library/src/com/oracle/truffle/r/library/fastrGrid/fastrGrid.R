@@ -48,6 +48,10 @@ find.viewport <- function(path, name, strict, currPath, pvp, depth) {
     }
 }
 
+growPathFixed <- function(pathsofar, name) {
+    if (is.null(pathsofar)) name else grid:::growPath(pathsofar, name)
+}
+
 find.in.children <- function(path, name, strict, currPath, children, depth) {
   cpvps <- ls(env=children)
   ncpvp <- length(cpvps)
@@ -55,7 +59,7 @@ find.in.children <- function(path, name, strict, currPath, children, depth) {
   found <- FALSE
   while (count < ncpvp && !found) {
     child <- get(cpvps[count + 1L], env=children)
-    nextCurrPath <- if (path == 0L) NULL else grid:::growPath(currPath, child$name)
+    nextCurrPath <- if (path == 0L) NULL else growPathFixed(currPath, child$name)
     result <- find.viewport(path, name, strict, nextCurrPath, child, depth)
     if (result[[1L]]) {
         return(result);
