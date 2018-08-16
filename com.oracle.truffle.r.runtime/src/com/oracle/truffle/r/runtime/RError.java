@@ -705,6 +705,7 @@ public final class RError extends RuntimeException implements TruffleException {
         WRONG_LENGTH_ARG("wrong length for '%s' argument"),
         INVALID_TYPE_IN("invalid '%s' type in 'x %s y'"),
         DOT_DOT_MISSING("'..%d' is missing"),
+        DOT_DOT_INDEX_ZERO_OR_LESS("indexing '...' with non-positive index %d"),
         DOT_DOT_SHORT("the ... list does not contain %d elements"),
         DOT_DOT_NONE("the ... list does not contain any elements"),
         NO_DOT_DOT("..%d used in an incorrect context, no ... to look in"),

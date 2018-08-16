@@ -22,20 +22,21 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
+
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "...elt", kind = PRIMITIVE, parameterNames = {"n"}, behavior = READS_FRAME)
 public abstract class DotDotDotElt extends RBuiltinNode.Arg1 {
@@ -47,7 +48,7 @@ public abstract class DotDotDotElt extends RBuiltinNode.Arg1 {
         casts.arg("n").asIntegerVector().findFirst();
     }
 
-    @Specialization
+    @Specialization(guards = "n > 0")
     protected Object lookupElt(VirtualFrame frame, int n) {
         if (lookupVarArgs == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -63,13 +64,18 @@ public abstract class DotDotDotElt extends RBuiltinNode.Arg1 {
         }
         int zeroBased = n - 1;
         if (zeroBased > varArgs.getLength()) {
-            throw error(Message.DOT_DOT_SHORT);
+            throw RError.error(RError.SHOW_CALLER, Message.DOT_DOT_SHORT, n);
         }
         return varArgs.getArgument(zeroBased);
     }
 
-    private void noElementsError() {
-        throw error(Message.DOT_DOT_NONE);
+    @Specialization(guards = "n <= 0")
+    protected Object lookupEltErr(int n) {
+        throw RError.error(RError.SHOW_CALLER, Message.DOT_DOT_INDEX_ZERO_OR_LESS, n);
+    }
+
+    private static void noElementsError() {
+        throw RError.error(RError.SHOW_CALLER, Message.DOT_DOT_NONE);
     }
 
     public static DotDotDotElt create() {
