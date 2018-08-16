@@ -25,8 +25,10 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -34,6 +36,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
 
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_FRAME;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
@@ -42,6 +45,8 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 public abstract class DotDotDotElt extends RBuiltinNode.Arg1 {
 
     @Child private ReadVariableNode lookupVarArgs;
+    @Child private PromiseHelperNode promiseHelper;
+    private final ConditionProfile isRPromise = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(DotDotDotElt.class);
@@ -66,7 +71,18 @@ public abstract class DotDotDotElt extends RBuiltinNode.Arg1 {
         if (zeroBased > varArgs.getLength()) {
             throw RError.error(RError.SHOW_CALLER, Message.DOT_DOT_SHORT, n);
         }
-        return varArgs.getArgument(zeroBased);
+
+        Object arg = varArgs.getArgument(zeroBased);
+
+        if (isRPromise.profile(arg instanceof RPromise)) {
+            if (promiseHelper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                promiseHelper = insert(new PromiseHelperNode());
+            }
+            arg = promiseHelper.evaluate(frame, (RPromise) arg);
+        }
+
+        return arg;
     }
 
     @Specialization(guards = "n <= 0")

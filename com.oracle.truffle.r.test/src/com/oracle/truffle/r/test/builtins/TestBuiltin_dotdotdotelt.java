@@ -37,9 +37,13 @@ public class TestBuiltin_dotdotdotelt extends TestBase {
         // TODO: error with conversion of string to interger
         assertEval(Ignored.ImplementationError, "tst <- function(n,...) ...elt(n); tst('1.6', 1, 2, 3)");
         assertEval("tst <- function(n,...) ...elt(n); a <- 1; tst(a, 1, 2, 3)");
-        assertEval("tst <- function(n,...) ...elt(n); f <- function() {print('hello')}; tst(1, 1, f(), 3)");
+        assertEval("tst <- function(n,...) ...elt(n); f <- function() {print('hello')}; tst(1, f(), f(), 3)");
         assertEval("tst <- function(n,...) ...elt(n); tst(c(1), c(1,2,3))");
         assertEval("tst <- function(n,...) ...elt(n); tst(1, NA)");
+        assertEval("tst <- function(n,...) ...elt(n);  b <- function() {print('b')}; tst(1, b())");
+        assertEval("tst <- function(n,...) {print('a'); ...elt(n); print('c')};  b <- function() {print('b')}; tst(1, b())");
+        assertEval("tst <- function(n,...) ...elt(n); tst(1, 1, 2, 3)");
+
     }
 
     @Test
