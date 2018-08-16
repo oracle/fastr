@@ -298,7 +298,7 @@ public class TestFunctions extends TestBase {
         // Checkstyle: resume line length check
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function(x) { ..1 } ;  f(10) }");
-        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreErrorContext,*/"{ f <- function(...) { ..1 } ;  f() }");
+        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreErrorContext, */"{ f <- function(...) { ..1 } ;  f() }");
 
         assertEval("{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }");
         assertEval("{ asdf <- function(x,...) UseMethod(\"asdf\",x); asdf.numeric <- function(x, ...) print(paste(\"num:\", x, ...)); asdf(1) }");
