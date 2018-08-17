@@ -709,6 +709,7 @@ public final class RError extends RuntimeException implements TruffleException {
         DOT_DOT_SHORT("the ... list does not contain %d elements"),
         DOT_DOT_NONE("the ... list does not contain any elements"),
         NO_DOT_DOT("..%d used in an incorrect context, no ... to look in"),
+        NO_DOT_DOT_CNTXT("incorrect context: the current call has no '...' to look in"),
         NO_DOT_DOT_DOT("'...' used in an incorrect context"),
         NO_LIST_FOR_CDR("'nthcdr' needs a list to CDR down"),
         INVALID_TYPE_LENGTH("invalid type/length (%s/%d) in vector allocation"),
