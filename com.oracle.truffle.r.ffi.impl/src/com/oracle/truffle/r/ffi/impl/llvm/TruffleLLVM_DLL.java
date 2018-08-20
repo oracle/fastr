@@ -44,6 +44,11 @@ import java.util.zip.ZipInputStream;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -94,6 +99,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
          */
         @Override
         public ContextState initialize(RContext context) {
+            // TODO: Is it really needed when using the new lookup mechanism?
             if (!context.isInitial()) {
                 for (LLVM_IR ir : truffleDLL.libRModules) {
                     parseLLVM("libR", ir);
@@ -105,8 +111,8 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 for (DLLInfo dllInfo : loadedDLLs) {
                     if (dllInfo.handle instanceof LLVM_Handle) {
                         LLVM_Handle llvmHandle = (LLVM_Handle) dllInfo.handle;
-                        for (LLVM_IR ir : llvmHandle.irs) {
-                            parseLLVM(llvmHandle.libName, ir);
+                        for (ParsedLLVM_IR parsedIR : llvmHandle.parsedIRs) {
+                            parseLLVM(llvmHandle.libName, parsedIR.ir);
                         }
                     }
                 }
@@ -128,14 +134,34 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         return new ContextStateImpl();
     }
 
-    static class LLVM_Handle {
-        private final String libName;
-        private final LLVM_IR[] irs;
+    static class ParsedLLVM_IR {
+        final LLVM_IR ir;
+        final Object lookupObject;
 
-        LLVM_Handle(String libName, LLVM_IR[] irs) {
-            this.libName = libName;
-            this.irs = irs;
+        ParsedLLVM_IR(LLVM_IR ir, Object lookupObject) {
+            this.ir = ir;
+            this.lookupObject = lookupObject;
         }
+
+        Object lookup(String symbol) throws UnknownIdentifierException {
+            try {
+                return ForeignAccess.sendRead(Message.READ.createNode(), (TruffleObject) lookupObject, symbol);
+            } catch (UnsupportedMessageException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+
+    }
+
+    static class LLVM_Handle {
+        final String libName;
+        final ParsedLLVM_IR[] parsedIRs;
+
+        LLVM_Handle(String libName, ParsedLLVM_IR[] irs) {
+            this.libName = libName;
+            this.parsedIRs = irs;
+        }
+
     }
 
     @FunctionalInterface
@@ -236,10 +262,13 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 } else {
                     loadNativeLibs(ar.nativeLibs);
                 }
-                for (LLVM_IR ir : irs) {
-                    parseLLVM(libName, ir);
+                ParsedLLVM_IR[] parsedIRs = new ParsedLLVM_IR[irs.length];
+                for (int i = 0; i < irs.length; i++) {
+                    LLVM_IR ir = irs[i];
+                    Object irLookupObject = parseLLVM(libName, ir).call();
+                    parsedIRs[i] = new ParsedLLVM_IR(ir, irLookupObject);
                 }
-                return new LLVM_Handle(libName, irs);
+                return new LLVM_Handle(libName, parsedIRs);
             } catch (Exception ex) {
                 CompilerDirectives.transferToInterpreter();
                 StringBuilder sb = new StringBuilder();
@@ -276,15 +305,30 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     private static class TruffleLLVM_DLSymNode extends Node implements DLSymNode {
+        @Child private Node lookupNode = Message.READ.createNode();
+
         @Override
         public SymbolHandle execute(Object handle, String symbol) throws UnsatisfiedLinkError {
             assert handle instanceof LLVM_Handle;
-            Object symValue = RContext.getInstance().getEnv().importSymbol("@" + symbol);
+            LLVM_Handle llvmHandle = (LLVM_Handle) handle;
+            Object symValue = null;
+            for (int i = 0; i < llvmHandle.parsedIRs.length; i++) {
+                ParsedLLVM_IR pir = llvmHandle.parsedIRs[i];
+                try {
+                    symValue = ForeignAccess.sendRead(lookupNode, (TruffleObject) pir.lookupObject, symbol);
+                    break;
+                } catch (UnknownIdentifierException e) {
+                    continue;
+                } catch (UnsupportedMessageException e) {
+                    RInternalError.shouldNotReachHere();
+                }
+            }
             if (symValue == null) {
                 throw new UnsatisfiedLinkError();
             }
             return new SymbolHandle(symValue);
         }
+
     }
 
     private static class TruffleLLVM_DLCloseNode extends Node implements DLCloseNode {
@@ -321,25 +365,10 @@ public class TruffleLLVM_DLL implements DLLRFFI {
      */
     private LLVM_IR[] libRModules;
 
-    private static final String[] PARSE_ERRORS = new String[0];
-
-    private static boolean parseFails(String libName, LLVM_IR ir) {
-        for (int i = 0; i < PARSE_ERRORS.length / 2; i++) {
-            String plibName = PARSE_ERRORS[i * 2];
-            String pModule = PARSE_ERRORS[i * 2 + 1];
-            if (libName.equals(plibName) && ir.name.equals(pModule)) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static void parseLLVM(String libName, LLVM_IR ir) {
+    private static CallTarget parseLLVM(String libName, LLVM_IR ir) {
         if (ir instanceof LLVM_IR.Binary) {
             LLVM_IR.Binary bir = (LLVM_IR.Binary) ir;
-            if (!parseFails(libName, ir)) {
-                parseBinary(libName, bir);
-            }
+            return parseBinary(libName, bir);
         } else {
             throw RInternalError.unimplemented("LLVM text IR");
         }

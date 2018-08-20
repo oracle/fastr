@@ -987,7 +987,9 @@ public final class RError extends RuntimeException implements TruffleException {
         NA_INF_REPLACED("-Inf replaced by maximally negative value"),
         MINUS_INF_REPLACED("NA/Inf replaced by maximum positive value"),
         INVALID_FUNCTION_VALUE("invalid function value in '%s'"),
-        LINE_MALFORMED("Line starting '%s ...' is malformed!");
+        LINE_MALFORMED("Line starting '%s ...' is malformed!"),
+        IS_NOT_GRAPHICAL_PAR("\"%s\" is not a graphical parameter"),
+        GRAPHICAL_PAR_CANNOT_BE_SET("graphical parameter \"%s\" cannot be set");
 
         public final String message;
         final boolean hasArgs;

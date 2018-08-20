@@ -70,15 +70,32 @@ public final class GridContext {
         devices.add(new DeviceAndState(null, null, null));
     }
 
+    /**
+     * Retrieves current {@link GridContext} from given {@link RContext}, if necessary initializes
+     * the {@link GridContext}. If the {@link RContext} is a child of existing context, the parent
+     * {@link GridContext} is used to initialize this {@link GridContext}, which is problematic if
+     * the parent did not load grid package, so this scenario is not supported yet. The grid package
+     * must be either loaded by the master context or not used.
+     */
     public static GridContext getContext(RContext rCtx) {
+        return getContext(rCtx, true);
+    }
+
+    private static GridContext getContext(RContext rCtx, boolean initialize) {
         if (rCtx.gridContext == null) {
             RContext parentRCtx = rCtx.getParent();
+            boolean doInitialize = initialize;
             if (parentRCtx != null) {
                 assert parentRCtx != rCtx;  // would cause infinite recursion
-                rCtx.gridContext = new GridContext(getContext(parentRCtx));
-                // re-initialize local copies of .Device, .Devices etc.
-                RGridGraphicsAdapter.initialize(rCtx);
-            } else {
+                GridContext parentGridCtx = getContext(parentRCtx, false);
+                if (parentGridCtx != null) {
+                    rCtx.gridContext = new GridContext(parentGridCtx);
+                    // re-initialize local copies of .Device, .Devices etc.
+                    RGridGraphicsAdapter.initialize(rCtx);
+                    doInitialize = false;
+                }
+            }
+            if (doInitialize) {
                 rCtx.gridContext = new GridContext();
             }
         }

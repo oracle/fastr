@@ -25,6 +25,9 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+/**
+ * Gets called when the grid package is loaded.
+ */
 public abstract class LInitGrid extends RExternalBuiltinNode.Arg1 {
     static {
         Casts casts = new Casts(LInitGrid.class);
