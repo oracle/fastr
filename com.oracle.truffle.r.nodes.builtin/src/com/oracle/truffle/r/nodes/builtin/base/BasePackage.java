@@ -615,6 +615,7 @@ public class BasePackage extends RBuiltinPackage {
         add(IsUnsorted.class, IsUnsortedNodeGen::create);
         add(SortedFastPass.class, SortedFastPass::create);
         add(WrapMeta.class, WrapMeta::create);
+        add(DotDotDotLength.class, DotDotDotLength::create);
         add(DotDotDotElt.class, DotDotDotElt::create);
         add(ValidUtf8.class, ValidUtf8::create);
         add(LaFunctions.DetGeReal.class, LaFunctionsFactory.DetGeRealNodeGen::create);

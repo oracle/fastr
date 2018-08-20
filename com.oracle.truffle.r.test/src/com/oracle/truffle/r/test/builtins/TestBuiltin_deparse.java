@@ -32,7 +32,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_deparse extends TestBase {
 
     private void assertEvalDeparsed(String snippet) {
-        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreWhitespace,*/"cat({" + snippet + "})");
+        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreWhitespace, */"cat({" + snippet + "})");
     }
 
     @Test
@@ -229,7 +229,8 @@ public class TestBuiltin_deparse extends TestBase {
 
     @Test
     public void testdeparse38() {
-        assertEval(Ignored.NewRVersionMigration, "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        assertEval(Ignored.NewRVersionMigration,
+                        "argv <- list(structure(list(c0 = structure(integer(0), .Label = character(0), class = 'factor')), .Names = 'c0', row.names = character(0), class = structure('integer(0)', .Names = 'c0')), 60L, FALSE, 69, -1L); .Internal(deparse(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
     }
 
     @Test

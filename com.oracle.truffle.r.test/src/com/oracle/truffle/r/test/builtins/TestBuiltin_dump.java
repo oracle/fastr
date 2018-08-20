@@ -40,7 +40,7 @@ public class TestBuiltin_dump extends TestBase {
     @Test
     public void testDumpData() {
         assertEval(Output.IgnoreWhitespace, String.format(TEMPLATE, "x <- 10", "\"x\"", "TRUE"));
-        assertEval(Ignored.NewRVersionMigration, /*Output.IgnoreWhitespace,*/String.format(TEMPLATE, "x <- list(a=10,b=20)", "\"x\"", "TRUE"));
+        assertEval(Ignored.NewRVersionMigration, /* Output.IgnoreWhitespace, */String.format(TEMPLATE, "x <- list(a=10,b=20)", "\"x\"", "TRUE"));
         assertEval(Output.IgnoreWhitespace, String.format(TEMPLATE, "x <- c(10,20,25)", "\"x\"", "TRUE"));
         assertEval(Output.IgnoreWhitespace, String.format(TEMPLATE, "x <- 1:10", "\"x\"", "TRUE"));
     }
