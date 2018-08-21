@@ -45,7 +45,8 @@ public class FastRDispatchNativeHandlers extends RBuiltinNode.Arg0 {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        dispatchHandlersNode.execute();
+        // TODO: GR-11260
+        // dispatchHandlersNode.execute();
         return RNull.instance;
     }
 }
