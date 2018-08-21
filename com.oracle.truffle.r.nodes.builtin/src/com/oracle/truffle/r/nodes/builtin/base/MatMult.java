@@ -41,8 +41,20 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.*;
-import com.oracle.truffle.r.runtime.data.model.*;
+import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -341,7 +353,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                     if (na.checkNAorNaN(aValue)) {
                         if (na.check(aValue)) {
                             Arrays.fill(result, RRuntime.DOUBLE_NA);
-                        } else if (Double.isNaN(aValue)) {
+                        } else {
                             Arrays.fill(result, Double.NaN);
                         }
                     } else {
@@ -420,11 +432,16 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 double[] result = new double[(aRows * bCols) << 1];
                 na.enable(a);
                 na.enable(b);
+                mult.enable(a, b);
                 for (int row = 0; row < aRows; row++) {
                     for (int col = 0; col < bCols; col++) {
                         RComplex x = RDataFactory.createComplexZero();
+                        na.enable(x);
+                        RComplex tmp;
                         for (int k = 0; k < aCols; k++) {
-                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
+                            tmp = mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k));
+                            add.enable(x, tmp);
+                            x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
                         final int index = 2 * (col * aRows + row);
@@ -441,12 +458,17 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 }
                 na.enable(a);
                 na.enable(b);
+                mult.enable(a, b);
                 if (notOneColumn.profile(aCols != 1)) {
                     double[] result = new double[aRows << 1];
                     for (int row = 0; row < aRows; row++) {
                         RComplex x = RDataFactory.createComplexZero();
+                        na.enable(x);
+                        RComplex tmp;
                         for (int k = 0; k < b.getLength(); k++) {
-                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k)));
+                            tmp = mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k));
+                            add.enable(x, tmp);
+                            x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
                         result[row << 1] = x.getRealPart();
@@ -475,12 +497,17 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 }
                 na.enable(a);
                 na.enable(b);
+                mult.enable(a, b);
                 if (notOneRow.profile(bRows != 1)) {
                     double[] result = new double[bCols << 1];
                     for (int k = 0; k < bCols; k++) {
                         RComplex x = RDataFactory.createComplexZero();
+                        na.enable(x);
+                        RComplex tmp;
                         for (int row = 0; row < a.getLength(); row++) {
-                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
+                            tmp = mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row));
+                            add.enable(x, tmp);
+                            x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
                         result[k << 1] = x.getRealPart();
@@ -536,6 +563,7 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 RComplex tmp;
                 na.enable(a);
                 na.enable(b);
+                na.enable(result);
                 mult.enable(a, b);
                 for (int k = 0; k < a.getLength(); k++) {
                     RComplex aValue = a.getDataAt(k);
@@ -543,7 +571,6 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                     tmp = mult.applyComplex(aValue, bValue);
                     add.enable(result, tmp);
                     result = add.applyComplex(result, tmp);
-                    na.enable(result);
                     na.check(result);
                 }
                 return RDataFactory.createComplexVector(new double[]{result.getRealPart(), result.getImaginaryPart()}, na.neverSeenNA(), new int[]{1, 1});
