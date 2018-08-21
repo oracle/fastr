@@ -796,6 +796,7 @@ com.oracle.truffle.r.native/gnur/patch/src/include/Internal.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/include/Parse.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/include/Print.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/include/R.h,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/include/R_ext/Altrep.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/include/R_ext/Applic.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/include/R_ext/Arith.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/include/R_ext/BLAS.h,no.copyright
