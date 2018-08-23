@@ -41,6 +41,55 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 
 public class TextConnections {
+
+    public static String[] splitLines(String value, int limit) {
+        assert limit != 0;
+        ArrayList<String> strings = null;
+
+        int lastPos = 0;
+        int pos = 0;
+        while (pos < value.length()) {
+            char c = value.charAt(pos);
+            if (c == '\n' || c == '\r') {
+                if (strings == null) {
+                    strings = new ArrayList<>();
+                }
+                if (limit != -1 && strings.size() == limit - 1) {
+                    strings.add(value.substring(lastPos));
+                    return strings.toArray(new String[strings.size()]);
+                }
+                strings.add(value.substring(lastPos, pos));
+                // skip "\r\n" combination
+                if (c == '\r') {
+                    if ((pos + 1) < value.length()) {
+                        c = value.charAt(pos + 1);
+                        if (c == '\r') {
+                            // bug in GNU R: a second "\r" is immediately treated as a EOL
+                            if (limit != -1 && strings.size() == limit - 1) {
+                                strings.add(value.substring(pos + 2));
+                                return strings.toArray(new String[strings.size()]);
+                            }
+                            strings.add("");
+                        } else if (c == '\n') {
+                            pos++;
+                        }
+                    } else {
+                        // bug in GNU R: a final "\r" will be ignored
+                        return strings.toArray(new String[strings.size()]);
+                    }
+                }
+                lastPos = pos + 1;
+            }
+            pos++;
+        }
+        if (strings == null) {
+            return new String[]{value};
+        } else {
+            strings.add(value.substring(lastPos));
+            return strings.toArray(new String[strings.size()]);
+        }
+    }
+
     public static class TextRConnection extends BaseRConnection {
         protected String description;
         private final RAbstractStringVector object;
@@ -97,11 +146,13 @@ public class TextConnections {
             assert object != null;
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < object.getLength(); i++) {
+                if (i > 0) {
+                    sb.append('\n');
+                }
                 sb.append(object.getDataAt(i));
                 // vector elements are implicitly terminated with a newline
-                sb.append('\n');
             }
-            lines = sb.toString().split("\\n");
+            lines = splitLines(sb.toString(), -1);
         }
 
         @Override
