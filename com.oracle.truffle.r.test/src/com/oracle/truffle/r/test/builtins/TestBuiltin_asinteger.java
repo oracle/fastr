@@ -34,9 +34,7 @@ public class TestBuiltin_asinteger extends TestBase {
 
     @Test
     public void testasinteger2() {
-        // FIXME according to docs a leading whitespace should be accepted
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(c('   33', '   34', '   35', '   36', '   37', '   38', '   18', '   19', '   20', '   21', '   22', '   23', '   36', '   37', '   38', '   39'));as.integer(argv[[1]]);");
+        assertEval("argv <- list(c('   33', '   34', '   35', '   36', '   37', '   38', '   18', '   19', '   20', '   21', '   22', '   23', '   36', '   37', '   38', '   39'));as.integer(argv[[1]]);");
     }
 
     @Test
