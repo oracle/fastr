@@ -208,6 +208,10 @@ public class TestConnections extends TestRBase {
         assertEval(Output.MayIgnoreWarningContext, TestBase.template(
                         "{ zz <- file('',\"w+b\", blocking=%0); writeBin(as.raw(%1), zz, useBytes=T); seek(zz, 0); res <- readLines(zz, 2, warn=%2, skipNul=%3); close(zz); res }",
                         LVAL, arr(lineWithNul, twoLinesOneNul, lineWithNulIncomp, twoLinesOneNulIncomp), LVAL, LVAL));
+
+        String[] endings = new String[]{"", "\\n", "\\r", "\\n\\r", "\\r\\n", "\\n\\n\\r", "\\r\\r\\n"};
+        String[] text = new String[]{"", "foo"};
+        assertEval(template("readLines(textConnection(\"foo%0%1\"))", endings, text));
     }
 
     @Test
