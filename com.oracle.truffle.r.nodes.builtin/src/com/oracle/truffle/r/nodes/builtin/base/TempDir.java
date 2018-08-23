@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.TempPathName;
@@ -35,11 +37,14 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 public abstract class TempDir extends RBuiltinNode.Arg1 {
 
     static {
-        Casts.noCasts(TempDir.class);
+        Casts casts = new Casts(TempDir.class);
+        casts.arg(0).asLogicalVector().findFirst().map(toBoolean());
     }
 
+    @TruffleBoundary
     @Specialization
-    protected Object tempdir(@SuppressWarnings("unused") Object check) {
-        return RDataFactory.createStringVectorFromScalar(TempPathName.tempDirPath());
+    protected Object tempdir(boolean check) {
+        String tempDirPath = check ? TempPathName.tempDirPathChecked() : TempPathName.tempDirPath();
+        return RDataFactory.createStringVectorFromScalar(tempDirPath);
     }
 }

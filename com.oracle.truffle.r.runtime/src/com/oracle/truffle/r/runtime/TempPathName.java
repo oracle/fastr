@@ -91,6 +91,20 @@ public class TempPathName implements RContext.ContextState {
         return RContext.getInstance().stateTempPath.tempDirPath;
     }
 
+    public static String tempDirPathChecked() {
+        String path = tempDirPath();
+        if (!Files.isDirectory(Paths.get(path))) {
+            RContext ctx = RContext.getInstance();
+            if (ctx.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
+                RContext parentCtx = ctx.getParent();
+                parentCtx.stateTempPath.initialize(parentCtx);
+            }
+            ctx.stateTempPath.initialize(ctx);
+            path = tempDirPath();
+        }
+        return path;
+    }
+
     public static TempPathName newContextState() {
         return new TempPathName();
     }
