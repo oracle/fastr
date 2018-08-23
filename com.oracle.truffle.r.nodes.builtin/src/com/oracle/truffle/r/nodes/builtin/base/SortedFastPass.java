@@ -22,31 +22,66 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
-
-import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RIntSequence;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.runtime.RError.Message.INVALID_LOGICAL;
+import static com.oracle.truffle.r.runtime.RError.Message.ONLY_ATOMIC_CAN_BE_SORTED;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 /**
  * Fast path check if a vector is already sorted. For now we simply return {@code FALSE}. This
  * should be improved.
  */
 @RBuiltin(name = "sorted_fpass", kind = INTERNAL, parameterNames = {"x", "decr", "nalast"}, behavior = PURE)
-public class SortedFastPass extends RBuiltinNode.Arg3 {
+public abstract class SortedFastPass extends RBuiltinNode.Arg3 {
+
+    private final NACheck na = NACheck.create();
+    private final ConditionProfile containNAs = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile isNalast = ConditionProfile.createBinaryProfile();
 
     static {
-        Casts.noCasts(SortedFastPass.class);
+        Casts casts = new Casts(SortedFastPass.class);
+        casts.arg("x").allowNull().mustBe(abstractVectorValue(), ONLY_ATOMIC_CAN_BE_SORTED);
+        casts.arg("decr").defaultError(INVALID_LOGICAL, "decr").mustBe(numericValue()).asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("nalast").mustBe(numericValue(), INVALID_LOGICAL, "nalast").asLogicalVector().findFirst();
     }
 
-    @Override
-    public Object execute(VirtualFrame frame, Object arg1, Object arg2, Object arg3) {
+    @Specialization()
+    public byte isSorted(Object x, boolean decr, byte nalast) {
+        na.enable(nalast);
+
+        if (containNAs.profile(isRNull(x) || x.equals(RRuntime.DOUBLE_NA))) {
+            return RRuntime.LOGICAL_FALSE;
+        }
+
+        if (x instanceof RIntSequence) {
+            RIntSequence xseq = (RIntSequence) x;
+            if (isNalast.profile(!na.check(nalast))) {
+                if (decr) {
+                    if (xseq.getStride() < 0) {
+                        return RRuntime.LOGICAL_TRUE;
+                    }
+                } else {
+                    if (xseq.getStride() >= 0) {
+                        return RRuntime.LOGICAL_TRUE;
+                    }
+                }
+            }
+        }
         return RRuntime.LOGICAL_FALSE;
     }
 
     public static SortedFastPass create() {
-        return new SortedFastPass();
+        return SortedFastPassNodeGen.create();
     }
 }
