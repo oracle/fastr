@@ -29,6 +29,7 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
@@ -148,7 +149,7 @@ abstract class PositionCastNode extends RBaseNode {
             if (replace) {
                 throw error(RError.Message.MISSING_SUBSCRIPT);
             } else {
-                throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
+                throw error(Message.SUBSCRIPT_BOUNDS);
             }
         } else {
             return RMissing.instance;
@@ -157,7 +158,7 @@ abstract class PositionCastNode extends RBaseNode {
 
     @Specialization
     protected RMissing doEmpty(@SuppressWarnings("unused") REmpty position) {
-        return doMissing(null);
+        return doMissing(RMissing.instance);
     }
 
     @Specialization
