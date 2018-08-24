@@ -308,16 +308,16 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ x<-2; x[NULL] }");
         assertEval(Output.IgnoreErrorContext, "{ x<-2; x[[NULL]] }");
         assertEval("{ x<-1; x[] }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1; x[[]] }");
+        assertEval("{ x<-1; x[[]] }");
         assertEval("{ x<-1:2; dim(x)=c(1,2); x[,] }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1:2; dim(x)=c(1,2); x[[, ]] }");
+        assertEval("{ x<-1:2; dim(x)=c(1,2); x[[, ]] }");
         assertEval("{ x<-1:2; dim(x)=c(1,2); x[,1] }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1:2; dim(x)=c(1,2); x[[, 1]] }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1:2; dim(x)=c(1,2); x[[1, ]] }");
+        assertEval("{ x<-1:2; dim(x)=c(1,2); x[[, 1]] }");
+        assertEval("{ x<-1:2; dim(x)=c(1,2); x[[1, ]] }");
         // Checkstyle: stop
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1:2; dim(x)=c(1,1,2); x[[1, , 1]] }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1:2; dim(x)=c(1,1,2); x[[, , 1]] }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1:2; dim(x)=c(1,1,2); x[[1, , ]] }");
+        assertEval("{ x<-1:2; dim(x)=c(1,1,2); x[[1, , 1]] }");
+        assertEval("{ x<-1:2; dim(x)=c(1,1,2); x[[, , 1]] }");
+        assertEval("{ x<-1:2; dim(x)=c(1,1,2); x[[1, , ]] }");
         // Checkstyle: resume
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(\"a\", c(\"b\", \"c\")); x[\"z\", \"x\"] }");
         assertEval("{ x<-c(1,2); dim(x)<-c(1,2); dimnames(x)<-list(\"a\", c(\"b\", \"c\")); x[[\"z\", \"x\"]] }");
