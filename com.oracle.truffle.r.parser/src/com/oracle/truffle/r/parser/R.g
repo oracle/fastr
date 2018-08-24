@@ -789,6 +789,8 @@ fragment ESCAPE [StringBuilder buf]
       | 'x' a = HEX_DIGIT b = HEX_DIGIT { buf.append(hexChar($a.text, $b.text)); }
       | 'u' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
       | 'U' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? e = HEX_DIGIT? f = HEX_DIGIT? g = HEX_DIGIT? h = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
+      | 'u' '{' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? '}' { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
+      | 'U' '{' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? '}' { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
       )
     ;
 

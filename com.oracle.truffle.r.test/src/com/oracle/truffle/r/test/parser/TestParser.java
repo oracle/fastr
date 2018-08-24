@@ -61,6 +61,12 @@ public class TestParser extends TestBase {
         assertEval("0xa.bp1i");
     }
 
+    @Test
+    public void testBraceUnicodeLiterals() {
+        assertEval("\"\\u{23}\\u{9}\\u{723}\\u{1234}\\U{23}\\U{9}\\U{723}\\U{1234}\"");
+        assertEval("'\\u{23}\\u{9}\\u{723}\\u{1234}\\U{23}\\U{9}\\U{723}\\U{1234}'");
+    }
+
     private static final String[] HEX_VALUES = new String[]{"0xFFF", "0xFFFFFFFFFFF"};
 
     @Test
