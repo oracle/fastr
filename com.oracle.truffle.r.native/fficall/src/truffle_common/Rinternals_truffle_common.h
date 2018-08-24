@@ -144,13 +144,6 @@ int LENGTH(SEXP x) {
     return result;
 }
 
-SEXP Rf_ScalarString(SEXP value) {
-    TRACE1(value);
-    SEXP result = ((call_Rf_ScalarString) callbacks[Rf_ScalarString_x])(value);
-    checkExitCall();
-    return result;
-}
-
 SEXP Rf_mkString(const char *s) {
     TRACE0();
     return ScalarString(Rf_mkChar(s));
@@ -300,9 +293,30 @@ void REvprintf(const char *format, va_list args) {
     UNIMPLEMENTED;
 }
 
+SEXP Rf_ScalarComplex(Rcomplex value) {
+    TRACE0();
+    SEXP result = ((call_Rf_ScalarComplex) callbacks[Rf_ScalarComplex_x])(value.r, value.i);
+    checkExitCall();
+    return result;
+}
+
 SEXP Rf_ScalarInteger(int value) {
     TRACE0();
     SEXP result = ((call_Rf_ScalarInteger) callbacks[Rf_ScalarInteger_x])(value);
+    checkExitCall();
+    return result;
+}
+
+SEXP Rf_ScalarLogical(int value) {
+    TRACE0();
+    SEXP result = ((call_Rf_ScalarLogical) callbacks[Rf_ScalarLogical_x])(value);
+    checkExitCall();
+    return result;
+}
+
+SEXP Rf_ScalarRaw(Rbyte value) {
+    TRACE0();
+    SEXP result = ((call_Rf_ScalarRaw) callbacks[Rf_ScalarRaw_x])(value);
     checkExitCall();
     return result;
 }
@@ -314,9 +328,9 @@ SEXP Rf_ScalarReal(double value) {
     return result;
 }
 
-SEXP Rf_ScalarLogical(int value) {
-    TRACE0();
-    SEXP result = ((call_Rf_ScalarLogical) callbacks[Rf_ScalarLogical_x])(value);
+SEXP Rf_ScalarString(SEXP value) {
+    TRACE1(value);
+    SEXP result = ((call_Rf_ScalarString) callbacks[Rf_ScalarString_x])(value);
     checkExitCall();
     return result;
 }
