@@ -74,16 +74,19 @@
 #define R_NegInf_x 46
 #define R_NaReal_x 47
 #define R_NaInt_x 48
-#define R_BlankString_x 49
-#define R_BlankScalarString_x 50
-#define R_BaseSymbol_x 51
-#define R_NamespaceEnvSymbol_x 52
-#define R_RestartToken_x 53
-#define R_SortListSymbol_x 54
-#define R_SpecSymbol_x 55
-#define R_TripleColonSymbol_x 56
-#define R_PreviousSymbol_x 57
+#define R_TrueValue_x 49
+#define R_FalseValue_x 50
+#define R_LogicalNAValue_x 51
+#define R_BlankString_x 52
+#define R_BlankScalarString_x 53
+#define R_BaseSymbol_x 54
+#define R_NamespaceEnvSymbol_x 55
+#define R_RestartToken_x 56
+#define R_SortListSymbol_x 57
+#define R_SpecSymbol_x 58
+#define R_TripleColonSymbol_x 59
+#define R_PreviousSymbol_x 60
 
-#define VARIABLES_TABLE_SIZE 58
+#define VARIABLES_TABLE_SIZE 61
 
 #endif // RFFI_VARIABLESINDEX_H
