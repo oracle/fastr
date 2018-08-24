@@ -246,6 +246,12 @@ public interface StdUpCallsRFFI {
     @RFFIRunGC
     Object Rf_allocMatrix(int mode, int nrow, int ncol);
 
+    @RFFIRunGC
+    Object Rf_allocList(int length);
+
+    @RFFIRunGC
+    Object Rf_allocSExp(int type);
+
     int Rf_nrows(Object x);
 
     int Rf_ncols(Object x);

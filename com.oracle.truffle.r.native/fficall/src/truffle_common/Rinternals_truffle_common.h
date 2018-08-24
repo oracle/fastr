@@ -364,14 +364,18 @@ SEXP Rf_allocMatrix(SEXPTYPE mode, int nrow, int ncol) {
     return result;
 }
 
-SEXP Rf_allocList(int x) {
+SEXP Rf_allocList(int length) {
     TRACE0();
-    return UNIMPLEMENTED;
+    SEXP result = ((call_Rf_allocList) callbacks[Rf_allocList_x])(length);
+    checkExitCall();
+    return result;
 }
 
 SEXP Rf_allocSExp(SEXPTYPE t) {
     TRACE0();
-    return UNIMPLEMENTED;
+    SEXP result = ((call_Rf_allocSExp) callbacks[Rf_allocSExp_x])(t);
+    checkExitCall();
+    return result;
 }
 
 void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {

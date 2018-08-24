@@ -478,7 +478,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RAbstractVector result = (RAbstractVector) Rf_allocVector(mode, n);
         setDims(newDims, result);
         return result;
+    }
 
+    @Override
+    @TruffleBoundary
+    public Object Rf_allocList(int length) {
+        Object result = RNull.instance;
+        for (int i = 0; i < length; i++) {
+            result = RDataFactory.createPairList(RNull.instance, result);
+        }
+        return result;
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object Rf_allocSExp(int mode) {
+        SEXPTYPE type = SEXPTYPE.mapInt(mode);
+        switch (type) {
+            case ENVSXP:
+                return RDataFactory.createNewEnv(null);
+            case LISTSXP:
+                return RDataFactory.createPairList(RNull.instance, RNull.instance);
+            case LANGSXP:
+                return RDataFactory.createPairList(1, type);
+            default:
+                throw unimplemented("unexpected SEXPTYPE " + type);
+        }
     }
 
     @TruffleBoundary
