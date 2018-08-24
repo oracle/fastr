@@ -35,12 +35,12 @@ import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
-import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.DuplicationHelper;
@@ -107,12 +107,10 @@ public class DuplicatedFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(guards = {"!isRAbstractVector(incomparables)", "x.getLength() != 0"})
+        @TruffleBoundary
         protected RLogicalVector duplicatedTrueIncomparables(RAbstractVector x, Object incomparables, byte fromLast, int nmax,
                         @Cached("createTypeof()") TypeofNode typeof) {
-            RType xType = typeof.execute(x);
-            // TODO: this is not quite correct, as passing expression generated some obscure error
-            // message, but is it worth fixing
-            throw error(RError.Message.CANNOT_COERCE, ((RTypedValue) incomparables).getRType().getName(), xType.getName());
+            throw error(Message.CANNOT_COERCE, RRuntime.getRTypeName(incomparables), RRuntime.getRTypeName(x));
         }
 
         @SuppressWarnings("unused")
@@ -165,9 +163,8 @@ public class DuplicatedFunctions {
         @Specialization(guards = {"!isRAbstractVector(incomparables)", "x.getLength() != 0"})
         @TruffleBoundary
         protected int anyDuplicatedTrueIncomparables(RAbstractVector x, Object incomparables, @SuppressWarnings("unused") byte fromLast) {
-            // TODO: this is not quite correct, as passing expression generated some obscure error
-            // message, but is it worth fixing
-            throw error(RError.Message.CANNOT_COERCE, TypeofNode.getTypeof(incomparables).getName(), TypeofNode.getTypeof(x).getName());
+            // this is not quite correct, as passing expression generates some obscure error message
+            throw error(Message.CANNOT_COERCE, RRuntime.getRTypeName(incomparables), RRuntime.getRTypeName(x));
         }
 
         @SuppressWarnings("unused")
