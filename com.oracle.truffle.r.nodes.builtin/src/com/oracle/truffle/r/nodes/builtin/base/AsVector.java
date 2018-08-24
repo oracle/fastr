@@ -284,9 +284,9 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         }
 
         @Fallback
+        @TruffleBoundary
         protected Object castPairlist(Object x) {
-            String name = x instanceof RTypedValue ? ((RTypedValue) x).getRType().getName() : x.getClass().getSimpleName();
-            throw error(Message.CANNOT_COERCE, name, RType.PairList.getName());
+            throw error(Message.CANNOT_COERCE, RRuntime.getRTypeName(x), RType.PairList.getName());
         }
 
         @TruffleBoundary

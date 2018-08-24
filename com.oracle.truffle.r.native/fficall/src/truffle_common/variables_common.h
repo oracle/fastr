@@ -102,6 +102,9 @@ double R_PosInf;
 double R_NegInf;
 double R_NaReal;
 int R_NaInt;
+SEXP R_TrueValue;
+SEXP R_FalseValue;
+SEXP R_LogicalNAValue;
 SEXP R_BlankString;
 SEXP R_BlankScalarString;
 SEXP R_BaseSymbol; /* "base" */
@@ -187,6 +190,9 @@ void Call_initvar_obj_common(int index, void* value) {
         case R_SrcrefSymbol_x: R_SrcrefSymbol = value; break;
         case R_SrcfileSymbol_x: R_SrcfileSymbol = value; break;
         case R_NaString_x: R_NaString = value; break;
+        case R_TrueValue_x: R_TrueValue = value; break;
+        case R_FalseValue_x: R_FalseValue = value; break;
+        case R_LogicalNAValue_x: R_LogicalNAValue = value; break;
         case R_BlankString_x: R_BlankString = value; break;
         case R_BlankScalarString_x: R_BlankScalarString = value; break;
         case R_BaseSymbol_x: R_BaseSymbol = value; break;

@@ -71,6 +71,7 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -84,6 +85,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -140,6 +142,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     // Checkstyle: stop method name check
+
+    @Override
+    public RComplexVector Rf_ScalarComplex(double real, double imag) {
+        return RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(real, imag));
+    }
+
     @Override
     public RIntVector Rf_ScalarInteger(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
@@ -154,6 +162,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             byteValue = (byte) (value & 0xFF);
         }
         return RDataFactory.createLogicalVectorFromScalar(byteValue);
+    }
+
+    @Override
+    public RRawVector Rf_ScalarRaw(int value) {
+        return RDataFactory.createRawVectorFromScalar(RRaw.valueOf((byte) value));
     }
 
     @Override
@@ -465,7 +478,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RAbstractVector result = (RAbstractVector) Rf_allocVector(mode, n);
         setDims(newDims, result);
         return result;
+    }
 
+    @Override
+    @TruffleBoundary
+    public Object Rf_allocList(int length) {
+        Object result = RNull.instance;
+        for (int i = 0; i < length; i++) {
+            result = RDataFactory.createPairList(RNull.instance, result);
+        }
+        return result;
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object Rf_allocSExp(int mode) {
+        SEXPTYPE type = SEXPTYPE.mapInt(mode);
+        switch (type) {
+            case ENVSXP:
+                return RDataFactory.createNewEnv(null);
+            case LISTSXP:
+                return RDataFactory.createPairList(RNull.instance, RNull.instance);
+            case LANGSXP:
+                return RDataFactory.createPairList(1, type);
+            default:
+                throw unimplemented("unexpected SEXPTYPE " + type);
+        }
     }
 
     @TruffleBoundary

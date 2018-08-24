@@ -156,9 +156,13 @@ import com.oracle.truffle.r.runtime.nmath.distr.Wilcox;
 public interface StdUpCallsRFFI {
     // Checkstyle: stop method name check
 
+    Object Rf_ScalarComplex(double real, double imag);
+
     Object Rf_ScalarInteger(int value);
 
     Object Rf_ScalarLogical(int value);
+
+    Object Rf_ScalarRaw(int value);
 
     Object Rf_ScalarReal(double value);
 
@@ -241,6 +245,12 @@ public interface StdUpCallsRFFI {
 
     @RFFIRunGC
     Object Rf_allocMatrix(int mode, int nrow, int ncol);
+
+    @RFFIRunGC
+    Object Rf_allocList(int length);
+
+    @RFFIRunGC
+    Object Rf_allocSExp(int type);
 
     int Rf_nrows(Object x);
 
