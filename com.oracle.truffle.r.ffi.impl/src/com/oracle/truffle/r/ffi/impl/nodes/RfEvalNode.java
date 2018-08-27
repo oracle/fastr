@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 
 public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
 
@@ -103,6 +104,9 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         Object result = ReadVariableNode.lookupAny(expr.getName(), getEnv(envArg).getFrame(accessProfile), false);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, UNKNOWN_OBJECT, expr.getName());
+        }
+        if (result instanceof ActiveBinding) {
+            result = ((ActiveBinding) result).readValue();
         }
         return result;
     }

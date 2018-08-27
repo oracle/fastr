@@ -668,7 +668,7 @@ SEXP Rf_lengthgets(SEXP x, R_len_t y) {
 
 SEXP Rf_xlengthgets(SEXP x, R_xlen_t y) {
     TRACE1(x);
-    return unimplemented("Rf_xlengthgets");
+    return Rf_lengthgets(x, y);
 }
 
 SEXP R_lsInternal(SEXP env, Rboolean all) {
@@ -1139,8 +1139,7 @@ SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v) {
 
 SEXP *STRING_PTR(SEXP x) {
     TRACE0();
-    unimplemented("STRING_PTR");
-    return NULL;
+    return FASTR_DATAPTR(x);
 }
 
 SEXP * NORET VECTOR_PTR(SEXP x) {

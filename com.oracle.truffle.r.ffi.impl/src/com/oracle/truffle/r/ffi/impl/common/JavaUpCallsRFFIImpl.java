@@ -2385,8 +2385,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object FASTR_DATAPTR(Object x) {
-        if (x instanceof RStringVector) {
-            return VectorRFFIWrapper.get((RStringVector) x);
+        if ((x instanceof RStringVector) || (x instanceof RList)) {
+            return VectorRFFIWrapper.get((TruffleObject) x);
         }
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "DATAPTR not implemented for type " + Utils.getTypeName(x));

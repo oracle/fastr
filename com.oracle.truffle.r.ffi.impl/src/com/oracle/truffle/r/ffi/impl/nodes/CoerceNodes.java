@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -93,7 +94,7 @@ public final class CoerceNodes {
             for (int i = v.getLength() - 1; i >= 0; i--) {
                 Object element = v.getDataAtAsObject(i);
                 adjustSharing(v, element);
-                current = RDataFactory.createPairList(element, current, names != null ? RDataFactory.createSymbol(names.getDataAt(i)) : RNull.instance, gnurType);
+                current = RDataFactory.createPairList(element, current, names != null ? RDataFactory.createSymbol(Utils.intern(names.getDataAt(i))) : RNull.instance, gnurType);
             }
             if (current != RNull.instance) {
                 // also copy regular attributes
