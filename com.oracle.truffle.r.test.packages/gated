@@ -1,9 +1,5 @@
 foreign
-mime
-rjson
 iterators
 OptimalCutpoints
-RSclient
 rstudioapi
-nnet
 compare
