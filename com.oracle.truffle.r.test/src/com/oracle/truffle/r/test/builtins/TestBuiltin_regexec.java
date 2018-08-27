@@ -29,26 +29,22 @@ public class TestBuiltin_regexec extends TestBase {
 
     @Test
     public void testregexec1() {
-        // FIXME Outputs match but in addition GnuR outputs:
-        // attr(,"useBytes")
-        // [1] TRUE
-        // docs do not mention that so ReferenceError for now.
-        assertEval(Ignored.ReferenceError,
-                        "argv <- list('^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)', 'http://stat.umn.edu:80/xyz', FALSE, FALSE, FALSE); .Internal(regexec(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
+        // Extra newline after "match.length" attr output
+        assertEval(Output.IgnoreWhitespace, "argv <- list('^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)', 'http://stat.umn.edu:80/xyz', FALSE, FALSE, FALSE); .Internal(regexec(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
 
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1 A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?<n1>:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?<n1>:(?:^\\\\[([^\\\\]]+)\\\\])?(?<n2>:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?<n2>:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^((.*))$\", 'A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?<n>(.*))$\", 'A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(.*)$\", 'A1', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(?<n>.*)$\", 'A1', perl=T)");
+        assertEval("regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1A1', perl=T)");
+        assertEval("regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1 A1', perl=T)");
+        assertEval("regexec(\"^(?<n1>:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexec(\"^(?<n1>:(?:^\\\\[([^\\\\]]+)\\\\])?(?<n2>:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?<n2>:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval("regexec(\"^((.*))$\", 'A1', perl=T)");
+        assertEval("regexec(\"^(?<n>(.*))$\", 'A1', perl=T)");
+        assertEval("regexec(\"^(.*)$\", 'A1', perl=T)");
+        assertEval("regexec(\"^(?<n>.*)$\", 'A1', perl=T)");
 
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(([A-Z)|([a-z]))$\", 'Aa', perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(([A-Z)|([a-z]))$\", c('A', 'Aa'), perl=T)");
-        assertEval(Ignored.NewRVersionMigration, "regexpr(\"^(([A-Z)|([a-z]))$\", c('Aa', 'A'), perl=T)");
+        assertEval("regexec(\"^(([A-Z)|([a-z]))$\", 'Aa', perl=T)");
+        assertEval("regexec(\"^(([A-Z)|([a-z]))$\", c('A', 'Aa'), perl=T)");
+        assertEval("regexec(\"^(([A-Z)|([a-z]))$\", c('Aa', 'A'), perl=T)");
     }
 }
