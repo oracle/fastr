@@ -311,6 +311,20 @@ suite = {
 
     },
 
+    "com.oracle.truffle.r.library.fastrGrid.server" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "com.oracle.truffle.r.library",
+      ],
+      "annotationProcessors" : [
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "FastR",
+      "jacoco" : "include",
+
+    },
+
     "com.oracle.truffle.r.release" : {
       "sourceDirs" : ["src"],
       "buildDependencies" : ["com.oracle.truffle.r.native.recommended"],
@@ -393,6 +407,20 @@ suite = {
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
+      ],
+    },
+
+    "GRID_DEVICE_REMOTE_SERVER" : {
+      "description" : "remote server for grid device",
+      "dependencies" : [
+        "com.oracle.truffle.r.library.fastrGrid.server",
+      ],
+      "mainClass" : "com.oracle.truffle.r.library.fastrGrid.server.RemoteDeviceServer",
+      "exclude" : [
+        "truffle:JLINE",
+        "ANTLR-3.5",
+        "GNUR",
+        "XZ-1.6",
       ],
     },
 
