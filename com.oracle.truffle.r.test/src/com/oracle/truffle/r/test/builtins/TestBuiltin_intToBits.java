@@ -56,7 +56,7 @@ public class TestBuiltin_intToBits extends TestBase {
         assertEval("intToBits(double(0))");
         assertEval("intToBits(6:9)");
         assertEval("intToBits('23rrff')");
-        assertEval("intToBits(new.env())");
+        assertEval(Output.IgnoreErrorMessage, "intToBits(new.env())");
         assertEval("intToBits(environment)");
         assertEval("intToBits(stdout())");
         assertEval("intToBits(list(c(5,5,7,8),88,6L))");

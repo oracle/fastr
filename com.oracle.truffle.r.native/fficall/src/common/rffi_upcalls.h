@@ -30,10 +30,12 @@ extern __thread void* *callbacks;
 
 // This is the complete set , including those not yet implemented
 
+typedef SEXP (*call_Rf_ScalarComplex)(double real, double imag);
 typedef SEXP (*call_Rf_ScalarInteger)(int value);
+typedef SEXP (*call_Rf_ScalarLogical)(int value);
+typedef SEXP (*call_Rf_ScalarRaw)(int value);
 typedef SEXP (*call_Rf_ScalarReal)(double value);
 typedef SEXP (*call_Rf_ScalarString)(SEXP value);
-typedef SEXP (*call_Rf_ScalarLogical)(int value);
 typedef SEXP (*call_Rf_allocVector)(SEXPTYPE t, R_xlen_t len);
 typedef SEXP (*call_Rf_allocArray)(SEXPTYPE t, SEXP dims);
 typedef SEXP (*call_Rf_alloc3DArray)(SEXPTYPE t, int x, int y, int z);

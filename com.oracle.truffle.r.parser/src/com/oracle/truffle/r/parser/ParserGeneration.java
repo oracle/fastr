@@ -101,5 +101,6 @@ public class ParserGeneration {
         ":: and ::: do not set argument names",
         "refactored: use file for interactive single-line source",
         "create lookups for field accesses where appropriate",
+        "allow unicode escape literals with {...}",
     };
 }

@@ -977,3 +977,5 @@ com.oracle.truffle.r.pkgs/rJava/src/java/RectangularArraySummary.java,no.copyrig
 com.oracle.truffle.r.native/fficall/src/truffle_common/Applic.c,gnu_r.language.oracle
 com.oracle.truffle.r.native/gnur/patch/src/main/errors.c,gnu_r.language.oracle
 com.oracle.truffle.r.native/gnur/patch/src/unix/sys-std.c,gnu_r.language.oracle
+com.oracle.truffle.r.native/gnur/patch/src/main/duplicate.c,gnu_r.language.oracle
+com.oracle.truffle.r.native/gnur/patch/src/main/duplicate.h,gnu_r.language.oracle

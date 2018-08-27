@@ -25,7 +25,6 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -36,7 +35,6 @@ import com.oracle.truffle.r.runtime.NullProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
@@ -46,7 +44,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class CastBaseNode extends CastNode {
 
@@ -182,27 +179,14 @@ public abstract class CastBaseNode extends CastNode {
     @TruffleBoundary
     protected Object doOther(Object value) {
         Object mappedValue = RRuntime.asAbstractVector(value);
-        return forRFFI ? doOtherRFFI(mappedValue) : doOtherDefault(mappedValue);
-    }
-
-    protected Object doOtherDefault(Object mappedValue) {
-        if (mappedValue instanceof REnvironment) {
-            throw error(RError.Message.ENVIRONMENTS_COERCE);
-        } else if (mappedValue instanceof RTypedValue) {
-            throw error(RError.Message.CANNOT_COERCE, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
-        } else if (mappedValue instanceof TruffleObject) {
-            throw error(RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
-        } else {
-            throw RInternalError.shouldNotReachHere("unexpected value of type " + (mappedValue == null ? "null" : mappedValue.getClass()));
+        if (forRFFI && mappedValue instanceof RTypedValue) {
+            return doOtherRFFI(mappedValue);
         }
+        throw error(Message.CANNOT_COERCE, RRuntime.getRTypeName(mappedValue), getTargetType().getName());
     }
 
     protected Object doOtherRFFI(Object mappedValue) {
-        if (mappedValue instanceof RTypedValue) {
-            warning(Message.CANNOT_COERCE_RFFI, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
-        } else if (mappedValue instanceof TruffleObject) {
-            throw error(RError.Message.CANNOT_COERCE, "truffleobject", getTargetType().getName());
-        }
+        warning(Message.CANNOT_COERCE_RFFI, ((RTypedValue) mappedValue).getRType().getName(), getTargetType().getName());
         return RNull.instance;
     }
 

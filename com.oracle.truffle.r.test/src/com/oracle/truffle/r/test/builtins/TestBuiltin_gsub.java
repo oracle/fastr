@@ -231,5 +231,11 @@ public class TestBuiltin_gsub extends TestBase {
 
         // Test the dollar in the replacement is not treated as a group reference
         assertEval("{ gsub('x', '$', 'x') }");
+
+        // Test group reference handling
+        assertEval("gsub('_[bB]','\\\\0_m','b_b')");
+        assertEval("gsub('_[bB]','\\\\1_m','b_b')");
+        assertEval("gsub('(_[bB])','\\\\1_m','b_b')");
+        assertEval("gsub('b','\\\\1m','Abb')");
     }
 }

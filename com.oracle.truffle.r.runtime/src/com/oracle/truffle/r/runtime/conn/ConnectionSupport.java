@@ -902,7 +902,7 @@ public class ConnectionSupport {
             if (s == null) {
                 return null;
             } else {
-                String[] lines = s.split("\n", 2);
+                String[] lines = TextConnections.splitLines(s, 2);
                 if (lines.length == 2) {
                     // we hit end of the line
                     if (lines[1].length() != 0) {
@@ -923,7 +923,7 @@ public class ConnectionSupport {
                             break;
                         }
 
-                        lines = s.split("\n", 2);
+                        lines = TextConnections.splitLines(s, 2);
                         if (lines.length == 2) {
                             // we hit end of the line
                             if (lines[1].length() != 0) {
@@ -947,7 +947,7 @@ public class ConnectionSupport {
          */
         @TruffleBoundary
         private String[] readLinesWithPushBack(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
-            // NOTE: 'n' may be negative indicating to read as much lines as available
+            // NOTE: 'n' may be negative indicating to read as many lines as available
             final List<String> res;
             if (n >= 0) {
                 res = new ArrayList<>(n);

@@ -1057,7 +1057,7 @@ public class TestJavaInterop extends TestBase {
         if (asXXX.equals("as.expression")) {
             assertEvalFastR(Output.IgnoreErrorContext, CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this polyglot value to a vector"));
         } else if (asXXX.equals("as.raw") || asXXX.equals("as.complex")) {
-            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "cannot coerce type 'truffleobject' to vector of type '" + type + "'"));
+            assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "cannot coerce type 'polyglot.value' to vector of type '" + type + "'"));
         } else {
             assertEvalFastR(CREATE_TRUFFLE_OBJECT + asXXX + "(to);", errorIn(asXXX + "(to)", "no method for coercing this polyglot value to a vector"));
         }

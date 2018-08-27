@@ -30,7 +30,8 @@ public class TestBuiltin_attributesassign extends TestBase {
     @Test
     public void testattributesassign1() {
         // FIXME According to docs NULL object is allowed (coerced to empty list)
-        assertEval(Ignored.ImplementationError, "argv <- list(NULL, NULL);`attributes<-`(argv[[1]],argv[[2]]);");
+        assertEval("{ `attributes<-`(NULL, list(a=42)) }");
+        assertEval("argv <- list(NULL, NULL);`attributes<-`(argv[[1]],argv[[2]]);");
     }
 
     @Test
