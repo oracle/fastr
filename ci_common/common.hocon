@@ -36,9 +36,11 @@ logfiles : [
     "com.oracle.truffle.r.test.native/embedded/src/*.output"
     # Uncomment to debug pkgtest issues, produces lot of logs!
     "test.fastr/**/*.Rout"
+    "test.fastr/**/*.fail"
     "test.fastr/**/*-tests/*.Rout"
     "test.gnur/**/*.Rout"
     "test.gnur/**/*-tests/*.Rout"
+    "test.gnur/**/*.fail"
   ]
 
 # This is needed by all (Linux) builds but is specific to the module system employed

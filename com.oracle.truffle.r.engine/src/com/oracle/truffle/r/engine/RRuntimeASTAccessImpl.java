@@ -354,20 +354,20 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object rcommandMain(String[] args, String[] env, boolean intern) {
+    public Object rcommandMain(String[] args, String[] env, boolean intern, int timeoutSecs) {
         IORedirect redirect = handleIORedirect(args, intern);
         assert env == null : "re-enable env arguments";
-        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err);
+        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
         return redirect.getInternResult(result);
     }
 
     @Override
-    public Object rscriptMain(String[] args, String[] env, boolean intern) {
+    public Object rscriptMain(String[] args, String[] env, boolean intern, int timeoutSecs) {
         IORedirect redirect = handleIORedirect(args, intern);
         // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
         // nested context
         assert env == null : "re-enable env arguments";
-        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err);
+        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
         return redirect.getInternResult(result);
     }
 

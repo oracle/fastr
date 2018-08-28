@@ -989,7 +989,8 @@ public final class RError extends RuntimeException implements TruffleException {
         INVALID_FUNCTION_VALUE("invalid function value in '%s'"),
         LINE_MALFORMED("Line starting '%s ...' is malformed!"),
         IS_NOT_GRAPHICAL_PAR("\"%s\" is not a graphical parameter"),
-        GRAPHICAL_PAR_CANNOT_BE_SET("graphical parameter \"%s\" cannot be set");
+        GRAPHICAL_PAR_CANNOT_BE_SET("graphical parameter \"%s\" cannot be set"),
+        COMMAND_TIMED_OUT("command '%s' timed out after %ds");
 
         public final String message;
         final boolean hasArgs;

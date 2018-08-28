@@ -31,23 +31,22 @@ import java.util.concurrent.TimeUnit;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
+import static com.oracle.truffle.r.runtime.RError.SHOW_CALLER;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
-    /**
-     * Temporary support for (test) processes that hang.
-     */
-    private static final String TIMEOUT = "FASTR_PROCESS_TIMEOUT";
 
     @Override
-    public Object execute(VirtualFrame frame, String command, boolean intern) {
-        return execute(command, intern);
+    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs) {
+        return execute(command, intern, timeoutSecs);
     }
 
     @TruffleBoundary
-    private Object execute(String command, boolean intern) {
+    private Object execute(String command, boolean intern, int timeoutSecs) {
         Object result;
         // GNU R uses popen which always invokes /bin/sh
         String shell = "/bin/sh";
@@ -70,17 +69,11 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
                 readThread = new ProcessOutputManager.OutputThreadVariable("system", os);
                 readThread.start();
             }
-            String timeoutVar = System.getenv(TIMEOUT);
-            if (timeoutVar != null) {
-                long timeout;
-                try {
-                    timeout = Integer.parseInt(timeoutVar);
-                } catch (NumberFormatException ex) {
-                    timeout = 5;
-                }
-                boolean exited = p.waitFor(timeout, TimeUnit.MINUTES);
+            if (timeoutSecs > 0) {
+                boolean exited = p.waitFor(timeoutSecs, TimeUnit.SECONDS);
                 if (!exited) {
                     p.destroy();
+                    RError.warning(SHOW_CALLER, Message.COMMAND_TIMED_OUT, command, timeoutSecs);
                 }
                 rc = exited ? 0 : 127;
             } else {
