@@ -241,12 +241,12 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
         @Override
         protected double getComplexRImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index * 2] : NativeDataAccess.getDoubleNativeMirrorData(accessIter.getStore(), index * 2);
+            return hasStore ? ((double[]) accessIter.getStore())[index * 2] : NativeDataAccess.getComplexNativeMirrorDataR(accessIter.getStore(), index);
         }
 
         @Override
         protected double getComplexIImpl(AccessIterator accessIter, int index) {
-            return hasStore ? ((double[]) accessIter.getStore())[index * 2 + 1] : NativeDataAccess.getDoubleNativeMirrorData(accessIter.getStore(), index * 2 + 1);
+            return hasStore ? ((double[]) accessIter.getStore())[index * 2 + 1] : NativeDataAccess.getComplexNativeMirrorDataI(accessIter.getStore(), index);
         }
 
         @Override

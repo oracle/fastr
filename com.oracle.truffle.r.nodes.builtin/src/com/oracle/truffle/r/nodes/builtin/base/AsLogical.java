@@ -33,6 +33,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -43,7 +44,7 @@ public abstract class AsLogical extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(AsLogical.class);
-        casts.arg("x").returnIf(missingValue().or(nullValue()), emptyLogicalVector()).asLogicalVector();
+        casts.arg("x").defaultWarningContext(RError.NO_CALLER).returnIf(missingValue().or(nullValue()), emptyLogicalVector()).asLogicalVector();
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")

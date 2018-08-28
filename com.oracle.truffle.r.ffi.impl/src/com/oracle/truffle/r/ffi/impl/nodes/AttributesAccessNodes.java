@@ -225,7 +225,7 @@ public final class AttributesAccessNodes {
         }
 
         @Specialization
-        protected Object doIt(RSharingAttributeStorage target, RNull attributes) {
+        protected Object doIt(RSharingAttributeStorage target, @SuppressWarnings("unused") RNull attributes) {
             clearAttrs(target);
             return RNull.instance;
         }

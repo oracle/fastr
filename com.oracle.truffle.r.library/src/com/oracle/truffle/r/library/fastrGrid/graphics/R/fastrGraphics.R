@@ -25,7 +25,7 @@
 # prints a warning message instructing the user to use grid/lattice/ggplot2 instead
 
 eval(expression({
-    graphicsWarning <- function(name) {
+    graphicsWarning <- function(name, ignore = NULL) {
         # lookup original function and fetch signature
         fun <- tryCatch(get(name, environment()), error=function(x) NULL)
         if(!is.null(fun)) {
@@ -35,8 +35,23 @@ eval(expression({
         }
 
         if (.fastr.option('IgnoreGraphicsCalls')) {
-            # we evaluate the arguments to simulate the function effects
-            replacementFun <- function(...) { if (is.null(sig)) list(...) else get(names(sig)); invisible(NULL); }
+            # We evaluate the non-missing arguments to simulate the function effects.
+            # Some arguments must be ignored, because they are a promise to a value
+            # that will be calculated inside the function before the argument is accessed
+            sigNames <- setdiff(base::names(sig), ignore)
+            replacementFun <- function(...) {
+                if (is.null(sigNames)) {
+                    return(invisible(list(...)));
+                }
+                missingExpr <- quote(missing(x))
+                for (n in sigNames) {
+                    missingExpr[[2]] <- as.symbol(n)
+                    if (!eval(missingExpr)) {
+                        get(n)
+                    }
+                }
+                invisible(NULL);
+            }
         } else {
             replacementFun <- function(...) {
                 warning(paste0(name, " not supported.", " Note: FastR does not support graphics package and most of its functions. Please use grid package or grid based packages like lattice instead."))
@@ -98,7 +113,7 @@ eval(expression({
     }
 
     # Note: explicitly supported functions: din
-    # Note: harmless functions that we do not override: co.intervals, hist.default
+    # Note: harmless functions that we do not override: co.intervals, hist.default, axTicks
     # Note: S3 dispatch functions that may dispatch to lattice/ggplot2/etc. implementation: hist, contour, lines, pairs, points, text
 
     abline <- graphicsWarning("abline");
@@ -108,7 +123,6 @@ eval(expression({
     Axis <- graphicsWarning("Axis");
     axis.Date <- graphicsWarning("axis.Date");
     axis.POSIXct <- graphicsWarning("axis.POSIXct");
-    axTicks <- graphicsWarning("axTicks");
     barplot.default <- graphicsWarning("barplot.default");
     box <- graphicsWarning("box");
     boxplot.default <- graphicsWarning("boxplot.default");
@@ -134,7 +148,7 @@ eval(expression({
     layout <- graphicsWarning("layout");
     layout.show <- graphicsWarning("layout.show");
     lcm <- graphicsWarning("lcm");
-    legend <- graphicsWarning("legend");
+    legend <- graphicsWarning("legend", c('merge'));
     lines.default <- graphicsWarning("lines.default");
     locator <- graphicsWarning("locator");
     matlines <- graphicsWarning("matlines");

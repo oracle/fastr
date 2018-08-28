@@ -93,6 +93,10 @@ public final class RList extends RListBase implements RAbstractListVector {
         return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
     }
 
+    public long allocateNativeContents() {
+        return NativeDataAccess.allocateNativeContents(this, data);
+    }
+
     private static final class FastPathAccess extends FastPathFromListAccess {
 
         FastPathAccess(RAbstractContainer value) {

@@ -34,15 +34,14 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 
 public final class NACheck {
+
+    private final BranchProfile conversionOverflowReached = BranchProfile.create();
 
     private static final int NO_CHECK = 0;
     private static final int CHECK_DEOPT = 1;
     private static final int CHECK = 2;
-
-    private final BranchProfile conversionOverflowReached = BranchProfile.create();
 
     @CompilationFinal private int state;
     @CompilationFinal private boolean seenNaN;
@@ -313,16 +312,6 @@ public final class NACheck {
         return RRuntime.complex2logicalNoCheck(value);
     }
 
-    public int convertComplexToInt(RComplex right, boolean warning) {
-        if (check(right)) {
-            return RRuntime.INT_NA;
-        }
-        if (warning) {
-            RError.warning(RError.SHOW_CALLER2, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
-        return RRuntime.complex2intNoCheck(right);
-    }
-
     public boolean checkNAorNaN(double value) {
         if (Double.isNaN(value)) {
             if (!this.seenNaN) {
@@ -341,34 +330,8 @@ public final class NACheck {
         int result = (int) value;
         if (result == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
             conversionOverflowReached.enter();
-            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION_INT);
             check(RRuntime.INT_NA); // na encountered
             return RRuntime.INT_NA;
-        }
-        return result;
-    }
-
-    public int[] convertDoubleVectorToIntData(RAbstractDoubleVector vector) {
-        int length = vector.getLength();
-        int[] result = new int[length];
-        boolean warning = false;
-        for (int i = 0; i < length; i++) {
-            double value = vector.getDataAt(i);
-            if (checkNAorNaN(value)) {
-                result[i] = RRuntime.INT_NA;
-            } else {
-                int intValue = (int) value;
-                if (intValue == Integer.MIN_VALUE || value > Integer.MAX_VALUE) {
-                    conversionOverflowReached.enter();
-                    warning = true;
-                    check(RRuntime.INT_NA); // NA encountered
-                    intValue = RRuntime.INT_NA;
-                }
-                result[i] = intValue;
-            }
-        }
-        if (warning) {
-            RError.warning(RError.SHOW_CALLER2, RError.Message.NA_INTRODUCED_COERCION_INT);
         }
         return result;
     }

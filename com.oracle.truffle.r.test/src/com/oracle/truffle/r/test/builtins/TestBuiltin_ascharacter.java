@@ -264,6 +264,7 @@ public class TestBuiltin_ascharacter extends TestBase {
         assertEval("{ as.character(1L) }");
         assertEval("{ as.character(TRUE) }");
         assertEval("{ as.character(1:3) }");
+        assertEval("{ as.character(1.1:3.1) }");
         assertEval("{ as.character(NULL) }");
 
         assertEval("{ as.character(list(1,2,3)) }");
@@ -279,5 +280,10 @@ public class TestBuiltin_ascharacter extends TestBase {
         assertEval("{ f1<-function(x) 7; f2<-function(y) { sys.call() }; as.character(f2(f1(42))) }");
         assertEval("{ as.character.cls <- function(x) 42; as.character(structure(c(1,2), class='cls')); }");
         assertEval("{ y <- c('a', 'b'); attr(y, 'someAttr') <- 'someValue'; x <- as.character(y); x[[1]] <- '42'; y }");
+    }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c('a', 'abc'); .fastr.identity(x) == .fastr.identity(as.character(x)); }", "[1] TRUE");
     }
 }

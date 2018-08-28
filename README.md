@@ -121,6 +121,11 @@ The access point for contributions, issues and questions about FastR is the [Git
 
 ## Troubleshooting
 
+### GNU-R build fails
+
+GNU-R is built as part of the FastR build and therefore all GNU-R dependencies are required.
+The output from GNU-R configuration is logged in `libdownloads/R-3.4.0/gnur_configure.log`.
+
 ### Build fails when generating R grammar
 
 This problem manifests by the following error message in the build output:
@@ -141,3 +146,10 @@ export LANG=en_US.UTF-8
 export LC_ALL=en_US.UTF-8
 export LC_CTYPE=en_US.UTF-8
 ```
+
+Note: you may need to install `locale` and run the following before setting the above env variables:
+
+```
+locale en_US.UTF-8
+```
+

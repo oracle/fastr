@@ -180,12 +180,8 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
         Context context = preparedContext = contextBuilderAllowAll.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         this.consoleHandler.setContext(context);
-        try {
-            Source src = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).build();
-            context.eval(src).execute(consoleHandler.getPolyglotWrapper());
-        } catch (IOException e) {
-            throw fatal(e, "error while setting console handler");
-        }
+        Source src = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).buildLiteral();
+        context.eval(src).execute(consoleHandler.getPolyglotWrapper());
         if (launcherMode) {
             try {
                 System.exit(execute(context));

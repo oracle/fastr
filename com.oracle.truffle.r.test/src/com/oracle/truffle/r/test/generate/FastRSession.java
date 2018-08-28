@@ -26,7 +26,6 @@ import static org.junit.Assert.fail;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.lang.reflect.AccessibleObject;
 import java.lang.reflect.Field;
@@ -118,13 +117,7 @@ public final class FastRSession implements RSession {
     }
 
     public static Source createSource(String txt, String name) {
-        try {
-            return Source.newBuilder("R", txt, name).internal(true).interactive(true).build();
-        } catch (IOException ex) {
-            Logger.getLogger(FastRSession.class.getName()).log(Level.SEVERE, null, ex);
-            assert false;
-        }
-        return null;
+        return Source.newBuilder("R", txt, name).internal(true).interactive(true).buildLiteral();
     }
 
     public Context createContext(ContextKind contextKind) {

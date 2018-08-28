@@ -41,7 +41,6 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
-import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 @MessageResolution(receiverType = RArgsValuesAndNames.class)
 public class RArgsValuesAndNamesMR {

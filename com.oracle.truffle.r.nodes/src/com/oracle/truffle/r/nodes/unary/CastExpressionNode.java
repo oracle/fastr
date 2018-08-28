@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -33,7 +35,10 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
+@ImportStatic(DSLConfig.class)
 public abstract class CastExpressionNode extends CastBaseNode {
 
     public abstract Object executeExpression(Object o);
@@ -86,13 +91,16 @@ public abstract class CastExpressionNode extends CastBaseNode {
         return value;
     }
 
-    @Specialization
+    @Specialization(guards = "uAccess.supports(obj)", limit = "getGenericVectorAccessCacheSize()")
     protected RExpression doAbstractContainer(RAbstractContainer obj,
-                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+                    @Cached("create()") GetNamesAttributeNode getNamesNode,
+                    @Cached("obj.access()") VectorAccess uAccess) {
         int len = obj.getLength();
         Object[] data = new Object[len];
-        for (int i = 0; i < len; i++) {
-            data[i] = obj.getDataAtAsObject(i);
+        try (SequentialIterator sIter = uAccess.access(obj, warningContext())) {
+            while (uAccess.next(sIter)) {
+                data[sIter.getIndex()] = uAccess.getListElement(sIter);
+            }
         }
         if (obj instanceof RList) {
             RList list = (RList) obj;
@@ -101,6 +109,12 @@ public abstract class CastExpressionNode extends CastBaseNode {
         } else {
             return factory().createExpression(data);
         }
+    }
+
+    @Specialization(replaces = "doAbstractContainer")
+    protected RExpression doAbstractContainerGeneric(RAbstractContainer obj,
+                    @Cached("create()") GetNamesAttributeNode getNamesNode) {
+        return doAbstractContainer(obj, getNamesNode, obj.slowPathAccess());
     }
 
     private RExpression create(Object obj) {

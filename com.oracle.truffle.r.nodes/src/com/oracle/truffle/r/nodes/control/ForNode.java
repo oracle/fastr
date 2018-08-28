@@ -117,7 +117,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                     @Cached("createWriteVariable(iteratorName)") WriteVariableNode writeIteratorNode,
                     @Cached("createForIterableLoopNode(iteratorName)") LoopNode l,
                     @Cached("READ.createNode()") Node readNode,
-                    @Cached("createExecute(0).createNode()") Node executeNode) {
+                    @Cached("EXECUTE.createNode()") Node executeNode) {
 
         TruffleObject iterator = getIterator((TruffleObject) range, readNode, executeNode);
         writeIteratorNode.execute(frame, iterator);
@@ -368,7 +368,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
             this.readIteratorNode = LocalReadVariableNode.create(iteratorName, true);
 
-            this.executeForeignNode = Message.createExecute(0).createNode();
+            this.executeForeignNode = Message.EXECUTE.createNode();
             this.readForeignNode = Message.READ.createNode();
 
             // pre-initialize the profile so that loop exits to not deoptimize

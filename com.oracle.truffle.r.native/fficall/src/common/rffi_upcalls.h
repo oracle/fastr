@@ -30,10 +30,12 @@ extern __thread void* *callbacks;
 
 // This is the complete set , including those not yet implemented
 
+typedef SEXP (*call_Rf_ScalarComplex)(double real, double imag);
 typedef SEXP (*call_Rf_ScalarInteger)(int value);
+typedef SEXP (*call_Rf_ScalarLogical)(int value);
+typedef SEXP (*call_Rf_ScalarRaw)(int value);
 typedef SEXP (*call_Rf_ScalarReal)(double value);
 typedef SEXP (*call_Rf_ScalarString)(SEXP value);
-typedef SEXP (*call_Rf_ScalarLogical)(int value);
 typedef SEXP (*call_Rf_allocVector)(SEXPTYPE t, R_xlen_t len);
 typedef SEXP (*call_Rf_allocArray)(SEXPTYPE t, SEXP dims);
 typedef SEXP (*call_Rf_alloc3DArray)(SEXPTYPE t, int x, int y, int z);
@@ -228,7 +230,7 @@ typedef double (*call_R_atof)(const char *str);
 typedef double (*call_R_strtod)(const char *c, char **end);
 typedef SEXP (*call_R_PromiseExpr)(SEXP x);
 typedef SEXP (*call_R_ClosureExpr)(SEXP x);
-typedef SEXP (*call_R_forceAndCall)(SEXP e, int n, SEXP rho);
+typedef SEXP (*call_R_forceAndCall)(SEXP e, SEXP f, int n, SEXP rho);
 typedef SEXP (*call_R_MakeExternalPtr)(void *p, SEXP tag, SEXP prot);
 typedef void *(*call_R_ExternalPtrAddr)(SEXP s);
 typedef SEXP (*call_R_ExternalPtrTag)(SEXP s);
@@ -408,6 +410,7 @@ typedef SEXP (*call_getvar)();
 typedef SEXP (*call_R_ParseVector)(SEXP text, int n, SEXP srcFile);
 typedef SEXPTYPE (*call_Rf_str2type)(const char *s);
 typedef SEXP (*call_octsize)(SEXP size);
+typedef int (*call_R_nchar)(SEXP string, nchar_type type_, Rboolean allowNA, Rboolean keepNA, const char* msg_name);
 
 // connections
 

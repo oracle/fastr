@@ -1,25 +1,45 @@
-# test from Hadley Wickham's book
-
+#
+# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 3 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 3 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
+#
 stopifnot(require(methods))
 stopifnot(require(tests4))
-setGeneric("sides", function(object) {
-  standardGeneric("sides")
+
+setGeneric("legs", function(object) {
+  standardGeneric("legs")
 })
 
-setClass("Shape")
-setClass("Polygon", representation(sides = "integer"), contains = "Shape")
-setClass("Triangle", contains = "Polygon")
-setClass("Square", contains = "Polygon")
-setClass("Circle", contains = "Shape")
+setClass("Animal")
+setClass("Mammal", representation(legs = "integer"), contains = "Animal")
+setClass("Elephant", contains = "Mammal")
+setClass("Kangaroo", contains = "Mammal")
+setClass("Bird", contains = "Animal")
 
-setMethod("sides", signature(object = "Polygon"), function(object) {
-  object@sides
+setMethod("legs", signature(object = "Mammal"), function(object) {
+  object@legs
 })
 
-setMethod("sides", signature("Triangle"), function(object) 3)
-setMethod("sides", signature("Square"),   function(object) 4)
-setMethod("sides", signature("Circle"),   function(object) Inf)
+setMethod("legs", signature("Elephant"), function(object) 4)
+setMethod("legs", signature("Bird"),   function(object) 2)
 
-res<-print(showMethods(class = "Polygon"))
-removeGeneric("sides")
-print(res)
+legs(new("Kangaroo", legs = 2L))
+legs(new("Elephant", legs = 42L))
+legs(new("Bird"))

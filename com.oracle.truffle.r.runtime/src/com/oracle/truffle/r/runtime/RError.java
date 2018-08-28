@@ -54,9 +54,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * way of a {@link Node} value (which may be indirectly related to the actual builtin due to AST
  * transformations) and the Truffle {@link Frame} stack. Mostly the {@link Node} value and
  * {@link Frame} are sufficient to reconstruct the context, but there are some special cases that
- * might require more information to disambiguate. Rather than create a new class to carry that, we
- * would simply create an instance of a {@link RBaseNode} subclass with the additional state.
- * Currently,there are no such cases.
+ * might require more information to disambiguate, one such example is {@link ShowCallerOf}.
  */
 @SuppressWarnings("serial")
 public final class RError extends RuntimeException implements TruffleException {
@@ -90,7 +88,7 @@ public final class RError extends RuntimeException implements TruffleException {
         }
 
         @Override
-        protected RBaseNode getErrorContext() {
+        public RBaseNode getErrorContext() {
             return this;
         }
 
@@ -362,7 +360,9 @@ public final class RError extends RuntimeException implements TruffleException {
         SUBSCRIPT_BOUNDS("subscript out of bounds"),
         SUBSCRIPT_BOUNDS_SUB("[[ ]] subscript out of bounds"),
         SELECT_LESS_1("attempt to select less than one element"),
+        SELECT_LESS_1_IN_ONE_INDEX("attempt to select less than one element in integerOneIndex"),
         SELECT_MORE_1("attempt to select more than one element"),
+        SELECT_MORE_1_IN_ONE_INDEX("attempt to select more than one element in integerOneIndex"),
         ONLY_0_MIXED("only 0's may be mixed with negative subscripts"),
         REPLACEMENT_0("replacement has length zero"),
         NOT_MULTIPLE_REPLACEMENT("number of items to replace is not a multiple of replacement length"),
@@ -984,7 +984,9 @@ public final class RError extends RuntimeException implements TruffleException {
         NA_INF_REPLACED("-Inf replaced by maximally negative value"),
         MINUS_INF_REPLACED("NA/Inf replaced by maximum positive value"),
         INVALID_FUNCTION_VALUE("invalid function value in '%s'"),
-        LINE_MALFORMED("Line starting '%s ...' is malformed!");
+        LINE_MALFORMED("Line starting '%s ...' is malformed!"),
+        IS_NOT_GRAPHICAL_PAR("\"%s\" is not a graphical parameter"),
+        GRAPHICAL_PAR_CANNOT_BE_SET("graphical parameter \"%s\" cannot be set");
 
         public final String message;
         final boolean hasArgs;

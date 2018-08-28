@@ -153,7 +153,7 @@ abstract class VectorPrinter<T extends RAbstractVector> extends AbstractValuePri
         }
 
         public final void print(T vector) throws IOException {
-            access = vector.access();
+            access = vector.slowPathAccess();
             try (RandomIterator iter = access.randomAccess(vector)) {
                 this.iterator = iter;
                 switch (jobMode) {

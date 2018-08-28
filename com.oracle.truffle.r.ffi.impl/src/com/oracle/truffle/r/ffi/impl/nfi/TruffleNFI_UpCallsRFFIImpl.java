@@ -81,7 +81,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     @TruffleBoundary
     protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        Node executeNode = Message.createExecute(4).createNode();
+        Node executeNode = Message.EXECUTE.createNode();
         try {
             return (DotSymbol) FFIUnwrapNode.unwrap(
                             ForeignAccess.sendExecute(executeNode, TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol), dllInfo, nstOrd, routines, index));

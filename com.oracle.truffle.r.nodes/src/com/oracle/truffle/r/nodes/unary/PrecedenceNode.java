@@ -262,7 +262,7 @@ public abstract class PrecedenceNode extends RBaseNode {
     protected int doJavaIterable(TruffleObject obj, boolean recursive,
                     @Cached("HAS_SIZE.createNode()") Node hasSize,
                     @Cached("READ.createNode()") Node read,
-                    @Cached("createExecute(0).createNode()") Node execute,
+                    @Cached("EXECUTE.createNode()") Node execute,
                     @Cached("createRecursive()") PrecedenceNode precedenceNode,
                     @Cached("create()") Foreign2R foreign2R) {
         int precedence = -1;

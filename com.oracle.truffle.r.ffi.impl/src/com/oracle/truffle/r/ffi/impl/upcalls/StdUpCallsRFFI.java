@@ -41,6 +41,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated3;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.UnlockBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.GetClassDefNode;
+import com.oracle.truffle.r.ffi.impl.nodes.IsObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAARNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CAD4RNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.CADDDRNode;
@@ -61,9 +62,11 @@ import com.oracle.truffle.r.ffi.impl.nodes.MathFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
-import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
-import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
+import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RForceAndCallNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
@@ -153,9 +156,13 @@ import com.oracle.truffle.r.runtime.nmath.distr.Wilcox;
 public interface StdUpCallsRFFI {
     // Checkstyle: stop method name check
 
+    Object Rf_ScalarComplex(double real, double imag);
+
     Object Rf_ScalarInteger(int value);
 
     Object Rf_ScalarLogical(int value);
+
+    Object Rf_ScalarRaw(int value);
 
     Object Rf_ScalarReal(double value);
 
@@ -239,6 +246,12 @@ public interface StdUpCallsRFFI {
     @RFFIRunGC
     Object Rf_allocMatrix(int mode, int nrow, int ncol);
 
+    @RFFIRunGC
+    Object Rf_allocList(int length);
+
+    @RFFIRunGC
+    Object Rf_allocSExp(int type);
+
     int Rf_nrows(Object x);
 
     int Rf_ncols(Object x);
@@ -248,14 +261,16 @@ public interface StdUpCallsRFFI {
 
     void SET_STRING_ELT(Object x, long i, Object v);
 
-    int /* void */ SETLENGTH(Object x, int l);
+    void SETLENGTH(Object x, int l);
 
-    int /* void */ SETTRUELENGTH(Object x, int l);
+    void SET_TRUELENGTH(Object x, int l);
 
     @RFFIUpCallNode(TRUELENGTHNode.class)
     int TRUELENGTH(Object x);
 
     int LEVELS(Object x);
+
+    void SETLEVELS(Object x, int gpbits);
 
     void SET_VECTOR_ELT(Object x, long i, Object v);
 
@@ -420,6 +435,8 @@ public interface StdUpCallsRFFI {
     void SET_RSTEP(Object x, int v);
 
     Object ENCLOS(Object x);
+
+    void SET_ENCLOS(Object x, Object enc);
 
     Object PRVALUE(Object x);
 
@@ -908,4 +925,13 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(MiscNodes.RfPrintValueNode.class)
     void Rf_PrintValue(Object value);
+
+    @RFFIUpCallNode(RNCharNode.class)
+    int R_nchar(Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName);
+
+    @RFFIUpCallNode(RForceAndCallNode.class)
+    Object R_forceAndCall(Object e, Object f, int n, Object args);
+
+    @RFFIUpCallNode(IsObjectNode.class)
+    int Rf_isObject(Object x);
 }

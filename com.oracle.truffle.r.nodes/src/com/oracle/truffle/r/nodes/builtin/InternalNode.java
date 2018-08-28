@@ -219,7 +219,7 @@ public abstract class InternalNode extends OperatorNode {
         }
 
         @Override
-        protected RBaseNode getErrorContext() {
+        public RBaseNode getErrorContext() {
             return builtin.getErrorContext();
         }
 
@@ -228,7 +228,7 @@ public abstract class InternalNode extends OperatorNode {
         @Override
         public Object execute(VirtualFrame frame) {
             Object[] args = prepareArgs(frame);
-            Object result = doInternalDispatch(frame, factory, args);
+            Object result = doInternalDispatch(frame, args);
             if (result == null) {
                 result = builtin.call(frame, prepareArgs(frame));
                 assert result != null : "builtins cannot return 'null': " + factory.getName();
@@ -238,7 +238,7 @@ public abstract class InternalNode extends OperatorNode {
             return result;
         }
 
-        private Object doInternalDispatch(VirtualFrame frame, RBuiltinFactory factory, Object[] args) {
+        private Object doInternalDispatch(VirtualFrame frame, Object[] args) {
             if (factory.getDispatch() != RDispatch.INTERNAL_GENERIC) {
                 return null;
             }
@@ -432,7 +432,7 @@ public abstract class InternalNode extends OperatorNode {
                     "phyper", "qhyper", "dnbeta", "pnbeta", "qnbeta", "dnf", "pnf", "qnf", "dtukey", "ptukey", "qtukey", "rchisq", "rexp", "rgeom", "rpois", "rt", "rsignrank", "rbeta", "rbinom",
                     "rcauchy", "rf", "rgamma", "rlnorm", "rlogis", "rnbinom", "rnbinom_mu", "rnchisq", "rnorm", "runif", "rweibull", "rwilcox", "rhyper",
                     "grepRaw", "regexec", "adist", "aregexec", "chartr", "strtrim", "eapply", "machine", "save", "dump", "prmatrix", "gcinfo",
-                    "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply", "inspect",
+                    "memory.profile", "sys.on.exit", "builtins", "bodyCode", "rapply",
                     "mem.limits", "capabilitiesX11", "Cstack_info", "file.choose", "polyroot",
                     "setNumMathThreads", "setMaxNumMathThreads", "isatty", "isIncomplete", "pipe", "fifo", "unz", "truncate", "rawConnection",
                     "rawConnectionValue", "sockSelect", "gzcon", "memCompress", "memDecompress", "mkUnbound", "env.profile", "setSessionTimeLimit", "icuSetCollate", "findInterval", "rowsum_df",

@@ -59,7 +59,7 @@ public class TruffleNFI_Call implements CallRFFI {
     }
 
     private abstract static class NodeAdapter extends Node {
-        @Child private Node bindNode = Message.createInvoke(1).createNode();
+        @Child private Node bindNode = Message.INVOKE.createNode();
 
         @TruffleBoundary
         protected TruffleObject getFunction(String name, String signature) {
@@ -85,7 +85,7 @@ public class TruffleNFI_Call implements CallRFFI {
                         @Cached("args.length") int cachedArgsLength,
                         @Cached("create(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
-                        @Cached("createExecute(cachedArgsLength)") Node executeNode,
+                        @Cached("createExecute()") Node executeNode,
                         @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
                         @Cached("getFunction(cachedArgsLength)") TruffleObject cachedFunction) {
             Object result = null;
@@ -109,7 +109,7 @@ public class TruffleNFI_Call implements CallRFFI {
                         @Cached("args.length") int cachedArgsLength,
                         @Cached("create(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
-                        @Cached("createExecute(cachedArgsLength)") Node executeNode) {
+                        @Cached("createExecute()") Node executeNode) {
             Object result = null;
             Object[] realArgs = new Object[cachedArgsLength + 1];
             boolean isNullSetting = prepareCall(nativeCallInfo.name, args, ffiWrapNodes);
@@ -126,8 +126,8 @@ public class TruffleNFI_Call implements CallRFFI {
             }
         }
 
-        public static Node createExecute(int n) {
-            return Message.createExecute(n).createNode();
+        public static Node createExecute() {
+            return Message.EXECUTE.createNode();
         }
     }
 
@@ -135,8 +135,8 @@ public class TruffleNFI_Call implements CallRFFI {
         private static final String CallVoid1Sig = "(pointer, pointer): void";
         private static final String CallVoid0Sig = "(pointer): void";
 
-        @Child private Node execute0Node = Message.createExecute(0).createNode();
-        @Child private Node execute1Node = Message.createExecute(1).createNode();
+        @Child private Node execute0Node = Message.EXECUTE.createNode();
+        @Child private Node execute1Node = Message.EXECUTE.createNode();
         @Children private final FFIWrapNode[] ffiWrapNodes0 = FFIWrapNode.create(0);
         @Children private final FFIWrapNode[] ffiWrapNodes1 = FFIWrapNode.create(1);
 

@@ -88,13 +88,16 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval("{ as.complex() }");
         assertEval("{ as.complex(0) }");
         assertEval("{ as.complex(TRUE) }");
-        assertEval("{ as.complex(\"1+5i\") }");
+        assertEval("{ as.complex('1+5i') }");
+        assertEval("{ as.complex(c('1+5i', '1+5i')) }");
+        assertEval("{ as.complex(c(1, NA)) }");
+        assertEval("{ as.complex(c('1', NA_character_)) }");
         assertEval("{ as.complex(\"-1+5i\") }");
         assertEval("{ as.complex(\"-1-5i\") }");
         assertEval("{ as.complex(0/0) }");
         assertEval("{ as.complex(c(0/0, 0/0)) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.complex(c(\"1\",\"hello\")) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.complex(\"TRUE\") }");
+        assertEval("{ as.complex(c('1','hello')) }");
+        assertEval("{ as.complex('TRUE') }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.complex(x); attributes(y) }");
         assertEval("{ as.complex(\"Inf\") }");
@@ -112,5 +115,10 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
         assertEval(Output.IgnoreWarningContext, "{ as.complex(list(\"foo\")) }");
         assertEval("{ as.complex.cls <- function(x) 42; as.complex(structure(c(1,2), class='cls')); }");
+    }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c(1+2i, 3.5+3i); .fastr.identity(x) == .fastr.identity(as.complex(x)); }", "[1] TRUE");
     }
 }

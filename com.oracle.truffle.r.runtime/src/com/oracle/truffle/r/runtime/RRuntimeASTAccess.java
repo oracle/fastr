@@ -46,7 +46,8 @@ public interface RRuntimeASTAccess {
 
     /**
      * Returns the real caller associated with {@code rl}, by locating the {@code RSyntaxNode}
-     * associated with the node stored with {@code rl}.
+     * associated with the node stored with {@code rl}. It may return {@code null} if there is no
+     * valid caller.
      */
     RPairList getSyntaxCaller(RCaller rl);
 
@@ -76,7 +77,8 @@ public interface RRuntimeASTAccess {
      * Convenience method for {@code getCallerSource(getSyntaxCaller(caller))}.
      */
     default String getCallerSource(RCaller caller) {
-        return getCallerSource(getSyntaxCaller(caller));
+        final RPairList syntaxCaller = getSyntaxCaller(caller);
+        return syntaxCaller == null ? "<invalid call>" : getCallerSource(syntaxCaller);
     }
 
     /**

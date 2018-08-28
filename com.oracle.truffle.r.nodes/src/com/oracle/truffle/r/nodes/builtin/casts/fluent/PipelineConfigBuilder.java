@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.builtin.casts.fluent;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.nodes.builtin.casts.PipelineConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -37,6 +38,7 @@ public final class PipelineConfigBuilder {
     private final String argumentName;
     private MessageData defaultError;
     private MessageData defaultWarning;
+    private ErrorContext defaultWarningContext;
 
     private boolean valueForwarding = true;
     private boolean castForeign = true;
@@ -48,7 +50,7 @@ public final class PipelineConfigBuilder {
     }
 
     public PipelineConfig build() {
-        return new PipelineConfig(argumentName, defaultError, defaultWarning, valueForwarding, castForeign);
+        return new PipelineConfig(argumentName, defaultError, defaultWarning, defaultWarningContext, valueForwarding, castForeign);
     }
 
     void setDefaultError(MessageData defaultError) {
@@ -57,6 +59,10 @@ public final class PipelineConfigBuilder {
 
     void setDefaultWarning(MessageData defaultWarning) {
         this.defaultWarning = defaultWarning;
+    }
+
+    void setDefaultWarningContext(ErrorContext ctx) {
+        this.defaultWarningContext = ctx;
     }
 
     public PipelineConfigBuilder setValueForwarding(boolean flag) {

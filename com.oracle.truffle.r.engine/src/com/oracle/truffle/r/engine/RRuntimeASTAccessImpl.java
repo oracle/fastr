@@ -146,8 +146,12 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
         while (call.isPromise()) {
             call = call.getParent();
         }
-        RSyntaxElement syntaxNode = call.getSyntaxNode();
-        return RDataFactory.createLanguage(getOrCreateLanguageClosure(((RSyntaxNode) syntaxNode).asRNode()));
+        if (call.isValidCaller()) {
+            RSyntaxElement syntaxNode = call.getSyntaxNode();
+            return RDataFactory.createLanguage(getOrCreateLanguageClosure(((RSyntaxNode) syntaxNode).asRNode()));
+        } else {
+            return null;
+        }
     }
 
     private static RBaseNode checkBuiltin(RBaseNode bn) {

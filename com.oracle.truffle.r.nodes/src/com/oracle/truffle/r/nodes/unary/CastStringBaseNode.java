@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -39,6 +40,10 @@ public abstract class CastStringBaseNode extends CastBaseNode {
 
     protected CastStringBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    }
+
+    protected CastStringBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, warningContext);
     }
 
     @Override
@@ -71,7 +76,7 @@ public abstract class CastStringBaseNode extends CastBaseNode {
     }
 
     @Specialization
-    protected String doRaw(RComplex value) {
+    protected String doComplex(RComplex value) {
         return toString(value);
     }
 

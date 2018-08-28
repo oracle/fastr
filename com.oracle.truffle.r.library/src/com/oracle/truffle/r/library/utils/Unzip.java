@@ -69,7 +69,7 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return RError.SHOW_CALLER;
     }
 

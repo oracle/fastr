@@ -44,5 +44,6 @@ public class TestBuiltin_chol extends TestBase {
         // the leading minor of order 2 is not positive definite
         // FastR output: Error in chol.default(m) : error code 2 from Lapack routine 'dpotrf'
         assertEval(Output.IgnoreErrorMessage, "{ m <- matrix(c(5,-5,-5,3),2,2) ; chol(m) }");
+        assertEval("chol(matrix(c(4,2,2,3), ncol=2), pivot=TRUE)");
     }
 }

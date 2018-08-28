@@ -1,4 +1,5 @@
 JAVA_SRC=$(wildcard java/*.java)
+JFLAGS=-Xlint:none
 JAVAC=${JAVA_HOME}/bin/javac
 
 all: $(SHLIB)
@@ -7,7 +8,7 @@ $(SHLIB): java
 .PHONY: all java
 
 java: $(JAVA_SRC)
-	$(JAVAC) $(JAVA_SRC) || (echo "ERROR: compilation failed, do you have properly configured JAVA_HOME environment variable?"; exit 1)
+	$(JAVAC) $(JFLAGS) $(JAVA_SRC) || (echo "ERROR: compilation failed, do you have properly configured JAVA_HOME environment variable?"; exit 1)
 	rm -rfv ../inst/java
 	mkdir -p ../inst/java
 	mv java/*.class ../inst/java

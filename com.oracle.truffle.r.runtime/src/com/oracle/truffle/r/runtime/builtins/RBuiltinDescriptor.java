@@ -48,6 +48,7 @@ public abstract class RBuiltinDescriptor {
     private final RDispatch dispatch;
     private final String genericName;
     private final RBehavior behavior;
+    private final boolean lookupVarArgs;
     private final RSpecialFactory specialCall;
 
     private final int primitiveMethodIndex;
@@ -55,8 +56,9 @@ public abstract class RBuiltinDescriptor {
     private final boolean isFieldAccess;
 
     public RBuiltinDescriptor(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature,
-                    int[] nonEvalArgs, boolean splitCaller, boolean isFieldAccess,
+                    int[] nonEvalArgs, boolean splitCaller, boolean isFieldAccess, boolean lookupVarArgs,
                     boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
+        this.lookupVarArgs = lookupVarArgs;
         this.specialCall = specialCall;
         this.name = Utils.intern(name);
         this.builtinMetaClass = builtinMetaClass;
@@ -90,11 +92,11 @@ public abstract class RBuiltinDescriptor {
         }
     }
 
-    public String getName() {
+    public final String getName() {
         return name;
     }
 
-    public String getGenericName() {
+    public final String getGenericName() {
         if (genericName.isEmpty()) {
             return name;
         } else {
@@ -102,65 +104,73 @@ public abstract class RBuiltinDescriptor {
         }
     }
 
-    public String[] getAliases() {
+    public final String[] getAliases() {
         return aliases;
     }
 
-    public RBuiltinKind getKind() {
+    public final RBuiltinKind getKind() {
         return kind;
     }
 
-    public ArgumentsSignature getSignature() {
+    public final ArgumentsSignature getSignature() {
         return signature;
     }
 
-    public boolean isAlwaysSplit() {
+    public final boolean isAlwaysSplit() {
         return alwaysSplit;
     }
 
-    public boolean isSplitCaller() {
+    public final boolean isSplitCaller() {
         return splitCaller;
     }
 
-    public RDispatch getDispatch() {
+    public final RDispatch getDispatch() {
         return dispatch;
     }
 
-    public boolean evaluatesArg(int index) {
+    public final boolean evaluatesArg(int index) {
         return evaluatesArgument[index];
     }
 
-    public int getPrimMethodIndex() {
+    public final int getPrimMethodIndex() {
         return primitiveMethodIndex;
     }
 
-    public RVisibility getVisibility() {
+    public final RVisibility getVisibility() {
         return visibility;
     }
 
-    public Class<?> getBuiltinMetaClass() {
+    public final Class<?> getBuiltinMetaClass() {
         return builtinMetaClass;
     }
 
-    public Class<?> getBuiltinNodeClass() {
+    public final Class<?> getBuiltinNodeClass() {
         return builtinNodeClass;
     }
 
-    public RBehavior getBehavior() {
+    public final RBehavior getBehavior() {
         return behavior;
     }
 
-    public RSpecialFactory getSpecialCall() {
+    public final RSpecialFactory getSpecialCall() {
         return specialCall;
     }
 
     @Override
-    public String toString() {
+    public final String toString() {
         return "RBuiltinFactory [name=" + getName() + ", aliases=" + Arrays.toString(getAliases()) + ", kind=" + getKind() + ", siagnature=" + getSignature() + ", nonEvaledArgs=" +
                         Arrays.toString(nonEvalArgs) + ", splitCaller=" + isSplitCaller() + ", dispatch=" + getDispatch() + ", behavior=" + getBehavior() + "]";
     }
 
-    public boolean isFieldAccess() {
+    public final boolean isFieldAccess() {
         return isFieldAccess;
+    }
+
+    public final boolean lookupVarArgs() {
+        return lookupVarArgs;
+    }
+
+    public static boolean lookupVarArgs(RBuiltinDescriptor builtin) {
+        return builtin == null || builtin.lookupVarArgs;
     }
 }

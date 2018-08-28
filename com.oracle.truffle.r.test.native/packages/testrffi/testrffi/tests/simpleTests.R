@@ -1,3 +1,23 @@
+# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
+#
+# This code is free software; you can redistribute it and/or modify it
+# under the terms of the GNU General Public License version 3 only, as
+# published by the Free Software Foundation.
+#
+# This code is distributed in the hope that it will be useful, but WITHOUT
+# ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or
+# FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+# version 3 for more details (a copy is included in the LICENSE file that
+# accompanied this code).
+#
+# You should have received a copy of the GNU General Public License version
+# 3 along with this work; if not, write to the Free Software Foundation,
+# Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.
+#
+# Please contact Oracle, 500 Oracle Parkway, Redwood Shores, CA 94065 USA
+# or visit www.oracle.com if you need additional information or have any
+# questions.
 stopifnot(require(testrffi))
 
 rffi.addInt(2L, 3L)
@@ -264,3 +284,41 @@ api.SET_OBJECT(c(1,2,3), 0)
 # inherits(x, 'abc') # TRUE
 # foo(x) # "foo.abc"
 
+## The following set/get semantics does not work in FastR as the scalar value is
+## always transformed into a NEW string vector before passing it to the native function.
+#svec <- "a"
+#api.SETLEVELS(svec, 1)
+#api.LEVELS(svec)
+
+svec <- c("a", "b")
+api.SETLEVELS(svec, 1)
+api.LEVELS(svec)
+
+env <- new.env()
+env2 <- new.env()
+env2$id <- "enclosing"
+api.SET_ENCLOS(env, env2)
+api.ENCLOS(env)$id == "enclosing"
+
+rffi.test_R_nchar("ffff")
+
+f1 <- function(x,y) { print("f1"); x^y }
+f2 <- function(z) { print("f2"); z }
+ll <- quote(f1(2, f2(3)))
+rffi.test_forceAndCall(ll, 0, .GlobalEnv)
+rffi.test_forceAndCall(ll, 2, .GlobalEnv)
+
+f1 <- function(x, y, ...) { print("f1"); vars <- list(...); print(vars); x^y }
+f2 <- function(z) { print("f2"); z }
+f3 <- function(s) { print("f3"); s }
+ll <- quote(f1(2, f2(3), ...))
+testForceAndCallWithVarArgs <- function (n, ...) {
+	rffi.test_forceAndCall(ll, n, environment())
+}
+testForceAndCallWithVarArgs(0, f3("aaa"))
+testForceAndCallWithVarArgs(3, f3("aaa"))
+
+x <- c(1)
+api.Rf_isObject(x)
+class(x) <- "c1"
+api.Rf_isObject(x)

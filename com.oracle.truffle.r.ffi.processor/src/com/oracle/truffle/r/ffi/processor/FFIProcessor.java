@@ -149,6 +149,7 @@ public final class FFIProcessor extends AbstractProcessor {
         String canRunGc = m.getAnnotation(RFFIRunGC.class) == null ? "false" : "true";
         String nodeClassName = null;
         TypeElement nodeClass = null;
+        boolean useFrame = false;
         String functionClassName = null;
         TypeElement functionClass = null;
         if (nodeAnnotation != null) {
@@ -276,7 +277,16 @@ public final class FFIProcessor extends AbstractProcessor {
             for (Element element : nodeClass.getEnclosedElements()) {
                 if (element.getKind() == ElementKind.METHOD && element.getModifiers().contains(Modifier.STATIC) && "create".equals(element.getSimpleName().toString())) {
                     createFunction = true;
-                    break;
+                }
+                if (element.getKind() == ElementKind.METHOD && element.getModifiers().contains(Modifier.ABSTRACT) && "executeObject".equals(element.getSimpleName().toString())) {
+                    final List<? extends VariableElement> parameters = ((ExecutableElement) element).getParameters();
+                    if (!parameters.isEmpty()) {
+                        final VariableElement first = parameters.get(0);
+                        final TypeMirror parType = first.asType();
+                        if (parType.toString().equals("com.oracle.truffle.api.frame.VirtualFrame")) {
+                            useFrame = true;
+                        }
+                    }
                 }
             }
             if (createFunction) {
@@ -326,7 +336,11 @@ public final class FFIProcessor extends AbstractProcessor {
         } else {
             w.append("((" + callName + ") ForeignAccess.getReceiver(frame)).upCallsImpl." + name);
         }
-        w.append("(" + arguments + ")");
+        w.append("(");
+        if (useFrame) {
+            w.append("frame, ");
+        }
+        w.append(arguments).append(")");
         if (needsReturnWrap) {
             w.append(");\n");
         } else {

@@ -461,6 +461,7 @@ colon_expr returns [T v]
 
 unary_expression returns [T v]
     : op=(PLUS | MINUS | NOT | QM) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
+	| op=(TILDE) n_ l=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | b=power_expr                                  { $v = $b.v; }
     ;
 
@@ -596,7 +597,7 @@ add_operator returns [Token v]
     ;
 
 mult_operator returns [Token v]
-    : op=(MULT | DIV | MOD ) { $v = $op; }
+    : op=(MULT | DIV) { $v = $op; }
     ;
 
 power_operator returns [Token v]
@@ -667,7 +668,6 @@ NOT   : '!' ;
 QM    : '?' ;
 PLUS  : '+' ;
 MULT  : '*' ;
-MOD   : '%%' ;
 DIV   : '/' ;
 MINUS : '-' ;
 
@@ -727,7 +727,7 @@ ID
     | '`' BACKTICK_NAME
     ;
 
-OP : '%' (~('%' | '\n' | '\r' | '\f'))+ '%' ;
+OP : '%' (~('%' | '\n' | '\r' | '\f'))* '%' ;
 
 fragment BACKTICK_NAME
     @init { final StringBuilder buf = new StringBuilder(); }
@@ -789,6 +789,8 @@ fragment ESCAPE [StringBuilder buf]
       | 'x' a = HEX_DIGIT b = HEX_DIGIT { buf.append(hexChar($a.text, $b.text)); }
       | 'u' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
       | 'U' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? e = HEX_DIGIT? f = HEX_DIGIT? g = HEX_DIGIT? h = HEX_DIGIT? { buf.append(hexChar($a.text, $b.text, $c.text, $d.text, $e.text, $f.text, $g.text, $h.text)); }
+      | 'u' '{' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? '}' { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
+      | 'U' '{' a = HEX_DIGIT b = HEX_DIGIT? c = HEX_DIGIT? d = HEX_DIGIT? '}' { buf.append(hexChar($a.text, $b.text, $c.text, $d.text)); }
       )
     ;
 

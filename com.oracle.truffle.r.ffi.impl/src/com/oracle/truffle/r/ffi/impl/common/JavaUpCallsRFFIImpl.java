@@ -45,6 +45,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
+import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RArguments;
@@ -70,6 +71,7 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
@@ -83,6 +85,7 @@ import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -139,6 +142,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     // Checkstyle: stop method name check
+
+    @Override
+    public RComplexVector Rf_ScalarComplex(double real, double imag) {
+        return RDataFactory.createComplexVectorFromScalar(RComplex.valueOf(real, imag));
+    }
+
     @Override
     public RIntVector Rf_ScalarInteger(int value) {
         return RDataFactory.createIntVectorFromScalar(value);
@@ -153,6 +162,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             byteValue = (byte) (value & 0xFF);
         }
         return RDataFactory.createLogicalVectorFromScalar(byteValue);
+    }
+
+    @Override
+    public RRawVector Rf_ScalarRaw(int value) {
+        return RDataFactory.createRawVectorFromScalar(RRaw.valueOf((byte) value));
     }
 
     @Override
@@ -464,7 +478,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RAbstractVector result = (RAbstractVector) Rf_allocVector(mode, n);
         setDims(newDims, result);
         return result;
+    }
 
+    @Override
+    @TruffleBoundary
+    public Object Rf_allocList(int length) {
+        Object result = RNull.instance;
+        for (int i = 0; i < length; i++) {
+            result = RDataFactory.createPairList(RNull.instance, result);
+        }
+        return result;
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object Rf_allocSExp(int mode) {
+        SEXPTYPE type = SEXPTYPE.mapInt(mode);
+        switch (type) {
+            case ENVSXP:
+                return RDataFactory.createNewEnv(null);
+            case LISTSXP:
+                return RDataFactory.createPairList(RNull.instance, RNull.instance);
+            case LANGSXP:
+                return RDataFactory.createPairList(1, type);
+            default:
+                throw unimplemented("unexpected SEXPTYPE " + type);
+        }
     }
 
     @TruffleBoundary
@@ -517,21 +556,19 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public int SETLENGTH(Object x, int l) {
+    public void SETLENGTH(Object x, int l) {
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         vec.setLength(l);
-        return 0;
     }
 
     @Override
-    public int SETTRUELENGTH(Object x, int l) {
+    public void SET_TRUELENGTH(Object x, int l) {
         if (x instanceof CharSXPWrapper) {
             ((CharSXPWrapper) x).setTruelength(l);
-            return 0;
+            return;
         }
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         vec.setTrueLength(l);
-        return 0;
     }
 
     @Override
@@ -553,6 +590,21 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             throw RInternalError.shouldNotReachHere("Not yet implemented - CharSXPWrapper has to implement RTypedValue!");
         }
         throw RInternalError.shouldNotReachHere();
+    }
+
+    @Override
+    public void SETLEVELS(Object x, int gpbits) {
+        if (x instanceof RTypedValue) {
+            ((RTypedValue) x).setGPBits(gpbits);
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Override
+    @TruffleBoundary
+    public int Rf_isObject(Object x) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1004,6 +1056,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             result = RNull.instance;
         }
         return result;
+    }
+
+    @Override
+    @TruffleBoundary
+    public void SET_ENCLOS(Object x, Object enc) {
+        REnvironment env = guaranteeInstanceOf(x, REnvironment.class);
+        REnvironment enclosing = guaranteeInstanceOf(enc, REnvironment.class);
+        env.setParent(enclosing);
     }
 
     @Override
@@ -2325,8 +2385,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object FASTR_DATAPTR(Object x) {
-        if (x instanceof RStringVector) {
-            return VectorRFFIWrapper.get((RStringVector) x);
+        if ((x instanceof RStringVector) || (x instanceof RList)) {
+            return VectorRFFIWrapper.get((TruffleObject) x);
         }
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.NO_CALLER, Message.GENERIC, "DATAPTR not implemented for type " + Utils.getTypeName(x));
@@ -2366,6 +2426,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void Rf_PrintValue(Object value) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public int R_nchar(@RFFICstring Object string, int type, int allowNA, int keepNA, @RFFICstring Object msgName) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object R_forceAndCall(Object e, Object f, int n, Object args) {
         throw implementedAsNode();
     }
 

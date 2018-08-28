@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import com.oracle.truffle.r.nodes.builtin.casts.Mapper;
 import com.oracle.truffle.r.nodes.builtin.casts.MessageData;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -109,6 +110,11 @@ public final class PreinitialPhaseBuilder extends InitialPhaseBuilder<Object> {
 
     public PreinitialPhaseBuilder defaultWarning(Message message, Object... args) {
         pipelineBuilder().getPipelineConfig().setDefaultWarning(new MessageData(message, args));
+        return this;
+    }
+
+    public PreinitialPhaseBuilder defaultWarningContext(ErrorContext ctx) {
+        pipelineBuilder().getPipelineConfig().setDefaultWarningContext(ctx);
         return this;
     }
 }

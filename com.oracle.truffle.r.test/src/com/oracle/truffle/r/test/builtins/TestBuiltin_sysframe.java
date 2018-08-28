@@ -46,4 +46,20 @@ public class TestBuiltin_sysframe extends TestBase {
                                         "start <- function(vstart) baz(vstart);" +
                                         "lapply(lapply(0:8, function(i) start(i)), function(env) sort(tolower(ls(env)))); }");
     }
+
+    private final String[] envirValues = {"-6", "-4", "-3", "-2", "-1", "0", "1", "2", "3", "4", "5", "6"};
+
+    @Test
+    public void sysFrameViaEval() {
+        assertEval(template("{ f <- function() { xx <- 'xv'; f1 <- function() get('xx', envir = %0);  xy <- new.env(); xy$xx <- 'aa'; eval(parse(text='f1()'), envir=xy)}; f() }", envirValues));
+
+        for (String envirValue : envirValues) {
+            String input = "{ f <- function() { xx <- 'xv'; f1 <- function() ls(sys.frame(" + envirValue + "));  eval(parse(text='f1()'), envir=environment())}; f() }";
+            if (Math.abs(Integer.parseInt(envirValue)) > 1) {
+                assertEval(Ignored.ImplementationError, input);
+            } else {
+                assertEval(input);
+            }
+        }
+    }
 }

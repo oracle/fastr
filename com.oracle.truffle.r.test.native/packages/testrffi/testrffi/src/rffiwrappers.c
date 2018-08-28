@@ -43,18 +43,6 @@
 
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 
-SEXP api_OBJECT(SEXP x) {
-    return ScalarInteger(OBJECT(x));
-}
-
-SEXP api_ATTRIB(SEXP obj) {
-    return ATTRIB(obj);
-}
-
-SEXP api_Rf_cons(SEXP car, SEXP cdr) {
-    return Rf_cons(car, cdr);
-}
-
 SEXP api_Rf_ScalarInteger(SEXP value) {
     return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
@@ -95,6 +83,10 @@ SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding) {
     return Rf_mkCharLenCE(R_CHAR(STRING_ELT(bytes, 0)), INTEGER_VALUE(len), INTEGER_VALUE(encoding));
 }
 
+SEXP api_Rf_cons(SEXP car, SEXP cdr) {
+    return Rf_cons(car, cdr);
+}
+
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg) {
     Rf_defineVar(symbolArg, value, envArg);
     return R_NilValue;
@@ -122,6 +114,10 @@ SEXP api_Rf_findVarInFrame(SEXP envArg, SEXP symbolArg) {
 
 SEXP api_Rf_findVarInFrame3(SEXP envArg, SEXP symbolArg, SEXP doGet) {
     return Rf_findVarInFrame3(envArg, symbolArg, INTEGER_VALUE(doGet));
+}
+
+SEXP api_ATTRIB(SEXP obj) {
+    return ATTRIB(obj);
 }
 
 SEXP api_Rf_getAttrib(SEXP obj, SEXP name) {
@@ -205,8 +201,9 @@ SEXP api_LENGTH(SEXP x) {
     return ScalarInteger(LENGTH(x));
 }
 
-SEXP api_LEVELS(SEXP x) {
-    return ScalarInteger(LEVELS(x));
+SEXP api_SET_STRING_ELT(SEXP x, SEXP i, SEXP v) {
+    SET_STRING_ELT(x, INTEGER_VALUE(i), v);
+    return R_NilValue;
 }
 
 SEXP api_SETLENGTH(SEXP x, SEXP l) {
@@ -214,17 +211,21 @@ SEXP api_SETLENGTH(SEXP x, SEXP l) {
     return R_NilValue;
 }
 
-SEXP api_TRUELENGTH(SEXP x) {
-    return ScalarInteger(TRUELENGTH(x));
-}
-    
 SEXP api_SET_TRUELENGTH(SEXP x, SEXP l) {
     SET_TRUELENGTH(x, INTEGER_VALUE(l));
     return R_NilValue;
 }
 
-SEXP api_SET_STRING_ELT(SEXP x, SEXP i, SEXP v) {
-    SET_STRING_ELT(x, INTEGER_VALUE(i), v);
+SEXP api_TRUELENGTH(SEXP x) {
+    return ScalarInteger(TRUELENGTH(x));
+}
+
+SEXP api_LEVELS(SEXP x) {
+    return ScalarInteger(LEVELS(x));
+}
+
+SEXP api_SETLEVELS(SEXP x, SEXP gpbits) {
+    SETLEVELS(x, INTEGER_VALUE(gpbits));
     return R_NilValue;
 }
 
@@ -466,6 +467,11 @@ SEXP api_ENCLOS(SEXP x) {
     return ENCLOS(x);
 }
 
+SEXP api_SET_ENCLOS(SEXP x, SEXP enc) {
+    SET_ENCLOS(x, enc);
+    return R_NilValue;
+}
+
 SEXP api_PRVALUE(SEXP x) {
     return PRVALUE(x);
 }
@@ -680,6 +686,26 @@ SEXP api_Rf_qgamma(SEXP a, SEXP b, SEXP c, SEXP d, SEXP e) {
 
 SEXP api_Rf_rgamma(SEXP a, SEXP b) {
     return ScalarReal(Rf_rgamma(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_log1pmx(SEXP a) {
+    return ScalarReal(Rf_log1pmx(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_log1pexp(SEXP a) {
+    return ScalarReal(Rf_log1pexp(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_lgamma1p(SEXP a) {
+    return ScalarReal(Rf_lgamma1p(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_logspace_add(SEXP a, SEXP b) {
+    return ScalarReal(Rf_logspace_add(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_logspace_sub(SEXP a, SEXP b) {
+    return ScalarReal(Rf_logspace_sub(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
 }
 
 SEXP api_Rf_dbeta(SEXP a, SEXP b, SEXP c, SEXP d) {
@@ -966,6 +992,74 @@ SEXP api_Rf_rsignrank(SEXP a) {
     return ScalarReal(Rf_rsignrank(NUMERIC_VALUE(a)));
 }
 
+SEXP api_Rf_gammafn(SEXP a) {
+    return ScalarReal(Rf_gammafn(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_lgammafn(SEXP a) {
+    return ScalarReal(Rf_lgammafn(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_psigamma(SEXP a, SEXP b) {
+    return ScalarReal(Rf_psigamma(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_digamma(SEXP a) {
+    return ScalarReal(Rf_digamma(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_trigamma(SEXP a) {
+    return ScalarReal(Rf_trigamma(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_tetragamma(SEXP a) {
+    return ScalarReal(Rf_tetragamma(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_pentagamma(SEXP a) {
+    return ScalarReal(Rf_pentagamma(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_beta(SEXP a, SEXP b) {
+    return ScalarReal(Rf_beta(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_lbeta(SEXP a, SEXP b) {
+    return ScalarReal(Rf_lbeta(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_choose(SEXP a, SEXP b) {
+    return ScalarReal(Rf_choose(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_lchoose(SEXP a, SEXP b) {
+    return ScalarReal(Rf_lchoose(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_bessel_i(SEXP a, SEXP b, SEXP c) {
+    return ScalarReal(Rf_bessel_i(NUMERIC_VALUE(a), NUMERIC_VALUE(b), NUMERIC_VALUE(c)));
+}
+
+SEXP api_Rf_bessel_j(SEXP a, SEXP b) {
+    return ScalarReal(Rf_bessel_j(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_bessel_k(SEXP a, SEXP b, SEXP c) {
+    return ScalarReal(Rf_bessel_k(NUMERIC_VALUE(a), NUMERIC_VALUE(b), NUMERIC_VALUE(c)));
+}
+
+SEXP api_Rf_bessel_y(SEXP a, SEXP b) {
+    return ScalarReal(Rf_bessel_y(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
+SEXP api_Rf_sign(SEXP a) {
+    return ScalarReal(Rf_sign(NUMERIC_VALUE(a)));
+}
+
+SEXP api_Rf_fprec(SEXP a, SEXP b) {
+    return ScalarReal(Rf_fprec(NUMERIC_VALUE(a), NUMERIC_VALUE(b)));
+}
+
 SEXP api_Rf_ftrunc(SEXP a) {
     return ScalarReal(Rf_ftrunc(NUMERIC_VALUE(a)));
 }
@@ -1002,6 +1096,18 @@ SEXP api_R_has_slot(SEXP container, SEXP name) {
 SEXP api_Rf_PrintValue(SEXP value) {
     Rf_PrintValue(value);
     return R_NilValue;
+}
+
+SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName) {
+    return ScalarInteger(R_nchar(string, INTEGER_VALUE(type), INTEGER_VALUE(allowNA), INTEGER_VALUE(keepNA), R_CHAR(STRING_ELT(msgName, 0))));
+}
+
+SEXP api_Rf_isObject(SEXP x) {
+    return ScalarInteger(Rf_isObject(x));
+}
+
+SEXP api_OBJECT(SEXP x) {
+    return ScalarInteger(OBJECT(x));
 }
 
 #pragma GCC diagnostic pop

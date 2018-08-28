@@ -118,9 +118,9 @@ public final class NativeDataAccess {
         /**
          * The truly allocated length of the native data array. Expected to be either kept at zero
          * if not used, or to be a value &gt;= length.<br>
-         * 
+         *
          * Expected usage in native code:
-         * 
+         *
          * <pre>
          * SEXP vector = allocVector(STRSXP, 1024);
          * SETLENGTH(newnames, 10);
@@ -185,6 +185,18 @@ public final class NativeDataAccess {
             long addr = dataAddress = allocateNativeMemory(wrappers.length * Long.BYTES);
             for (int i = 0; i < wrappers.length; i++) {
                 UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(wrappers[i]));
+            }
+        }
+
+        @TruffleBoundary
+        void allocateNative(Object[] elements) {
+            long addr = dataAddress = allocateNativeMemory(elements.length * Long.BYTES);
+            for (int i = 0; i < elements.length; i++) {
+                Object element = elements[i];
+                if (element instanceof RSequence) {
+                    element = ((RSequence) element).createVector();
+                }
+                UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(element));
             }
         }
 
@@ -310,11 +322,15 @@ public final class NativeDataAccess {
 
     private static RuntimeException reportDataAccessError(long address) {
         RuntimeException location = TRACE_MIRROR_ALLOCATION_SITES ? nativeMirrorInfo.get(address) : null;
+        printDataAccessErrorLocation(location);
+        throw RInternalError.shouldNotReachHere("unknown native reference " + address + "L / 0x" + Long.toHexString(address) + " (current id count: " + Long.toHexString(counter.get()) + ")");
+    }
+
+    private static void printDataAccessErrorLocation(RuntimeException location) {
         if (location != null) {
             System.out.println("Location at which the native mirror was allocated:");
             location.printStackTrace();
         }
-        throw RInternalError.shouldNotReachHere("unknown native reference " + address + "L / 0x" + Long.toHexString(address) + " (current id count: " + Long.toHexString(counter.get()) + ")");
     }
 
     // methods operating on the native mirror object directly:
@@ -850,6 +866,17 @@ public final class NativeDataAccess {
         if (mirror.dataAddress == 0) {
             noCharSXPNative.invalidate();
             mirror.allocateNativeString(data);
+        }
+        return mirror.dataAddress;
+    }
+
+    static long allocateNativeContents(RList list, Object[] elements) {
+        NativeMirror mirror = (NativeMirror) list.getNativeMirror();
+        assert mirror != null;
+        if (mirror.dataAddress == 0) {
+            // Note: shall the list become writeable and not only read-only, we should
+            // crate assumption like for other vector types
+            mirror.allocateNative(elements);
         }
         return mirror.dataAddress;
     }

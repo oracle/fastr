@@ -24,29 +24,40 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ImportStatic(DSLConfig.class)
 public abstract class CastIntegerBaseNode extends CastBaseNode {
 
     protected final NACheck naCheck = NACheck.create();
 
     @Child private CastIntegerNode recursiveCastInteger;
 
+    protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, warningContext);
+    }
+
     protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure) {
-        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure);
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, null);
     }
 
     protected CastIntegerBaseNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes) {
-        super(preserveNames, preserveDimensions, preserveAttributes, false, false);
+        super(preserveNames, preserveDimensions, preserveAttributes, false, false, null);
     }
 
     @Override
@@ -80,17 +91,28 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     @Specialization
     protected int doDouble(double operand) {
         naCheck.enable(operand);
-        return naCheck.convertDoubleToInt(operand);
-    }
-
-    @Specialization
-    protected int doComplex(RComplex operand) {
-        naCheck.enable(operand);
-        int result = naCheck.convertComplexToInt(operand, false);
-        if (operand.getImaginaryPart() != 0.0) {
-            warning(RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
+        // either a warning context was preset or
+        // we pass this node to get the context if it becomes necessary
+        int result = naCheck.convertDoubleToInt(operand);
+        if (naCheck.neverSeenNA() && RRuntime.isNA(result)) {
+            RBaseNode ctx = warningContext();
+            warning(ctx != null ? ctx : getErrorContext(), RError.Message.NA_INTRODUCED_COERCION_INT);
         }
         return result;
+    }
+
+    @Specialization(guards = "uAccess.supports(operand)", limit = "getVectorAccessCacheSize()")
+    protected int doComplex(RComplex operand,
+                    @Cached("operand.access()") VectorAccess uAccess) {
+        try (SequentialIterator sIter = uAccess.access(operand, getWarningContext())) {
+            uAccess.next(sIter);
+            return uAccess.getInt(sIter);
+        }
+    }
+
+    @Specialization(replaces = "doComplex")
+    protected int doComplexGeneric(RComplex operand) {
+        return doComplex(operand, operand.slowPathAccess());
     }
 
     @Specialization
@@ -102,7 +124,7 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
         }
         int result = RRuntime.string2intNoCheck(operand);
         if (RRuntime.isNA(result)) {
-            warning(RError.Message.NA_INTRODUCED_COERCION);
+            warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION);
         }
         return result;
     }
@@ -116,5 +138,10 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     @Specialization
     protected int doRaw(RRaw operand) {
         return RRuntime.raw2int(operand.getValue());
+    }
+
+    protected RBaseNode getWarningContext() {
+        RBaseNode ctx = warningContext();
+        return ctx != null ? ctx : this;
     }
 }

@@ -29,8 +29,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
@@ -42,11 +44,14 @@ import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
-@ImportStatic(RRuntime.class)
+@ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class CastStringNode extends CastStringBaseNode {
 
     @Child private CastStringNode recursiveCastString;
@@ -57,6 +62,10 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     protected CastStringNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI) {
         super(preserveNames, preserveDimensions, preserveAttributes, forRFFI);
+    }
+
+    protected CastStringNode(boolean preserveNames, boolean preserveDimensions, boolean preserveAttributes, boolean forRFFI, boolean useClosure, ErrorContext warningContext) {
+        super(preserveNames, preserveDimensions, preserveAttributes, forRFFI, useClosure, warningContext);
     }
 
     public abstract Object executeString(int o);
@@ -75,10 +84,6 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return ret;
     }
 
-    protected boolean isIntSequence(RAbstractContainer c) {
-        return c instanceof RIntSequence;
-    }
-
     @Specialization
     protected RAbstractStringVector doStringVector(RAbstractStringVector vector) {
         return vector;
@@ -89,22 +94,55 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return factory().createStringSequence("", "", vector.getStart(), vector.getStride(), vector.getLength());
     }
 
-    @Specialization(guards = {"!isIntSequence(operandIn)", "!isRAbstractStringVector(operandIn)", "!isForeignWrapper(operandIn)"})
-    protected RStringVector doAbstractContainer(RAbstractContainer operandIn,
+    @Specialization(guards = {"uAccess.supports(operandIn)", "handleAsAtomic(operandIn)"}, limit = "getGenericVectorAccessCacheSize()")
+    protected RStringVector doAbstractAtomicVector(RAbstractAtomicVector operandIn,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
-                    @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
+                    @Cached("operandIn.access()") VectorAccess uAccess) {
         RAbstractContainer operand = operandProfile.profile(operandIn);
         String[] sdata = new String[operand.getLength()];
-        // conversions to character will not introduce new NAs
-        for (int i = 0; i < operand.getLength(); i++) {
-            Object o = operand.getDataAtAsObject(i);
-            if (isLanguageProfile.profile((o instanceof RPairList && ((RPairList) o).isLanguage()))) {
-                sdata[i] = RDeparse.deparse(o);
-            } else {
-                sdata[i] = toString(o);
+        // conversions to character will not introduce new NAs,
+        // but lets pass the warning context anyway
+        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
+            while (uAccess.next(sIter)) {
+                int i = sIter.getIndex();
+                sdata[i] = uAccess.getString(sIter);
             }
         }
         return vectorCopy(operand, sdata);
+    }
+
+    @Specialization(replaces = "doAbstractAtomicVector", guards = "handleAsAtomic(operandIn)")
+    protected RStringVector doAbstractAtomicVectorGeneric(RAbstractAtomicVector operandIn,
+                    @Cached("createClassProfile()") ValueProfile operandProfile) {
+        return doAbstractAtomicVector(operandIn, operandProfile, operandIn.slowPathAccess());
+    }
+
+    @Specialization(guards = {"uAccess.supports(x)", "handleAsNonAtomic(x)"}, limit = "getGenericVectorAccessCacheSize()")
+    protected RStringVector doNonAtomic(RAbstractContainer x,
+                    @Cached("createClassProfile()") ValueProfile operandProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile,
+                    @Cached("x.access()") VectorAccess uAccess) {
+        RAbstractContainer operand = operandProfile.profile(x);
+        String[] sdata = new String[operand.getLength()];
+        try (VectorAccess.SequentialIterator sIter = uAccess.access(operand, warningContext())) {
+            while (uAccess.next(sIter)) {
+                int i = sIter.getIndex();
+                Object o = uAccess.getListElement(sIter);
+                if (isLanguageProfile.profile((o instanceof RPairList && ((RPairList) o).isLanguage()))) {
+                    sdata[i] = RDeparse.deparse(o);
+                } else {
+                    sdata[i] = toString(o);
+                }
+            }
+        }
+        return vectorCopy(operand, sdata);
+    }
+
+    @Specialization(replaces = "doNonAtomic", guards = "handleAsNonAtomic(list)")
+    protected RStringVector doNonAtomicGeneric(RAbstractListVector list,
+                    @Cached("createClassProfile()") ValueProfile operandProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
+        return doNonAtomic(list, operandProfile, isLanguageProfile, list.slowPathAccess());
     }
 
     @Specialization(guards = "isForeignObject(obj)")
@@ -128,10 +166,6 @@ public abstract class CastStringNode extends CastStringBaseNode {
         return s.getName();
     }
 
-    protected boolean isForeignWrapper(Object value) {
-        return value instanceof RForeignWrapper;
-    }
-
     @Specialization
     protected RAbstractStringVector doForeignWrapper(RForeignBooleanWrapper operand) {
         return RClosures.createToStringVector(operand, true);
@@ -145,6 +179,22 @@ public abstract class CastStringNode extends CastStringBaseNode {
     @Specialization
     protected RAbstractStringVector doForeignWrapper(RForeignDoubleWrapper operand) {
         return RClosures.createToStringVector(operand, true);
+    }
+
+    protected boolean isForeignWrapper(Object value) {
+        return value instanceof RForeignWrapper;
+    }
+
+    protected boolean isIntSequence(RAbstractContainer c) {
+        return c instanceof RIntSequence;
+    }
+
+    protected boolean handleAsAtomic(RAbstractAtomicVector x) {
+        return !isForeignWrapper(x) && !(x instanceof RIntSequence || x instanceof RAbstractStringVector);
+    }
+
+    protected boolean handleAsNonAtomic(RAbstractContainer x) {
+        return !isForeignWrapper(x) && !(x instanceof RAbstractAtomicVector);
     }
 
     public static CastStringNode create() {

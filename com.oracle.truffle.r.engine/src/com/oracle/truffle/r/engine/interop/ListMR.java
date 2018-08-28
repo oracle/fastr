@@ -55,7 +55,6 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
-import com.oracle.truffle.r.runtime.interop.R2ForeignNodeGen;
 
 public class ListMR {
 

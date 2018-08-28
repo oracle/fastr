@@ -224,8 +224,7 @@ public class LoadSaveFunctions {
                     value = env.get(varName);
                     if (value != null) {
                         if (value instanceof RPromise) {
-                            // GNU R does not seem to honor evalPromises==false
-                            value = true || evalPromises
+                            value = evalPromises
                                             ? promiseHelper.evaluate(frame, (RPromise) value)
                                             : ((RPromise) value).getRawValue();
                         }

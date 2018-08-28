@@ -106,6 +106,7 @@ public class FrameFunctions {
     public static final class FrameHelper extends RBaseNode {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile globalFrameProfile = ConditionProfile.createBinaryProfile();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
@@ -114,19 +115,44 @@ public class FrameFunctions {
          */
         private final FrameAccess access;
 
+        private final boolean ignoreDotInternal;
+
         public FrameHelper(FrameAccess access) {
-            this.access = access;
+            this(access, false);
         }
 
-        protected Frame getFrame(VirtualFrame frame, int n) {
-            int actualFrame = decodeFrameNumber(RArguments.getCall(frame), n);
-            return RInternalError.guaranteeNonNull(getNumberedFrame(frame, actualFrame));
+        public FrameHelper(FrameAccess access, boolean ignoreDotInternal) {
+            this.access = access;
+            this.ignoreDotInternal = ignoreDotInternal;
+        }
+
+        // Note: the helper methods either return MaterializedFrame or they read some specific
+        // argument from the target frame, but without returning it, in which case we may avoid
+        // frame materialization in some cases. If a method returns both virtual and materialized
+        // frame disguised under common Frame, the compiler may have some issue in finding out that
+        // the virtual frame does not escape.
+
+        protected MaterializedFrame getMaterializedFrame(VirtualFrame frame, int n) {
+            assert access == FrameAccess.MATERIALIZE;
+            RCaller c = RArguments.getCall(frame);
+            int actualFrame = decodeFrameNumber(c, n);
+            MaterializedFrame numberedFrame = (MaterializedFrame) getNumberedFrame(frame, actualFrame, true);
+            return RInternalError.guaranteeNonNull(numberedFrame);
+        }
+
+        protected RFunction getFunction(VirtualFrame frame, int n) {
+            assert access == FrameAccess.READ_ONLY;
+            RCaller currentCall = RArguments.getCall(frame);
+            int actualFrame = decodeFrameNumber(currentCall, n);
+            Frame targetFrame = getNumberedFrame(frame, actualFrame, false);
+            return RArguments.getFunction(targetFrame);
         }
 
         protected RCaller getCall(VirtualFrame frame, int n) {
+            assert access == FrameAccess.READ_ONLY;
             RCaller currentCall = RArguments.getCall(frame);
             int actualFrame = decodeFrameNumber(currentCall, n);
-            Frame targetFrame = getNumberedFrame(frame, actualFrame);
+            Frame targetFrame = getNumberedFrame(frame, actualFrame, false);
             return RArguments.getCall(targetFrame);
         }
 
@@ -135,7 +161,10 @@ public class FrameFunctions {
          */
         private int decodeFrameNumber(RCaller currentCall, int n) {
             RCaller call = currentCall;
-            call = call.getParent(); // skip the .Internal function
+            if (!ignoreDotInternal) {
+                call = call.getParent();
+            }
+
             while (call.isPromise()) {
                 call = call.getParent();
             }
@@ -156,9 +185,14 @@ public class FrameFunctions {
         private static final int ITERATE_LEVELS = 2;
 
         @ExplodeLoop
-        protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame) {
+        protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame, boolean materialize) {
             if (currentFrameProfile.profile(RArguments.getDepth(frame) == actualFrame)) {
-                return frame;
+                return materialize ? frame.materialize() : frame;
+            } else if (globalFrameProfile.profile(actualFrame == 0)) {
+                // Note: this is optimization and necessity, because in the case of invocation of R
+                // function from another "master" language, there will be no actual Truffle frame
+                // for global environment
+                return REnvironment.globalEnv().getFrame();
             } else {
                 if (RArguments.getDepth(frame) - actualFrame <= ITERATE_LEVELS) {
                     Frame current = frame;
@@ -169,11 +203,12 @@ public class FrameFunctions {
                         }
                     }
                 }
-                return Utils.getStackFrame(access, actualFrame);
+                Frame result = Utils.getStackFrame(access, actualFrame);
+                return materialize ? (MaterializedFrame) result : result;
             }
         }
 
-        private static Frame getCallerFrame(Frame current) {
+        private static MaterializedFrame getCallerFrame(Frame current) {
             Object callerFrame = RArguments.getCallerFrame(current);
             if (callerFrame instanceof CallerFrameClosure) {
                 CallerFrameClosure closure = (CallerFrameClosure) callerFrame;
@@ -181,7 +216,7 @@ public class FrameFunctions {
                 return closure.getMaterializedCallerFrame();
             }
             assert callerFrame == null || callerFrame instanceof Frame;
-            return (Frame) callerFrame;
+            return (MaterializedFrame) callerFrame;
         }
     }
 
@@ -229,8 +264,6 @@ public class FrameFunctions {
      */
     @RBuiltin(name = "match.call", kind = INTERNAL, parameterNames = {"definition", "call", "expand.dots", "envir"}, behavior = COMPLEX)
     public abstract static class MatchCall extends RBuiltinNode.Arg4 {
-
-        @Child private FrameHelper helper = new FrameHelper(FrameAccess.READ_ONLY);
 
         static {
             Casts casts = new Casts(MatchCall.class);
@@ -419,15 +452,28 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.frame", kind = INTERNAL, parameterNames = {"which"}, behavior = COMPLEX)
     public abstract static class SysFrame extends RBuiltinNode.Arg1 {
 
-        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
+        @Child private FrameHelper helper;
         @Child private PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
 
         private final ConditionProfile zeroProfile = ConditionProfile.createBinaryProfile();
+        private final boolean skipDotInternal;
+
+        public SysFrame() {
+            this(false);
+        }
+
+        public SysFrame(boolean skipDotInternal) {
+            this.skipDotInternal = skipDotInternal;
+        }
 
         public abstract REnvironment executeInt(VirtualFrame frame, int which);
 
         public static SysFrame create() {
             return SysFrameNodeGen.create();
+        }
+
+        public static SysFrame create(boolean skipDotInternal) {
+            return SysFrameNodeGen.create(skipDotInternal);
         }
 
         static {
@@ -441,13 +487,21 @@ public class FrameFunctions {
             if (zeroProfile.profile(which == 0)) {
                 result = REnvironment.globalEnv();
             } else {
-                Frame callerFrame = helper.getFrame(frame, which);
-                result = REnvironment.frameToEnvironment(callerFrame.materialize());
+                MaterializedFrame callerFrame = getFrameHelper().getMaterializedFrame(frame, which);
+                result = REnvironment.frameToEnvironment(callerFrame);
             }
 
             // Deoptimize every promise which is now in this frame, as it might leave it's stack
             deoptFrameNode.deoptimizeFrame(RArguments.getArguments(result.getFrame()));
             return result;
+        }
+
+        private FrameHelper getFrameHelper() {
+            if (helper == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                helper = insert(new FrameHelper(FrameAccess.MATERIALIZE, skipDotInternal));
+            }
+            return helper;
         }
     }
 
@@ -466,7 +520,7 @@ public class FrameFunctions {
                 RPairList result = RDataFactory.createPairList();
                 RPairList next = result;
                 for (int i = 1; i < depth; i++) {
-                    MaterializedFrame mf = helper.getNumberedFrame(frame, i).materialize();
+                    MaterializedFrame mf = (MaterializedFrame) helper.getNumberedFrame(frame, i, true);
                     deoptFrameNode.deoptimizeFrame(RArguments.getArguments(mf));
                     next.setCar(REnvironment.frameToEnvironment(mf));
                     if (i != depth - 1) {
@@ -572,8 +626,7 @@ public class FrameFunctions {
         @Specialization
         protected Object sysFunction(VirtualFrame frame, int which) {
             // N.B. Despite the spec, n==0 is treated as the current function
-            Frame callerFrame = helper.getFrame(frame, which);
-            RFunction func = RArguments.getFunction(callerFrame);
+            RFunction func = helper.getFunction(frame, which);
 
             if (func == null) {
                 return RNull.instance;
@@ -700,7 +753,7 @@ public class FrameFunctions {
                 // If the parent frame is the caller frame, we can use more efficient code:
                 return REnvironment.frameToEnvironment(getCallerFrameNode().execute(frame));
             }
-            return REnvironment.frameToEnvironment(getFrameHelper().getNumberedFrame(frame, call.getDepth()).materialize());
+            return REnvironment.frameToEnvironment((MaterializedFrame) getFrameHelper().getNumberedFrame(frame, call.getDepth(), true));
         }
 
         private FrameHelper getFrameHelper() {

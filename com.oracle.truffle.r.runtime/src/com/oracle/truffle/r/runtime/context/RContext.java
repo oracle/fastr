@@ -768,8 +768,8 @@ public final class RContext {
         return executor != null;
     }
 
-    public Executor getExecutor() {
-        return this.executor;
+    public Object getExecutor() {
+        return env.asGuestValue(this.executor);
     }
 
     /**
@@ -957,7 +957,7 @@ public final class RContext {
         }
 
         private final Node read = Message.READ.createNode();
-        private final Node execute = Message.createExecute(1).createNode();
+        private final Node execute = Message.EXECUTE.createNode();
 
         @TruffleBoundary
         public String getPrompt() {

@@ -136,7 +136,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
 
         @Specialization(guards = {"!severalOK", "!hasS3Class(classHierarchy, choices)"})
         protected Object matchArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
-                        @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
+                        @SuppressWarnings("unused") @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (identical.executeByte(arg, choices, true, true, true, true, true, true) == RRuntime.LOGICAL_TRUE) {
                 return choices.getDataAtAsObject(0);
             }
@@ -167,7 +167,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
 
         @Specialization(guards = {"severalOK", "!hasS3Class(classHierarchy, choices)"})
         protected Object matchArgSeveral(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
-                        @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
+                        @SuppressWarnings("unused") @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (arg.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
                 throw RError.error(this, Message.MUST_BE_GE_ONE, "arg");
@@ -212,8 +212,9 @@ public abstract class MatchArgFastPath extends RFastPathNode {
             return resultVector;
         }
 
+        @SuppressWarnings("unused")
         @Specialization(guards = "hasS3Class(classHierarchy, choices)")
-        protected Object matchArgS3(RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+        protected Object matchArgS3(RAbstractStringVector arg, RAbstractVector choices, boolean severalOK,
                         @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             return null;
         }

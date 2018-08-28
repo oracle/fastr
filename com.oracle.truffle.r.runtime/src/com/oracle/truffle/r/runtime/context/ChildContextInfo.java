@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.Map;
@@ -35,21 +34,6 @@ import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
-
-final class ConsoleHandlerInputStream extends InputStream {
-    @Override
-    public int read() throws IOException {
-        return 0;
-    }
-}
-
-final class ConsoleHandlerOutputStream extends OutputStream {
-
-    @Override
-    public void write(int b) throws IOException {
-
-    }
-}
 
 /**
  * Represents custom initialization state for a "spawned" R instance, that is one created by, e.g.,

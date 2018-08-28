@@ -230,7 +230,7 @@ public final class SeqFunctions {
         protected Object seqNoClassAndNumeric(RArgsValuesAndNames args,
                         @Cached("new()") SeqNoClassAndNumericNode cache) {
             Object[] rargs = reorderedArguments(args, cache.seqIntFunction);
-            if (cache.isNumericProfile.profile(cache.fromCheck.execute(rargs[0]) && cache.toCheck.execute(rargs[1]) && cache.toCheck.execute(rargs[2]))) {
+            if (cache.isNumericProfile.profile(cache.fromCheck.execute(rargs[0]) && cache.toCheck.execute(rargs[1]) && cache.byCheck.execute(rargs[2]))) {
                 return cache.seqInt.execute(rargs[0], rargs[1], rargs[2], rargs[3], rargs[4], RMissing.instance);
             } else {
                 return null;

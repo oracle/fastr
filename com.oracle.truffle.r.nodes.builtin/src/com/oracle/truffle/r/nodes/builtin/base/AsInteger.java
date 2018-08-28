@@ -33,6 +33,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -43,7 +44,7 @@ public abstract class AsInteger extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(AsInteger.class);
-        casts.arg("x").returnIf(missingValue().or(nullValue()), emptyIntegerVector()).asIntegerVector();
+        casts.arg("x").defaultWarningContext(RError.NO_CALLER).returnIf(missingValue().or(nullValue()), emptyIntegerVector()).asIntegerVector();
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
@@ -53,7 +54,7 @@ public abstract class AsInteger extends RBuiltinNode.Arg2 {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RAbstractIntVector res = (RAbstractIntVector) reuseTemporaryNode.getResult(v).materialize();
+            RAbstractIntVector res = reuseTemporaryNode.getResult(v).materialize();
             res.resetAllAttributes(true);
             return res;
         }

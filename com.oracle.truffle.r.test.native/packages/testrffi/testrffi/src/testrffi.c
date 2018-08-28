@@ -801,3 +801,17 @@ SEXP test_duplicate(SEXP val, SEXP deep) {
     }
 }
 
+SEXP test_R_nchar(SEXP x) {
+	int res = R_nchar(STRING_ELT(x, 0), Chars, FALSE, FALSE, "OutDec");
+	SEXP resVec;
+	PROTECT(resVec = allocVector(INTSXP, 1));
+    INTEGER(resVec)[0] = res;
+    UNPROTECT(1);
+    return resVec;
+}
+
+SEXP test_forceAndCall(SEXP e, SEXP n, SEXP rho)
+{
+    SEXP val = R_forceAndCall(e, Rf_asInteger(n), rho);
+    return val;
+}

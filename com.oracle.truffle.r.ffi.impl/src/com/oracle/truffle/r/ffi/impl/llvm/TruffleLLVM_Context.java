@@ -23,14 +23,25 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import java.nio.file.FileSystems;
+import java.util.EnumMap;
 
+import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
+import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
+import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.ParsedLLVM_IR;
 import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
 import com.oracle.truffle.r.runtime.ffi.MiscRFFI;
@@ -104,9 +115,53 @@ final class TruffleLLVM_Context extends RFFIContext {
         callState.beforeDispose(context);
     }
 
+    private final EnumMap<NativeFunction, TruffleObject> nativeFunctions = new EnumMap<>(NativeFunction.class);
+
     @Override
     public TruffleObject lookupNativeFunction(NativeFunction function) {
-        Object symValue = RContext.getInstance().getEnv().importSymbol("@" + function.getCallName());
-        return (TruffleObject) symValue;
+        CompilerAsserts.neverPartOfCompilation();
+        if (!nativeFunctions.containsKey(function)) {
+            TruffleObject[] lookupObjects = new TruffleObject[0];
+            if (function.getLibrary() == NativeFunction.baseLibrary()) {
+                TruffleObject lookupObject = (TruffleObject) ((LLVM_Handle) DLL.getRdllInfo().handle).parsedIRs[0].lookupObject;
+                lookupObjects = new TruffleObject[]{lookupObject};
+            } else if (function.getLibrary() == NativeFunction.anyLibrary()) {
+                DLLInfo dllInfo = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
+                if (dllInfo == null) {
+                    throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
+                }
+                lookupObjects = getLookupObjects(dllInfo);
+            } else {
+                DLLInfo dllInfo = DLL.findLibrary(function.getLibrary());
+                if (dllInfo == null) {
+                    throw RInternalError.shouldNotReachHere("Could not find library  " + function.getLibrary());
+                }
+                lookupObjects = getLookupObjects(dllInfo);
+            }
+            TruffleObject target = null;
+            final Node lookupNode = Message.READ.createNode();
+            for (int i = 0; i < lookupObjects.length; i++) {
+                try {
+                    target = (TruffleObject) ForeignAccess.sendRead(lookupNode, lookupObjects[i], function.getCallName());
+                    break;
+                } catch (UnknownIdentifierException e) {
+                    continue;
+                } catch (UnsupportedMessageException e) {
+                    RInternalError.shouldNotReachHere();
+                }
+            }
+            nativeFunctions.put(function, target);
+        }
+        return nativeFunctions.get(function);
+    }
+
+    private static TruffleObject[] getLookupObjects(DLLInfo dllInfo) {
+        TruffleObject[] lookupObjects;
+        final ParsedLLVM_IR[] parsedIRs = ((LLVM_Handle) dllInfo.handle).parsedIRs;
+        lookupObjects = new TruffleObject[parsedIRs.length];
+        for (int i = 0; i < parsedIRs.length; i++) {
+            lookupObjects[i] = (TruffleObject) parsedIRs[i].lookupObject;
+        }
+        return lookupObjects;
     }
 }

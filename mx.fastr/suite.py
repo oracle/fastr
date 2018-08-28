@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "2c597bf501948b6f46856b754a98928b34da9037",
+               "version" : "8eb52e74643a8a5ca788b9b8f37acca929816df4",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -162,6 +162,7 @@ suite = {
       "output" : "com.oracle.truffle.r.test.native",
       "results" :[
          "urand/lib/liburand.so",
+         "urand/lib/liburand.sol",
        ],
       "workingSets" : "FastR",
     },

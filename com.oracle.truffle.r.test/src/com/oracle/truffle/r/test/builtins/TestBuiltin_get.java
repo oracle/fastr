@@ -27,6 +27,9 @@ import com.oracle.truffle.r.test.TestBase;
 // Checkstyle: stop line length check
 public class TestBuiltin_get extends TestBase {
 
+    private final String[] envirValues2 = {"-2", "-1", "0", "1", "2"};
+    private final String[] envirValues3 = {"-3", "-2", "-1", "0", "1", "2", "3"};
+
     @Test
     public void testGet() {
         assertEval("{y<-function(){y<-2;get(\"y\",mode=\"integer\")};y();}");
@@ -47,5 +50,17 @@ public class TestBuiltin_get extends TestBase {
 
         assertEval("{x <- 1L; get('x', mode='numeric'); }");
         assertEval("{x <- 1L; get('x', mode='double'); }");
+
+        // get('x', envir = 0) => [1] "xv"
+        // get('x', envir = 1) => [1] "x"
+        assertEval(template("{ x <- 'xv'; get('x', envir = %0) }", envirValues2));
+
+        assertEval(template("{ xx <- 'xv'; get('xx', envir =%0) }", envirValues2));
+        assertEval(template("{ xx <- 'xv'; f <- function() { get('xx', envir = %0)}; f() }", envirValues3));
+        assertEval(template("{ f <- function() { xx <- 'xv'; f1 <- function() get('xx', envir = %0); f1()}; f() }", envirValues3));
+
+        assertEval(template("{ xx <- 'xv'; get0('xx', envir = %0, ifnotfound = 'DNF') }", envirValues2));
+        assertEval(template("{ xx <- 'xv'; f <- function() { get0('xx', envir = %0, ifnotfound = 'DNF')}; f() }", envirValues3));
+        assertEval(template("{ f <- function() { xx <- 'xv'; f1 <- function() get0('xx', envir = %0, ifnotfound = 'DNF'); f1()}; f() }", envirValues3));
     }
 }

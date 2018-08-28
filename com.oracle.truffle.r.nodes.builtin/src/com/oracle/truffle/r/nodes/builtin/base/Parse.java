@@ -45,9 +45,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -110,9 +107,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
  */
 @RBuiltin(name = "parse", kind = INTERNAL, parameterNames = {"conn", "n", "text", "prompt", "srcfile", "encoding"}, behavior = IO)
 public abstract class Parse extends RBuiltinNode.Arg6 {
-    @Child private CastIntegerNode castIntNode;
-    @Child private CastStringNode castStringNode;
-    @Child private CastToVectorNode castVectorNode;
 
     @Child private SetFixedAttributeNode setSrcRefAttrNode = SetFixedAttributeNode.create(RRuntime.R_SRCREF);
     @Child private SetFixedAttributeNode setWholeSrcRefAttrNode = SetFixedAttributeNode.create(RRuntime.R_WHOLE_SRCREF);

@@ -81,14 +81,14 @@ public abstract class InvokeCNode extends RBaseNode {
         return functionGetterNode.execute(address, arity);
     }
 
-    public static Node createExecute(int n) {
-        return Message.createExecute(n).createNode();
+    public static Node createExecute() {
+        return Message.EXECUTE.createNode();
     }
 
     @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
     protected void invokeCallCached(@SuppressWarnings("unused") NativeCallInfo nativeCallInfo, Object[] args,
                     @SuppressWarnings("unused") @Cached("args.length") int cachedArgsLength,
-                    @Cached("createExecute(cachedArgsLength)") Node executeNode,
+                    @Cached("createExecute()") Node executeNode,
                     @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
                     @Cached("getFunction(cachedAddress, cachedArgsLength)") TruffleObject cachedFunction) {
         try {
@@ -101,7 +101,7 @@ public abstract class InvokeCNode extends RBaseNode {
     @Specialization(replaces = "invokeCallCached", limit = "99", guards = "args.length == cachedArgsLength")
     protected void invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
                     @Cached("args.length") int cachedArgsLength,
-                    @Cached("createExecute(cachedArgsLength)") Node executeNode) {
+                    @Cached("createExecute()") Node executeNode) {
         try {
             ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
         } catch (InteropException ex) {

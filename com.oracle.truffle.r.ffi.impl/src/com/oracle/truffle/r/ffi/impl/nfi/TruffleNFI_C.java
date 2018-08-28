@@ -59,7 +59,7 @@ public class TruffleNFI_C implements CRFFI {
 
     static final class NFIFunctionObjectGetter extends FunctionObjectGetter {
 
-        @Child private Node bindNode = Message.createInvoke(1).createNode();
+        @Child private Node bindNode = Message.INVOKE.createNode();
 
         @Override
         @TruffleBoundary

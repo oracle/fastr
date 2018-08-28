@@ -31,23 +31,29 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.helpers.RFactorNodes.GetLevels;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
+import com.oracle.truffle.r.nodes.unary.IsFactorNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "names<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateNames extends RBuiltinNode.Arg2 {
 
     @Child private CastStringNode castStringNode;
+    @Child private GetLevels getFactorLevels;
 
     static {
         Casts casts = new Casts(UpdateNames.class);
@@ -66,8 +72,17 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
 
     @Specialization
     @TruffleBoundary
-    protected RAbstractContainer updateNames(RAbstractContainer container, Object names,
+    protected RAbstractContainer updateNames(RAbstractContainer container, Object namesArg,
+                    @Cached("new()") IsFactorNode isFactorNode,
+                    @Cached("createBinaryProfile()") ConditionProfile isFactorProfile,
                     @Cached("create()") GetNonSharedNode nonShared) {
+        Object names = namesArg;
+        if (isFactorProfile.profile(isFactorNode.executeIsFactor(names))) {
+            final RStringVector levels = getFactorLevels(names);
+            if (levels != null) {
+                names = RClosures.createFactorToVector((RAbstractIntVector) names, true, levels);
+            }
+        }
         Object newNames = castString(names);
         RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         if (newNames == RNull.instance) {
@@ -95,19 +110,28 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
         return result;
     }
 
+    private RStringVector getFactorLevels(Object names) {
+        if (getFactorLevels == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getFactorLevels = insert(GetLevels.create());
+        }
+        assert names instanceof RAbstractIntVector;
+        final RStringVector levels = getFactorLevels.execute((RAbstractIntVector) names);
+        return levels;
+    }
+
     @Specialization
-    protected Object updateNames(RNull n, RNull names) {
+    protected Object updateNames(RNull n, @SuppressWarnings("unused") RNull names) {
         return n;
     }
 
     @Specialization
-    protected Object updateNames(RNull n, Object names) {
+    protected Object updateNames(@SuppressWarnings("unused") RNull n, @SuppressWarnings("unused") Object names) {
         return error(RError.Message.SET_ATTRIBUTES_ON_NULL);
     }
 
-    @SuppressWarnings("unused")
     @Fallback
-    protected Object doOthers(Object target, Object names) {
+    protected Object doOthers(@SuppressWarnings("unused") Object target, @SuppressWarnings("unused") Object names) {
         throw error(Message.NAMES_NONVECTOR);
     }
 }

@@ -1,7 +1,7 @@
 # java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
-java8 : {name : labsjdk, version : "8u172-jvmci-0.46", platformspecific: true}
+java8 : {name : labsjdk, version : "8u172-jvmci-0.47", platformspecific: true}
 java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
 
 java8Downloads : {
@@ -35,10 +35,10 @@ logfiles : [
     "com.oracle.truffle.r.test.native/embedded/*.output"
     "com.oracle.truffle.r.test.native/embedded/src/*.output"
     # Uncomment to debug pkgtest issues, produces lot of logs!
-    # "test.fastr/*/*.Rout"
-    # "test.fastr/*/*-tests/*.Rout"
-    # "test.gnur/*/*.Rout"
-    # "test.gnur/*/*-tests/*.Rout"
+    "test.fastr/**/*.Rout"
+    "test.fastr/**/*-tests/*.Rout"
+    "test.gnur/**/*.Rout"
+    "test.gnur/**/*-tests/*.Rout"
   ]
 
 # This is needed by all (Linux) builds but is specific to the module system employed
@@ -91,7 +91,7 @@ common : ${java8Downloads} ${packagesLinux}  {
 # the "mx" tool. This defines a common prefix for all gate commands. The "-t"
 # arg indicates the exact set of gate "tasks" that will be run.
 
-gateCmd : ["mx", "-v", "--strict-compliance", "rgate", "--strict-mode", "-t"]
+gateCmd : ["mx", "-v", "--strict-compliance", "rgate", "-B=--force-deprecation-as-warning", "--strict-mode", "-t"]
 
 # currently disabled gate commands: FindBugs,Checkheaders,Distribution Overlap Check
 
@@ -165,6 +165,8 @@ gateStyle : ${common} {
   }
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
+    ["mx", "clean", "--no-native"]
+    ${gateCmd} ["BuildWithEcj"]
   ]
 }
 

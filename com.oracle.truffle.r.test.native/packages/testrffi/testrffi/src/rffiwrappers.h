@@ -34,21 +34,17 @@
 #include <R_ext/Connections.h>
 #include <Rmath.h>
 
-SEXP api_OBJECT(SEXP x);
+SEXP api_Rf_ScalarInteger(SEXP value);
+
+SEXP api_Rf_ScalarLogical(SEXP value);
 
 SEXP api_Rf_ScalarReal(SEXP value);
 
-SEXP api_Rf_cons(SEXP car, SEXP cdr);
+SEXP api_Rf_ScalarString(SEXP value);
 
 SEXP api_Rf_asInteger(SEXP x);
 
 SEXP api_Rf_asReal(SEXP x);
-
-SEXP api_Rf_ScalarString(SEXP value);
-
-SEXP api_Rf_ScalarInteger(SEXP value);
-
-SEXP api_Rf_ScalarLogical(SEXP value);
 
 SEXP api_Rf_asLogical(SEXP x);
 
@@ -57,6 +53,8 @@ SEXP api_Rf_asChar(SEXP x);
 SEXP api_Rf_coerceVector(SEXP x, SEXP mode);
 
 SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding);
+
+SEXP api_Rf_cons(SEXP car, SEXP cdr);
 
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg);
 
@@ -112,15 +110,17 @@ SEXP api_Rf_ncols(SEXP x);
 
 SEXP api_LENGTH(SEXP x);
 
-SEXP api_LEVELS(SEXP x);
+SEXP api_SET_STRING_ELT(SEXP x, SEXP i, SEXP v);
 
 SEXP api_SETLENGTH(SEXP x, SEXP l);
 
-SEXP api_TRUELENGTH(SEXP x);
-
 SEXP api_SET_TRUELENGTH(SEXP x, SEXP l);
 
-SEXP api_SET_STRING_ELT(SEXP x, SEXP i, SEXP v);
+SEXP api_TRUELENGTH(SEXP x);
+
+SEXP api_LEVELS(SEXP x);
+
+SEXP api_SETLEVELS(SEXP x, SEXP gpbits);
 
 SEXP api_SET_VECTOR_ELT(SEXP x, SEXP i, SEXP v);
 
@@ -232,6 +232,8 @@ SEXP api_SET_RSTEP(SEXP x, SEXP v);
 
 SEXP api_ENCLOS(SEXP x);
 
+SEXP api_SET_ENCLOS(SEXP x, SEXP enc);
+
 SEXP api_PRVALUE(SEXP x);
 
 SEXP api_R_lsInternal3(SEXP envArg, SEXP allArg, SEXP sortedArg);
@@ -335,6 +337,16 @@ SEXP api_Rf_pgamma(SEXP a, SEXP b, SEXP c, SEXP d, SEXP e);
 SEXP api_Rf_qgamma(SEXP a, SEXP b, SEXP c, SEXP d, SEXP e);
 
 SEXP api_Rf_rgamma(SEXP a, SEXP b);
+
+SEXP api_Rf_log1pmx(SEXP a);
+
+SEXP api_Rf_log1pexp(SEXP a);
+
+SEXP api_Rf_lgamma1p(SEXP a);
+
+SEXP api_Rf_logspace_add(SEXP a, SEXP b);
+
+SEXP api_Rf_logspace_sub(SEXP a, SEXP b);
 
 SEXP api_Rf_dbeta(SEXP a, SEXP b, SEXP c, SEXP d);
 
@@ -478,6 +490,40 @@ SEXP api_Rf_qsignrank(SEXP a, SEXP b, SEXP c, SEXP d);
 
 SEXP api_Rf_rsignrank(SEXP a);
 
+SEXP api_Rf_gammafn(SEXP a);
+
+SEXP api_Rf_lgammafn(SEXP a);
+
+SEXP api_Rf_psigamma(SEXP a, SEXP b);
+
+SEXP api_Rf_digamma(SEXP a);
+
+SEXP api_Rf_trigamma(SEXP a);
+
+SEXP api_Rf_tetragamma(SEXP a);
+
+SEXP api_Rf_pentagamma(SEXP a);
+
+SEXP api_Rf_beta(SEXP a, SEXP b);
+
+SEXP api_Rf_lbeta(SEXP a, SEXP b);
+
+SEXP api_Rf_choose(SEXP a, SEXP b);
+
+SEXP api_Rf_lchoose(SEXP a, SEXP b);
+
+SEXP api_Rf_bessel_i(SEXP a, SEXP b, SEXP c);
+
+SEXP api_Rf_bessel_j(SEXP a, SEXP b);
+
+SEXP api_Rf_bessel_k(SEXP a, SEXP b, SEXP c);
+
+SEXP api_Rf_bessel_y(SEXP a, SEXP b);
+
+SEXP api_Rf_sign(SEXP a);
+
+SEXP api_Rf_fprec(SEXP a, SEXP b);
+
 SEXP api_Rf_ftrunc(SEXP a);
 
 SEXP api_Rf_namesgets(SEXP vec, SEXP val);
@@ -495,4 +541,10 @@ SEXP api_Rf_NonNullStringMatch(SEXP s, SEXP t);
 SEXP api_R_has_slot(SEXP container, SEXP name);
 
 SEXP api_Rf_PrintValue(SEXP value);
+
+SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName);
+
+SEXP api_Rf_isObject(SEXP x);
+
+SEXP api_OBJECT(SEXP x);
 

@@ -66,7 +66,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return RError.SHOW_CALLER;
     }
 

@@ -74,7 +74,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
     }
 
     @Override
-    protected RBaseNode getErrorContext() {
+    public RBaseNode getErrorContext() {
         return RError.SHOW_CALLER;
     }
 

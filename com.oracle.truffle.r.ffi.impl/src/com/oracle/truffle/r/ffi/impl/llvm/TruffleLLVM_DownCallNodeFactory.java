@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.llvm;
 
 import static com.oracle.truffle.r.runtime.ffi.NativeFunction.anyLibrary;
+import static com.oracle.truffle.r.runtime.ffi.NativeFunction.baseLibrary;
 
 import java.nio.charset.StandardCharsets;
 
@@ -67,7 +68,9 @@ final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
                 CompilerAsserts.neverPartOfCompilation();
                 String library = fn.getLibrary();
                 DLLInfo dllInfo = null;
-                if (library != anyLibrary()) {
+                if (library == baseLibrary()) {
+                    dllInfo = DLL.getRdllInfo();
+                } else if (library != anyLibrary()) {
                     dllInfo = DLL.findLibrary(library);
                 }
                 SymbolHandle result = DLL.findSymbol(fn.getCallName(), dllInfo);

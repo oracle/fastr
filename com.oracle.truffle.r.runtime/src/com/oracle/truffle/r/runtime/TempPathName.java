@@ -48,7 +48,6 @@ public class TempPathName implements RContext.ContextState {
     private static final int RANDOM_CHARACTERS_LENGTH = RANDOM_CHARACTERS.length();
     private static final int RANDOM_LENGTH = 12; // as per GnuR
     private static final Random rand = new Random();
-    private static final String DEPARSE_DIR_NAME = "deparse";
 
     private String tempDirPath;
 

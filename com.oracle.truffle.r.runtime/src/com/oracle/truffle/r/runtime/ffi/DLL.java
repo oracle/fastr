@@ -64,8 +64,6 @@ import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 /**
  * Support for Dynamically Loaded Libraries.
@@ -829,6 +827,10 @@ public class DLL {
             }
         }
         return null;
+    }
+
+    public static DLLInfo getRdllInfo() {
+        return ContextStateImpl.libRdllInfo;
     }
 
     /**

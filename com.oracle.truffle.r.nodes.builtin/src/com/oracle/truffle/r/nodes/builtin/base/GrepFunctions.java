@@ -494,6 +494,7 @@ public class GrepFunctions {
                     if (fixed) {
                         if (gsub) {
                             replacement = replacement.replace("$", "\\$");
+                            replacement = convertGroups(replacement, 0);
                             value = Pattern.compile(pattern, Pattern.LITERAL).matcher(input).replaceAll(replacement);
                         } else {
                             int ix = input.indexOf(pattern);
@@ -560,9 +561,9 @@ public class GrepFunctions {
                             value = sb.toString();
                         }
                     } else {
-                        replacement = convertGroups(replacement);
-
                         Matcher matcher = Pattern.compile(pattern, Pattern.DOTALL).matcher(input);
+                        replacement = convertGroups(replacement, matcher.groupCount());
+
                         if (gsub) {
                             value = matcher.replaceAll(replacement);
                         } else {
@@ -712,7 +713,7 @@ public class GrepFunctions {
         }
 
         @TruffleBoundary
-        private static String convertGroups(String value) {
+        private static String convertGroups(String value, int groupCount) {
             StringBuilder result = new StringBuilder();
             int i = 0;
             while (i < value.length()) {
@@ -723,12 +724,14 @@ public class GrepFunctions {
                         result.append('\\');
                     } else {
                         c = value.charAt(i);
-                        if (c >= '0' && c <= '9') {
-                            result.append('$');
+                        if (c >= '1' && c <= '9') {
+                            int gi = c - '0';
+                            if (gi <= groupCount) {
+                                result.append('$').append(c);
+                            }
                         } else {
-                            result.append('\\');
+                            result.append('\\').append(c);
                         }
-                        result.append(c);
                     }
                 } else {
                     result.append(c);
@@ -1021,7 +1024,6 @@ public class GrepFunctions {
 
         @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
         @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
-        @Child private SetFixedAttributeNode setDimNamesAttrNode = SetFixedAttributeNode.createDimNames();
 
         static {
             Casts casts = new Casts(Regexec.class);

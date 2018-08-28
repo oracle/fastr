@@ -43,10 +43,21 @@ C_LIBNAME := liburand.so
 C_OBJECTS := $(subst $(SRC),$(OBJ),$(C_SOURCES:.c=.o))
 C_LIB := $(OBJ)/$(C_LIBNAME)
 
-
 INCLUDE_DIR := $(NATIVE_PROJECT)/include
 
+ifeq ($(FASTR_RFFI),llvm)
+
 all: $(C_LIB)
+
+else
+
+C_LIB_LLVM_DUMMY := $(C_LIB)l
+all: $(C_LIB) $(C_LIB_LLVM_DUMMY)
+
+$(C_LIB_LLVM_DUMMY):
+	touch $(C_LIB_LLVM_DUMMY)
+	
+endif
 
 $(C_LIB): $(OBJ) $(C_OBJECTS)
 	$(DYLIB_LD) $(DYLIB_LDFLAGS)  -o $(C_LIB) $(C_OBJECTS)

@@ -158,7 +158,7 @@ public abstract class RLengthNode extends RBaseNode {
     @Specialization(guards = "isJavaIterable(object)")
     protected int getJavaIterableSize(TruffleObject object,
                     @Cached("READ.createNode()") Node read,
-                    @Cached("createExecute(0).createNode()") Node execute,
+                    @Cached("EXECUTE.createNode()") Node execute,
                     @Cached("createBinaryProfile()") ConditionProfile profile) {
         try {
             Number sizeByMethod = null;

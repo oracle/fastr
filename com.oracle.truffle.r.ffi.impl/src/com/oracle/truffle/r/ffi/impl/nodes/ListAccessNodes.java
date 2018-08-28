@@ -70,7 +70,7 @@ public final class ListAccessNodes {
 
         @Fallback
         @TruffleBoundary
-        protected Object car(@SuppressWarnings("unused") Object obj) {
+        protected Object car(Object obj) {
             throw RInternalError.unimplemented("CAR only works on pair lists, language objects, and argument lists, type given: " + Utils.getTypeName(obj));
         }
 
@@ -104,7 +104,7 @@ public final class ListAccessNodes {
 
         @Fallback
         @TruffleBoundary
-        protected Object cdr(@SuppressWarnings("unused") Object obj) {
+        protected Object cdr(Object obj) {
             throw RInternalError.unimplemented("CDR only works on pair lists, language objects, and argument lists, type given: " + Utils.getTypeName(obj));
         }
 
@@ -200,7 +200,7 @@ public final class ListAccessNodes {
 
         @Fallback
         @TruffleBoundary
-        protected Object car(@SuppressWarnings("unused") Object x, @SuppressWarnings("unused") Object y) {
+        protected Object car(Object x, Object y) {
             throw RInternalError.unimplemented("SETCAR only works on pair lists or language objects, types given: " + Utils.getTypeName(x) + ',' + Utils.getTypeName(y));
         }
     }

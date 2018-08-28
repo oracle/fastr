@@ -24,6 +24,8 @@ package com.oracle.truffle.r.library.fastrGrid.graphics;
 
 import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_TO_POINTS_FACTOR;
 
+import java.util.Map;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -38,8 +40,6 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -48,8 +48,15 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+/**
+ * Retrieves and optionally sets the graphical parameters. Some of them are read-only. This function
+ * has issues with shared search path, see {@link GridContext#getContext()} for details, therefore
+ * we do not have any unit tests for it for now.
+ */
 public final class CPar extends RExternalBuiltinNode {
     static {
         Casts.noCasts(CPar.class);
@@ -75,55 +82,74 @@ public final class CPar extends RExternalBuiltinNode {
         return getPar(args);
     }
 
-    private void initGridDevice(VirtualFrame frame) {
-        RContext rCtx = RContext.getInstance();
-        GridState gridState = GridContext.getContext(rCtx).getGridState();
-        if (!gridState.isDeviceInitialized()) {
-            CompilerDirectives.transferToInterpreter();
-            gridDirty.call(getGridEnv(frame, rCtx).getFrame(), RArgsValuesAndNames.EMPTY);
-        }
-    }
-
-    private REnvironment getGridEnv(VirtualFrame frame, RContext rCtx) {
-        REnvironment gridEnv = REnvironment.getRegisteredNamespace(rCtx, "grid");
-        if (gridEnv != null) {
-            return gridEnv;
-        }
-        // evaluate "library(grid)"
-        RFunction libFun = (RFunction) readLibraryFun.execute(frame);
-        ArgumentsSignature libFunSig = ArgumentsSignature.get(null, "character.only");
-        callNode.call(frame, libFun, new RArgsValuesAndNames(new Object[]{"grid", RRuntime.LOGICAL_TRUE}, libFunSig));
-        gridEnv = REnvironment.getRegisteredNamespace(rCtx, "grid");
-        assert gridEnv != null : "grid should have been just loaded";
-        return gridEnv;
-    }
-
     @TruffleBoundary
-    private static Object getPar(RArgsValuesAndNames args) {
-        GridDevice device = GridContext.getContext().getCurrentDevice();
-        RList names = RDataFactory.createList(args.getArguments());
+    private Object getPar(RArgsValuesAndNames args) {
+        GridContext gridCtx = GridContext.getContext();
+        GridDevice device = gridCtx.getCurrentDevice();
+        Map<String, Object> graphicsPars = gridCtx.getGridState().getGraphicsPars();
+        String[] names = null;
+        RAbstractListVector values = null;
+
         // unwrap list if it is the first argument
-        if (names.getLength() == 1) {
+        if (args.getLength() == 1 && args.getSignature().getName(0) == null) {
             Object first = args.getArgument(0);
             if (first instanceof RList) {
-                names = (RList) first;
+                values = (RList) first;
+                RStringVector namesVec = values.getNames();
+                names = namesVec == null ? null : namesVec.getReadonlyStringData();
             }
         }
+        if (values == null) {
+            names = args.getSignature().getNames();
+            values = RDataFactory.createList(args.getArguments());
+        }
 
-        Object[] result = new Object[names.getLength()];
-        String[] resultNames = new String[names.getLength()];
-        for (int i = 0; i < names.getLength(); i++) {
-            resultNames[i] = RRuntime.asString(names.getDataAt(i));
-            result[i] = getParam(resultNames[i], device);
+        Object[] result = new Object[values.getLength()];
+        String[] resultNames = new String[values.getLength()];
+        for (int i = 0; i < values.getLength(); i++) {
+            String paramName = names == null ? null : names[i];
+            Object newValue = null;
+            if (paramName == null) {
+                // the value of the parameter itself is the name and we are only getting the value
+                // of the graphical par
+                paramName = RRuntime.asString(values.getDataAt(i));
+                if (paramName == null) {
+                    // if the name is not String, GNU-R just puts NULL into the result
+                    result[i] = RNull.instance;
+                    resultNames[i] = "";
+                    continue;
+                }
+            } else {
+                newValue = values.getDataAt(i);
+            }
+            resultNames[i] = paramName;
+            result[i] = handleParam(paramName, newValue, graphicsPars, device);
         }
         return RDataFactory.createList(result, RDataFactory.createStringVector(resultNames, RDataFactory.COMPLETE_VECTOR));
     }
 
-    private static Object getParam(String name, GridDevice device) {
-        if (name == null) {
-            // TODO: a hot-fix to enable package tests (e.g. cluster)
-            return RNull.instance;
+    private Object handleParam(String name, Object newValue, Map<String, Object> graphicsPars, GridDevice device) {
+        // Note: some parameters which are readonly in GNU-R are writeable in FastR
+        Object result = getComputedParam(name, device);
+        if (result != null && newValue != null) {
+            throw error(Message.GRAPHICAL_PAR_CANNOT_BE_SET, name);
         }
+        if (result == null) {
+            result = graphicsPars.get(name);
+            if (result == null) {
+                throw error(Message.IS_NOT_GRAPHICAL_PAR, name);
+            }
+            // TODO: we are not validating and coercing the values, e.g. "oma" should be integer
+            // vector of size 4. This can be maybe based on the previous value: the type and size
+            // must match
+            if (newValue != null) {
+                graphicsPars.put(name, newValue);
+            }
+        }
+        return result;
+    }
+
+    private static Object getComputedParam(String name, GridDevice device) {
         switch (name) {
             case "din":
                 return RDataFactory.createDoubleVector(new double[]{device.getWidth(), device.getHeight()}, RDataFactory.COMPLETE_VECTOR);
@@ -146,28 +172,35 @@ public final class CPar extends RExternalBuiltinNode {
                  */
                 double cra = getCurrentDrawingContext().getFontSize();
                 return RDataFactory.createDoubleVector(new double[]{cra, cra}, RDataFactory.COMPLETE_VECTOR);
-            case "usr":
-                // TODO:
-                return RDataFactory.createDoubleVector(new double[]{0, 1, 0, 1}, RDataFactory.COMPLETE_VECTOR);
-            case "xlog":
-                // TODO:
-                return RDataFactory.createLogicalVectorFromScalar(false);
-            case "ylog":
-                // TODO:
-                return RDataFactory.createLogicalVectorFromScalar(false);
-            case "page":
-                // TODO:
-                return RDataFactory.createLogicalVectorFromScalar(false);
             default:
-                if (!FastROptions.IgnoreGraphicsCalls.getBooleanValue()) {
-                    throw RError.nyi(RError.NO_CALLER, "C_Par parameter '" + name + "'");
-                } else {
-                    return RNull.instance;
-                }
+                return null;
         }
     }
 
     private static DrawingContext getCurrentDrawingContext() {
         return GPar.create(GridContext.getContext().getGridState().getGpar()).getDrawingContext(0);
+    }
+
+    private void initGridDevice(VirtualFrame frame) {
+        RContext rCtx = RContext.getInstance();
+        GridState gridState = GridContext.getContext(rCtx).getGridState();
+        if (!gridState.isDeviceInitialized()) {
+            CompilerDirectives.transferToInterpreter();
+            gridDirty.call(getGridEnv(frame, rCtx).getFrame(), RArgsValuesAndNames.EMPTY);
+        }
+    }
+
+    private REnvironment getGridEnv(VirtualFrame frame, RContext rCtx) {
+        REnvironment gridEnv = REnvironment.getRegisteredNamespace(rCtx, "grid");
+        if (gridEnv != null) {
+            return gridEnv;
+        }
+        // evaluate "library(grid)"
+        RFunction libFun = (RFunction) readLibraryFun.execute(frame);
+        ArgumentsSignature libFunSig = ArgumentsSignature.get(null, "character.only");
+        callNode.call(frame, libFun, new RArgsValuesAndNames(new Object[]{"grid", RRuntime.LOGICAL_TRUE}, libFunSig));
+        gridEnv = REnvironment.getRegisteredNamespace(rCtx, "grid");
+        assert gridEnv != null : "grid should have been just loaded";
+        return gridEnv;
     }
 }

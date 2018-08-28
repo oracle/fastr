@@ -34,16 +34,12 @@ public class TestBuiltin_asinteger extends TestBase {
 
     @Test
     public void testasinteger2() {
-        // FIXME according to docs a leading whitespace should be accepted
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(c('   33', '   34', '   35', '   36', '   37', '   38', '   18', '   19', '   20', '   21', '   22', '   23', '   36', '   37', '   38', '   39'));as.integer(argv[[1]]);");
+        assertEval("argv <- list(c('   33', '   34', '   35', '   36', '   37', '   38', '   18', '   19', '   20', '   21', '   22', '   23', '   36', '   37', '   38', '   39'));as.integer(argv[[1]]);");
     }
 
     @Test
     public void testasinteger3() {
-        // FIXME combination of Inf and a number causes AssertionError
-        assertEval(Ignored.ImplementationError,
-                        "argv <- list(c(-Inf, -8.5, -2.83333333333333, -1.41666666666667, -0.85, -0.566666666666666, -0.404761904761905, -0.303571428571428, -0.236111111111111, -0.188888888888889));as.integer(argv[[1]]);");
+        assertEval("argv <- list(c(-Inf, -8.5, -2.83333333333333, -1.41666666666667, -0.85, -0.566666666666666, -0.404761904761905, -0.303571428571428, -0.236111111111111, -0.188888888888889));as.integer(argv[[1]]);");
     }
 
     @Test
@@ -137,17 +133,20 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(0/0) }");
         assertEval("{ as.integer(-0/0) }");
         assertEval("{ as.integer(as.raw(c(1,2,3,4))) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.integer(10+2i) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.integer(c(3+3i, 4+4i)) }");
+        assertEval("{ as.integer(10+2i) }");
+        assertEval(Output.IgnoreWarningContext, "{ f <- function() as.integer(10+2i); f() }");
+        assertEval("{ as.integer(c(3+3i, 4+4i)) }");
         assertEval("{ as.integer(10000000000000) }");
         assertEval("{ as.integer(list(c(1),2,3)) }");
         assertEval("{ as.integer(list(integer(),2,3)) }");
         assertEval("{ as.integer(list(list(1),2,3)) }");
         assertEval("{ as.integer(list(1,2,3,list())) }");
+        assertEval(Output.IgnoreErrorContext, "{ as.integer(list(c(1L, 2L))) }");
         assertEval("{ as.integer(10000000000) }");
+        assertEval("{ as.integer(c(1, 10000000000)) }");
         assertEval("{ as.integer(-10000000000) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.integer(c(\"1\",\"hello\")) }");
-        assertEval(Output.IgnoreWarningContext, "{ as.integer(\"TRUE\") }");
+        assertEval("{ as.integer(c(\"1\",\"hello\")) }");
+        assertEval("{ as.integer(\"TRUE\") }");
         assertEval("{ as.integer(as.raw(1)) }");
         assertEval("{ x<-c(a=1.1, b=2.2); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
         assertEval("{ x<-c(a=1L, b=2L); dim(x)<-c(1,2); attr(x, \"foo\")<-\"foo\"; y<-as.integer(x); attributes(y) }");
@@ -159,5 +158,11 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer.cls <- function(x) 42; as.integer(structure(c(1,2), class='cls')); }");
         assertEval("{ as.integer(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA)) }");
         assertEval("{ y <- c(3L, 4L); attr(y, 'someAttr') <- 'someValue'; x <- as.integer(y); x[[1]] <- 42L; y }");
+    }
+
+    @Test
+    public void noCopyCheck() {
+        assertEvalFastR("{ x <- c(1L, 3L); .fastr.identity(x) == .fastr.identity(as.integer(x)); }", "[1] TRUE");
+        assertEvalFastR("{ x <- 1:10; .fastr.identity(x) == .fastr.identity(as.integer(x)); }", "[1] TRUE");
     }
 }
