@@ -103,6 +103,7 @@ public final class GridContext {
         return (GridContext) rCtx.gridContext;
     }
 
+    @TruffleBoundary
     public static GridContext getContext() {
         return getContext(RContext.getInstance());
     }
