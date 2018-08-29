@@ -858,7 +858,8 @@ public class GrepFunctions {
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
                 boolean useBytes = true;
-                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" : "chars";
+                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
+                                            // "chars";
                 boolean hasCaptureResult = false;
                 int[] result = new int[vector.getLength()];
                 int[] matchLength = new int[vector.getLength()];
@@ -1071,7 +1072,8 @@ public class GrepFunctions {
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
                 boolean useBytes = true;
-                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" : "chars";
+                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
+                                            // "chars";
                 for (int i = 0; i < vector.getLength(); i++) {
                     int[] matchPos;
                     int[] matchLength;
@@ -1192,7 +1194,8 @@ public class GrepFunctions {
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
                 boolean useBytes = true;
-                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" : "chars";
+                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
+                                            // "chars";
                 Object[] result = new Object[vector.getLength()];
                 boolean hasAnyCapture = false;
                 RStringVector captureNames = null;
