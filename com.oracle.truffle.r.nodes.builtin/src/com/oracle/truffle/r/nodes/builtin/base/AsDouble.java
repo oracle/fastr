@@ -44,7 +44,7 @@ public abstract class AsDouble extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(AsDouble.class);
-        casts.arg("x").defaultWarningContext(RError.NO_CALLER).returnIf(missingValue().or(nullValue()), emptyDoubleVector()).asDoubleVector();
+        casts.arg("x").defaultWarningContext(RError.SHOW_CALLER).returnIf(missingValue().or(nullValue()), emptyDoubleVector()).asDoubleVector();
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")

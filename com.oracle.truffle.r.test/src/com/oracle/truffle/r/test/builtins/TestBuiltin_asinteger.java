@@ -158,6 +158,9 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer.cls <- function(x) 42; as.integer(structure(c(1,2), class='cls')); }");
         assertEval("{ as.integer(c(100, -1e-13, Inf, -Inf, NaN, 3.14159265358979, NA)) }");
         assertEval("{ y <- c(3L, 4L); attr(y, 'someAttr') <- 'someValue'; x <- as.integer(y); x[[1]] <- 42L; y }");
+
+        assertEval("{ f <- function() as.integer('aaa'); f() }");
+        assertEval("{ f1 <- function() {f<- function() as.integer('aaa'); f()}; f1() }");
     }
 
     @Test
