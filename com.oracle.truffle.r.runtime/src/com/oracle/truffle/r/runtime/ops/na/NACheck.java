@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RRuntime.isNA;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -242,20 +241,6 @@ public final class NACheck {
         return RRuntime.logical2doubleNoCheck(value);
     }
 
-    public String convertLogicalToString(byte right) {
-        if (check(right)) {
-            return RRuntime.STRING_NA;
-        }
-        return RRuntime.logicalToStringNoCheck(right);
-    }
-
-    public String convertIntToString(int right) {
-        if (check(right)) {
-            return RRuntime.STRING_NA;
-        }
-        return RRuntime.intToStringNoCheck(right);
-    }
-
     public double convertStringToDouble(String value) {
         if (check(value)) {
             return RRuntime.DOUBLE_NA;
@@ -274,13 +259,6 @@ public final class NACheck {
         return result;
     }
 
-    public int convertStringToInt(String value) {
-        if (check(value)) {
-            return RRuntime.INT_NA;
-        }
-        return RRuntime.string2intNoCheck(value);
-    }
-
     public String convertDoubleToString(double value) {
         if (check(value)) {
             return RRuntime.STRING_NA;
@@ -293,16 +271,6 @@ public final class NACheck {
             return RRuntime.STRING_NA;
         }
         return RContext.getRRuntimeASTAccess().encodeComplex(value);
-    }
-
-    public double convertComplexToDouble(RComplex value, boolean warning) {
-        if (check(value)) {
-            return RRuntime.DOUBLE_NA;
-        }
-        if (warning) {
-            RError.warning(RError.SHOW_CALLER2, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
-        return RRuntime.complex2doubleNoCheck(value);
     }
 
     public byte convertComplexToLogical(RComplex value) {
