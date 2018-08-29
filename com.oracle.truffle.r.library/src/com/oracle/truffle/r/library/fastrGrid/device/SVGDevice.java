@@ -142,7 +142,9 @@ public class SVGDevice implements GridDevice, FileGridDevice {
         if (rotationAnticlockWise != 0) {
             appendTransform((int) round(toDegrees(rotationAnticlockWise)), trRound(leftX), trRound(transY(bottomY)));
         }
-        data.append(">").append(text).append("</text>\n");
+        data.append('>');
+        xmlEncodeAppend(data, text);
+        data.append("</text>\n");
     }
 
     @Override
@@ -377,6 +379,30 @@ public class SVGDevice implements GridDevice, FileGridDevice {
                         ctx1.getLineHeight() == ctx2.getLineHeight() &&
                         ctx1.getLineWidth() == ctx2.getLineWidth() &&
                         ctx1.getLineMitre() == ctx2.getLineMitre());
+    }
+
+    private static void xmlEncodeAppend(StringBuilder result, String text) {
+        for (int i = 0; i < text.length(); i++) {
+            switch (text.charAt(i)) {
+                case '>':
+                    result.append("&gt;");
+                    break;
+                case '<':
+                    result.append("&lt;");
+                    break;
+                case '&':
+                    result.append("&amp;");
+                    break;
+                case '\"':
+                    result.append("&quot;");
+                    break;
+                case '\'':
+                    result.append("&apos;");
+                    break;
+                default:
+                    result.append(text.charAt(i));
+            }
+        }
     }
 
     private static final class Bitmap {
