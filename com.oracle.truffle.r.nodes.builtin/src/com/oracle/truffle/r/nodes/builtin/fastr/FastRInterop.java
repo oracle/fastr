@@ -62,7 +62,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.api.source.Source.Builder;
+import com.oracle.truffle.api.source.Source.SourceBuilder;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
@@ -206,17 +206,19 @@ public class FastRInterop {
             return parseFile(path, languageId).call();
         }
 
-        protected CallTarget parseFile(String path, String languageId) {
+        protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
 
             File file = new File(path);
             try {
-                Builder<IOException, RuntimeException, RuntimeException> sourceBuilder = Source.newBuilder(file).name(file.getName());
-                if (languageId != null) {
-                    sourceBuilder.language(languageId);
+                String languageId = languageIdArg;
+                if (languageId == null) { // null languageId not allowed in newBuilder()
+                    languageId = RRuntime.R_LANGUAGE_ID;
                 }
+                Env env = RContext.getInstance().getEnv();
+                SourceBuilder sourceBuilder = Source.newBuilder(languageId, env.getTruffleFile(file.getAbsolutePath())).name(file.getName());
                 Source sourceObject = sourceBuilder.build();
-                return RContext.getInstance().getEnv().parse(sourceObject);
+                return env.parse(sourceObject);
             } catch (IOException e) {
                 throw error(RError.Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {

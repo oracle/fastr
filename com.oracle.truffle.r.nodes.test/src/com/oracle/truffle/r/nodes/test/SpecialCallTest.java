@@ -287,8 +287,8 @@ public class SpecialCallTest extends TestBase {
         if (!FastROptions.UseSpecials.getBooleanValue()) {
             return;
         }
-        Source setupSource = Source.newBuilder("{" + setup + "}").language(RRuntime.R_LANGUAGE_ID).name("test").build();
-        Source testSource = Source.newBuilder(test).language(RRuntime.R_LANGUAGE_ID).name("test").build();
+        Source setupSource = Source.newBuilder(RRuntime.R_LANGUAGE_ID, "{" + setup + "}", "test").build();
+        Source testSource = Source.newBuilder(RRuntime.R_LANGUAGE_ID, test, "test").build();
 
         RExpression setupExpression = testVMContext.getThisEngine().parse(setupSource);
         RExpression testExpression = testVMContext.getThisEngine().parse(testSource);
