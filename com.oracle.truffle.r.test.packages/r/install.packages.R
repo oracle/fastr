@@ -899,13 +899,12 @@ system.test <- function(pkgname, pkgEnv) {
 	# we want to stop tests that hang, but some packages have many tests
 	# each of which spawns a sub-process (over which we have no control)
 	# so we time out the entire set after 20 minutes.
-    genEnv <- c("FASTR_PROCESS_TIMEOUT=20",
-             paste0("R_LIBS_USER=", shQuote(lib.install)),
+    genEnv <- c(paste0("R_LIBS_USER=", shQuote(lib.install)),
              "R_LIBS=",
              paste0("MX_R_GLOBAL_ARGS=", fastr.test.jvm.args())
             )
 	env <- c(pkgEnv, genEnv)
-	rc <- system2(rscript, args, env=env)
+	rc <- system2(rscript, args, env=env, timeout=1200)
 	rc
 }
 
