@@ -188,6 +188,12 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
 }
 
 pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
+    pkgname <- as.character(pkg["Package"])
+    if (pkgname %in% ignored.packages) {
+        log.message("reject to insert ignored package '", pkgname, "'", level=1)
+        return (FALSE)
+    }
+
     version.dir <- pkg.cache.check(pkg.cache.env)
     if(is.null(version.dir)) {
         return (FALSE)
@@ -210,7 +216,6 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     })
 
     tryCatch({
-        pkgname <- as.character(pkg["Package"])
         pkg.version <- as.character(pkg["Version"])
         fromPath <- file.path(lib, pkgname)
         toPath <- file.path(version.dir, pkg.cache.entry.filename(pkg))
