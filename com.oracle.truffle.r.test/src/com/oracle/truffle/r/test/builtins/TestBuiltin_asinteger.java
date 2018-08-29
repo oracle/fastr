@@ -127,6 +127,12 @@ public class TestBuiltin_asinteger extends TestBase {
     public void testAsInteger() {
         assertEval("{ as.integer() }");
         assertEval("{ as.integer(\"1\") }");
+        assertEval("{ as.integer('1.1') }");
+        assertEval("{ as.integer('2147483648') }");
+        assertEval("{ as.integer(c('1.1', '1')) }");
+        assertEval("{ as.integer(c('2147483648', '1.1')) }");
+        assertEval("{ as.integer('NaN') }");
+        assertEval("{ as.integer(c('1.1', 'NaN')) }");
         assertEval("{ as.integer(c(\"1\",\"2\")) }");
         assertEval("{ as.integer(c(1,2,3)) }");
         assertEval("{ as.integer(c(1.0,2.5,3.9)) }");
@@ -134,7 +140,6 @@ public class TestBuiltin_asinteger extends TestBase {
         assertEval("{ as.integer(-0/0) }");
         assertEval("{ as.integer(as.raw(c(1,2,3,4))) }");
         assertEval("{ as.integer(10+2i) }");
-        assertEval(Output.IgnoreWarningContext, "{ f <- function() as.integer(10+2i); f() }");
         assertEval("{ as.integer(c(3+3i, 4+4i)) }");
         assertEval("{ as.integer(10000000000000) }");
         assertEval("{ as.integer(list(c(1),2,3)) }");

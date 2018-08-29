@@ -93,6 +93,11 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval("{ as.raw('1') }");
         assertEval("{ as.raw('1000') }");
         assertEval(Output.IgnoreWhitespace, "{ as.raw('10000000000000000') }");
+        assertEval("{ as.raw('1.1') }");
+        assertEval("{ as.raw(c('1.1', '1')) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(c('10000000000000000', '1.1')) }");
+        assertEval("{ as.raw('NaN') }");
+        assertEval("{ as.raw(c('1.1', 'NaN')) }");
         assertEval("{ as.raw(c('1', '2')) }");
         assertEval("{ as.raw(c('1', '1000')) }");
         assertEval(Output.IgnoreWhitespace, "{ as.raw(c('10000000000000000', '1000')) }");
