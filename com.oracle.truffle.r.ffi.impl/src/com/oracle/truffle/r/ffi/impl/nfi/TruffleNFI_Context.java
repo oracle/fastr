@@ -309,7 +309,7 @@ final class TruffleNFI_Context extends RFFIContext {
                     // new thread, initialize properly
                     assert defaultLibrary == null && rlibDLLInfo == null;
                     rlibDLLInfo = DLL.findLibraryContainingSymbol(context, "dot_call0");
-                    defaultLibrary = (TruffleObject) RContext.getInstance().getEnv().parse(Source.newBuilder("default").name("(load default)").language("native").build()).call();
+                    defaultLibrary = (TruffleObject) RContext.getInstance().getEnv().parse(Source.newBuilder("native", "default", "(load default)").build()).call();
                     initCallbacks(context);
                     break;
                 case SHARE_PARENT_RO:

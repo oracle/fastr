@@ -39,6 +39,7 @@ import java.util.function.Consumer;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class MemAllocProfilerPaths {
@@ -238,7 +239,7 @@ public final class MemAllocProfilerPaths {
                 this.id = paths.idGen.getAndIncrement();
                 this.parent = parent;
                 this.name = name;
-                this.sourceSection = sourceSection == null ? Source.newBuilder("").name(name).mimeType("").build().createUnavailableSection() : sourceSection;
+                this.sourceSection = sourceSection == null ? Source.newBuilder(RRuntime.R_LANGUAGE_ID, "", name).build().createUnavailableSection() : sourceSection;
                 this.paths.entryMap.put(id, this);
                 if (parent != null) {
                     parent.children.put(this.sourceSection, this);

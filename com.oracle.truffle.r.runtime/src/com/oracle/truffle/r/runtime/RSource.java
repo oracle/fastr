@@ -34,6 +34,8 @@ import java.nio.file.Paths;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSrcref.SrcrefFields;
@@ -110,18 +112,14 @@ public class RSource {
     public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
         File file = new File(path).getAbsoluteFile();
         URI uri = new URI("file://" + file.getAbsolutePath());
-        Source.Builder<RuntimeException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).content(text).uri(uri).language(RRuntime.R_LANGUAGE_ID);
-        if (internal) {
-            builder.internal();
-        }
-        return builder.build();
+        return Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, path).content(text).uri(uri).internal(internal).build();
     }
 
     /**
      * Create a cached source from {@code text} and {@code name}.
      */
     public static Source fromText(String text, String name) {
-        return getCachedByOrigin(text, origin -> Source.newBuilder(text).name(name).language(RRuntime.R_LANGUAGE_ID).build());
+        return getCachedByOrigin(text, origin -> Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, name).build());
     }
 
     /**
@@ -144,7 +142,7 @@ public class RSource {
      */
 
     public static Source fromTextInternal(String text, Internal description, String languageId) {
-        return Source.newBuilder(text).name(description.string).language(languageId).internal().interactive().build();
+        return Source.newBuilder(languageId, text, description.string).internal(true).interactive(true).build();
     }
 
     /**
@@ -153,7 +151,7 @@ public class RSource {
      */
 
     public static Source fromTextInternalInvisible(String text, Internal description, String languageId) {
-        return Source.newBuilder(text).name(description.string).language(languageId).internal().build();
+        return Source.newBuilder(languageId, text, description.string).internal(true).build();
     }
 
     /**
@@ -162,7 +160,7 @@ public class RSource {
      */
     public static Source fromPackageTextInternal(String text, String packageName) {
         String name = String.format(Internal.PACKAGE.string, packageName);
-        return Source.newBuilder(text).name(name).language(RRuntime.R_LANGUAGE_ID).build();
+        return Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, name).build();
     }
 
     /**
@@ -174,7 +172,7 @@ public class RSource {
         if (functionName == null) {
             return fromPackageTextInternal(text, packageName);
         } else {
-            return Source.newBuilder(text).name(packageName + "::" + functionName).language(RRuntime.R_LANGUAGE_ID).build();
+            return Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, packageName + "::" + functionName).build();
         }
     }
 
@@ -184,11 +182,9 @@ public class RSource {
     public static Source fromFileName(String path, boolean internal) throws IOException {
         File file = new File(path);
         return getCachedByOrigin(file, origin -> {
-            Source.Builder<IOException, RuntimeException, RuntimeException> builder = Source.newBuilder(file).language(RRuntime.R_LANGUAGE_ID);
-            if (internal) {
-                builder.internal();
-            }
-            return builder.build();
+            Env env = RContext.getInstance().getEnv();
+            TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
+            return Source.newBuilder(RRuntime.R_LANGUAGE_ID, tFile).internal(internal).build();
         });
     }
 
@@ -196,21 +192,29 @@ public class RSource {
      * Create an (external) source from the file system path denoted by {@code file}.
      */
     public static Source fromFile(File file) throws IOException {
-        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).language(RRuntime.R_LANGUAGE_ID).build());
+        return getCachedByOrigin(file, origin -> {
+            Env env = RContext.getInstance().getEnv();
+            TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
+            return Source.newBuilder(RRuntime.R_LANGUAGE_ID, tFile).name(file.getName()).build();
+        });
     }
 
     /**
      * Create a source from the file system path denoted by {@code file}.
      */
     public static Source fromTempFile(File file) throws IOException {
-        return getCachedByOrigin(file, origin -> Source.newBuilder(file).name(file.getName()).language(RRuntime.R_LANGUAGE_ID).internal().build());
+        return getCachedByOrigin(file, origin -> {
+            Env env = RContext.getInstance().getEnv();
+            TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
+            return Source.newBuilder(RRuntime.R_LANGUAGE_ID, tFile).name(file.getName()).internal(true).build();
+        });
     }
 
     /**
      * Create an (external) source from {@code url}.
      */
     public static Source fromURL(URL url, String name) throws IOException {
-        return getCachedByOrigin(url, origin -> Source.newBuilder(url).name(name).language(RRuntime.R_LANGUAGE_ID).build());
+        return getCachedByOrigin(url, origin -> Source.newBuilder(RRuntime.R_LANGUAGE_ID, url).name(name).build());
     }
 
     /**
@@ -248,7 +252,7 @@ public class RSource {
      * Create an unknown source with the given name.
      */
     public static SourceSection createUnknown(String name) {
-        return Source.newBuilder("").name(name).language(RRuntime.R_LANGUAGE_ID).build().createSection(0, 0);
+        return Source.newBuilder(RRuntime.R_LANGUAGE_ID, "", name).build().createSection(0, 0);
     }
 
     /**
