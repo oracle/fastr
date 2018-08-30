@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -35,6 +33,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -43,9 +42,12 @@ import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+
+import java.util.Arrays;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their names given to a
@@ -238,10 +240,19 @@ public final class CallArgumentsNode extends RBaseNode {
                 if (CompilerDirectives.inInterpreter() && result == null) {
                     throw RInternalError.shouldNotReachHere("invalid null in arguments");
                 }
+                if (result instanceof RShareable && !(((RShareable) result).isSharedPermanent())) {
+                    ShareObjectNode.share(result);
+                }
                 values[index] = result;
                 index++;
             }
         }
+        for (Object val : values) {
+            if (val instanceof RShareable && !(((RShareable) val).isSharedPermanent()) && !(((RShareable) val).isTemporary())) {
+                ShareObjectNode.unshare(val);
+            }
+        }
+
         return values;
     }
 
@@ -252,7 +263,9 @@ public final class CallArgumentsNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseCheckHelperNode());
             }
-            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
+            Object result = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
+            ShareObjectNode.share(result);
+            values[index] = result;
             index++;
         }
         return index;

@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -42,6 +39,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -54,10 +52,14 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
 
 /**
  * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.<br/>
@@ -541,6 +543,11 @@ public abstract class PromiseNode extends RNode {
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
+
+                if (argValue instanceof RShareable && !(((RShareable) argValue).isSharedPermanent())) {
+                    ShareObjectNode.share(argValue);
+                }
+
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     containsVarargs = true;
                     size += ((RArgsValuesAndNames) argValue).getLength();
@@ -554,6 +561,13 @@ public abstract class PromiseNode extends RNode {
                     throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
                 }
             }
+
+            for (Object eArg : evaluatedArgs) {
+                if (eArg instanceof RShareable && !(((RShareable) eArg).isSharedPermanent()) && !(((RShareable) eArg).isTemporary())) {
+                    ShareObjectNode.unshare(eArg);
+                }
+            }
+
             if (containsVarargProfile.profile(containsVarargs)) {
                 return size;
             } else {
@@ -566,6 +580,11 @@ public abstract class PromiseNode extends RNode {
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
+
+                if (argValue instanceof RShareable && !(((RShareable) argValue).isSharedPermanent())) {
+                    ((RShareable) argValue).incRefCount();
+                }
+
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     containsVarargs = true;
                     size += ((RArgsValuesAndNames) argValue).getLength();
@@ -579,6 +598,13 @@ public abstract class PromiseNode extends RNode {
                     throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
                 }
             }
+
+            for (Object dec : evaluatedArgs) {
+                if (dec instanceof RShareable && !(((RShareable) dec).isSharedPermanent()) && !(((RShareable) dec).isTemporary())) {
+                    ((RShareable) dec).decRefCount();
+                }
+            }
+
             if (containsVarargProfile.profile(containsVarargs)) {
                 return size;
             } else {

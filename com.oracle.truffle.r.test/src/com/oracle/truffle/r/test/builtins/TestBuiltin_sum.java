@@ -208,4 +208,9 @@ public class TestBuiltin_sum extends TestBase {
         assertEval("sum(c(2147483647L), 1)");
         assertEval("sum(c(-2147483647L), -1)");
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ x <- c(1, 2, 3); f <- function() { x[1] <<- 10; 2 }; g <- function(){ x[1] <<- 100; 0 }; sum(x, f(), x, g()) }");
+    }
 }

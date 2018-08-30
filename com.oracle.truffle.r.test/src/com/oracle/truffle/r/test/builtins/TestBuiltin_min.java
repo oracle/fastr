@@ -191,4 +191,9 @@ public class TestBuiltin_min extends TestBase {
 
         assertEval("min(c(1,NA,2), na.rm=NA)");
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ x <- c(10, 2, 3); f <- function() { x[1] <<- 1 ; 4 }; min(x, f())}");
+    }
 }

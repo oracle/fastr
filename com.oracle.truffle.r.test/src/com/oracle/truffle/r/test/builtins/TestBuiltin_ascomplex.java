@@ -121,4 +121,9 @@ public class TestBuiltin_ascomplex extends TestBase {
     public void noCopyCheck() {
         assertEvalFastR("{ x <- c(1+2i, 3.5+3i); .fastr.identity(x) == .fastr.identity(as.complex(x)); }", "[1] TRUE");
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ x <- c(1, 2, 3); f <- function() { x[1] <<- 10; 2 }; as.complex(x, f()) }");
+    }
 }

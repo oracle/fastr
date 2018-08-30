@@ -259,4 +259,9 @@ public class TestBuiltin_attr extends TestBase {
         assertEval("a<-1; attr(a,'myattr')<-c('x','y'); b<-choose(a,1); attr(b,'myattr')[1]<-'z'; a ");
         assertEval("a<-1; attr(a,'myattr')<-42; b<-choose(a,1); attr(b,'myattr')[1]<-'z'; a ");
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ a <- c(1, 2, 4); foo <- function() { attr(a,'mya') <<- 42; TRUE; }; attr(a, 'mya', foo()) }");
+    }
 }

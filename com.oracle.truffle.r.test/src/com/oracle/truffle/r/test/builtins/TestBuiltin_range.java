@@ -196,4 +196,9 @@ public class TestBuiltin_range extends TestBase {
         assertEval(template("range(c('a', 'b', 'c')%0)", OPTIONAL_ARGS));
         assertEval(template("range(c('1', '2', '3')%0)", OPTIONAL_ARGS));
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ a <- c(1, 2, 3); foo <- function() { x[1] <<- 10; 2 }; range(x,f(),1,2,3,x,f()) }");
+    }
 }

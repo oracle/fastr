@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsDefaultNodeGen;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsExplicitNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -46,6 +47,7 @@ import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -94,12 +96,22 @@ public abstract class PrepareArguments extends Node {
             Object[] result = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 Object value = arguments[i].execute(frame);
+
+                if (value instanceof RShareable && !(((RShareable) value).isSharedPermanent())) {
+                    ShareObjectNode.share(value);
+                }
+
                 if (CompilerDirectives.inInterpreter()) {
                     if (value == null) {
                         throw RInternalError.shouldNotReachHere("Java 'null' not allowed in arguments");
                     }
                 }
                 result[i] = value;
+            }
+            for (Object res : result) {
+                if (res instanceof RShareable && !(((RShareable) res).isSharedPermanent()) && !(((RShareable) res).isTemporary())) {
+                    ShareObjectNode.unshare(res);
+                }
             }
             return new RArgsValuesAndNames(result, suppliedSignature);
         }
