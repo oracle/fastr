@@ -378,7 +378,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         long start = System.nanoTime();
         RContext context = RContext.getInstance();
         long nanos = 1000 * 1000 * 1000;
-        Source source = Source.newBuilder("", ir.base64, ir.name).mimeType("application/x-llvm-ir-bitcode-base64").build();
+        String mimeType = "application/x-llvm-ir-bitcode-base64";
+        String language = Source.findLanguage(mimeType);
+        Source source = Source.newBuilder(language, ir.base64, ir.name).mimeType(mimeType).build();
         CallTarget result = context.getEnv().parse(source);
         if (System.getenv("LLVM_PARSE_TIME") != null) {
             long end = System.nanoTime();

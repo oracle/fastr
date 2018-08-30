@@ -211,12 +211,13 @@ public class FastRInterop {
 
             File file = new File(path);
             try {
-                String languageId = languageIdArg;
-                if (languageId == null) { // null languageId not allowed in newBuilder()
-                    languageId = RRuntime.R_LANGUAGE_ID;
-                }
                 Env env = RContext.getInstance().getEnv();
-                SourceBuilder sourceBuilder = Source.newBuilder(languageId, env.getTruffleFile(file.getAbsolutePath())).name(file.getName());
+                TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
+                String languageId = languageIdArg;
+                if (languageId == null) {
+                    languageId = Source.findLanguage(tFile);
+                }
+                SourceBuilder sourceBuilder = Source.newBuilder(languageId, tFile).name(file.getName());
                 Source sourceObject = sourceBuilder.build();
                 return env.parse(sourceObject);
             } catch (IOException e) {
