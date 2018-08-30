@@ -67,8 +67,8 @@ public final class CallArgumentsNode extends RBaseNode {
     protected final ArgumentsSignature signature;
 
     @Child private PromiseCheckHelperNode promiseHelper;
-    @Child private ShareObjectNode isShared = ShareObjectNode.create();
-    @Child private UnShareObjectNode isUnshared = UnShareObjectNode.create();
+    @Child private ShareObjectNode shareObject;
+    @Child private UnShareObjectNode unshareObject;
 
     private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
@@ -231,6 +231,7 @@ public final class CallArgumentsNode extends RBaseNode {
             size += (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
         }
         Object[] values = new Object[size];
+
         int vargsSymbolsIndex = 0;
         int index = 0;
         for (int i = 0; i < arguments.length; i++) {
@@ -242,13 +243,14 @@ public final class CallArgumentsNode extends RBaseNode {
                 if (CompilerDirectives.inInterpreter() && result == null) {
                     throw RInternalError.shouldNotReachHere("invalid null in arguments");
                 }
-                isShared.execute(result);
+                getShareObject().execute(result);
                 values[index] = result;
                 index++;
             }
         }
-        for (Object val : values) {
-            isUnshared.execute(val);
+
+        for (int i = 0; i < values.length; i++) {
+            getUnshareObject().execute(values[i]);
         }
 
         return values;
@@ -262,11 +264,27 @@ public final class CallArgumentsNode extends RBaseNode {
                 promiseHelper = insert(new PromiseCheckHelperNode());
             }
             Object result = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
-            isShared.execute(result);
+            getShareObject().execute(result);
             values[index] = result;
             index++;
         }
         return index;
+    }
+
+    private ShareObjectNode getShareObject() {
+        if (shareObject == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            shareObject = insert(ShareObjectNode.create());
+        }
+        return shareObject;
+    }
+
+    private UnShareObjectNode getUnshareObject() {
+        if (unshareObject == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            unshareObject = insert(UnShareObjectNode.create());
+        }
+        return unshareObject;
     }
 
     public boolean containsVarArgsSymbol() {

@@ -420,8 +420,8 @@ public abstract class PromiseNode extends RNode {
         @Children private final RNode[] varargs;
         protected final ArgumentsSignature signature;
 
-        @Child private ShareObjectNode isShared = ShareObjectNode.create();
-        @Child private UnShareObjectNode isUnshared = UnShareObjectNode.create();
+        @Child private ShareObjectNode sharedObject;
+        @Child private UnShareObjectNode unsharedObject;
 
         @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
@@ -547,8 +547,7 @@ public abstract class PromiseNode extends RNode {
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
-
-                isShared.execute(argValue);
+                getShareObject().execute(argValue);
 
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     containsVarargs = true;
@@ -564,8 +563,8 @@ public abstract class PromiseNode extends RNode {
                 }
             }
 
-            for (Object eArg : evaluatedArgs) {
-                isUnshared.execute(eArg);
+            for (int i = 0; i < evaluatedArgs.length; i++) {
+                getUnshareObject().execute(evaluatedArgs[i]);
             }
 
             if (containsVarargProfile.profile(containsVarargs)) {
@@ -610,6 +609,22 @@ public abstract class PromiseNode extends RNode {
             } else {
                 return -1;
             }
+        }
+
+        private ShareObjectNode getShareObject() {
+            if (sharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                sharedObject = insert(ShareObjectNode.create());
+            }
+            return sharedObject;
+        }
+
+        private UnShareObjectNode getUnshareObject() {
+            if (unsharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                unsharedObject = insert(UnShareObjectNode.create());
+            }
+            return unsharedObject;
         }
     }
 }

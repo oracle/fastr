@@ -65,8 +65,8 @@ public abstract class PrepareArguments extends Node {
         protected final RRootNode target;
         protected final CallArgumentsNode sourceArguments; // not used as a node
         protected final boolean noOpt;
-        @Child private static ShareObjectNode isShared = ShareObjectNode.create();
-        @Child private static UnShareObjectNode isUnshared = UnShareObjectNode.create();
+        @Child private ShareObjectNode sharedObject;
+        @Child private UnShareObjectNode unsharedObject;
 
         static final class ArgumentsAndSignature extends Node {
             @Children private final RNode[] matchedArguments;
@@ -94,11 +94,11 @@ public abstract class PrepareArguments extends Node {
         }
 
         @ExplodeLoop
-        private static RArgsValuesAndNames executeArgs(RNode[] arguments, ArgumentsSignature suppliedSignature, VirtualFrame frame) {
+        private RArgsValuesAndNames executeArgs(RNode[] arguments, ArgumentsSignature suppliedSignature, VirtualFrame frame) {
             Object[] result = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 Object value = arguments[i].execute(frame);
-                isShared.execute(value);
+                getShareObject().execute(value);
 
                 if (CompilerDirectives.inInterpreter()) {
                     if (value == null) {
@@ -107,8 +107,8 @@ public abstract class PrepareArguments extends Node {
                 }
                 result[i] = value;
             }
-            for (Object res : result) {
-                isUnshared.execute(res);
+            for (int i = 0; i < result.length; i++) {
+                getUnshareObject().execute(result[i]);
             }
             return new RArgsValuesAndNames(result, suppliedSignature);
         }
@@ -121,6 +121,22 @@ public abstract class PrepareArguments extends Node {
                         @SuppressWarnings("unused") @Cached("s3DefaultArguments") S3DefaultArguments cachedS3DefaultArguments) {
             assert (cachedVarArgSignature != null) == (varArgs != null);
             return executeArgs(arguments.matchedArguments, arguments.matchedSuppliedSignature, frame);
+        }
+
+        private ShareObjectNode getShareObject() {
+            if (sharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                sharedObject = insert(ShareObjectNode.create());
+            }
+            return sharedObject;
+        }
+
+        private UnShareObjectNode getUnshareObject() {
+            if (unsharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                unsharedObject = insert(UnShareObjectNode.create());
+            }
+            return unsharedObject;
         }
 
         private static final class GenericCallEntry extends Node {
