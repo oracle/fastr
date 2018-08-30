@@ -29,6 +29,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -97,7 +98,11 @@ public interface RCodeBuilder<T> {
     /**
      * Create a call with an arbitrary number of named or unnamed arguments.
      */
-    T call(SourceSection source, T lhs, List<Argument<T>> arguments);
+    T call(SourceSection source, T lhs, List<Argument<T>> arguments, DynamicObject attributes);
+
+    default T call(SourceSection source, T lhs, List<Argument<T>> arguments) {
+        return call(source, lhs, arguments, null);
+    }
 
     /**
      * Creates a constant, the value is expected to be one of FastR's scalar types (byte, int,
@@ -144,7 +149,7 @@ public interface RCodeBuilder<T> {
             @Override
             protected T visit(RSyntaxCall element) {
                 ArrayList<Argument<T>> args = createArguments(element.getSyntaxSignature(), element.getSyntaxArguments());
-                return call(element.getLazySourceSection(), accept(element.getSyntaxLHS()), args);
+                return call(element.getLazySourceSection(), accept(element.getSyntaxLHS()), args, element.getAttributes());
             }
 
             private ArrayList<Argument<T>> createArguments(ArgumentsSignature signature, RSyntaxElement[] arguments) {

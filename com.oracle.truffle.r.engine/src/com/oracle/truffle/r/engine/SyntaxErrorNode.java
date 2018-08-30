@@ -26,15 +26,15 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.nodes.RAttributableNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
-import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Node that represents piece of AST that would throw syntax error when parser. Used to delay
+ * Node that represents piece of AST that would throw syntax err or when parser. Used to delay
  * parsing error to the point when they should be reported.
  */
-final class SyntaxErrorNode extends RNode implements RSyntaxNode, RInstrumentableNode {
+final class SyntaxErrorNode extends RAttributableNode implements RSyntaxNode, RInstrumentableNode {
     private final ParseException exception;
     private final SourceSection sourceSection;
 

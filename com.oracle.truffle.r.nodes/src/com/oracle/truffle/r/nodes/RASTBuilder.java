@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
@@ -70,6 +71,8 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -82,8 +85,44 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
 
+    /**
+     * Recognize whether the LHS of the call element under construction corresponds to an indirect
+     * invocation of {@code .Internal}, i.e.: {@code (get(".Internal", baseenv()))}.
+     *
+     * @param lhs the LHS of the call element under construction
+     */
+    private static boolean isInternalIndirect(RSyntaxNode lhs) {
+        if (lhs instanceof RSyntaxCall && (((RSyntaxCall) lhs).getSyntaxLHS()) instanceof RSyntaxLookup) {
+            RSyntaxCall lhsCall = (RSyntaxCall) lhs;
+            RSyntaxLookup lhsCallLhsLookup = (RSyntaxLookup) lhsCall.getSyntaxLHS();
+            if ("(".equals(lhsCallLhsLookup.getIdentifier()) && lhsCall.getSyntaxArguments().length == 1 && lhsCall.getSyntaxArguments()[0] instanceof RSyntaxCall) {
+                RSyntaxCall lhsCallFirstArgCall = (RSyntaxCall) lhsCall.getSyntaxArguments()[0];
+                if (lhsCallFirstArgCall.getSyntaxLHS() instanceof RSyntaxLookup) {
+                    RSyntaxLookup lhsCallFirstArgCallLhsLookup = (RSyntaxLookup) lhsCallFirstArgCall.getSyntaxLHS();
+                    if ("get".equals(lhsCallFirstArgCallLhsLookup.getIdentifier()) && lhsCallFirstArgCall.getSyntaxArguments().length == 2 &&
+                                    lhsCallFirstArgCall.getSyntaxArguments()[0] instanceof RSyntaxConstant) {
+                        RSyntaxConstant firstArg = (RSyntaxConstant) lhsCallFirstArgCall.getSyntaxArguments()[0];
+                        if (".Internal".equals(firstArg.getValue())) {
+                            return true;
+                        }
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
     @Override
-    public RSyntaxNode call(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args) {
+    public RSyntaxNode call(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args, DynamicObject attributes) {
+        RSyntaxNode sn = createCall(source, lhs, args);
+        sn.setAttributes(attributes);
+        return sn;
+    }
+
+    private RSyntaxNode createCall(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args) {
+        if (isInternalIndirect(lhs)) {
+            return InternalNode.create(source, null, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
+        }
         if (lhs instanceof RSyntaxLookup) {
             RSyntaxLookup lhsLookup = (RSyntaxLookup) lhs;
             String symbol = lhsLookup.getIdentifier();

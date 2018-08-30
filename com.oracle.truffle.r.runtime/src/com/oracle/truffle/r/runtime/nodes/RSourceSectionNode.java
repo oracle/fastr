@@ -32,7 +32,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
  * inheritance restrictions, just cut and paste the class body into the class, as it's not worth a
  * level of indirection for such a trivial piece of code.
  */
-public abstract class RSourceSectionNode extends RNode implements RSyntaxNode {
+public abstract class RSourceSectionNode extends RAttributableNode implements RSyntaxNode {
     /**
      * temp disambiguate for debugging until sourceSection removed from Node.
      */

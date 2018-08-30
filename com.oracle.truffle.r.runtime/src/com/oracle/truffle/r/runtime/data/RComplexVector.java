@@ -69,7 +69,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
         if (data != null) {
             return new RComplexVector(Arrays.copyOf(data, data.length), this.isComplete());
         } else {
-            return new RComplexVector(NativeDataAccess.copyDoubleNativeData(getNativeMirror()), this.isComplete());
+            return new RComplexVector(NativeDataAccess.copyComplexNativeData(getNativeMirror()), this.isComplete());
         }
     }
 
