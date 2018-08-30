@@ -91,10 +91,14 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
     @Specialization
     protected int doDouble(double operand) {
         naCheck.enable(operand);
+        if (naCheck.checkNAorNaN(operand)) {
+            return RRuntime.INT_NA;
+        }
         // either a warning context was preset or
         // we pass this node to get the context if it becomes necessary
         int result = naCheck.convertDoubleToInt(operand);
-        if (naCheck.neverSeenNA() && RRuntime.isNA(result)) {
+        naCheck.enable(result);
+        if (naCheck.check(result)) {
             RBaseNode ctx = warningContext();
             warning(ctx != null ? ctx : getErrorContext(), RError.Message.NA_INTRODUCED_COERCION_INT);
         }
@@ -122,9 +126,18 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
         if (naCheck.check(operand) || emptyStringProfile.profile(operand.isEmpty())) {
             return RRuntime.INT_NA;
         }
-        int result = RRuntime.string2intNoCheck(operand);
-        if (RRuntime.isNA(result)) {
-            warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION);
+        double d = naCheck.convertStringToDouble(operand);
+        naCheck.enable(d);
+        if (naCheck.checkNAorNaN(d)) {
+            if (naCheck.check(d)) {
+                warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION);
+            }
+            return RRuntime.INT_NA;
+        }
+        int result = naCheck.convertDoubleToInt(d);
+        naCheck.enable(result);
+        if (naCheck.check(result)) {
+            warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION_INT);
         }
         return result;
     }

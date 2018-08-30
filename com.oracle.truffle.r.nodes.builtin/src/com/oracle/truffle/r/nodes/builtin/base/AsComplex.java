@@ -44,7 +44,7 @@ public abstract class AsComplex extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(AsComplex.class);
-        casts.arg("x").defaultWarningContext(RError.NO_CALLER).returnIf(missingValue().or(nullValue()), emptyComplexVector()).asComplexVector();
+        casts.arg("x").defaultWarningContext(RError.SHOW_CALLER).returnIf(missingValue().or(nullValue()), emptyComplexVector()).asComplexVector();
     }
 
     @Specialization

@@ -44,7 +44,7 @@ public abstract class AsInteger extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(AsInteger.class);
-        casts.arg("x").defaultWarningContext(RError.NO_CALLER).returnIf(missingValue().or(nullValue()), emptyIntegerVector()).asIntegerVector();
+        casts.arg("x").defaultWarningContext(RError.SHOW_CALLER).returnIf(missingValue().or(nullValue()), emptyIntegerVector()).asIntegerVector();
     }
 
     @Specialization(guards = "reuseTemporaryNode.supports(v)", limit = "getVectorAccessCacheSize()")
