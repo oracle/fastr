@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import java.util.Arrays;
+import java.util.function.IntFunction;
+import java.util.function.IntPredicate;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -66,10 +70,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-
-import java.util.Arrays;
-import java.util.function.IntFunction;
-import java.util.function.IntPredicate;
 
 /**
  * <p>
@@ -418,7 +418,6 @@ public class ArgumentMatcher {
                         }
                     }
                     newNames[index] = match.varargsSignature.getName(i);
-
                     newVarArgs[index] = shouldInline ? updateInlinedArg(varArg) : varArg;
                     index++;
                 }
@@ -443,7 +442,6 @@ public class ArgumentMatcher {
                 }
 
                 ArgumentsSignature signature = ArgumentsSignature.get(newNames);
-
                 if (shouldInline) {
                     resArgs[formalIndex] = PromiseNode.createVarArgsInlined(newVarArgs, signature);
                 } else {

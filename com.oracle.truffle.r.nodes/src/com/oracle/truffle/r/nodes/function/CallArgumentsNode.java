@@ -34,6 +34,7 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -42,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.ClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -67,6 +67,8 @@ public final class CallArgumentsNode extends RBaseNode {
     protected final ArgumentsSignature signature;
 
     @Child private PromiseCheckHelperNode promiseHelper;
+    @Child private ShareObjectNode isShared = ShareObjectNode.create();
+    @Child private UnShareObjectNode isUnshared = UnShareObjectNode.create();
 
     private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
@@ -240,17 +242,13 @@ public final class CallArgumentsNode extends RBaseNode {
                 if (CompilerDirectives.inInterpreter() && result == null) {
                     throw RInternalError.shouldNotReachHere("invalid null in arguments");
                 }
-                if (result instanceof RShareable && !(((RShareable) result).isSharedPermanent())) {
-                    ShareObjectNode.share(result);
-                }
+                isShared.execute(result);
                 values[index] = result;
                 index++;
             }
         }
         for (Object val : values) {
-            if (val instanceof RShareable && !(((RShareable) val).isSharedPermanent()) && !(((RShareable) val).isTemporary())) {
-                ShareObjectNode.unshare(val);
-            }
+            isUnshared.execute(val);
         }
 
         return values;
@@ -264,7 +262,7 @@ public final class CallArgumentsNode extends RBaseNode {
                 promiseHelper = insert(new PromiseCheckHelperNode());
             }
             Object result = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
-            ShareObjectNode.share(result);
+            isShared.execute(result);
             values[index] = result;
             index++;
         }

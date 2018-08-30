@@ -199,6 +199,6 @@ public class TestBuiltin_range extends TestBase {
 
     @Test
     public void testSideEffect() {
-        assertEval("{ a <- c(1, 2, 3); foo <- function() { x[1] <<- 10; 2 }; range(x,f(),1,2,3,x,f()) }");
+        assertEval("{ x <- c(1, 2, 3); foo <- function() { x[1] <<- 10; 2 }; range(x,f(),1,2,3,x,f()) }");
     }
 }

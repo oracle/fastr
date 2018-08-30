@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -419,6 +420,9 @@ public abstract class PromiseNode extends RNode {
         @Children private final RNode[] varargs;
         protected final ArgumentsSignature signature;
 
+        @Child private ShareObjectNode isShared = ShareObjectNode.create();
+        @Child private UnShareObjectNode isUnshared = UnShareObjectNode.create();
+
         @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile containsVarargProfile = ConditionProfile.createBinaryProfile();
@@ -544,9 +548,7 @@ public abstract class PromiseNode extends RNode {
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
 
-                if (argValue instanceof RShareable && !(((RShareable) argValue).isSharedPermanent())) {
-                    ShareObjectNode.share(argValue);
-                }
+                isShared.execute(argValue);
 
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     containsVarargs = true;
@@ -563,9 +565,7 @@ public abstract class PromiseNode extends RNode {
             }
 
             for (Object eArg : evaluatedArgs) {
-                if (eArg instanceof RShareable && !(((RShareable) eArg).isSharedPermanent()) && !(((RShareable) eArg).isTemporary())) {
-                    ShareObjectNode.unshare(eArg);
-                }
+                isUnshared.execute(eArg);
             }
 
             if (containsVarargProfile.profile(containsVarargs)) {

@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsDefaultNodeGen;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsExplicitNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -47,7 +48,6 @@ import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
@@ -65,6 +65,8 @@ public abstract class PrepareArguments extends Node {
         protected final RRootNode target;
         protected final CallArgumentsNode sourceArguments; // not used as a node
         protected final boolean noOpt;
+        @Child private static ShareObjectNode isShared = ShareObjectNode.create();
+        @Child private static UnShareObjectNode isUnshared = UnShareObjectNode.create();
 
         static final class ArgumentsAndSignature extends Node {
             @Children private final RNode[] matchedArguments;
@@ -96,10 +98,7 @@ public abstract class PrepareArguments extends Node {
             Object[] result = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 Object value = arguments[i].execute(frame);
-
-                if (value instanceof RShareable && !(((RShareable) value).isSharedPermanent())) {
-                    ShareObjectNode.share(value);
-                }
+                isShared.execute(value);
 
                 if (CompilerDirectives.inInterpreter()) {
                     if (value == null) {
@@ -109,9 +108,7 @@ public abstract class PrepareArguments extends Node {
                 result[i] = value;
             }
             for (Object res : result) {
-                if (res instanceof RShareable && !(((RShareable) res).isSharedPermanent()) && !(((RShareable) res).isTemporary())) {
-                    ShareObjectNode.unshare(res);
-                }
+                isUnshared.execute(res);
             }
             return new RArgsValuesAndNames(result, suppliedSignature);
         }
