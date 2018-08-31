@@ -34,11 +34,14 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @TypeSystemReference(RTypes.class)
 public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
     private static final CharSXPWrapper CharSXPWrapper_NA = CharSXPWrapper.create(RRuntime.STRING_NA);
+    private static final CharSXPWrapper CharSXPWrapper_NAString = CharSXPWrapper.create("NA");
 
     public abstract CharSXPWrapper execute(Object obj);
 
@@ -53,7 +56,8 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
             return CharSXPWrapper_NA;
         } else {
             obj.wrapStrings();
-            return obj.getWrappedDataAt(0);
+            CharSXPWrapper result = obj.getWrappedDataAt(0);
+            return RRuntime.isNA(result.getContents()) ? CharSXPWrapper_NA : result;
         }
     }
 
@@ -63,17 +67,28 @@ public abstract class AsCharNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization(guards = {"obj.getLength() > 0", "isNotStringVec(obj)"})
-    protected CharSXPWrapper asChar(RAbstractAtomicVector obj, //
+    protected CharSXPWrapper asChar(RAbstractAtomicVector obj,
                     @Cached("createNonPreserving()") CastStringNode castStringNode) {
         // for other than character vector, symbol or CHARSXP, the cast and creation of new vector
         // is inevitable and the user should know to take appropriate measures (i.e. PROTECT).
         Object castObj = castStringNode.executeString(obj);
+        CharSXPWrapper result;
         if (castObj instanceof String) {
-            return CharSXPWrapper.create((String) castObj);
+            result = CharSXPWrapper.create((String) castObj);
         } else if (castObj instanceof RAbstractStringVector) {
-            return CharSXPWrapper.create(((RAbstractStringVector) castObj).getDataAt(0));
+            result = CharSXPWrapper.create(((RAbstractStringVector) castObj).getDataAt(0));
         } else {
             throw RInternalError.shouldNotReachHere();
+        }
+
+        if (RRuntime.isNA(result.getContents())) {
+            if (obj instanceof RAbstractComplexVector || obj instanceof RAbstractDoubleVector) {
+                return CharSXPWrapper_NAString;
+            } else {
+                return CharSXPWrapper_NA;
+            }
+        } else {
+            return result;
         }
     }
 

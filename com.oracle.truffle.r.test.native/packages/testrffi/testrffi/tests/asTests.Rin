@@ -1,6 +1,11 @@
 source(Sys.getenv("TEMPLATE_FILE"))
 
-as_values <- c("1L", "2", "2.2", "T", "integer()", "numeric()", "logical()", "character()", "c(5,6)", "c(2.3, 3.4)", "c(T, F)", "as.symbol(\"sym\")", "list()")
+as_values <- c("1L", "2", "2.2", "T", "2147483648", "'abc'",
+               "integer()", "numeric()", "logical()", "character()", 
+               "NA", "NA_character_", "NA_complex_", "NA_integer_", "NA_real_", 
+               "c(5,6)", "c(2.3, 3.4)", "c(T, F)", "c(2147483648, 2147483649)", "c('abc', 'bcd')",
+               "c(NA, NA)", "c(NA_character_, NA_character_)", "c(NA_complex_, NA_complex_)", "c(NA_integer_, NA_integer_)", "c(NA_real_, NA_real_)",                
+               "as.symbol(\"sym\")", "list()")
 as_funs <- c("Char", "Integer", "Real", "Logical")
 
 initialTest("testrffi", "rffi.as%0(%1)",  as_funs, as_values)

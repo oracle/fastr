@@ -26,11 +26,11 @@ RAWSXP <- as.character(24)
 S4SXP <- as.character(25)
 
 coercion_values_for_expr <- c("2", "2.2", "T", "integer()", "numeric()", "logical()", "character()", "c(5,6)", "c(2.3, 3.4)", "c(T, F)",
-                    "list()", "structure(2.2, names='b',dim=c(1,1),myattr='q')", "structure(T, names='c',dim=c(1,1),myattr='q'")
+                    "list()", "structure(2.2, names='b',dim=c(1,1),myattr='q')", "structure(T, names='c',dim=c(1,1),myattr='q')")
 
 coercion_values <- c("1L", "2", "2.2", "T", "integer()", "numeric()", "logical()", "character()", "c(5,6)", "c(2.3, 3.4)",
                     "c(T, F)", "list()", "structure(1L,names='a',dim=c(1,1),myattr='q')", "structure(2.2, names='b',dim=c(1,1),myattr='q')",
-                    "structure(T, names='c',dim=c(1,1),myattr='q')", "structure(list(1,'42'), names=c('q','w'),dim=c(2,1),myattr='q'")
+                    "structure(T, names='c',dim=c(1,1),myattr='q')", "structure(list(1,'42'), names=c('q','w'),dim=c(2,1),myattr='q')")
 
 coercion_modes <- c(SYMSXP, NILSXP, VECSXP, INTSXP, REALSXP, LGLSXP, STRSXP, CPLXSXP, RAWSXP)
 
