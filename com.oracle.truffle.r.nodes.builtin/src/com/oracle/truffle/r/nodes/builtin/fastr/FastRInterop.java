@@ -77,6 +77,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -208,8 +210,7 @@ public class FastRInterop {
 
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
-
-            File file = new File(path);
+            File file = new File(Utils.tildeExpand(path, false));
             try {
                 Env env = RContext.getInstance().getEnv();
                 TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
