@@ -22,14 +22,6 @@
  */
 package com.oracle.truffle.r.engine;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -63,6 +55,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -80,8 +73,8 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
-import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.RootBodyNode;
+import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -102,6 +95,14 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
@@ -678,7 +679,7 @@ final class REngine implements Engine, Engine.Timings {
                 RFunction function = (RFunction) evaluatePromise(printMethod);
                 CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RArgsValuesAndNames.EMPTY}, null);
             }
-            ShareObjectNode.unshare(resultValue);
+            UnShareObjectNode.unshare(resultValue);
         } else {
             // this supports printing of non-R values (via toString for now)
             String str;
