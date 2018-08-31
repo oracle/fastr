@@ -11,7 +11,9 @@ include "ci_common/common.hocon"
 # overlay = "1823c758582f31386f8ba4d89157265a23cebd04"
 builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64"}
+  ${gateTestNoDSLCacheLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-no-dsl-cache"}
   ${gateTestNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials"}
+  ${gateTestNoDSLCacheNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials-no-dsl-cache"}
   ${gateTestDarwin}           {capabilities : [darwin_sierra, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
   ${gateBuildWithEcj}         {capabilities : [linux, amd64],  targets : [gate], name: "gate-ecj-linux-amd64"}
