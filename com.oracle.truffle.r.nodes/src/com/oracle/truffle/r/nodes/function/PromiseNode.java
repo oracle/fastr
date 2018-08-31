@@ -53,7 +53,6 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
-import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
@@ -579,10 +578,7 @@ public abstract class PromiseNode extends RNode {
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
-
-                if (argValue instanceof RShareable && !(((RShareable) argValue).isSharedPermanent())) {
-                    ((RShareable) argValue).incRefCount();
-                }
+                getShareObject().execute(argValue);
 
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     containsVarargs = true;
@@ -598,10 +594,8 @@ public abstract class PromiseNode extends RNode {
                 }
             }
 
-            for (Object dec : evaluatedArgs) {
-                if (dec instanceof RShareable && !(((RShareable) dec).isSharedPermanent()) && !(((RShareable) dec).isTemporary())) {
-                    ((RShareable) dec).decRefCount();
-                }
+            for (int i = 0; i < evaluatedArgs.length; i++) {
+                getUnshareObject().execute(evaluatedArgs[i]);
             }
 
             if (containsVarargProfile.profile(containsVarargs)) {
