@@ -58,16 +58,14 @@ public final class FastRConfig {
         String rffiVal = System.getenv("FASTR_RFFI");
         ManagedMode = rffiVal != null && rffiVal.equals("managed");
         if (ManagedMode) {
-            InternalGridAwtSupport = false;
             UseMXBeans = false;
             UseNativeEventLoop = false;
-            UseRemoteGridAwtDevice = false;
         } else {
-            InternalGridAwtSupport = getBooleanOrTrue("fastr.internal.grid.awt.support");
             UseMXBeans = getBooleanOrTrue("fastr.internal.usemxbeans");
             UseNativeEventLoop = getBooleanOrTrue("fastr.internal.usenativeeventloop");
-            UseRemoteGridAwtDevice = getBooleanOrFalse("fastr.use.remote.grid.awt.device");
         }
+        InternalGridAwtSupport = getBooleanOrTrue("fastr.internal.grid.awt.support");
+        UseRemoteGridAwtDevice = getBooleanOrFalse("fastr.use.remote.grid.awt.device");
         DefaultDownloadMethod = System.getProperty("fastr.internal.defaultdownloadmethod");
     }
 
