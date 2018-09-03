@@ -32,18 +32,17 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 /**
- * Serves as a FastR specific Truffle profile, i.e. {@link CompilerDirectives Truffle compiler
- * directives} to communicate to the compiler that certain code can be omitted from the compilation.
- * Instances of {@link NACheck} should be fields of AST Nodes (this includes creation via
- * {@link com.oracle.truffle.api.dsl.Cached} annotation).
+ * Serves as a FastR specific Truffle profile, i.e. it uses {@link CompilerDirectives Truffle
+ * compiler directives} to communicate to the compiler that certain code can be omitted from the
+ * compilation. Instances of {@link NACheck} should be fields of AST Nodes (this includes creation
+ * via {@link com.oracle.truffle.api.dsl.Cached} annotation).
  *
  * Main use-case of {@link NACheck} is to save checks for {@code NA} values inside a loop if we know
  * that we are reading those values from a vector that does not contain any {@code NA} value, which
- * can be determined via {@link RAbstractAtomicVector#isComplete()}. In the following example:
+ * can be determined via {@link RAbstractContainer#isComplete()}. In the following example:
  *
  * <pre>
  * naCheck.enable(vector);
@@ -53,16 +52,16 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
  * </pre>
  *
  * The {@code if} can be completely eliminated from the loop if all the vectors that were seen
- * during the runtime returned {@code true} from {@link RAbstractAtomicVector#isComplete()}.
+ * during the runtime returned {@code true} from {@link RAbstractContainer#isComplete()}.
  *
  * Common pattern is to use {@link #neverSeenNA()} as a value for the {@code complete} flag of a new
  * vector if whether it contains {@NA} values or not depends on the vector(s) for which we
- * {@link #enable(RAbstractAtomicVector)} the check. Note that is such case the vector may be marked
- * as incomplete even if the current vector for which we enabled the check happens to be complete,
- * because some previous vector wasn't complete and the {@link NACheck} is one way -- once it is
- * enabled, it stays enabled forever. Marking a vector without any {@code NA}s is OK as
- * "incompleteness" gives no guarantees about {@code NA}s in the vector, only completeness does.
- * Example:
+ * {@link #enable(RAbstractContainer)} the check. Note that in such case the vector may be marked as
+ * incomplete even if the current vector for which we enabled the check happens to be complete,
+ * because some previous vector seen during runtime wasn't complete and once enabled {@link NACheck}
+ * is never "disabled" and stays enabled forever. Marking a vector without any {@code NA}s as
+ * incomplete is OK as "incompleteness" gives no guarantees about {@code NA}s in the vector, only
+ * completeness does. Example:
  *
  * <pre>
  * naCheck.enable(vector);
@@ -87,7 +86,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
  *
  * The {@code if} will not be removed from the compilation, because completeness doesn't tell us if
  * the "source" vector contains {@code NaN}s, but {@link NACheck} will make sure the code inside the
- * {@code if} will be replaced with {@code deopt} if we never seen any {@code NaN}s during the
+ * {@code if} will be replaced with {@code deopt} if we have never seen any {@code NaN}s during the
  * runtime so far.
  */
 public final class NACheck {
