@@ -107,7 +107,10 @@ public abstract class PrepareArguments extends Node {
                 }
                 result[i] = value;
             }
-            for (int i = 0; i < result.length; i++) {
+            for (int i = 0; i < arguments.length; i++) {
+                if (i >= result.length) {
+                    break;
+                }
                 getUnshareObject().execute(result[i]);
             }
             return new RArgsValuesAndNames(result, suppliedSignature);

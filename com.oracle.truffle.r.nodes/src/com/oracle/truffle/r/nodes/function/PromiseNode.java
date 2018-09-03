@@ -562,7 +562,10 @@ public abstract class PromiseNode extends RNode {
                 }
             }
 
-            for (int i = 0; i < evaluatedArgs.length; i++) {
+            for (int i = 0; i < varargs.length; i++) {
+                if (i >= evaluatedArgs.length) {
+                    break;
+                }
                 getUnshareObject().execute(evaluatedArgs[i]);
             }
 
@@ -594,7 +597,10 @@ public abstract class PromiseNode extends RNode {
                 }
             }
 
-            for (int i = 0; i < evaluatedArgs.length; i++) {
+            for (int i = 0; i < varargs.length; i++) {
+                if (i >= evaluatedArgs.length) {
+                    break;
+                }
                 getUnshareObject().execute(evaluatedArgs[i]);
             }
 

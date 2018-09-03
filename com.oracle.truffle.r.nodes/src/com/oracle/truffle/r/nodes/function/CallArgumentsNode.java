@@ -249,7 +249,10 @@ public final class CallArgumentsNode extends RBaseNode {
             }
         }
 
-        for (int i = 0; i < values.length; i++) {
+        for (int i = 0; i < arguments.length; i++) {
+            if (i >= values.length) {
+                break;
+            }
             getUnshareObject().execute(values[i]);
         }
 
