@@ -65,7 +65,7 @@ public class TestBuiltin_bincode extends TestBase {
         assertEval("{ x <- c(0, 0.01, 0.5, 0.99, 1); b <- c(0, 0, 1, 1); .bincode(x, b, FALSE, TRUE) }");
 
         assertEval("{ .Internal(bincode(NULL, 2, T, T)) }");
-        assertEval(Ignored.NewRVersionMigration, "{ .Internal(bincode(2, NULL, T, T)) }");
+        assertEval("{ .Internal(bincode(2, NULL, T, T)) }");
 
         assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bincode(, 1, T, T)) }");
         assertEval(Output.MayIgnoreErrorContext, "{ .Internal(bincode(1, ,T, T)) }");

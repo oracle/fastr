@@ -181,7 +181,7 @@ public class TestBuiltin_array extends TestBase {
         assertEval("{ array(double(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
         assertEval("{ array(complex(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
         assertEval("{ array(logical(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
-        assertEval(Ignored.NewRVersionMigration, "{ array(character(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
+        assertEval("{ array(character(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
         assertEval("{ array(list(0), dim=2, dimnames=list(c(\"1\", \"2\")))}");
     }
 }

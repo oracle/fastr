@@ -159,7 +159,7 @@ public class TestBuiltin_isna extends TestBase {
 
     @Test
     public void testisna29() {
-        assertEval(Ignored.NewRVersionMigration, "argv <- list(NULL);is.na(argv[[1]]);");
+        assertEval("argv <- list(NULL);is.na(argv[[1]]);");
     }
 
     @Test

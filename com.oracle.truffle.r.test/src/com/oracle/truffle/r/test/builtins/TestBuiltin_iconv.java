@@ -84,7 +84,14 @@ public class TestBuiltin_iconv extends TestBase {
         assertEval("{ .Internal(iconv(\"7\", \"latin1\", character(), \"42\", T, F)) }");
         assertEval("{ .Internal(iconv(\"7\", \"latin1\", \"ASCII\", 42, T, F)) }");
         assertEval("{ .Internal(iconv(\"7\", \"latin1\", \"ASCII\", character(), T, F)) }");
-        assertEval(Ignored.NewRVersionMigration, "Sys.setlocale('LC_CTYPE', 'C'); iconv(c('²a²²','b')); Sys.setlocale('LC_CTYPE', 'UTF-8'); iconv(c('²a²²','b'))");
+        // Sys.setlocale() in GNU R 3.5.1 returns an empty string (and warning)
+        // if C getlocale() function returns NULL (unsupported charset for the given LC_... type).
+        // There's no counterpart to this in java. The LC_CTYPE locale does not seem to have
+        // a corresponding LocaleServiceProvider class which could be queried
+        // for isSupportedLocale() and moreover there would be no guarantee
+        // that the result of particular isSupportedLocale() would mimic
+        // what OS would return from getlocale().
+        assertEval(Ignored.ImplementationError, "Sys.setlocale('LC_CTYPE', 'C'); iconv(c('²a²²','b')); Sys.setlocale('LC_CTYPE', 'UTF-8'); iconv(c('²a²²','b'))");
         assertEval("iconv('foo²²', 'UTF8', 'ASCII')");
         assertEval(Ignored.Unimplemented, "iconv('foo²²', 'UTF8', 'ASCII', sub='byte')");
         assertEval(Ignored.Unimplemented, "iconv('foo²²', 'UTF8', 'ASCII', sub='fooooo')");
