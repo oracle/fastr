@@ -870,13 +870,6 @@ public class ConnectionSupport {
          */
         public abstract String getSummaryDescription();
 
-        /**
-         * Return the value that is used in the "text" field by {@code summary.connection}.
-         */
-        public String getSummaryText() {
-            return isTextMode() ? "text" : "binary";
-        }
-
         @Override
         public int getDescriptor() {
             return descriptor;
