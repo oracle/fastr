@@ -34,6 +34,6 @@ clazz <- java.type("com.oracle.truffle.r.JavaMessage")
 obj <- new(clazz, "Hi there")
 print(obj$getMessage())
 
-eval.polyglot('js', source='var s = "Hello from Javascript"; print(s)')
+eval.polyglot('js', code='var s = "Hello from Javascript"; print(s)')
 eval.polyglot('js', path="JS/main.js")
 
