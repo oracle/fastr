@@ -209,7 +209,9 @@ public abstract class S3DispatchFunctions {
                     return arg;
                 }
             }
-            return null;
+            // Maybe there is an argument with a default value different than NULL, but even GNU-R
+            // just uses "NULL" class in this case...
+            return RNull.instance;
         }
 
         private static Object getFirstVarArg(RArgsValuesAndNames varArgs) {
