@@ -197,6 +197,10 @@ public class TestBuiltin_asdouble extends TestBase {
         assertEval("{ as.double(NULL) }");
         assertEval("{ as.double.cls <- function(x) 42; as.double(structure(c(1,2), class='cls')); }");
         assertEval("{ y <- c(3.1, 3.2); attr(y, 'someAttr') <- 'someValue'; x <- as.double(y); x[[1]] <- 42; y }");
+
+        assertEval("{ f <- function() as.double('aaa'); f() }");
+        assertEval("{ f <- function() as.numeric('aaa'); f() }");
+        assertEval("{ f1 <- function() {f<- function() as.double('aaa'); f()}; f1() }");
     }
 
     @Test

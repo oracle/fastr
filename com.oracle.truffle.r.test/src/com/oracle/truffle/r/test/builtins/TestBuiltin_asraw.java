@@ -93,6 +93,11 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval("{ as.raw('1') }");
         assertEval("{ as.raw('1000') }");
         assertEval(Output.IgnoreWhitespace, "{ as.raw('10000000000000000') }");
+        assertEval("{ as.raw('1.1') }");
+        assertEval("{ as.raw(c('1.1', '1')) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.raw(c('10000000000000000', '1.1')) }");
+        assertEval("{ as.raw('NaN') }");
+        assertEval("{ as.raw(c('1.1', 'NaN')) }");
         assertEval("{ as.raw(c('1', '2')) }");
         assertEval("{ as.raw(c('1', '1000')) }");
         assertEval(Output.IgnoreWhitespace, "{ as.raw(c('10000000000000000', '1000')) }");
@@ -113,6 +118,9 @@ public class TestBuiltin_asraw extends TestBase {
         assertEval("{ as.raw(c(1L, -2L, 3L)) }");
         assertEval("{ as.raw(c(1L, -2L, NA)) }");
         assertEval("{ y <- as.raw(c(5L, 6L)); attr(y, 'someAttr') <- 'someValue'; x <- as.raw(y); x[[1]] <- as.raw(42); y }");
+
+        assertEval("{ f <- function() as.raw('aaa'); f() }");
+        assertEval("{ f1 <- function() {f<- function() as.raw('aaa'); f()}; f1() }");
     }
 
     @Test

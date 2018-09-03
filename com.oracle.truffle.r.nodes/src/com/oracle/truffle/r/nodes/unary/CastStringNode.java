@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
@@ -139,7 +138,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(replaces = "doNonAtomic", guards = "handleAsNonAtomic(list)")
-    protected RStringVector doNonAtomicGeneric(RAbstractListVector list,
+    protected RStringVector doNonAtomicGeneric(RAbstractContainer list,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
         return doNonAtomic(list, operandProfile, isLanguageProfile, list.slowPathAccess());

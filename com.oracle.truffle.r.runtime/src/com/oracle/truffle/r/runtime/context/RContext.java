@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,6 +43,7 @@ import java.util.WeakHashMap;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
+import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.Assumption;
@@ -460,7 +459,7 @@ public final class RContext {
         state.add(State.CONSTRUCTED);
 
         this.allocationReporter = env.lookup(AllocationReporter.class);
-        this.allocationReporter.addPropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
+        this.allocationReporter.addActiveListener(ALLOCATION_ACTIVATION_LISTENER);
         RDataFactory.setAllocationTracingEnabled(allocationReporter.isActive());
     }
 
@@ -610,7 +609,7 @@ public final class RContext {
 
             assert !initial || EvalThread.threadCnt.get() == 0 : "Did not close all children contexts";
 
-            this.allocationReporter.removePropertyChangeListener(ALLOCATION_ACTIVATION_LISTENER);
+            this.allocationReporter.removeActiveListener(ALLOCATION_ACTIVATION_LISTENER);
         }
     }
 
@@ -836,10 +835,10 @@ public final class RContext {
         return this.allocationReporter;
     }
 
-    private static final PropertyChangeListener ALLOCATION_ACTIVATION_LISTENER = new PropertyChangeListener() {
+    private static final Consumer<Boolean> ALLOCATION_ACTIVATION_LISTENER = new Consumer<Boolean>() {
         @Override
-        public void propertyChange(PropertyChangeEvent event) {
-            RDataFactory.setAllocationTracingEnabled(event.getNewValue() == Boolean.TRUE);
+        public void accept(Boolean active) {
+            RDataFactory.setAllocationTracingEnabled(active);
         }
     };
 
