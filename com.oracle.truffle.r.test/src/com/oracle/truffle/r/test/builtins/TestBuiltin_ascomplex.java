@@ -115,6 +115,9 @@ public class TestBuiltin_ascomplex extends TestBase {
         assertEval(Output.IgnoreErrorContext, "{ as.complex(list(NULL)) }");
         assertEval(Output.IgnoreWarningContext, "{ as.complex(list(\"foo\")) }");
         assertEval("{ as.complex.cls <- function(x) 42; as.complex(structure(c(1,2), class='cls')); }");
+
+        assertEval("{ f <- function() as.complex('aaa'); f() }");
+        assertEval("{ f1 <- function() {f<- function() as.complex('aaa'); f()}; f1() }");
     }
 
     @Test

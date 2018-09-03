@@ -107,6 +107,11 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
         vmArgs.extend(_command_class_dict[command.lower()])
     return mx.run_java(vmArgs + args, jdk=jdk, **kwargs)
 
+def run_grid_server(args, **kwargs):
+    vmArgs = mx.get_runtime_jvm_args(['GRID_DEVICE_REMOTE_SERVER'], jdk=get_default_jdk())
+    vmArgs.append('com.oracle.truffle.r.library.fastrGrid.device.remote.server.RemoteDeviceServer')
+    return mx.run_java(vmArgs + args, jdk=get_default_jdk(), **kwargs)
+
 def r_classpath(args):
     print mx.classpath('FASTR', jdk=mx.get_jdk())
 
@@ -594,6 +599,7 @@ _commands = {
     'R' : [rshell, '[options]'],
     'rscript' : [rscript, '[options]'],
     'Rscript' : [rscript, '[options]'],
+    'gridserver' : [run_grid_server, ''],
     'rtestgen' : [testgen, ''],
     'rgate' : [rgate, ''],
     'rutsimple' : [ut_simple, ['options']],

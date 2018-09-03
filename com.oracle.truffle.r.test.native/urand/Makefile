@@ -50,11 +50,12 @@ ifeq ($(FASTR_RFFI),llvm)
 all: $(C_LIB)
 
 else
-
+# suite.py requires that there always be liburand.so and liburand.sol. In LLVM mode, the 
+# build script builds both, but in NFI mode, we have to create a dummy liburand.sol.
 C_LIB_LLVM_DUMMY := $(C_LIB)l
 all: $(C_LIB) $(C_LIB_LLVM_DUMMY)
 
-$(C_LIB_LLVM_DUMMY):
+$(C_LIB_LLVM_DUMMY): $(C_LIB)
 	touch $(C_LIB_LLVM_DUMMY)
 	
 endif
@@ -65,7 +66,7 @@ $(C_LIB): $(OBJ) $(C_OBJECTS)
 $(OBJ):
 	mkdir -p $(OBJ)
 
-$(OBJ)/%.o: $(SRC)/%.c
+$(OBJ)/%.o: $(SRC)/%.c $(OBJ)
 	$(CC) $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
 
 clean:

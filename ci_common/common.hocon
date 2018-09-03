@@ -108,9 +108,33 @@ gateTestCommon : ${common} {
 gateTestLinux : ${gateTestCommon}  {
 }
 
+gateTestNoDSLCacheLinux : ${common} {
+  environment : ${common.environment} {
+    FASTR_RELEASE: "true", # release build so that we also tests recommended pkgs installation
+    FASTR_OPTION_DSLCacheSizeFactor: "0"
+  }
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: with specials,Rembedded"]
+    # to verify that we run with the desired configuration
+    ["mx", "r", "-e", "print(list(.fastr.option(as.character(quote(DSLCacheSizeFactor))),.fastr.option(as.character(quote(UseSpecials)))))"]
+  ]
+}
+
 gateTestNoSpecialsLinux : ${common}  {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
+  ]
+}
+
+gateTestNoDSLCacheNoSpecialsLinux : ${common} {
+  environment : ${common.environment} {
+    FASTR_RELEASE: "true", # release build so that we also tests recommended pkgs installation
+    FASTR_OPTION_DSLCacheSizeFactor: "0"
+  }
+  run : [
+    ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
+    # to verify that we run with the desired configuration
+    ["mx", "r", "-e", "print(list(.fastr.option(as.character(quote(DSLCacheSizeFactor))),.fastr.option(as.character(quote(UseSpecials)))))"]
   ]
 }
 

@@ -388,7 +388,7 @@ final class REngine implements Engine, Engine.Timings {
                         break;
                     }
                     sb.append(input);
-                    Source src = Source.newBuilder(sb.toString()).language(RRuntime.R_LANGUAGE_ID).name(file + "#" + startLine + "-" + lineIndex).uri(uri).build();
+                    Source src = Source.newBuilder(RRuntime.R_LANGUAGE_ID, sb.toString(), file + "#" + startLine + "-" + lineIndex).uri(uri).build();
                     lineIndex++;
                     List<RSyntaxNode> currentStmts = null;
                     try {

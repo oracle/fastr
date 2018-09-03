@@ -35,7 +35,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 /**
  * Base classes for {@link VectorAccess} implementations that are used on the fast path. For
@@ -156,8 +155,8 @@ public abstract class FastPathVectorAccess extends VectorAccess {
         @Override
         protected final int getIntImpl(AccessIterator accessIter, int index) {
             double value = getDoubleImpl(accessIter, index);
+            na.enable(value);
             if (na.checkNAorNaN(value)) {
-                na.enable(true);
                 return RRuntime.INT_NA;
             }
             if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
@@ -510,7 +509,6 @@ public abstract class FastPathVectorAccess extends VectorAccess {
     public abstract static class FastPathFromStringAccess extends FastPathVectorAccess {
 
         ConditionProfile emptyStringProfile = ConditionProfile.createBinaryProfile();
-        private NAProfile naProfile = NAProfile.create();
 
         public FastPathFromStringAccess(Object value) {
             super(value);
@@ -528,11 +526,21 @@ public abstract class FastPathVectorAccess extends VectorAccess {
                 na.enable(true);
                 return RRuntime.INT_NA;
             }
-            int value = na.convertStringToInt(str);
-            if (RRuntime.isNA(value)) {
-                na.enable(true);
+            double d = na.convertStringToDouble(str);
+            na.enable(d);
+            if (na.checkNAorNaN(d)) {
+                if (na.check(d)) {
+                    warningReportedProfile.enter();
+                    accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                    return RRuntime.INT_NA;
+                }
+                return RRuntime.INT_NA;
+            }
+            int value = na.convertDoubleToInt(d);
+            na.enable(value);
+            if (na.check(value)) {
                 warningReportedProfile.enter();
-                accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                accessIter.warning(Message.NA_INTRODUCED_COERCION_INT);
                 return RRuntime.INT_NA;
             }
             return value;
@@ -562,16 +570,20 @@ public abstract class FastPathVectorAccess extends VectorAccess {
             if (na.check(value) || emptyStringProfile.profile(value.isEmpty())) {
                 intValue = RRuntime.INT_NA;
             } else {
-                intValue = RRuntime.string2intNoCheck(value);
-                if (naProfile.isNA(intValue)) {
-                    if (!value.isEmpty()) {
+                double d = na.convertStringToDouble(value);
+                na.enable(d);
+                if (na.checkNAorNaN(d)) {
+                    if (na.check(d) && !value.isEmpty()) {
                         warningReportedProfile.enter();
-                        try {
-                            Double.parseDouble(value);
-                            accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
-                        } catch (NumberFormatException e) {
-                            accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
-                        }
+                        accessIter.warning(RError.Message.NA_INTRODUCED_COERCION);
+                    }
+                    intValue = RRuntime.INT_NA;
+                } else {
+                    intValue = na.convertDoubleToInt(d);
+                    na.enable(intValue);
+                    if (na.check(intValue) && !value.isEmpty()) {
+                        warningReportedProfile.enter();
+                        accessIter.warning(RError.Message.NA_INTRODUCED_COERCION_INT);
                     }
                 }
                 int intRawValue = RRuntime.int2rawIntValue(intValue);

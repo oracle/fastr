@@ -33,7 +33,8 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice.DeviceCloseException;
 import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
+import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
+import com.oracle.truffle.r.library.fastrGrid.device.remote.RemoteDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.FileDevUtils;
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
 import com.oracle.truffle.r.runtime.FastRConfig;
@@ -102,8 +103,17 @@ public final class GridContext {
         return (GridContext) rCtx.gridContext;
     }
 
+    @TruffleBoundary
     public static GridContext getContext() {
         return getContext(RContext.getInstance());
+    }
+
+    public static GridDevice openLocalOrRemoteDevice(String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
+        if (FastRConfig.UseRemoteGridAwtDevice) {
+            return RemoteDevice.open(filename, fileType, width, height);
+        } else {
+            return BufferedImageDevice.open(filename, fileType, width, height);
+        }
     }
 
     @TruffleBoundary
@@ -153,7 +163,7 @@ public final class GridContext {
             if (!FastRConfig.InternalGridAwtSupport) {
                 throw awtNotSupported();
             }
-            setCurrentDevice(defaultDev, WindowDevice.createWindowDevice());
+            setCurrentDevice(defaultDev, WindowDevice.createWindowDevice(false, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT));
         } else if (defaultDev.equals("svg")) {
             String filename = "Rplot%03d.svg";
             SVGDevice svgDevice = new SVGDevice(FileDevUtils.formatInitialFilename(filename), GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
@@ -200,12 +210,9 @@ public final class GridContext {
     }
 
     private void safeOpenImageDev(String filename, String formatName) {
-        if (!FastRConfig.InternalGridAwtSupport) {
-            throw awtNotSupported();
-        }
-        BufferedImageDevice dev = null;
+        GridDevice dev = null;
         try {
-            dev = BufferedImageDevice.open(FileDevUtils.formatInitialFilename(filename), formatName, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
+            dev = openLocalOrRemoteDevice(FileDevUtils.formatInitialFilename(filename), formatName, GridDevice.DEFAULT_WIDTH, GridDevice.DEFAULT_HEIGHT);
         } catch (NotSupportedImageFormatException e) {
             throw RInternalError.shouldNotReachHere("Device format " + formatName + " should be supported.");
         }

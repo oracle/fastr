@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 @ImportStatic({DSLConfig.class})
@@ -161,6 +162,8 @@ public abstract class CastRawNode extends CastBaseNode {
         return doInt(intVal);
     }
 
+    protected final NACheck naCheck = NACheck.create();
+
     @Specialization
     protected RRaw doString(String operand,
                     @Cached("create()") NAProfile naProfile,
@@ -169,13 +172,18 @@ public abstract class CastRawNode extends CastBaseNode {
         if (naProfile.isNA(operand) || emptyStringProfile.profile(operand.isEmpty())) {
             intValue = 0;
         } else {
-            intValue = RRuntime.string2intNoCheck(operand);
-            if (RRuntime.isNA(intValue)) {
-                try {
-                    Double.parseDouble(operand);
-                    warning(warningContext(), RError.Message.NA_INTRODUCED_COERCION_INT);
-                } catch (NumberFormatException e) {
-                    warning(warningContext(), RError.Message.NA_INTRODUCED_COERCION);
+            double d = naCheck.convertStringToDouble(operand);
+            naCheck.enable(d);
+            if (naCheck.checkNAorNaN(d)) {
+                if (naCheck.check(d)) {
+                    warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION);
+                }
+                intValue = RRuntime.INT_NA;
+            } else {
+                intValue = naCheck.convertDoubleToInt(d);
+                naCheck.enable(intValue);
+                if (naCheck.check(intValue)) {
+                    warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION_INT);
                 }
             }
         }
