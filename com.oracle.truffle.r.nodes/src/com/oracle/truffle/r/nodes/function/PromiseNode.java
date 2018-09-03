@@ -22,9 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -42,6 +39,8 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperN
 import com.oracle.truffle.r.nodes.function.opt.OptConstantPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptForcedEagerPromiseNode;
 import com.oracle.truffle.r.nodes.function.opt.OptVariablePromiseBaseNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -58,6 +57,9 @@ import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
 
 /**
  * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.<br/>
@@ -417,6 +419,9 @@ public abstract class PromiseNode extends RNode {
         @Children private final RNode[] varargs;
         protected final ArgumentsSignature signature;
 
+        @Child private ShareObjectNode sharedObject;
+        @Child private UnShareObjectNode unsharedObject;
+
         @Child private PromiseCheckHelperNode promiseCheckHelper = new PromiseCheckHelperNode();
         private final ConditionProfile argsValueAndNamesProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile containsVarargProfile = ConditionProfile.createBinaryProfile();
@@ -541,6 +546,8 @@ public abstract class PromiseNode extends RNode {
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
+                getShareObject().execute(argValue);
+
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     containsVarargs = true;
                     size += ((RArgsValuesAndNames) argValue).getLength();
@@ -554,6 +561,14 @@ public abstract class PromiseNode extends RNode {
                     throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
                 }
             }
+
+            for (int i = 0; i < varargs.length; i++) {
+                if (i >= evaluatedArgs.length) {
+                    break;
+                }
+                getUnshareObject().execute(evaluatedArgs[i]);
+            }
+
             if (containsVarargProfile.profile(containsVarargs)) {
                 return size;
             } else {
@@ -566,6 +581,8 @@ public abstract class PromiseNode extends RNode {
             boolean containsVarargs = false;
             for (int i = 0; i < varargs.length; i++) {
                 Object argValue = varargs[i].execute(frame);
+                getShareObject().execute(argValue);
+
                 if (argsValueAndNamesProfile.profile(argValue instanceof RArgsValuesAndNames)) {
                     containsVarargs = true;
                     size += ((RArgsValuesAndNames) argValue).getLength();
@@ -579,11 +596,35 @@ public abstract class PromiseNode extends RNode {
                     throw RInternalError.shouldNotReachHere("evaluated argument must not be null");
                 }
             }
+
+            for (int i = 0; i < varargs.length; i++) {
+                if (i >= evaluatedArgs.length) {
+                    break;
+                }
+                getUnshareObject().execute(evaluatedArgs[i]);
+            }
+
             if (containsVarargProfile.profile(containsVarargs)) {
                 return size;
             } else {
                 return -1;
             }
+        }
+
+        private ShareObjectNode getShareObject() {
+            if (sharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                sharedObject = insert(ShareObjectNode.create());
+            }
+            return sharedObject;
+        }
+
+        private UnShareObjectNode getUnshareObject() {
+            if (unsharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                unsharedObject = insert(UnShareObjectNode.create());
+            }
+            return unsharedObject;
         }
     }
 }

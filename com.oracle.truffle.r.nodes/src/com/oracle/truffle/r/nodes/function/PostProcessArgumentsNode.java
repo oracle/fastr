@@ -87,7 +87,7 @@ public final class PostProcessArgumentsNode extends RNode {
                         throw RInternalError.shouldNotReachHere();
                     }
                     if (isNonNull.profile(s != null)) {
-                        if (isRefCountUpdateable.profile(!s.isSharedPermanent())) {
+                        if (isRefCountUpdateable.profile(!(s.isSharedPermanent()) && !(s.isTemporary()))) {
                             s.decRefCount();
                         }
                     }

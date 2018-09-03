@@ -766,4 +766,10 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ xor(0:2, 2:4) }");
         assertEval("{ xor(0:2, 2:7) }");
     }
+
+    @Test
+    public void testArgSideEffect() {
+        assertEval("{ a <- c(1, 2, 4); foo <- function() { a[[1]] <<- 42; 33; }; a + foo() }");
+
+    }
 }

@@ -265,4 +265,10 @@ public class TestBuiltin_rep extends TestBase {
 
         assertEval("rep(NULL)");
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval(Ignored.ReferenceError, "{ x <- c(1,2,3); f <- function() { x[1] <<- 10; 2 }; rep(x, f()) }");
+
+    }
 }

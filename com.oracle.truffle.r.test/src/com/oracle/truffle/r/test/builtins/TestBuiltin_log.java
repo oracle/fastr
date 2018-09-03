@@ -195,4 +195,9 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ y <- array(1:6, c(2,3), list(y=c('y1','y2'), x=c('x1','x2','x3'))); r <- log(y); r; }");
     }
 
+    @Test
+    public void testSideEffect() {
+        assertEval("{ a <- c(1, 2, 4); foo <- function() { a[[1]] <<- 42; 33; }; log(a, foo()) }");
+    }
+
 }
