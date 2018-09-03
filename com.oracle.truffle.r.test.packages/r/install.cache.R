@@ -112,8 +112,15 @@ pkg.cache.unlock <- function(pkg.cache.env, version.dir) {
     TRUE
 }
 
+
 is.fastr <- function() {
     length(grep('FastR', R.Version()$version.string))
+}
+
+get.vm <- function() if (is.fastr()) "fastr" else "gnur"
+
+pkg.cache.is.enabled <- function(pkg.cache.env) {
+    pkg.cache.env$enabled && (!is.character(pkg.cache.env$vm) || grepl(get.vm(), pkg.cache.env$vm))
 }
 
 # A simple log function; to be replaced by a user of this file.
@@ -254,7 +261,7 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
 
 pkg.cache.check <- function(pkg.cache.env) {
     # check if caching is enabled
-    if (!pkg.cache.env$enabled) {
+    if (!pkg.cache.is.enabled(pkg.cache.env)) {
         return (NULL)
     }
 
@@ -496,7 +503,7 @@ transitive.dependencies <- function(pkg, lib, pl = as.data.frame(available.packa
 # Fetches the package from the cache or installs it. This is also done for all transitive dependencies.
 pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.install) {
     tryCatch({
-        if (pkg.cache.env$enabled) {
+        if (pkg.cache.is.enabled(pkg.cache.env)) {
             # determine available packages
             pkg.list <- as.data.frame(available.packages(contriburl=contriburl), stringAsFactors=FALSE)
 
