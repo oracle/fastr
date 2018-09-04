@@ -1048,7 +1048,7 @@ cat.args <- function() {
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
 		cat("testdir.path", testdir, "\n")
-		cat("pkg.cache:", pkg.cache$enabled, "\n")
+		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "\n")
 	}
 }
 
