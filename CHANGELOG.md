@@ -1,3 +1,37 @@
+# 1.0 RC 7
+
+New features
+
+* AWT based graphics devices (jpg, png, X11, ...) supported in native image
+
+Added missing R builtins and C API
+
+Bugfixes
+
+# 1.0 RC 6
+
+New features
+
+* Support for reading/writing graphical parameters via par
+  * in preparation for full graphics package support
+
+Added missing R builtins and C API
+
+* 'get' builtin supports the 'envir' argument
+* 'inspect' internal
+* SETLEVELS
+* Rf_isObject
+* SET_ENCLOS
+* R_nchar
+* R_forceAndCall
+
+Bugfixes
+
+* support for formulas that include '...'
+* updating attributes of NULL produces empty list with given attributes
+* treat CR/LF in readLine like GNU-R
+* fix in La_chol (incorrect pivot attribute in return)
+* various fixes in vector coercion code to produce GNU-R compatible warnings and errors
 
 # 1.0 RC 5
 
@@ -7,7 +41,7 @@ New features
   * allows to pass additional arguments for the underlying configure script
   * by default uses the following arguments: --with-x=no --with-aqua=no --enable-memory-profiling FFLAGS=-O2
 
-Updates in interop:
+Updates in interop
 
 * R code evaluated via interop never returns a Java primitive type, but always a vector
 * Vectors of size 1 that do not contain NA can be unboxed
@@ -16,7 +50,7 @@ Updates in interop:
   * if the value is `NA`, a special value that responds to `IS_NULL` with `true`. If this value is passed back to R it behaves as `NA` again
 * Note that sending the READ message to a list, environment, or other heterogenous data structure never gives atomic Java type but a primitive R vector
 
-Bug fixes:
+Bug fixes
 
 * Various smaller issues discovered during testing of CRAN packages.
 
