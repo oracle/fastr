@@ -76,8 +76,18 @@ public class TestInterop extends TestBase {
                         "x<-c(1);cat(x)");
         assertEvalFastR("tryCatch(eval.polyglot(path=\"/a/b.R\"),  error = function(e) e$message)", "cat('[1] \"Error reading file: /a/b.R\"\\n')");
 
-        assertEvalFastR("eval.polyglot()", "cat('Error in eval.polyglot() : invalid \\'source\\' or \\'path\\' argument\\n')");
-        assertEvalFastR("eval.polyglot(,'abc',)", "cat('Error in eval.polyglot(, \"abc\", ) : invalid languageId argument\\n')");
+        assertEvalFastR("eval.polyglot()", "cat('Error in eval.polyglot() :\n  Wrong arguments combination, please refer to ?eval.polyglot for more details.\\n')");
+        assertEvalFastR("eval.polyglot(,'abc',)", "cat('Error in eval.polyglot(, \"abc\", ) :\n  No language id provided, please refer to ?eval.polyglot for more details.\\n')");
+        assertEvalFastR("eval.polyglot('R', 'as.character(123)')", "as.character(123)");
+        assertEvalFastR("eval.polyglot('someLanguage')", "cat('Error in eval.polyglot(\"someLanguage\") :\n  No code or path provided, please refer to ?eval.polyglot for more details.\\n')");
+        assertEvalFastR("eval.polyglot('js', 'console.log(42)', 'file.js')",
+                        "cat('Error in eval.polyglot(\"js\", \"console.log(42)\", \"file.js\") :\n  Wrong arguments combination, please refer to ?eval.polyglot for more details.\\n')");
+        assertEvalFastR("f<-paste0(tempfile(),'.nonLanguageExtension'); file.create(f); tryCatch(eval.polyglot(path=f), finally=file.remove(f))",
+                        "cat('Error in eval.polyglot(path = f) :\n  Could not find language corresponding to extension \\'nonLanguageExtension\\', you can specify the language id explicitly, please refer to ?eval.polyglot for more details.\\n')");
+        assertEvalFastR("eval.polyglot('nonExistentLanguage', 'code')",
+                        "cat('Error in eval.polyglot(\"nonExistentLanguage\", \"code\") :\n  Language with id \\'nonExistentLanguage\\' is not available. Did you start R with --polyglot?\\n')");
+        assertEvalFastR("eval.polyglot(code='')", "cat('Error in eval.polyglot(code = \"\") :\n  No language id provided, please refer to ?eval.polyglot for more details.\\n')");
+        assertEvalFastR("eval.polyglot(languageId='js')", "cat('Error in eval.polyglot(languageId = \"js\") :\n  No code or path provided, please refer to ?eval.polyglot for more details.\\n')");
     }
 
     @Test
