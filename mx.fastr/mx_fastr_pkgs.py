@@ -65,12 +65,15 @@ def _gnur_include_path():
         gnur_include_p = join(mx_fastr._gnur_path(), "include")
     return gnur_include_p
 
+
 def _fastr_include_path():
     return join(_fastr_suite_dir(), 'include')
+
 
 def _graalvm_rscript():
     assert graalvm is not None
     return join(graalvm, 'bin', 'Rscript')
+
 
 def _check_graalvm():
     if os.environ.has_key('FASTR_GRAALVM'):
@@ -80,16 +83,22 @@ def _check_graalvm():
     else:
         return None
 
+
+def _get_r_version(rscript_binary):
+    args = ["--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], '\\n', sep='')"]
+    return subprocess.check_output([rscript_binary] + args, stderr=subprocess.STDOUT).rstrip()
+
+
 def _graalvm():
     global graalvm
     if graalvm is None:
         graalvm = _check_graalvm()
         if graalvm:
             # version check
-            gnur_version = _mx_gnur().extensions.r_version().split('-')[1]
-            graalvm_version = subprocess.check_output([_graalvm_rscript(), '--version'], stderr=subprocess.STDOUT).rstrip()
-            if not gnur_version in graalvm_version:
-                mx.abort('graalvm R version does not match gnur suite')
+            gnur_version = _get_r_version(_gnur_rscript())
+            graalvm_version = _get_r_version(_graalvm_rscript())
+            if gnur_version != graalvm_version:
+                mx.abort('graalvm R version does not match gnur suite: %s (GnuR) vs. %s (FastR)' % (gnur_version, graalvm_version))
     return graalvm
 
 def _create_libinstall(rvm, test_installed):
