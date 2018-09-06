@@ -30,6 +30,8 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.object.Property;
+import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -72,6 +74,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Deparsing R objects.
@@ -88,7 +91,8 @@ public class RDeparse {
     public static final int S_COMPAT = 128;
     /* common combinations of the above */
     public static final int SIMPLEDEPARSE = 0;
-    public static final int DEFAULTDEPARSE = 65; /* KEEPINTEGER | KEEPNA, used for calls */
+    public static final int DEFAULTDEPARSE = 1089; /* KEEPINTEGER | KEEPNA | NICE_NAMES, used for calls */
+    public static final int NICE_NAMES = 1024;
 
     public static final int MIN_CUTOFF = 20;
     public static final int MAX_CUTOFF = 500;
@@ -309,6 +313,10 @@ public class RDeparse {
 
         private boolean showAttributes() {
             return (opts & SHOWATTRIBUTES) != 0;
+        }
+
+        private boolean niceNames() {
+            return (opts & NICE_NAMES) != 0;
         }
 
         boolean quoteExpressions() {
@@ -709,14 +717,14 @@ public class RDeparse {
                 append("expression(").appendListContents((RExpression) value).append(')');
             } else if (value instanceof RAbstractListVector) {
                 RAbstractListVector obj = (RAbstractListVector) value;
-                try (C c = withAttributes(obj)) {
-                    append("list(").appendListContents(obj).append(')');
-                }
+                    try (C c = withAttributes(obj)) {
+                        append("list(").appendListContents(obj).append(')');
+                    }
             } else if (value instanceof RAbstractAtomicVector) {
                 RAbstractVector obj = (RAbstractAtomicVector) value;
-                try (C c = withAttributes(obj)) {
-                    appendVector((RAbstractAtomicVector) value);
-                }
+                    try (C c = withAttributes(obj)) {
+                        appendVector((RAbstractAtomicVector) value);
+                    }
             } else if (value instanceof RNull) {
                 append("NULL");
             } else if (value instanceof RFunction) {
@@ -1024,11 +1032,46 @@ public class RDeparse {
             }
         }
 
+        public boolean usableNiceNames (Object obj){
+            Object vec = RRuntime.asAbstractVector(obj);
+                if (vec instanceof RAttributable) {
+                    DynamicObject attr = ((RAttributable) vec).getAttributes();
+                    if (attr != null) {
+                        Shape shape = attr.getShape();
+                        List<Property> properties = shape.getPropertyList();
+                        for (int i = 0; i < properties.size(); i++) {
+                            Property p = properties.get(i);
+                            String name = (String) p.getKey();
+                            if (vec instanceof RAbstractAtomicVector) {
+                                if (name.equalsIgnoreCase("recursive") || name.equalsIgnoreCase("use.names") || RRuntime.isNA(name)) {
+                                    return false;
+                                }
+                            } else {
+                                if (RRuntime.isNA(name)) {
+                                    return false;
+                                }
+                            }
+                        }
+                    }
+                }
+
+            return false;
+        }
+
+
         private C withAttributes(Object obj) {
-            if (showAttributes() && hasAttributes(obj)) {
+
+            // Need to setup nicenames
+            boolean names = false;
+
+            if (true ) {
+
+            } else if (showAttributes() && hasAttributes(obj)) {
+                    DynamicObject attrs = ((RAttributable) obj).getAttributes();
+
+
                 append("structure(");
                 return () -> {
-                    DynamicObject attrs = ((RAttributable) obj).getAttributes();
                     assert attrs != null;
                     Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
                     while (iter.hasNext()) {
@@ -1073,9 +1116,14 @@ public class RDeparse {
                     append(')');
                 };
             } else {
+                if (niceNames()) {
+                    names = true;
+                }
                 return () -> {
                 };
             }
+            return () -> {
+            };
         }
     }
 
