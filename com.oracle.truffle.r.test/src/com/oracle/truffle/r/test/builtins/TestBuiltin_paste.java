@@ -112,4 +112,13 @@ public class TestBuiltin_paste extends TestBase {
         assertEval("{ as.character.myc <- function(x) '42'; val <- 3.14; class(val) <- 'myc'; paste(val, 'world') }");
         assertEval("{ assign('as.character.myc', function(x) '42', envir=.__S3MethodsTable__.); val <- 3.14; class(val) <- 'myc'; res <- paste(val, 'world'); rm('as.character.myc', envir=.__S3MethodsTable__.); res }");
     }
+
+    public void testStringSequence() {
+        assertEval("{ paste(\"a\", 1, TRUE, 1:4, 1.2) }");
+        assertEval("{ paste(\"a\", 1, TRUE, 1:4) }");
+        assertEval("{ paste(1:4, 1.2) }");
+
+        // ISOdate utilizes paste
+        assertEval("{ ISOdate(2010, 01, 01, 1:10) }");
+    }
 }

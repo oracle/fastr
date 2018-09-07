@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -106,7 +107,11 @@ public final class AttributesAccessNodes {
             assert names.getLength() == list.getLength();
             for (int i = list.getLength() - 1; i >= 0; i--) {
                 Object item = list.getDataAt(i);
-                RSymbol symbol = RDataFactory.createSymbol(names.getDataAt(i));
+                String name = names.getDataAt(i);
+                if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
+                    item = GetRowNamesAttributeNode.ensureRowNamesCompactFormat(item);
+                }
+                RSymbol symbol = RDataFactory.createSymbol(name);
                 result = RDataFactory.createPairList(item, result, symbol);
             }
             return result;
@@ -186,6 +191,9 @@ public final class AttributesAccessNodes {
                 copyRegAttributes = insert(CopyOfRegAttributesNode.create());
             }
             copyRegAttributes.execute(x, y);
+            if (x.isS4()) {
+                y.setS4();
+            }
             return null;
         }
 

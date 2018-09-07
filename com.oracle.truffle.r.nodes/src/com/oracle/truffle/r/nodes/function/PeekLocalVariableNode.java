@@ -30,11 +30,11 @@ import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
-import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RAttributableNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-public final class PeekLocalVariableNode extends RNode implements RSyntaxNode, RSyntaxLookup {
+public final class PeekLocalVariableNode extends RAttributableNode implements RSyntaxNode, RSyntaxLookup {
 
     @Child private LocalReadVariableNode read;
     @Child private SetVisibilityNode visibility;

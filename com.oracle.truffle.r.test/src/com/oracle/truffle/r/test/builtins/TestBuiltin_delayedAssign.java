@@ -47,4 +47,10 @@ public class TestBuiltin_delayedAssign extends TestBase {
         assertEval("{ h <- new.env(parent=emptyenv()) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
         assertEval("{ h <- new.env(parent=emptyenv()) ; assign(\"x\", 1, h) ; delayedAssign(\"x\", y, h, h) ; assign(\"y\", 2, h) ; get(\"x\", h) }");
     }
+
+    @Test
+    public void testParseIndirectlyInvokedInternal() {
+        assertEval("f <- function(x, value, eval.env = parent.frame(1), assign.env = parent.frame(1)) { (get(\".Internal\", baseenv()))(delayedAssign(x, value, eval.env, assign.env))  }; f(\"aaa\",1); aaa");
+    }
+
 }

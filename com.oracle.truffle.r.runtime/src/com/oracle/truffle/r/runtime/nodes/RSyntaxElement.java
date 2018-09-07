@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RDeparse;
 
@@ -44,4 +45,7 @@ public interface RSyntaxElement {
 
     void setSourceSection(SourceSection source);
 
+    default DynamicObject getAttributes() {
+        return null;
+    }
 }

@@ -85,7 +85,7 @@ final class FunctionPrinter extends AbstractValuePrinter<RFunction> {
                     source = sourceSection.getCharacters().toString();
                 }
             }
-            if (source == null) {
+            if (source == null || "".equals(source)) {
                 source = RDeparse.deparse(operand);
             }
             REnvironment env = RArguments.getEnvironment(operand.getEnclosingFrame());
