@@ -77,7 +77,7 @@ public abstract class CastTypeNode extends RBaseNode {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(guards = {"isForeignVector(value, hasSize)", "typeof.execute(value) != type",
+    @Specialization(guards = {"isForeignArray(value, hasSize)", "typeof.execute(value) != type",
                     "type == cachedType", "!isNull(cast)"}, limit = "NUMBER_OF_TYPES")
     protected static Object doCast(TruffleObject value, RType type,
                     @Cached("type") RType cachedType,

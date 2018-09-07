@@ -23,20 +23,17 @@
 package com.oracle.truffle.r.nodes.unary;
 
 import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isJavaIterable;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -251,40 +248,11 @@ public abstract class PrecedenceNode extends RBaseNode {
         return precedenceNode.executeInteger(args.getArgument(0), recursive);
     }
 
-    @Specialization(guards = {"isForeignObject(to)", "!isJavaIterable(to)", "!isForeignArray(to, hasSize)"})
+    @Specialization(guards = {"isForeignObject(to)", "!isForeignArray(to, hasSize)"})
     @SuppressWarnings("unused")
     protected int doForeignObject(TruffleObject to, boolean recursive,
                     @Cached("HAS_SIZE.createNode()") Node hasSize) {
         return LIST_PRECEDENCE;
-    }
-
-    @Specialization(guards = {"isJavaIterable(obj)", "!isForeignArray(obj, hasSize)"})
-    protected int doJavaIterable(TruffleObject obj, boolean recursive,
-                    @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("READ.createNode()") Node read,
-                    @Cached("EXECUTE.createNode()") Node execute,
-                    @Cached("createRecursive()") PrecedenceNode precedenceNode,
-                    @Cached("create()") Foreign2R foreign2R) {
-        int precedence = -1;
-        try {
-            TruffleObject itFunction = (TruffleObject) ForeignAccess.sendRead(read, obj, "iterator");
-            TruffleObject it = (TruffleObject) ForeignAccess.sendExecute(execute, itFunction);
-            TruffleObject hasNextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "hasNext");
-
-            while ((boolean) ForeignAccess.sendExecute(execute, hasNextFunction)) {
-                TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
-                Object element = ForeignAccess.sendExecute(execute, nextFunction);
-                element = foreign2R.execute(element);
-                if (!recursive && (isJavaIterable(element) || isForeignArray(element, hasSize))) {
-                    return LIST_PRECEDENCE;
-                } else {
-                    precedence = Math.max(precedence, precedenceNode.executeInteger(element, recursive));
-                }
-            }
-        } catch (ArityException | UnsupportedTypeException | UnsupportedMessageException | UnknownIdentifierException ex) {
-            throw error(RError.Message.GENERIC, "error while accessing java iterable: " + ex.getMessage());
-        }
-        return precedence;
     }
 
     @Specialization(guards = {"isForeignArray(obj, hasSize)"})
@@ -309,7 +277,7 @@ public abstract class PrecedenceNode extends RBaseNode {
             for (int i = 0; i < size; i++) {
                 Object element = ForeignAccess.sendRead(read, obj, i);
                 element = foreign2R.execute(element);
-                if (!recursive && (isForeignArray(element, hasSize) || isJavaIterable(element))) {
+                if (!recursive && (isForeignArray(element, hasSize))) {
                     return LIST_PRECEDENCE;
                 } else {
                     precedence = Math.max(precedence, precedenceNode.executeInteger(element, recursive));

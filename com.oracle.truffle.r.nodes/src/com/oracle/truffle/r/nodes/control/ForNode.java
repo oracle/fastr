@@ -111,23 +111,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         return iterate(frame, range, indexName, rangeName, lengthName, writeIndexNode, writeRangeNode, writeLengthNode, length, l);
     }
 
-    @Specialization(guards = "isJavaIterable(range)")
-    protected Object iterateForeignArray(VirtualFrame frame, Object range,
-                    @Cached("createIteratorName()") @SuppressWarnings("unused") String iteratorName,
-                    @Cached("createWriteVariable(iteratorName)") WriteVariableNode writeIteratorNode,
-                    @Cached("createForIterableLoopNode(iteratorName)") LoopNode l,
-                    @Cached("READ.createNode()") Node readNode,
-                    @Cached("EXECUTE.createNode()") Node executeNode) {
-
-        TruffleObject iterator = getIterator((TruffleObject) range, readNode, executeNode);
-        writeIteratorNode.execute(frame, iterator);
-
-        l.executeLoop(frame);
-
-        return RNull.instance;
-    }
-
-    @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, hasSizeNode)", "!isJavaIterable(range)"})
+    @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, hasSizeNode)"})
     protected Object iterateKeys(VirtualFrame frame, Object range,
                     @Cached("createIndexName()") @SuppressWarnings("unused") String indexName,
                     @Cached("createPositionName()") @SuppressWarnings("unused") String positionName,
@@ -202,16 +186,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     private static LoopNode createLoopNode(AbstractRepeatingNode n) {
         return Truffle.getRuntime().createLoopNode(n);
-    }
-
-    private static TruffleObject getIterator(TruffleObject obj, Node readNode, Node executeNode) {
-        assert ForeignArray2R.isJavaIterable(obj);
-        try {
-            TruffleObject itFun = (TruffleObject) ForeignAccess.sendRead(readNode, obj, "iterator");
-            return (TruffleObject) ForeignAccess.sendExecute(executeNode, itFun);
-        } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException ex) {
-            throw RInternalError.shouldNotReachHere(ex, "is java.lang.Iterable but could not access the iterator() function: " + obj);
-        }
     }
 
     private static int getKeysLength(TruffleObject keys, Node sizeNode) {
