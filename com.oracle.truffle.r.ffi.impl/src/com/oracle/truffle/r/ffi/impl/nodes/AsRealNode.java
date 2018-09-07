@@ -49,7 +49,7 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected double asReal(int obj) {
-        return obj;
+        return RRuntime.isNA(obj) ? RRuntime.DOUBLE_NA : obj;
     }
 
     @Specialization
@@ -65,7 +65,8 @@ public abstract class AsRealNode extends FFIUpCallNode.Arg1 {
         if (obj.getLength() == 0) {
             return RRuntime.DOUBLE_NA;
         }
-        return obj.getDataAt(0);
+        int result = obj.getDataAt(0);
+        return RRuntime.isNA(result) ? RRuntime.DOUBLE_NA : result;
     }
 
     @Specialization(guards = "obj.getLength() > 0")

@@ -62,6 +62,18 @@ public class SocketConnections {
         }
 
         @Override
+        public boolean canRead() {
+            // socket connections can always be read
+            return true;
+        }
+
+        @Override
+        public boolean canWrite() {
+            // socket connections can always be written
+            return true;
+        }
+
+        @Override
         @TruffleBoundary
         protected void createDelegateConnection() throws IOException {
             DelegateRConnection delegate;

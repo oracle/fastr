@@ -240,6 +240,10 @@ public abstract class CastIntegerNode extends CastIntegerBaseNode {
         return CastIntegerNodeGen.create(false, false, false, false, false);
     }
 
+    public static CastIntegerNode createNonPreserving(ErrorContext warningContext) {
+        return CastIntegerNodeGen.create(false, false, false, false, false, warningContext);
+    }
+
     protected boolean useClosure(RAbstractAtomicVector x) {
         return useClosure() && !isForeignWrapper(x) && !(x instanceof RAbstractIntVector) && !(x instanceof RAbstractStringVector || x instanceof RAbstractComplexVector);
     }

@@ -83,8 +83,8 @@ public class RawConnections {
         }
 
         @Override
-        public String getSummaryText() {
-            return "binary";
+        public boolean isTextMode() {
+            return false;
         }
 
         public byte[] getValue() {

@@ -510,7 +510,7 @@ public abstract class ConnectionFunctions {
             data[0] = baseCon.getSummaryDescription();
             data[1] = baseCon.getConnectionClass();
             data[2] = baseCon.getOpenMode().summaryString();
-            data[3] = baseCon.getSummaryText();
+            data[3] = baseCon.isTextMode() ? "text" : "binary";
             data[4] = baseCon.isOpen() ? "opened" : "closed";
             data[5] = baseCon.canRead() ? "yes" : "no";
             data[6] = baseCon.canWrite() ? "yes" : "no";
@@ -858,7 +858,7 @@ public abstract class ConnectionFunctions {
             RVector<?> result;
             BaseRConnection connection = RConnection.fromIndex(con);
             try (RConnection openConn = connection.forceOpen("rb")) {
-                if (getBaseConnection(openConn).getOpenMode().isText()) {
+                if (getBaseConnection(openConn).isTextMode()) {
                     throw error(RError.Message.ONLY_READ_BINARY_CONNECTION);
                 }
                 switch (what) {
@@ -899,15 +899,23 @@ public abstract class ConnectionFunctions {
             return result;
         }
 
-        private static RIntVector readInteger(RConnection con, int n, int size, boolean swap, boolean signed) throws IOException {
-            ByteBuffer buffer = ByteBuffer.allocate(n * size);
-            int bytesRead = con.readBin(buffer);
-            if (bytesRead == 0) {
-                return RDataFactory.createEmptyIntVector();
-            }
+        private static ByteBuffer fillBuffer(RConnection con, boolean swap, int bytes) throws IOException {
+            ByteBuffer buffer = ByteBuffer.allocate(bytes);
+            // read at least one element
+            do {
+                int bytesRead = con.readBin(buffer);
+                if (bytesRead == 0) {
+                    break;
+                }
+            } while (buffer.hasRemaining());
             buffer.flip();
             checkOrder(buffer, swap);
-            int nInts = bytesRead / size;
+            return buffer;
+        }
+
+        private static RIntVector readInteger(RConnection con, int n, int size, boolean swap, boolean signed) throws IOException {
+            ByteBuffer buffer = fillBuffer(con, swap, n * size);
+            int nInts = buffer.limit() / size;
             int[] data = new int[nInts];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             if (size == 4) {
@@ -928,21 +936,17 @@ public abstract class ConnectionFunctions {
             } else if (size == 2) {
                 ShortBuffer shortBuffer = buffer.asShortBuffer();
                 for (int i = 0; i < nInts; i++) {
-                    data[i] = shortBuffer.get();
+                    short s = shortBuffer.get();
+                    data[i] = signed ? s : s & 0xFFFF;
                 }
             }
             return RDataFactory.createIntVector(data, complete);
         }
 
         private static RDoubleVector readDouble(RConnection con, int n, boolean swap) throws IOException {
-            ByteBuffer buffer = ByteBuffer.allocate(n * 8);
-            int bytesRead = con.readBin(buffer);
-            if (bytesRead == 0) {
-                return RDataFactory.createEmptyDoubleVector();
-            }
-            buffer.flip();
-            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
-            int nDoubles = bytesRead / 8;
+            ByteBuffer buffer = fillBuffer(con, swap, n * 8);
+            DoubleBuffer doubleBuffer = buffer.asDoubleBuffer();
+            int nDoubles = buffer.limit() / 8;
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             double[] data = new double[nDoubles];
             for (int i = 0; i < nDoubles; i++) {
@@ -956,14 +960,9 @@ public abstract class ConnectionFunctions {
         }
 
         private static RComplexVector readComplex(RConnection con, int n, boolean swap) throws IOException {
-            ByteBuffer buffer = ByteBuffer.allocate(n * 16);
-            int bytesRead = con.readBin(buffer);
-            if (bytesRead == 0) {
-                return RDataFactory.createEmptyComplexVector();
-            }
-            buffer.flip();
-            DoubleBuffer doubleBuffer = checkOrder(buffer, swap).asDoubleBuffer();
-            int nComplex = bytesRead / 16;
+            ByteBuffer buffer = fillBuffer(con, swap, n * 16);
+            DoubleBuffer doubleBuffer = buffer.asDoubleBuffer();
+            int nComplex = buffer.limit() / 16;
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             double[] data = new double[nComplex * 2];
             for (int i = 0; i < nComplex; i++) {
@@ -1017,13 +1016,8 @@ public abstract class ConnectionFunctions {
         }
 
         private static RRawVector readRaw(RConnection con, int n) throws IOException {
-            ByteBuffer buffer = ByteBuffer.allocate(n);
-            int bytesRead = con.readBin(buffer);
-            if (bytesRead == 0) {
-                return RDataFactory.createEmptyRawVector();
-            }
-            buffer.flip();
-            byte[] data = new byte[bytesRead];
+            ByteBuffer buffer = fillBuffer(con, false, n);
+            byte[] data = new byte[buffer.limit()];
             buffer.get(data);
             return RDataFactory.createRawVector(data);
         }
@@ -1036,21 +1030,18 @@ public abstract class ConnectionFunctions {
          */
 
         private static RLogicalVector readLogical(RConnection con, int n, boolean swap) throws IOException {
-            ByteBuffer buffer = ByteBuffer.allocate(n * 4);
-            int bytesRead = con.readBin(buffer);
-            if (bytesRead == 0) {
-                return RDataFactory.createEmptyLogicalVector();
-            }
-            buffer.flip();
-            IntBuffer intBuffer = checkOrder(buffer, swap).asIntBuffer();
-            int nInts = bytesRead / 4;
+            ByteBuffer buffer = fillBuffer(con, swap, n * 4);
+            IntBuffer intBuffer = buffer.asIntBuffer();
+            int nInts = buffer.limit() / 4;
             byte[] data = new byte[nInts];
             boolean complete = RDataFactory.COMPLETE_VECTOR;
             for (int i = 0; i < nInts; i++) {
                 int value = intBuffer.get();
-                data[i] = value == RRuntime.INT_NA ? RRuntime.LOGICAL_NA : value == 1 ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
-                if (value == RRuntime.INT_NA) {
+                if (RRuntime.isNA(value)) {
+                    data[i] = RRuntime.LOGICAL_NA;
                     complete = RDataFactory.INCOMPLETE_VECTOR;
+                } else {
+                    data[i] = value == 1 ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
                 }
             }
             return RDataFactory.createLogicalVector(data, complete);
