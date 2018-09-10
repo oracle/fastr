@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -205,7 +206,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                  * but GnuR does not appear to do tilde expansion
                  */
                 fileName = Utils.tildeExpand(fileName);
-                File fnf = new File(fileName);
+                TruffleFile fnf = RContext.getInstance().getEnv().getTruffleFile(fileName);
                 String path = null;
                 if (!fnf.isAbsolute()) {
                     String wd = RRuntime.asString(srcFileEnv.get("wd"));

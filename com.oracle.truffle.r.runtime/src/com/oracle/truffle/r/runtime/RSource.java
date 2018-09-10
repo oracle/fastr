@@ -110,8 +110,8 @@ public class RSource {
      * system path {@code path}. The simulates the behavior of {@link #fromFile}.
      */
     public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
-        File file = new File(path).getAbsoluteFile();
-        URI uri = new URI("file://" + file.getAbsolutePath());
+        TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(path).getAbsoluteFile();
+        URI uri = new URI("file://" + file.getPath());
         return Source.newBuilder(RRuntime.R_LANGUAGE_ID, text, path).content(text).uri(uri).internal(internal).build();
     }
 

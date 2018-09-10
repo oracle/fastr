@@ -27,9 +27,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElemen
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Date;
@@ -38,16 +35,21 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import java.io.OutputStream;
+import java.nio.file.attribute.FileTime;
 
 public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
 
@@ -97,19 +99,21 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
             };
         }
 
-        File targetDir = new File(exdir);
+        Env env = RContext.getInstance().getEnv();
+        TruffleFile targetDir = env.getTruffleFile(exdir);
         if (!targetDir.exists() || !targetDir.isDirectory()) {
             throw error(Message.GENERIC, "invalid target directory");
         }
-        try (ZipInputStream stream = new ZipInputStream(new FileInputStream(Utils.tildeExpand(zipfile)))) {
+        TruffleFile tZipFile = env.getTruffleFile(Utils.tildeExpand(zipfile));
+        try (ZipInputStream stream = new ZipInputStream(tZipFile.newInputStream())) {
             ZipEntry entry;
             ArrayList<String> extracted = new ArrayList<>();
             byte[] buffer = new byte[2048];
             while ((entry = stream.getNextEntry()) != null) {
                 if (filter.test(entry.getName())) {
-                    File target = new File(targetDir, junkpaths ? new File(entry.getName()).getName() : entry.getName());
+                    TruffleFile target = targetDir.resolve(junkpaths ? env.getTruffleFile(entry.getName()).getName() : entry.getName());
                     if (!target.exists() || overwrite) {
-                        try (FileOutputStream output = new FileOutputStream(target)) {
+                        try (OutputStream output = target.newOutputStream()) {
                             extracted.add(target.getPath());
                             int length;
                             while ((length = stream.read(buffer)) > 0) {
@@ -117,7 +121,7 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
                             }
                         }
                         if (setTimes) {
-                            target.setLastModified(entry.getTime());
+                            target.setLastModifiedTime(FileTime.fromMillis(entry.getTime()));
                         }
                     }
                 }
@@ -140,7 +144,7 @@ public abstract class Unzip extends RExternalBuiltinNode.Arg7 {
 
     @SuppressWarnings("deprecation")
     private Object list(String zipfile) {
-        try (ZipInputStream stream = new ZipInputStream(new FileInputStream(Utils.tildeExpand(zipfile)))) {
+        try (ZipInputStream stream = new ZipInputStream(RContext.getInstance().getEnv().getTruffleFile(Utils.tildeExpand(zipfile)).newInputStream())) {
             ArrayList<ZipEntry> entryList = new ArrayList<>();
             ZipEntry entry;
             while ((entry = stream.getNextEntry()) != null) {

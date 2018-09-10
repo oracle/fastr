@@ -24,7 +24,6 @@ package com.oracle.truffle.r.runtime;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -34,6 +33,7 @@ import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
@@ -59,10 +59,10 @@ public class TempPathName implements RContext.ContextState {
             return this;
         }
         String startingTempDir = Utils.getUserTempDir();
-        Path startingTempDirPath = FileSystems.getDefault().getPath(startingTempDir, "Rtmp");
+        TruffleFile startingTempDirPath = context.getEnv().getTruffleFile(startingTempDir).resolve("Rtmp");
         // ensure absolute, to avoid problems with R code does a setwd
         if (!startingTempDirPath.isAbsolute()) {
-            startingTempDirPath = startingTempDirPath.toAbsolutePath();
+            startingTempDirPath = startingTempDirPath.getAbsoluteFile();
         }
         String t = (String) BaseRFFI.MkdtempRootNode.create().getCallTarget().call(startingTempDirPath.toString() + "XXXXXX");
         if (t != null) {
@@ -106,7 +106,7 @@ public class TempPathName implements RContext.ContextState {
                 sb.append(fileExt);
             }
             String path = sb.toString();
-            if (!new File(path).exists()) {
+            if (!RContext.getInstance().getEnv().getTruffleFile(path).exists()) {
                 return path;
             }
         }

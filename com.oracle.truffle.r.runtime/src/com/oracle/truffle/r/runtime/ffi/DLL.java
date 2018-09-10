@@ -19,7 +19,6 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -32,6 +31,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -533,7 +533,7 @@ public class DLL {
     }
 
     public static String libName(String absPath) {
-        File file = new File(absPath);
+        TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(absPath);
         String name = file.getName();
         int dx = name.lastIndexOf('.');
         if (dx > 0) {

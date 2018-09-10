@@ -36,30 +36,24 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.PathMatcher;
-import java.nio.file.Paths;
+import java.nio.file.NoSuchFileException;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.StandardCopyOption;
+import java.nio.file.StandardOpenOption;
 import java.nio.file.attribute.BasicFileAttributes;
-import java.nio.file.attribute.PosixFileAttributes;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.function.BiFunction;
-import java.util.function.BiPredicate;
+import java.util.function.Predicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.regex.PatternSyntaxException;
@@ -67,6 +61,8 @@ import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -91,6 +87,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import java.nio.file.FileVisitor;
 
 // Much of this code was influences/transcribed from GnuR src/main/platform.c
 
@@ -113,15 +110,15 @@ public class FileFunctions {
         protected Object fileAccess(RAbstractStringVector names, int mode) {
             int[] data = new int[names.getLength()];
             for (int i = 0; i < data.length; i++) {
-                File file = new File(Utils.tildeExpand(names.getDataAt(i)));
+                TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(Utils.tildeExpand(names.getDataAt(i)));
                 if (file.exists()) {
-                    if ((mode & EXECUTE) != 0 && !file.canExecute()) {
+                    if ((mode & EXECUTE) != 0 && !file.isExecutable()) {
                         data[i] = -1;
                     }
-                    if ((mode & READ) != 0 && !file.canRead()) {
+                    if ((mode & READ) != 0 && !file.isReadable()) {
                         data[i] = -1;
                     }
-                    if ((mode & WRITE) != 0 && !file.canWrite()) {
+                    if ((mode & WRITE) != 0 && !file.isWritable()) {
                         data[i] = -1;
                     }
                 } else {
@@ -188,7 +185,7 @@ public class FileFunctions {
                     String file1 = file1A[f];
                     if (file1 != RRuntime.STRING_NA) {
                         file1 = Utils.tildeExpand(file1);
-                        try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
+                        try (BufferedOutputStream out = new BufferedOutputStream(RContext.getInstance().getEnv().getTruffleFile(file1).newOutputStream(StandardOpenOption.APPEND))) {
                             String file2 = file2A[f];
                             status[f] = RRuntime.asLogical(appendFile(out, file2));
                         } catch (IOException ex) {
@@ -205,13 +202,18 @@ public class FileFunctions {
                 return false;
             }
             String path = Utils.tildeExpand(pathArg);
-            File file = new File(path);
+            TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(path);
             if (!file.exists()) {
                 // not an error (cf GnuR), just status
                 return false;
             } else {
-                byte[] buf = new byte[(int) file.length()];
-                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(path))) {
+                byte[] buf;
+                try {
+                    buf = new byte[(int) file.size()];
+                } catch (IOException ex) {
+                    return false;
+                }
+                try (BufferedInputStream in = new BufferedInputStream(file.newInputStream())) {
                     in.read(buf);
                 } catch (IOException ex) {
                     // not an error (cf GnuR), just status
@@ -248,7 +250,7 @@ public class FileFunctions {
                 } else {
                     boolean ok = true;
                     try {
-                        new FileOutputStream(Utils.tildeExpand(path)).close();
+                        RContext.getInstance().getEnv().getTruffleFile(Utils.tildeExpand(path)).newOutputStream().close();
                     } catch (IOException ex) {
                         ok = false;
                         if (showWarnings == RRuntime.LOGICAL_TRUE) {
@@ -304,12 +306,12 @@ public class FileFunctions {
                 data[n] = createColumnData(Column.VALUES[n], vecLength);
                 complete[n] = RDataFactory.COMPLETE_VECTOR; // optimistic
             }
-            FileSystem fileSystem = FileSystems.getDefault();
+            Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < vecLength; i++) {
                 String vecPath = vec.getDataAt(i);
-                Path path = fileSystem.getPath(Utils.tildeExpand(vecPath));
+                TruffleFile file = env.getTruffleFile(Utils.tildeExpand(vecPath));
                 // missing defaults to NA
-                if (Files.exists(path)) {
+                if (file.exists()) {
                     double size = RRuntime.DOUBLE_NA;
                     byte isdir = RRuntime.LOGICAL_NA;
                     int mode = RRuntime.INT_NA;
@@ -321,15 +323,14 @@ public class FileFunctions {
                     String uname = RRuntime.STRING_NA;
                     String grname = RRuntime.STRING_NA;
                     try {
-                        PosixFileAttributes pfa = Files.readAttributes(path, PosixFileAttributes.class);
-                        size = pfa.size();
-                        isdir = RRuntime.asLogical(pfa.isDirectory());
-                        mtime = Utils.getTimeInSecs(pfa.lastModifiedTime());
-                        ctime = Utils.getTimeInSecs(pfa.creationTime());
-                        atime = Utils.getTimeInSecs(pfa.lastAccessTime());
-                        uname = pfa.owner().getName();
-                        grname = pfa.group().getName();
-                        mode = Utils.intFilePermissions(pfa.permissions());
+                        size = file.size();
+                        isdir = RRuntime.asLogical(file.isDirectory());
+                        mtime = Utils.getTimeInSecs(file.getLastModifiedTime());
+                        ctime = Utils.getTimeInSecs(file.getCreationTime());
+                        atime = Utils.getTimeInSecs(file.getLastAccessTime());
+                        mode = Utils.intFilePermissions(file.getPosixPermissions());
+                        uname = file.getOwner().getName();
+                        grname = file.getGroup().getName();
                     } catch (IOException ex) {
                         // ok, NA value is used
                     }
@@ -443,7 +444,7 @@ public class FileFunctions {
                 return RDataFactory.createLogicalVector(0);
             }
             int len = lenFrom > lenTo ? lenFrom : lenTo;
-            FileSystem fileSystem = FileSystems.getDefault();
+            Env env = RContext.getInstance().getEnv();
             byte[] status = new byte[len];
             for (int i = 0; i < len; i++) {
                 String from = vecFrom.getDataAt(i % lenFrom);
@@ -451,14 +452,14 @@ public class FileFunctions {
                 if (RRuntime.isNA(from) || RRuntime.isNA(to)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
-                    Path toPath = fileSystem.getPath(Utils.tildeExpand(to));
+                    TruffleFile fromFile = env.getTruffleFile(Utils.tildeExpand(from));
+                    TruffleFile toFile = env.getTruffleFile(Utils.tildeExpand(to));
                     status[i] = RRuntime.LOGICAL_TRUE;
                     try {
                         if (symbolic) {
-                            Files.createSymbolicLink(toPath, fromPath);
+                            toFile.createSymbolicLink(fromFile);
                         } else {
-                            Files.createLink(toPath, fromPath);
+                            toFile.createLink(fromFile);
                         }
                     } catch (UnsupportedOperationException | IOException ex) {
                         status[i] = RRuntime.LOGICAL_FALSE;
@@ -513,14 +514,23 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected Object doFileRemove(RAbstractStringVector vec) {
+            Env env = RContext.getInstance().getEnv();
             byte[] status = new byte[vec.getLength()];
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
                 if (RRuntime.isNA(path)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    File f = new File(Utils.tildeExpand(path));
-                    boolean ok = f.delete();
+                    TruffleFile f = env.getTruffleFile(Utils.tildeExpand(path));
+                    boolean ok;
+                    try {
+                        f.delete();
+                        ok = true;
+                    } catch (NoSuchFileException ex) {
+                        ok = false;
+                    } catch (IOException ex) {
+                        ok = false;
+                    }
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
                         warning(RError.Message.FILE_CANNOT_REMOVE, path);
@@ -548,6 +558,7 @@ public class FileFunctions {
                 throw error(RError.Message.FROM_TO_DIFFERENT);
             }
             byte[] status = new byte[len];
+            Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < len; i++) {
                 String from = vecFrom.getDataAt(i);
                 String to = vecTo.getDataAt(i);
@@ -556,7 +567,13 @@ public class FileFunctions {
                 if (RRuntime.isNA(from) || RRuntime.isNA(to)) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    boolean ok = new File(Utils.tildeExpand(from)).renameTo(new File(Utils.tildeExpand(to)));
+                    boolean ok;
+                    try {
+                        env.getTruffleFile(Utils.tildeExpand(from)).move(env.getTruffleFile(Utils.tildeExpand(to)));
+                        ok = true;
+                    } catch (IOException ex) {
+                        ok = false;
+                    }
                     status[i] = RRuntime.asLogical(ok);
                     if (!ok) {
                         warning(RError.Message.FILE_CANNOT_RENAME, from, to);
@@ -579,12 +596,13 @@ public class FileFunctions {
         @TruffleBoundary
         protected Object doFileExists(RAbstractStringVector vec) {
             byte[] status = new byte[vec.getLength()];
+            Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < status.length; i++) {
                 String path = vec.getDataAt(i);
                 if (RRuntime.isNA(path) || path.isEmpty()) {
                     status[i] = RRuntime.LOGICAL_FALSE;
                 } else {
-                    File f = new File(Utils.tildeExpand(path));
+                    TruffleFile f = env.getTruffleFile(Utils.tildeExpand(path));
                     // TODO R's notion of exists may not match Java - check
                     status[i] = f.exists() ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE;
                 }
@@ -657,23 +675,24 @@ public class FileFunctions {
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
             ArrayList<String> files = new ArrayList<>();
+            Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < vec.getLength(); i++) {
                 String vecPathString = vec.getDataAt(i);
                 String pathString = Utils.tildeExpand(vecPathString, true);
-                File root = new File(pathString);
-                if (!root.exists()) {
+                TruffleFile root = env.getTruffleFile(pathString);
+                if (pathString.isEmpty() || !root.exists()) { // File.exists() returns false for ""
+                                                              // but TF gives true
                     continue;
                 }
-                Path rootPath = root.toPath();
-                try (Stream<Path> stream = Files.find(rootPath, recursive ? Integer.MAX_VALUE : 1, new FileMatcher(pattern, allFiles, includeDirs))) {
-                    Iterator<Path> iter = stream.iterator();
-                    Path vecPath = null;
+                try (Stream<TruffleFile> stream = FileSystemUtils.find(root, recursive ? Integer.MAX_VALUE : 1, new FileMatcher(pattern, allFiles, includeDirs))) {
+                    Iterator<TruffleFile> iter = stream.iterator();
+                    TruffleFile vecPath = null;
                     if (!fullNames) {
-                        vecPath = FileSystems.getDefault().getPath(vecPathString);
+                        vecPath = env.getTruffleFile(vecPathString);
                     }
                     while (iter.hasNext()) {
-                        Path file = iter.next();
-                        if (Files.isSameFile(file, rootPath)) {
+                        TruffleFile file = iter.next();
+                        if (file.equals(root)) {
                             continue;
                         }
                         if (!fullNames) {
@@ -687,10 +706,10 @@ public class FileFunctions {
                      */
                     if (!noDotDot) {
                         if (pattern == null || pattern.matcher(DOT).find()) {
-                            files.add(fullNames ? FileSystems.getDefault().getPath(vecPathString, DOT).toString() : DOT);
+                            files.add(fullNames ? env.getTruffleFile(vecPathString).resolve(DOT).getPath() : DOT);
                         }
                         if (pattern == null || pattern.matcher(DOTDOT).find()) {
-                            files.add(fullNames ? FileSystems.getDefault().getPath(vecPathString, DOTDOT).toString() : DOTDOT);
+                            files.add(fullNames ? env.getTruffleFile(vecPathString).resolve(DOTDOT).getPath() : DOTDOT);
                         }
                     }
                 } catch (IOException | UncheckedIOException ex) {
@@ -708,7 +727,7 @@ public class FileFunctions {
             }
         }
 
-        private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
+        private static class FileMatcher implements Predicate<TruffleFile> {
             final Pattern pattern;
             final boolean includeDirs;
             final boolean allFiles;
@@ -720,17 +739,17 @@ public class FileFunctions {
             }
 
             @Override
-            public boolean test(Path path, BasicFileAttributes u) {
-                if (u.isDirectory() && !includeDirs) {
+            public boolean test(TruffleFile f) {
+                if (f.isDirectory() && !includeDirs) {
                     return false;
                 }
-                if (!allFiles && path.getFileName().toString().charAt(0) == '.') {
+                if (!allFiles && f.getName().charAt(0) == '.') {
                     return false;
                 }
                 if (pattern == null) {
                     return true;
                 }
-                Matcher m = pattern.matcher(path.getFileName().toString());
+                Matcher m = pattern.matcher(f.getName());
                 boolean result = m.find();
                 return result;
             }
@@ -751,27 +770,26 @@ public class FileFunctions {
         @TruffleBoundary
         protected RStringVector listDirs(RAbstractStringVector paths, boolean fullNames, boolean recursive) {
             ArrayList<String> dirList = new ArrayList<>();
+            Env env = RContext.getInstance().getEnv();
             for (int i = 0; i < paths.getLength(); i++) {
                 String vecPathString = paths.getDataAt(i);
                 String pathString = Utils.tildeExpand(vecPathString, true);
-                File root = new File(pathString);
+                TruffleFile root = env.getTruffleFile(pathString);
                 if (!root.exists()) {
                     continue;
                 }
-                Path path = root.toPath();
-                try (Stream<Path> stream = Files.find(path, recursive ? Integer.MAX_VALUE : 1, new FileMatcher())) {
-                    Iterator<Path> iter = stream.iterator();
-                    Path vecPath = null;
+                try (Stream<TruffleFile> stream = FileSystemUtils.find(root, recursive ? Integer.MAX_VALUE : 1, new FileMatcher())) {
+                    Iterator<TruffleFile> iter = stream.iterator();
+                    TruffleFile vecPath = null;
                     if (!fullNames) {
-                        FileSystem fileSystem = FileSystems.getDefault();
-                        vecPath = fileSystem.getPath(vecPathString);
+                        vecPath = env.getTruffleFile(vecPathString);
                     }
                     while (iter.hasNext()) {
-                        Path dir = iter.next();
+                        TruffleFile dir = iter.next();
                         if (!fullNames) {
                             dir = vecPath.relativize(dir);
                         }
-                        dirList.add(dir.toString());
+                        dirList.add(dir.getPath());
                     }
                 } catch (IOException ex) {
                     // ignored
@@ -783,10 +801,10 @@ public class FileFunctions {
             return RDataFactory.createStringVector(data, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private static class FileMatcher implements BiPredicate<Path, BasicFileAttributes> {
+        private static class FileMatcher implements Predicate<TruffleFile> {
             @Override
-            public boolean test(Path path, BasicFileAttributes u) {
-                boolean result = u.isDirectory();
+            public boolean test(TruffleFile f) {
+                boolean result = f.isDirectory();
                 return result;
             }
         }
@@ -937,11 +955,11 @@ public class FileFunctions {
                 if (overwrite) {
                     copyOptions[0] = StandardCopyOption.REPLACE_EXISTING;
                 }
-                FileSystem fileSystem = FileSystems.getDefault();
-                Path toDir = null;
+                TruffleFile toDir = null;
+                Env env = RContext.getInstance().getEnv();
                 if (vecTo.getLength() == 1) {
-                    Path vecTo0Path = fileSystem.getPath(Utils.tildeExpand(vecTo.getDataAt(0)));
-                    if (Files.isDirectory(vecTo0Path)) {
+                    TruffleFile vecTo0Path = env.getTruffleFile(Utils.tildeExpand(vecTo.getDataAt(0)));
+                    if (vecTo0Path.isDirectory()) {
                         toDir = vecTo0Path;
                     }
                 }
@@ -954,16 +972,16 @@ public class FileFunctions {
 
                 for (int i = 0; i < lenFrom; i++) {
                     String from = vecFrom.getDataAt(i % lenFrom);
-                    Path fromPath = fileSystem.getPath(Utils.tildeExpand(from));
+                    TruffleFile fromPath = env.getTruffleFile(Utils.tildeExpand(from));
                     String to = vecTo.getDataAt(i % lenTo);
-                    Path toPath = fileSystem.getPath(Utils.tildeExpand(to));
+                    TruffleFile toPath = env.getTruffleFile(Utils.tildeExpand(to));
                     assert !recursive || toDir != null;
                     status[i] = RRuntime.LOGICAL_FALSE;
                     try {
                         if (toDir != null) {
-                            toPath = toDir.resolve(fromPath.getFileName());
+                            toPath = toDir.resolve(fromPath.getName());
                         }
-                        if (Files.isDirectory(fromPath)) {
+                        if (fromPath.isDirectory()) {
                             if (recursive) {
                                 assert toDir != null;
                                 // to is just one dir (checked above)
@@ -971,12 +989,12 @@ public class FileFunctions {
                             }
                         } else {
                             // copy to existing files is skipped unless overWrite
-                            if (!Files.exists(toPath) || overwrite) {
+                            if (!toPath.exists() || overwrite) {
                                 /*
                                  * toB Be careful if toPath is a directory, if empty Java will
                                  * replace it with a plain file, otherwise the copy will fail
                                  */
-                                Files.copy(fromPath, toPath, copyOptions);
+                                fromPath.copy(toPath, copyOptions);
                                 status[i] = RRuntime.LOGICAL_TRUE;
                             }
                         }
@@ -988,23 +1006,23 @@ public class FileFunctions {
             return RDataFactory.createLogicalVector(status, RDataFactory.COMPLETE_VECTOR);
         }
 
-        private static final class DirCopy extends SimpleFileVisitor<Path> {
-            private final Path fromDir;
-            private final Path toDir;
+        private static final class DirCopy implements FileVisitor<TruffleFile> {
+            private final TruffleFile fromDir;
+            private final TruffleFile toDir;
             private final CopyOption[] copyOptions;
             private boolean error;
 
-            private DirCopy(Path fromDir, Path toDir, CopyOption[] copyOptions) {
+            private DirCopy(TruffleFile fromDir, TruffleFile toDir, CopyOption[] copyOptions) {
                 this.fromDir = fromDir;
                 this.toDir = toDir;
                 this.copyOptions = copyOptions;
             }
 
             @Override
-            public FileVisitResult preVisitDirectory(Path dir, BasicFileAttributes attrs) {
-                Path newDir = toDir.resolve(fromDir.relativize(dir));
+            public FileVisitResult preVisitDirectory(TruffleFile dir, BasicFileAttributes attrs) {
+                TruffleFile newDir = toDir.resolve(fromDir.relativize(dir).getPath());
                 try {
-                    Files.copy(dir, newDir, copyOptions);
+                    dir.copy(newDir, copyOptions);
                 } catch (FileAlreadyExistsException x) {
                     // ok
                 } catch (IOException ex) {
@@ -1015,17 +1033,30 @@ public class FileFunctions {
             }
 
             @Override
-            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                Path newFile = toDir.resolve(fromDir.relativize(file));
-                Files.copy(file, newFile, copyOptions);
+            public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) throws IOException {
+                TruffleFile newFile = toDir.resolve(fromDir.relativize(file).getPath());
+                file.copy(newFile, copyOptions);
+                return FileVisitResult.CONTINUE;
+            }
+
+            @Override
+            public FileVisitResult visitFileFailed(TruffleFile f, IOException exc) throws IOException {
+                throw exc;
+            }
+
+            @Override
+            public FileVisitResult postVisitDirectory(TruffleFile f, IOException exc) throws IOException {
+                if (exc != null) {
+                    throw exc;
+                }
                 return FileVisitResult.CONTINUE;
             }
         }
 
         @SuppressWarnings("static-method")
-        private boolean copyDir(Path fromDir, Path toDir, CopyOption[] copyOptions) throws IOException {
+        private boolean copyDir(TruffleFile fromDir, TruffleFile toDir, CopyOption[] copyOptions) throws IOException {
             DirCopy dirCopy = new DirCopy(fromDir, toDir, copyOptions);
-            Files.walkFileTree(fromDir, dirCopy);
+            FileSystemUtils.walkFileTree(fromDir, dirCopy);
             return !dirCopy.error;
         }
     }
@@ -1045,7 +1076,9 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RNull show(RAbstractStringVector files, RAbstractStringVector header, RAbstractStringVector title, boolean deleteFile, @SuppressWarnings("unused") String pager) {
-            ConsoleIO console = RContext.getInstance().getConsole();
+            RContext ctx = RContext.getInstance();
+            ConsoleIO console = ctx.getConsole();
+            Env env = ctx.getEnv();
             for (int i = 0; i < title.getLength(); i++) {
                 console.println("==== " + title.getDataAt(i) + " ====");
             }
@@ -1054,13 +1087,13 @@ public class FileFunctions {
                     console.println("== " + header.getDataAt(i) + " ==");
                 }
                 try {
-                    Path path = Paths.get(files.getDataAt(i));
-                    List<String> lines = Files.readAllLines(path);
+                    TruffleFile path = env.getTruffleFile(files.getDataAt(i));
+                    List<String> lines = FileSystemUtils.readAllLines(path);
                     for (String line : lines) {
                         console.println(line);
                     }
                     if (deleteFile) {
-                        path.toFile().delete();
+                        path.delete();
                     }
                 } catch (IOException e) {
                     throw error(Message.GENERIC, e.getMessage());
@@ -1070,10 +1103,10 @@ public class FileFunctions {
         }
     }
 
-    protected static RStringVector doXyzName(RAbstractStringVector vec, BiFunction<FileSystem, String, String> fun) {
-        FileSystem fileSystem = FileSystems.getDefault();
+    protected static RStringVector doXyzName(RAbstractStringVector vec, BiFunction<Env, String, String> fun) {
         boolean complete = RDataFactory.COMPLETE_VECTOR;
         String[] data = new String[vec.getLength()];
+        Env env = RContext.getInstance().getEnv();
         for (int i = 0; i < data.length; i++) {
             String name = vec.getDataAt(i);
             if (RRuntime.isNA(name)) {
@@ -1082,7 +1115,7 @@ public class FileFunctions {
             } else if (name.length() == 0) {
                 data[i] = name;
             } else {
-                data[i] = fun.apply(fileSystem, name);
+                data[i] = fun.apply(env, name);
             }
         }
         return RDataFactory.createStringVector(data, complete);
@@ -1099,9 +1132,9 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
-            return doXyzName(vec, (fileSystem, name) -> {
-                Path path = fileSystem.getPath(Utils.tildeExpand(name));
-                Path parent = path.getParent();
+            return doXyzName(vec, (env, name) -> {
+                TruffleFile path = env.getTruffleFile(Utils.tildeExpand(name));
+                TruffleFile parent = path.getParent();
                 return parent != null ? parent.toString() : ".";
             });
         }
@@ -1118,10 +1151,10 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector doDirName(RAbstractStringVector vec) {
-            return doXyzName(vec, (fileSystem, name) -> {
-                Path path = fileSystem.getPath(name);
-                Path parent = path.getFileName();
-                return parent != null ? parent.toString() : name;
+            return doXyzName(vec, (env, name) -> {
+                TruffleFile path = env.getTruffleFile(name);
+                String fileName = path.getName();
+                return fileName != null ? fileName.toString() : name;
             });
         }
     }
@@ -1149,7 +1182,7 @@ public class FileFunctions {
                 if (firstGlobCharIdx >= 0) {
                     result = removeGlob(pathPattern, recursive, firstGlobCharIdx, result);
                 } else {
-                    result = removeFile(FileSystems.getDefault().getPath(pathPattern), recursive, result);
+                    result = removeFile(RContext.getInstance().getEnv().getTruffleFile(pathPattern), recursive, result);
                 }
             }
             return result;
@@ -1161,12 +1194,13 @@ public class FileFunctions {
             String searchRoot = pathPattern.substring(0, lastSeparator);
             try {
                 int[] tmpResult = new int[]{result};
-                PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + pathPattern);
-                Files.walkFileTree(Paths.get(searchRoot), new SimpleFileVisitor<Path>() {
+                final Pattern globRegex = Pattern.compile(FileSystemUtils.toUnixRegexPattern(pathPattern));
+                final Env env = RContext.getInstance().getEnv();
+                FileSystemUtils.walkFileTree(env.getTruffleFile(searchRoot), new SimpleFileVisitor<TruffleFile>() {
                     @Override
-                    public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-                        if (matcher.matches(file)) {
-                            tmpResult[0] = removeFile(file, recursive, tmpResult[0]);
+                    public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) throws IOException {
+                        if (globRegex.matcher(file.getName()).matches()) {
+                            tmpResult[0] = removeFile(env.getTruffleFile(file.toString()), recursive, tmpResult[0]);
                             return recursive ? FileVisitResult.SKIP_SUBTREE : FileVisitResult.CONTINUE;
                         }
                         return FileVisitResult.CONTINUE;
@@ -1178,17 +1212,17 @@ public class FileFunctions {
             }
         }
 
-        private int removeFile(Path path, boolean recursive, int resultIn) {
+        private int removeFile(TruffleFile file, boolean recursive, int resultIn) {
             int result = resultIn;
-            if (Files.isDirectory(path)) {
+            if (file.isDirectory()) {
                 if (!recursive) {
                     return result;
                 } else {
-                    result = recursiveDelete(path);
+                    result = recursiveDelete(file);
                 }
             }
             try {
-                Files.deleteIfExists(path);
+                file.delete();
             } catch (IOException ex) {
                 result = 0;
             }
@@ -1209,13 +1243,13 @@ public class FileFunctions {
             return -1;
         }
 
-        private int recursiveDelete(Path path) {
-            try (DirectoryStream<Path> stream = Files.newDirectoryStream(path)) {
-                for (Path entry : stream) {
-                    if (Files.isDirectory(entry)) {
+        private int recursiveDelete(TruffleFile f) {
+            try (DirectoryStream<TruffleFile> stream = f.newDirectoryStream()) {
+                for (TruffleFile entry : stream) {
+                    if (entry.isDirectory()) {
                         recursiveDelete(entry);
                     }
-                    Files.deleteIfExists(entry);
+                    FileSystemUtils.deleteIfExists(entry);
                 }
                 return 1;
             } catch (IOException ex) {
@@ -1245,36 +1279,36 @@ public class FileFunctions {
                 ok = true;
                 String path = Utils.tildeExpand(pathIn);
                 if (recursive) {
-                    ok = mkparentdirs(new File(path).getAbsoluteFile().getParentFile(), showWarnings, octMode);
+                    ok = mkparentdirs(RContext.getInstance().getEnv().getTruffleFile(path).getAbsoluteFile().getParent(), showWarnings, octMode);
                 }
                 if (ok) {
-                    ok = mkdir(path, showWarnings, octMode);
+                    ok = mkdir(RContext.getInstance().getEnv().getTruffleFile(path), showWarnings, octMode);
                 }
             }
             return RRuntime.asLogical(ok);
         }
 
-        private boolean mkparentdirs(File file, boolean showWarnings, int mode) {
+        private boolean mkparentdirs(TruffleFile file, boolean showWarnings, int mode) {
             if (file.isDirectory()) {
                 return true;
             }
             if (file.exists()) {
                 return false;
             }
-            if (mkparentdirs(file.getParentFile(), showWarnings, mode)) {
-                return mkdir(file.getAbsolutePath(), showWarnings, mode);
+            if (mkparentdirs(file.getParent(), showWarnings, mode)) {
+                return mkdir(file.getAbsoluteFile(), showWarnings, mode);
             } else {
                 return false;
             }
         }
 
-        private boolean mkdir(String path, boolean showWarnings, int mode) {
+        private boolean mkdir(TruffleFile dir, boolean showWarnings, int mode) {
             try {
-                FileSystemUtils.mkdir(path, mode);
+                FileSystemUtils.mkdir(dir, mode);
                 return true;
             } catch (IOException ex) {
                 if (showWarnings) {
-                    warning(RError.Message.DIR_CANNOT_CREATE, path);
+                    warning(RError.Message.DIR_CANNOT_CREATE, dir);
                 }
                 return false;
             }
@@ -1292,11 +1326,12 @@ public class FileFunctions {
         @Specialization
         @TruffleBoundary
         protected RLogicalVector dirExists(RAbstractStringVector pathVec) {
+            Env env = RContext.getInstance().getEnv();
             byte[] data = new byte[pathVec.getLength()];
             for (int i = 0; i < data.length; i++) {
                 String pathString = Utils.tildeExpand(pathVec.getDataAt(i));
-                Path path = FileSystems.getDefault().getPath(pathString);
-                data[i] = RRuntime.asLogical(Files.exists(path) && Files.isDirectory(path));
+                TruffleFile path = env.getTruffleFile(pathString);
+                data[i] = RRuntime.asLogical(path.isDirectory());
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);
         }

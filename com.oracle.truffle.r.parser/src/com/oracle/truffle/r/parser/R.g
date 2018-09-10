@@ -40,8 +40,6 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -58,6 +56,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -178,7 +177,7 @@ import com.oracle.truffle.r.runtime.RError;
 	    		if(q0 != -1 && q1 != -1) {
 	    			String path = commentLine.substring(q0+1, q1);
 	    			try {
-	    			    String content = new String(Files.readAllBytes(Paths.get(path)), StandardCharsets.UTF_8);
+	    			    String content = new String(RContext.getInstance().getEnv().getTruffleFile(path).readAllBytes(), StandardCharsets.UTF_8);
 	    			    String lineEnding = detectLineEnding(initialSource.getCharacters());
 	    			    content = convertToLineEnding(content, lineEnding);
                         source = RSource.fromFileName(content, path, false);

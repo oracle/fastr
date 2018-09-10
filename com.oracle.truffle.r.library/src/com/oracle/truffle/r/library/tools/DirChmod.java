@@ -24,14 +24,12 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.attribute.PosixFileAttributes;
 import java.util.Iterator;
 import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
@@ -39,7 +37,10 @@ import com.oracle.truffle.r.runtime.FileSystemUtils;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.Set;
 
 public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
 
@@ -57,25 +58,26 @@ public abstract class DirChmod extends RExternalBuiltinNode.Arg2 {
     @Specialization
     @TruffleBoundary
     protected RNull dirChmod(String pathName, boolean setGroupWrite) {
-        Path path = FileSystems.getDefault().getPath(pathName);
+        Env env = RContext.getInstance().getEnv();
+        TruffleFile path = env.getTruffleFile(pathName);
         int fileMask = setGroupWrite ? GRPWRITE_FILE_MASK : FILE_MASK;
         int dirMask = setGroupWrite ? GRPWRITE_DIR_MASK : DIR_MASK;
-        if (!path.toFile().exists()) {
+        if (!path.exists()) {
             return RNull.instance;
         }
         assert path.isAbsolute() : path;
-        try (Stream<Path> stream = Files.walk(path, Integer.MAX_VALUE)) {
-            Iterator<Path> iter = stream.iterator();
+        try (Stream<TruffleFile> stream = FileSystemUtils.walk(path, Integer.MAX_VALUE)) {
+            Iterator<TruffleFile> iter = stream.iterator();
             while (iter.hasNext()) {
-                Path element = iter.next();
-                if (Files.isSameFile(path, element)) {
+                TruffleFile element = iter.next();
+                if (path.equals(element)) {
                     continue;
                 }
-                PosixFileAttributes pfa = Files.readAttributes(element, PosixFileAttributes.class);
-                int elementMode = Utils.intFilePermissions(pfa.permissions());
-                int newMode = Files.isDirectory(element) ? elementMode | dirMask : elementMode | fileMask;
+                Set<PosixFilePermission> posixPermissions = element.getPosixPermissions();
+                int elementMode = Utils.intFilePermissions(posixPermissions);
+                int newMode = element.isDirectory() ? elementMode | dirMask : elementMode | fileMask;
                 // System.out.printf("path %s: old %o, new %o%n", element, elementMode, newMode);
-                FileSystemUtils.chmod(element.toString(), newMode);
+                FileSystemUtils.chmod(element, newMode);
             }
         } catch (IOException ex) {
             // ignore
