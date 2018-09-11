@@ -664,10 +664,15 @@ public class RDeparse {
 
         private void appendWithParens(RSyntaxElement arg, PPInfo mainOp, boolean isLeft) {
             Func func = isInfixOperatorNode(arg);
+            boolean lbreak = false;
+            boolean shouldbreak = true;
             boolean needsParens = false;
             if (func == null) {
                 // put parens around complex values
                 needsParens = !isLeft && arg instanceof RSyntaxConstant && ((RSyntaxConstant) arg).getValue() instanceof RAbstractComplexVector;
+                if (arg instanceof RSyntaxConstant) {
+                    shouldbreak = false;
+                }
             } else {
                 PPInfo arginfo = func.info;
                 switch (arginfo.kind) {
@@ -680,11 +685,13 @@ public class RDeparse {
                         if (subArgs.length == 1) {
                             if (!isLeft && (arginfo.prec != RDeparse.PREC_NOT || mainOp.prec != RDeparse.PREC_NOT)) {
                                 needsParens = false;
+                                shouldbreak = false;
                                 break;
                             }
                             if (arginfo.prec == RDeparse.PREC_SUM) {
                                 arginfo = arginfo.changePrec(RDeparse.PREC_SIGN);
                             }
+                            shouldbreak = false;
                         } else if (subArgs.length == 2) {
                             if (mainOp.prec == PREC_COMPARE && arginfo.prec == PREC_COMPARE) {
                                 needsParens = true;
@@ -708,6 +715,9 @@ public class RDeparse {
                 append(arg);
                 append(')');
             } else {
+                if (shouldbreak) {
+                    listLinebreak(lbreak);
+                }
                 append(arg);
             }
         }
@@ -908,17 +918,32 @@ public class RDeparse {
             }
         }
 
+        private static boolean containNames(DynamicObject dobj) {
+            if (dobj != null) {
+                List<Property> properties = dobj.getShape().getPropertyList();
+                for (int i = 0; i < properties.size(); i++) {
+                    String name = (String) properties.get(i).getKey();
+                    if (name.equals(RRuntime.NAMES_ATTR_KEY)) {
+                        return true;
+                    }
+                }
+            }
+            return false;
+        }
+
         private void appendVector(RAbstractAtomicVector vec) {
             assert vec != null;
             boolean lbreak = true;
-            boolean nicename = niceNames() && usableNiceNames(vec.getAttributes());
+            boolean usablename = usableNiceNames(vec.getAttributes());
+            boolean showname = showAttributes() && usablename && containNames(vec.getAttributes());
+            boolean nicename = niceNames() && usablename;
             int len = vec.getLength();
             if (len == 0) {
                 append(vec.getRType().getClazz() + "(0)");
             } else if (vec instanceof RAbstractRawVector) {
                 append("as.raw(c(");
                 for (int i = 0; i < len; i++) {
-                    if (nicename) {
+                    if (nicename || showname) {
                         append(vec.getNames().getDataAt(i));
                         append(" = ");
                         vecElement2buff(vec.getDataAtAsObject(i), false);
@@ -932,7 +957,7 @@ public class RDeparse {
                 }
                 append("))");
             } else if (len == 1) {
-                if (nicename) {
+                if (nicename || showname) {
                     append("c(");
                     RStringVector name = vec.getNames();
                     if (name != null) {
@@ -1052,7 +1077,7 @@ public class RDeparse {
                     append(", ");
                 }
                 lbreak = listLinebreak(lbreak);
-                if (snames != null) {
+                if (snames != null && niceNames()) {
                     append(quotify(snames.getDataAt(i), '\"'));
                     append(" = ");
                 }
@@ -1111,7 +1136,6 @@ public class RDeparse {
                         showAttri = true;
                     }
                 }
-                assert attrs != null;
                 if (!(usableNiceNames(attrs))) {
                     if (!(showAttributes())) {
                         return () -> {
