@@ -46,10 +46,10 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -74,7 +74,6 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * Deparsing R objects.
@@ -91,7 +90,10 @@ public class RDeparse {
     public static final int S_COMPAT = 128;
     /* common combinations of the above */
     public static final int SIMPLEDEPARSE = 0;
-    public static final int DEFAULTDEPARSE = 1089; /* KEEPINTEGER | KEEPNA | NICE_NAMES, used for calls */
+    public static final int DEFAULTDEPARSE = 1089; /*
+                                                    * KEEPINTEGER | KEEPNA | NICE_NAMES, used for
+                                                    * calls
+                                                    */
     public static final int NICE_NAMES = 1024;
 
     public static final int MIN_CUTOFF = 20;
@@ -717,14 +719,14 @@ public class RDeparse {
                 append("expression(").appendListContents((RExpression) value).append(')');
             } else if (value instanceof RAbstractListVector) {
                 RAbstractListVector obj = (RAbstractListVector) value;
-                    try (C c = withAttributes(obj)) {
-                        append("list(").appendListContents(obj).append(')');
-                    }
+                try (C c = withAttributes(obj)) {
+                    append("list(").appendListContents(obj).append(')');
+                }
             } else if (value instanceof RAbstractAtomicVector) {
                 RAbstractVector obj = (RAbstractAtomicVector) value;
-                    try (C c = withAttributes(obj)) {
-                        appendVector((RAbstractAtomicVector) value);
-                    }
+                try (C c = withAttributes(obj)) {
+                    appendVector((RAbstractAtomicVector) value);
+                }
             } else if (value instanceof RNull) {
                 append("NULL");
             } else if (value instanceof RFunction) {
@@ -907,33 +909,68 @@ public class RDeparse {
         }
 
         private void appendVector(RAbstractAtomicVector vec) {
+            assert vec != null;
+            boolean lbreak = true;
+            boolean nicename = niceNames() && usableNiceNames(vec.getAttributes());
             int len = vec.getLength();
             if (len == 0) {
                 append(vec.getRType().getClazz() + "(0)");
             } else if (vec instanceof RAbstractRawVector) {
                 append("as.raw(c(");
                 for (int i = 0; i < len; i++) {
-                    if (i > 0) {
+                    if (nicename) {
+                        append(vec.getNames().getDataAt(i));
+                        append(" = ");
+                        vecElement2buff(vec.getDataAtAsObject(i), false);
+                    } else {
+                        vecElement2buff(vec.getDataAtAsObject(i), false);
+                    }
+                    if (i < (len - 1)) {
                         append(", ");
                     }
-                    vecElement2buff(vec.getDataAtAsObject(i), false);
+                    lbreak = listLinebreak(lbreak);
                 }
                 append("))");
             } else if (len == 1) {
-                vecElement2buff(vec.getDataAtAsObject(0), true);
+                if (nicename) {
+                    append("c(");
+                    RStringVector name = vec.getNames();
+                    if (name != null) {
+                        append(name.getDataAt(0));
+                        append(" = ");
+                    }
+                    vecElement2buff(vec.getDataAtAsObject(0), true);
+                    append(')');
+                } else {
+                    vecElement2buff(vec.getDataAtAsObject(0), true);
+                }
+
             } else {
                 RIntSequence sequence = asIntSequence(vec);
                 if (sequence != null) {
                     append(RRuntime.intToStringNoCheck(sequence.getStart())).append(':').append(RRuntime.intToStringNoCheck(sequence.getEnd()));
-                    return;
                 } else {
                     // TODO COMPAT?
                     append("c(");
                     for (int i = 0; i < len; i++) {
-                        if (i > 0) {
-                            append(", ");
+                        RStringVector names = vec.getNames();
+                        if (names != null) {
+                            String name = names.getDataAt(i);
+                            if (name.equals(RRuntime.NA_HEADER)) {
+                                if (niceNames()) {
+                                    append(name);
+                                    append(" = ");
+                                }
+                            } else {
+                                append(name);
+                                append(" = ");
+                            }
                         }
                         vecElement2buff(vec.getDataAtAsObject(i), false);
+                        if (i < (len - 1)) {
+                            append(", ");
+                        }
+                        lbreak = listLinebreak(lbreak);
                     }
                     append(')');
                 }
@@ -953,13 +990,18 @@ public class RDeparse {
             if (RRuntime.isNA(start)) {
                 return null;
             }
+            int stride = start < intVec.getDataAt(1) ? 1 : -1;
             for (int i = 1; i < vec.getLength(); i++) {
                 int next = intVec.getDataAt(i);
-                if (RRuntime.isNA(next) || next != start + i) {
+                if (RRuntime.isNA(next)) {
+                    return null;
+                } else if (stride == 1 && next != start + i) {
+                    return null;
+                } else if (stride == -1 && next != start - i) {
                     return null;
                 }
             }
-            return RDataFactory.createIntSequence(start, 1, intVec.getLength());
+            return RDataFactory.createIntSequence(start, stride, intVec.getLength());
         }
 
         private DeparseVisitor vecElement2buff(Object element, boolean singleElement) {
@@ -1032,95 +1074,100 @@ public class RDeparse {
             }
         }
 
-        public boolean usableNiceNames (Object obj){
-            Object vec = RRuntime.asAbstractVector(obj);
-                if (vec instanceof RAttributable) {
-                    DynamicObject attr = ((RAttributable) vec).getAttributes();
-                    if (attr != null) {
-                        Shape shape = attr.getShape();
-                        List<Property> properties = shape.getPropertyList();
-                        for (int i = 0; i < properties.size(); i++) {
-                            Property p = properties.get(i);
-                            String name = (String) p.getKey();
-                            if (vec instanceof RAbstractAtomicVector) {
-                                if (name.equalsIgnoreCase("recursive") || name.equalsIgnoreCase("use.names") || RRuntime.isNA(name)) {
-                                    return false;
-                                }
-                            } else {
-                                if (RRuntime.isNA(name)) {
-                                    return false;
-                                }
-                            }
+        public static boolean usableNiceNames(DynamicObject attr) {
+            if (attr != null) {
+                Shape shape = attr.getShape();
+                List<Property> properties = shape.getPropertyList();
+                Object vec = RRuntime.asAbstractVector(attr);
+                for (int i = 0; i < properties.size(); i++) {
+                    Property p = properties.get(i);
+                    String name = (String) p.getKey();
+                    if (RRuntime.isNA(name)) {
+                        return false;
+                    }
+                    if (vec instanceof RAbstractAtomicVector) {
+                        if (name.equalsIgnoreCase("recursive") || name.equalsIgnoreCase("use.names")) {
+                            return false;
                         }
                     }
                 }
-
+                return true;
+            }
             return false;
         }
 
-
         private C withAttributes(Object obj) {
+            boolean showAttri = true;
+            if (hasAttributes(obj)) {
+                DynamicObject attrs = ((RAttributable) obj).getAttributes();
+                assert attrs != null;
+                Iterator<RAttributesLayout.RAttribute> itera = RAttributesLayout.asIterable(attrs).iterator();
+                while (itera.hasNext()) {
+                    RAttributesLayout.RAttribute attr = itera.next();
+                    String attrName = attr.getName();
+                    if (attrName == null || RRuntime.isNA(attrName) || attrName.equals(RRuntime.NAMES_ATTR_KEY)) {
+                        showAttri = false;
+                    } else if (showAttributes() && !attrName.equals(RRuntime.R_SRCREF)) {
+                        showAttri = true;
+                    }
+                }
+                assert attrs != null;
+                if (!(usableNiceNames(attrs))) {
+                    if (!(showAttributes())) {
+                        return () -> {
+                        };
+                    }
+                } else if (showAttributes() && showAttri) {
+                    append("structure(");
+                    return () -> {
+                        Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
+                        while (iter.hasNext()) {
+                            RAttributesLayout.RAttribute attr = iter.next();
+                            String attrName = attr.getName();
+                            if (attrName.equals(RRuntime.NAMES_ATTR_KEY) && niceNames()) {
+                                continue;
+                            }
+                            append(", ");
+                            String dotName = null;
+                            switch (attrName) {
+                                case "dimnames":
+                                    dotName = ".Dimnames";
+                                    break;
+                                case "dim":
+                                    dotName = ".Dim";
+                                    break;
+                                case "names":
+                                    dotName = ".Names";
+                                    break;
+                                case "tsp":
+                                    dotName = ".Tsp";
+                                    break;
+                                case "levels":
+                                    dotName = ".Label";
+                                    break;
 
-            // Need to setup nicenames
-            boolean names = false;
-
-            if (true ) {
-
-            } else if (showAttributes() && hasAttributes(obj)) {
-                    DynamicObject attrs = ((RAttributable) obj).getAttributes();
-
-
-                append("structure(");
-                return () -> {
-                    assert attrs != null;
-                    Iterator<RAttributesLayout.RAttribute> iter = RAttributesLayout.asIterable(attrs).iterator();
-                    while (iter.hasNext()) {
-                        RAttributesLayout.RAttribute attr = iter.next();
-                        // TODO ignore function source attribute
-                        String attrName = attr.getName();
-                        append(", ");
-                        String dotName = null;
-                        switch (attrName) {
-                            case "dimnames":
-                                dotName = ".Dimnames";
-                                break;
-                            case "dim":
-                                dotName = ".Dim";
-                                break;
-                            case "names":
-                                dotName = ".Names";
-                                break;
-                            case "tsp":
-                                dotName = ".Tsp";
-                                break;
-                            case "levels":
-                                dotName = ".Label";
-                                break;
-
-                            default: {
-                                if (attrName.contains(" ")) {
-                                    append('"');
-                                    append(attrName);
-                                    append('"');
-                                } else {
-                                    append(attrName);
+                                default: {
+                                    if (attrName.contains(" ")) {
+                                        append('"');
+                                        append(attrName);
+                                        append('"');
+                                    } else {
+                                        append(attrName);
+                                    }
                                 }
                             }
+                            if (dotName != null) {
+                                append(dotName);
+                            }
+                            append(" = ");
+                            appendValue(attr.getValue());
                         }
-                        if (dotName != null) {
-                            append(dotName);
-                        }
-                        append(" = ");
-                        appendValue(attr.getValue());
-                    }
-                    append(')');
-                };
-            } else {
-                if (niceNames()) {
-                    names = true;
+                        append(')');
+                    };
+                } else {
+                    return () -> {
+                    };
                 }
-                return () -> {
-                };
             }
             return () -> {
             };
