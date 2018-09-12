@@ -990,7 +990,7 @@ public final class RError extends RuntimeException implements TruffleException {
         LINE_MALFORMED("Line starting '%s ...' is malformed!"),
         IS_NOT_GRAPHICAL_PAR("\"%s\" is not a graphical parameter"),
         GRAPHICAL_PAR_CANNOT_BE_SET("graphical parameter \"%s\" cannot be set"),
-        COMMAND_TIMED_OUT("command '%s' timed out after %ds");
+        COMMAND_TIMED_OUT("command '%s' timed out after %ds"),
         WRONG_ARGS_COMBINATION("Wrong arguments combination, please refer to ?%s for more details."),
         COULD_NOT_FIND_LANGUAGE("Could not find language corresponding to extension '%s', you can specify the language id explicitly, please refer to ?%s for more details."),
         LANGUAGE_NOT_AVAILABLE("Language with id '%s' is not available. Did you start R with --polyglot?"),
