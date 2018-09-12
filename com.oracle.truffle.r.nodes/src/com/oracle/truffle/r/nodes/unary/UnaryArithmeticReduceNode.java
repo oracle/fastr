@@ -93,6 +93,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         }
     }
 
+    @SuppressWarnings("unused")
     private void naResultWarning() {
         naResultProfile.enter();
         if (semantics.getNAResultWarning() != null) {
