@@ -202,6 +202,9 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     private Object doInt(RAbstractVector vector, boolean naRm, VectorAccess access) {
         boolean profiledNaRm = naRmProfile.profile(naRm);
         int result = semantics.getIntStart();
+        int oldResult = result;
+        double doubleResult = semantics.getDoubleStart();
+        boolean overflow = false;
         boolean empty = true;
         try (VectorAccess.SequentialIterator iter = access.access(vector)) {
             while (access.next(iter)) {
@@ -231,10 +234,18 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                     default:
                         throw RInternalError.shouldNotReachHere();
                 }
+
+                if (overflow) {
+                    doubleResult = arithmetic.op(doubleResult, d);
+                } else {
+                    oldResult = result;
+                }
+
                 result = arithmetic.op(result, d);
-                if (RRuntime.isNA(result)) {
-                    naResultWarning();
-                    return RRuntime.INT_NA;
+
+                if (RRuntime.isNA(result) && !overflow) {
+                    overflow = true;
+                    doubleResult = arithmetic.op((double) oldResult, (double) d);
                 }
                 empty = false;
             }
@@ -245,6 +256,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
                 return semantics.getDoubleStart();
             }
         }
+        if (overflow) {
+            return doubleResult;
+        }
+
         return result;
     }
 
