@@ -105,3 +105,25 @@ int *INTEGER(SEXP x){
 double *REAL(SEXP x){
 	return (double*) ((call_REAL) callbacks[REAL_x])(x);
 }
+
+/* Unwind-protect mechanism to support C++ stack unwinding. */
+
+// NB: It cannot be properly implemented until Sulong supports setjmp and longjmp.
+
+SEXP R_MakeUnwindCont() {
+    return R_NilValue;
+}
+
+void NORET R_ContinueUnwind(SEXP cont) {
+}
+
+SEXP R_UnwindProtect(SEXP (*fun)(void *data), void *data,
+		     void (*cleanfun)(void *data, Rboolean jump),
+		     void *cleandata, SEXP cont) {
+    SEXP result;
+
+	result = fun(data);
+    cleanfun(cleandata, FALSE);
+
+    return result;
+}

@@ -44,7 +44,7 @@ public abstract class ValidUTF8 extends RBuiltinNode.Arg1 {
 
     static {
         Casts casts = new Casts(ValidUTF8.class);
-        casts.arg("x").mustNotBeNull().asStringVector();
+        casts.arg("x").mustNotBeMissing().mustNotBeNull().asStringVector();
     }
 
     @Specialization
