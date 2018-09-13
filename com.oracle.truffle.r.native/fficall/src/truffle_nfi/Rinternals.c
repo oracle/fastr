@@ -21,7 +21,6 @@
  * questions.
  */
 #define NO_FASTR_REDEFINE
-#include <setjmp.h>
 #include <Rinterface.h>
 #include <rffiutils.h>
 #include <Rinternals_common.h>
@@ -191,4 +190,8 @@ SEXP R_UnwindProtect(SEXP (*fun)(void *data), void *data,
 	R_ContinueUnwind(cont);	
 
     return result;
+}
+
+int call_base_dispatchHandlers() {
+    DO_CALL(dispatchHandlers());
 }

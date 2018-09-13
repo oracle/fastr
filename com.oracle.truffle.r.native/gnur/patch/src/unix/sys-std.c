@@ -138,7 +138,7 @@ static InputHandler BasicInputHandler = {StdinActivity, -1, NULL};
 */
 InputHandler *R_InputHandlers = &BasicInputHandler;
 
-// FastR NOTE: we do not call this function and therefor do not use the BasicInputHandler
+// FastR NOTE: we do not call this function and therefore do not use the BasicInputHandler
 // and all if (... == BasicInputHandler) will not be taken ever. This code is left here
 // in case we need to actually enable this special handling.
 /*
@@ -385,6 +385,7 @@ getSelectedHandler(InputHandler *handlers, fd_set *readMask)
 }
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -396,6 +397,15 @@ static void
 handleInterrupt(void)
 {
     onintrNoResume();
+}
+
+FILE *fpLog;
+
+static void eventLoopLog(const char* msg) {
+	if (fpLog) {
+		fprintf(fpLog, "DEBUG[%d]: traceEventLoopNative: %s\n", 0, msg);
+		fflush(fpLog);
+	}
 }
 
 char hint1 = 64;
@@ -437,20 +447,26 @@ static int notifyExecutorAndWait() {
 }
 
 int dispatchHandlers() {
+	eventLoopLog("before R_runHandlers in dispatchHandlers");
 	R_runHandlers(R_InputHandlers, what);
 	
+	eventLoopLog("before open in dispatchHandlers");
 	int fd = open(fifoOutPath, O_WRONLY);
 	if (fd < 0) {
 	    return errno;
     }
+	eventLoopLog("before write in dispatchHandlers");
 	int res = write(fd, &hint2, 1);
 	if (res < 0) {
 	    return errno;
     }
+	eventLoopLog("before close in dispatchHandlers");
 	res = close(fd);
 	if (res < 0) {
 	    return errno;
     }
+
+	eventLoopLog("before exit in dispatchHandlers");
 
 	return 0;
 }
@@ -462,7 +478,7 @@ static void *eventLoop(void *params) {
 	for (;;) {
 		fflush(stdout);
 		
-		what = R_checkActivityEx(wt, 0, handleInterrupt);
+		what = R_checkActivityEx(wt, 1, handleInterrupt);
 		if (what != NULL) {
 			int res = notifyExecutorAndWait();
 			if (res != 0) {
@@ -475,6 +491,11 @@ static void *eventLoop(void *params) {
 }
 
 int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam) {
+	const char* trace = getenv("TRACE_EVENT_LOOP");
+	if (trace && strcmp(trace, "true") == 0) {
+		fpLog = fopen("traceEventLoop.log", "a+");
+	}
+
 	fifoInPath = malloc(strlen(fifoInPathParam) * (sizeof(char) + 1));
 	strcpy(fifoInPath, fifoInPathParam);
 

@@ -127,3 +127,7 @@ SEXP R_UnwindProtect(SEXP (*fun)(void *data), void *data,
 
     return result;
 }
+
+int call_base_dispatchHandlers() {
+    return dispatchHandlers();
+}

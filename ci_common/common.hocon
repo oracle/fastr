@@ -41,6 +41,9 @@ logfiles : [
     "test.gnur/**/*.Rout"
     "test.gnur/**/*-tests/*.Rout"
     "test.gnur/**/*.fail"
+    # Uncomment to debug the event loop hanging issue. It must be accompanied by enabling
+    # the logging by setting the TRACE_EVENT_LOOP env var to true.
+    # "traceEventLoop.log"
   ]
 
 # This is needed by all (Linux) builds but is specific to the module system employed
