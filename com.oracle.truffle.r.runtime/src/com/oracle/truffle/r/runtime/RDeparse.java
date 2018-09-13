@@ -683,15 +683,14 @@ public class RDeparse {
                     case BINARY2:
                         RSyntaxElement[] subArgs = ((RSyntaxCall) arg).getSyntaxArguments();
                         if (subArgs.length == 1) {
+                            shouldbreak = false;
                             if (!isLeft && (arginfo.prec != RDeparse.PREC_NOT || mainOp.prec != RDeparse.PREC_NOT)) {
                                 needsParens = false;
-                                shouldbreak = false;
                                 break;
                             }
                             if (arginfo.prec == RDeparse.PREC_SUM) {
                                 arginfo = arginfo.changePrec(RDeparse.PREC_SIGN);
                             }
-                            shouldbreak = false;
                         } else if (subArgs.length == 2) {
                             if (mainOp.prec == PREC_COMPARE && arginfo.prec == PREC_COMPARE) {
                                 needsParens = true;
@@ -707,6 +706,7 @@ public class RDeparse {
                         needsParens = true;
                         break;
                     default:
+                        shouldbreak = false;
                         break;
                 }
             }
