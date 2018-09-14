@@ -97,12 +97,14 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     @Override
     public final RAbstractVector copyDropAttributes() {
-        throw RInternalError.shouldNotReachHere();
+        return copy();
     }
 
     @Override
     public final RAbstractVector copyWithNewDimensions(int[] newDimensions) {
-        throw RInternalError.shouldNotReachHere();
+        RAbstractVector res = copy();
+        res.setDimensions(newDimensions);
+        return res;
     }
 
     @Override
@@ -195,16 +197,18 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     @Override
     public final RVector<?> copyResized(int size, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+        RAbstractVector v = copy();
+        return v.copyResized(size, fillNA);
     }
 
     @Override
-    public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+    public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        RAbstractVector v = copy();
+        return v.copyResizedWithDimensions(newDimensions, fillNA);
     }
 
     @Override
-    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         throw RInternalError.shouldNotReachHere();
     }
 

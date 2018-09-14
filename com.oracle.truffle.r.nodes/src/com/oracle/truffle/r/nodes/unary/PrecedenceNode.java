@@ -268,7 +268,7 @@ public abstract class PrecedenceNode extends RBaseNode {
             if (context.getEnv().isHostObject(obj)) {
                 Object o = context.getEnv().asHostObject(obj);
                 Class<?> ct = o.getClass().getComponentType();
-                int prc = getPrecedence(ct, recursive);
+                int prc = getPrecedence(ct);
                 if (prc != -1) {
                     return prc;
                 }
@@ -290,14 +290,10 @@ public abstract class PrecedenceNode extends RBaseNode {
     }
 
     @TruffleBoundary
-    private int getPrecedence(Class<?> ct, boolean recursive) {
-        if (recursive && ct != null && ct.isArray()) {
-            return getPrecedence(ct.getComponentType(), true);
+    private int getPrecedence(Class<?> ct) {
+        if (ct != null && ct.isArray()) {
+            return getPrecedence(ct.getComponentType());
         }
-        return getPrecedence(ct);
-    }
-
-    private static int getPrecedence(Class<?> ct) {
         if (ct == Integer.class || ct == Byte.class || ct == Short.class || ct == int.class || ct == byte.class || ct == short.class) {
             return INT_PRECEDENCE;
         } else if (ct == Double.class || ct == Float.class || ct == Long.class || ct == double.class || ct == float.class || ct == long.class) {
