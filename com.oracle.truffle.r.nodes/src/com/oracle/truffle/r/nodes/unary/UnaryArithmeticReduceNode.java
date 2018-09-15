@@ -410,7 +410,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
     protected Object doForeignVector(TruffleObject obj, boolean naRm, boolean finite,
                     @Cached("create()") ForeignArray2R foreignArray2R,
                     @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
-        if (foreignArray2R.isForeignVector(obj)) {
+        if (foreignArray2R.isForeignArray(obj)) {
             Object vec = foreignArray2R.convert(obj);
             return recursive.executeReduce(vec, naRm, finite);
         }

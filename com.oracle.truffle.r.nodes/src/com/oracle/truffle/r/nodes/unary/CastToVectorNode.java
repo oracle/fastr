@@ -22,15 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
 
+@ImportStatic(RRuntime.class)
 public abstract class CastToVectorNode extends CastNode {
 
     private final boolean preserveNonVector;
@@ -79,6 +86,29 @@ public abstract class CastToVectorNode extends CastNode {
     protected RAbstractVector cast(@SuppressWarnings("unused") RS4Object s4obj) {
         // TODO implement according to function 'R_getS4DataSlot' in 'attrib.c'
         throw error(RError.Message.CANNOT_COERCE_S4_TO_VECTOR);
+    }
+
+    @Specialization
+    protected Object cast(REnvironment env) {
+        if (preserveNonVector) {
+            return env;
+        } else {
+            return RDataFactory.createList();
+        }
+    }
+
+    @Specialization(guards = "isForeignObject(truffleObject)")
+    protected Object castForeign(TruffleObject truffleObject,
+                    @Cached("create()") ForeignArray2R foreignArray2R) {
+        if (preserveNonVector) {
+            return truffleObject;
+        } else {
+            Object o = foreignArray2R.convert(truffleObject);
+            if (!RRuntime.isForeignObject(o)) {
+                return o;
+            }
+        }
+        throw error(RError.Message.CANNOT_COERCE_EXTERNAL_OBJECT_TO_VECTOR, "vector");
     }
 
     public static CastToVectorNode create() {

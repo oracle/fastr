@@ -55,7 +55,7 @@ public final class CastForeignNode extends CastNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             isInteropScalar = ConditionProfile.createBinaryProfile();
         }
-        if (isForeign.profile(foreignArray2R.isForeignVector(obj))) {
+        if (isForeign.profile(foreignArray2R.isForeignArray(obj))) {
             return foreignArray2R.convert((TruffleObject) obj);
         } else if (isInteropScalar.profile(isInteropScalar(obj))) {
             return ((RInteropScalar) obj).getRValue();

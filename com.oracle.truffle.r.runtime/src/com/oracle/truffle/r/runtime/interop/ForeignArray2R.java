@@ -395,7 +395,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         return idx;
     }
 
-    protected boolean isForeignArray(Object obj) {
+    public boolean isForeignArray(Object obj) {
         return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSize, (TruffleObject) obj);
     }
 

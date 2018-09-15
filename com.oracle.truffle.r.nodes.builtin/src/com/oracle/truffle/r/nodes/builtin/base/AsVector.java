@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -133,13 +134,20 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         throw RError.error(RError.SHOW_CALLER, Message.CANNOT_COERCE, RType.Environment.getName(), type != null ? type.getName() : mode);
     }
 
+    @TruffleBoundary
+    @Specialization
+    protected Object asVector(RFunction x, String mode) {
+        RType type = RType.fromMode(mode);
+        throw RError.error(RError.SHOW_CALLER, Message.CANNOT_COERCE, x.getRType().getName(), type != null ? type.getName() : mode);
+    }
+
     protected static boolean isREnvironment(Object value) {
         return value instanceof REnvironment;
     }
 
     // there should never be more than ~12 specializations
     @SuppressWarnings("unused")
-    @Specialization(limit = "99", guards = {"!isREnvironment(x)", "matchesMode(mode, cachedMode)"})
+    @Specialization(limit = "99", guards = {"!isREnvironment(x)", "!isRFunction(x)", "matchesMode(mode, cachedMode)"})
     protected Object asVector(Object x, String mode,
                     @Cached("mode") String cachedMode,
                     @Cached("fromMode(cachedMode)") RType type,

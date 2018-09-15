@@ -544,15 +544,6 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    public void testLengthIterable() {
-        String thisFQN = this.getClass().getName();
-        for (String s : new String[]{"Size", "GetSize", "Length", "GetLength", "NoSizeMethod"}) {
-            String clazz = thisFQN + "$TestIterable" + s;
-            assertEvalFastR("ti <- new('" + clazz + "', 123); length(ti)", "123");
-        }
-    }
-
-    @Test
     public void testNamesForForeignObject() {
         assertEvalFastR("tc <- java.type('" + TestNamesClassNoMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "'class'");
         assertEvalFastR("tc <- java.type('" + TestNamesClassNoPublicMembers.class.getName() + "'); t <- .fastr.interop.new(tc); names(t)", "'class'");
@@ -631,6 +622,30 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list();  l$foreignobject <- to; identical(to, l$foreignobject)", "TRUE");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list(1); l$foreignobject <- to; identical(to, l$foreignobject)", "TRUE");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " l <- list(1); l$foreignobject <- 1; l$foreignobject <- to; identical(to, l$foreignobject)", "TRUE");
+    }
+
+    @Test
+    public void testCRBind() {
+        testCRBind("cbind");
+        testCRBind("rbind");
+    }
+
+    public void testCRBind(String fun) {
+        assertEvalFastR(CREATE_TEST_ARRAYS + " v <- ta$integerArray; " + fun + "(v)", " v <- c(1, 2, 3); " + fun + "(v)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " v <- ta$integerArray; " + fun + "(v, 1)", " v <- c(1, 2, 3); " + fun + "(v, 1)");
+        assertEvalFastR(Output.IgnoreWhitespace, CREATE_TEST_ARRAYS + " v1 <- ta$integerArray; v2 <- ta$stringArray; " + fun + "(v1, v2)",
+                        "v1 <- c(1, 2,  3); v2 <- c('a', 'b', 'c'); " + fun + "(v1, v2)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " v1 <- ta$integerArray2; v2 <- ta$stringArray; " + fun + "(v1, v2)",
+                        "v1 <- c(1, 1, 2, 2, 3, 3); dim(v1) <- c(2,3); v2 <- c('a', 'b', 'c'); " + fun + "(v1, v2)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " v1 <- ta$integerArray2; v2 <- ta$stringArray2; " + fun + "(v1, v2)",
+                        "v1 <- c(1, 1, 2, 2, 3, 3); dim(v1) <- c(2,3); v2 <- c('a', 'a', 'b', 'b', 'c', 'c'); dim(v2) <- c(2,3); " + fun + "(v1, v2)");
+    }
+
+    @Test
+    public void testMatrix() {
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; matrix(ja, c(3, 2))", "matrix(1:6, c(3, 2))");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "matrix(ta$integerArray2, c(3, 2))", "v <- c(1, 1, 2, 2, 3, 3); dim(v) <- c(2, 3); matrix(v, c(3, 2))");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "matrix(ta$integerArray3, c(3, 2, 2))", "v <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); dim(v) <- c(2, 2, 3); matrix(v, c(3, 2, 2))");
     }
 
     @Test
@@ -2455,90 +2470,6 @@ public class TestJavaInterop extends TestBase {
             }
         }
 
-    }
-
-    public static class TestIterableSize extends AbstractTestIterable {
-        public TestIterableSize(int size) {
-            super(size);
-        }
-
-        public int size() {
-            return size;
-        }
-    }
-
-    public static class TestIterableGetSize extends AbstractTestIterable {
-        public TestIterableGetSize(int size) {
-            super(size);
-        }
-
-        public int getSize() {
-            return size;
-        }
-    }
-
-    public static class TestIterableLength extends AbstractTestIterable {
-        public TestIterableLength(int size) {
-            super(size);
-        }
-
-        public int length() {
-            return size;
-        }
-    }
-
-    public static class TestIterableGetLength extends AbstractTestIterable {
-        public TestIterableGetLength(int size) {
-            super(size);
-        }
-
-        public int getLength() {
-            return size;
-        }
-    }
-
-    public static class TestIterableNoSizeMethod implements Iterable<Integer> {
-        private final int size;
-
-        public TestIterableNoSizeMethod(int size) {
-            this.size = size;
-        }
-
-        private class I implements Iterator<Integer> {
-            private int size;
-
-            I() {
-                this.size = TestIterableNoSizeMethod.this.size;
-            }
-
-            @Override
-            public boolean hasNext() {
-                return size-- > 0;
-            }
-
-            @Override
-            public Integer next() {
-                throw new UnsupportedOperationException("Should not reach here.");
-            }
-        }
-
-        @Override
-        public Iterator<Integer> iterator() {
-            return new I();
-        }
-    }
-
-    private static class AbstractTestIterable implements Iterable<Object> {
-        protected final int size;
-
-        AbstractTestIterable(int size) {
-            this.size = size;
-        }
-
-        @Override
-        public Iterator<Object> iterator() {
-            throw new UnsupportedOperationException("Should not reach here.");
-        }
     }
 
     public static class TestExceptionsClass {

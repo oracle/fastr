@@ -87,4 +87,10 @@ public class TestBuiltin_dimassign extends TestBase {
     public void testdimassign12() {
         assertEval("b <- c(a=1+2i,b=3+4i);dim(b) <- c(2,1);attributes(x)");
     }
+
+    @Test
+    public void testDimAssignError() {
+        assertEval("dim(environment()) <- c(1,2)");
+        assertEval("f <- function() {}; dim(f) <- c(1,2)");
+    }
 }

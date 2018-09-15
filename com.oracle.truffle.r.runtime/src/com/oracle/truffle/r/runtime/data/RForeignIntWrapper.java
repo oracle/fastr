@@ -88,6 +88,11 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
         throw RInternalError.shouldNotReachHere(e);
     }
 
+    @Override
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createIntVector(new int[newLength], newIsComplete);
+    }
+
     private static final class FastPathAccess extends FastPathFromIntAccess {
 
         FastPathAccess(RAbstractContainer value) {
