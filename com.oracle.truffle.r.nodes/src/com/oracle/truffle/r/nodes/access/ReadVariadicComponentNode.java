@@ -65,7 +65,7 @@ public final class ReadVariadicComponentNode extends RSourceSectionNode implemen
         }
         RArgsValuesAndNames argsValuesAndNames = (RArgsValuesAndNames) args;
         if (argsValuesAndNames.isEmpty()) {
-            throw error(RError.Message.NO_LIST_FOR_CDR);
+            throw RError.error(RError.SHOW_CALLER, RError.Message.DOT_DOT_NONE);
         }
         if (argsValuesAndNames.getLength() <= index) {
             throw error(RError.Message.DOT_DOT_SHORT, index + 1);

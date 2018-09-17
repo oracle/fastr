@@ -755,7 +755,20 @@ public class RDeparse {
                 }
             } else if ((value instanceof RPairList && !((RPairList) value).isLanguage())) {
                 RPairList arglist = (RPairList) value;
-                append("pairlist(");
+                RPairList arg = arglist;
+                boolean missing = false;
+                while (arg != null) {
+                    if (arg.car() instanceof RSymbol && ((RSymbol) arg.car()).isMissing()) {
+                        missing = true;
+                        break;
+                    }
+                    arg = next(arg);
+                }
+                if (missing) {
+                    append("as.pairlist(alist(");
+                } else {
+                    append("pairlist(");
+                }
                 int i = 0;
                 boolean lbreak = false;
                 while (arglist != null) {
@@ -772,7 +785,11 @@ public class RDeparse {
                     appendValue(arglist.car());
                     arglist = next(arglist);
                 }
-                append(')');
+                if (missing) {
+                    append("))");
+                } else {
+                    append(')');
+                }
             } else if (value instanceof RS4Object) {
                 RS4Object s4Obj = (RS4Object) value;
                 Object clazz = s4Obj.getAttr("class");
@@ -801,7 +818,7 @@ public class RDeparse {
             } else if (value instanceof REnvironment) {
                 append("<environment>");
             } else if (value instanceof REmpty) {
-                append("");
+                append("alist()");
             } else if (value instanceof EagerPromise) {
                 return appendConstant(((EagerPromise) value).getEagerValue());
             } else if (value instanceof RPromise) {
