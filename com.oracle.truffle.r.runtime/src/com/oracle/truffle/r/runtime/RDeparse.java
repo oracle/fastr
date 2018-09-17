@@ -296,7 +296,7 @@ public class RDeparse {
         public String getContents() {
             // strip surplus newlines
             int length = sb.length();
-            while (length > 0) {
+            while (length > 1) {
                 char c = sb.charAt(length - 1);
                 if (c != '\n' && c != ' ') {
                     break;

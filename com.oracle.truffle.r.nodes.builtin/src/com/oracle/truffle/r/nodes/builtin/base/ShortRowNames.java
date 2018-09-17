@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -102,6 +103,15 @@ public abstract class ShortRowNames extends RBuiltinNode.Arg2 {
                 }
             }
             return intVector.getLength();
+        } else if (rowNames instanceof RAbstractDoubleVector) {
+            RAbstractDoubleVector doubleVector = ((RAbstractDoubleVector) rowNames);
+            if (doubleVector.getLength() == 2) {
+                if (RRuntime.isNA(doubleVector.getDataAt(0))) {
+                    naValueMet.enter();
+                    return (int) doubleVector.getDataAt(1);
+                }
+            }
+            return doubleVector.getLength();
         } else if (rowNames instanceof RAbstractContainer) {
             return ((RAbstractContainer) rowNames).getLength();
         } else {

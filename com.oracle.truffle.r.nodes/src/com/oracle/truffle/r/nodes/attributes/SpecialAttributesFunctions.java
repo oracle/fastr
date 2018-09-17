@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
@@ -1071,6 +1072,44 @@ public final class SpecialAttributesFunctions {
             Object res = super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
             return nullRowNamesProfile.profile(res == null) ? RNull.instance : res;
         }
+
+        /**
+         * If <code>row.names</code> are in the GnuR compact format they will be converted to an int
+         * sequence.
+         */
+        public static Object convertRowNamesToSeq(Object rowNames) {
+            if (rowNames == RNull.instance) {
+                return RNull.instance;
+            } else {
+                if (rowNames instanceof RAbstractIntVector) {
+                    RAbstractIntVector vec = (RAbstractIntVector) rowNames;
+                    if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
+                        return RDataFactory.createIntSequence(1, 1, Math.abs(vec.getDataAt(1)));
+                    }
+                } else if (rowNames instanceof RAbstractDoubleVector) {
+                    RAbstractDoubleVector vec = (RAbstractDoubleVector) rowNames;
+                    if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
+                        return RDataFactory.createIntSequence(1, 1, Math.abs((int) (vec.getDataAt(1))));
+                    }
+                }
+                return rowNames;
+            }
+        }
+
+        public static Object ensureRowNamesCompactFormat(Object rowNames) {
+            if (rowNames == RNull.instance) {
+                return RNull.instance;
+            } else {
+                if (rowNames instanceof RAbstractDoubleVector) {
+                    RAbstractDoubleVector vec = (RAbstractDoubleVector) rowNames;
+                    if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
+                        return RDataFactory.createIntVector(new int[]{RRuntime.INT_NA, (int) vec.getDataAt(1)}, false);
+                    }
+                }
+                return rowNames;
+            }
+        }
+
     }
 
     public abstract static class SetClassAttributeNode extends SetSpecialAttributeNode {

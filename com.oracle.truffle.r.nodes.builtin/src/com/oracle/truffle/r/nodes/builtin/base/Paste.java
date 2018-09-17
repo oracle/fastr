@@ -30,6 +30,8 @@ import static com.oracle.truffle.r.runtime.RError.Message.NON_STRING_ARG_TO_INTE
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -55,7 +57,6 @@ import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import java.util.Arrays;
 
 @RBuiltin(name = "paste", kind = INTERNAL, parameterNames = {"", "sep", "collapse"}, behavior = PURE)
 public abstract class Paste extends RBuiltinNode.Arg3 {
@@ -114,7 +115,7 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         if (hasNonNullElements(values, length)) {
             int seqPos = isStringSequence(values, length);
             if (seqPos != -1) {
-                return createStringSequence(values, length, seqPos, sep);
+                return createStringSequence(frame, values, length, seqPos, sep);
             } else {
                 String[] result = pasteListElements(frame, values, sep, length);
                 if (result == ONE_EMPTY_STRING) {
@@ -302,25 +303,48 @@ public abstract class Paste extends RBuiltinNode.Arg3 {
         return dataAt instanceof RScalar || dataAt instanceof String || dataAt instanceof Double || dataAt instanceof Integer || dataAt instanceof Byte;
     }
 
-    @TruffleBoundary
-    private static RStringSequence createStringSequence(RAbstractListVector values, int length, int seqPos, String sep) {
+    private RStringSequence createStringSequence(VirtualFrame frame, RAbstractListVector values, int length, int seqPos, String sep) {
         assert isStringSequence(values, length) != -1;
 
-        StringBuilder prefix = new StringBuilder();
+        String[] prefix = new String[seqPos];
         for (int i = 0; i < seqPos; i++) {
-            prefix.append(values.getDataAt(i)).append(sep);
+            // castCharacterVector should yield a single-element string vector
+            prefix[i] = castCharacterVector(frame, values.getDataAt(i)).getDataAt(0);
         }
         RIntSequence seq = (RIntSequence) values.getDataAt(seqPos);
-        StringBuilder suffix = new StringBuilder();
+        String[] suffix;
         if (seqPos + 1 < length) {
-            suffix.append(sep);
+            suffix = new String[length - seqPos - 1];
             for (int i = seqPos + 1; i < length; i++) {
-                suffix.append(values.getDataAt(i));
-                if (i < length - 1) {
+                suffix[i - seqPos - 1] = castCharacterVector(frame, values.getDataAt(i)).getDataAt(0);
+            }
+        } else {
+            suffix = new String[0];
+        }
+
+        return buildStringSequence(prefix, seq, suffix, sep);
+
+    }
+
+    @TruffleBoundary
+    private static RStringSequence buildStringSequence(String[] prefixArr, RIntSequence seq, String[] suffixArr, String sep) {
+        StringBuilder prefix = new StringBuilder();
+        for (int i = 0; i < prefixArr.length; i++) {
+            prefix.append(prefixArr[i]).append(sep);
+        }
+
+        StringBuilder suffix = new StringBuilder();
+        if (suffixArr.length > 0) {
+            suffix.append(sep);
+            for (int i = 0; i < suffixArr.length; i++) {
+                suffix.append(suffixArr[i]);
+                if (i < suffixArr.length - 1) {
                     suffix.append(sep);
                 }
             }
         }
+
         return RDataFactory.createStringSequence(prefix.toString(), suffix.toString(), seq.getStart(), seq.getStride(), seq.getLength());
     }
+
 }

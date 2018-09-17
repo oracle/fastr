@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,19 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.runtime.RDeparse;
 
-/**
- * This is the base interface for all nodes in the tree of elements that make up an R closure.
- * Implementations of this interface do not necessarily need to be Truffle nodes, and some Truffle
- * nodes synthesize RSyntaxElements in order to simulate the R-level structure of code. (e.g., an
- * "if" node may return a synthetic lookup of "if" as the call's left hand side)
- */
-public interface RSyntaxElement {
+public abstract class RAttributableNode extends RNode {
 
-    SourceSection getSourceSection();
+    @CompilationFinal private DynamicObject attributes;
 
-    /**
-     * This is a special version of {@link #getSourceSection} that does not try to
-     * {@link RDeparse#ensureSourceSection(RSyntaxNode) deparse} {@link SourceSection}s that are
-     * {@link RSyntaxNode#INTERNAL internal}.
-     */
-    SourceSection getLazySourceSection();
+    public void setAttributes(DynamicObject attributes) {
+        assert this.attributes == null : "attributes can only be set during initialization";
+        this.attributes = attributes;
+    }
 
-    void setSourceSection(SourceSection source);
-
-    default DynamicObject getAttributes() {
-        return null;
+    public DynamicObject getAttributes() {
+        return attributes;
     }
 }

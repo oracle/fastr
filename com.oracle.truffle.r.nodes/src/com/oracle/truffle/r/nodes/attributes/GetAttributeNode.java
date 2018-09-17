@@ -66,7 +66,7 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
     @Specialization(guards = "isRowNamesAttr(name)")
     protected Object getRowNames(DynamicObject attrs, @SuppressWarnings("unused") String name,
                     @Cached("create()") GetRowNamesAttributeNode getRowNamesNode) {
-        return GetAttributesNode.convertRowNamesToSeq(getRowNamesNode.execute(attrs));
+        return GetRowNamesAttributeNode.convertRowNamesToSeq(getRowNamesNode.execute(attrs));
     }
 
     @Specialization(guards = "isNamesAttr(name)")
@@ -117,15 +117,15 @@ public abstract class GetAttributeNode extends AttributeAccessNode {
         return recursive.execute(attributes, name);
     }
 
-    protected static boolean isRowNamesAttr(String name) {
+    public static boolean isRowNamesAttr(String name) {
         return name.equals(RRuntime.ROWNAMES_ATTR_KEY);
     }
 
-    protected static boolean isNamesAttr(String name) {
+    public static boolean isNamesAttr(String name) {
         return name.equals(RRuntime.NAMES_ATTR_KEY);
     }
 
-    protected static boolean isSpecialAttribute(String name) {
+    public static boolean isSpecialAttribute(String name) {
         return isRowNamesAttr(name) || isNamesAttr(name);
     }
 }
