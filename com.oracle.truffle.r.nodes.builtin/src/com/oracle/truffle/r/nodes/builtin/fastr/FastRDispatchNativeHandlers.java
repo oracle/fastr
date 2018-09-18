@@ -28,7 +28,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
 /**
@@ -45,8 +44,6 @@ public class FastRDispatchNativeHandlers extends RBuiltinNode.Arg0 {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        // TODO: GR-11260
-        // dispatchHandlersNode.execute();
-        return RNull.instance;
+        return dispatchHandlersNode.execute();
     }
 }
