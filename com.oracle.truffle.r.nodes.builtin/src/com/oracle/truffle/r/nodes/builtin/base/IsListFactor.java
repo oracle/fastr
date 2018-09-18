@@ -86,6 +86,7 @@ public abstract class IsListFactor extends RBuiltinNode.Arg2 {
         return IsListFactorInternalNodeGen.create(recursive);
     }
 
+    // Note: the limit should never be reached
     @Specialization(guards = "recursive == node.recursive", limit = "2")
     protected byte isListFactor(Object value, @SuppressWarnings("unused") boolean recursive,
                     @Cached("createNode(recursive)") IsListFactorInternal node) {

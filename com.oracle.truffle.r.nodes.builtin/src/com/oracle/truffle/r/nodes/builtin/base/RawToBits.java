@@ -45,7 +45,7 @@ public abstract class RawToBits extends RBuiltinNode.Arg1 {
         casts.arg("x").mustNotBeNull(RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x").mustBe(Predef.rawValue(), RError.Message.ARGUMENT_MUST_BE_RAW_VECTOR, "x");
     }
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected RAbstractRawVector rawToBits(RAbstractRawVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {

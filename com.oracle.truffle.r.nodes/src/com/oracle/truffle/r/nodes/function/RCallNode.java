@@ -34,6 +34,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -633,6 +634,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     protected abstract static class SendForeignMessageBase extends Node {
         @Child private R2Foreign r2ForeignNode;
 
@@ -659,7 +661,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return Message.EXECUTE.createNode();
         }
 
-        @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "8")
+        @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "getCacheSize(8)")
         protected Object doCached(TruffleObject function, Object[] argumentsArray,
                         @Cached("createMessageNode()") Node messageNode,
                         @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
@@ -692,7 +694,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return Message.INVOKE.createNode();
         }
 
-        @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "8")
+        @Specialization(guards = "argumentsArray.length == foreignCallArgCount", limit = "getCacheSize(8)")
         protected Object doCached(DeferredFunctionValue lhs, Object[] argumentsArray,
                         @Cached("createMessageNode()") Node messageNode,
                         @Cached("argumentsArray.length") @SuppressWarnings("unused") int foreignCallArgCount) {
