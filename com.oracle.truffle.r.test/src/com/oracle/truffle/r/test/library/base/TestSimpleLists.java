@@ -157,11 +157,12 @@ public class TestSimpleLists extends TestBase {
 
     @Test
     public void testNullListAssignment() {
-        assertEval(Ignored.NewRVersionMigration, "a<-NULL; a$b<-42L; dput(a)");
-        assertEval(Ignored.NewRVersionMigration, "a<-NULL; a$b<-print; dput(a)");
-        assertEval(Ignored.NewRVersionMigration, "a<- NULL; a <- `$<-`(a, \"a\", 1); dput(a)");
-        assertEval(Ignored.NewRVersionMigration, "a<- NULL; a <- `[[<-`(a, \"a\", 1); dput(a)");
+        assertEval("a<-NULL; a$b<-42L; dput(a)");
+        assertEval("a<-NULL; a$b<-print; dput(a)");
+        assertEval("a<- NULL; a <- `$<-`(a, \"a\", 1); dput(a)");
+        assertEval("a<- NULL; a <- `[[<-`(a, \"a\", 1); dput(a)");
         assertEval("a<- NULL; a <- `[[<-`(a, 1, 1); dput(a)");
         assertEval("a<- NULL; a <- `$<-`(a, 1, 1); dput(a)");
+        assertEval("a<- NULL; a <- `[[<-`(a, \"a\", 1); a <-`[[<-`(a, \"b\", 1); dput(a)");
     }
 }
