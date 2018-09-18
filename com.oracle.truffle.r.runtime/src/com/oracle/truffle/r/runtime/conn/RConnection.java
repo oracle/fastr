@@ -91,7 +91,7 @@ public interface RConnection extends AutoCloseable, RTruffleObject {
      * Forces the connection open. If the connection was already open does nothing. Otherwise, tries
      * to open the connection in the given mode. In either case returns an opened connection.
      *
-     * builtins that need to ensure that a connection is open should use thr try-with-resources
+     * builtins that need to ensure that a connection is open should use the try-with-resources
      * pattern, e.g:
      *
      *

@@ -21,6 +21,7 @@
  * questions.
  */
 #define NO_FASTR_REDEFINE
+#include <setjmp.h>
 #include <Rinterface.h>
 #include <rffiutils.h>
 #include <Rinternals_common.h>
@@ -126,5 +127,68 @@ double *REAL(SEXP x){
     double *result = FASTR_REAL(x);
 
     array_cache_insert(real_cache, x, result);
+    return result;
+}
+
+/* Unwind-protect mechanism to support C++ stack unwinding. */
+
+typedef struct {
+//    int jumpmask;
+    jmp_buf *jumptarget;
+} unwind_cont_t;
+
+SEXP R_MakeUnwindCont()
+{
+    return CONS(R_NilValue, allocVector(RAWSXP, sizeof(unwind_cont_t)));
+}
+
+#define RAWDATA(x) ((void *) RAW0(x))
+
+void NORET R_ContinueUnwind(SEXP cont)
+{
+    SEXP retval = CAR(cont);
+    unwind_cont_t *u = RAWDATA(CDR(cont));
+	longjmp(*(u->jumptarget), 1);
+}
+
+SEXP R_UnwindProtect(SEXP (*fun)(void *data), void *data,
+		     void (*cleanfun)(void *data, Rboolean jump),
+		     void *cleandata, SEXP cont) {
+    SEXP result;
+    Rboolean jump;
+
+    /* Allow simple usage with a NULL continuotion token. This _could_
+       result in a failure in allocation or exceeding the PROTECT
+       stack limit before calling fun(), so fun() and cleanfun should
+       be written accordingly. */
+    if (cont == NULL) {
+	PROTECT(cont = R_MakeUnwindCont());
+	result = R_UnwindProtect(fun, data, cleanfun, cleandata, cont);
+	UNPROTECT(1);
+	return result;
+    }
+
+	// peek the jump stack
+    jmp_buf *jumptarget = peekJmpBuf();  
+    jmp_buf cjmpbuf;
+    pushJmpBuf(&cjmpbuf);      
+    if (setjmp(cjmpbuf)) {
+	jump = TRUE;
+	//SETCAR(cont, R_ReturnedValue);
+	unwind_cont_t *u = RAWDATA(CDR(cont));
+	u->jumptarget = jumptarget;
+    }
+    else {
+	result = fun(data);
+	SETCAR(cont, result);
+	jump = FALSE;
+    }
+    popJmpBuf();
+
+    cleanfun(cleandata, jump);
+
+    if (jump)
+	R_ContinueUnwind(cont);	
+
     return result;
 }

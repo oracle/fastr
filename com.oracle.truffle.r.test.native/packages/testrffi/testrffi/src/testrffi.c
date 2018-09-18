@@ -518,6 +518,7 @@ static Rboolean testrfficonn_open(Rconnection conn) {
         printNow("ERROR: open function did not receive expected argument\n");
         return 0;
     } else {
+	    conn->isopen = TRUE;
         printNow("Custom connection opened\n");
         return 1;
     }
@@ -527,8 +528,8 @@ static void testrfficonn_close(Rconnection conn) {
     if (conn != customConn) {
         printNow("ERROR: close function did not receive expected argument\n");
     } else {
-        // TODO: GR-11213
-        // printNow("Custom connection closed\n");
+	    conn->isopen = FALSE;
+        printNow("Custom connection closed\n");
     }
 }
 

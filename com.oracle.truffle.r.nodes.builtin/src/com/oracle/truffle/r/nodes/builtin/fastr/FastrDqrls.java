@@ -25,6 +25,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -45,7 +46,7 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
  */
 @RBuiltin(name = ".fastr.dqrls", visibility = OFF, kind = PRIMITIVE, parameterNames = {"x", "n", "p", "y", "ny", "tol", "coeff"}, behavior = PURE)
 public abstract class FastrDqrls extends RBuiltinNode.Arg7 {
-    @Child private MiscRFFI.DqrlsNode dqrlsNode = RFFIFactory.getMiscRFFI().createDqrlsNode();
+    @Child private MiscRFFI.DqrlsNode dqrlsNode;
 
     private static final String[] NAMES = new String[]{"qr", "coefficients", "residuals", "effects", "rank", "pivot", "qraux", "tol", "pivoted"};
     private static RStringVector namesVector = null;
@@ -86,6 +87,10 @@ public abstract class FastrDqrls extends RBuiltinNode.Arg7 {
             pivot[i] = i + 1;
         }
 
+        if (dqrlsNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dqrlsNode = insert(RFFIFactory.getMiscRFFI().createDqrlsNode());
+        }
         dqrlsNode.execute(x, n, p, y, ny, tol, coeff, residuals, effects, rank, pivot, qraux, work);
 
         RDoubleVector resultCoeffVect = RDataFactory.createDoubleVector(coeff, RDataFactory.COMPLETE_VECTOR);

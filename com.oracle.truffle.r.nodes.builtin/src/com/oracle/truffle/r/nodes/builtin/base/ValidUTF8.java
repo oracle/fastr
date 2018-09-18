@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.RVisibility.ON;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.util.Arrays;
@@ -33,24 +33,29 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
-@RBuiltin(name = "validUTF8", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
-public abstract class ValidUtf8 extends RBuiltinNode.Arg1 {
+/**
+ * The {@code validUTF8 .Internal}.
+ */
+@RBuiltin(name = "validUTF8", visibility = ON, kind = INTERNAL, parameterNames = {"x"}, behavior = PURE_ARITHMETIC)
+public abstract class ValidUTF8 extends RBuiltinNode.Arg1 {
+
     static {
-        Casts casts = new Casts(ValidUtf8.class);
-        casts.arg("x").mustBe(stringValue()).asStringVector();
+        Casts casts = new Casts(ValidUTF8.class);
+        casts.arg("x").mustNotBeMissing().mustNotBeNull().asStringVector();
     }
 
     @Specialization
-    protected RAbstractLogicalVector isValidUtf8(RAbstractStringVector values) {
-        byte[] result = new byte[values.getLength()];
+    protected RLogicalVector validUTF8(RAbstractStringVector x) {
+        /**
+         * NB: Once we have a string it is too late to determine whether the string is UTF-8 valid.
+         * The check must be done on the raw data before it is used to create the string.
+         */
+        byte[] result = new byte[x.getLength()];
         Arrays.fill(result, RRuntime.LOGICAL_TRUE);
-        return RDataFactory.createLogicalVector(result, RDataFactory.COMPLETE_VECTOR);
+        return RDataFactory.createLogicalVector(result, true);
     }
 
-    public static ValidUtf8 create() {
-        return ValidUtf8NodeGen.create();
-    }
 }

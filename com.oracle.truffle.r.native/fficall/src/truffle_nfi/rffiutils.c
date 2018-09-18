@@ -57,7 +57,7 @@ void set_exception_flag() {
     exceptionFlag = 1;
 }
 
-static void pushJmpBuf(jmp_buf *buf) {
+void pushJmpBuf(jmp_buf *buf) {
     if (callErrorJmpBufStackIndex == ERROR_JMP_BUF_STACK_SIZE) {
         fprintf(stderr, "Maximum native call stack size ERROR_JMP_BUF_STACK_SIZE exceeded. Update the constant ERROR%s.\n", "_JMP_BUF_STACK_SIZE");
         exit(1);
@@ -65,7 +65,11 @@ static void pushJmpBuf(jmp_buf *buf) {
     callErrorJmpBufStack[callErrorJmpBufStackIndex++] = buf;
 }
 
-static void popJmpBuf() {
+jmp_buf * peekJmpBuf() {
+    return callErrorJmpBufStack[callErrorJmpBufStackIndex - 1];
+}
+
+void popJmpBuf() {
     callErrorJmpBufStackIndex--;
 }
 

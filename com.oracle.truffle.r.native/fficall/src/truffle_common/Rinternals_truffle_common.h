@@ -1103,6 +1103,10 @@ Rbyte *RAW(SEXP x) {
     return result;
 }
 
+Rbyte *RAW0(SEXP x) {
+    return RAW(x);
+}
+
 const char * R_CHAR(SEXP x) {
     TRACE0();
     SEXP result = ((call_R_CHAR) callbacks[R_CHAR_x])(x);

@@ -27,6 +27,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <setjmp.h>
 #include <Rinternals.h>
 #include <trufflenfi.h>
 
@@ -55,6 +56,13 @@ void checkExitCall();
 
 // invoked from Java to set the exit call flag
 void set_exception_flag();
+
+
+void pushJmpBuf(jmp_buf *buf);
+
+jmp_buf * peekJmpBuf();
+
+void popJmpBuf();
 
 // use for any fatal error
 void fatalError(const char *msg) __attribute__((noreturn));

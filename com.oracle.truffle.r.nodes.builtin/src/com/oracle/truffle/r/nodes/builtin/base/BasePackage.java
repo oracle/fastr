@@ -617,7 +617,7 @@ public class BasePackage extends RBuiltinPackage {
         add(WrapMeta.class, WrapMeta::create);
         add(DotDotDotLength.class, DotDotDotLength::create);
         add(DotDotDotElt.class, DotDotDotElt::create);
-        add(ValidUtf8.class, ValidUtf8::create);
+        add(ValidUTF8.class, ValidUTF8NodeGen::create);
         add(LaFunctions.DetGeReal.class, LaFunctionsFactory.DetGeRealNodeGen::create);
         add(LaFunctions.LaChol.class, LaFunctionsFactory.LaCholNodeGen::create);
         add(LaFunctions.LaChol2Inv.class, LaFunctionsFactory.LaChol2InvNodeGen::create);
