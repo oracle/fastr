@@ -389,8 +389,6 @@ public final class RCmdOptions {
     }
 
     static void printVersion() {
-        System.out.print("FastR version ");
-        System.out.println(RVersionNumber.FULL);
-        System.out.println(RVersionNumber.LICENSE);
+        System.out.printf("R scripting front-end version %s%s\n", RVersionNumber.FULL, RVersionNumber.RELEASE_DATE);
     }
 }
