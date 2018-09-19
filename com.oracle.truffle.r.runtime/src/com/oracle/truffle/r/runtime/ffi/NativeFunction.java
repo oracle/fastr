@@ -80,7 +80,7 @@ public enum NativeFunction {
     dqrls("([double], sint32, sint32, [double], sint32, double, [double], [double], [double], [sint32], [sint32], [double], [double]): void", "call_misc_"),
     // stats
     fft_factor("(sint32, [sint32], [sint32]): void", "", "stats"),
-    fft_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", "", "stats"),
+    fft_setup_work("([double], sint32, sint32, sint32, sint32, [double], [sint32]): sint32", "", "stats"),
     lminfl("([double], sint32, sint32, sint32, sint32, [double], [double], [double], [double], [double], double): void", "call_stats_", "stats"),
     // FastR helpers
     set_exception_flag("(): void"),

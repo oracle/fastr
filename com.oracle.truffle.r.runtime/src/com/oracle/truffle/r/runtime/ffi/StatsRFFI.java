@@ -48,17 +48,17 @@ public final class StatsRFFI {
         }
     }
 
-    public static final class WorkNode extends NativeCallNode {
-        private WorkNode(DownCallNodeFactory factory) {
-            super(factory.createDownCallNode(NativeFunction.fft_work));
+    public static final class SetupWorkNode extends NativeCallNode {
+        private SetupWorkNode(DownCallNodeFactory factory) {
+            super(factory.createDownCallNode(NativeFunction.fft_setup_work));
         }
 
         public int execute(double[] a, int nseg, int n, int nspn, int isn, double[] work, int[] iwork) {
             return (int) call(a, nseg, n, nspn, isn, work, iwork);
         }
 
-        public static WorkNode create() {
-            return RFFIFactory.getStatsRFFI().createWorkNode();
+        public static SetupWorkNode create() {
+            return RFFIFactory.getStatsRFFI().createSetupWorkNode();
         }
     }
 
@@ -80,8 +80,8 @@ public final class StatsRFFI {
         return new FactorNode(downCallNodeFactory);
     }
 
-    public WorkNode createWorkNode() {
-        return new WorkNode(downCallNodeFactory);
+    public SetupWorkNode createSetupWorkNode() {
+        return new SetupWorkNode(downCallNodeFactory);
     }
 
     public LminflNode createLminflNode() {

@@ -44,7 +44,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
     }
 
     @Child private StatsRFFI.FactorNode factorNode = StatsRFFI.FactorNode.create();
-    @Child private StatsRFFI.WorkNode workNode = StatsRFFI.WorkNode.create();
+    @Child private StatsRFFI.SetupWorkNode setupWorkNode = StatsRFFI.SetupWorkNode.create();
 
     // TODO: handle more argument types (this is sufficient to run the b25 benchmarks)
     @Specialization
@@ -53,8 +53,6 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
         double[] z = zVec.materialize().getDataTemp();
         int inv = inverse ? 2 : -2;
         int[] d = getDimNode.getDimensions(zVec);
-        @SuppressWarnings("unused")
-        int retCode = 7;
         if (zVecLgt1.profile(zVec.getLength() > 1)) {
             int[] maxf = new int[1];
             int[] maxp = new int[1];
@@ -66,7 +64,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                 }
                 double[] work = new double[4 * maxf[0]];
                 int[] iwork = new int[maxp[0]];
-                retCode = workNode.execute(z, 1, n, 1, inv, work, iwork);
+                setupWorkNode.execute(z, 1, n, 1, inv, work, iwork);
             } else {
                 int maxmaxf = 1;
                 int maxmaxp = 1;
@@ -97,7 +95,7 @@ public abstract class Fft extends RExternalBuiltinNode.Arg2 {
                         n = d[i];
                         nseg /= n;
                         factorNode.execute(n, maxf, maxp);
-                        workNode.execute(z, nseg, n, nspn, inv, work, iwork);
+                        setupWorkNode.execute(z, nseg, n, nspn, inv, work, iwork);
                     }
                 }
             }
