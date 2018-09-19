@@ -871,3 +871,13 @@ Rboolean fft_work(double *a, double *b, int nseg, int n, int nspn, int isn,
 
     return TRUE;
 }
+
+/* FastR specific function to call into fft_work. It is required to set up the b vector to point to the imaginary
+    part of the input.*/
+
+Rboolean fft_setup_work(double *a, int nseg, int n, int nspn, int isn,
+		  double *work, int *iwork)
+{
+    return fft_work(a, &a[1], nseg, n, nspn, isn, work, iwork);
+
+}

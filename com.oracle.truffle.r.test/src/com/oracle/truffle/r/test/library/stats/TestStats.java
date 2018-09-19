@@ -46,10 +46,12 @@ public class TestStats extends TestBase {
 
     @Test
     public void testFFT() {
-        assertEval(Ignored.NewRVersionMigration, "{ fft(1:4) }");
-        assertEval(Ignored.NewRVersionMigration, "{ fft(1:4, inverse=TRUE) }");
+        assertEval("{ fft(1:4) }");
+        assertEval("{ fft(1:4, inverse=TRUE) }");
         assertEval("{ fft(10) }");
-        assertEval(Ignored.NewRVersionMigration, "{ fft(cbind(1:2,3:4)) }");
+        assertEval("{ fft(cbind(1:2,3:4)) }");
+        assertEval("{ fft(c(0, 1, integer(6))) }");
+        assertEval("{ fft(c(complex(real=1, imaginary=0), integer(7))) }");
     }
 
     @Test
