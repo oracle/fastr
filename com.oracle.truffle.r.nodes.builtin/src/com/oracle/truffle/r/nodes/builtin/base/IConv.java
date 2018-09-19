@@ -141,7 +141,12 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
             toCharset = StandardCharsets.US_ASCII;
         } else {
             try {
-                toCharset = Charset.forName(name);
+                final int iconvFlagDelim = name.indexOf("//");
+                String chsName = name;
+                if (iconvFlagDelim > 0) {
+                    chsName = name.substring(0, iconvFlagDelim);
+                }
+                toCharset = Charset.forName(chsName);
             } catch (IllegalCharsetNameException | UnsupportedCharsetException e) {
                 throw error(Message.UNSUPPORTED_ENCODING_CONVERSION, from, to);
             }
