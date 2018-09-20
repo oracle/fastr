@@ -35,7 +35,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
 @ImportStatic(RRuntime.class)
 public abstract class CastToVectorNode extends CastNode {
@@ -99,11 +99,11 @@ public abstract class CastToVectorNode extends CastNode {
 
     @Specialization(guards = "isForeignObject(truffleObject)")
     protected Object castForeign(TruffleObject truffleObject,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
         if (preserveNonVector) {
             return truffleObject;
         } else {
-            Object o = foreignArray2R.convert(truffleObject);
+            Object o = convertForeign.convert(truffleObject);
             if (!RRuntime.isForeignObject(o)) {
                 return o;
             }

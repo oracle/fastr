@@ -75,7 +75,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic(RRuntime.class)
@@ -153,9 +153,13 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                     @Cached("fromMode(cachedMode)") RType type,
                     @Cached("createCast(type)") CastNode cast,
                     @Cached("create(type)") DropAttributesNode drop,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
         if (RRuntime.isForeignObject(x)) {
-            Object o = foreignArray2R.convert((TruffleObject) x);
+            if (type == RType.List) {
+                // already returns list, no need to cast
+                return convertForeign.convertToList((TruffleObject) x, true, true);
+            }
+            Object o = convertForeign.convert((TruffleObject) x, true, true);
             if (!RRuntime.isForeignObject(o)) {
                 return cast == null ? o : cast.doCast(o);
             }

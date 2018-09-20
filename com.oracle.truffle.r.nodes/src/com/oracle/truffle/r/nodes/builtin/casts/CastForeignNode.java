@@ -29,11 +29,14 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
+/**
+ * Cast pipelines internal. You probably want to use {@link ConvertForeignObjectNode}.
+ */
 public final class CastForeignNode extends CastNode {
 
-    @Child private ForeignArray2R foreignArray2R;
+    @Child private ConvertForeignObjectNode convertForeign;
 
     @CompilationFinal private ConditionProfile isForeign;
     @CompilationFinal private ConditionProfile isInteropScalar;
@@ -43,9 +46,9 @@ public final class CastForeignNode extends CastNode {
         if (!RRuntime.isForeignObject(obj)) {
             return obj;
         }
-        if (foreignArray2R == null) {
+        if (convertForeign == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreignArray2R = insert(ForeignArray2R.create());
+            convertForeign = insert(ConvertForeignObjectNode.create());
         }
         if (isForeign == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -55,8 +58,8 @@ public final class CastForeignNode extends CastNode {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             isInteropScalar = ConditionProfile.createBinaryProfile();
         }
-        if (isForeign.profile(foreignArray2R.isForeignArray(obj))) {
-            return foreignArray2R.convert((TruffleObject) obj);
+        if (isForeign.profile(convertForeign.isForeignArray(obj))) {
+            return convertForeign.convert((TruffleObject) obj);
         } else if (isInteropScalar.profile(isInteropScalar(obj))) {
             return ((RInteropScalar) obj).getRValue();
         } else {

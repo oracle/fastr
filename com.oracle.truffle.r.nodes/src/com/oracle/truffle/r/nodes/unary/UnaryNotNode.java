@@ -51,10 +51,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
-@ImportStatic({RRuntime.class, ForeignArray2R.class, Message.class, RType.class})
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, Message.class, RType.class})
 @RBuiltin(name = "!", kind = PRIMITIVE, parameterNames = {""}, dispatch = OPS_GROUP_GENERIC, behavior = PURE_ARITHMETIC)
 public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
@@ -189,10 +189,10 @@ public abstract class UnaryNotNode extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = {"isForeignObject(obj)"})
     protected Object doForeign(VirtualFrame frame, TruffleObject obj,
-                    @Cached("create()") ForeignArray2R foreignArray2R,
+                    @Cached("create()") ConvertForeignObjectNode convertForeign,
                     @Cached("createRecursive()") UnaryNotNode recursive) {
-        if (foreignArray2R.isForeignArray(obj)) {
-            Object vec = foreignArray2R.convert(obj);
+        if (convertForeign.isForeignArray(obj)) {
+            Object vec = convertForeign.convert(obj);
             return recursive.execute(frame, vec);
         }
         return invalidArgType(obj);

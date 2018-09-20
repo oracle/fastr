@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_2;
@@ -214,8 +214,8 @@ public final class RandFunctionsNodes {
         @Child private Node probAsPointerNode;
         @Child private Node rNIsPointerNode = Message.IS_POINTER.createNode();
         @Child private Node rNAsPointerNode;
-        @Child private ForeignArray2R probForeignArray2R;
-        @Child private ForeignArray2R rNForeignArray2R;
+        @Child private ConvertForeignObjectNode probConvertForeign;
+        @Child private ConvertForeignObjectNode rNConvertForeign;
         @Child private DoRMultinomNode doRMultinomNode = RandFunctionsNodesFactory.DoRMultinomNodeGen.create();
 
         @Specialization
@@ -237,11 +237,11 @@ public final class RandFunctionsNodes {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
-                if (probForeignArray2R == null) {
+                if (probConvertForeign == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    probForeignArray2R = insert(ForeignArray2R.create());
+                    probConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                probVector = (RAbstractDoubleVector) probForeignArray2R.convert(probTO);
+                probVector = (RAbstractDoubleVector) probConvertForeign.convert(probTO);
             }
 
             RAbstractIntVector rNVector;
@@ -259,11 +259,11 @@ public final class RandFunctionsNodes {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
-                if (rNForeignArray2R == null) {
+                if (rNConvertForeign == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    rNForeignArray2R = insert(ForeignArray2R.create());
+                    rNConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                rNVector = (RAbstractIntVector) rNForeignArray2R.convert(probTO);
+                rNVector = (RAbstractIntVector) rNConvertForeign.convert(probTO);
             }
 
             doRMultinomNode.execute(n, probVector, k, rNVector);

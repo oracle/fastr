@@ -64,7 +64,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
 @ImportStatic({Message.class, RRuntime.class})
 @RBuiltin(name = "unlist", kind = INTERNAL, dispatch = RDispatch.INTERNAL_GENERIC, parameterNames = {"x", "recursive", "use.names"}, behavior = PURE)
@@ -83,9 +83,9 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     @Child private RecursiveLength recursiveLengthNode;
     @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
     @Child private Node hasSizeNode;
-    @Child private ForeignArray2R foreignArray2RNode;
+    @Child private ConvertForeignObjectNode convertForeignNode;
 
-    @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class})
+    @ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class})
     @TypeSystemReference(RTypes.class)
     protected abstract static class UnlistLength extends Node {
 
@@ -110,7 +110,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         }
     }
 
-    @ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class})
+    @ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class})
     @TypeSystemReference(RTypes.class)
     protected abstract static class RecursiveLength extends Node {
 
@@ -292,12 +292,12 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     @Specialization(guards = {"isForeignArray(obj)"})
     protected Object unlistForeignArray(VirtualFrame frame, TruffleObject obj, boolean recursive, boolean useNames,
                     @SuppressWarnings("unused") @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
-        return unlistForeign(frame, obj, recursive, useNames, foreignArray2R);
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
+        return unlistForeign(frame, obj, recursive, useNames, convertForeign);
     }
 
-    private Object unlistForeign(VirtualFrame frame, TruffleObject obj, boolean recursive, boolean useNames, ForeignArray2R foreignArray2R) {
-        Object result = foreignArray2R.convert(obj, recursive);
+    private Object unlistForeign(VirtualFrame frame, TruffleObject obj, boolean recursive, boolean useNames, ConvertForeignObjectNode convertForeign) {
+        Object result = convertForeign.convert(obj, recursive);
         if (result instanceof RAbstractListVector) {
             result = execute(frame, result, recursive, useNames);
         }
@@ -316,7 +316,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
     }
 
     protected boolean isForeignArray(Object obj) {
-        return ForeignArray2R.isForeignArray(obj, getHasSizeNode());
+        return ConvertForeignObjectNode.isForeignArray(obj, getHasSizeNode());
     }
 
     /**
@@ -329,12 +329,12 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         return (RAbstractVector) getForeignArray2RNode().convert(obj, recursive);
     }
 
-    private ForeignArray2R getForeignArray2RNode() {
-        if (foreignArray2RNode == null) {
+    private ConvertForeignObjectNode getForeignArray2RNode() {
+        if (convertForeignNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreignArray2RNode = insert(ForeignArray2R.create());
+            convertForeignNode = insert(ConvertForeignObjectNode.create());
         }
-        return foreignArray2RNode;
+        return convertForeignNode;
     }
 
     private Node getHasSizeNode() {
