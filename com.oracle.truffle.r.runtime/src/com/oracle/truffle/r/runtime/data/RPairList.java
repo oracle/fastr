@@ -177,11 +177,11 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         RStringVector names = vector.getNames();
         for (int i = vector.getLength() - 1; i >= 0; i--) {
             Object item = vector.getDataAtAsObject(i);
-            if (item == RSymbol.MISSING || item == RMissing.instance) {
-                // This is opposite to the conversion done in RASTUtils, there REmpty and RMissing
-                // are replaced with RSymbol.MISSING. If we get directly RMissing, we convert it to
-                // REmpty, because RMissing constant should not appear in AST. See JavaDoc of REmpty
-                // for more details.
+            // Note: RSymbol.MISSING is converted to syntax constant with value REmpty only once the
+            // pairlist data are converted to a closure.
+            if (item == RMissing.instance) {
+                // If we get directly RMissing, we convert it to REmpty, because RMissing constant
+                // should not appear in AST. See JavaDoc of REmpty for more details.
                 item = REmpty.instance;
             }
             result = dataFactory.createPairList(item, result, names != null ? RDataFactory.createSymbolInterned(names.getDataAt(i)) : RNull.instance, SEXPTYPE.LISTSXP);
@@ -634,7 +634,9 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     private static RSyntaxElement unwrapToRSyntaxElement(Object obj, boolean functionLookup) {
-        if ((obj instanceof RPairList && ((RPairList) obj).isLanguage())) {
+        if (obj == RSymbol.MISSING) {
+            return RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, REmpty.instance);
+        } else if ((obj instanceof RPairList && ((RPairList) obj).isLanguage())) {
             return ((RPairList) obj).getSyntaxElement();
         } else if (obj instanceof RSymbol) {
             return RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) obj).getName(), functionLookup);

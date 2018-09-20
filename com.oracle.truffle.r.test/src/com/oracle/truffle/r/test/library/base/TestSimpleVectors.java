@@ -734,6 +734,11 @@ public class TestSimpleVectors extends TestBase {
         assertEval("x <- as.pairlist(list(7,42)); x[[1]] <- list(); typeof(x); x$foo <- 123; typeof(x); x[1] <- list(1); typeof(x)");
         assertEval("l <- quote(a(\"b\",1,4,3)); typeof(l); typeof(l[[1]]); typeof(l[1]); typeof(l[1:5]); typeof(l[4:5]); l[4:5]");
         assertEval("l <- pairlist(\"a\",\"b\",1,4,3); typeof(l); typeof(l[[1]]); typeof(l[1]); typeof(l[1:5]); typeof(l[4:5]); l[4:5]");
+        // retrieves the 'missing' symbol "":
+        assertEval("typeof( quote(`~`(,))[c(-3,-1)][[1]])");
+        assertEval(" quote(`~`(,))[c(-3,-1)][[1]]");
+        assertEval("typeof(quote(`~`(,))[[2]])");
+        assertEval("quote(`~`(,))[[2]]");
     }
 
     @Test
