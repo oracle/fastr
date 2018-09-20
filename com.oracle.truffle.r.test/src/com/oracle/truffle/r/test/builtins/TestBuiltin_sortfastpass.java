@@ -22,8 +22,9 @@
  */
 package com.oracle.truffle.r.test.builtins;
 
-import com.oracle.truffle.r.test.TestBase;
 import org.junit.Test;
+
+import com.oracle.truffle.r.test.TestBase;
 
 public class TestBuiltin_sortfastpass extends TestBase {
 
