@@ -260,13 +260,10 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
     }
 
     /**
-     * Creates an RList from this pairlist.
+     * Creates an {@link RList} from this pairlist.
      */
     @TruffleBoundary
     public RList toRList() {
-        /**
-         * Convert to a {@link RList}.
-         */
         int len = 0;
         boolean named = false;
         for (RPairList item : this) {
@@ -868,9 +865,8 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
             }
         }
 
-        /*
-         * Constants and lookups are converted to their intrinsic value:
-         */
+        // Constants and lookups are converted to their intrinsic value: including conversion from
+        // syntax constant for RMissing/REmpty -> RSymbol.MISSING.
         return RContext.getRRuntimeASTAccess().createLanguageElement(result);
     }
 

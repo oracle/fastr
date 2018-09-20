@@ -785,7 +785,7 @@ SEXP test_DATAPTR(SEXP strings, SEXP testSingleChar) {
         // pointer to CHARSXP array
         void* data = DATAPTR(strings);
         for (int i = 0; i < LENGTH(strings); ++i) {
-            printf("DATAPTR(strings)[%d] == '%s'\n", i, R_CHAR(((SEXP*)data)[i]));
+            printf("DATAPTR(strings)[%d] == '%s'\n", i, CHAR(((SEXP*)data)[i]));
         }
     }
     fflush(stdout);
