@@ -322,3 +322,13 @@ x <- c(1)
 api.Rf_isObject(x)
 class(x) <- "c1"
 api.Rf_isObject(x)
+
+# findVarInFrame for "..." that is empty gives symbol for missing, i.e. ""
+foo <- function(...) rffi.findvar('...', environment())
+typeof(foo())
+foo()
+
+# findVarInFrame for empty argument gives symbol for missing, i.e. ""
+foo <- function(x) rffi.findvar('x', environment())
+typeof(foo())
+foo()
