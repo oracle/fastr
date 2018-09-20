@@ -323,6 +323,9 @@ api.Rf_isObject(x)
 class(x) <- "c1"
 api.Rf_isObject(x)
 
+# prints R types of C constants like R_NamesSymbol
+rffi.test_constantTypes()
+
 # findVarInFrame for "..." that is empty gives symbol for missing, i.e. ""
 foo <- function(...) rffi.findvar('...', environment())
 typeof(foo())

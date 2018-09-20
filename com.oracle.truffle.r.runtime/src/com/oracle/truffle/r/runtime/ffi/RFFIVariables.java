@@ -28,8 +28,8 @@ import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -46,7 +46,7 @@ public enum RFFIVariables {
     R_Interactive(0), // Set later
     R_NilValue(RNull.instance),
     R_UnboundValue(RUnboundValue.instance),
-    R_MissingArg(RMissing.instance),
+    R_MissingArg(RSymbol.MISSING),
     R_EmptyEnv(REnvironment.emptyEnv()),
     R_Srcref(null),
     R_Bracket2Symbol(RDataFactory.createSymbol("[[")),
