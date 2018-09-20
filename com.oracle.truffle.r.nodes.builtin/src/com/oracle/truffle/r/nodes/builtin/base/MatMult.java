@@ -391,8 +391,8 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                         } else if (Double.isNaN(bValue)) {
                             return RDataFactory.createDoubleVector(new double[]{Double.NaN}, false, new int[]{1, 1});
                         }
-                        result = add.applyDouble(result, mult.applyDouble(aValue, bValue));
                     }
+                    result = add.applyDouble(result, mult.applyDouble(aValue, bValue));
                 }
                 return RDataFactory.createDoubleVector(new double[]{result}, true, new int[]{1, 1});
             }
@@ -541,10 +541,10 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                             Arrays.fill(result, RRuntime.DOUBLE_NA);
                         } else if (Double.isNaN(bValue.getRealPart()) || Double.isNaN(bValue.getImaginaryPart())) {
                             Arrays.fill(result, Double.NaN);
-                        } else if (Double.isNaN(aValue.getRealPart()) || Double.isNaN(aValue.getImaginaryPart())) {
-                            Arrays.fill(result, Double.NaN);
                         } else if (na.check(aValue)) {
                             Arrays.fill(result, RRuntime.DOUBLE_NA);
+                        } else if (Double.isNaN(aValue.getRealPart()) || Double.isNaN(aValue.getImaginaryPart())) {
+                            Arrays.fill(result, Double.NaN);
                         }
                     } else {
                         for (int k = 0; k < b.getLength(); k++) {
