@@ -22,13 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode.isMatrix;
-import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
-
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -65,6 +58,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
+
+import java.util.Arrays;
+
+import static com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode.isMatrix;
+import static com.oracle.truffle.r.runtime.RDispatch.OPS_GROUP_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 @RBuiltin(name = "%*%", kind = PRIMITIVE, parameterNames = {"", ""}, behavior = PURE, dispatch = OPS_GROUP_GENERIC)
 public abstract class MatMult extends RBuiltinNode.Arg2 {
@@ -350,8 +350,12 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                     na.enable(b);
                     double aValue = a.getDataAt(0);
                     double[] result = new double[b.getLength()];
-                    if (na.check(aValue)) {
-                        Arrays.fill(result, RRuntime.DOUBLE_NA);
+                    if (na.checkNAorNaN(aValue)) {
+                        if (na.check(aValue)) {
+                            Arrays.fill(result, RRuntime.DOUBLE_NA);
+                        } else {
+                            Arrays.fill(result, Double.NaN);
+                        }
                     } else {
                         for (int k = 0; k < b.getLength(); k++) {
                             double bValue = b.getDataAt(k);
@@ -373,8 +377,20 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 for (int k = 0; k < a.getLength(); k++) {
                     double aValue = a.getDataAt(k);
                     double bValue = b.getDataAt(k);
-                    if (na.check(aValue) || na.check(bValue)) {
-                        return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, false, new int[]{1, 1});
+                    /*
+                     * The ordering matters: have to check aValue first, NA before NaN, then check
+                     * for bValue, again NA before NaN
+                     */
+                    if (na.checkNAorNaN(aValue) || na.checkNAorNaN(bValue)) {
+                        if (na.check(aValue)) {
+                            return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, false, new int[]{1, 1});
+                        } else if (Double.isNaN(aValue)) {
+                            return RDataFactory.createDoubleVector(new double[]{Double.NaN}, false, new int[]{1, 1});
+                        } else if (na.check(bValue)) {
+                            return RDataFactory.createDoubleVector(new double[]{RRuntime.DOUBLE_NA}, false, new int[]{1, 1});
+                        } else if (Double.isNaN(bValue)) {
+                            return RDataFactory.createDoubleVector(new double[]{Double.NaN}, false, new int[]{1, 1});
+                        }
                     }
                     result = add.applyDouble(result, mult.applyDouble(aValue, bValue));
                 }
@@ -416,11 +432,16 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 double[] result = new double[(aRows * bCols) << 1];
                 na.enable(a);
                 na.enable(b);
+                mult.enable(a, b);
                 for (int row = 0; row < aRows; row++) {
                     for (int col = 0; col < bCols; col++) {
                         RComplex x = RDataFactory.createComplexZero();
+                        na.enable(x);
+                        RComplex tmp;
                         for (int k = 0; k < aCols; k++) {
-                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k)));
+                            tmp = mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(col * bRows + k));
+                            add.enable(x, tmp);
+                            x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
                         final int index = 2 * (col * aRows + row);
@@ -437,12 +458,17 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 }
                 na.enable(a);
                 na.enable(b);
+                mult.enable(a, b);
                 if (notOneColumn.profile(aCols != 1)) {
                     double[] result = new double[aRows << 1];
                     for (int row = 0; row < aRows; row++) {
                         RComplex x = RDataFactory.createComplexZero();
+                        na.enable(x);
+                        RComplex tmp;
                         for (int k = 0; k < b.getLength(); k++) {
-                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k)));
+                            tmp = mult.applyComplex(a.getDataAt(k * aRows + row), b.getDataAt(k));
+                            add.enable(x, tmp);
+                            x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
                         result[row << 1] = x.getRealPart();
@@ -471,12 +497,17 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 }
                 na.enable(a);
                 na.enable(b);
+                mult.enable(a, b);
                 if (notOneRow.profile(bRows != 1)) {
                     double[] result = new double[bCols << 1];
                     for (int k = 0; k < bCols; k++) {
                         RComplex x = RDataFactory.createComplexZero();
+                        na.enable(x);
+                        RComplex tmp;
                         for (int row = 0; row < a.getLength(); row++) {
-                            x = add.applyComplex(x, mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row)));
+                            tmp = mult.applyComplex(a.getDataAt(row), b.getDataAt(k * a.getLength() + row));
+                            add.enable(x, tmp);
+                            x = add.applyComplex(x, tmp);
                             na.check(x);
                         }
                         result[k << 1] = x.getRealPart();
@@ -499,10 +530,22 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                 if (a.getLength() == 1) {
                     na.enable(a);
                     na.enable(b);
+                    mult.enable(a, b);
                     RComplex aValue = a.getDataAt(0);
+                    RComplex bValue = b.getDataAt(0);
                     double[] result = new double[2 * b.getLength()];
-                    if (na.check(aValue)) {
-                        Arrays.fill(result, RRuntime.DOUBLE_NA);
+
+                    if (na.checkNAorNaN(aValue.getRealPart()) || na.checkNAorNaN(aValue.getImaginaryPart()) ||
+                                    na.checkNAorNaN(bValue.getRealPart()) || na.checkNAorNaN(bValue.getImaginaryPart())) {
+                        if (na.check(bValue)) {
+                            Arrays.fill(result, RRuntime.DOUBLE_NA);
+                        } else if (Double.isNaN(bValue.getRealPart()) || Double.isNaN(bValue.getImaginaryPart())) {
+                            Arrays.fill(result, Double.NaN);
+                        } else if (na.check(aValue)) {
+                            Arrays.fill(result, RRuntime.DOUBLE_NA);
+                        } else if (Double.isNaN(aValue.getRealPart()) || Double.isNaN(aValue.getImaginaryPart())) {
+                            Arrays.fill(result, Double.NaN);
+                        }
                     } else {
                         for (int k = 0; k < b.getLength(); k++) {
                             RComplex res = mult.applyComplex(aValue, b.getDataAt(k));
@@ -517,10 +560,17 @@ public abstract class MatMult extends RBuiltinNode.Arg2 {
                     throw error(RError.Message.NON_CONFORMABLE_ARGS);
                 }
                 RComplex result = RDataFactory.createComplexZero();
+                RComplex tmp;
                 na.enable(a);
                 na.enable(b);
+                na.enable(result);
+                mult.enable(a, b);
                 for (int k = 0; k < a.getLength(); k++) {
-                    result = add.applyComplex(result, mult.applyComplex(a.getDataAt(k), b.getDataAt(k)));
+                    RComplex aValue = a.getDataAt(k);
+                    RComplex bValue = b.getDataAt(k);
+                    tmp = mult.applyComplex(aValue, bValue);
+                    add.enable(result, tmp);
+                    result = add.applyComplex(result, tmp);
                     na.check(result);
                 }
                 return RDataFactory.createComplexVector(new double[]{result.getRealPart(), result.getImaginaryPart()}, na.neverSeenNA(), new int[]{1, 1});

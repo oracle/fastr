@@ -484,11 +484,31 @@ public class TestSimpleArithmetic extends TestBase {
         assertEval("{ matrix(c(3,1,0/0,2), nrow=2) %*% matrix(1:6,nrow=2) }");
         assertEval("{ as.raw(1:3) %*% 1:3 }");
         assertEval("{ options(matprod = 'blas'); matrix(c(NaN,1,7,2,4,NA), nrow=3) %*% matrix(c(3,1,NA,2,NaN,5,6,7), nrow=2) }");
-        // NaN vs. NA issue
-        assertEval(Ignored.Unknown, "{ c(1,2,NA,NaN) %*% c(1,3,3,4) }");
-        assertEval(Ignored.NewRVersionMigration, "{ c(1,2,NaN,NA) %*% c(1,3,3,4) }");
-        assertEval(Ignored.Unknown, "{ c(1,2,2,3) %*% c(1,3,NA,NaN) }");
-        assertEval(Ignored.NewRVersionMigration, "{ c(1,2,2,3) %*% c(1,3,NaN,NA) }");
+        assertEval("{ NaN %*% NA}");
+        assertEval("{ NA %*% NaN}");
+        assertEval("{ c(NaN) %*% c(NA)}");
+        assertEval("{ c(NA) %*% c(NaN)}");
+        assertEval("{ c(1,2,NA,NaN) %*% c(1,3,3,4) }");
+        assertEval("{ c(1,2,NaN,NA) %*% c(1,3,3,4) }");
+        assertEval("{ c(1,2,2,3) %*% c(1,3,NA,NaN) }");
+        assertEval("{ c(1,2,2,3) %*% c(1,3,NaN,NA) }");
+        assertEval("{ c(NA,NaN) %*% c(1.6,3.6) }");
+        assertEval("{ c(NaN,NA) %*% c(1.6,3.6) }");
+        assertEval("{ c(1.1,2.2) %*% c(NA,NaN) }");
+        assertEval("{ c(1.1,22.2) %*% c(NaN,NA) }");
+        assertEval("{c(as.complex(NaN), NA) %*% c(1, 3.6)}");
+        assertEval("{c(as.complex(NaN), NA, as.complex(NaN)) %*% c(1, 3.6)}");
+        assertEval("{c(as.complex(NA), NaN) %*% c(1, 3.6)}");
+        assertEval("{c(as.complex(NA), NaN, as.complex(NA)) %*% c(1, 3.6)}");
+        assertEval("{c(1.1, 2.2) %*% c(as.complex(NaN), NA)}");
+        assertEval("{c(1.1, 2.2) %*% c(as.complex(NaN), NA, as.complex(NaN))}");
+        assertEval("{c(1.1, 2.2) %*% c(as.complex(NA), NaN)}");
+        assertEval("{c(1.1, 2.2) %*% c(as.complex(NA), NaN, as.complex(NA))}");
+        assertEval("{c(as.complex(NaN)) %*% c(NA)}");
+        assertEval("{c(as.complex(NA)) %*% c(NaN)}");
+        assertEval("{c(NA) %*% c(as.complex(NaN))}");
+        assertEval("{c(NaN) %*% c(as.complex(NA))}");
+
     }
 
     @Test
