@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
 @ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class CastListNode extends CastBaseNode {
@@ -139,9 +139,9 @@ public abstract class CastListNode extends CastBaseNode {
 
     @Specialization(guards = {"isForeignObject(obj)"})
     protected RList doForeignObject(TruffleObject obj,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
 
-        Object o = foreignArray2R.convert(obj);
+        Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RList) {
                 return (RList) o;

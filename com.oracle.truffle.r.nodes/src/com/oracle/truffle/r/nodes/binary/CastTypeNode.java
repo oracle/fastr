@@ -41,11 +41,11 @@ import com.oracle.truffle.r.nodes.unary.TypeofNode;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @TypeSystemReference(RTypes.class)
-@ImportStatic({ForeignArray2R.class, Message.class})
+@ImportStatic({ConvertForeignObjectNode.class, Message.class})
 public abstract class CastTypeNode extends RBaseNode {
 
     protected static final int NUMBER_OF_TYPES = RType.values().length;
@@ -83,8 +83,8 @@ public abstract class CastTypeNode extends RBaseNode {
                     @Cached("type") RType cachedType,
                     @Cached("createCast(cachedType)") CastNode cast,
                     @Cached("HAS_SIZE.createNode()") Node hasSize,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
-        return cast.doCast(foreignArray2R.convert(value));
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
+        return cast.doCast(convertForeign.convert(value));
     }
 
     @TruffleBoundary

@@ -104,7 +104,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 public class FastRInterop {
@@ -967,12 +967,12 @@ public class FastRInterop {
         @TruffleBoundary
         public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions,
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("create()") ForeignArray2R array2R) {
+                        @Cached("create()") ConvertForeignObjectNode convertForeign) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
-                return array2R.convert(obj, recursive, dropDimensions);
+                return convertForeign.convert(obj, recursive, dropDimensions);
             } else {
                 // a non-array we can convert only to List
-                return array2R.convertToList(obj, recursive, dropDimensions);
+                return convertForeign.convertToList(obj, recursive, dropDimensions);
             }
         }
 

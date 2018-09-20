@@ -37,12 +37,12 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray;
+import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import java.util.ArrayList;
 import java.util.List;
 
-@ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class, RType.class})
+@ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class, RType.class})
 public abstract class CopyForeignArrayNode extends RBaseNode {
 
     @Child protected Node hasSize = Message.HAS_SIZE.createNode();
@@ -75,7 +75,7 @@ public abstract class CopyForeignArrayNode extends RBaseNode {
     RAbstractVector toVector(TruffleObject obj, boolean recursive, RType type, int[] dims, boolean dropDimensions) {
         // TODO if possible, pass an already allocated array of the particular type
         List<Object> res = execute(obj, recursive, null);
-        return ForeignArray2R.asAbstractVector(res.toArray(new Object[res.size()]), dims, type, dropDimensions);
+        return ConvertForeignObjectNode.asAbstractVector(res.toArray(new Object[res.size()]), dims, type, dropDimensions);
     }
 
     @Specialization(guards = "isForeignArray(obj, hasSize)")

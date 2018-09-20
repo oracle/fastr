@@ -79,16 +79,16 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * </p>
  */
 @ImportStatic({Message.class, RRuntime.class, RType.class})
-public abstract class ForeignArray2R extends RBaseNode {
+public abstract class ConvertForeignObjectNode extends RBaseNode {
 
     @Child protected Node hasSizeNode = Message.HAS_SIZE.createNode();
     @Child protected Node readNode;
     @Child protected Foreign2R foreign2RNode;
     @Child protected Node keyInfoNode;
-    @Child private ForeignArray2R recurseNode;
+    @Child private ConvertForeignObjectNode recurseNode;
 
-    public static ForeignArray2R create() {
-        return ForeignArray2RNodeGen.create();
+    public static ConvertForeignObjectNode create() {
+        return ConvertForeignObjectNodeGen.create();
     }
 
     protected abstract Object execute(Object obj, boolean recursive, boolean dropDimensions, RType type);
@@ -399,7 +399,7 @@ public abstract class ForeignArray2R extends RBaseNode {
 
     @Specialization(guards = {"isForeignObject(truffleObject)", "!isForeignArray(truffleObject)", "type == List"})
     @TruffleBoundary
-    protected Object convertObjectToList(TruffleObject truffleObject, @SuppressWarnings("unused") boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") RType type,
+    protected Object convertObjectToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") RType type,
                     @Cached("create()") GetForeignKeysNode namesNode) {
         Object namesObj = namesNode.execute(truffleObject, false);
         if (namesObj == RNull.instance) {
@@ -438,7 +438,7 @@ public abstract class ForeignArray2R extends RBaseNode {
         return !RRuntime.isForeignObject(obj) || (!isForeignArray(obj) && type != RType.List);
     }
 
-    private ForeignArray2R getRecurseNode() {
+    private ConvertForeignObjectNode getRecurseNode() {
         if (recurseNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             recurseNode = insert(create());

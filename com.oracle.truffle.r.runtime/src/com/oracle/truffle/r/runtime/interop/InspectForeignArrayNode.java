@@ -36,12 +36,12 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray;
+import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import java.util.ArrayList;
 import java.util.List;
 
-@ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class})
+@ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class})
 public abstract class InspectForeignArrayNode extends RBaseNode {
 
     @Child protected Node hasSize = Message.HAS_SIZE.createNode();

@@ -69,7 +69,7 @@ public abstract class GetForeignKeysNode extends RBaseNode {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     hasSizeNode = insert(Message.HAS_SIZE.createNode());
                 }
-                if (ForeignArray2R.isForeignArray(obj, hasSizeNode)) {
+                if (ConvertForeignObjectNode.isForeignArray(obj, hasSizeNode)) {
                     // got no names for a truffle array
                     return RNull.instance;
                 }

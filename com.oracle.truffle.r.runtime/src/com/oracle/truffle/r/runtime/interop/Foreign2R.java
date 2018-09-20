@@ -39,7 +39,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
  * Converts 'primitive' values from the outside world to internal FastR representations. For
- * conversion of more complex cases see {@link ForeignArray2R}.
+ * conversion of more complex cases see {@link ConvertForeignObjectNode}.
  */
 @ImportStatic({RRuntime.class})
 public abstract class Foreign2R extends RBaseNode {

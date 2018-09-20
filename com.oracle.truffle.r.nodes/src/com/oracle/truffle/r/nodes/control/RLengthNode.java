@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -49,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * overridden for some S3/S4 classes. Check if you need to get actual length, or what the 'length'
  * function returns, like in {@code seq_along}.
  */
-@ImportStatic({Message.class, ForeignArray2R.class})
+@ImportStatic({Message.class, ConvertForeignObjectNode.class})
 public abstract class RLengthNode extends RBaseNode {
 
     public abstract int executeInteger(Object value);

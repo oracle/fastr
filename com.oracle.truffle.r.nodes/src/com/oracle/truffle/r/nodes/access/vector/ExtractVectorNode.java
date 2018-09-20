@@ -68,7 +68,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.ForeignTypeCheck;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -291,7 +291,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
                 elements[i] = foreign2RNode.execute(res);
                 typeCheck.check(elements[i]);
             }
-            return ForeignArray2R.asAbstractVector(elements, typeCheck.getType());
+            return ConvertForeignObjectNode.asAbstractVector(elements, typeCheck.getType());
         } catch (InteropException e) {
             CompilerDirectives.transferToInterpreter();
             throw RError.interopError(RError.findParentRBase(this), e, object);

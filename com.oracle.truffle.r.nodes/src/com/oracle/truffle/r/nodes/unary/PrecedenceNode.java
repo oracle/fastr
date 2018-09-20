@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.unary;
 
-import static com.oracle.truffle.r.runtime.interop.ForeignArray2R.isForeignArray;
+import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -61,10 +61,10 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@ImportStatic({Message.class, RRuntime.class, ForeignArray2R.class, Foreign2R.class})
+@ImportStatic({Message.class, RRuntime.class, ConvertForeignObjectNode.class, Foreign2R.class})
 public abstract class PrecedenceNode extends RBaseNode {
 
     public static final int NO_PRECEDENCE = -1;
