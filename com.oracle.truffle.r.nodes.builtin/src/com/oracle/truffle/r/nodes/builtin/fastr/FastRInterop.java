@@ -949,13 +949,15 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = ".fastr.interop.fromArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive"}, behavior = COMPLEX)
-    public abstract static class FromForeignArray extends RBuiltinNode.Arg2 {
+    @RBuiltin(name = ".fastr.interop.asVector", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive", "dropDimensions"}, behavior = COMPLEX)
+    public abstract static class AsVector extends RBuiltinNode.Arg3 {
 
         static {
-            Casts casts = new Casts(FromForeignArray.class);
+            Casts casts = new Casts(AsVector.class);
             casts.arg("array").castForeignObjects(false).mustNotBeMissing();
             casts.arg("recursive").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+                            notLogicalNA()).map(Predef.toBoolean());
+            casts.arg("dropDimensions").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
         }
 
@@ -963,19 +965,20 @@ public class FastRInterop {
 
         @Specialization(guards = {"isForeignObject(obj)"})
         @TruffleBoundary
-        public Object fromArray(TruffleObject obj, boolean recursive,
+        public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions,
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
                         @Cached("create()") ForeignArray2R array2R) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
-                return array2R.convert(obj, recursive);
+                return array2R.convert(obj, recursive, dropDimensions);
             } else {
-                throw error(RError.Message.GENERIC, "not a java array");
+                // a non-array we can convert only to List
+                return array2R.convertToList(obj, recursive, dropDimensions);
             }
         }
 
         @Fallback
-        public Object fromObject(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive) {
-            throw error(RError.Message.GENERIC, "not a java array");
+        public Object fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive, @SuppressWarnings("unused") Object dropDimensions) {
+            return RNull.instance;
         }
     }
 

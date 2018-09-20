@@ -25,318 +25,259 @@ package com.oracle.truffle.r.runtime.interop;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.interop.InspectForeignArrayNode.ArrayInfo;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@ImportStatic({Message.class, RRuntime.class})
+/**
+ * <p>
+ * Converts foreign objects to a vector or a list.
+ * <ul>
+ * <li><b>Homogenous arrays</b> are converted implicitly to a corresponding atomic vector or to a
+ * list if explicitely requested.<br>
+ * <li><b>Heterogenous arrays</b> are always converted to a list.<br>
+ * <li><b>Non-array objects</b> having keys are converted into a named list <b>only</b> if
+ * explicitely requested.<br>
+ * </ul>
+ * </p>
+ * 
+ * <p>
+ * <b>Multi dimensional arrays</b> are, depending on the <b>recursive</b> parameter, either
+ * converted recursively or only the first dimension array is read and a list with the particular
+ * foreign objects is returned.
+ * </p>
+ * 
+ * <p>
+ * Rectangular <b>array dimensions</b> (or a n-dim equivalent) are, depending on the
+ * <b>dropDimensions</b> parameter, either honored by the conversion or a flat vector/list is
+ * returned.
+ * </p>
+ */
+@ImportStatic({Message.class, RRuntime.class, RType.class})
 public abstract class ForeignArray2R extends RBaseNode {
 
-    @Child protected Node hasSize = Message.HAS_SIZE.createNode();
-    @Child protected Node getSize = Message.GET_SIZE.createNode();
-    @Child private Foreign2R foreign2R;
-    @Child private ForeignArray2R foreignArray2R;
-    @Child private Node read = Message.READ.createNode();
-    @Child private Node isNull;
-    @Child private Node isBoxed;
-    @Child private Node unbox;
+    @Child protected Node hasSizeNode = Message.HAS_SIZE.createNode();
+    @Child protected Node readNode;
+    @Child protected Foreign2R foreign2RNode;
+    @Child protected Node keyInfoNode;
+    @Child private ForeignArray2R recurseNode;
 
     public static ForeignArray2R create() {
         return ForeignArray2RNodeGen.create();
     }
 
+    protected abstract Object execute(Object obj, boolean recursive, boolean dropDimensions, RType type);
+
     /**
-     * Convert the provided foreign array to a vector. Multi dimensional arrays will be resolved
-     * recursively.
+     * Converts the provided foreign array to a vector or list.
+     * <p>
+     * The returned vector type will be implicitly determined by the values from the foreign array.
+     * </p>
+     * <p>
+     * All dimensions will be taken in count and resolved recursively.
+     * </p>
      *
-     * @param obj foreign array
-     * @return a vector if obj is a foreign array, otherwise obj
+     * @param truffleObject foreign array
+     * @return a vector or list if <code>truffleObject</code> is a foreign array otherwise
+     *         <code>truffleObject</code>
      */
-    public Object convert(TruffleObject obj) {
-        return convert(obj, true);
+    public Object convert(TruffleObject truffleObject) {
+        return convert(truffleObject, true);
     }
 
     /**
-     * Convert the provided foreign array to a vector.
+     * Converts the provided foreign array to a vector or list.
+     * <p>
+     * The returned vector type will be implicitly determined by the values from the foreign array.
+     * </p>
      *
      * @param truffleObject foreign array
-     * @param recursive determines whether a provided multi dimensional array should be resolved
-     *            recursively or not.
-     * @return a vector if obj is a foreign array, otherwise obj
+     * @param recursive if <code>true</code> then the dimensions in a multi dimensional array will
+     *            be taken in count and resolved recursively, otherwise only the first array
+     *            dimension will be read and returned in a list.
+     * @return a vector or list if <code>truffleObject</code> is a foreign array, otherwise
+     *         <code>truffleObject</code>
      *
      */
     public Object convert(TruffleObject truffleObject, boolean recursive) {
-        if (FastROptions.ForeignObjectWrappers.getBooleanValue() && isForeignArray(truffleObject)) {
-            try {
-                int size = (int) ForeignAccess.sendGetSize(getSize, truffleObject);
-                if (size == 0) {
-                    // TODO not yet ready to use RForeignListWrapper
-                    // as an alternative to RList
-                    // return new RForeignListWrapper(truffleObject);
-                    return RDataFactory.createList();
-                } else {
-                    Object result = execute(truffleObject, recursive, null, 0, true);
-                    if (result instanceof ForeignArrayData) {
-                        ForeignArrayData arrayData = (ForeignArrayData) result;
-                        if (arrayData.isOneDim()) { // can't deal with multidims
-                            InteropTypeCheck.RType type = arrayData.typeCheck.getType();
-                            switch (type) {
-                                case NONE:
-                                case NULL:
-                                    // TODO not yet ready to use RForeignListWrapper
-                                    // as an alternative to RList
-                                    // return new RForeignListWrapper(truffleObject);
-                                    return copy(truffleObject, recursive);
-                                case BOOLEAN:
-                                    return new RForeignBooleanWrapper(truffleObject);
-                                case DOUBLE:
-                                    return new RForeignDoubleWrapper(truffleObject);
-                                case INTEGER:
-                                    return new RForeignIntWrapper(truffleObject);
-                                case STRING:
-                                    return new RForeignStringWrapper(truffleObject);
-                                default:
-                                    assert false : "did not handle properly: " + type;
-                            }
-                        }
-                    }
-                }
-            } catch (UnsupportedMessageException e) {
-                throw RInternalError.shouldNotReachHere(e);
-            }
-        }
-        return copy(truffleObject, recursive);
+        return convert(truffleObject, recursive, false);
     }
 
     /**
-     * Creates a complete copy of all foreign array elements into a R vector/list.
+     * Converts the provided foreign array to a vector or list.
+     * <p>
+     * The returned vector type will be implicitly determined by the values from the foreign array.
+     * </p>
+     *
+     * @param truffleObject foreign array
+     * @param recursive if <code>true</code> then the dimensions in a multi dimensional array will
+     *            be taken in count and resolved recursively, otherwise only the first array
+     *            dimension will be read and returned in a list.
+     * @param dropDimensions if <code>true</code> a flat vector or list without dimensions will be
+     *            returned. <b>Note</b> that the positioning of the particular values in the result
+     *            vector will be done by columns, as this is the default e.g. when creating a R
+     *            matrix.
+     * @return a vector if <code>truffleObject</code> is a foreign array, otherwise
+     *         <code>truffleObject</code>
+     *
+     */
+    public Object convert(TruffleObject truffleObject, boolean recursive, boolean dropDimensions) {
+        return execute(truffleObject, recursive, dropDimensions, RType.Any);
+    }
+
+    /**
+     * Converts the provided foreign object to a list.
+     * 
+     * <p>
+     * If the provided object isn't an array, then a named list will be created from it's keys and
+     * their values.
+     * </p>
+     * 
+     * @param truffleObject foreign object
+     * @param recursive if <code>true</code> then the dimensions in a multi dimensional array will
+     *            be taken in count and resolved recursively, otherwise only the first array
+     *            dimension will be read and returned in a list.
+     * @param dropDimensions if <code>true</code> a flat list without dimensions will be returned.
+     *            <b>Note</b> that the positioning of the particular values in the result will be
+     *            done by columns, as this is the default e.g. when creating a R matrix.
+     * @return a list if obj is a foreign array, otherwise obj
+     */
+    public Object convertToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions) {
+        return execute(truffleObject, recursive, dropDimensions, RType.List);
+    }
+
+    /**
+     * Determines whether the provided object is a foreign array or not.
      * 
      * @param obj
-     * @param recursive
-     * @return a vector or list
+     * @return <code>true</code> if the provided object is an array, otherwise <code>false</code>
      */
-    public Object copy(TruffleObject obj, boolean recursive) {
-        Object result = execute(obj, recursive, null, 0, false);
-        if (result instanceof ForeignArrayData) {
-            ForeignArrayData arrayData = (ForeignArrayData) result;
-            if (arrayData.elements.isEmpty()) {
-                return RDataFactory.createList();
-            }
-            return asAbstractVector(arrayData);
-        }
-        return result;
-    }
-
-    protected abstract Object execute(Object obj, boolean recursive, ForeignArrayData arrayData, int depth, boolean onlyInspect);
-
-    @Specialization(guards = {"isForeignArray(obj)"})
-    @TruffleBoundary
-    protected ForeignArrayData doArray(TruffleObject obj, boolean recursive, ForeignArrayData arrayData, int depth, boolean onlyInspect) {
-        try {
-            return collectArrayElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, recursive, depth, onlyInspect);
-        } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-            throw error(RError.Message.GENERIC, "error while converting array: " + e.getMessage());
-        }
-    }
-
-    @Specialization(guards = "isJavaIterable(obj)")
-    @TruffleBoundary
-    protected ForeignArrayData doJavaIterable(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, ForeignArrayData arrayData, @SuppressWarnings("unused") int depth, boolean onlyInspect,
-                    @Cached("EXECUTE.createNode()") Node execute) {
-
-        try {
-            return getIterableElements(arrayData == null ? new ForeignArrayData() : arrayData, obj, execute, onlyInspect);
-        } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException | ArityException e) {
-            throw error(RError.Message.GENERIC, "error while casting polyglot value to list: " + e.getMessage());
-        }
-    }
-
-    @Fallback
-    protected Object doObject(Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") ForeignArrayData arrayData, @SuppressWarnings("unused") int depth,
-                    @SuppressWarnings("unused") boolean onlyInspect) {
-        return obj;
-    }
-
-    private ForeignArrayData collectArrayElements(ForeignArrayData arrayData, TruffleObject obj, boolean recursive, int depth, boolean onlyInspect)
-                    throws UnsupportedMessageException, UnknownIdentifierException {
-        int size = (int) ForeignAccess.sendGetSize(getSize, obj);
-
-        arrayData.addDimension(depth, size);
-
-        if (size == 0) {
-            return arrayData;
-        }
-        for (int i = 0; i < size; i++) {
-            Object element = ForeignAccess.sendRead(read, obj, i);
-            if (recursive && (isForeignArray(element, hasSize) || isJavaIterable(element))) {
-                recurse(arrayData, element, depth, onlyInspect);
-            } else {
-                arrayData.process(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R, onlyInspect);
-            }
-        }
-        return arrayData;
-    }
-
-    private ForeignArrayData getIterableElements(ForeignArrayData arrayData, TruffleObject obj, Node execute, boolean onlyInspect)
-                    throws UnknownIdentifierException, ArityException, UnsupportedMessageException, UnsupportedTypeException {
-        if (read == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            read = insert(Message.READ.createNode());
-        }
-        TruffleObject itFunction = (TruffleObject) ForeignAccess.sendRead(read, obj, "iterator");
-        TruffleObject it = (TruffleObject) ForeignAccess.sendExecute(execute, itFunction);
-        TruffleObject hasNextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "hasNext");
-
-        while ((boolean) ForeignAccess.sendExecute(execute, hasNextFunction)) {
-            TruffleObject nextFunction = (TruffleObject) ForeignAccess.sendRead(read, it, "next");
-            Object element = ForeignAccess.sendExecute(execute, nextFunction);
-            arrayData.process(element, this::getIsNull, this::getIsBoxed, this::getUnbox, this::getForeign2R, onlyInspect);
-        }
-        return arrayData;
-    }
-
-    private void recurse(ForeignArrayData arrayData, Object element, int depth, boolean onlyInspect) {
-        if (foreignArray2R == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreignArray2R = insert(create());
-        }
-        foreignArray2R.execute(element, true, arrayData, depth + 1, onlyInspect);
-    }
-
-    private Foreign2R getForeign2R() {
-        if (foreign2R == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            foreign2R = insert(Foreign2RNodeGen.create());
-        }
-        return foreign2R;
-    }
-
-    private Node getUnbox() {
-        if (unbox == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            unbox = insert(Message.UNBOX.createNode());
-        }
-        return unbox;
-    }
-
-    private Node getIsBoxed() {
-        if (isBoxed == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            isBoxed = insert(Message.IS_BOXED.createNode());
-        }
-        return isBoxed;
-    }
-
-    private Node getIsNull() {
-        if (isNull == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            isNull = insert(Message.IS_NULL.createNode());
-        }
-        return isNull;
+    public boolean isForeignArray(Object obj) {
+        return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSizeNode, (TruffleObject) obj);
     }
 
     /**
-     * Converts the elements collected from a foreign array or java iterable into a vector or list.
+     * Determines whether the provided object is a foreign array or not.
+     * 
+     * @param obj
+     * @param hasSizeNode
+     * @return <code>true</code> if the provided object is an array, otherwise <code>false</code>
+     */
+    public static boolean isForeignArray(Object obj, Node hasSizeNode) {
+        return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSizeNode, (TruffleObject) obj);
+    }
+
+    /**
+     * Creates a vector. It has to be assured by the caller that the elements and type corresponds
+     * to each other. Null values are replaced by NA.
      *
-     * @param arrayData foreign array data
+     * @param elements vector elements
+     * @param type the resulting vector type. Allowed values are
+     *            <ul>
+     *            <li>Logical</li>
+     *            <li>Integer</li>
+     *            <li>Double</li>
+     *            <li>Character</li>
+     *            <li>List</li>
+     *            </ul>
      * @return a vector
      */
     @TruffleBoundary
-    public static RAbstractVector asAbstractVector(final ForeignArrayData arrayData) {
-        InteropTypeCheck.RType type = arrayData.typeCheck.getType();
-        int size = arrayData.elements.size();
+    public static RAbstractVector asAbstractVector(Object[] elements, RType type) {
+        return asAbstractVector(elements, null, type, true);
+    }
 
-        int[] dims = arrayData.isMultiDim() ? arrayData.dims.stream().mapToInt((i) -> i.intValue()).toArray() : null;
-
+    static RAbstractVector asAbstractVector(Object[] elements, int[] dims, RType type, boolean dropDimensions) {
+        int size = elements.length;
         switch (type) {
-            case NONE:
-            case NULL:
-                return RDataFactory.createList(arrayData.elements.toArray(new Object[arrayData.elements.size()]));
-            case BOOLEAN:
+            case Logical:
                 WriteArray<byte[]> wba = (byte[] array, int resultIdx, int sourceIdx, boolean[] complete) -> {
-                    Object value = arrayData.elements.get(sourceIdx);
+                    Object value = elements[sourceIdx];
                     array[resultIdx] = value == RNull.instance ? RRuntime.LOGICAL_NA : ((Number) value).byteValue();
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 byte[] byteArray = new byte[size];
                 if (dims != null) {
-                    return createVector(dims, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete, dims));
+                    return createVector(dims, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete));
                 }
-            case DOUBLE:
+            case Double:
                 WriteArray<double[]> wda = (array, resultIdx, sourceIdx, complete) -> {
-                    Object value = arrayData.elements.get(sourceIdx);
+                    Object value = elements[sourceIdx];
                     array[resultIdx] = value == RNull.instance ? RRuntime.DOUBLE_NA : ((Number) value).doubleValue();
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 double[] doubleArray = new double[size];
                 if (dims != null) {
-                    return createVector(dims, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete, dims));
+                    return createVector(dims, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete));
                 }
-            case INTEGER:
+            case Integer:
                 WriteArray<int[]> wia = (array, resultIdx, sourceIdx, complete) -> {
-                    Object value = arrayData.elements.get(sourceIdx);
+                    Object value = elements[sourceIdx];
                     array[resultIdx] = value == RNull.instance ? RRuntime.INT_NA : ((Number) value).intValue();
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 int[] intArray = new int[size];
                 if (dims != null) {
-                    return createVector(dims, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete, dims));
+                    return createVector(dims, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete));
                 }
-            case STRING:
+            case Character:
                 WriteArray<String[]> wsa = (array, resultIdx, sourceIdx, complete) -> {
-                    Object value = arrayData.elements.get(sourceIdx);
+                    Object value = elements[sourceIdx];
                     array[resultIdx] = value == RNull.instance ? RRuntime.STRING_NA : String.valueOf(value);
                     complete[0] &= !RRuntime.isNA(array[resultIdx]);
                 };
                 String[] stringArray = new String[size];
                 if (dims != null) {
-                    return createVector(dims, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete, dims));
+                    return createVector(dims, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete));
                 }
+            case List:
+            case Null:
+                // return createList(elements, null, dropDimensions ? null : dims, size);
+                if (dims != null) {
+                    WriteArray<Object[]> wa = (array, resultIdx, sourceIdx, complete) -> {
+                        array[resultIdx] = elements[sourceIdx];
+                    };
+                    Object[] array = new Object[size];
+                    return createVector(dims, array, wa, (complete) -> RDataFactory.createList(array, dropDimensions ? null : dims));
+                } else {
+                    return RDataFactory.createList(elements);
+                }
             default:
-                assert false : "did not handle properly: " + type;
+                throw RInternalError.shouldNotReachHere();
         }
-
-        return RDataFactory.createList(arrayData.elements.toArray(new Object[arrayData.elements.size()]));
     }
 
     @FunctionalInterface
@@ -395,153 +336,138 @@ public abstract class ForeignArray2R extends RBaseNode {
         return idx;
     }
 
-    public boolean isForeignArray(Object obj) {
-        return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSize, (TruffleObject) obj);
-    }
+    @Specialization(guards = {"isForeignArray(truffleObject)", "type != List"})
+    protected Object convertArray(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") RType type,
+                    @Cached("create()") InspectForeignArrayNode inspectTruffleObject,
+                    @Cached("create()") CopyForeignArrayNode copyArray) {
+        ArrayInfo arrayInfo = new ArrayInfo();
+        inspectTruffleObject.execute(truffleObject, recursive, arrayInfo, 0);
 
-    public boolean isForeignVector(Object obj) {
-        return isJavaIterable(obj) || isForeignArray(obj, hasSize);
-    }
-
-    public static boolean isForeignArray(Object obj, Node hasSize) {
-        return RRuntime.isForeignObject(obj) && ForeignAccess.sendHasSize(hasSize, (TruffleObject) obj);
-    }
-
-    public static boolean isJavaIterable(Object obj) {
-        if (RRuntime.isForeignObject(obj)) {
-            TruffleLanguage.Env env = RContext.getInstance().getEnv();
-            return env.isHostObject(obj) && env.asHostObject(obj) instanceof Iterable;
-        }
-        return false;
-    }
-
-    public static boolean isForeignVector(Object obj, Node hasSize) {
-        return isJavaIterable(obj) || isForeignArray(obj, hasSize);
-    }
-
-    public static class InteropTypeCheck {
-        public enum RType {
-            BOOLEAN,
-            DOUBLE,
-            INTEGER,
-            STRING,
-            NULL,
-            NONE;
-        }
-
-        private RType type = null;
-
-        public static RType determineType(Object value) {
-            if (value instanceof Boolean) {
-                return RType.BOOLEAN;
-            } else if (value instanceof Byte || value instanceof Integer || value instanceof Short) {
-                return RType.INTEGER;
-            } else if (value instanceof Double || value instanceof Float || value instanceof Long) {
-                return RType.DOUBLE;
-            } else if (value instanceof Character || value instanceof String) {
-                return RType.STRING;
-            } else {
-                return RType.NONE;
-            }
-        }
-
-        public RType checkForeign(Object value) {
-            if (value instanceof Boolean) {
-                setType(RType.BOOLEAN);
-            } else if (value instanceof Byte || value instanceof Integer || value instanceof Short) {
-                setType(RType.INTEGER);
-            } else if (value instanceof Double || value instanceof Float || value instanceof Long) {
-                setType(RType.DOUBLE);
-            } else if (value instanceof Character || value instanceof String) {
-                setType(RType.STRING);
-            } else if (value == RNull.instance) {
-                setType(RType.NULL);
-            } else {
-                this.type = RType.NONE;
-            }
-            return this.type;
-        }
-
-        public RType checkVector(RAbstractVector value) {
-            if (value instanceof RAbstractLogicalVector) {
-                setType(RType.BOOLEAN);
-            } else if (value instanceof RAbstractIntVector) {
-                setType(RType.INTEGER);
-            } else if (value instanceof RAbstractDoubleVector) {
-                setType(RType.DOUBLE);
-            } else if (value instanceof RAbstractStringVector) {
-                setType(RType.STRING);
-            } else {
-                this.type = RType.NONE;
-            }
-            return this.type;
-        }
-
-        private void setType(RType check) {
-            if (this.type != RType.NONE) {
-                if (this.type == null) {
-                    this.type = check;
-                } else if (this.type == RType.INTEGER && check == RType.DOUBLE || check == RType.INTEGER && this.type == RType.DOUBLE) {
-                    this.type = RType.DOUBLE;
-                } else if (this.type != check && check != RType.NULL) {
-                    this.type = RType.NONE;
-                }
-            }
-        }
-
-        public RType getType() {
-            return type != null ? type : RType.NONE;
-        }
-    }
-
-    public static class ForeignArrayData {
-        private InteropTypeCheck typeCheck = new InteropTypeCheck();
-        private List<Object> elements = new ArrayList<>();
-        private List<Integer> dims = new ArrayList<>();
-
-        public void process(Object value, Supplier<Node> getIsNull, Supplier<Node> getIsBoxed, Supplier<Node> getUnbox, Supplier<Foreign2R> getForeign2R, boolean onlyInspect)
-                        throws UnsupportedMessageException {
-            Object unboxedValue = value;
-            if (unboxedValue instanceof TruffleObject) {
-                if (ForeignAccess.sendIsNull(getIsNull.get(), (TruffleObject) unboxedValue)) {
-                    unboxedValue = RNull.instance;
+        RType inspectedType = arrayInfo.getType();
+        switch (inspectedType) {
+            case Logical:
+                if (arrayInfo.isOneDim()) {
+                    return new RForeignBooleanWrapper(truffleObject);
                 } else {
-                    if (ForeignAccess.sendIsBoxed(getIsBoxed.get(), (TruffleObject) unboxedValue)) {
-                        unboxedValue = ForeignAccess.sendUnbox(getUnbox.get(), (TruffleObject) unboxedValue);
-                    }
+                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
                 }
-            }
-            InteropTypeCheck.RType type = typeCheck.checkForeign(unboxedValue);
-            if (onlyInspect && type == InteropTypeCheck.RType.NONE) {
-                return;
-            }
-            if (!onlyInspect) {
-                unboxedValue = getForeign2R.get().execute(unboxedValue);
-                elements.add(unboxedValue);
-            }
-        }
-
-        private boolean isMultiDim() {
-            return dims != null && dims.size() > 1;
-        }
-
-        private boolean isOneDim() {
-            return dims != null && dims.size() == 1;
-        }
-
-        private void addDimension(int depth, int size) {
-            if (dims != null) {
-                if (dims.size() == depth) {
-                    dims.add(size);
-                } else if (depth < dims.size()) {
-                    if (dims.get(depth) != size) {
-                        // had previously on the same depth an array with different length
-                        // -> not rectangular, skip the dimensions
-                        dims = null;
-                    }
+            case Double:
+                if (arrayInfo.isOneDim()) {
+                    return new RForeignDoubleWrapper(truffleObject);
+                } else {
+                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
                 }
-            }
+            case Integer:
+                if (arrayInfo.isOneDim()) {
+                    return new RForeignIntWrapper(truffleObject);
+                } else {
+                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                }
+            case Character:
+                if (arrayInfo.isOneDim()) {
+                    return new RForeignStringWrapper(truffleObject);
+                } else {
+                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                }
+            case List:
+            case Null:
+                return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), false);
+            default:
+                throw RInternalError.shouldNotReachHere("did not handle properly: " + inspectedType);
         }
-
     }
+
+    @Specialization(guards = {"isForeignArray(truffleObject)", "type == List"})
+    protected Object convertArrayToList(TruffleObject truffleObject, boolean recursive, @SuppressWarnings("unused") boolean dropDimensions, @SuppressWarnings("unused") RType type,
+                    @Cached("create()") InspectForeignArrayNode inspectTruffleObject,
+                    @Cached("create()") CopyForeignArrayNode copyArray) {
+        ArrayInfo arrayInfo = new ArrayInfo();
+        inspectTruffleObject.execute(truffleObject, recursive, arrayInfo, 0);
+
+        RType inspectedType = arrayInfo.getType();
+        if (inspectedType != RType.List) {
+            // as if in as.list(atomicVector/Matrix) - e.g. as.list(matrix(1:4, c(2,2)))
+            // => results in a flat list
+            return copyArray.toVector(truffleObject, recursive, type, arrayInfo.getDims(), true);
+        } else {
+            // as if in as.list(heterogenous Matrix)
+            // - e.g. l<-list(1,'a',2,3);dim(l)<-c(2,2);as.list(matrix(l,c(2,2)))
+            // => keeps the lists dimensions
+            return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), false);
+        }
+    }
+
+    @Specialization(guards = {"isForeignObject(truffleObject)", "!isForeignArray(truffleObject)", "type == List"})
+    @TruffleBoundary
+    protected Object convertObjectToList(TruffleObject truffleObject, @SuppressWarnings("unused") boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") RType type,
+                    @Cached("create()") GetForeignKeysNode namesNode) {
+        Object namesObj = namesNode.execute(truffleObject, false);
+        if (namesObj == RNull.instance) {
+            return RDataFactory.createList();
+        }
+        RStringVector names = (RStringVector) namesObj;
+        List<Object> elements = new ArrayList<>();
+        List<Object> elementNames = new ArrayList<>();
+        for (int i = 0; i < names.getLength(); i++) {
+            String name = names.getDataAt(i);
+            try {
+                int keyInfo = ForeignAccess.sendKeyInfo(getKeyInfoNode(), truffleObject, name);
+                if (KeyInfo.isReadable(keyInfo) && !KeyInfo.isInvocable(keyInfo)) {
+                    Object o = ForeignAccess.sendRead(getReadNode(), truffleObject, name);
+                    o = getForeign2RNode().execute(o);
+                    if (isForeignArray(o, hasSizeNode)) {
+                        o = getRecurseNode().execute(o, recursive, dropDimensions, RType.Any);
+                    }
+                    elements.add(o);
+                    elementNames.add(name);
+                }
+            } catch (UnknownIdentifierException | UnsupportedMessageException ex) {
+                throw error(RError.Message.GENERIC, "error while converting truffle object to list: " + ex.getMessage());
+            }
+        }
+        return RDataFactory.createList(elements.toArray(new Object[elements.size()]), RDataFactory.createStringVector(elementNames.toArray(new String[elementNames.size()]), true));
+    }
+
+    @Specialization(guards = {"doNotConvert(obj, type)"})
+    protected Object doObject(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean dropDimensions,
+                    @SuppressWarnings("unused") RType type) {
+        return obj;
+    }
+
+    protected boolean doNotConvert(Object obj, RType type) {
+        return !RRuntime.isForeignObject(obj) || (!isForeignArray(obj) && type != RType.List);
+    }
+
+    private ForeignArray2R getRecurseNode() {
+        if (recurseNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            recurseNode = insert(create());
+        }
+        return recurseNode;
+    }
+
+    private Node getReadNode() {
+        if (readNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            readNode = insert(Message.READ.createNode());
+        }
+        return readNode;
+    }
+
+    private Node getKeyInfoNode() {
+        if (keyInfoNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            keyInfoNode = insert(Message.KEY_INFO.createNode());
+        }
+        return keyInfoNode;
+    }
+
+    private Foreign2R getForeign2RNode() {
+        if (foreign2RNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            foreign2RNode = insert(Foreign2RNodeGen.create());
+        }
+        return foreign2RNode;
+    }
+
 }

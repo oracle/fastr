@@ -155,7 +155,11 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
                     @Cached("create(type)") DropAttributesNode drop,
                     @Cached("create()") ForeignArray2R foreignArray2R) {
         if (RRuntime.isForeignObject(x)) {
-            Object o = foreignArray2R.convert((TruffleObject) x);
+            if (type == RType.List) {
+                // already returns list, no need to cast
+                return foreignArray2R.convertToList((TruffleObject) x, true, true);
+            }
+            Object o = foreignArray2R.convert((TruffleObject) x, true, true);
             if (!RRuntime.isForeignObject(o)) {
                 return cast == null ? o : cast.doCast(o);
             }

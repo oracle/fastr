@@ -33,6 +33,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.KeyInfo;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -68,7 +69,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R.ForeignArrayData;
+import com.oracle.truffle.r.runtime.interop.ForeignTypeCheck;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
@@ -249,6 +250,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return this;
     }
 
+    @ImportStatic(Message.class)
     protected static final class GenericVectorExtractNode extends TruffleBoundaryNode {
 
         @Child private CachedExtractVectorNode cached;
@@ -278,20 +280,18 @@ public abstract class ExtractVectorNode extends RBaseNode {
     @Specialization(guards = {"isForeignObject(object)", "positionsByVector(positions)"})
     protected Object accessFieldByVectorPositions(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
                     @Cached("createReadElement()") ReadElementNode readElement,
-                    @Cached("IS_NULL.createNode()") Node isNullNode,
-                    @Cached("IS_BOXED.createNode()") Node isBoxedNode,
-                    @Cached("UNBOX.createNode()") Node unboxNode,
                     @Cached("create()") Foreign2R foreign2RNode) {
 
         RAbstractVector vec = (RAbstractVector) positions[0];
-        ForeignArrayData arrayData = new ForeignArrayData();
-
         try {
+            ForeignTypeCheck typeCheck = new ForeignTypeCheck();
+            Object[] elements = new Object[vec.getLength()];
             for (int i = 0; i < vec.getLength(); i++) {
                 Object res = readElement.execute(vec.getDataAtAsObject(i), object);
-                arrayData.process(res, () -> isNullNode, () -> isBoxedNode, () -> unboxNode, () -> foreign2RNode, false);
+                elements[i] = foreign2RNode.execute(res);
+                typeCheck.check(elements[i]);
             }
-            return ForeignArray2R.asAbstractVector(arrayData);
+            return ForeignArray2R.asAbstractVector(elements, typeCheck.getType());
         } catch (InteropException e) {
             CompilerDirectives.transferToInterpreter();
             throw RError.interopError(RError.findParentRBase(this), e, object);
