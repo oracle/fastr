@@ -115,6 +115,12 @@ eval(expression({
     # Note: explicitly supported functions: din
     # Note: harmless functions that we do not override: co.intervals, hist.default, axTicks
     # Note: S3 dispatch functions that may dispatch to lattice/ggplot2/etc. implementation: hist, contour, lines, pairs, points, text
+    # Note: we ignore plot.new because Shiny probably uses it for getting coordinates, but not for plotting itself
+
+    # Special case of grconvertX/Y used in Shiny
+    grconvertX <- function(x, from, to) if (from == "user" && to == "nfc") round(x) else graphicsWarning("gcconvertX")(x, from, to)
+    grconvertY <- function(x, from, to) if (from == "user" && to == "nfc") round(x) else graphicsWarning("gcconvertX")(x, from, to)
+    plot.new <- function(...) { } # just ignore
 
     abline <- graphicsWarning("abline");
     arrows <- graphicsWarning("arrows");
@@ -139,8 +145,6 @@ eval(expression({
     filled.contour <- graphicsWarning("filled.contour");
     fourfoldplot <- graphicsWarning("fourfoldplot");
     frame <- graphicsWarning("frame");
-    grconvertX <- graphicsWarning("grconvertX");
-    grconvertY <- graphicsWarning("grconvertY");
     grid <- graphicsWarning("grid");
     identify <- graphicsWarning("identify");
     image <- graphicsWarning("image");
@@ -162,7 +166,6 @@ eval(expression({
     pie <- graphicsWarning("pie");
     plot.design <- graphicsWarning("plot.design");
     plot.function <- graphicsWarning("plot.function");
-    plot.new <- graphicsWarning("plot.new");
     plot.window <- graphicsWarning("plot.window");
     plot.xy <- graphicsWarning("plot.xy");
     points.default <- graphicsWarning("points.default");
