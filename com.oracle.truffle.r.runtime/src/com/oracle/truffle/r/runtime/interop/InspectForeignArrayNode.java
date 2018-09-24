@@ -33,7 +33,6 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import static com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode.isForeignArray;
@@ -53,6 +52,20 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
 
     public static InspectForeignArrayNode create() {
         return InspectForeignArrayNodeGen.create();
+    }
+
+    /**
+     * Determines the target R type and dimensions of a foreign array.
+     * 
+     * @param obj
+     * @return ArrayInfo
+     */
+    public ArrayInfo getArrayInfo(TruffleObject obj) {
+        ArrayInfo info = new ArrayInfo();
+        if (execute(obj, true, info, 0)) {
+            return info;
+        }
+        return null;
     }
 
     protected abstract boolean execute(Object obj, boolean recursive, ArrayInfo data, int depth);
@@ -98,7 +111,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
     @Fallback
     protected boolean fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") ArrayInfo data,
                     @SuppressWarnings("unused") int depth) {
-        throw RInternalError.shouldNotReachHere();
+        return false;
     }
 
     private boolean recurse(ArrayInfo arrayInfo, Object element, int depth) {
@@ -109,7 +122,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
         return inspectTruffleObject.execute(element, true, arrayInfo, depth + 1);
     }
 
-    protected static class ArrayInfo {
+    public static final class ArrayInfo {
         private final ForeignTypeCheck typeCheck = new ForeignTypeCheck();
         private final List<Integer> dims = new ArrayList<>();
 
@@ -120,7 +133,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
         }
 
         @CompilerDirectives.TruffleBoundary
-        int[] getDims() {
+        public int[] getDims() {
             return isRectMultiDim() ? dims.stream().mapToInt((i) -> i.intValue()).toArray() : null;
         }
 

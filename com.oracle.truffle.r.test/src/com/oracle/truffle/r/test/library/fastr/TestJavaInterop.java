@@ -736,6 +736,8 @@ public class TestJavaInterop extends TestBase {
         result = "b2 <- c(T, T, F, F, T, T); i <- c(1,2,3); oa <- list(T, 'a', F, 'b', T, 'c'); dim(oa)  <- c(2, 3); list(b=b2, i=i, oa=oa, o=NULL)";
         assertEvalFastR("talc <- new('" + TestAsListClassMixed.class.getName() + "')" + "; as.list(talc)", result);
 
+        // TODO test for as.vector too
+        assertEvalFastR(Ignored.ImplementationError, "ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); as.list(ta$integerArray2x3x4x5)", "c(2, 3, 4, 5)");
     }
 
     @Test
@@ -917,6 +919,20 @@ public class TestJavaInterop extends TestBase {
             }
         }
         return sb.toString();
+    }
+
+    @Test
+    public void testDim() {
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray)", "NULL");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray2)", "c(2, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray3)", "c(2, 2, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray3)", "c(2, 2, 3)");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta)", "NULL");
+
+        assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); dim(ta$integerArray3NotSquare)", "NULL");
+        assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); dim(ta$integerArray2NotSquare)", "NULL");
+        assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); dim(ta$integerArray2x3x4x5)", "c(2, 3, 4, 5)");
     }
 
     @Test
