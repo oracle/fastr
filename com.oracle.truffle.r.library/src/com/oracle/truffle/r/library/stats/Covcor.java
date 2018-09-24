@@ -813,8 +813,8 @@ public abstract class Covcor extends RExternalBuiltinNode.Arg4 {
             } else {
                 RList dimNamesX = getDimsNamesXNode.getDimNames(x);
                 RList dimNamesY = getDimsNamesYNode.getDimNames(y);
-                Object namesX = dimNamesX.getLength() >= 2 ? dimNamesX.getDataAt(1) : RNull.instance;
-                Object namesY = dimNamesY.getLength() >= 2 ? dimNamesY.getDataAt(1) : RNull.instance;
+                Object namesX = dimNamesX != null && dimNamesX.getLength() >= 2 ? dimNamesX.getDataAt(1) : RNull.instance;
+                Object namesY = dimNamesY != null && dimNamesY.getLength() >= 2 ? dimNamesY.getDataAt(1) : RNull.instance;
                 if (namesX != RNull.instance || namesY != RNull.instance) {
                     if (namesX instanceof RShareable && !((RShareable) namesX).isShared()) {
                         ((RShareable) namesX).incRefCount();

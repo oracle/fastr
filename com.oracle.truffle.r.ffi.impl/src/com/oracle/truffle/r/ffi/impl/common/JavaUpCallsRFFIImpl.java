@@ -95,6 +95,7 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
@@ -1084,7 +1085,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object R_ParseVector(Object text, int n, Object srcFile) {
         // TODO general case + all statuses
-        assert n == 1 : "unsupported: R_ParseVector with n != 0.";
+        assert n == 1 || (n < 0 && (text instanceof String || (text instanceof RAbstractStringVector && ((RAbstractStringVector) text).getLength() == 1))) : "unsupported: R_ParseVector with n != 0.";
         assert srcFile == RNull.instance : "unsupported: R_ParseVector with non-null srcFile argument.";
         String textString = RRuntime.asString(text);
         assert textString != null;

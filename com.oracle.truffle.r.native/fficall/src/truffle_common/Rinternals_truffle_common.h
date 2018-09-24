@@ -1134,7 +1134,7 @@ SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v) {
     TRACE0();
     SEXP result = ((call_SET_VECTOR_ELT) callbacks[SET_VECTOR_ELT_x])(x, i, v);
     checkExitCall();
-    return result;
+    return v;
 }
 
 SEXP *STRING_PTR(SEXP x) {
