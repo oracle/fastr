@@ -22,53 +22,59 @@
  */
 package com.oracle.truffle.r.runtime.ffi.interop;
 
+import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import static com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter.UNSAFE;
 
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import java.lang.ref.WeakReference;
 
 public abstract class NativeArray<T> implements RTruffleObject {
 
-    /**
-     * If the array escapes the Truffle world via {@link #convertToNative()}, this value will be
-     * non-zero and is used exclusively thereafter.
-     */
-    protected long nativeAddress;
     protected T array;
-    @SuppressWarnings("unused") private NativeFinalizer finalizer;
+    @SuppressWarnings("unused") private NativeMirror<T> nativeMirror;
 
     protected NativeArray(T array) {
         this.array = array;
     }
 
-    protected abstract void allocateNative();
+    protected abstract long allocateNative();
 
-    protected abstract void copyBackFromNative();
+    protected abstract void copyBackFromNative(long nativeAddress);
+
+    protected long nativeAddress() {
+        return (nativeMirror != null) ? nativeMirror.nativeAddress : 0L;
+    }
 
     final long convertToNative() {
-        if (nativeAddress == 0) {
-            finalizer = new NativeFinalizer();
+        if (nativeMirror == null) {
+            nativeMirror = new NativeMirror<>(this);
         }
-        return nativeAddress;
+        return nativeMirror.nativeAddress;
     }
 
     public final T refresh() {
-        if (nativeAddress != 0) {
-            copyBackFromNative();
+        if (nativeMirror != null) {
+            copyBackFromNative(nativeMirror.nativeAddress);
         }
         return array;
     }
 
-    private final class NativeFinalizer {
+    private static final class NativeMirror<T> extends WeakReference<NativeArray<T>> implements NativeDataAccess.Releasable {
 
-        {
-            allocateNative();
+        /**
+         * If the array escapes the Truffle world via {@link #convertToNative()}, this value will be
+         * non-zero and is used exclusively thereafter.
+         */
+        final long nativeAddress;
+
+        NativeMirror(NativeArray<T> owner) {
+            super(owner, NativeDataAccess.nativeReferenceQueue());
+            nativeAddress = owner.allocateNative();
             assert nativeAddress != 0;
         }
 
         @Override
-        protected void finalize() throws Throwable {
-            assert nativeAddress != 0;
-            super.finalize();
+        public void release() {
             UNSAFE.freeMemory(nativeAddress);
         }
     }

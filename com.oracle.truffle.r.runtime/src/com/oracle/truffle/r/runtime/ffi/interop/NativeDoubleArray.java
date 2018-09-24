@@ -36,6 +36,7 @@ public final class NativeDoubleArray extends NativeArray<double[]> {
     }
 
     double read(int index) {
+        long nativeAddress = nativeAddress();
         if (nativeAddress != 0) {
             return UNSAFE.getDouble(nativeAddress + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
         } else {
@@ -44,6 +45,7 @@ public final class NativeDoubleArray extends NativeArray<double[]> {
     }
 
     void write(int index, double nv) {
+        long nativeAddress = nativeAddress();
         if (nativeAddress != 0) {
             UNSAFE.putDouble(nativeAddress + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, nv);
         } else {
@@ -53,14 +55,15 @@ public final class NativeDoubleArray extends NativeArray<double[]> {
 
     @Override
     @TruffleBoundary
-    protected void allocateNative() {
-        nativeAddress = UNSAFE.allocateMemory(array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+    protected long allocateNative() {
+        long nativeAddress = UNSAFE.allocateMemory(array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
         UNSAFE.copyMemory(array, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, null, nativeAddress, array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
+        return nativeAddress;
     }
 
     @Override
     @TruffleBoundary
-    public void copyBackFromNative() {
+    protected void copyBackFromNative(long nativeAddress) {
         // copy back
         UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_DOUBLE_BASE_OFFSET, array.length * Unsafe.ARRAY_DOUBLE_INDEX_SCALE);
     }

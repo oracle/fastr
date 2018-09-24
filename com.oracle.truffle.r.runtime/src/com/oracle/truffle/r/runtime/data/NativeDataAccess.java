@@ -22,11 +22,14 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.lang.ref.Reference;
+import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.lang.reflect.Field;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
@@ -95,11 +98,50 @@ public final class NativeDataAccess {
         long getCustomMirrorAddress();
     }
 
+    public interface Releasable {
+        void release();
+    }
+
     private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
     private static final long EMPTY_DATA_ADDRESS = 0xBAD;
 
-    private static final class NativeMirror {
+    private static final ReferenceQueue<Object> nativeRefQueue = new ReferenceQueue<>();
+
+    private static final AtomicReference<Thread> nativeRefQueueThread = new AtomicReference<>(null);
+
+    private static void initNativeRefQueueThread() {
+        Thread thread = nativeRefQueueThread.get();
+        if (thread == null) {
+            thread = new Thread(
+                            new Runnable() {
+                                @Override
+                                public void run() {
+                                    try {
+                                        while (true) {
+                                            Reference<?> ref = nativeRefQueue.remove();
+                                            if (ref instanceof Releasable) {
+                                                ((Releasable) ref).release();
+                                            }
+                                        }
+                                    } catch (InterruptedException ex) {
+                                    }
+                                }
+                            },
+                            "Native-Reference-Queue-Worker");
+            if (nativeRefQueueThread.compareAndSet(null, thread)) {
+                thread.setDaemon(true);
+                thread.start();
+            }
+        }
+    }
+
+    public static ReferenceQueue<Object> nativeReferenceQueue() {
+        initNativeRefQueueThread();
+        return nativeRefQueue;
+    }
+
+    private static final class NativeMirror extends WeakReference<RObject> implements Releasable {
         /**
          * ID of the mirror, this will be used as the value for SEXP. When native up-calls to Java,
          * we get this value and find the corresponding object for it.
@@ -137,19 +179,26 @@ public final class NativeDataAccess {
          * comparison would fail if the same <code>RObject</code> instance were wrapped by two
          * different native wrappers.
          */
-        private Object nativeWrapper;
+        private Reference<Object> nativeWrapperRef;
 
-        NativeMirror() {
+        NativeMirror(RObject owner) {
+            super(owner, nativeReferenceQueue());
             this.id = counter.addAndGet(2);
+            nativeMirrors.put(id, this);
         }
 
         /**
          * Creates a new mirror with a specified native address as both ID and address. The buffer
          * will be freed when the Java object is collected.
          */
-        NativeMirror(long address) {
+        NativeMirror(RObject ownerVec, long address) {
+            // address == 0 means no nativeMirrors registration and no release() call
+            super(ownerVec, (address != 0) ? nativeReferenceQueue() : null);
             this.id = address;
             this.dataAddress = address;
+            if (address != 0) {
+                nativeMirrors.put(id, this);
+            }
         }
 
         @TruffleBoundary
@@ -200,11 +249,11 @@ public final class NativeDataAccess {
             }
         }
 
-        // TODO: turn this into reference queues
         @Override
-        protected void finalize() throws Throwable {
-            super.finalize();
-            nativeMirrors.remove(id);
+        public void release() {
+            if (id != 0) {
+                nativeMirrors.remove(id, this);
+            }
             // System.out.println(String.format("gc'ing %16x", id));
             if (dataAddress == EMPTY_DATA_ADDRESS) {
                 assert (dataAddress = 0xbadbad) != 0;
@@ -212,6 +261,9 @@ public final class NativeDataAccess {
                 // System.out.println(String.format("freeing data at %16x", dataAddress));
                 freeNativeMemory(dataAddress);
                 assert (dataAddress = 0xbadbad) != 0;
+            }
+            if (nativeMirrorInfo != null) {
+                nativeMirrorInfo.remove(id); // Possible id(address)-clashing entries not handled
             }
         }
 
@@ -224,7 +276,7 @@ public final class NativeDataAccess {
     // The counter is initialized to invalid address and incremented by 2 to always get invalid
     // address value
     private static final AtomicLong counter = new AtomicLong(0xdef000000000001L);
-    private static final ConcurrentHashMap<Long, WeakReference<RObject>> nativeMirrors = new ConcurrentHashMap<>(512);
+    private static final ConcurrentHashMap<Long, NativeMirror> nativeMirrors = new ConcurrentHashMap<>(512);
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
     public static CallTarget createIsPointer() {
@@ -267,13 +319,12 @@ public final class NativeDataAccess {
     @TruffleBoundary
     private static NativeMirror putMirrorObject(Object arg, RObject obj, NativeMirror oldMirror) {
         NativeMirror newMirror;
-        obj.setNativeMirror(newMirror = arg instanceof CustomNativeMirror ? new NativeMirror(((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror());
+        obj.setNativeMirror(newMirror = arg instanceof CustomNativeMirror ? new NativeMirror(obj, ((CustomNativeMirror) arg).getCustomMirrorAddress()) : new NativeMirror(obj));
         if (oldMirror != null) {
-            newMirror.nativeWrapper = oldMirror.nativeWrapper;
+            newMirror.nativeWrapperRef = oldMirror.nativeWrapperRef;
         }
         // System.out.println(String.format("adding %16x = %s", mirror.id,
         // obj.getClass().getSimpleName()));
-        nativeMirrors.put(newMirror.id, new WeakReference<>(obj));
         if (TRACE_MIRROR_ALLOCATION_SITES) {
             registerAllocationSite(arg, newMirror);
         }
@@ -307,12 +358,12 @@ public final class NativeDataAccess {
      */
     @TruffleBoundary
     public static Object lookup(long address) {
-        WeakReference<RObject> reference = nativeMirrors.get(address);
-        if (reference == null) {
+        NativeMirror nativeMirror = nativeMirrors.get(address);
+        if (nativeMirror == null) {
             CompilerDirectives.transferToInterpreter();
             throw reportDataAccessError(address);
         }
-        RObject result = reference.get();
+        RObject result = nativeMirror.get();
         if (result == null) {
             CompilerDirectives.transferToInterpreter();
             throw reportDataAccessError(address);
@@ -955,10 +1006,10 @@ public final class NativeDataAccess {
     public static void setNativeWrapper(RObject obj, Object wrapper) {
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
         if (mirror == null) {
-            mirror = new NativeMirror(0);
+            mirror = new NativeMirror(obj, 0);
             obj.setNativeMirror(mirror);
         }
-        mirror.nativeWrapper = wrapper;
+        mirror.nativeWrapperRef = new WeakReference<>(wrapper);
     }
 
     public static Object getNativeWrapper(RObject obj) {
@@ -966,7 +1017,8 @@ public final class NativeDataAccess {
         if (mirror == null) {
             return null;
         } else {
-            return mirror.nativeWrapper;
+            Reference<?> ref = mirror.nativeWrapperRef;
+            return (ref != null) ? ref.get() : null;
         }
     }
 
