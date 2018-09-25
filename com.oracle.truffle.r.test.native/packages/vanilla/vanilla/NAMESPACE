@@ -1,3 +1,4 @@
 export(vanilla)
 export(functionTest)
 export("foo<-")
+export("someDelayAssignedGlobal")

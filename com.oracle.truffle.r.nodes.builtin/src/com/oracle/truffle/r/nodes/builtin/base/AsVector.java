@@ -62,6 +62,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
@@ -74,7 +75,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic(RRuntime.class)
@@ -133,21 +134,32 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         throw RError.error(RError.SHOW_CALLER, Message.CANNOT_COERCE, RType.Environment.getName(), type != null ? type.getName() : mode);
     }
 
+    @TruffleBoundary
+    @Specialization
+    protected Object asVector(RFunction x, String mode) {
+        RType type = RType.fromMode(mode);
+        throw RError.error(RError.SHOW_CALLER, Message.CANNOT_COERCE, x.getRType().getName(), type != null ? type.getName() : mode);
+    }
+
     protected static boolean isREnvironment(Object value) {
         return value instanceof REnvironment;
     }
 
     // there should never be more than ~12 specializations
     @SuppressWarnings("unused")
-    @Specialization(limit = "99", guards = {"!isREnvironment(x)", "matchesMode(mode, cachedMode)"})
+    @Specialization(limit = "99", guards = {"!isREnvironment(x)", "!isRFunction(x)", "matchesMode(mode, cachedMode)"})
     protected Object asVector(Object x, String mode,
                     @Cached("mode") String cachedMode,
                     @Cached("fromMode(cachedMode)") RType type,
                     @Cached("createCast(type)") CastNode cast,
                     @Cached("create(type)") DropAttributesNode drop,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
         if (RRuntime.isForeignObject(x)) {
-            Object o = foreignArray2R.convert((TruffleObject) x);
+            if (type == RType.List) {
+                // already returns list, no need to cast
+                return convertForeign.convertToList((TruffleObject) x, true, true);
+            }
+            Object o = convertForeign.convert((TruffleObject) x, true, true);
             if (!RRuntime.isForeignObject(o)) {
                 return cast == null ? o : cast.doCast(o);
             }

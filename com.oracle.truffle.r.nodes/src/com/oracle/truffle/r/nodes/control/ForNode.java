@@ -29,13 +29,11 @@ import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.LoopNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.UnexpectedResultException;
@@ -53,7 +51,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -61,7 +59,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
-@ImportStatic({RRuntime.class, ForeignArray2R.class, Message.class})
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class, Message.class})
 @NodeChild(value = "range", type = RNode.class)
 public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, RSyntaxCall {
 
@@ -111,23 +109,7 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         return iterate(frame, range, indexName, rangeName, lengthName, writeIndexNode, writeRangeNode, writeLengthNode, length, l);
     }
 
-    @Specialization(guards = "isJavaIterable(range)")
-    protected Object iterateForeignArray(VirtualFrame frame, Object range,
-                    @Cached("createIteratorName()") @SuppressWarnings("unused") String iteratorName,
-                    @Cached("createWriteVariable(iteratorName)") WriteVariableNode writeIteratorNode,
-                    @Cached("createForIterableLoopNode(iteratorName)") LoopNode l,
-                    @Cached("READ.createNode()") Node readNode,
-                    @Cached("EXECUTE.createNode()") Node executeNode) {
-
-        TruffleObject iterator = getIterator((TruffleObject) range, readNode, executeNode);
-        writeIteratorNode.execute(frame, iterator);
-
-        l.executeLoop(frame);
-
-        return RNull.instance;
-    }
-
-    @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, hasSizeNode)", "!isJavaIterable(range)"})
+    @Specialization(guards = {"isForeignObject(range)", "!isForeignArray(range, hasSizeNode)"})
     protected Object iterateKeys(VirtualFrame frame, Object range,
                     @Cached("createIndexName()") @SuppressWarnings("unused") String indexName,
                     @Cached("createPositionName()") @SuppressWarnings("unused") String positionName,
@@ -188,10 +170,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
         return WriteVariableNode.createAnonymous(name, Mode.REGULAR, null);
     }
 
-    protected LoopNode createForIterableLoopNode(String iteratorName) {
-        return createLoopNode(new ForIterableRepeatingNode(this, var.getIdentifier(), RASTUtils.cloneNode(body), iteratorName));
-    }
-
     protected LoopNode createForKeysLoopNode(String indexName, String positionName, String lengthName, String rangeName, String keysName) {
         return createLoopNode(new ForKeysRepeatingNode(this, var.getIdentifier(), RASTUtils.cloneNode(body), indexName, positionName, lengthName, rangeName, keysName));
     }
@@ -202,16 +180,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
 
     private static LoopNode createLoopNode(AbstractRepeatingNode n) {
         return Truffle.getRuntime().createLoopNode(n);
-    }
-
-    private static TruffleObject getIterator(TruffleObject obj, Node readNode, Node executeNode) {
-        assert ForeignArray2R.isJavaIterable(obj);
-        try {
-            TruffleObject itFun = (TruffleObject) ForeignAccess.sendRead(readNode, obj, "iterator");
-            return (TruffleObject) ForeignAccess.sendExecute(executeNode, itFun);
-        } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException ex) {
-            throw RInternalError.shouldNotReachHere(ex, "is java.lang.Iterable but could not access the iterator() function: " + obj);
-        }
     }
 
     private static int getKeysLength(TruffleObject keys, Node sizeNode) {
@@ -344,81 +312,6 @@ public abstract class ForNode extends AbstractLoopNode implements RSyntaxNode, R
                 throw RInternalError.shouldNotReachHere(ex, "could not read foreign key: " + (index - 1));
             }
         }
-    }
-
-    private static final class ForIterableRepeatingNode extends AbstractRepeatingNode {
-
-        private final ConditionProfile conditionProfile = ConditionProfile.createBinaryProfile();
-        private final BranchProfile breakBlock = BranchProfile.create();
-        private final BranchProfile nextBlock = BranchProfile.create();
-
-        @Child private WriteVariableNode writeElementNode;
-        @Child private LocalReadVariableNode readIteratorNode;
-
-        @Child private Node readForeignNode;
-        @Child private Node executeForeignNode;
-
-        // only used for toString
-        private final ForNode forNode;
-
-        ForIterableRepeatingNode(ForNode forNode, String var, RNode body, String iteratorName) {
-            super(body);
-            this.forNode = forNode;
-            this.writeElementNode = WriteVariableNode.createAnonymous(var, Mode.REGULAR, createNextLoad(iteratorName), false);
-
-            this.readIteratorNode = LocalReadVariableNode.create(iteratorName, true);
-
-            this.executeForeignNode = Message.EXECUTE.createNode();
-            this.readForeignNode = Message.READ.createNode();
-
-            // pre-initialize the profile so that loop exits to not deoptimize
-            conditionProfile.profile(false);
-        }
-
-        private static RNode createNextLoad(String iteratorName) {
-            RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
-            RSyntaxNode receiver = builder.lookup(RSyntaxNode.INTERNAL, iteratorName, false);
-            RSyntaxNode next = builder.lookup(RSyntaxNode.INTERNAL, "next", true);
-            RSyntaxNode access = builder.lookup(RSyntaxNode.INTERNAL, "$", true);
-            RSyntaxNode nextCall = builder.call(RSyntaxNode.INTERNAL, access, receiver, next);
-            return builder.call(RSyntaxNode.INTERNAL, nextCall).asRNode();
-        }
-
-        @Override
-        public boolean executeRepeating(VirtualFrame frame) {
-            try {
-                TruffleObject iterator = (TruffleObject) readIteratorNode.execute(frame);
-                assert iterator != null;
-
-                if (conditionProfile.profile(hasNext(iterator))) {
-                    writeElementNode.voidExecute(frame);
-                    body.voidExecute(frame);
-                    return true;
-                }
-                return false;
-            } catch (BreakException e) {
-                breakBlock.enter();
-                return false;
-            } catch (NextException e) {
-                nextBlock.enter();
-                return true;
-            }
-        }
-
-        private boolean hasNext(TruffleObject iterator) {
-            try {
-                TruffleObject hasNextFun = (TruffleObject) ForeignAccess.sendRead(readForeignNode, iterator, "hasNext");
-                return (boolean) ForeignAccess.sendExecute(executeForeignNode, hasNextFun);
-            } catch (UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException | ArityException ex) {
-                throw RInternalError.shouldNotReachHere(ex, "Could not retrieve hasNext function");
-            }
-        }
-
-        @Override
-        public String toString() {
-            return forNode.toString();
-        }
-
     }
 
     @Override

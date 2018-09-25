@@ -124,6 +124,10 @@ public class TestBuiltin_cbind extends TestBase {
         assertEval("cbind(1, 1:4, matrix(1:8, nrow=2))");
         assertEval("cbind(matrix(1:4,nrow=2), matrix(1:8,nrow=4))");
         assertEval(Output.IgnoreWarningContext, "cbind(1:2, 1:3, 1:4)");
+
+        assertEval(Ignored.ImplementationError, "cbind(cbind)");
+        assertEval("cbind(new.env())");
+        assertEval("cbind(NULL)");
     }
 
     @Test

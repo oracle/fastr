@@ -35,6 +35,7 @@ if (any(R.version$engine == "FastR")) {
     .fastr.channel.send(ch1, 24)
     y <- .fastr.channel.receive(ch1)
     z <- .fastr.channel.receive(ch1)
+    .fastr.context.join(cx)
     
     .fastr.channel.close(ch1)
     print(sort(c(y, z)))

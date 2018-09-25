@@ -55,6 +55,10 @@ public abstract class CallRFunctionCachedNode extends CallRFunctionBaseNode {
         this.cacheLimit = cacheLimit;
     }
 
+    public static CallRFunctionCachedNode create(int cacheLimit) {
+        return CallRFunctionCachedNodeGen.create(cacheLimit);
+    }
+
     public final Object execute(VirtualFrame frame, RFunction function, RCaller call, Object[] evaluatedArgs, DispatchArgs dispatchArgs) {
         assert !function.isBuiltin(); // use CallRBuiltinCachedNode
         Object[] callArgs = RArguments.create(function, call, getCallerFrameObject(frame), evaluatedArgs, dispatchArgs);

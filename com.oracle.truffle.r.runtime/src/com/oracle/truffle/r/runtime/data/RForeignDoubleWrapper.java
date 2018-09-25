@@ -88,6 +88,11 @@ public final class RForeignDoubleWrapper extends RForeignWrapper implements RAbs
         throw RInternalError.shouldNotReachHere(e);
     }
 
+    @Override
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createDoubleVector(new double[newLength], newIsComplete);
+    }
+
     private static final class FastPathAccess extends FastPathFromDoubleAccess {
 
         FastPathAccess(RAbstractContainer value) {

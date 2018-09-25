@@ -355,6 +355,8 @@ public class REPL {
         } catch (PolyglotException e) {
             if (e.isExit()) {
                 throw new ExitException(e.getExitStatus());
+            } else if (e.isCancelled()) {
+                throw e;
             }
             throw RMain.fatal(e, "Unexpected error " + e.getMessage());
         } catch (Exception e) {

@@ -95,6 +95,10 @@ public class TestBuiltin_rbind extends TestBase {
         assertEval("v <- 1; attr(v, 'a') <- 'a'; attr(v, 'a1') <- 'a1'; rbind(v); rbind(v, v)");
         assertEval("v <- 1:3; attr(v, 'a') <- 'a'; attr(v, 'a1') <- 'a1'; rbind(v); rbind(v, v)");
         assertEval("v <- 1:3; v1<-1:3; attr(v, 'a') <- 'a'; attr(v1, 'a1') <- 'a1'; rbind(v, v1)");
+
+        assertEval(Ignored.ImplementationError, "rbind(rbind)");
+        assertEval(Ignored.ImplementationError, "rbind(new.env())");
+        assertEval("rbind(NULL)");
     }
 
     @Test

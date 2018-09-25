@@ -42,6 +42,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.LoopNode;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -49,6 +51,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNode;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionCachedNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RCompression;
@@ -208,7 +211,7 @@ public class HiddenInternalFunctions {
     @RBuiltin(name = "lazyLoadDBfetch", kind = PRIMITIVE, parameterNames = {"key", "datafile", "compressed", "envhook"}, behavior = PURE)
     public abstract static class LazyLoadDBFetch extends RBuiltinNode.Arg4 {
 
-        @Child private CallRFunctionCachedNode callCache = CallRFunctionCachedNodeGen.create(2);
+        @Child private EvaluateAndSharePromiseNode evaluateAndSharePromiseNode;
 
         static {
             Casts casts = new Casts(LazyLoadDBFetch.class);
@@ -219,12 +222,22 @@ public class HiddenInternalFunctions {
          * No error checking here as this called by trusted library code.
          */
         @Specialization
-        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, int compressed, RFunction envhook) {
-            return lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed, envhook);
+        protected Object lazyLoadDBFetch(VirtualFrame frame, RIntVector key, RStringVector datafile, int compressed, RFunction envhook,
+                        @Cached("create(2)") CallRFunctionCachedNode callCache,
+                        @Cached("createBinaryProfile()") ConditionProfile isPromiseProfile) {
+            Object result = lazyLoadDBFetchInternal(frame.materialize(), key, datafile, compressed, envhook, callCache);
+            if (isPromiseProfile.profile(result instanceof RPromise)) {
+                if (evaluateAndSharePromiseNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    evaluateAndSharePromiseNode = insert(new EvaluateAndSharePromiseNode());
+                }
+                result = evaluateAndSharePromiseNode.execute((RPromise) result);
+            }
+            return result;
         }
 
         @TruffleBoundary
-        private Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook) {
+        private Object lazyLoadDBFetchInternal(MaterializedFrame frame, RIntVector key, RStringVector datafile, int compression, RFunction envhook, CallRFunctionCachedNode callCache) {
             if (CompilerDirectives.inInterpreter()) {
                 LoopNode.reportLoopCount(this, -5);
             }
@@ -302,6 +315,21 @@ public class HiddenInternalFunctions {
             dataLengthBuf.put(dbData, offset, 4);
             dataLengthBuf.position(0);
             return dataLengthBuf.getInt();
+        }
+
+        private static final class EvaluateAndSharePromiseNode extends Node {
+            @Child private PromiseHelperNode promiseHelperNode;
+            @Child private ShareObjectNode shareObjectNode;
+
+            EvaluateAndSharePromiseNode() {
+                promiseHelperNode = new PromiseHelperNode();
+                shareObjectNode = ShareObjectNode.create();
+            }
+
+            public Object execute(RPromise promise) {
+                REnvironment globalEnv = REnvironment.globalEnv(RContext.getInstance());
+                return shareObjectNode.execute(promiseHelperNode.evaluate(globalEnv.getFrame(), promise));
+            }
         }
     }
 

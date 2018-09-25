@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
 @ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class CastLogicalNode extends CastLogicalBaseNode {
@@ -182,8 +182,8 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected RAbstractLogicalVector doForeignObject(TruffleObject obj,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.convert(obj);
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
+        Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RAbstractLogicalVector) {
                 return (RAbstractLogicalVector) o;

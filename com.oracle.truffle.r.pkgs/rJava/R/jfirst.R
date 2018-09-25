@@ -471,7 +471,7 @@
     }
     obj <- attr(obj, "external.object", exact=TRUE)
     # we rely on this being called only if obj is an external array
-    obj <- .fastr.interop.fromArray(obj)
+    obj <- .fastr.interop.asVector(obj)
     lapply(obj, function(e) {.fromJ(e, toExtPointer=TRUE)})
 }
 

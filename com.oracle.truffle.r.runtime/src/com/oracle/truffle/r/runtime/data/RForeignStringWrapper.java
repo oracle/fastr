@@ -85,6 +85,11 @@ public final class RForeignStringWrapper extends RForeignWrapper implements RAbs
         }
     }
 
+    @Override
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createStringVector(new String[newLength], newIsComplete);
+    }
+
     private static final class FastPathAccess extends FastPathFromStringAccess {
 
         FastPathAccess(RAbstractContainer value) {
