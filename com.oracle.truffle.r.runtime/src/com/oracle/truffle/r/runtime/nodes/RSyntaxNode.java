@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.nodes;
 
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RSource;
 
@@ -78,6 +79,8 @@ public interface RSyntaxNode extends RSyntaxElement {
     default boolean isSyntax() {
         return true;
     }
+
+    void setAttributes(DynamicObject attributes);
 
     /**
      * Indicates the case where a node that should have a valid {@link SourceSection} but for reason

@@ -486,7 +486,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRInterop.JavaIsInstance.class, FastRInteropFactory.JavaIsInstanceNodeGen::create);
         add(FastRInterop.JavaAsTruffleObject.class, FastRInteropFactory.JavaAsTruffleObjectNodeGen::create);
         add(FastRInterop.ToJavaArray.class, FastRInteropFactory.ToJavaArrayNodeGen::create);
-        add(FastRInterop.FromForeignArray.class, FastRInteropFactory.FromForeignArrayNodeGen::create);
+        add(FastRInterop.AsVector.class, FastRInteropFactory.AsVectorNodeGen::create);
         add(FastRInterop.ToByte.class, FastRInteropFactory.ToByteNodeGen::create);
         add(FastRInterop.ToChar.class, FastRInteropFactory.ToCharNodeGen::create);
         add(FastRInterop.ToFloat.class, FastRInteropFactory.ToFloatNodeGen::create);

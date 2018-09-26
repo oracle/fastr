@@ -46,7 +46,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * only values appearing in FastR are vectors, so we convert scalars to them. Moreover, there are
  * few FastR types used to explicitly choose a specific type for interop, e.g. {@link RInteropByte}.
  *
- * All the objects passed to the outside are maked as shared permanent as FastR looses the control
+ * All the objects passed to the outside are made as shared permanent as FastR looses the control
  * over all their possible references.
  */
 public abstract class R2Foreign extends RBaseNode {

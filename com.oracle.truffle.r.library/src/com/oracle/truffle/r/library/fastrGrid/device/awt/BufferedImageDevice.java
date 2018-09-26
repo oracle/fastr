@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.device.awt;
 
+import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
 import java.awt.Color;
@@ -102,12 +103,4 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
         return false;
     }
 
-    public static class NotSupportedImageFormatException extends Exception {
-        private static final long serialVersionUID = 1182697755931636217L;
-
-        @Override
-        public synchronized Throwable fillInStackTrace() {
-            return this;
-        }
-    }
 }

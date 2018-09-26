@@ -77,6 +77,8 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
+
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -102,7 +104,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 public class FastRInterop {
@@ -113,29 +115,29 @@ public class FastRInterop {
         isTesting = true;
     }
 
-    @RBuiltin(name = "eval.polyglot", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"languageId", "source", "path"}, behavior = COMPLEX)
+    @RBuiltin(name = "eval.polyglot", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"languageId", "code", "path"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg3 {
 
         static {
             Casts casts = new Casts(Eval.class);
-            casts.arg("languageId").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-            casts.arg("source").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
-            casts.arg("path").allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg(0).allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg(1).allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
+            casts.arg(2).allowMissing().mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
         }
 
         @Child private SetVisibilityNode setVisibilityNode = SetVisibilityNode.create();
         @Child private Foreign2R foreign2rNode = Foreign2R.create();
 
-        protected DirectCallNode createCall(String languageId, String source) {
-            return Truffle.getRuntime().createDirectCallNode(parse(languageId, source));
+        protected DirectCallNode createCall(String languageId, String code) {
+            return Truffle.getRuntime().createDirectCallNode(parse(languageId, code));
         }
 
         @SuppressWarnings("unused")
-        @Specialization(guards = {"cachedLanguageId != null", "cachedLanguageId.equals(languageId)", "cachedSource != null", "cachedSource.equals(source)"})
-        protected Object evalCached(VirtualFrame frame, String languageId, String source, RMissing path,
+        @Specialization(guards = {"cachedLanguageId != null", "cachedLanguageId.equals(languageId)", "cachedSource != null", "cachedSource.equals(code)"})
+        protected Object evalCached(VirtualFrame frame, String languageId, String code, RMissing path,
                         @Cached("languageId") String cachedLanguageId,
-                        @Cached("source") String cachedSource,
-                        @Cached("createCall(languageId, source)") DirectCallNode call) {
+                        @Cached("code") String cachedSource,
+                        @Cached("createCall(languageId, code)") DirectCallNode call) {
             try {
                 return foreign2rNode.execute(call.call(EMPTY_OBJECT_ARRAY));
             } finally {
@@ -144,38 +146,45 @@ public class FastRInterop {
         }
 
         @Specialization(replaces = "evalCached")
-        protected Object eval(VirtualFrame frame, String languageId, String source, @SuppressWarnings("unused") RMissing path) {
+        protected Object eval(VirtualFrame frame, String languageId, String code, @SuppressWarnings("unused") RMissing path) {
             try {
-                return foreign2rNode.execute(parseAndCall(source, languageId));
+                return foreign2rNode.execute(parseAndCall(code, languageId));
             } finally {
                 setVisibilityNode.execute(frame, true);
             }
         }
 
         @TruffleBoundary
-        private Object parseAndCall(String source, String languageId) {
-            return parse(languageId, source).call();
+        private Object parseAndCall(String code, String languageId) {
+            return parse(languageId, code).call();
         }
 
         @Specialization()
-        @TruffleBoundary
-        protected Object eval(@SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") String source, @SuppressWarnings("unused") RMissing path) {
-            throw RError.error(this, RError.Message.INVALID_ARG, "languageId");
+        protected Object eval(@SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") String code, @SuppressWarnings("unused") RMissing path) {
+            throw error(RError.Message.NO_LANGUAGE_PROVIDED, "eval.polyglot");
         }
 
-        protected CallTarget parse(String languageId, String source) {
+        protected CallTarget parse(String languageId, String code) {
             CompilerAsserts.neverPartOfCompilation();
-
-            Source sourceObject = RSource.fromTextInternalInvisible(source, RSource.Internal.EVAL_WRAPPER, languageId);
+            Env env = RContext.getInstance().getEnv();
+            if (languageId != null && env.getLanguages().get(languageId) == null) {
+                throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
+            }
+            Source sourceObject = RSource.fromTextInternalInvisible(code, RSource.Internal.EVAL_WRAPPER, languageId);
             try {
-                return RContext.getInstance().getEnv().parse(sourceObject);
+                return env.parse(sourceObject);
             } catch (Throwable t) {
                 throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
             }
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") String source, String path) {
+        protected Object eval(@SuppressWarnings("unused") String languageId, @SuppressWarnings("unused") String code, @SuppressWarnings("unused") String path) {
+            throw error(RError.Message.WRONG_ARGS_COMBINATION, "eval.polyglot");
+        }
+
+        @Specialization
+        protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") RMissing code, String path) {
             try {
                 return foreign2rNode.execute(parseFileAndCall(path, languageId));
             } finally {
@@ -184,16 +193,12 @@ public class FastRInterop {
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") RMissing source, String path) {
-            try {
-                return foreign2rNode.execute(parseFileAndCall(path, languageId));
-            } finally {
-                setVisibilityNode.execute(frame, false);
-            }
+        protected Object eval(@SuppressWarnings("unused") String languageId, @SuppressWarnings("unused") RMissing code, @SuppressWarnings("unused") RMissing path) {
+            throw error(RError.Message.NO_CODE_OR_PATH_PROVIDED, "eval.polyglot");
         }
 
         @Specialization
-        protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing source, String path) {
+        protected Object eval(VirtualFrame frame, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing code, String path) {
             try {
                 return foreign2rNode.execute(parseFileAndCall(path, null));
             } finally {
@@ -208,12 +213,14 @@ public class FastRInterop {
 
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
-
-            File file = new File(path);
+            File file = new File(Utils.tildeExpand(path, false));
             try {
                 Env env = RContext.getInstance().getEnv();
                 TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
                 String languageId = languageIdArg;
+                if (languageId != null && env.getLanguages().get(languageId) == null) {
+                    throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
+                }
                 if (languageId == null) {
                     languageId = Source.findLanguage(tFile);
                 }
@@ -223,14 +230,19 @@ public class FastRInterop {
             } catch (IOException e) {
                 throw error(RError.Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {
-                throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
+                if (languageIdArg == null) {
+                    String[] tokens = file.getName().split("\\.(?=[^\\.]+$)");
+                    throw error(RError.Message.COULD_NOT_FIND_LANGUAGE, tokens[tokens.length - 1], "eval.polyglot");
+                } else {
+                    throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
+                }
             }
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object eval(@SuppressWarnings("unused") RMissing source, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing path) {
-            throw RError.error(this, RError.Message.INVALID_ARG, "'source' or 'path'");
+        protected Object eval(@SuppressWarnings("unused") RMissing code, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing path) {
+            throw RError.error(this, RError.Message.WRONG_ARGS_COMBINATION, "eval.polyglot");
         }
     }
 
@@ -937,13 +949,15 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = ".fastr.interop.fromArray", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive"}, behavior = COMPLEX)
-    public abstract static class FromForeignArray extends RBuiltinNode.Arg2 {
+    @RBuiltin(name = ".fastr.interop.asVector", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive", "dropDimensions"}, behavior = COMPLEX)
+    public abstract static class AsVector extends RBuiltinNode.Arg3 {
 
         static {
-            Casts casts = new Casts(FromForeignArray.class);
+            Casts casts = new Casts(AsVector.class);
             casts.arg("array").castForeignObjects(false).mustNotBeMissing();
             casts.arg("recursive").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+                            notLogicalNA()).map(Predef.toBoolean());
+            casts.arg("dropDimensions").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
         }
 
@@ -951,19 +965,20 @@ public class FastRInterop {
 
         @Specialization(guards = {"isForeignObject(obj)"})
         @TruffleBoundary
-        public Object fromArray(TruffleObject obj, boolean recursive,
+        public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions,
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("create()") ForeignArray2R array2R) {
+                        @Cached("create()") ConvertForeignObjectNode convertForeign) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
-                return array2R.convert(obj, recursive);
+                return convertForeign.convert(obj, recursive, dropDimensions);
             } else {
-                throw error(RError.Message.GENERIC, "not a java array");
+                // a non-array we can convert only to List
+                return convertForeign.convertToList(obj, recursive, dropDimensions);
             }
         }
 
         @Fallback
-        public Object fromObject(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive) {
-            throw error(RError.Message.GENERIC, "not a java array");
+        public Object fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive, @SuppressWarnings("unused") Object dropDimensions) {
+            return RNull.instance;
         }
     }
 

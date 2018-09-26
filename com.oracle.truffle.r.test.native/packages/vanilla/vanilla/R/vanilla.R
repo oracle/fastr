@@ -21,6 +21,10 @@
 vanilla <-
 function() print("A vanilla R package")
 
+someDelayAssignedGlobal <- NULL
+createValue <- function(x) { cat("calculating the delayed assignment"); x }
+delayedAssign("someDelayAssignedGlobal", createValue(42L))
+
 functionTest <- function(x, y) {
     x[5] <- 1
     y[2] <- x[5]

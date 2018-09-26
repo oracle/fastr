@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
 import com.oracle.truffle.r.runtime.ffi.interop.UnsafeAdapter;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nmath.BesselFunctions;
 import com.oracle.truffle.r.runtime.nmath.Beta;
 import com.oracle.truffle.r.runtime.nmath.Choose;
@@ -695,7 +695,7 @@ public final class MathFunctionsNodes {
 
         @Child private Node bIsPointerNode = Message.IS_POINTER.createNode();
         @Child private Node bAsPointerNode;
-        @Child private ForeignArray2R bForeignArray2R;
+        @Child private ConvertForeignObjectNode bConvertForeign;
 
         public abstract double execute(BesselExCaller caller, Object b);
 
@@ -717,11 +717,11 @@ public final class MathFunctionsNodes {
                     throw RInternalError.shouldNotReachHere("IS_POINTER message returned true, AS_POINTER should not fail");
                 }
             } else {
-                if (bForeignArray2R == null) {
+                if (bConvertForeign == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
-                    bForeignArray2R = insert(ForeignArray2R.create());
+                    bConvertForeign = insert(ConvertForeignObjectNode.create());
                 }
-                bVec = (RAbstractDoubleVector) bForeignArray2R.convert(bTO);
+                bVec = (RAbstractDoubleVector) bConvertForeign.convert(bTO);
             }
 
             return caller.call(bReadonlyData.execute(bVec.materialize()));

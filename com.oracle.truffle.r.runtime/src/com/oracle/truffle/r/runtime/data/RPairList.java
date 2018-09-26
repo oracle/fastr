@@ -135,6 +135,12 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.closure = closure;
         this.type = SEXPTYPE.LANGSXP;
         this.mayBeClosure = true;
+        copyAttributesFromClosure();
+    }
+
+    @TruffleBoundary
+    private void copyAttributesFromClosure() {
+        RAttributable.copyAttributes(this, closure.getSyntaxElement().getAttributes());
     }
 
     private static boolean assertClosure(Closure closure) {
@@ -771,6 +777,12 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                         }
                         return result;
                     }
+
+                    @Override
+                    public DynamicObject getAttributes() {
+                        return RPairList.this.getAttributes();
+                    }
+
                 };
             }
         }

@@ -33,17 +33,17 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNamesAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -77,7 +77,7 @@ public abstract class GetAttributesNode extends RBaseNode {
 
     /**
      * The <code>row.names</code> attribute will be kept in the compact format.
-     * 
+     *
      * @return <code>GetAttributesNode</code>
      * @see #keepCompactRowNames
      */
@@ -125,26 +125,6 @@ public abstract class GetAttributesNode extends RBaseNode {
     }
 
     /**
-     * If <code>row.names</code> are in the GnuR compact format they will be converted to an int
-     * sequence.
-     * 
-     * @see #keepCompactRowNames
-     */
-    static Object convertRowNamesToSeq(Object rowNames) {
-        if (rowNames == RNull.instance) {
-            return RNull.instance;
-        } else {
-            if (rowNames instanceof RAbstractIntVector) {
-                RAbstractIntVector vec = (RAbstractIntVector) rowNames;
-                if (vec.getLength() == 2 && RRuntime.isNA(vec.getDataAt(0))) {
-                    return RDataFactory.createIntSequence(1, 1, Math.abs(vec.getDataAt(1)));
-                }
-            }
-            return rowNames;
-        }
-    }
-
-    /**
      * {@code language} objects behave differently regarding "names"; they don't get included.
      */
     private Object createResult(RAttributable attributable, boolean ignoreNames, RStringVector explicitNames) {
@@ -180,7 +160,7 @@ public abstract class GetAttributesNode extends RBaseNode {
                 }
             } else if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 rownamesBranch.enter();
-                values[z] = keepCompactRowNames ? attr.getValue() : convertRowNamesToSeq(attr.getValue());
+                values[z] = keepCompactRowNames ? attr.getValue() : GetRowNamesAttributeNode.convertRowNamesToSeq(attr.getValue());
             } else {
                 values[z] = attr.getValue();
             }

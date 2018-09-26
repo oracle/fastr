@@ -27,12 +27,13 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.ProbeNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.data.RTypes;
+import com.oracle.truffle.r.runtime.nodes.RAttributableNode;
 import com.oracle.truffle.r.runtime.nodes.RInstrumentableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @TypeSystemReference(RTypes.class)
-public abstract class RCallBaseNode extends RNode implements RInstrumentableNode {
+public abstract class RCallBaseNode extends RAttributableNode implements RInstrumentableNode {
 
     @Override
     public WrapperNode createWrapper(ProbeNode probe) {

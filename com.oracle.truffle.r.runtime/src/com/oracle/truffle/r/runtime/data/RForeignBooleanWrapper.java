@@ -87,6 +87,11 @@ public final class RForeignBooleanWrapper extends RForeignWrapper implements RAb
         throw RInternalError.shouldNotReachHere(e);
     }
 
+    @Override
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
+        return RDataFactory.createLogicalVector(new byte[newLength], newIsComplete);
+    }
+
     private static final class FastPathAccess extends FastPathFromLogicalAccess {
 
         FastPathAccess(RAbstractContainer value) {

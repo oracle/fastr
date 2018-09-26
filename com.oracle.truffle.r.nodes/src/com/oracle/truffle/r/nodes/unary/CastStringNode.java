@@ -46,10 +46,9 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 
 @ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class CastStringNode extends CastStringBaseNode {
@@ -139,7 +138,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     @Specialization(replaces = "doNonAtomic", guards = "handleAsNonAtomic(list)")
-    protected RStringVector doNonAtomicGeneric(RAbstractListVector list,
+    protected RStringVector doNonAtomicGeneric(RAbstractContainer list,
                     @Cached("createClassProfile()") ValueProfile operandProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isLanguageProfile) {
         return doNonAtomic(list, operandProfile, isLanguageProfile, list.slowPathAccess());
@@ -147,8 +146,8 @@ public abstract class CastStringNode extends CastStringBaseNode {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected RAbstractStringVector doForeignObject(TruffleObject obj,
-                    @Cached("create()") ForeignArray2R foreignArray2R) {
-        Object o = foreignArray2R.convert(obj);
+                    @Cached("create()") ConvertForeignObjectNode convertForeign) {
+        Object o = convertForeign.convert(obj);
         if (!RRuntime.isForeignObject(o)) {
             if (o instanceof RAbstractStringVector) {
                 return (RAbstractStringVector) o;

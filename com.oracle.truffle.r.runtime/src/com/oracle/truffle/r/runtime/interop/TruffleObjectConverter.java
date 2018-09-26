@@ -29,6 +29,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
@@ -44,39 +45,38 @@ public final class TruffleObjectConverter {
     private Node hasSizeNode = com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode();
     private Node getSizeNode = com.oracle.truffle.api.interop.Message.GET_SIZE.createNode();
     private Node readNode = com.oracle.truffle.api.interop.Message.READ.createNode();
-    private Node isBoxedNode = com.oracle.truffle.api.interop.Message.IS_BOXED.createNode();
-    private Node unboxNode = com.oracle.truffle.api.interop.Message.UNBOX.createNode();
+    private Foreign2R f2r = Foreign2R.create();
     private Node keysNode = com.oracle.truffle.api.interop.Message.KEYS.createNode();
 
     public Node[] getSubNodes() {
-        return new Node[]{hasSizeNode, getSizeNode, readNode, isBoxedNode, unboxNode, keysNode};
+        return new Node[]{hasSizeNode, getSizeNode, readNode, keysNode, f2r};
     }
 
     @TruffleBoundary
     public Object convert(TruffleObject obj) {
         try {
+            // TODO besides using RForeignListWrapper and RForeignNamedListWrapper,
+            // this could be replaced by ForeignArray2R
             if (ForeignAccess.sendHasSize(hasSizeNode, obj)) {
                 int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, obj);
-                ForeignArray2R.InteropTypeCheck typeCheck = new ForeignArray2R.InteropTypeCheck();
+                ForeignTypeCheck typeCheck = new ForeignTypeCheck();
                 for (int i = 0; i < size; i++) {
                     Object value = ForeignAccess.sendRead(readNode, obj, i);
-                    if (value instanceof TruffleObject && ForeignAccess.sendIsBoxed(isBoxedNode, (TruffleObject) value)) {
-                        value = ForeignAccess.sendUnbox(unboxNode, (TruffleObject) value);
-                    }
-                    if (typeCheck.checkForeign(value) == ForeignArray2R.InteropTypeCheck.RType.NONE) {
+                    if (typeCheck.check(f2r.execute(value)) == RType.List) {
                         break;
                     }
                 }
                 switch (typeCheck.getType()) {
-                    case BOOLEAN:
+                    case Logical:
                         return new RForeignBooleanWrapper(obj);
-                    case INTEGER:
+                    case Integer:
                         return new RForeignIntWrapper(obj);
-                    case DOUBLE:
+                    case Double:
                         return new RForeignDoubleWrapper(obj);
-                    case STRING:
+                    case Character:
                         return new RForeignStringWrapper(obj);
-                    case NONE:
+                    case List:
+                    case Null:
                         return new RForeignListWrapper(obj);
                     default:
                         throw RInternalError.shouldNotReachHere();

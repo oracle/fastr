@@ -41,6 +41,7 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleSequence;
@@ -49,6 +50,8 @@ import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
@@ -267,19 +270,19 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
         }
 
         @Specialization
-        protected int doString(RAbstractStringVector vector) {
+        protected double doString(RAbstractStringVector vector,
+                        @Cached("vector.access()") VectorAccess uAccess) {
             checkLength(vector.getLength());
-            String val = vector.getDataAt(0);
-            if (RRuntime.isNA(val)) {
-                throw error(RError.Message.NA_OR_NAN);
+            try (SequentialIterator sIter = uAccess.access(vector, this)) {
+                while (uAccess.next(sIter)) {
+                    double result = uAccess.getDouble(sIter);
+                    if (RRuntime.isNA(result)) {
+                        throw error(RError.Message.NA_OR_NAN);
+                    }
+                    return result;
+                }
             }
-            // TODO it might be a double or complex string
-            int result = RRuntime.string2intNoCheck(val);
-            if (RRuntime.isNA(result)) {
-                warning(RError.Message.NA_INTRODUCED_COERCION);
-                throw error(RError.Message.NA_OR_NAN);
-            }
-            return result;
+            throw RInternalError.shouldNotReachHere();
         }
 
         @Fallback

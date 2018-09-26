@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BooleanOperation;
 import com.oracle.truffle.r.runtime.ops.BooleanOperationFactory;
@@ -155,10 +155,10 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
 
         @Specialization(guards = {"isForeignObject(operand)"})
         protected byte doForeignVector(TruffleObject operand,
-                        @Cached("create()") ForeignArray2R foreignArray2R,
+                        @Cached("create()") ConvertForeignObjectNode convertForeign,
                         @Cached("createRecursive()") LogicalScalarCastNode recursive) {
-            if (foreignArray2R.isForeignVector(operand)) {
-                Object o = foreignArray2R.convert(operand);
+            if (convertForeign.isForeignArray(operand)) {
+                Object o = convertForeign.convert(operand);
                 return recursive.executeCast(o);
             }
             return doFallback(operand);

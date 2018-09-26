@@ -33,7 +33,7 @@ public interface DrawingContext {
     String FONT_FAMILY_SANS = "sans";
     String FONT_FAMILY_SERIF = "serif";
 
-    byte[] GRID_LINE_BLANK = null;
+    byte[] GRID_LINE_BLANK = new byte[0];
     byte[] GRID_LINE_SOLID = new byte[0];
 
     enum GridFontStyle {

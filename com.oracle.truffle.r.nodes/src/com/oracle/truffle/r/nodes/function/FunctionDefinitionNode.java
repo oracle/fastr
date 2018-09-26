@@ -37,6 +37,7 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeUtil;
 import com.oracle.truffle.api.nodes.NodeUtil.NodeCountFilter;
+import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
@@ -87,6 +88,8 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
     private final FormalArguments formalArguments;
 
     @Child private RootBodyNode body;
+
+    @CompilationFinal private DynamicObject attributes;
 
     /**
      * This exists for debugging purposes. It is set initially when the function is defined to
@@ -470,4 +473,15 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         }
         return handlerStackSlot;
     }
+
+    @Override
+    public void setAttributes(DynamicObject attributes) {
+        this.attributes = attributes;
+    }
+
+    @Override
+    public DynamicObject getAttributes() {
+        return attributes;
+    }
+
 }

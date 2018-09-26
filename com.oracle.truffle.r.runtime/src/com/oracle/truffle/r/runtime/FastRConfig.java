@@ -28,6 +28,8 @@ public final class FastRConfig {
      */
     public static final boolean InternalGridAwtSupport;
 
+    public static final boolean UseRemoteGridAwtDevice;
+
     /**
      * Umbrella option, which changes default values of other options in a way that FastR will not
      * invoke any native code directly and other potentially security sensitive operations are
@@ -56,14 +58,14 @@ public final class FastRConfig {
         String rffiVal = System.getenv("FASTR_RFFI");
         ManagedMode = rffiVal != null && rffiVal.equals("managed");
         if (ManagedMode) {
-            InternalGridAwtSupport = false;
             UseMXBeans = false;
             UseNativeEventLoop = false;
         } else {
-            InternalGridAwtSupport = getBoolean("fastr.internal.grid.awt.support");
-            UseMXBeans = getBoolean("fastr.internal.usemxbeans");
-            UseNativeEventLoop = getBoolean("fastr.internal.usenativeeventloop");
+            UseMXBeans = getBooleanOrTrue("fastr.internal.usemxbeans");
+            UseNativeEventLoop = getBooleanOrTrue("fastr.internal.usenativeeventloop");
         }
+        InternalGridAwtSupport = getBooleanOrTrue("fastr.internal.grid.awt.support");
+        UseRemoteGridAwtDevice = getBooleanOrFalse("fastr.use.remote.grid.awt.device");
         DefaultDownloadMethod = System.getProperty("fastr.internal.defaultdownloadmethod");
     }
 
@@ -71,7 +73,12 @@ public final class FastRConfig {
         // only static fields
     }
 
-    private static boolean getBoolean(String propName) {
+    private static boolean getBooleanOrFalse(String propName) {
+        String val = System.getProperty(propName);
+        return val != null && val.equals("true");
+    }
+
+    private static boolean getBooleanOrTrue(String propName) {
         String val = System.getProperty(propName);
         return val == null || val.equals("true");
     }

@@ -87,7 +87,6 @@ public final class GcFunctions {
         static {
             Casts casts = new Casts(Gctorture2.class);
             casts.arg("step").allowNull().asIntegerVector().findFirst();
-            casts.arg("wait").allowNull().asIntegerVector().findFirst();
             casts.arg("inhibit_release").allowNull().asLogicalVector().findFirst().map(toBoolean());
         }
 

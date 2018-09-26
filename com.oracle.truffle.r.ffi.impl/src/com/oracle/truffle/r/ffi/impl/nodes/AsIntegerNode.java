@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RTypes;
@@ -49,20 +50,29 @@ public abstract class AsIntegerNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization
-    protected int asInteger(double obj) {
-        return (int) obj;
+    protected int asInteger(double obj,
+                    @Cached("createCastIntegerNode()") CastIntegerNode castIntegerNode) {
+        return (int) castIntegerNode.executeInt(obj);
     }
 
     @Specialization
-    protected int asReal(RAbstractDoubleVector obj) {
+    protected int asInteger(RAbstractDoubleVector obj,
+                    @Cached("createCastIntegerNode()") CastIntegerNode castIntegerNode) {
         if (obj.getLength() == 0) {
             return RRuntime.INT_NA;
         }
-        return (int) obj.getDataAt(0);
+        Object castObj = castIntegerNode.executeInt(obj);
+        if (castObj instanceof Integer) {
+            return (Integer) castObj;
+        } else if (castObj instanceof RAbstractIntVector) {
+            return ((RAbstractIntVector) castObj).getDataAt(0);
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
     }
 
     @Specialization
-    protected int asReal(RAbstractIntVector obj) {
+    protected int asInteger(RAbstractIntVector obj) {
         if (obj.getLength() == 0) {
             return RRuntime.INT_NA;
         }
@@ -70,8 +80,8 @@ public abstract class AsIntegerNode extends FFIUpCallNode.Arg1 {
     }
 
     @Specialization(guards = "obj.getLength() > 0")
-    protected int asReal(RAbstractAtomicVector obj,
-                    @Cached("createNonPreserving()") CastIntegerNode castIntegerNode) {
+    protected int asInteger(RAbstractAtomicVector obj,
+                    @Cached("createCastIntegerNode()") CastIntegerNode castIntegerNode) {
         Object castObj = castIntegerNode.executeInt(obj);
         if (castObj instanceof Integer) {
             return (Integer) castObj;
@@ -83,11 +93,15 @@ public abstract class AsIntegerNode extends FFIUpCallNode.Arg1 {
     }
 
     @Fallback
-    protected int asRealFallback(@SuppressWarnings("unused") Object obj) {
+    protected int asIntegerFallback(@SuppressWarnings("unused") Object obj) {
         return RRuntime.INT_NA;
     }
 
     public static AsIntegerNode create() {
         return AsIntegerNodeGen.create();
+    }
+
+    protected CastIntegerNode createCastIntegerNode() {
+        return CastIntegerNode.createNonPreserving(RError.SHOW_CALLER);
     }
 }

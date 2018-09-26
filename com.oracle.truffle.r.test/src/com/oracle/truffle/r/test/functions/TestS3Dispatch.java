@@ -162,6 +162,13 @@ public class TestS3Dispatch extends TestRBase {
         assertEval("{ assign('[[.myclass', function(a,b) 42, envir=.__S3MethodsTable__.); x<-1; class(x)<-'myclass'; res <- x[[99]]; rm('[[.myclass', envir=.__S3MethodsTable__.); res; }");
     }
 
+    @Test
+    public void testDispatchWithNULL() {
+        assertEval("{ fun <- function(x = 42L) UseMethod('fun'); fun.integer <- function(x) 'integer'; fun.NULL <- function(x) 'NULL'; fun(); }");
+        assertEval("{ fun <- function(x) UseMethod('fun'); fun.NULL <- function(x) 'integer'; fun(NULL); }");
+        assertEval("{ fun <- function(x) UseMethod('fun'); fun.NULL <- function(x) 'integer'; fun(); }");
+    }
+
     @Override
     public String getTestDir() {
         return "S3";

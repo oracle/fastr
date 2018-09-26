@@ -40,7 +40,7 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
 
     @Specialization
     protected int asLogical(byte b) {
-        return b;
+        return RRuntime.isNA(b) ? RRuntime.INT_NA : b;
     }
 
     @Specialization
@@ -48,20 +48,23 @@ public abstract class AsLogicalNode extends FFIUpCallNode.Arg1 {
         if (obj.getLength() == 0) {
             return RRuntime.INT_NA;
         }
-        return obj.getDataAt(0);
+        byte result = obj.getDataAt(0);
+        return RRuntime.isNA(result) ? RRuntime.INT_NA : result;
     }
 
     @Specialization(guards = "obj.getLength() > 0")
     protected int asLogical(RAbstractAtomicVector obj,
                     @Cached("createNonPreserving()") CastLogicalNode castLogicalNode) {
         Object castObj = castLogicalNode.doCast(obj);
+        byte result;
         if (castObj instanceof Byte) {
-            return (byte) castObj;
+            result = (byte) castObj;
         } else if (castObj instanceof RAbstractLogicalVector) {
-            return ((RAbstractLogicalVector) castObj).getDataAt(0);
+            result = ((RAbstractLogicalVector) castObj).getDataAt(0);
         } else {
             throw RInternalError.shouldNotReachHere();
         }
+        return RRuntime.isNA(result) ? RRuntime.INT_NA : result;
     }
 
     @Fallback

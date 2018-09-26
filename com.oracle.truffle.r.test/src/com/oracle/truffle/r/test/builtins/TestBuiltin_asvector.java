@@ -526,4 +526,11 @@ public class TestBuiltin_asvector extends TestRBase {
         assertEval(Output.IgnoreErrorMessage, template("{ x <- %0; names(x) <- c('a','b','c'); attr(x,'myattr') <- 42; as.vector(x, mode='%1'); }", valuesNameableAttributable, modes));
         assertEval(Output.IgnoreErrorMessage, template("{ x <- %0; attr(x,'myattr') <- 42; as.vector(x, mode='%1'); }", valuesAttributable, modes));
     }
+
+    @Test
+    public void testCannotCoerce() {
+        assertEval(Output.IgnoreErrorContext, "as.vector(environment())");
+        assertEval(Output.IgnoreErrorContext, "as.vector(environment(), 'integer')");
+        assertEval(Output.IgnoreErrorContext, "as.vector(function(){})");
+    }
 }

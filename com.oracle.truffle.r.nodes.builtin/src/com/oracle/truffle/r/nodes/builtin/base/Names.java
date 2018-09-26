@@ -22,51 +22,40 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import com.oracle.truffle.r.runtime.interop.GetForeignKeysNode;
 
-@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
+@ImportStatic(RRuntime.class)
 @RBuiltin(name = "names", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Names extends RBuiltinNode.Arg1 {
 
     private final ConditionProfile hasNames = ConditionProfile.createBinaryProfile();
-    @Child private GetNamesAttributeNode getNames = GetNamesAttributeNode.create();
-    @Child private Node executeNode;
 
     static {
         Casts.noCasts(Names.class);
     }
 
     @Specialization
-    protected Object getNames(RAbstractContainer container) {
+    protected Object getNames(RAbstractContainer container,
+                    @Cached("create()") GetNamesAttributeNode getNames) {
         RStringVector names = getNames.getNames(container);
         if (hasNames.profile(names != null)) {
             return names;
@@ -83,54 +72,8 @@ public abstract class Names extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "isForeignObject(obj)")
     protected Object getNames(TruffleObject obj,
-                    @Cached("GET_SIZE.createNode()") Node getSizeNode,
-                    @Cached("KEYS.createNode()") Node keysNode,
-                    @Cached("READ.createNode()") Node readNode) {
-
-        try {
-            String[] names;
-            try {
-                names = readKeys(keysNode, obj, getSizeNode, readNode);
-            } catch (UnsupportedMessageException e) {
-                // because it is a java function, java.util.Map (has special handling too) ... ?
-                return RNull.instance;
-            }
-            String[] staticNames = new String[0];
-            RContext context = RContext.getInstance();
-            TruffleLanguage.Env env = context.getEnv();
-            if (env.isHostObject(obj) && !(env.asHostObject(obj) instanceof Class)) {
-                if (executeNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    executeNode = insert(Message.EXECUTE.createNode());
-                }
-                try {
-                    TruffleObject clazzStatic = context.toJavaStatic(obj, readNode, executeNode);
-                    staticNames = readKeys(keysNode, clazzStatic, getSizeNode, readNode);
-                } catch (UnknownIdentifierException | NoSuchFieldError | UnsupportedMessageException e) {
-                }
-            }
-            if (names.length == 0 && staticNames.length == 0) {
-                return RNull.instance;
-            }
-            String[] result = new String[names.length + staticNames.length];
-            System.arraycopy(names, 0, result, 0, names.length);
-            System.arraycopy(staticNames, 0, result, names.length, staticNames.length);
-            return RDataFactory.createStringVector(result, true);
-        } catch (InteropException e) {
-            throw RInternalError.shouldNotReachHere(e);
-        }
-    }
-
-    private static String[] readKeys(Node keysNode, TruffleObject obj, Node getSizeNode, Node readNode)
-                    throws UnknownIdentifierException, InteropException, UnsupportedMessageException {
-        TruffleObject keys = ForeignAccess.sendKeys(keysNode, obj);
-        int size = (Integer) ForeignAccess.sendGetSize(getSizeNode, keys);
-        String[] names = new String[size];
-        for (int i = 0; i < size; i++) {
-            Object value = ForeignAccess.sendRead(readNode, keys, i);
-            names[i] = (String) value;
-        }
-        return names;
+                    @Cached("create()") GetForeignKeysNode foreignKeys) {
+        return foreignKeys.execute(obj, true);
     }
 
     @Fallback

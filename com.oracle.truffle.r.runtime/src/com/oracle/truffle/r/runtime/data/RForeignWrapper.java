@@ -32,7 +32,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.CopyForeignArrayNode;
 
 public abstract class RForeignWrapper implements RAbstractVector {
 
@@ -42,7 +42,7 @@ public abstract class RForeignWrapper implements RAbstractVector {
     protected static final Node UNBOX = Message.UNBOX.createNode();
     protected static final Node READ = Message.READ.createNode();
 
-    private static final ForeignArray2R FOREIGN_ARRAY_2R = ForeignArray2R.create();
+    private static final CopyForeignArrayNode COPY_ARRAY = CopyForeignArrayNode.create();
 
     protected final TruffleObject delegate;
 
@@ -92,17 +92,19 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     @Override
     public final RAbstractVector copy() {
-        return (RAbstractVector) FOREIGN_ARRAY_2R.copy(delegate, true);
+        return COPY_ARRAY.toVector(delegate, getRType());
     }
 
     @Override
     public final RAbstractVector copyDropAttributes() {
-        throw RInternalError.shouldNotReachHere();
+        return copy();
     }
 
     @Override
     public final RAbstractVector copyWithNewDimensions(int[] newDimensions) {
-        throw RInternalError.shouldNotReachHere();
+        RAbstractVector res = copy();
+        res.setDimensions(newDimensions);
+        return res;
     }
 
     @Override
@@ -195,16 +197,18 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     @Override
     public final RVector<?> copyResized(int size, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+        RAbstractVector v = copy();
+        return v.copyResized(size, fillNA);
     }
 
     @Override
-    public final RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
-        throw RInternalError.shouldNotReachHere();
+    public RVector<?> copyResizedWithDimensions(int[] newDimensions, boolean fillNA) {
+        RAbstractVector v = copy();
+        return v.copyResizedWithDimensions(newDimensions, fillNA);
     }
 
     @Override
-    public final RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
+    public RVector<?> createEmptySameType(int newLength, boolean newIsComplete) {
         throw RInternalError.shouldNotReachHere();
     }
 

@@ -151,7 +151,8 @@ default.packages <- c("R", "base", "grid", "splines", "utils",
 # if this configuration gets too complex or updated too often, we can move it to separate config file
 ignore.suggests <- list(
 	rstudioapi = c('*'), # rstudioapi executes almost no real tests, it is mostly just test of install & load
-	glmnet = c('knitr')  # probably used for vignettes only
+	glmnet = c('knitr'),  # probably used for vignettes only
+    quantmod = c('*'), # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 )
 
 choice.depends <- function(pkg, choice=c("direct","suggests")) {
@@ -1048,7 +1049,7 @@ cat.args <- function() {
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
 		cat("testdir.path", testdir, "\n")
-		cat("pkg.cache:", pkg.cache$enabled, "\n")
+		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "\n")
 	}
 }
 

@@ -143,8 +143,8 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
         @Override
         protected final int getIntImpl(AccessIterator accessIter, int index) {
             double value = getDoubleImpl(accessIter, index);
+            na.enable(value);
             if (na.checkNAorNaN(value)) {
-                na.enable(true);
                 return RRuntime.INT_NA;
             }
             if (value > Integer.MAX_VALUE || value <= Integer.MIN_VALUE) {
@@ -418,17 +418,28 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
 
         @Override
         protected final byte getRawImpl(AccessIterator accessIter, int index) {
-            double value = getComplexRImpl(accessIter, index);
-            if (Double.isNaN(value) || value < 0 || value >= 256) {
+            RComplex value = getComplexImpl(accessIter, index);
+
+            double realPart = value.getRealPart();
+            double realResult = realPart;
+
+            if (realPart > Integer.MAX_VALUE || realPart <= Integer.MIN_VALUE) {
                 warningReportedProfile.enter();
-                accessIter.warning(Message.OUT_OF_RANGE);
-                return 0;
+                accessIter.warning(Message.NA_INTRODUCED_COERCION_INT);
+                realResult = 0;
             }
+
             if (getComplexIImpl(accessIter, index) != 0) {
                 warningReportedProfile.enter();
                 accessIter.warning(Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
             }
-            return (byte) value;
+
+            if (Double.isNaN(realPart) || realPart < 0 || realPart >= 256) {
+                warningReportedProfile.enter();
+                accessIter.warning(Message.OUT_OF_RANGE);
+                realResult = 0;
+            }
+            return (byte) RRuntime.double2rawIntValue(realResult);
         }
 
         @Override
@@ -483,11 +494,21 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
                 na.enable(true);
                 return RRuntime.INT_NA;
             }
-            int value = na.convertStringToInt(str);
-            if (RRuntime.isNA(value)) {
-                na.enable(true);
+            double d = na.convertStringToDouble(str);
+            na.enable(d);
+            if (na.checkNAorNaN(d)) {
+                if (na.check(d)) {
+                    warningReportedProfile.enter();
+                    accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                    return RRuntime.INT_NA;
+                }
+                return RRuntime.INT_NA;
+            }
+            int value = na.convertDoubleToInt(d);
+            na.enable(value);
+            if (na.check(value)) {
                 warningReportedProfile.enter();
-                accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                accessIter.warning(Message.NA_INTRODUCED_COERCION_INT);
                 return RRuntime.INT_NA;
             }
             return value;
@@ -512,8 +533,35 @@ public abstract class SlowPathVectorAccess extends VectorAccess {
 
         @Override
         protected final byte getRawImpl(AccessIterator accessIter, int index) {
-            int value = na.convertStringToInt(getStringImpl(accessIter, index));
-            return value >= 0 && value <= 255 ? (byte) value : 0;
+            String value = getStringImpl(accessIter, index);
+            int intValue;
+            if (na.check(value) || value.isEmpty()) {
+                intValue = RRuntime.INT_NA;
+            } else {
+                double d = na.convertStringToDouble(value);
+                na.enable(d);
+                if (na.checkNAorNaN(d)) {
+                    if (na.check(d) && !value.isEmpty()) {
+                        warningReportedProfile.enter();
+                        accessIter.warning(Message.NA_INTRODUCED_COERCION);
+                    }
+                    intValue = RRuntime.INT_NA;
+                } else {
+                    intValue = na.convertDoubleToInt(d);
+                    na.enable(intValue);
+                    if (na.check(intValue) && !value.isEmpty()) {
+                        warningReportedProfile.enter();
+                        accessIter.warning(Message.NA_INTRODUCED_COERCION_INT);
+                    }
+                }
+                int intRawValue = RRuntime.int2rawIntValue(intValue);
+                if (intValue != intRawValue) {
+                    warningReportedProfile.enter();
+                    accessIter.warning(Message.OUT_OF_RANGE);
+                    intValue = 0;
+                }
+            }
+            return intValue >= 0 && intValue <= 255 ? (byte) intValue : 0;
         }
 
         @Override

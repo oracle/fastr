@@ -55,6 +55,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
+import com.oracle.truffle.r.runtime.nodes.RAttributableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -281,7 +282,7 @@ public abstract class PromiseNode extends RNode {
      * an argument in a {@link RCallNode} where the arguments are statically typed as
      * {@link RSyntaxNode}.
      */
-    public static final class VarArgNode extends RNode implements RSyntaxNode, RSyntaxLookup {
+    public static final class VarArgNode extends RAttributableNode implements RSyntaxNode, RSyntaxLookup {
 
         @Child private ReadVariableNode lookupVarArgs;
 

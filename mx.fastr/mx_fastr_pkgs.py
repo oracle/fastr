@@ -58,19 +58,21 @@ def _gnur_rscript():
     return _mx_gnur().extensions._gnur_rscript_path()
 
 def _gnur_include_path():
-    gnur_include_p = None
     if _graalvm():
-        gnur_include_p = join(_mx_gnur().dir, 'gnur', _mx_gnur().extensions.r_version(), 'include')
-    else:
-        gnur_include_p = join(mx_fastr._gnur_path(), "include")
-    return gnur_include_p
+        return join(_mx_gnur().dir, 'gnur', _mx_gnur().extensions.r_version(), 'include')
+    return join(mx_fastr._gnur_path(), "include")
+
 
 def _fastr_include_path():
+    if _graalvm():
+        return join(graalvm, "jre", "languages", "R", "include")
     return join(_fastr_suite_dir(), 'include')
+
 
 def _graalvm_rscript():
     assert graalvm is not None
     return join(graalvm, 'bin', 'Rscript')
+
 
 def _check_graalvm():
     if os.environ.has_key('FASTR_GRAALVM'):
@@ -80,16 +82,24 @@ def _check_graalvm():
     else:
         return None
 
+
+def _get_r_version(rscript_binary):
+    args = ["--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], '\\n', sep='')"]
+    return subprocess.check_output([rscript_binary] + args, stderr=subprocess.STDOUT).rstrip()
+
+
 def _graalvm():
     global graalvm
     if graalvm is None:
         graalvm = _check_graalvm()
         if graalvm:
+
             # version check
-            gnur_version = _mx_gnur().extensions.r_version().split('-')[1]
-            graalvm_version = subprocess.check_output([_graalvm_rscript(), '--version'], stderr=subprocess.STDOUT).rstrip()
-            if not gnur_version in graalvm_version:
-                mx.abort('graalvm R version does not match gnur suite')
+            gnur_version = _get_r_version(_gnur_rscript())
+            graalvm_version = _get_r_version(_graalvm_rscript())
+            mx.log("Using GraalVM in '%s' (FastR version = %s ; GnuR version = %s): " % (graalvm, graalvm_version, gnur_version))
+            if gnur_version != graalvm_version:
+                mx.abort('graalvm R version does not match gnur suite: %s (GnuR) vs. %s (FastR)' % (gnur_version, graalvm_version))
     return graalvm
 
 def _create_libinstall(rvm, test_installed):
@@ -159,9 +169,11 @@ def _installpkgs(args, **kwargs):
 
     script = _installpkgs_script()
     if _graalvm() is None:
+        mx.logv("Using FastR binary: mx rscript")
         _ensure_R_on_PATH(env, join(_fastr_suite_dir(), 'bin'))
         return mx_fastr.rscript([script] + args, **kwargs)
     else:
+        mx.logv("Using FastR binary: " + _graalvm_rscript())
         _ensure_R_on_PATH(env, os.path.dirname(_graalvm_rscript()))
         return mx.run([_graalvm_rscript(), script] + args, **kwargs)
 
@@ -421,11 +433,8 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     env['R_LIBS_USER'] = gnur_libinstall
     env["TZDIR"] = "/usr/share/zoneinfo/"
 
-    args = []
-    if _graalvm():
-        args += [_gnur_rscript()]
     # forward any explicit args to pkgtest
-    args += [_installpkgs_script()]
+    args = [_installpkgs_script()]
     args += forwarded_args
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
@@ -433,9 +442,11 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args += ['--testdir', 'test.gnur']
     _log_step('BEGIN', 'install/test', 'GnuR')
     if _graalvm():
+        mx.logv("Using GnuR binary: " + _gnur_rscript())
         _ensure_R_on_PATH(env, os.path.dirname(_gnur_rscript()))
-        mx.run(args, nonZeroIsFatal=False, env=env)
+        mx.run([_gnur_rscript()] + args, nonZeroIsFatal=False, env=env)
     else:
+        mx.logv("Using GnuR binary: " +  join(mx_fastr._gnur_path(), 'Rscript'))
         _ensure_R_on_PATH(env, mx_fastr._gnur_path())
         mx_fastr.gnu_rscript(args, env=env)
     _log_step('END', 'install/test', 'GnuR')

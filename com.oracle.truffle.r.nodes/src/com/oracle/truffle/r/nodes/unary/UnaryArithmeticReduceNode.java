@@ -44,7 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.interop.ForeignArray2R;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmeticFactory;
@@ -408,10 +408,10 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
     @Specialization(guards = {"isForeignObject(obj)"})
     protected Object doForeignVector(TruffleObject obj, boolean naRm, boolean finite,
-                    @Cached("create()") ForeignArray2R foreignArray2R,
+                    @Cached("create()") ConvertForeignObjectNode convertForeign,
                     @Cached("createRecursive()") UnaryArithmeticReduceNode recursive) {
-        if (foreignArray2R.isForeignVector(obj)) {
-            Object vec = foreignArray2R.convert(obj);
+        if (convertForeign.isForeignArray(obj)) {
+            Object vec = convertForeign.convert(obj);
             return recursive.executeReduce(vec, naRm, finite);
         }
         return doFallback(obj, naRm, finite);

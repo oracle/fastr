@@ -31,8 +31,7 @@ import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
 import com.oracle.truffle.r.library.fastrGrid.WindowDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice;
-import com.oracle.truffle.r.library.fastrGrid.device.awt.BufferedImageDevice.NotSupportedImageFormatException;
+import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
 import com.oracle.truffle.r.library.fastrGrid.device.awt.Graphics2DDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.FastRConfig;
@@ -94,7 +93,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         }
 
         // otherwise create the window ourselves
-        GridDevice device = WindowDevice.createWindowDevice(width, height);
+        GridDevice device = WindowDevice.createWindowDevice(false, width, height);
         String name = isFastRDevice ? "awt" : "X11cairo";
         GridContext.getContext().setCurrentDevice(name, device);
         return RNull.instance;
@@ -104,7 +103,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         String formatName = name.substring(0, name.indexOf("::"));
         String filename = name.substring(name.lastIndexOf(':') + 1);
         try {
-            BufferedImageDevice device = BufferedImageDevice.open(FileDevUtils.formatInitialFilename(filename), formatName, width, height);
+            GridDevice device = GridContext.openLocalOrRemoteDevice(FileDevUtils.formatInitialFilename(filename), formatName, width, height);
             GridContext.getContext().setCurrentDevice(formatName.toUpperCase(), device, filename);
         } catch (NotSupportedImageFormatException e) {
             throw error(Message.GENERIC, String.format("Format '%s' is not supported.", formatName));

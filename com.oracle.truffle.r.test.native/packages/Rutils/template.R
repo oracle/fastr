@@ -41,7 +41,7 @@ expandTemplate <- function(template, ...) {
 
 		for (i in seq_along(params)) {
 			positions[[i]] <- positions[[i]] + 1
-			if (positions[[i]] >= length(params[[i]])) {
+			if (positions[[i]] > length(params[[i]])) {
 				positions[[i]] <- 1
 			} else {
 				break

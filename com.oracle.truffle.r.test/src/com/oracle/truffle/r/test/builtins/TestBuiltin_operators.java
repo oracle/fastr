@@ -2033,6 +2033,10 @@ public class TestBuiltin_operators extends TestBase {
         assertEval("8.2:c(9,8)");
         assertEval("new.env():new.env()");
         assertEval("numeric(0):numeric(0)");
+
+        assertEval("1:'1'");
+        assertEval("1:'1.1'");
+        assertEval("2147483647L:'2147483648'");
     }
 
     private static final String[] INT_MAX_VALUES = new String[]{"2147483647L", "2147483648"};

@@ -35,7 +35,9 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.IterableAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -46,7 +48,9 @@ import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RListBase;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -104,10 +108,17 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
         return identicalRecursive.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
     }
 
-    private byte identicalRecursiveAttr(Object x, Object y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
+    private byte identicalRecursiveAttr(String attrName, Object xx, Object yy, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment,
+                    boolean ignoreSrcref) {
         if (identicalRecursiveAttr == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             identicalRecursiveAttr = insert(IdenticalNodeGen.create());
+        }
+        Object x = xx;
+        Object y = yy;
+        if (GetAttributeNode.isRowNamesAttr(attrName)) {
+            x = GetRowNamesAttributeNode.convertRowNamesToSeq(x);
+            y = GetRowNamesAttributeNode.convertRowNamesToSeq(y);
         }
         return identicalRecursiveAttr.executeByte(x, y, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
     }
@@ -187,7 +198,7 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
                 if (yValue == null) {
                     return RRuntime.LOGICAL_FALSE;
                 }
-                byte res = identicalRecursiveAttr(xAttr.getValue(), yValue, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
+                byte res = identicalRecursiveAttr(xAttr.getName(), xAttr.getValue(), yValue, numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
                 if (res == RRuntime.LOGICAL_FALSE) {
                     return RRuntime.LOGICAL_FALSE;
                 }
@@ -209,7 +220,7 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
                 if (!xAttr.getName().equals(yAttr.getName())) {
                     return RRuntime.LOGICAL_FALSE;
                 }
-                byte res = identicalRecursiveAttr(xAttr.getValue(), yAttr.getValue(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
+                byte res = identicalRecursiveAttr(xAttr.getName(), xAttr.getValue(), yAttr.getValue(), numEq, singleNA, attribAsSet, ignoreBytecode, ignoreEnvironment, ignoreSrcref);
                 if (res == RRuntime.LOGICAL_FALSE) {
                     return RRuntime.LOGICAL_FALSE;
                 }
@@ -334,13 +345,21 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
                 } else {
                     RPairList xSubList = (RPairList) tmpXCdr;
                     RPairList ySubList = (RPairList) tmpYCdr;
+                    Object tagX = xSubList.getTag();
+                    if (tagX instanceof RSymbol && "".equals(((RSymbol) tagX).getName())) {
+                        tagX = RNull.instance;
+                    }
+                    Object tagY = ySubList.getTag();
+                    if (tagY instanceof RSymbol && "".equals(((RSymbol) tagY).getName())) {
+                        tagY = RNull.instance;
+                    }
 
-                    if (RPairList.isNull(xSubList.getTag()) && RPairList.isNull(ySubList.getTag())) {
+                    if (RPairList.isNull(tagX) && RPairList.isNull(tagY)) {
                         // continue
-                    } else if (RPairList.isNull(xSubList.getTag()) || RPairList.isNull(ySubList.getTag())) {
+                    } else if (RPairList.isNull(tagX) || RPairList.isNull(tagY)) {
                         return RRuntime.LOGICAL_FALSE;
                     } else {
-                        if (xSubList.getTag() instanceof RSymbol && ySubList.getTag() instanceof RSymbol) {
+                        if (tagY instanceof RSymbol && tagY instanceof RSymbol) {
                             if (xSubList.getTag() != ySubList.getTag()) {
                                 return RRuntime.LOGICAL_FALSE;
                             }
@@ -380,6 +399,13 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     @SuppressWarnings("unused")
     @Specialization(guards = "areForeignObjects(x, y)")
     protected byte doInternalIdenticalForeignObject(TruffleObject x, TruffleObject y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment,
+                    boolean ignoreSrcref) {
+        return RRuntime.asLogical(x == y);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected byte doInternalIdenticalForeignObject(RPromise x, RPromise y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment,
                     boolean ignoreSrcref) {
         return RRuntime.asLogical(x == y);
     }

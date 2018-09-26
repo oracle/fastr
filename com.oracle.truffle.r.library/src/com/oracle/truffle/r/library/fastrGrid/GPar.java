@@ -246,9 +246,9 @@ public final class GPar {
         /**
          * Converts value to given enum type using either {@code nameMapper} for String values or
          * {@code valueMapper} for integer value, which is first validated to be greater or equal to
-         * 0 and less or equal to the {@code maxValue} parameter. If {@code nameMapper} returns
-         * {@code null} or integer validation fails, error with given {@code propertyName} in the
-         * message is thrown.
+         * 0 and less or equal to the {@code maxValue} parameter. If {@code nameMapper} or
+         * {@code valueMapper} returns {@code null} or integer validation fails, error with given
+         * {@code propertyName} in the message is thrown.
          */
         public <T> T convertNamedValue(Object value, int maxValue, String propertyName, Function<String, T> nameMapper, Function<Integer, T> valueMapper) {
             T result = null;

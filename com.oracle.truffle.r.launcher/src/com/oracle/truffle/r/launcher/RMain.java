@@ -160,6 +160,8 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
                 rArguments = preprocessRScriptOptions(options);
             } catch (PrintHelp e) {
                 printHelp(OptionCategory.USER);
+            } catch (PrintVersion e) {
+                RCmdOptions.printVersion();
             }
         } else {
             rArguments = this.options.getArguments();
@@ -285,7 +287,11 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
     // CheckStyle: stop system..print check
 
-    private static String[] preprocessRScriptOptions(RCmdOptions options) throws PrintHelp {
+    private static String[] preprocessRScriptOptions(RCmdOptions options) {
+        if (options.getBoolean(RCmdOption.VERSION)) {
+            throw new PrintVersion();
+        }
+
         String[] arguments = options.getArguments();
         int resultArgsLength = arguments.length;
         int firstNonOptionArgIndex = options.getFirstNonOptionArgIndex();
@@ -334,7 +340,15 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     }
 
     @SuppressWarnings("serial")
-    static class PrintHelp extends Exception {
+    static class PrintHelp extends RuntimeException {
+        @Override
+        public synchronized Throwable fillInStackTrace() {
+            return this;
+        }
+    }
+
+    @SuppressWarnings("serial")
+    static class PrintVersion extends RuntimeException {
         @Override
         public synchronized Throwable fillInStackTrace() {
             return this;

@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "8eb52e74643a8a5ca788b9b8f37acca929816df4",
+               "version" : "759c95d2998884cc88bf03b4ba747e2f2ace580d",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -311,6 +311,20 @@ suite = {
 
     },
 
+    "com.oracle.truffle.r.library.fastrGrid.server" : {
+      "sourceDirs" : ["src"],
+      "dependencies" : [
+        "com.oracle.truffle.r.library",
+      ],
+      "annotationProcessors" : [
+      ],
+      "checkstyle" : "com.oracle.truffle.r.runtime",
+      "javaCompliance" : "1.8",
+      "workingSets" : "FastR",
+      "jacoco" : "include",
+
+    },
+
     "com.oracle.truffle.r.release" : {
       "sourceDirs" : ["src"],
       "buildDependencies" : ["com.oracle.truffle.r.native.recommended"],
@@ -393,6 +407,20 @@ suite = {
         "truffle:TRUFFLE_API",
         "truffle:TRUFFLE_NFI",
         "truffle:TRUFFLE_NFI_NATIVE",
+      ],
+    },
+
+    "GRID_DEVICE_REMOTE_SERVER" : {
+      "description" : "remote server for grid device",
+      "dependencies" : [
+        "com.oracle.truffle.r.library.fastrGrid.server",
+      ],
+      "mainClass" : "com.oracle.truffle.r.library.fastrGrid.server.RemoteDeviceServer",
+      "exclude" : [
+        "truffle:JLINE",
+        "ANTLR-3.5",
+        "GNUR",
+        "XZ-1.6",
       ],
     },
 

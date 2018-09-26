@@ -711,14 +711,6 @@ public class EnvFunctions {
         @Child private CopyNode recursiveCopy;
         @Child private PromiseHelperNode promiseHelper;
 
-        private Object recursiveCopy(VirtualFrame frame, Object operand) {
-            if (recursiveCopy == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                recursiveCopy = insert(CopyNodeGen.create());
-            }
-            return recursiveCopy.execute(frame, operand);
-        }
-
         @Specialization
         RNull copy(RNull n) {
             return n;
@@ -760,7 +752,7 @@ public class EnvFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
             }
-            return recursiveCopy(frame, promiseHelper.evaluate(frame, promise));
+            return promiseHelper.evaluate(frame, promise);
         }
 
         @Specialization

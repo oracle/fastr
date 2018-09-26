@@ -26,10 +26,15 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RPromise;
 
 /**
  * .Internal is resolved during AST creation, so this builtin is only a dummy to make the name
@@ -43,6 +48,11 @@ public abstract class Internal extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
+    protected Object doInternal(VirtualFrame frame, RPromise promise, @Cached("new()") PromiseHelperNode promiseHelper) {
+        return promiseHelper.evaluate(frame, promise);
+    }
+
+    @Fallback
     protected Object doInternal(@SuppressWarnings("unused") Object x) {
         throw RInternalError.unimplemented();
     }

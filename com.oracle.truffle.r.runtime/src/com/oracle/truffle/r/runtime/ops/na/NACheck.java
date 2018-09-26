@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.RRuntime.isNA;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -35,12 +34,84 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
+/**
+ * Serves as a FastR specific Truffle profile, i.e. it uses {@link CompilerDirectives Truffle
+ * compiler directives} to communicate to the compiler that certain code can be omitted from the
+ * compilation. Instances of {@link NACheck} should be fields of AST Nodes (this includes creation
+ * via {@link com.oracle.truffle.api.dsl.Cached} annotation).
+ *
+ * Main use-case of {@link NACheck} is to save checks for {@code NA} values inside a loop if we know
+ * that we are reading those values from a vector that does not contain any {@code NA} value, which
+ * can be determined via {@link RAbstractContainer#isComplete()}. In the following example:
+ *
+ * <pre>
+ * naCheck.enable(vector);
+ * for (int i = 0; i < vector.getLength(); i++) {
+ *     if (naCheck.check(vector.getDataAt(i)) { ... }
+ * }
+ * </pre>
+ *
+ * The {@code if} can be completely eliminated from the loop if all the vectors that were seen
+ * during the runtime returned {@code true} from {@link RAbstractContainer#isComplete()}.
+ *
+ * Common pattern is to use {@link #neverSeenNA()} as a value for the {@code complete} flag of a new
+ * vector if whether it contains {@NA} values or not depends on the vector(s) for which we
+ * {@link #enable(RAbstractContainer)} the check. Note that in such case the vector may be marked as
+ * incomplete even if the current vector for which we enabled the check happens to be complete,
+ * because some previous vector seen during runtime wasn't complete and once enabled {@link NACheck}
+ * is never "disabled" and stays enabled forever. Marking a vector without any {@code NA}s as
+ * incomplete is OK as "incompleteness" gives no guarantees about {@code NA}s in the vector, only
+ * completeness does. Example:
+ *
+ * <pre>
+ * naCheck.enable(vector);
+ * int[] result = new int[vector.getLength()];
+ * for (int i = 0; i < vector.getLength(); i++) {
+ *     if (naCheck.check(vector.getDataAt(i)) { result[i] = RRuntime.INT_NA; }
+ *     else { result[i] = vector.getDataAt(i) + 1; }
+ * }
+ * return RDataFactory.createIntVector(result, naCheck.neverSeenNA());
+ * </pre>
+ *
+ * The {@link NACheck} also contains facility for {@code NaN} checks. The trick is that {@code NA}
+ * is of the of possible values representing {@code NaN}, so if it is necessary to check for both,
+ * the patten is follows:
+ *
+ * <pre>
+ * if (naCheck.checkNAorNan(value)) {
+ *     if (naCheck.check(value)) { ...is NA... }
+ *     else { ...is NaN... }
+ * }
+ * </pre>
+ *
+ * The {@code if} will not be removed from the compilation, because completeness doesn't tell us if
+ * the "source" vector contains {@code NaN}s, but {@link NACheck} will make sure the code inside the
+ * {@code if} will be replaced with {@code deopt} if we have never seen any {@code NaN}s during the
+ * runtime so far.
+ */
 public final class NACheck {
 
     private final BranchProfile conversionOverflowReached = BranchProfile.create();
 
+    /**
+     * The {@link NACheck} can be in 3 states. {@link #NO_CHECK} means that no incomplete
+     * vector/value was ever passed to noe of the {@code enable} functions and so {@code check}
+     * functions will be no-ops in the compiled code.
+     */
     private static final int NO_CHECK = 0;
+
+    /**
+     * First time an incomplete vector/value is passed to one of the {@code enable} methods, we
+     * change the state to {@link #CHECK_DEOPT}, but only actually deoptimize once one of the
+     * {@code check} methods is called.
+     */
     private static final int CHECK_DEOPT = 1;
+
+    /**
+     * Once one of the {@code check} methods is called and state is {@link #CHECK_DEOPT}, then the
+     * {@code check} method calls {@link CompilerDirectives#transferToInterpreterAndInvalidate()}
+     * and changes state to {@link #CHECK}.
+     */
     private static final int CHECK = 2;
 
     @CompilationFinal private int state;
@@ -242,20 +313,6 @@ public final class NACheck {
         return RRuntime.logical2doubleNoCheck(value);
     }
 
-    public String convertLogicalToString(byte right) {
-        if (check(right)) {
-            return RRuntime.STRING_NA;
-        }
-        return RRuntime.logicalToStringNoCheck(right);
-    }
-
-    public String convertIntToString(int right) {
-        if (check(right)) {
-            return RRuntime.STRING_NA;
-        }
-        return RRuntime.intToStringNoCheck(right);
-    }
-
     public double convertStringToDouble(String value) {
         if (check(value)) {
             return RRuntime.DOUBLE_NA;
@@ -274,13 +331,6 @@ public final class NACheck {
         return result;
     }
 
-    public int convertStringToInt(String value) {
-        if (check(value)) {
-            return RRuntime.INT_NA;
-        }
-        return RRuntime.string2intNoCheck(value);
-    }
-
     public String convertDoubleToString(double value) {
         if (check(value)) {
             return RRuntime.STRING_NA;
@@ -293,16 +343,6 @@ public final class NACheck {
             return RRuntime.STRING_NA;
         }
         return RContext.getRRuntimeASTAccess().encodeComplex(value);
-    }
-
-    public double convertComplexToDouble(RComplex value, boolean warning) {
-        if (check(value)) {
-            return RRuntime.DOUBLE_NA;
-        }
-        if (warning) {
-            RError.warning(RError.SHOW_CALLER2, RError.Message.IMAGINARY_PARTS_DISCARDED_IN_COERCION);
-        }
-        return RRuntime.complex2doubleNoCheck(value);
     }
 
     public byte convertComplexToLogical(RComplex value) {
