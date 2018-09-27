@@ -344,7 +344,8 @@ def _simple_generated_unit_tests():
 def _simple_unit_tests():
     # com.oracle.truffle.tck.tests - truffle language inter-operability tck in com.oracle.truffle.r.test.tck/
     # com.oracle.truffle.r.test.tck - other tck tests in com.oracle.truffle.r.test/ e.g. FastRDebugTest
-    return _simple_generated_unit_tests() + ['com.oracle.truffle.r.nodes.castsTests', 'com.oracle.truffle.tck.tests', 'com.oracle.truffle.r.test.tck']
+    # return _simple_generated_unit_tests() + ['com.oracle.truffle.r.nodes.castsTests', 'com.oracle.truffle.tck.tests', 'com.oracle.truffle.r.test.tck']
+    return _simple_generated_unit_tests() + ['com.oracle.truffle.tck.tests', 'com.oracle.truffle.r.test.tck']
 
 def _nodes_unit_tests():
     return ['com.oracle.truffle.r.nodes.test', 'com.oracle.truffle.r.nodes.access.vector']

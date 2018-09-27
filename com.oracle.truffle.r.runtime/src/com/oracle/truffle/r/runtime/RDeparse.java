@@ -882,6 +882,11 @@ public class RDeparse {
             assert v != null;
             assert !(v instanceof RSyntaxElement) : v.getClass();
 
+            if (RRuntime.isForeignObject(v)) {
+                sb.append("[polyglot.value]");
+                return this;
+            }
+
             Object value = RRuntime.convertScalarVectors(v);
             assert value instanceof RTypedValue : v.getClass();
 
