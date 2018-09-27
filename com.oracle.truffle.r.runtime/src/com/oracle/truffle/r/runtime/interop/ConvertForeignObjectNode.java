@@ -300,6 +300,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return createResult.apply(complete[0]);
     }
 
+    @TruffleBoundary
     private static <A> int populateResultArray(int[] dims, int[] currentCoordinates, int depth, int[] sourceIdx, A resultArray, WriteArray<A> writeResultArray, boolean[] complete) {
         int[] cor = new int[currentCoordinates.length];
         System.arraycopy(currentCoordinates, 0, cor, 0, currentCoordinates.length);

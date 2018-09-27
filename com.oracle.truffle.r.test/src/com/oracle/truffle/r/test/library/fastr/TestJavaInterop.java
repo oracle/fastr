@@ -444,6 +444,7 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[1];", "1");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[[1]];", "1");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[TRUE];", getRValue(new TestClass().fieldIntegerArray));
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[1]", getRValue(new int[]{1, 2, 3}));
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[[1]]", getRValue(new int[]{1, 2, 3}));
@@ -460,16 +461,55 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[1,2] <- 1234L; to$int2DimArray[1,2]", "1234");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[[1,2]] <- 12345L; to$int2DimArray[[1,2]]", "12345");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to['fieldStringObject'] <- 'test'; to['fieldStringObject']", "'test'");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[TRUE] <- 0; to$fieldIntegerArray", "cat('[polyglot value]\n[1] 0 0 0\n')");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[FALSE]", "integer(0)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " t1 <- to[TRUE]; identical(to, t1)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[FALSE]", "list()");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to['x']", errorIn("to[\"x\"]", "invalid index/identifier during foreign access: x"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[1]", errorIn("to[1]", "invalid index/identifier during foreign access: 0.0"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[c(1, 5)]", errorIn("to$fieldIntegerArray[c(1, 5)]", "invalid index/identifier during foreign access: 4.0"));
     }
 
     @Test
-    public void testReadByVector() {
+    public void testReadByPositionsVector() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)]", "c('a', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(c(1,2), c(3, 2))]", "c('a', 'b', 'c', 'b')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$hasNullIntArray[c(2, 3)]", "c(NA_integer_, 3L)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)]", "c('a', 'c')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " t1 <- to[c(TRUE, FALSE)]; identical(to, t1)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c(FALSE, TRUE)]", "list()");
+
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TEST_ARRAYS + " ta$integerArray2[c(1,2), c(1,2)]", "just wrong");
 
         TestClass tc = new TestClass();
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldStringObject', 'fieldChar')]", "c('" + tc.fieldStringObject + "', '" + tc.fieldChar + "')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldStringObject', 'fieldInteger')]", "list('" + tc.fieldStringObject + "', " + tc.fieldInteger + ")");
+    }
+
+    @Test
+    public void testWriteByPositionsVector() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)] <- 'x'; to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"x\"\n')");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; ja[c(c(1, 3), c(5, 6))] <- 0; ja", "cat('[polyglot value]\n[1] 0 2 0 4 0 0\n')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)] <- c('x', 'x', 'x'); to$fieldStringArray",
+                        errorIn("to$fieldStringArray[c(1, 3)] <- c(\"x\", \"x\", \"x\")", "number of items to replace is not a multiple of replacement length"));
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldInteger', 'fieldDouble')] <- c(111L, 222); to['fieldInteger'] ", "111");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldInteger', 'fieldDouble')] <- c(111L, 222); to['fieldDouble'] ", "222");
+
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TEST_ARRAYS + " ta$integerArray2[c(1,2), c(1,2)] <- 1", "just wrong");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)] <- c('x', 'y'); to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"y\"\n')");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; ja[c(1, 3, 5, 6)] <- c(8, 9); ja", "cat('[polyglot value]\n[1] 8 2 9 4 8 9\n')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- 'x'; to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"x\"\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- c('x', 'y'); to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"y\"\n" +
+                        errorIn("In to$fieldStringArray[c(TRUE, FALSE)] <- c(\"x\", \"y\")", "number of items to replace is not a multiple of replacement length", true, true) + "')");
     }
 
     @Test
@@ -1521,11 +1561,22 @@ public class TestJavaInterop extends TestBase {
     }
 
     private static String errorIn(String left, String right) {
-        String errorIn = "Error in ";
+        return errorIn(left, right, false, false);
+    }
+
+    private static String errorIn(String left, String right, boolean warning, boolean onlyText) {
+        String errorIn;
+        if (warning) {
+            errorIn = "Warning message:\n";
+        } else {
+            errorIn = "Error in ";
+        }
         String delim = " :";
 
         StringBuilder sb = new StringBuilder();
-        sb.append("cat('");
+        if (!onlyText) {
+            sb.append("cat('");
+        }
         sb.append(errorIn);
         sb.append(left.replaceAll("\\'", "\\\\\\'"));
         sb.append(delim);
@@ -1534,7 +1585,10 @@ public class TestJavaInterop extends TestBase {
         }
         sb.append(' ');
         sb.append(right.replaceAll("\\'", "\\\\\\'"));
-        sb.append("', '\n')");
+        sb.append("', '\n");
+        if (!onlyText) {
+            sb.append("')");
+        }
         return sb.toString();
     }
 
