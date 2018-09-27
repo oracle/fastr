@@ -147,5 +147,4 @@ public class TestBuiltin_isnumeric extends TestBase {
     public void testisnumericGenericDispatch() {
         assertEval("{ is.numeric.cls <- function(x) 42; is.numeric(structure(c(1,2), class='cls')); }");
     }
-
 }

@@ -107,5 +107,4 @@ public class TestBuiltin_formatC extends TestBase {
         assertEval(".Internal(formatC(1e-15, \"double\", 1L, 6L, \"g\", \"\", 12))");
         assertEval("y <- structure(c(2, 14.1776856316985), .Dim = c(2L, 1L), .Dimnames = list(c(\"m.ship.expon.\", \"objective\"), \" \")); formatC(y, digits = 6)");
     }
-
 }
