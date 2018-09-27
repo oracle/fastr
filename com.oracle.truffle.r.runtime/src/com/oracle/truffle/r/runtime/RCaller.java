@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  * NOTE: It is important to create new caller instances for each stack frame, so that
  * {@link ReturnException#getTarget()} can uniquely identify the target frame.
- * 
+ *
  * Example:
  *
  * <pre>
@@ -107,7 +107,7 @@ public final class RCaller {
      * <li>{@link REnvironment} (which marks promise evaluation frame with explicit "sys parent",
      * see {@link #hasSysParent()})</li>
      * </ul>
-     * 
+     *
      * If the function was invoked via regular call node, then the syntax can be that call node
      * (RSyntaxNode case), if the function was invoked by other means and we do not have the actual
      * syntax for the invocation, we only provide it lazily via Supplier, so that we do not have to
@@ -253,6 +253,10 @@ public final class RCaller {
     public static RCaller createForPromise(RCaller originalCaller, Frame frame, REnvironment sysParent) {
         int newDepth = frame == null ? 0 : RArguments.getDepth(frame);
         return new RCaller(newDepth, originalCaller, sysParent);
+    }
+
+    public static RCaller createForFrame(Frame callingFrame, RCaller original) {
+        return new RCaller(depthFromFrame(callingFrame), original.parent, original.payload);
     }
 
     public boolean getVisibility() {
