@@ -26,54 +26,19 @@ import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.helpers.AccessListField;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.AccessFieldSpecialNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-
-@NodeInfo(cost = NodeCost.NONE)
-@NodeChild(value = "arguments", type = RNode[].class)
-abstract class AccessFieldSpecial extends RNode {
-
-    @Child private AccessListField accessListField;
-
-    @Specialization
-    public Object doList(RList list, String field) {
-        // Note: special call construction turns lookups into string constants for field accesses
-        if (accessListField == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            accessListField = insert(AccessListField.create());
-        }
-        Object result = accessListField.execute(list, field);
-        if (result == null) {
-            throw RSpecialFactory.throwFullCallNeeded();
-        } else {
-            return result;
-        }
-    }
-
-    @Fallback
-    @SuppressWarnings("unused")
-    public Object doFallback(Object container, Object field) {
-        throw RSpecialFactory.throwFullCallNeeded();
-    }
-}
 
 @RBuiltin(name = "$", kind = PRIMITIVE, parameterNames = {"", ""}, isFieldAccess = true, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class AccessField extends RBuiltinNode.Arg2 {

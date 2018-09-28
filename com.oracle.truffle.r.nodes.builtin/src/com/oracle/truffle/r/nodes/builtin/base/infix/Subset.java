@@ -22,98 +22,27 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import static com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.convertIndex;
+import static com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSET;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
-import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubsetSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.ProfiledSpecialsUtilsFactory.ProfiledSubsetSpecialNodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial2;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial2NodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecialNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
-import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-
-/**
- * Subset special only handles single element integer/double index. In the case of list, we need to
- * create the actual list otherwise we just return the primitive type.
- */
-abstract class SubsetSpecial extends SubscriptSpecialBase {
-
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-
-    protected SubsetSpecial(boolean inReplacement) {
-        super(inReplacement);
-    }
-
-    @Override
-    protected boolean simpleVector(RAbstractVector vector) {
-        return super.simpleVector(vector) && getNamesNode.getNames(vector) == null;
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index)", "!inReplacement"})
-    protected static RList access(RList vector, int index,
-                    @Cached("create()") ExtractListElement extract) {
-        return RDataFactory.createList(new Object[]{extract.execute(vector, index - 1)});
-    }
-
-    protected static ExtractVectorNode createAccess() {
-        return ExtractVectorNode.create(ElementAccessMode.SUBSET, false);
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "!inReplacement"})
-    protected Object accessObject(RAbstractVector vector, Object index,
-                    @Cached("createAccess()") ExtractVectorNode extract) {
-        return extract.apply(vector, new Object[]{index}, RRuntime.LOGICAL_TRUE, RLogical.TRUE);
-    }
-
-    public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index) {
-        return ProfiledSubsetSpecialNodeGen.create(inReplacement, vectorNode, index);
-    }
-}
-
-/**
- * Subset special only handles single element integer/double index. In the case of list, we need to
- * create the actual list otherwise we just return the primitive type.
- */
-abstract class SubsetSpecial2 extends SubscriptSpecial2Base {
-
-    @Child private GetNamesAttributeNode getNamesNode = GetNamesAttributeNode.create();
-
-    protected SubsetSpecial2(boolean inReplacement) {
-        super(inReplacement);
-    }
-
-    @Override
-    protected boolean simpleVector(RAbstractVector vector) {
-        return super.simpleVector(vector) && getNamesNode.getNames(vector) == null;
-    }
-
-    @Specialization(guards = {"simpleVector(vector)", "isValidIndex(vector, index1, index2)", "!inReplacement"})
-    protected RList access(RList vector, int index1, int index2,
-                    @Cached("create()") ExtractListElement extract) {
-        return RDataFactory.createList(new Object[]{extract.execute(vector, matrixIndex(vector, index1, index2))});
-    }
-
-    public static RNode create(boolean inReplacement, RNode vectorNode, ConvertIndex index1, ConvertIndex index2) {
-        return ProfiledSubsetSpecial2NodeGen.create(inReplacement, vectorNode, index1, index2);
-    }
-}
 
 @RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSET)
 public abstract class Subset extends RBuiltinNode.Arg3 {
