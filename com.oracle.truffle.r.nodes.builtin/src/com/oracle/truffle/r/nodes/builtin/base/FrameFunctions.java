@@ -82,6 +82,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -405,8 +406,7 @@ public class FrameFunctions {
         private static String createVarArgName(VarArgNode varArgNode) {
             CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
             int vn = varArgNode.getIndex() + 1;
-            String varArgSymbol = (vn < 10 ? ".." : ".") + vn;
-            return varArgSymbol;
+            return RSyntaxLookup.getVariadicComponentSymbol(vn);
         }
 
         @Specialization

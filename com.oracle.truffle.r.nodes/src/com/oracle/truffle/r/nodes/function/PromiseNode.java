@@ -46,7 +46,6 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -336,8 +335,7 @@ public abstract class PromiseNode extends RNode {
         @Override
         @TruffleBoundary
         public String getIdentifier() {
-            int num = index + 1;
-            return Utils.intern((num < 10 ? ".." : ".") + num);
+            return RSyntaxLookup.getVariadicComponentSymbol(index + 1);
         }
 
         @Override
