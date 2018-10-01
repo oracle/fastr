@@ -73,7 +73,6 @@ import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
-import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
 import com.oracle.truffle.r.runtime.nmath.distr.Chisq;
@@ -237,19 +236,14 @@ public interface StdUpCallsRFFI {
 
     void Rf_errorcall(Object call, @RFFICstring String msg);
 
-    @RFFIRunGC
     Object Rf_allocVector(int mode, long n);
 
-    @RFFIRunGC
     Object Rf_allocArray(int mode, Object dimsObj);
 
-    @RFFIRunGC
     Object Rf_allocMatrix(int mode, int nrow, int ncol);
 
-    @RFFIRunGC
     Object Rf_allocList(int length);
 
-    @RFFIRunGC
     Object Rf_allocSExp(int type);
 
     int Rf_nrows(Object x);

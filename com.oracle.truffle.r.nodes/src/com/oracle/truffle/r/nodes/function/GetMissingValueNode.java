@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
  * This is a node abstraction for the functionality defined in
@@ -54,11 +55,10 @@ public abstract class GetMissingValueNode extends RBaseNode {
         private final int varArgIndex;
 
         private UninitializedGetMissingValueNode(String sym) {
-            if (sym.length() > 2 && sym.startsWith("..") && Character.isDigit(sym.charAt(2))) {
-                this.varArgIndex = Integer.parseInt(sym.substring(2)) - 1;
+            varArgIndex = RSyntaxLookup.getVariadicComponentIndex(sym) - 1;
+            if (varArgIndex >= 0) {
                 this.name = ArgumentsSignature.VARARG_NAME;
             } else {
-                this.varArgIndex = -1;
                 this.name = sym;
             }
         }
