@@ -110,7 +110,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         return RDataFactory.createIntVector(data, na.profile(!RRuntime.isNA(nomatch)));
     }
 
-    @Child private InheritsCheckNode factorInheritsCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+    @Child private InheritsCheckNode factorInheritsCheck = InheritsCheckNode.create(RRuntime.CLASS_FACTOR);
 
     protected boolean isFactor(Object o) {
         return factorInheritsCheck.execute(o);

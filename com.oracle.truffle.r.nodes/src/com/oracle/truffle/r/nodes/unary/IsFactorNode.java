@@ -43,7 +43,7 @@ public final class IsFactorNode extends UnaryNode {
         }
         if (inheritsCheck == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inheritsCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));
+            inheritsCheck = insert(InheritsCheckNode.create(RRuntime.CLASS_FACTOR));
         }
 
         return inheritsCheck.execute(x);
