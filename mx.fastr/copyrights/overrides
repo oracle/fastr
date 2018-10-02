@@ -558,7 +558,7 @@ com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_jul
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_La.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_labels.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_lapply.java,purdue.copyright
-com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_rapply.java,purdue.copyright
+com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_rapply.java,no.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_lazyLoadDBflush.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_lbeta.java,purdue.copyright
 com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_lchoose.java,purdue.copyright

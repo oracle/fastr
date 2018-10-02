@@ -20,7 +20,6 @@ package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.anyValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullConstant;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.base.Lapply.createCallSourceSection;
@@ -41,6 +40,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen;
+import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.RapplyNodeGen.RapplyInternalNodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
@@ -79,23 +79,26 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
     static {
         Casts casts = new Casts(Rapply.class);
         casts.arg("object").mustBe(RAbstractListVector.class, Message.GENERIC, "'object' must be a list");
-        casts.arg("f").mustBe(instanceOf(RFunction.class));
+        casts.arg("f").mustBe(RFunction.class);
         casts.arg("classes").mapNull(constant("ANY")).mapMissing(constant("ANY")).mustBe(stringValue()).asStringVector().findFirst().mustNotBeNA();
         casts.arg("deflt").allowNull().mapMissing(nullConstant()).mustBe(anyValue());
         casts.arg("how").mapNull(constant("unlist")).mapMissing(constant("unlist")).mustBe(stringValue()).asStringVector().findFirst().mustNotBeNA();
     }
 
-    @Specialization
+    @Specialization(guards = "!isReplace(how)")
+    protected Object rapplyReplace(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how, @Cached("create()") UnaryCopyAttributesNode attri) {
+
+        return attri.execute(RDataFactory.createList((Object[]) rapply.execute(frame, object, f, classes, deflt, how)), object);
+    }
+
+    @Specialization(guards = "isReplace(how)")
     protected Object rapply(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how) {
 
-        RList result;
-        if (rapply.isReplace(how)) {
-            result = (RList) rapply.execute(frame, object, f, classes, deflt, how);
-        } else {
-            result = RDataFactory.createList((Object[]) rapply.execute(frame, object, f, classes, deflt, how));
-            result.copyAttributesFrom(object);
-        }
-        return result;
+        return rapply.execute(frame, object, f, classes, deflt, how);
+    }
+
+    protected static boolean isReplace(String how) {
+        return RapplyInternalNode.isReplace(how);
     }
 
     private static final class ExtractElementInternal extends RSourceSectionNode implements RSyntaxCall {
@@ -201,6 +204,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                         @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
                         @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
                         @Cached("create()") RLengthNode lengthNode,
+                        @Cached("create()") UnaryCopyAttributesNode attri,
                         @Cached("createCountingProfile()") LoopConditionProfile loop,
                         @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode callNode) {
 
@@ -216,7 +220,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                     Object element = object.getDataAt(i);
                     if (element instanceof RAbstractListVector) {
                         RList newlist = RDataFactory.createList((Object[]) getRapply().execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
-                        newlist.copyAttributesFrom((RAbstractListVector) element);
+                        attri.execute(newlist, (RAbstractListVector) element);
                         result[i] = newlist;
                         FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
                     } else if (isRNull(element)) {
@@ -241,7 +245,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
             return RCallNode.createCall(createCallSourceSection(), function, ArgumentsSignature.get(null, "..."), element, readArgs);
         }
 
-        protected boolean isReplace(String how) {
+        protected static boolean isReplace(String how) {
             return how.equals("replace");
         }
 
