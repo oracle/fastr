@@ -62,7 +62,7 @@ public class RConnectionMR {
     }
 
     @CanResolve
-    public abstract static class RConnection extends Node {
+    public abstract static class CanResolveRConnection extends Node {
 
         protected static boolean test(TruffleObject receiver) {
             return receiver instanceof RConnection;

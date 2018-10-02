@@ -30,7 +30,6 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -53,7 +52,7 @@ public final class ReadVariadicComponentNode extends RSourceSectionNode implemen
     public ReadVariadicComponentNode(SourceSection src, int index) {
         super(src);
         this.index = index;
-        this.name = Utils.intern(".." + Integer.toString(index + 1));
+        this.name = RSyntaxLookup.getVariadicComponentSymbol(index + 1);
     }
 
     @Override
