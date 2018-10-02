@@ -276,8 +276,7 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
         if (precedence == PrecedenceNode.NO_PRECEDENCE) {
             return RNull.instance;
         } else {
-            Object temp = unlistHelper(list, recursive, useNames, precedence, totalSize);
-            return temp;
+            return unlistHelper(list, recursive, useNames, precedence, totalSize);
         }
     }
 
