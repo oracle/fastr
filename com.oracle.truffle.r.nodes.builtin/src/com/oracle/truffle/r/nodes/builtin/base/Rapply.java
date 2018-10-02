@@ -46,7 +46,8 @@ import com.oracle.truffle.r.nodes.builtin.base.RapplyNodeGen.RapplyInternalNodeG
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
+import com.oracle.truffle.r.nodes.unary.InheritsNode;
+import com.oracle.truffle.r.nodes.unary.InheritsNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -138,7 +139,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
 
     public abstract static class RapplyInternalNode extends RBaseNode implements InternalRSyntaxNodeChildren {
 
-        @Child private InheritsCheckNode inhertsCheck;
+        @Child private InheritsNode inheritsNode = InheritsNodeGen.create();
         @Child private RapplyInternalNode rapply;
 
         protected static final String VECTOR_NAME = "object";
@@ -164,7 +165,6 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
 
             int length = lengthNode.executeInteger(object);
             RListBase result = (RListBase) object.copy();
-            inhertsCheck = InheritsCheckNode.createWithImplicit(classes);
             FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
 
             if (length > 0) {
@@ -174,12 +174,11 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                     frame.setInt(indexSlot, i + 1);
                     Object element = object.getDataAt(i);
                     if (element instanceof RAbstractListVector) {
-                        rapply = RapplyInternalNodeGen.create();
-                        result.setDataAt(i, rapply.execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
+                        result.setDataAt(i, getRapply().execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
                         FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
                     } else if (isRNull(element)) {
                         result.setDataAt(i, element);
-                    } else if (classes.equals("ANY") || inhertsCheck.execute(element)) {
+                    } else if (classes.equals("ANY") || inheritsNode.execute(element, RDataFactory.createStringVector(classes), false).equals(RRuntime.LOGICAL_TRUE)) {
                         result.setDataAt(i, callNode.execute(frame, f));
                     } else {
                         result.setDataAt(i, element);
@@ -187,6 +186,14 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                 }
             }
             return result;
+        }
+
+        private RapplyInternalNode getRapply() {
+            if (rapply == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                rapply = insert(RapplyInternalNodeGen.create());
+            }
+            return rapply;
         }
 
         @Specialization(guards = "!isReplace(how)")
@@ -199,7 +206,6 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
 
             int length = lengthNode.executeInteger(object);
             Object[] result = new Object[length];
-            inhertsCheck = InheritsCheckNode.createWithImplicit(classes);
             FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
 
             if (length > 0) {
@@ -209,14 +215,13 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                     frame.setInt(indexSlot, i + 1);
                     Object element = object.getDataAt(i);
                     if (element instanceof RAbstractListVector) {
-                        rapply = RapplyInternalNodeGen.create();
-                        RList newlist = RDataFactory.createList((Object[]) rapply.execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
+                        RList newlist = RDataFactory.createList((Object[]) getRapply().execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
                         newlist.copyAttributesFrom((RAbstractListVector) element);
                         result[i] = newlist;
                         FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
                     } else if (isRNull(element)) {
                         result[i] = RDataFactory.createList();
-                    } else if (classes.equals("ANY") || inhertsCheck.execute(element)) {
+                    } else if (classes.equals("ANY") || inheritsNode.execute(element, RDataFactory.createStringVector(classes), false).equals(RRuntime.LOGICAL_TRUE)) {
                         result[i] = callNode.execute(frame, f);
                     } else {
                         result[i] = deflt;
