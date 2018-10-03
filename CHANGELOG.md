@@ -1,10 +1,24 @@
 # 1.0 RC 7
 
+API changes
+
+* eval.polyglot: the parameter `source` was renamed to `code`
+
 New features
 
 * AWT based graphics devices (jpg, png, X11, ...) supported in native image
+* Seamless way to create R data frames from Polyglot objects
+  * Handled by as.data.frame.polyglot.value
+  * Expected structure: KEYS are used as column names, the values must be homogenous arrays (e.g. respond to HAS_SIZE)
 
-Added missing R builtins and C API
+Bug fixes
+
+* S3 dispatch works correctly with NULL
+* Paths in eval.polyglot are resolved relative to the current working directory
+* Connections: sockets can always be read and written, raw connections are always binary
+* Promises are evaluated in LazyLoadDBFetch (to support delayedAssign)
+* Fixed broken `Rscript --version`
+* Various fixes necessary to pass dplyr tests (GitHub version of dplyr)
 
 Bugfixes
 
