@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.Utils;
 
@@ -50,6 +51,14 @@ public interface RSyntaxLookup extends RSyntaxElement {
             return result;
         }
         return -1;
+    }
+
+    /**
+     * Returns interned "..X" or ".XY" where X or XY are digits of {@code index}.
+     */
+    static String getVariadicComponentSymbol(int index) {
+        CompilerAsserts.neverPartOfCompilation(); // for string concatenation and interning
+        return Utils.intern((index < 10 ? ".." : ".") + index);
     }
 
     /**
