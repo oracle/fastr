@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.data;
 
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
@@ -39,6 +40,8 @@ public final class RSymbol extends RAttributeStorage {
     /**
      * Note: GnuR caches all symbols and some packages rely on their identity. Moreover, the cached
      * symbols are never garbage collected. This table corresponds to {@code R_SymbolTable} in GNUR.
+     * Note: we could rewrite this to some concurrent implementation of identity hash map since the
+     * strings are interned.
      */
     private static final ConcurrentHashMap<String, RSymbol> symbolTable = new ConcurrentHashMap<>(2551);
 
@@ -48,12 +51,17 @@ public final class RSymbol extends RAttributeStorage {
     private CharSXPWrapper nameWrapper;
 
     private RSymbol(String name) {
-        this.name = Utils.intern(name);
+        this.name = name;
     }
 
     @TruffleBoundary
-    public static RSymbol install(String name) {
-        return symbolTable.computeIfAbsent(name, RSymbol::new);
+    public static RSymbol install(String name, Function<RSymbol, RSymbol> reportAllocation) {
+        assert Utils.isInterned(name);
+        if (reportAllocation == null) {
+            return symbolTable.computeIfAbsent(name, FastRSymbolAllocator.INSTANCE);
+        } else {
+            return symbolTable.computeIfAbsent(name, new RSymbolAllocator(reportAllocation));
+        }
     }
 
     @Override
@@ -94,5 +102,31 @@ public final class RSymbol extends RAttributeStorage {
             return ((RSymbol) obj).getName() == this.name;
         }
         return false;
+    }
+
+    private static final class FastRSymbolAllocator implements Function<String, RSymbol> {
+        static final FastRSymbolAllocator INSTANCE = new FastRSymbolAllocator();
+
+        @Override
+        public RSymbol apply(String s) {
+            return new RSymbol(s);
+        }
+    }
+
+    private static final class RSymbolAllocator implements Function<String, RSymbol> {
+        private final Function<RSymbol, RSymbol> reportAllocation;
+
+        RSymbolAllocator(Function<RSymbol, RSymbol> reportAllocation) {
+            this.reportAllocation = reportAllocation;
+        }
+
+        @Override
+        public RSymbol apply(String n) {
+            RSymbol result = new RSymbol(n);
+            if (reportAllocation != null) {
+                result = reportAllocation.apply(result);
+            }
+            return result;
+        }
     }
 }
