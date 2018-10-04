@@ -429,7 +429,7 @@ public class IsTypeFunctions {
             createCasts(IsNumeric.class);
         }
 
-        @Child private InheritsCheckNode inheritsCheck = new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+        @Child private InheritsCheckNode inheritsCheck = InheritsCheckNode.create(RRuntime.CLASS_FACTOR);
 
         protected boolean isFactor(Object o) {
             return inheritsCheck.execute(o);
