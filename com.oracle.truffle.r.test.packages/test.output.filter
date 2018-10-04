@@ -82,3 +82,9 @@ ROCR => D+1/Error in get("par.postscript", pos = "CheckExEnv") :
 # --------
 # ROCR: not clear why FastR does not produce this message, but doesn't seem important
 ROCR => D/detaching ‘ROCR.hiv’
+
+# --------
+# quantmod: PDF device not supported in saveChart()
+quantmod => D-2/  PDF device not supported.
+quantmod => D/  incomplete final line found on
+quantmod => s/There were [0-9]+ warnings \(use warnings\(\) to see them\)/
