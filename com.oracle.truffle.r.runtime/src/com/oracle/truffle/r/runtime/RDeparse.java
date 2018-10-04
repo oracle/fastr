@@ -503,6 +503,9 @@ public class RDeparse {
                                     appendWithParens(args[0], info, true);
                                     append(" <- NULL");
                                     return null;
+                                case UNARY:
+                                    append(func.op, lhs);
+                                    append(args[0]);
 
                             }
                         } else if (args.length == 2) {
@@ -700,7 +703,7 @@ public class RDeparse {
                             needsParens = false;
                             break;
                         }
-                        needsParens = mainOp.prec > arginfo.prec || (mainOp.prec == arginfo.prec && isLeft == mainOp.rightassoc);
+                        needsParens = mainOp.prec > arginfo.prec || (mainOp.prec == arginfo.prec && (mainOp.prec != RDeparse.PREC_NOT && isLeft == mainOp.rightassoc));
                         break;
                     case FUNCTION:
                         needsParens = true;

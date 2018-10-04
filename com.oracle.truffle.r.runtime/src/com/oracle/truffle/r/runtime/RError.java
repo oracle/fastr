@@ -995,7 +995,10 @@ public final class RError extends RuntimeException implements TruffleException {
         COULD_NOT_FIND_LANGUAGE("Could not find language corresponding to extension '%s', you can specify the language id explicitly, please refer to ?%s for more details."),
         LANGUAGE_NOT_AVAILABLE("Language with id '%s' is not available. Did you start R with --polyglot?"),
         NO_LANGUAGE_PROVIDED("No language id provided, please refer to ?%s for more details."),
-        NO_CODE_OR_PATH_PROVIDED("No code or path provided, please refer to ?%s for more details.");
+        NO_CODE_OR_PATH_PROVIDED("No code or path provided, please refer to ?%s for more details."),
+        LENGTH_OF_NULL_UNCHANGED("length of NULL cannot be changed"),
+        CANNOT_SET_LENGTH("cannot set length of non-(vector or list)"),
+        LONG_VECTOR_NOT_SUPPORTED("long vector '%s' is not supported");
 
         public final String message;
         final boolean hasArgs;

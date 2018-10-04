@@ -32,6 +32,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes.GetLevels;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
@@ -54,6 +56,8 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
 
     @Child private CastStringNode castStringNode;
     @Child private GetLevels getFactorLevels;
+    @Child private GetDimAttributeNode getDimNode;
+    @Child private RemoveDimNamesAttributeNode removeDimNamesNode;
 
     static {
         Casts casts = new Casts(UpdateNames.class);
@@ -86,7 +90,17 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
         Object newNames = castString(names);
         RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         if (newNames == RNull.instance) {
-            result.setNames(null);
+            if (getDimNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                getDimNode = GetDimAttributeNode.create();
+                removeDimNamesNode = RemoveDimNamesAttributeNode.create();
+            }
+            int[] dims = getDimNode.getDimensions(result);
+            if (dims != null && dims.length == 1) {
+                removeDimNamesNode.execute(result);
+            } else {
+                result.setNames(null);
+            }
             return result;
         }
 

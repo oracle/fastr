@@ -36,7 +36,6 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -101,18 +100,10 @@ public abstract class Array extends RBuiltinNode.Arg3 {
 
         try (SequentialIterator resultIter = resultAccess.access(result); SequentialIterator dataIter = dataAccess.access(data)) {
             if (isEmpty.profile(dataAccess.getLength(dataIter) == 0)) {
-                if (dataAccess.getType() == RType.Character) {
-                    // character vectors are initialized with "" instead of NA
-                    while (resultAccess.next(resultIter)) {
-                        resultAccess.setString(resultIter, "");
-                    }
-                    result.setComplete(true);
-                } else {
-                    while (resultAccess.next(resultIter)) {
-                        resultAccess.setNA(resultIter);
-                    }
-                    result.setComplete(false);
+                while (resultAccess.next(resultIter)) {
+                    resultAccess.setNA(resultIter);
                 }
+                result.setComplete(false);
             } else {
                 while (resultAccess.next(resultIter)) {
                     dataAccess.nextWithWrap(dataIter);

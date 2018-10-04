@@ -33,7 +33,7 @@ public class TestBuiltin_regexec extends TestBase {
         assertEval(Output.IgnoreWhitespace,
                         "argv <- list('^(([^:]+)://)?([^:/]+)(:([0-9]+))?(/.*)', 'http://stat.umn.edu:80/xyz', FALSE, FALSE, FALSE); .Internal(regexec(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]]))");
 
-        assertEval("regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
+        assertEval(Output.IgnoreWhitespace, "regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");
         assertEval("regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1A1', perl=T)");
         assertEval("regexec(\"^(?:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1 A1', perl=T)");
         assertEval("regexec(\"^(?<n1>:(?:^\\\\[([^\\\\]]+)\\\\])?(?:'?([^']+)'?!)?([a-zA-Z0-9:\\\\-$\\\\[\\\\]]+)|(.*))$\", 'A1', perl=T)");

@@ -234,9 +234,9 @@ public class TestBuiltin_dim extends TestBase {
         // the single names() invocation sets "dimnames" but "names" are not set since it's not
         assertEval("{ x<-c(42); attr(x, \"dim\")<-1; names(x)<-\"z\"; attributes(x) }");
         // third names() invocation resets "names" (and not "dimnames")
-        assertEval(Ignored.NewRVersionMigration, "{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attributes(x) }");
+        assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attributes(x) }");
         // both names and dimnames are set and then re-set
-        assertEval(Ignored.NewRVersionMigration, "{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attr(x, \"dimnames\")<-NULL; attributes(x) }");
+        assertEval("{ x<-c(42); names(x)<-\"a\"; attr(x, \"dim\")<-1; names(x)<-\"z\"; names(x)<-NULL; attr(x, \"dimnames\")<-NULL; attributes(x) }");
         assertEval("{ x<-1:4; attr(x, \"dimnames\") <- list(101, 102, 103, 104) }");
         // assigning an "invisible" list returned by "attr(y, dimnames)<-" as dimnames attribute for
         // x

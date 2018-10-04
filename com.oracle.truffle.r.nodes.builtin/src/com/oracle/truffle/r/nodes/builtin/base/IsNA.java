@@ -159,8 +159,7 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected RLogicalVector isNA(RNull value) {
-        warning(RError.Message.IS_NA_TO_NON_VECTOR, value.getRType().getName());
+    protected RLogicalVector isNA(@SuppressWarnings("unused") RNull value) {
         return factory.createEmptyLogicalVector();
     }
 
