@@ -216,37 +216,32 @@ public final class FastRSession implements RSession {
         Timer timer = null;
         output.reset();
         input.setContents(expression);
-        try {
-            Context evalContext = createContext(contextKind, allowHostAccess);
+        try (Context evalContext = createContext(contextKind, allowHostAccess)) {
             // set up some interop objects used by fastr-specific tests:
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
             }
             timer = scheduleTimeBoxing(evalContext.getEngine(), longTimeout ? longTimeoutValue : timeoutValue);
-            try {
-                String consoleInput = readLine();
-                while (consoleInput != null) {
+            String consoleInput = readLine();
+            while (consoleInput != null) {
+                try {
                     try {
-                        try {
-                            Source src = createSource(consoleInput, RSource.Internal.UNIT_TEST.string);
-                            evalContext.eval(src);
-                            // checked exceptions are wrapped in PolyglotException
-                        } catch (PolyglotException e) {
-                            // TODO need the wrapped exception for special handling of:
-                            // ParseException, RError, ... see bellow
-                            throw getWrappedThrowable(e);
-                        }
-                        consoleInput = readLine();
-                    } catch (IncompleteSourceException e) {
-                        String additionalInput = readLine();
-                        if (additionalInput == null) {
-                            throw e;
-                        }
-                        consoleInput += "\n" + additionalInput;
+                        Source src = createSource(consoleInput, RSource.Internal.UNIT_TEST.string);
+                        evalContext.eval(src);
+                        // checked exceptions are wrapped in PolyglotException
+                    } catch (PolyglotException e) {
+                        // TODO need the wrapped exception for special handling of:
+                        // ParseException, RError, ... see bellow
+                        throw getWrappedThrowable(e);
                     }
+                    consoleInput = readLine();
+                } catch (IncompleteSourceException e) {
+                    String additionalInput = readLine();
+                    if (additionalInput == null) {
+                        throw e;
+                    }
+                    consoleInput += "\n" + additionalInput;
                 }
-            } finally {
-                evalContext.close();
             }
         } catch (ParseException e) {
             e.report(output);
