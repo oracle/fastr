@@ -76,7 +76,7 @@ public class TestBuiltin_ascall extends TestBase {
 
         assertEval("e <- substitute(a$b(c)); as.call(lapply(e, function(x) x))");
         assertEval(Output.IgnoreWhitespace, "e <- expression(function(a) b); as.call(list(e[[1]][[1]]))");
-        assertEval(Ignored.NewRVersionMigration, "e <- expression(function(a) b); as.call(list(e[[1]][[2]]))");
+        assertEval("e <- expression(function(a) b); as.call(list(e[[1]][[2]]))");
         assertEval("call('foo')");
         // Note: call('function', 'a') should not cause the exception, it should be the printing
         assertEval(Output.IgnoreWhitespace, "invisible(call('function', 'a'))");

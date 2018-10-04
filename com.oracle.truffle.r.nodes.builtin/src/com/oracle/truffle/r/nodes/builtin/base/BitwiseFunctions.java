@@ -228,7 +228,8 @@ public class BitwiseFunctions {
 
         static {
             Casts casts = new Casts(BitwiseShiftL.class);
-            casts.arg("a").defaultError(RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, typeName(), Operation.SHIFTL.name).mustBe(
+            // 'b' reported instead of 'n' in GNU R
+            casts.arg("a").defaultError(RError.Message.SAME_TYPE, "a", "b").mustBe(
                             doubleValue().or(integerValue())).asIntegerVector();
             casts.arg("n").allowNull().mustNotBeMissing().asIntegerVector();
         }
