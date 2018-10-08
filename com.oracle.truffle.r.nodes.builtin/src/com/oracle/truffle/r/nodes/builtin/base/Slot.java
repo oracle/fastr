@@ -102,7 +102,7 @@ public abstract class Slot extends RBuiltinNode.Arg2 {
 
     static {
         Casts casts = new Casts(Slot.class);
-        casts.arg(0).returnIf(foreign()).asAttributable(true, true, true);
+        casts.arg(0).castForeignObjects(false).returnIf(foreign()).asAttributable(true, true, true);
     }
 
     private String getName(Object nameObj) {

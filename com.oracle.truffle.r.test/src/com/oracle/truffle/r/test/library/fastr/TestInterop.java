@@ -200,4 +200,18 @@ public class TestInterop extends TestBase {
             Assert.assertEquals(response, new String(buf.array()));
         }
     }
+
+    @Test
+    public void testDollar() {
+        // tests the execute msg
+        assertEvalFastR("tpojo <- import('testPOJO)'; tos <- tpojo$toString(); is.character(tos) && length(tos) == 1", "TRUE");
+        assertEvalFastR("ja <- new(java.type('int[]'), 3); tos <- ja$toString(); is.character(tos) && length(tos) == 1", "TRUE");
+    }
+
+    @Test
+    public void testSlot() {
+        // tests the invoke msg
+        assertEvalFastR("tpojo <- import('testPOJO)'; tpojo@toString(); is.character(tos) && length(tos) == 1", "TRUE");
+        assertEvalFastR("ja <-new(java.type('int[]'), 3); tos <- ja@toString(); is.character(tos) && length(tos) == 1", "TRUE");
+    }
 }
