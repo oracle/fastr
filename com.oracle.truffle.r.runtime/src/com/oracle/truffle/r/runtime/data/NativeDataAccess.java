@@ -104,7 +104,10 @@ public final class NativeDataAccess {
 
     private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
-    private static final long EMPTY_DATA_ADDRESS = 0xBAD;
+    private static final long EMPTY_DATA_ADDRESS;
+    static {
+        EMPTY_DATA_ADDRESS = allocateNativeMemory(8);
+    }
 
     private static final ReferenceQueue<Object> nativeRefQueue = new ReferenceQueue<>();
 

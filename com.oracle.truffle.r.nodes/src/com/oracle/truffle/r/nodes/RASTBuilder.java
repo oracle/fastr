@@ -121,7 +121,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     private RSyntaxNode createCall(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args) {
         if (isInternalIndirect(lhs)) {
-            return InternalNode.create(source, null, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
+            final RSyntaxLookup dummyLHS = (RSyntaxLookup) ReadVariableNode.wrap(RSyntaxNode.INTERNAL, ReadVariableNode.create(".Internal"));
+            return InternalNode.create(source, dummyLHS, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
         }
         if (lhs instanceof RSyntaxLookup) {
             RSyntaxLookup lhsLookup = (RSyntaxLookup) lhs;

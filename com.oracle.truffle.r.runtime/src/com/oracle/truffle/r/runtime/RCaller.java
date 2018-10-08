@@ -87,7 +87,7 @@ public final class RCaller {
      * Determines the actual position of the corresponding frame on the execution call stack. When
      * one follows the {@link RCaller#parent} chain, then the depth is not always decreasing by only
      * one, the reason are promises, which may be evaluated somewhere deep down the call stack, but
-     * their parent call frame from R prespective could be much higher up the actual execution call
+     * their parent call frame from R perspective could be much higher up the actual execution call
      * stack.
      *
      * Note: this is depth of the frame where this {@link RCaller} is stored, not the depth of the

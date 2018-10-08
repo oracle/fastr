@@ -29,7 +29,6 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -116,7 +115,6 @@ public abstract class RForceAndCallNode extends RBaseNode {
         return argsAndNames;
     }
 
-    @ExplodeLoop
     private void flattenFirstArgs(VirtualFrame frame, int n, RArgsValuesAndNames args) {
         if (promiseHelper == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
