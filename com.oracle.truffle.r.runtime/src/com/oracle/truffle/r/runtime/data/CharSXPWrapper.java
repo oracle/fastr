@@ -166,17 +166,17 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
     }
 
     @Override
-    public final RType getRType(){
+    public final RType getRType() {
         return RType.Character;
     }
 
     @Override
-    public final int getTypedValueInfo(){
+    public final int getTypedValueInfo() {
         return typedValueInfo;
     }
 
     @Override
-    public final void setTypedValueInfo(int value){
+    public final void setTypedValueInfo(int value) {
         typedValueInfo = value;
     }
 
