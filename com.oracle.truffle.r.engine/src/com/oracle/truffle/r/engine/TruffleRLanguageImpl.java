@@ -131,7 +131,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         if (unwrapped instanceof RPromise) {
             RPromise promise = (RPromise) unwrapped;
             if (promise.isEvaluated()) {
-                unwrapped = promise.getValue();
+                unwrapped = RRuntime.asAbstractVector(promise.getValue());
             }
         }
         if (unwrapped instanceof String) {

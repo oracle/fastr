@@ -34,13 +34,47 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import java.io.File;
+import org.graalvm.polyglot.Value;
+import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.junit.After;
+import static org.junit.Assert.assertEquals;
 
 public class TestInterop extends TestBase {
 
     private static final SeekableMemoryByteChannel CHANNEL = new SeekableMemoryByteChannel();
     private static final String CHANNEL_NAME = "_fastr_channel0";
     private static final String TEST_EVAL_FILE = "_testInteropEvalFile_testScript_.R";
+
+    private static final class TestVariable {
+        public final String name;
+        public Object value;
+        public String convertsTo;
+        public String rValue;
+        public Class<?> clazz;
+
+        private TestVariable(String name, Object value, String convertsTo) {
+            this(name, value, convertsTo, null);
+        }
+
+        private TestVariable(String name, Object value, String convertsTo, String rValue) {
+            this.name = name;
+            this.value = value;
+            this.convertsTo = convertsTo;
+            this.rValue = rValue != null ? rValue : "" + value;
+            clazz = value.getClass();
+        }
+    }
+
+    private static final TestVariable[] testVariables = new TestVariable[]{
+                    new TestVariable("testBooleanVariable", true, "'logical'", "TRUE"),
+                    new TestVariable("testByteVariable", (byte) 1, "'integer'"),
+                    new TestVariable("testCharVariable", 'a', "'character'", "'a'"),
+                    new TestVariable("testDoubleVariable", 2.1, "'double'"),
+                    new TestVariable("testFloatVariable", 3.1F, "'double'"),
+                    new TestVariable("testIntegerVariable", 4, "'integer'"),
+                    new TestVariable("testShortVariable", (short) 5, "'integer'"),
+                    new TestVariable("testStringVariable", "abc", "'character'", "'abc'")
+    };
 
     @After
     public void cleanup() {
@@ -57,6 +91,14 @@ public class TestInterop extends TestBase {
         assertEvalFastR("eval.polyglot('R', '1L')", "1L");
         assertEvalFastR("eval.polyglot('R', 'TRUE')", "TRUE");
         assertEvalFastR("eval.polyglot('R', 'as.character(123)')", "as.character(123)");
+    }
+
+    @Test
+    public void testInteropImportValue() {
+        for (TestVariable t : testVariables) {
+            assertEvalFastR("v <- import('" + t.name + "'); typeof(v)", t.convertsTo);
+            assertEvalFastR("v <- import('" + t.name + "'); v", "" + t.rValue);
+        }
     }
 
     @Test
@@ -134,6 +176,14 @@ public class TestInterop extends TestBase {
             for (TestJavaObject t : TestInterop.testJavaObjects) {
                 TruffleObject tobj = (TruffleObject) rContext.getEnv().asGuestValue(t.object);
                 context.getPolyglotBindings().putMember(t.name, tobj);
+            }
+            for (TestVariable t : TestInterop.testVariables) {
+                context.getBindings("R").putMember(t.name, t.value);
+                context.getPolyglotBindings().putMember(t.name, t.value);
+                context.getBindings("R").putMember(t.name + "Read", (ProxyExecutable) (Value... args) -> {
+                    assertEquals(context.getBindings("R").getMember(t.name).as(t.clazz), t.value);
+                    return true;
+                });
             }
             context.getPolyglotBindings().putMember(CHANNEL_NAME, rContext.getEnv().asGuestValue(CHANNEL));
             return null;
@@ -213,5 +263,13 @@ public class TestInterop extends TestBase {
         // tests the invoke msg
         assertEvalFastR("tpojo <- import('testPOJO)'; tpojo@toString(); is.character(tos) && length(tos) == 1", "TRUE");
         assertEvalFastR("ja <-new(java.type('int[]'), 3); tos <- ja@toString(); is.character(tos) && length(tos) == 1", "TRUE");
+    }
+
+    public void testVariableWrite() {
+        for (TestVariable t : testVariables) {
+            assertEvalFastR("typeof(" + t.name + ")", t.convertsTo);
+            assertEvalFastR(t.name, "" + t.rValue);
+            assertEvalFastR(t.name + "Read()", "TRUE");
+        }
     }
 }

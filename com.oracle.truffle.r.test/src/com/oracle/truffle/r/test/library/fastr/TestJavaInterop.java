@@ -688,9 +688,6 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$mixedObjectArray)", "list(1, 'a', '1')");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$mixedObjectArray2)", "l <- list('a', 1, 'b', 2, 'c', 3); dim(l) <- c(2, 3); l");
-        // TODO is this expected behaviour?
-        // the closesest would be as.list(matrix(c(1, NA, 2, NA, 3, NA), c(2,3)))
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$mixedObjectArray2)", "l <- list('a', 1, 'b', 2, 'c', 3); dim(l) <- c(2, 3); l");
 
         // TODO add tests for as.vector(ta$objectArray/2/3),
         // TODO add tests for as.list(ta$objectArray/2/3),
@@ -925,7 +922,6 @@ public class TestJavaInterop extends TestBase {
     public void testDim() {
         assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray)", "NULL");
         assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray2)", "c(2, 3)");
-        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray3)", "c(2, 2, 3)");
         assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray3)", "c(2, 2, 3)");
 
         assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta)", "NULL");
