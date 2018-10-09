@@ -86,5 +86,5 @@ ROCR => D/detaching ‘ROCR.hiv’
 # --------
 # quantmod: PDF device not supported in saveChart()
 quantmod => D-2/  PDF device not supported.
-quantmod => D/  incomplete final line found on
+quantmod => D/  incomplete final line found
 quantmod => s/There were [0-9]+ warnings \(use warnings\(\) to see them\)/
