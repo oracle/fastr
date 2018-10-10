@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,35 +20,22 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.upcalls;
+package com.oracle.truffle.r.ffi.processor;
 
-import com.oracle.truffle.api.frame.Frame;
-import com.oracle.truffle.r.ffi.processor.RFFIResultOwner;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Target;
 
 /**
- * Additional upcalls created for supporting FastR in RStudio. These mainly relate to the GNU R
- * notion of a "context", which corresponds somewhat to a Truffle {@link Frame}.
+ * Tags an upcall argument as the owner of the upcall result. Tagging is necessary always when the
+ * result logically belongs to the owning object (i.e. the lifetime of the result is the same as the
+ * lifetime of the owning object), but the owner does not refer to the result object (perhaps
+ * because the result is a secondary value created from another value retrieved from the owning
+ * object in the upcall). Not tagging the owner argument can lead to an accidental garbage
+ * collecting of the result even when its owner is still alive.
+ *
+ * An example of such a situation is a retrieval of a vector attribute, which is wrapped or cast
+ * upon the return from the upcall.
  */
-public interface IDEUpCallsRFFI {
-    // Checkstyle: stop method name check
-    Object R_GlobalContext();
-
-    Object R_getGlobalFunctionContext();
-
-    Object R_getParentFunctionContext(Object c);
-
-    Object R_getContextEnv(Object c);
-
-    Object R_getContextFun(Object c);
-
-    Object R_getContextCall(Object c);
-
-    Object R_getContextSrcRef(@RFFIResultOwner Object c);
-
-    int R_insideBrowser();
-
-    int R_isGlobal(Object c);
-
-    int R_isEqual(Object x, Object y);
-
+@Target(ElementType.PARAMETER)
+public @interface RFFIResultOwner {
 }
