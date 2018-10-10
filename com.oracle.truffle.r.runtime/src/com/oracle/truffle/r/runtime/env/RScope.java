@@ -48,6 +48,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 /**
  * Represents a variable scope for external tools like a debugger.<br>
@@ -247,6 +249,7 @@ public final class RScope {
 
             @Resolve(message = "READ")
             abstract static class VarsMapReadNode extends Node {
+                @Child private R2Foreign r2Foreign = R2Foreign.create();
 
                 @TruffleBoundary
                 public Object access(VariablesObject varMap, String name) {
@@ -259,13 +262,14 @@ public final class RScope {
                     if (value == null) {
                         throw UnknownIdentifierException.raise(name);
                     } else {
-                        return getInteropValue(value);
+                        return r2Foreign.execute(getInteropValue(value));
                     }
                 }
             }
 
             @Resolve(message = "WRITE")
             abstract static class VarsMapWriteNode extends Node {
+                @Child private Foreign2R foreign2R = Foreign2R.create();
 
                 @TruffleBoundary
                 public Object access(VariablesObject varMap, String name, Object value) {
@@ -273,7 +277,7 @@ public final class RScope {
                         throw UnsupportedMessageException.raise(Message.WRITE);
                     }
                     try {
-                        varMap.frameAccess.put(name, value);
+                        varMap.frameAccess.put(name, foreign2R.execute(value));
                         return value;
                     } catch (PutException e) {
                         throw RInternalError.shouldNotReachHere(e);
