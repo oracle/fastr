@@ -104,14 +104,25 @@ public final class NativeDataAccess {
 
     private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
-    private static final long EMPTY_DATA_ADDRESS;
+    private static final AtomicLong emptyDataAddress;
     static {
-        EMPTY_DATA_ADDRESS = allocateNativeMemory(8);
+        emptyDataAddress = new AtomicLong(0);
     }
 
     private static final ReferenceQueue<Object> nativeRefQueue = new ReferenceQueue<>();
 
     private static final AtomicReference<Thread> nativeRefQueueThread = new AtomicReference<>(null);
+
+    private static long getEmptyDataAddress() {
+        long addr = emptyDataAddress.get();
+        if (addr == 0L) {
+            addr = allocateNativeMemory(8);
+            if (!emptyDataAddress.compareAndSet(0L, addr)) {
+                freeNativeMemory(addr);
+            }
+        }
+        return emptyDataAddress.get();
+    }
 
     private static void initNativeRefQueueThread() {
         Thread thread = nativeRefQueueThread.get();
@@ -211,12 +222,12 @@ public final class NativeDataAccess {
                 dataAddress = allocateNativeMemory(trueLen * elementSize);
                 UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, trueLen * elementSize);
             } else {
-                dataAddress = EMPTY_DATA_ADDRESS;
+                dataAddress = getEmptyDataAddress();
             }
             this.length = len;
 
             // ensure that marker address is not used
-            assert this.length == 0 || dataAddress != EMPTY_DATA_ADDRESS;
+            assert this.length == 0 || dataAddress != getEmptyDataAddress();
         }
 
         @TruffleBoundary
@@ -229,7 +240,7 @@ public final class NativeDataAccess {
             this.length = bytes.length + 1;
 
             // ensure that marker address is not used
-            assert this.length == 0 || dataAddress != EMPTY_DATA_ADDRESS;
+            assert this.length == 0 || dataAddress != getEmptyDataAddress();
         }
 
         @TruffleBoundary
@@ -258,7 +269,7 @@ public final class NativeDataAccess {
                 nativeMirrors.remove(id, this);
             }
             // System.out.println(String.format("gc'ing %16x", id));
-            if (dataAddress == EMPTY_DATA_ADDRESS) {
+            if (dataAddress == getEmptyDataAddress()) {
                 assert (dataAddress = 0xbadbad) != 0;
             } else if (dataAddress != 0) {
                 // System.out.println(String.format("freeing data at %16x", dataAddress));
