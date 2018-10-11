@@ -211,6 +211,8 @@ public final class RScope {
 
         protected abstract String[] collectArgs();
 
+        protected abstract Object getArgument(String name);
+
         @MessageResolution(receiverType = VariablesObject.class)
         static final class VariablesMessageResolution {
 
@@ -254,6 +256,10 @@ public final class RScope {
                         throw UnsupportedMessageException.raise(Message.READ);
                     }
                     Object value = varMap.frameAccess.get(name);
+                    if (value == null) {
+                        // internal builtin argument?
+                        value = ((EnvVariablesObject) varMap).getArgument(name);
+                    }
 
                     // If Java-null is returned, the identifier does not exist !
                     if (value == null) {
@@ -294,7 +300,6 @@ public final class RScope {
 
         @Override
         protected String[] collectArgs() {
-
             if (env != REnvironment.emptyEnv()) {
                 assert RArguments.isRFrame(env.getFrame());
                 RFunction f = RArguments.getFunction(env.getFrame());
@@ -312,6 +317,27 @@ public final class RScope {
             }
             return new String[0];
         }
+
+        @Override
+        public Object getArgument(String name) {
+            if (env != REnvironment.emptyEnv()) {
+                assert RArguments.isRFrame(env.getFrame());
+                RFunction f = RArguments.getFunction(env.getFrame());
+                ArgumentsSignature signature;
+                if (f != null) {
+                    signature = RContext.getRRuntimeASTAccess().getArgumentsSignature(f);
+                } else {
+                    signature = RArguments.getSuppliedSignature(env.getFrame());
+                }
+                for (int i = 0; i < signature.getLength(); i++) {
+                    if (name.equals(signature.getName(i))) {
+                        return RArguments.getArgument(env.getFrame(), i);
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 
     static final class GenericVariablesObject extends VariablesObject {
@@ -324,6 +350,12 @@ public final class RScope {
         protected String[] collectArgs() {
             return new String[0];
         }
+
+        @Override
+        protected Object getArgument(String name) {
+            return null;
+        }
+
     }
 
     static final class ArgumentNamesObject implements TruffleObject {
