@@ -6,35 +6,34 @@ FastR is:
 
 * polyglot
 
-..R is very powerful and flexible, but certain tasks are best solved by using R in combination with other programming languages.
-..Interfaces to languages, e.g., Java, Fortran and C/C++, incur a significant overhead, which is caused, to a large degree, by the different execution strategies employed by different languages, e.g., compiled vs. interpreted, and by incompatible internal data representations.
+R is very powerful and flexible, but certain tasks are best solved by using R in combination with other programming languages.
+Interfaces to languages, e.g., Java, Fortran and C/C++, incur a significant overhead, which is caused, to a large degree, by the different execution strategies employed by different languages, e.g., compiled vs. interpreted, and by incompatible internal data representations.
 
-..The Truffle framework addresses these issues at a very fundamental level, and builds the necessary polyglot primitives directly into the runtime.
-..Consequently, FastR leverages this infrastructure to allow multiple languages to interact transparently and seamlessly.
-..All parts of a polyglot application can be compiled by the same optimizing compiler, and can be executed and debugged simultaneously, with little to no overhead at the language boundary.
+The Truffle framework addresses these issues at a very fundamental level, and builds the necessary polyglot primitives directly into the runtime.
+Consequently, FastR leverages this infrastructure to allow multiple languages to interact transparently and seamlessly.
+All parts of a polyglot application can be compiled by the same optimizing compiler, and can be executed and debugged simultaneously, with little to no overhead at the language boundary.
 
 * efficient
 
-..R is a highly dynamic language that employs a unique combination of data type immutability, lazy evaluation, argument matching, large amount of built-in functionality, and interaction with C and Fortran code.
-..Consequently, applications that spend a lot of time in R code often have performance problems.
-..Common solutions are to try to apply primitives to large amounts of data at once and to convert R code to a native language like C.
+R is a highly dynamic language that employs a unique combination of data type immutability, lazy evaluation, argument matching, large amount of built-in functionality, and interaction with C and Fortran code.
+Consequently, applications that spend a lot of time in R code often have performance problems.
+Common solutions are to try to apply primitives to large amounts of data at once and to convert R code to a native language like C.
 
-..FastR makes extensive use of the dynamic optimization features provided by the Truffle framework to remove the abstractions that the R language introduces, and can use the Graal compiler to create optimized machine code on the fly.
+FastR makes extensive use of the dynamic optimization features provided by the Truffle framework to remove the abstractions that the R language introduces, and can use the Graal compiler to create optimized machine code on the fly.
 
 * compatible
 
-..The hardest challenge for implementations of the R language is the tradeoff between compatibility and performance.
-..If an implementation is very compatible, e.g., by using the traditional internal data layout, it cannot perform optimizations that imply a radically different internal structure.
-..If an implementation is very efficient, e.g., by adapting internal data structures to the current requirements, it will find it difficult to implement some parts of the GNUR system that are interfacing with applications and packages.
+The hardest challenge for implementations of the R language is the tradeoff between compatibility and performance.
+If an implementation is very compatible, e.g., by using the traditional internal data layout, it cannot perform optimizations that imply a radically different internal structure.
+If an implementation is very efficient, e.g., by adapting internal data structures to the current requirements, it will find it difficult to implement some parts of the GNUR system that are interfacing with applications and packages.
 
-FastR employs many different solution strategies in order to overcome these problems.
-It also explores possible solutions at a grander scale, like evolution and emulation of R’s native interfaces.
+FastR employs many different solution strategies in order to overcome these problems, and also explores possible solutions at a grander scale, like evolution and emulation of R’s native interfaces.
 
 ## Getting FastR
 
 FastR is available in two forms:
 
-1. As a [pre-built binary](http://www.graalvm.org/downloads/). Note that this also includes (Truffle) implementations of JavaScript and optionally Ruby and Python. The pre-built binaries are available for Linux and Mac OS X. There is no Windows version available. The binary release is updated monthly.
+1. As a [pre-built binary](http://www.graalvm.org/downloads/). Note that this also includes (Truffle) implementations of JavaScript and optionally Ruby and Python. The pre-built binaries are available for Linux and Mac OS X. The binary release is updated monthly.
 2. As a source release on [GitHub](https://github.com/graalvm/fastr) for developers wishing to contribute to the project and/or study the implementation. The source release is updated regularly and always contains the latest tested version.
     * Note: there is a comunity provided and maintained [Dockerfile](https://github.com/nuest/fastr-docker) for FastR.
 
@@ -91,10 +90,10 @@ Use the following sequence of commands to download and build an interpreted vers
     $ mkdir $FASTR_HOME
     $ cd $FASTR_HOME
     $ git clone http://github.com/graalvm/mx
-	$ PATH=$PATH:$FASTR_HOME/mx
-	$ git clone http://github.com/graalvm/fastr
-	$ cd fastr
-	$ mx build
+  $ PATH=$PATH:$FASTR_HOME/mx
+  $ git clone http://github.com/graalvm/fastr
+  $ cd fastr
+  $ mx build
 
 The build will clone the Truffle repository and also download various required libraries, including GNU R, which is built first. Any problems with the GNU R configure step likely relate
 to dependent packages, so review the previous section. For FastR development, GNU R only needs to be built once, but an `mx clean` will, by default remove it. This can be prevented by setting
@@ -117,7 +116,7 @@ FastR supports the same command line arguments as R, so running an R script is d
 We would like to grow the FastR open-source community to provide a free R implementation atop the Truffle/Graal stack.
 We encourage contributions, and invite interested developers to join in.
 Prospective contributors need to sign the [Oracle Contributor Agreement (OCA)](http://www.oracle.com/technetwork/community/oca-486395.html).
-The access point for contributions, issues and questions about FastR is the [GitHub repository ](https://github.com/graalvm/fastr)
+The access point for contributions, issues and questions about FastR is the [GitHub repository](https://github.com/oracle/fastr).
 
 ## Troubleshooting
 
@@ -152,4 +151,5 @@ Note: you may need to install `locale` and run the following before setting the 
 ```
 locale en_US.UTF-8
 ```
+
 
