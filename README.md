@@ -1,10 +1,10 @@
 A high performance implementation of the R programming language., built on the GraalVM by Oracle Labs.
 
 FastR aims to be:
-* efficient: executing R language scripts faster than any other R runtime.
-* polyglot: allowing [polyglot interoperability](https://www.graalvm.org/docs/reference-manual/polyglot/) with other languages in the GraalVM ecosystem.
-* compatible: providing support for existing packages and the R native interface.
-* embeddable: allowing integration using the R embedding API or the GraalVM polyglot embedding SDK.
+* [efficient](https://medium.com/graalvm/faster-r-with-fastr-4b8db0e0dceb#4ab6): executing R language scripts faster than any other R runtime.
+* [polyglot](https://medium.com/graalvm/faster-r-with-fastr-4b8db0e0dceb#0f5c): allowing [polyglot interoperability](https://www.graalvm.org/docs/reference-manual/polyglot/) with other languages in the GraalVM ecosystem.
+* [compatible](https://medium.com/graalvm/faster-r-with-fastr-4b8db0e0dceb#fff5): providing support for existing packages and the R native interface.
+* [embeddable](https://github.com/graalvm/examples/tree/master/r_java_embedding): allowing integration using the R embedding API or the GraalVM polyglot embedding SDK.
 
  ## Getting Started
 See the documentation on the GraalVM website on how to [get GraalVM](https://www.graalvm.org/docs/getting-started/) and [install and use FastR](http://www.graalvm.org/docs/reference-manual/languages/r/).
