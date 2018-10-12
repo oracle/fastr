@@ -47,7 +47,7 @@ import java.util.WeakHashMap;
  */
 public final class CharSXPWrapper extends RObject implements RTruffleObject, RTypedValue {
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
-    private int typedValueInfo = 1 << 14;
+    private int typedValueInfo = ASCII_MASK_SHIFTED;
     private String contents;
     private byte[] bytes;
     private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
@@ -166,17 +166,17 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
     }
 
     @Override
-    public final RType getRType() {
-        return RType.Character;
+    public RType getRType() {
+        return RType.Char;
     }
 
     @Override
-    public final int getTypedValueInfo() {
+    public int getTypedValueInfo() {
         return typedValueInfo;
     }
 
     @Override
-    public final void setTypedValueInfo(int value) {
+    public void setTypedValueInfo(int value) {
         typedValueInfo = value;
     }
 

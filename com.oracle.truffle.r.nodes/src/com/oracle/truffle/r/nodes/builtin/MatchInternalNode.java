@@ -30,17 +30,21 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
 import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -69,6 +73,15 @@ public abstract class MatchInternalNode extends RBaseNode {
 
     protected boolean isSequence(RAbstractVector vec) {
         return vec instanceof RSequence;
+    }
+
+    protected boolean isCharSXP(RAbstractListVector list) {
+        for (int i = 0; i < list.getLength(); i++) {
+            if (!(RType.getRType(list.getDataAt(i)).equals(RType.Char))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Specialization
@@ -434,6 +447,108 @@ public abstract class MatchInternalNode extends RBaseNode {
                 result[i] = index + 1;
             } else {
                 matchAll = false;
+            }
+        }
+        return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
+    }
+
+    @Specialization(guards = {"x.getLength() == 1", "isCharSXP(x)", "isCharSXP(table)"})
+    @CompilerDirectives.TruffleBoundary
+    protected int matchSizeOne(RList x, RList table, int nomatch,
+                    @Cached("create()") NAProfile naProfile,
+                    @Cached("create()") BranchProfile foundProfile,
+                    @Cached("create()") BranchProfile notFoundProfile) {
+        Object data = x.getDataAt(0);
+        Object tableData;
+
+        if (data instanceof CharSXPWrapper) {
+            String element = ((CharSXPWrapper) data).getContents();
+            int length = table.getLength();
+            if (naProfile.isNA(element)) {
+                for (int i = 0; i < length; i++) {
+                    tableData = table.getDataAt(i);
+                    if (tableData instanceof CharSXPWrapper) {
+                        if (RRuntime.isNA(((CharSXPWrapper) tableData).getContents())) {
+                            foundProfile.enter();
+                            return i + 1;
+                        }
+                    } else {
+                        throw RInternalError.shouldNotReachHere();
+                    }
+                }
+            } else {
+                for (int i = 0; i < length; i++) {
+                    tableData = table.getDataAt(i);
+                    if (tableData instanceof CharSXPWrapper) {
+                        if (element.equals(((CharSXPWrapper) tableData).getContents())) {
+                            foundProfile.enter();
+                            return i + 1;
+                        }
+                    } else {
+                        throw RInternalError.shouldNotReachHere();
+                    }
+                }
+            }
+            notFoundProfile.enter();
+            return nomatch;
+        } else {
+            throw RInternalError.shouldNotReachHere();
+        }
+    }
+
+    @Specialization(guards = {"x.getLength() != 1", "isCharSXP(x)", "isCharSXP(table)"})
+    @CompilerDirectives.TruffleBoundary
+    protected RIntVector match(RList x, RList table, int nomatch) {
+        int[] result = initResult(x.getLength(), nomatch);
+        Object element;
+        boolean matchAll = true;
+        NonRecursiveHashMapCharacter hashTable;
+        if (bigTableProfile.profile(table.getLength() > (x.getLength() * TABLE_SIZE_FACTOR))) {
+            hashTable = new NonRecursiveHashMapCharacter(x.getLength());
+            NonRecursiveHashSetCharacter hashSet = new NonRecursiveHashSetCharacter(x.getLength());
+            for (int i = 0; i < result.length; i++) {
+                element = x.getDataAt(i);
+                if (element instanceof CharSXPWrapper) {
+                    hashSet.add(((CharSXPWrapper) element).getContents());
+                } else {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                element = table.getDataAt(i);
+                if (element instanceof CharSXPWrapper) {
+                    String val = ((CharSXPWrapper) element).getContents();
+                    if (hashSet.contains(val)) {
+                        hashTable.put(val, i);
+                    }
+                } else {
+                    throw RInternalError.shouldNotReachHere();
+                }
+            }
+        } else {
+            hashTable = new NonRecursiveHashMapCharacter(table.getLength());
+            for (int i = table.getLength() - 1; i >= 0; i--) {
+                element = table.getDataAt(i);
+                if (element instanceof CharSXPWrapper) {
+                    hashTable.put(((CharSXPWrapper) element).getContents(), i);
+                } else {
+                    throw RInternalError.shouldNotReachHere();
+                }
+
+            }
+        }
+        for (int i = 0; i < result.length; i++) {
+            element = x.getDataAt(i);
+            if (element instanceof CharSXPWrapper) {
+                String xx = ((CharSXPWrapper) element).getContents();
+                int index = hashTable.get(xx);
+                if (index != -1) {
+                    result[i] = index + 1;
+                } else {
+                    matchAll = false;
+                }
+            } else {
+                throw RInternalError.shouldNotReachHere();
             }
         }
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));

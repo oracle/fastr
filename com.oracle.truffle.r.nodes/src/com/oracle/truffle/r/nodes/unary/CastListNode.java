@@ -30,6 +30,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
@@ -74,6 +75,11 @@ public abstract class CastListNode extends CastBaseNode {
 
     @Specialization
     protected RList doInt(int operand) {
+        return factory().createList(new Object[]{operand});
+    }
+
+    @Specialization
+    protected RList doCharSXP(CharSXPWrapper operand) {
         return factory().createList(new Object[]{operand});
     }
 

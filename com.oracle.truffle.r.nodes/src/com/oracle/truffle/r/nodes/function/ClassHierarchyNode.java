@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
@@ -138,6 +139,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
 
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") String arg) {
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Character, forDispatch) : null;
+    }
+
+    @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") CharSXPWrapper arg) {
         return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Character, forDispatch) : null;
     }
 
