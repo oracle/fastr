@@ -455,45 +455,36 @@ public abstract class MatchInternalNode extends RBaseNode {
     @Specialization(guards = {"x.getLength() == 1", "isCharSXP(x)", "isCharSXP(table)"})
     @CompilerDirectives.TruffleBoundary
     protected int matchSizeOne(RList x, RList table, int nomatch,
-                    @Cached("create()") NAProfile naProfile,
-                    @Cached("create()") BranchProfile foundProfile,
-                    @Cached("create()") BranchProfile notFoundProfile) {
+                               @Cached("create()") NAProfile naProfile,
+                               @Cached("create()") BranchProfile foundProfile,
+                               @Cached("create()") BranchProfile notFoundProfile) {
         Object data = x.getDataAt(0);
         Object tableData;
 
-        if (data instanceof CharSXPWrapper) {
-            String element = ((CharSXPWrapper) data).getContents();
-            int length = table.getLength();
-            if (naProfile.isNA(element)) {
-                for (int i = 0; i < length; i++) {
-                    tableData = table.getDataAt(i);
-                    if (tableData instanceof CharSXPWrapper) {
-                        if (RRuntime.isNA(((CharSXPWrapper) tableData).getContents())) {
-                            foundProfile.enter();
-                            return i + 1;
-                        }
-                    } else {
-                        throw RInternalError.shouldNotReachHere();
-                    }
-                }
-            } else {
-                for (int i = 0; i < length; i++) {
-                    tableData = table.getDataAt(i);
-                    if (tableData instanceof CharSXPWrapper) {
-                        if (element.equals(((CharSXPWrapper) tableData).getContents())) {
-                            foundProfile.enter();
-                            return i + 1;
-                        }
-                    } else {
-                        throw RInternalError.shouldNotReachHere();
-                    }
+        assert data instanceof CharSXPWrapper;
+        String element = ((CharSXPWrapper) data).getContents();
+        int length = table.getLength();
+        if (naProfile.isNA(element)) {
+            for (int i = 0; i < length; i++) {
+                tableData = table.getDataAt(i);
+                assert tableData instanceof CharSXPWrapper;
+                if (RRuntime.isNA(((CharSXPWrapper) tableData).getContents())) {
+                    foundProfile.enter();
+                    return i + 1;
                 }
             }
-            notFoundProfile.enter();
-            return nomatch;
         } else {
-            throw RInternalError.shouldNotReachHere();
+            for (int i = 0; i < length; i++) {
+                tableData = table.getDataAt(i);
+                assert tableData instanceof CharSXPWrapper;
+                if (element.equals(((CharSXPWrapper) tableData).getContents())) {
+                    foundProfile.enter();
+                    return i + 1;
+                }
+            }
         }
+        notFoundProfile.enter();
+        return nomatch;
     }
 
     @Specialization(guards = {"x.getLength() != 1", "isCharSXP(x)", "isCharSXP(table)"})
@@ -508,47 +499,34 @@ public abstract class MatchInternalNode extends RBaseNode {
             NonRecursiveHashSetCharacter hashSet = new NonRecursiveHashSetCharacter(x.getLength());
             for (int i = 0; i < result.length; i++) {
                 element = x.getDataAt(i);
-                if (element instanceof CharSXPWrapper) {
-                    hashSet.add(((CharSXPWrapper) element).getContents());
-                } else {
-                    throw RInternalError.shouldNotReachHere();
-                }
+                assert element instanceof CharSXPWrapper;
+                hashSet.add(((CharSXPWrapper) element).getContents());
             }
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 element = table.getDataAt(i);
-                if (element instanceof CharSXPWrapper) {
-                    String val = ((CharSXPWrapper) element).getContents();
-                    if (hashSet.contains(val)) {
-                        hashTable.put(val, i);
-                    }
-                } else {
-                    throw RInternalError.shouldNotReachHere();
+                assert element instanceof CharSXPWrapper;
+                String val = ((CharSXPWrapper) element).getContents();
+                if (hashSet.contains(val)) {
+                    hashTable.put(val, i);
                 }
             }
         } else {
             hashTable = new NonRecursiveHashMapCharacter(table.getLength());
             for (int i = table.getLength() - 1; i >= 0; i--) {
                 element = table.getDataAt(i);
-                if (element instanceof CharSXPWrapper) {
-                    hashTable.put(((CharSXPWrapper) element).getContents(), i);
-                } else {
-                    throw RInternalError.shouldNotReachHere();
-                }
-
+                assert element instanceof CharSXPWrapper;
+                hashTable.put(((CharSXPWrapper) element).getContents(), i);
             }
         }
         for (int i = 0; i < result.length; i++) {
             element = x.getDataAt(i);
-            if (element instanceof CharSXPWrapper) {
-                String xx = ((CharSXPWrapper) element).getContents();
-                int index = hashTable.get(xx);
-                if (index != -1) {
-                    result[i] = index + 1;
-                } else {
-                    matchAll = false;
-                }
+            assert element instanceof CharSXPWrapper;
+            String xx = ((CharSXPWrapper) element).getContents();
+            int index = hashTable.get(xx);
+            if (index != -1) {
+                result[i] = index + 1;
             } else {
-                throw RInternalError.shouldNotReachHere();
+                matchAll = false;
             }
         }
         return RDataFactory.createIntVector(result, setCompleteState(matchAll, nomatch));
