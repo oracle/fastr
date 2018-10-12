@@ -15,11 +15,11 @@ used by all the Truffle languages. See `mx unittest --help` for a complete descr
 3. `fastr.test.generate`: Used internally by `mx rtestgen`, see below.
 4. `fastr.test.generate.quiet`; Used internally by `mx rtestgen`, see below.
 
-For convenience and backwards compatibility FastR provides some wrapper commands that invoke `unittest` with specific arguments.
-In particular the standard set of unit tests is available via the `mx junitgate` command and the following additional variants are available:
+For convenience and backwards compatibility FastR provides some wrapper commands that invoke `unittest` with specific arguments:
 
-1. `mx rutsimple`: everything except the tests in `com.oracle.truffle.r.nodes.test`
-2. `mx rutgate`: all the tests that run in the gate
+1. `mx rutgen`: small set of the most basic tests
+2. `mx rutsimple`: larger set of the most basic tests and Tuffle TCK
+3. `mx rutgate`: all the tests that run in the gate
 
 
 For example to debug a unit test under an IDE, it is important to disable the internal timeout mechanism that detects looping tests, vis:
@@ -36,17 +36,42 @@ After adding, removing or altering units tests (including the `TestTrait` argume
 
 ## Package Tests
 
-### Introduction
+### Cheat sheet
+
+Test single package and visually compare the outputs using `meld` (look only at `*.preprocessed` files):
+
+    mx pkgtest --verbose --dump-preprocessed --cache-pkgs dir=/path/to/cache --ignore-blacklist --pkg-pattern ^MatrixModels$
+    meld test.fastr test.gnur
+
+Run RFFI tests:
+
+    mx pkgtest --repos FASTR --run-tests testrffi
+
+Test all gated packages:
+
+    mx pkgtest --cache-pkgs dir=/path/to/cache --ignore-blacklist --pkg-filelist com.oracle.truffle.r.test.packages/gated
+
+Run `testthat` tests manually:
+
+    library(testthat); library(mypackage); test_package('mypackage')
+
+Take a look at `library/mypackage/tests/testthat` -- all files matching `test-*.R` are tests, 
+you can run individual tests by: 
+
+    test_package('mypackage', filter='sometestname')
+
+### Introduction to packages
 
 The R ecosystem is heavily based on packages contributed by the user community, and the standard CRAN repository contains over 6000 such packages. Naturally, many of these serve rather obscure areas but there is a small subset that are extremely popular and widely used, for example the "top 100" most popular packages cited here.
 
 Using a package in R is actually a two step process. First a package must be "installed" and then it can be "loaded" into an R session. The installation step takes the package as a gzipped tar file from the repository, unpacks it and then does some processing before installing the result in a "library" directory. The processing may involve C or Fortran compilation if the package uses the R foreign function interface, as many do.The default installation library location is the system library, which is where the packages included with GnuR are stored, e.g. `base`, `stats`. However, additional directories can be specified through the `R_LIBS_USER` or `R_LIBS` environment variables.
 
-### Installation
+### Installation of a package
 
 A package can be installed in three ways:
 
-    using the command line tool R CMD INSTALL  package.tar.gz
+    using the command line tool ./bin/R CMD INSTALL  package.tar.gz
+    using the command line tool ./bin/R CMD INSTALL  path/to/decompressed/package
     using utils::install.packages(pkgname) from within an R session
     using the lower level tools:::.install_packages(args) from within an R session
 
@@ -56,15 +81,22 @@ A final step in both these approaches is to test that the package can be loaded 
 
 The `-d` outputs additional tracing of the package installation process. The argument values are the same as for `R CMD INSTALL`.
 
-### Loading
+### Loading a package
 
 A package is loaded into an R session using `library(pkgname)` or `require(pkgname)`, which adds it to the search path. `pkgname` can be a quoted string or just the package name, e.g. `library(digest)`. The unquoted form takes advantage of R's lazy evaluation mechanism and the `substitute` builtin.
 
-### Testing
+### Testing a package
 
-Package developers can provide tests in several ways. To enable the full set of tests a package must be installed with the `--install-tests` option. The `mx pkgtest` command described below always sets this option. Once installed a package can be tested with the `tools::testInstalledPackage` function. The `mx pkgtest` command provides a standard way to do this.
+Package developers can provide tests in several ways. To enable the full set of tests a package must be installed with the `--install-tests` option, for example:
 
-### Package Installation and Testing
+    using command line tool ./bin/R CMD INSTALL --install-tests /path/to/directory
+    using utils::install.packages('packageName', INSTALL_opts='--install-tests')
+
+Once installed a package can be manually tested with the `tools::testInstalledPackage` function.
+
+The `mx pkgtest` command described below handles the installation with tests and running the tests.
+
+### Package Installation and Testing with mx
 
 Package installation and testing is partly handled by a R script `r/install.packages.R` in the `com.oracle.truffle.r.test.packages` project and partly by an `mx` script. There are two relevant `mx` commands, `installpkgs` and `pkgtest`. The former is simply a wrapper to `install.packages.R`, whereas `pkgtest` contains additional code to gather and compare test outputs.
 
@@ -112,7 +144,12 @@ There are many packages that cannot be installed due to either missing functiona
 3. TODO
 
 ##### CRAN Mirror
-Packages are downloaded and installed from the repos given by the `repos` argument, a comma-separated list of `name[=value]` pairs, that defaults to `CRAN`. CRAN packages are downloaded from a CRAN mirror. When the standard `utils::install_packages` function is run interactively, the user is prompted for a mirror. To avoid such interaction, `install.packages` has two ways for specifying a mirror. The default CRAN mirror is `http://cran.cnr.berkeley.edu/` but this can be changed either with `CRAN=url` or the environment variable `CRAN_MIRROR`.  The `FASTR` repo is internal to the source base and contains FastR-specific test packages. The BioConductor repo can be added by setting `--repos BIOC`. User defined repos can be specified by `USERNAME=url`. N.B. For file system paths this must be a `file:` URL.
+Packages are downloaded and installed from the repos given by the `repos` argument, a comma-separated list of `name[=value]` pairs, 
+that defaults to `CRAN`. CRAN packages are downloaded from a CRAN mirror. When the standard `utils::install_packages` function is run interactively, 
+the user is prompted for a mirror. To avoid such interaction, `install.packages` has two ways for specifying a mirror. 
+The default CRAN mirror is specified in `com.oracle.truffle.r.native/Makefile` but this can be changed either with `CRAN=url` 
+or the environment variable `CRAN_MIRROR`.  The `FASTR` repo is internal to the source base and contains FastR-specific test packages. 
+The BioConductor repo can be added by setting `--repos BIOC`. User defined repos can be specified by `USERNAME=url`. N.B. For file system paths this must be a `file:` URL.
 
 ##### Installation Directory
 The directory in which to install the package can be specified either by setting the `R_LIBS_USER` environment variable or with the `--lib` command line argument. The former is recommended and indeed required for running tests after installation (the testing system does not honor the `--lib` argument).
@@ -163,6 +200,7 @@ Testing packages requires that they are first installed, so all of the above is 
     --print-ok-installs: print the successfully installed packages
     --list-versions: for the candidate set of packages to install list the name and version in format: name,version,
     --run-tests: run packages tests on the successfully installed packages (not including dependents)
+    --dump-preprocessed: dump the preprocessed output (see below)
 
 #### Examples
 
@@ -234,12 +272,11 @@ The API checksum must be provided because we do not want to rely on some R packa
 
 #### Usage
 
-Run `mx pkgtest --cache-pkgs version=<checksum>,dir=<pkg-cache-dir>,size=<cache-size>`, e.g.
+Run `mx pkgtest --cache-pkgs dir=<pkg-cache-dir>,size=<cache-size>`, e.g.
 ```
-mx pkgtest --cache-pkgs version=730e109bd7a8a32b1cb9d9a09aa2325d2430587ddbc0c38bad911525,dir=/tmp/cache_dir
+mx pkgtest --cache-pkgs dir=/tmp/cache_dir --ignore-blacklist --pkg-pattern ^MatrixModels$
 ```
 
-The `version` key specifies the API version to use, i.e., a checksum of the header files of the native API (mandatory, no default).
 The `pkg-cache-dir` key specifies the directory of the cache (mandatory, no default).
 The `size` key specifies the number of different API versions for which to cache packages (optional, default=`2L`).
 
@@ -247,3 +284,46 @@ The `size` key specifies the number of different API versions for which to cache
 
 The version must be provided externally such that the R script does not rely on any package.
 The version must reflect the native API in the sense that if two R runtimes have the same native API version, then the packages can be used for both runtimes.
+
+### Environment variables
+
+Package-specific environment variables can be specified through the PKG_TEST_ENV_<pkgname> environment variable. 
+The individual environment variable pairs are delimited by a comma, e.g. export PKG_TEST_ENV_miniUI="LANGUAGE=en,LC_ALL=C" 
+specifies the environment variables LANGUAGE and LC_ALL for the miniUI package test.
+
+### Output preprocessing
+
+The test output can be preprocessed by sed like script in `com.oracle.truffle.r.test.packages/test.output.filter`. 
+Run pkgtest with `--dump-preprocessed` to get the preprocessed output dumped next to the real output
+Moreover, footer and header of the output file (copyright, test time, etc) are ignored by default.
+
+### Ignoring some suggest packages
+
+Edit variable `ignore.suggests` in `com.oracle.truffle.r.test.packages/r/install.packages.R` 
+to ignore installation of suggested packages that are not necessary for the tests to run.
+
+### testrfffi
+
+FastR has tests for the native R API (what is in FastR implemented by `JavaUpCallsImpl`) in `com.oracle.truffle.r.test.native/packages/testrffi/testrffi`.
+To install the `testrffi` package and run the tests: `mx pkgtest --repos FASTR --run-tests testrffi` or 
+just install it to the default library using command line:
+
+     rm -f com.oracle.truffle.r.test.native/packages/testrffi/testrffi/src/*.o
+     rm -f com.oracle.truffle.r.test.native/packages/testrffi/testrffi/src/*.so
+     ./bin/R CMD INSTALL com.oracle.truffle.r.test.native/packages/testrffi/testrffi
+
+Note that you can also install this package on GNU-R using the same commands.
+
+Once installed via `mx pkgtest`, you can load it in GNUR/FastR session by:
+
+     .libPaths(c( .libPaths(), "./lib.install.packages.gnur")); library(testrffi);
+     .libPaths(c( .libPaths(), "./lib.install.packages.fastr")); library(testrffi);
+     
+You can leave out the `.libPaths` call if you installed the package to the default library via `./bin/R CMD INSTALL ...`.      
+     
+All the native R API functions that take and return R objects (e.g. not raw C types) have R wrappers in testrffi, 
+e.g. native function `SETCAR` can be invoked via `api.SETCAR` if you suspect that some native R API function behaves 
+differently in FastR vs GNUR, you can simply verify, e.g. run `api.SETCAR(NULL, NULL)` in both GNU R and FastR to 
+find out what it should return and if FastR is compatible. 
+
+You can add your findings as tests into `com.oracle.truffle.r.test.native/packages/testrffi/testrffi/tests/somefile.R`.

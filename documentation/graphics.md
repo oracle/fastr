@@ -92,6 +92,6 @@ FastR's grid implementation does not yet support:
 * `grid.xspline` function
 * clipping
 
-FastR does not plan to implement the R graphics engine display list
-and related functions. However, the grid display list is implemented.
+FastR does emulates the R graphics engine display list and related functions using the grid display list, 
+which may not be 100% compatible with GNU-R, but works for many scenarios including the Shiny framework.
 
