@@ -1374,21 +1374,22 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testException() {
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException: msg"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException: msg"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
 
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')", errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: java.io.IOException"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')",
+                        errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
-                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: java.io.IOException: msg"));
+                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: java.lang.RuntimeException"));
+                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: java.lang.RuntimeException: msg"));
+                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
     }
 
     private String getRValue(Object value) {
