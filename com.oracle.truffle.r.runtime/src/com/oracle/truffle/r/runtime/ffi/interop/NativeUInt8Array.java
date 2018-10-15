@@ -59,6 +59,7 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
     }
 
     void write(int index, byte value) {
+        long nativeAddress = nativeAddress();
         if (nativeAddress != 0) {
             checkNativeIndex(index);
             UNSAFE.putByte(nativeAddress + index, value);
@@ -72,6 +73,7 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
     }
 
     byte read(int index) {
+        long nativeAddress = nativeAddress();
         if (nativeAddress != 0) {
             checkNativeIndex(index);
             return UNSAFE.getByte(nativeAddress + index);
@@ -89,19 +91,17 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
 
     @TruffleBoundary
     @Override
-    protected final void allocateNative() {
-        nativeAddress = UNSAFE.allocateMemory(effectiveLength);
+    protected final long allocateNative() {
+        long nativeAddress = UNSAFE.allocateMemory(effectiveLength);
         UNSAFE.copyMemory(array, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, nativeAddress, array.length);
         if (fakesNullTermination()) {
             UNSAFE.putByte(nativeAddress + array.length, (byte) 0);
         }
+        return nativeAddress;
     }
 
     public byte[] getValue() {
-        if (nativeAddress != 0) {
-            copyBackFromNative();
-        }
-        return array;
+        return refresh();
     }
 
     public void setValue(byte[] newBytes, boolean isNullTerminated) {
@@ -111,7 +111,7 @@ public abstract class NativeUInt8Array extends NativeArray<byte[]> {
 
     @TruffleBoundary
     @Override
-    public void copyBackFromNative() {
+    protected void copyBackFromNative(long nativeAddress) {
         // copy back
         UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_BYTE_BASE_OFFSET, array.length);
     }

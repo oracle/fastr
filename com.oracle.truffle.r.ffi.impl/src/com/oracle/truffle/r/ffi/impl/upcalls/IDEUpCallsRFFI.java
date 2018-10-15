@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.impl.upcalls;
 
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.r.ffi.processor.RFFIResultOwner;
 
 /**
  * Additional upcalls created for supporting FastR in RStudio. These mainly relate to the GNU R
@@ -42,7 +43,7 @@ public interface IDEUpCallsRFFI {
 
     Object R_getContextCall(Object c);
 
-    Object R_getContextSrcRef(Object c);
+    Object R_getContextSrcRef(@RFFIResultOwner Object c);
 
     int R_insideBrowser();
 

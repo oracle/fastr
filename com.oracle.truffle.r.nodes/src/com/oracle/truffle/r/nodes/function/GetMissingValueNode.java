@@ -29,8 +29,12 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
  * This is a node abstraction for the functionality defined in
@@ -48,16 +52,22 @@ public abstract class GetMissingValueNode extends RBaseNode {
     private static final class UninitializedGetMissingValueNode extends GetMissingValueNode {
 
         private final String name;
+        private final int varArgIndex;
 
         private UninitializedGetMissingValueNode(String sym) {
-            this.name = sym;
+            varArgIndex = RSyntaxLookup.getVariadicComponentIndex(sym) - 1;
+            if (varArgIndex >= 0) {
+                this.name = ArgumentsSignature.VARARG_NAME;
+            } else {
+                this.name = sym;
+            }
         }
 
         @Override
         public Object execute(Frame frame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             FrameSlot slot = frame.getFrameDescriptor().findFrameSlot(name);
-            return replace(new ResolvedGetMissingValueNode(slot)).execute(frame);
+            return varArgIndex < 0 ? replace(new ResolvedGetMissingValueNode(slot)).execute(frame) : replace(new ResolvedGetMissingVarArgIndexedValueNode(slot, varArgIndex)).execute(frame);
         }
     }
 
@@ -88,4 +98,28 @@ public abstract class GetMissingValueNode extends RBaseNode {
             }
         }
     }
+
+    private static final class ResolvedGetMissingVarArgIndexedValueNode extends GetMissingValueNode {
+
+        private final FrameSlot varArgSlot;
+        private final int varArgIndex;
+        private final ConditionProfile isArgMissingProfile = ConditionProfile.createBinaryProfile();
+
+        private ResolvedGetMissingVarArgIndexedValueNode(FrameSlot varArgSlot, int varArgIndex) {
+            assert varArgSlot != null;
+            this.varArgSlot = varArgSlot;
+            this.varArgIndex = varArgIndex;
+        }
+
+        @Override
+        public Object execute(Frame frame) {
+            RArgsValuesAndNames varArgs = (RArgsValuesAndNames) frame.getValue(varArgSlot);
+            if (isArgMissingProfile.profile(varArgIndex >= varArgs.getLength())) {
+                return RMissing.instance;
+            } else {
+                return varArgs.getArguments()[varArgIndex];
+            }
+        }
+    }
+
 }

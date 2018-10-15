@@ -73,6 +73,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
+import com.oracle.truffle.r.ffi.processor.RFFIResultOwner;
 import com.oracle.truffle.r.ffi.processor.RFFIRunGC;
 import com.oracle.truffle.r.ffi.processor.RFFIUpCallNode;
 import com.oracle.truffle.r.runtime.nmath.distr.Cauchy;
@@ -190,7 +191,7 @@ public interface StdUpCallsRFFI {
     void Rf_defineVar(Object symbolArg, Object value, Object envArg);
 
     @RFFIUpCallNode(GetClassDefNode.class)
-    Object R_getClassDef(@RFFICstring(convert = false) Object clazz);
+    Object R_getClassDef(@RFFIResultOwner @RFFICstring(convert = false) Object clazz);
 
     @RFFIUpCallNode(DoMakeClassNode.class)
     Object R_do_MAKE_CLASS(@RFFICstring(convert = false) Object clazz);
@@ -203,15 +204,15 @@ public interface StdUpCallsRFFI {
      */
     Object Rf_findVar(Object symbolArg, Object envArg);
 
-    Object Rf_findVarInFrame(Object envArg, Object symbolArg);
+    Object Rf_findVarInFrame(@RFFIResultOwner Object envArg, Object symbolArg);
 
-    Object Rf_findVarInFrame3(Object envArg, Object symbolArg, int doGet);
+    Object Rf_findVarInFrame3(@RFFIResultOwner Object envArg, Object symbolArg, int doGet);
 
     @RFFIUpCallNode(ATTRIB.class)
-    Object ATTRIB(Object obj);
+    Object ATTRIB(@RFFIResultOwner Object obj);
 
     @RFFIUpCallNode(GetAttrib.class)
-    Object Rf_getAttrib(Object obj, Object name);
+    Object Rf_getAttrib(@RFFIResultOwner Object obj, Object name);
 
     void Rf_setAttrib(Object obj, Object name, Object val);
 
@@ -292,9 +293,9 @@ public interface StdUpCallsRFFI {
     @RFFICpointer
     Object COMPLEX(Object x);
 
-    Object STRING_ELT(Object x, long i);
+    Object STRING_ELT(@RFFIResultOwner Object x, long i);
 
-    Object VECTOR_ELT(Object x, long i);
+    Object VECTOR_ELT(@RFFIResultOwner Object x, long i);
 
     int NAMED(Object x);
 
@@ -361,10 +362,10 @@ public interface StdUpCallsRFFI {
     Object SETCDR(Object x, Object y);
 
     @RFFIUpCallNode(MiscNodes.GetFunctionFormals.class)
-    Object FORMALS(Object x);
+    Object FORMALS(@RFFIResultOwner Object x);
 
     @RFFIUpCallNode(MiscNodes.GetFunctionBody.class)
-    Object BODY(Object x);
+    Object BODY(@RFFIResultOwner Object x);
 
     @RFFIUpCallNode(MiscNodes.GetFunctionEnvironment.class)
     Object CLOENV(Object x);
@@ -483,11 +484,11 @@ public interface StdUpCallsRFFI {
 
     int PRSEEN(Object x);
 
-    Object PRENV(Object x);
+    Object PRENV(@RFFIResultOwner Object x);
 
-    Object R_PromiseExpr(Object x);
+    Object R_PromiseExpr(@RFFIResultOwner Object x);
 
-    Object PRCODE(Object x);
+    Object PRCODE(@RFFIResultOwner Object x);
 
     @RFFICpointer
     Object R_CHAR(Object x);

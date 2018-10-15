@@ -35,8 +35,8 @@ import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.test.generate.FastRSession;
 
 public class RLanguageMRTest extends AbstractMRTest {
@@ -81,7 +81,7 @@ public class RLanguageMRTest extends AbstractMRTest {
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, "nnnoooonnne"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, rl.getLength()), UnknownIdentifierException.class);
-        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0d) == RSymbol.install("+"));
+        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0d) == RDataFactory.createSymbolInterned("+"));
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, 0f), UnknownIdentifierException.class);
 
         // TODO add some meaningful read tests

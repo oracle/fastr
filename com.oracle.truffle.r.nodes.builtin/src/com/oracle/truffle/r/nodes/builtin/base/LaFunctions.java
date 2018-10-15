@@ -747,7 +747,7 @@ public class LaFunctions {
                 setBDimsNode.setDimensions(b, new int[]{n, p});
                 RList binDn = getBinDimNamesNode.getDimNames(bin);
                 // This is somewhat odd, but Matrix relies on dropping NULL dimnames
-                if (aDn != null || binDn != null) {
+                if ((aDn != null && aDn.getDataAt(1) != RNull.instance) || (binDn != null && binDn.getDataAt(1) != RNull.instance)) {
                     // rownames(ans) = colnames(A), colnames(ans) = colnames(Bin)
                     if (aDn != null || binDn != null) {
                         Object[] bDnData = new Object[2];
@@ -768,7 +768,7 @@ public class LaFunctions {
                     System.arraycopy(bin.materialize().getReadonlyData(), 0, bData, 0, n * p);
                 }
                 b = RDataFactory.createDoubleVector(bData, RDataFactory.COMPLETE_VECTOR);
-                if (aDn != null) {
+                if (aDn != null && aDn.getDataAt(1) != RNull.instance) {
                     setNamesNode.setNames(b, (RStringVector) RRuntime.asAbstractVector(aDn.getDataAt(1)));
                 }
             }
@@ -785,11 +785,11 @@ public class LaFunctions {
             if (aDouble.isShared()) {
                 avals = aCache.get(aDouble.getLength());
                 // TODO: fixme more efficient copying
-                System.arraycopy(aDouble.getDataCopy(), 0, avals, 0, n * p);
+                System.arraycopy(aDouble.getDataCopy(), 0, avals, 0, n * n);
             } else {
                 avals = aDouble.getDataCopy();
             }
-            int info = dgesvNode.execute(n, p, avals, n, ipiv, bData, n);
+            int info = dgesvNode.execute(n, p, aDouble.getDataCopy(), n, ipiv, bData, n);
             if (info < 0) {
                 throw error(Message.LAPACK_INVALID_VALUE, -info, "dgesv");
             }

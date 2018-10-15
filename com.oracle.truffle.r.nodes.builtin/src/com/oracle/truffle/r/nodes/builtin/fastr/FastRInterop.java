@@ -105,6 +105,7 @@ import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.interop.FastrInteropTryContextState;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
+import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 public class FastRInterop {
@@ -279,6 +280,8 @@ public class FastRInterop {
     @RBuiltin(name = "import", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name"}, behavior = COMPLEX)
     public abstract static class Import extends RBuiltinNode.Arg1 {
 
+        @Child private Foreign2R foreign2R = Foreign2RNodeGen.create();
+
         static {
             Casts casts = new Casts(Import.class);
             casts.arg("name").mustBe(stringValue()).asStringVector().mustBe(singleElement()).findFirst();
@@ -291,7 +294,7 @@ public class FastRInterop {
             if (object == null) {
                 throw error(RError.Message.NO_IMPORT_OBJECT, name);
             }
-            return object;
+            return foreign2R.execute(object);
         }
     }
 

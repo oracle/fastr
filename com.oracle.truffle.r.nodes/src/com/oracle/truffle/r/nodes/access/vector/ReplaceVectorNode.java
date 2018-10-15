@@ -25,31 +25,22 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.AccessElementNode;
+import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.WriteElementsNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ExtractSingleName;
-import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode.ReadElementNode;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
-import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -61,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -258,91 +248,10 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         }
     }
 
-    protected FirstStringNode createFirstString() {
-        return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot corce position to character for foreign access.");
-    }
-
     @Specialization(guards = {"isForeignObject(object)"})
     protected Object accessField(TruffleObject object, Object[] positions, Object value,
-                    @Cached("createReadElement()") ReadElementNode readElement,
-                    @Cached("createWriteElement()") WriteElementNode writeElement,
-                    @Cached("create()") VectorLengthProfile lengthProfile) {
-        Object writtenValue = value;
-        try {
-            TruffleObject result = object;
-            for (int i = 0; i < lengthProfile.profile(positions.length) - 1; i++) {
-                result = (TruffleObject) readElement.execute(positions[i], result);
-            }
-            writeElement.execute(positions[positions.length - 1], result, writtenValue);
-            return object;
-        } catch (InteropException e) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.interopError(RError.findParentRBase(this), e, object);
-        }
-    }
-
-    protected static ReadElementNode createReadElement() {
-        return ExtractVectorNode.createReadElement();
-    }
-
-    protected static WriteElementNode createWriteElement() {
-        return new WriteElementNode();
-    }
-
-    static final class WriteElementNode extends AccessElementNode {
-
-        @Child private Node keyInfoNode;
-        @Child private Node foreignWrite = com.oracle.truffle.api.interop.Message.WRITE.createNode();
-        @Child private Node classForeignWrite;
-        @Child private R2Foreign r2Foreign = R2Foreign.create();
-        @Child private Node executeNode;
-        @Child private Node readNode;
-
-        private void execute(Object position, TruffleObject object, Object writtenValue) throws InteropException {
-            Object pos = extractPosition(position);
-            Object value = r2Foreign.execute(writtenValue);
-            if (keyInfoNode == null) {
-                try {
-                    ForeignAccess.sendWrite(foreignWrite, object, pos, value);
-                    return;
-                } catch (InteropException e) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    keyInfoNode = insert(com.oracle.truffle.api.interop.Message.KEY_INFO.createNode());
-                }
-            }
-            RContext context = RContext.getInstance();
-            TruffleLanguage.Env env = context.getEnv();
-            int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
-            if (KeyInfo.isWritable(info) || hasSize(object)) {
-                ForeignAccess.sendWrite(foreignWrite, object, pos, value);
-                return;
-            } else if (pos instanceof String && !KeyInfo.isExisting(info) && env.isHostObject(object) && !(env.asHostObject(object) instanceof Class)) {
-                if (classForeignWrite == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    classForeignWrite = insert(com.oracle.truffle.api.interop.Message.WRITE.createNode());
-                }
-                if (executeNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    executeNode = insert(com.oracle.truffle.api.interop.Message.EXECUTE.createNode());
-                }
-                if (readNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    readNode = insert(com.oracle.truffle.api.interop.Message.READ.createNode());
-                }
-                TruffleObject classStatic = context.toJavaStatic(object, readNode, executeNode);
-                try {
-                    ForeignAccess.sendWrite(classForeignWrite, classStatic, pos, value);
-                    return;
-                } catch (InteropException e) {
-                    if (KeyInfo.isWritable(ForeignAccess.sendKeyInfo(keyInfoNode, classStatic, pos))) {
-                        CompilerDirectives.transferToInterpreter();
-                        error(RError.Message.GENERIC, "error in foreign access: " + pos + " " + e.getMessage());
-                    }
-                }
-            }
-            CompilerDirectives.transferToInterpreter();
-            throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
-        }
+                    @Cached("create()") WriteElementsNode writeNode) {
+        return writeNode.execute(object, positions, value);
     }
 
     @SuppressWarnings("unused")

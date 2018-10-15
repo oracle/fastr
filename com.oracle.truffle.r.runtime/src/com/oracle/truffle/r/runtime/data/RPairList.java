@@ -68,7 +68,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  */
 public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
 
-    private static final RSymbol FUNCTION_SYMBOL = RSymbol.install("function");
+    private static final RSymbol FUNCTION_SYMBOL = RDataFactory.createSymbolInterned("function");
 
     /**
      * Data of the current pair list cell (can never be {@code null}).
@@ -184,7 +184,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
                 // for more details.
                 item = REmpty.instance;
             }
-            result = dataFactory.createPairList(item, result, names != null ? RSymbol.install(names.getDataAt(i)) : RNull.instance, SEXPTYPE.LISTSXP);
+            result = dataFactory.createPairList(item, result, names != null ? RDataFactory.createSymbolInterned(names.getDataAt(i)) : RNull.instance, SEXPTYPE.LISTSXP);
         }
         if (result != RNull.instance) {
             RPairList list = (RPairList) result;

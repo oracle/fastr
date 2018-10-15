@@ -281,7 +281,11 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     private RCaller getCaller(VirtualFrame frame, REnvironment environment) {
         if (environment instanceof REnvironment.Function) {
-            return RArguments.getCall(environment.getFrame());
+            // A copy of the original call must be made to reflect the current stack depth that is
+            // stored in the "depth" field of the caller. Otherwise the frame functions such as
+            // "sys.parents" or "sys.calls" would provide invalid results.
+            final RCaller origCall = RArguments.getCall(environment.getFrame());
+            return RCaller.createForFrame(frame, origCall);
         } else {
             return RCaller.create(frame, getOriginalCall());
         }

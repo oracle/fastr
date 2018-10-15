@@ -23,7 +23,10 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.IdentityHashMap;
+import java.util.Set;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -79,6 +82,8 @@ public abstract class RFFIContext extends RFFI {
      * added to it will be guaranteed to be preserved.
      */
     public final IdentityHashMap<RObject, AtomicInteger> preserveList = new IdentityHashMap<>();
+
+    private final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
 
     public abstract TruffleObject lookupNativeFunction(NativeFunction function);
 
@@ -142,6 +147,28 @@ public abstract class RFFIContext extends RFFI {
     @TruffleBoundary
     private void cooperativeGc() {
         protectedNativeReferences.clear();
+    }
+
+    /**
+     * Establish a weak relationship between an object and its owner to prevent a premature garbage
+     * collecting of the object. See <code>com.oracle.truffle.r.ffi.processor.RFFIResultOwner</code>
+     * for more commentary.
+     *
+     * Note: It is meant to be applied only on certain return values from upcalls.
+     *
+     * @param parent
+     * @param child
+     * @return the child
+     *
+     */
+    public final Object protectChild(Object parent, Object child) {
+        Set<Object> children = protectedChildren.get(parent);
+        if (children == null) {
+            children = new HashSet<>();
+            protectedChildren.put(parent, children);
+        }
+        children.add(child);
+        return child;
     }
 
     private RFFI instance;

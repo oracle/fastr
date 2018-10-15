@@ -444,6 +444,7 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[1];", "1");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[[1]];", "1");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[TRUE];", getRValue(new TestClass().fieldIntegerArray));
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[1]", getRValue(new int[]{1, 2, 3}));
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[[1]]", getRValue(new int[]{1, 2, 3}));
@@ -460,16 +461,55 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[1,2] <- 1234L; to$int2DimArray[1,2]", "1234");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$int2DimArray[[1,2]] <- 12345L; to$int2DimArray[[1,2]]", "12345");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to['fieldStringObject'] <- 'test'; to['fieldStringObject']", "'test'");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[TRUE] <- 0; to$fieldIntegerArray", "cat('[polyglot value]\n[1] 0 0 0\n')");
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[FALSE]", "integer(0)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " t1 <- to[TRUE]; identical(to, t1)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[FALSE]", "list()");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to['x']", errorIn("to[\"x\"]", "invalid index/identifier during foreign access: x"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[1]", errorIn("to[1]", "invalid index/identifier during foreign access: 0.0"));
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldIntegerArray[c(1, 5)]", errorIn("to$fieldIntegerArray[c(1, 5)]", "invalid index/identifier during foreign access: 4.0"));
     }
 
     @Test
-    public void testReadByVector() {
+    public void testReadByPositionsVector() {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)]", "c('a', 'c')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(c(1,2), c(3, 2))]", "c('a', 'b', 'c', 'b')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$hasNullIntArray[c(2, 3)]", "c(NA_integer_, 3L)");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)]", "c('a', 'c')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " t1 <- to[c(TRUE, FALSE)]; identical(to, t1)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c(FALSE, TRUE)]", "list()");
+
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TEST_ARRAYS + " ta$integerArray2[c(1,2), c(1,2)]", "just wrong");
 
         TestClass tc = new TestClass();
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldStringObject', 'fieldChar')]", "c('" + tc.fieldStringObject + "', '" + tc.fieldChar + "')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldStringObject', 'fieldInteger')]", "list('" + tc.fieldStringObject + "', " + tc.fieldInteger + ")");
+    }
+
+    @Test
+    public void testWriteByPositionsVector() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)] <- 'x'; to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"x\"\n')");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; ja[c(c(1, 3), c(5, 6))] <- 0; ja", "cat('[polyglot value]\n[1] 0 2 0 4 0 0\n')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)] <- c('x', 'x', 'x'); to$fieldStringArray",
+                        errorIn("to$fieldStringArray[c(1, 3)] <- c(\"x\", \"x\", \"x\")", "number of items to replace is not a multiple of replacement length"));
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldInteger', 'fieldDouble')] <- c(111L, 222); to['fieldInteger'] ", "111");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to[c('fieldInteger', 'fieldDouble')] <- c(111L, 222); to['fieldDouble'] ", "222");
+
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TEST_ARRAYS + " ta$integerArray2[c(1,2), c(1,2)] <- 1", "just wrong");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(1, 3)] <- c('x', 'y'); to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"y\"\n')");
+        assertEvalFastR("ja <- new(java.type('int[]'), 6); for(i in 1:6) ja[i] <- i; ja[c(1, 3, 5, 6)] <- c(8, 9); ja", "cat('[polyglot value]\n[1] 8 2 9 4 8 9\n')");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- 'x'; to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"x\"\n')");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- c('x', 'y'); to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"y\"\n" +
+                        errorIn("In to$fieldStringArray[c(TRUE, FALSE)] <- c(\"x\", \"y\")", "number of items to replace is not a multiple of replacement length", true, true) + "')");
     }
 
     @Test
@@ -648,9 +688,6 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$mixedObjectArray)", "list(1, 'a', '1')");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$mixedObjectArray2)", "l <- list('a', 1, 'b', 2, 'c', 3); dim(l) <- c(2, 3); l");
-        // TODO is this expected behaviour?
-        // the closesest would be as.list(matrix(c(1, NA, 2, NA, 3, NA), c(2,3)))
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.vector(ta$mixedObjectArray2)", "l <- list('a', 1, 'b', 2, 'c', 3); dim(l) <- c(2, 3); l");
 
         // TODO add tests for as.vector(ta$objectArray/2/3),
         // TODO add tests for as.list(ta$objectArray/2/3),
@@ -696,6 +733,8 @@ public class TestJavaInterop extends TestBase {
         result = "b2 <- c(T, T, F, F, T, T); i <- c(1,2,3); oa <- list(T, 'a', F, 'b', T, 'c'); dim(oa)  <- c(2, 3); list(b=b2, i=i, oa=oa, o=NULL)";
         assertEvalFastR("talc <- new('" + TestAsListClassMixed.class.getName() + "')" + "; as.list(talc)", result);
 
+        // TODO test for as.vector too
+        assertEvalFastR(Ignored.ImplementationError, "ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); as.list(ta$integerArray2x3x4x5)", "c(2, 3, 4, 5)");
     }
 
     @Test
@@ -877,6 +916,19 @@ public class TestJavaInterop extends TestBase {
             }
         }
         return sb.toString();
+    }
+
+    @Test
+    public void testDim() {
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray)", "NULL");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray2)", "c(2, 3)");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta$integerArray3)", "c(2, 2, 3)");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + " dim(ta)", "NULL");
+
+        assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); dim(ta$integerArray3NotSquare)", "NULL");
+        assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); dim(ta$integerArray2NotSquare)", "NULL");
+        assertEvalFastR("ta <- new('" + TestMultiDimArraysClass.class.getName() + "'); dim(ta$integerArray2x3x4x5)", "c(2, 3, 4, 5)");
     }
 
     @Test
@@ -1322,21 +1374,22 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testException() {
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException: msg"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException: msg"));
+                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
 
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')", errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: java.io.IOException"));
+        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')",
+                        errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
-                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: java.io.IOException: msg"));
+                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: java.lang.RuntimeException"));
+                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
         assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: java.lang.RuntimeException: msg"));
+                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: com.oracle.truffle.api.TruffleStackTrace$LazyStackTrace"));
     }
 
     private String getRValue(Object value) {
@@ -1521,11 +1574,22 @@ public class TestJavaInterop extends TestBase {
     }
 
     private static String errorIn(String left, String right) {
-        String errorIn = "Error in ";
+        return errorIn(left, right, false, false);
+    }
+
+    private static String errorIn(String left, String right, boolean warning, boolean onlyText) {
+        String errorIn;
+        if (warning) {
+            errorIn = "Warning message:\n";
+        } else {
+            errorIn = "Error in ";
+        }
         String delim = " :";
 
         StringBuilder sb = new StringBuilder();
-        sb.append("cat('");
+        if (!onlyText) {
+            sb.append("cat('");
+        }
         sb.append(errorIn);
         sb.append(left.replaceAll("\\'", "\\\\\\'"));
         sb.append(delim);
@@ -1534,7 +1598,10 @@ public class TestJavaInterop extends TestBase {
         }
         sb.append(' ');
         sb.append(right.replaceAll("\\'", "\\\\\\'"));
-        sb.append("', '\n')");
+        sb.append("', '\n");
+        if (!onlyText) {
+            sb.append("')");
+        }
         return sb.toString();
     }
 

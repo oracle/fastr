@@ -36,6 +36,7 @@ public final class NativeIntegerArray extends NativeArray<int[]> {
     }
 
     int read(int index) {
+        long nativeAddress = nativeAddress();
         if (nativeAddress != 0) {
             return UNSAFE.getInt(nativeAddress + index * Unsafe.ARRAY_INT_INDEX_SCALE);
         } else {
@@ -44,6 +45,7 @@ public final class NativeIntegerArray extends NativeArray<int[]> {
     }
 
     void write(int index, int nv) {
+        long nativeAddress = nativeAddress();
         if (nativeAddress != 0) {
             UNSAFE.putInt(nativeAddress + index * Unsafe.ARRAY_INT_INDEX_SCALE, nv);
         } else {
@@ -53,14 +55,15 @@ public final class NativeIntegerArray extends NativeArray<int[]> {
 
     @Override
     @TruffleBoundary
-    protected void allocateNative() {
-        nativeAddress = UNSAFE.allocateMemory(array.length * Unsafe.ARRAY_INT_INDEX_SCALE);
+    protected long allocateNative() {
+        long nativeAddress = UNSAFE.allocateMemory(array.length * Unsafe.ARRAY_INT_INDEX_SCALE);
         UNSAFE.copyMemory(array, Unsafe.ARRAY_INT_BASE_OFFSET, null, nativeAddress, array.length * Unsafe.ARRAY_INT_INDEX_SCALE);
+        return nativeAddress;
     }
 
     @Override
     @TruffleBoundary
-    public void copyBackFromNative() {
+    protected void copyBackFromNative(long nativeAddress) {
         // copy back
         UNSAFE.copyMemory(null, nativeAddress, array, Unsafe.ARRAY_INT_BASE_OFFSET, array.length * Unsafe.ARRAY_INT_INDEX_SCALE);
     }

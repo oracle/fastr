@@ -25,33 +25,24 @@ package com.oracle.truffle.r.nodes.access.vector;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.InteropException;
-import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.AccessForeignObjectNode.ReadElementsNode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNodeGen.ExtractSingleNameNodeGen;
 import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
-import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.FirstStringNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -59,17 +50,11 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
-import com.oracle.truffle.r.runtime.interop.ForeignTypeCheck;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
@@ -131,14 +116,6 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     protected static boolean isForeignObject(Object object) {
         return RRuntime.isForeignObject(object);
-    }
-
-    protected static FirstStringNode createFirstString() {
-        return FirstStringNode.createWithError(RError.Message.GENERIC, "Cannot coerce position to character for foreign access.");
-    }
-
-    protected boolean positionsByVector(Object[] positions) {
-        return positions.length == 1 && positions[0] instanceof RAbstractVector && ((RAbstractVector) positions[0]).getLength() > 1;
     }
 
     private boolean isRecursiveSubscript(Object vector, Object[] positions) {
@@ -277,154 +254,10 @@ public abstract class ExtractVectorNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"isForeignObject(object)", "positionsByVector(positions)"})
+    @Specialization(guards = {"isForeignObject(object)"})
     protected Object accessFieldByVectorPositions(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
-                    @Cached("createReadElement()") ReadElementNode readElement,
-                    @Cached("create()") Foreign2R foreign2RNode) {
-
-        RAbstractVector vec = (RAbstractVector) positions[0];
-        try {
-            ForeignTypeCheck typeCheck = new ForeignTypeCheck();
-            Object[] elements = new Object[vec.getLength()];
-            for (int i = 0; i < vec.getLength(); i++) {
-                Object res = readElement.execute(vec.getDataAtAsObject(i), object);
-                elements[i] = foreign2RNode.execute(res);
-                typeCheck.check(elements[i]);
-            }
-            return ConvertForeignObjectNode.asAbstractVector(elements, typeCheck.getType());
-        } catch (InteropException e) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.interopError(RError.findParentRBase(this), e, object);
-        }
-    }
-
-    @Specialization(guards = {"isForeignObject(object)", "!positionsByVector(positions)"})
-    protected Object accessField(TruffleObject object, Object[] positions, @SuppressWarnings("unused") Object exact, @SuppressWarnings("unused") Object dropDimensions,
-                    @Cached("createReadElement()") ReadElementNode readElement,
-                    @Cached("createClassProfile()") ValueProfile positionProfile,
-                    @Cached("create()") VectorLengthProfile lengthProfile,
-                    @Cached("create()") Foreign2R foreign2RNode) {
-        Object[] pos = positionProfile.profile(positions);
-        if (pos.length == 0) {
-            throw error(RError.Message.GENERIC, "No positions for foreign access.");
-        }
-        try {
-            Object result = object;
-            for (int i = 0; i < lengthProfile.profile(pos.length); i++) {
-                result = readElement.execute(pos[i], (TruffleObject) result);
-                assert !(pos.length > 1 && i < pos.length - 1) || result instanceof TruffleObject;
-            }
-            return foreign2RNode.execute(result);
-        } catch (InteropException | NoSuchFieldError e) {
-            CompilerDirectives.transferToInterpreter();
-            throw RError.interopError(RError.findParentRBase(this), e, object);
-        }
-    }
-
-    static ReadElementNode createReadElement() {
-        return new ReadElementNode();
-    }
-
-    abstract static class AccessElementNode extends RBaseNode {
-
-        @Child private Node hasSizeNode;
-        @Child private CastStringNode castNode;
-        @Child private FirstStringNode firstString;
-
-        private final ConditionProfile isIntProfile = ConditionProfile.createBinaryProfile();
-        private final ConditionProfile isDoubleProfile = ConditionProfile.createBinaryProfile();
-
-        protected final Object extractPosition(Object position) {
-            Object pos = position;
-            if (isIntProfile.profile(pos instanceof Integer)) {
-                pos = ((int) pos) - 1;
-            } else if (isDoubleProfile.profile(pos instanceof Double)) {
-                pos = ((double) pos) - 1;
-            } else if (pos instanceof RAbstractDoubleVector) {
-                RAbstractDoubleVector vector = (RAbstractDoubleVector) pos;
-                if (vector.getLength() == 0) {
-                    throw error(RError.Message.GENERIC, "invalid index during foreign access");
-                }
-                pos = vector.getDataAt(0) - 1;
-            } else if (pos instanceof RAbstractIntVector) {
-                RAbstractIntVector vector = (RAbstractIntVector) pos;
-                if (vector.getLength() == 0) {
-                    throw error(RError.Message.GENERIC, "invalid index during foreign access");
-                }
-                pos = vector.getDataAt(0) - 1;
-            } else if (pos instanceof RAbstractStringVector) {
-                if (castNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    castNode = insert(CastStringNode.create());
-                }
-                if (firstString == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    firstString = insert(createFirstString());
-                }
-                pos = firstString.executeString(castNode.doCast(pos));
-            } else if (!(pos instanceof String)) {
-                throw error(RError.Message.GENERIC, "invalid index during foreign access");
-            }
-            return pos;
-        }
-
-        protected final boolean hasSize(TruffleObject object) {
-            if (hasSizeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                hasSizeNode = insert(com.oracle.truffle.api.interop.Message.HAS_SIZE.createNode());
-            }
-            return ForeignAccess.sendHasSize(hasSizeNode, object);
-        }
-    }
-
-    static final class ReadElementNode extends AccessElementNode {
-
-        @Child private Node foreignRead = com.oracle.truffle.api.interop.Message.READ.createNode();
-        @Child private Node classForeignRead;
-        @Child private Node executeNode;
-        @Child private Node keyInfoNode;
-
-        public Object execute(Object position, TruffleObject object) throws InteropException {
-            Object pos = extractPosition(position);
-            if (keyInfoNode == null) {
-                try {
-                    return ForeignAccess.sendRead(foreignRead, object, pos);
-                } catch (InteropException e) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    keyInfoNode = insert(com.oracle.truffle.api.interop.Message.KEY_INFO.createNode());
-                }
-            }
-            RContext context = RContext.getInstance();
-            TruffleLanguage.Env env = context.getEnv();
-            int info = ForeignAccess.sendKeyInfo(keyInfoNode, object, pos);
-            if (KeyInfo.isReadable(info) || hasSize(object)) {
-                return ForeignAccess.sendRead(foreignRead, object, pos);
-            } else if (pos instanceof String && !KeyInfo.isExisting(info) && env.isHostObject(object) && !(env.asHostObject(object) instanceof Class)) {
-                if (classForeignRead == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    classForeignRead = insert(com.oracle.truffle.api.interop.Message.READ.createNode());
-                }
-                TruffleObject clazz = context.toJavaStatic(object, classForeignRead, getExecuteNode());
-                try {
-                    return ForeignAccess.sendRead(classForeignRead, clazz, pos);
-                } catch (InteropException e) {
-                    if (KeyInfo.isReadable(ForeignAccess.sendKeyInfo(keyInfoNode, clazz, pos))) {
-                        CompilerDirectives.transferToInterpreter();
-                        error(RError.Message.GENERIC, "error in foreign access: " + pos + " " + e.getMessage());
-                    }
-                }
-            }
-            CompilerDirectives.transferToInterpreter();
-            throw error(RError.Message.GENERIC, "invalid index/identifier during foreign access: " + pos);
-        }
-
-        private Node getExecuteNode() {
-            if (executeNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                executeNode = insert(com.oracle.truffle.api.interop.Message.EXECUTE.createNode());
-            }
-            return executeNode;
-        }
+                    @Cached("create()") ReadElementsNode readElements) {
+        return readElements.execute(object, positions);
     }
 
     @SuppressWarnings("unused")

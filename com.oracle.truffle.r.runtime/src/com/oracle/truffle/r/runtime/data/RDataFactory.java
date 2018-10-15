@@ -26,6 +26,7 @@ import java.util.Arrays;
 import java.util.Deque;
 import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.function.Function;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
@@ -618,7 +619,7 @@ public final class RDataFactory {
 
         public final RSymbol createSymbol(String name) {
             assert Utils.isInterned(name);
-            return traceDataCreated(RSymbol.install(name));
+            return RSymbol.install(name, getTraceDataCreatedLambda());
         }
 
         /*
@@ -1192,7 +1193,7 @@ public final class RDataFactory {
 
     public static RSymbol createSymbol(String name) {
         assert Utils.isInterned(name);
-        return traceDataCreated(RSymbol.install(name));
+        return RSymbol.install(name, getTraceDataCreatedLambda());
     }
 
     /*
@@ -1362,6 +1363,10 @@ public final class RDataFactory {
         stateAssumption = stateAssumption.setState(enabled);
     }
 
+    private static <T> Function<T, T> getTraceDataCreatedLambda() {
+        return stateAssumption.isEnabled() ? RDataFactory::reportDataCreated : null;
+    }
+
     private static <T> T traceDataCreated(T data) {
         if (stateAssumption.isEnabled()) {
             reportDataCreated(data);
@@ -1370,7 +1375,7 @@ public final class RDataFactory {
     }
 
     @TruffleBoundary
-    private static void reportDataCreated(Object data) {
+    private static <T> T reportDataCreated(T data) {
         if (allocationTracingEnabled) {
             RContext ctx = RContext.getInstance();
             assert ctx != null;
@@ -1384,6 +1389,7 @@ public final class RDataFactory {
         for (Listener listener : listeners) {
             listener.reportAllocation((RTypedValue) data);
         }
+        return data;
     }
 
     public interface Listener {

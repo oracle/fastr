@@ -25,6 +25,7 @@ package com.oracle.truffle.r.ffi.impl.upcalls;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
+import com.oracle.truffle.r.ffi.processor.RFFIResultOwner;
 
 public interface DLLUpCallsRFFI {
 
@@ -48,7 +49,7 @@ public interface DLLUpCallsRFFI {
      * @param fun a representation of the the C address of the function (in the table)
      * @param numArgs the number of arguments the function takes.
      */
-    Object setDotSymbolValues(Object dllInfo, @RFFICstring String name, @RFFICpointer Object fun, int numArgs);
+    Object setDotSymbolValues(Object dllInfo, @RFFICstring String name, @RFFIResultOwner @RFFICpointer Object fun, int numArgs);
 
     /**
      * Directly implements {@code R_useDynamicSymbols}.

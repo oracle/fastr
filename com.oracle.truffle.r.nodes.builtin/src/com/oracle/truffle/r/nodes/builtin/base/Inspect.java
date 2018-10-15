@@ -73,6 +73,7 @@ public abstract class Inspect extends RBuiltinNode.Arg2 {
     @Child private CastNode castPvecNode;
 
     @Specialization
+    @TruffleBoundary
     protected Object inspect(Object obj, RArgsValuesAndNames threeDots) {
         int deep = DEEP_DEFAULT;
         if (threeDots.getLength() > 0) {
