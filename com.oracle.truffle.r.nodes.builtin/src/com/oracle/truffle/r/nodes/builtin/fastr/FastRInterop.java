@@ -1129,7 +1129,7 @@ public class FastRInterop {
                 CompilerDirectives.transferToInterpreter();
                 Throwable cause = e.getCause();
                 if (cause instanceof TruffleException || cause.getCause() instanceof ClassNotFoundException) {
-                    cause = cause.getCause();
+                    cause = cause instanceof TruffleException ? RContext.getInstance().getEnv().asHostException(cause) : cause.getCause();
                     if (RRuntime.fromLogical(check)) {
                         String causeName = cause.getClass().getName();
                         String msg = cause.getMessage();
