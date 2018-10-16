@@ -53,7 +53,7 @@
 #define TARGsdd "%s(\"%s\", %d, %d)\n"
 
 #if TRACE_UPCALLS
-#define TRACE(format, ...) printf("%s " format "\n", __FUNCTION__, __VA_ARGS__)
+#define TRACE(format, ...) printf("" format "\n", __FUNCTION__, __VA_ARGS__)
 #define TRACE0() printf("%s\n", __FUNCTION__)
 #define TRACE1(x) printf("%s %p\n", __FUNCTION__, x)
 #define TRACE2(x, y) printf("%s %p %p\n", __FUNCTION__, x, y)
@@ -1138,7 +1138,7 @@ SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v) {
     TRACE0();
     SEXP result = ((call_SET_VECTOR_ELT) callbacks[SET_VECTOR_ELT_x])(x, i, v);
     checkExitCall();
-    return result;
+    return v;
 }
 
 SEXP *STRING_PTR(SEXP x) {

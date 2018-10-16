@@ -1,10 +1,9 @@
 # Limitations
 
 The long-term goal is for FastR to be a high-performance drop-in replacement for the reference implementation (open source GNU R). However, this is
-a challenging goal for a language and ecosystem as rich as R's. At the time of writing FastR implements almost the entire language, but many packages
+a challenging goal for a language and ecosystem as rich as R's. At the time of writing FastR implements almost the entire language, but some packages
 do not install or run correctly. For pure R packages this is generally due to incomplete implementations of the R builtin functions; either they are not
-implemented at all or some argument types are not accepted. In due course we expect to provide a web page listing the status of all the CRAN packages
-on FastR.
+implemented at all or some argument types are not accepted.
 
 ## Native Code
 

@@ -243,7 +243,11 @@ BitCount <- function(term) {
     sum(term)   
 }
 TermZero <- function(term) {
-    sum(term) == 0L
+	res <- sum(term) == 0L
+	if (is.na(res)) {
+		res <- TRUE
+	}
+	res
 }
 TermEqual <- function(term1, term2) {
     identical(term1, term2)
@@ -252,8 +256,12 @@ StripTerm <- function(term, list) {
     if (TermZero(term)) {
         intercept <<- FALSE
     }
-    filter <- mapply(function(otherTerm) {TermEqual(term, otherTerm)}, list)
-    return (list[filter])
+    if (length(list) == 0) {
+    	return (list)
+    } else {
+    	filter <- mapply(function(otherTerm) {TermEqual(term, otherTerm)}, list)
+	    return (list[filter])
+    } 
 }
 
 # TrimRepeats removes duplicates of (bit string) terms 

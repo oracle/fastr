@@ -72,7 +72,7 @@ public class FastRDebugTest {
     public void before() {
         suspendedEvent = null;
 
-        context = Context.newBuilder("R").allowNativeAccess(true).in(System.in).out(out).err(err).build();
+        context = Context.newBuilder("R").allowAllAccess(true).in(System.in).out(out).err(err).build();
         debugger = context.getEngine().getInstruments().get("debugger").lookup(Debugger.class);
         debuggerSession = debugger.startSession(event -> {
             suspendedEvent = event;
@@ -153,7 +153,7 @@ public class FastRDebugTest {
         assertExecutedOK();
 
         assertLocation(9, "nMinusOne = n - 1",
-                        "n", "2.0");
+                        "n", "2");
         continueExecution();
 
         final Source evalSrc = sourceFromText("main()\n", "test.r");
@@ -210,26 +210,26 @@ public class FastRDebugTest {
         assertLocation(2, "res = fac(2)");
         stepInto(2);
         assertLocation(9, "nMinusOne = n - 1",
-                        "n", 2.0);
+                        "n", 2);
         stepOver(1);
         assertLocation(10, "nMOFact = Recall(n - 1)",
-                        "n", 2.0,
-                        "nMinusOne", 1.0);
+                        "n", 2,
+                        "nMinusOne", 1);
         stepOver(1);
         assertLocation(11, "res = n * nMOFact",
-                        "n", 2.0, "nMinusOne", 1.0,
-                        "nMOFact", 1.0);
+                        "n", 2, "nMinusOne", 1,
+                        "nMOFact", 1);
         assertMetaObjectsOrStringValues(factorial, true, "n", "double", "nMOFact", "double", "nMinusOne", "double");
         stepOver(1);
         assertLocation(12, "res",
-                        "n", 2.0,
-                        "nMinusOne", 1.0,
-                        "nMOFact", 1.0,
-                        "res", 2.0);
+                        "n", 2,
+                        "nMinusOne", 1,
+                        "nMOFact", 1,
+                        "res", 2);
         stepOver(1);
         assertLocation(2, "fac(2)");
         stepOver(1);
-        assertLocation(3, "res", "res", 2.0);
+        assertLocation(3, "res", "res", 2);
         stepOut();
 
         // Init before eval:
@@ -263,7 +263,7 @@ public class FastRDebugTest {
 
         stepInto(1);
         stepOver(3);
-        assertLocation(5, "i <- i + 1L", "i", 3, "n", 15.0, "str", "hello");
+        assertLocation(5, "i <- i + 1L", "i", "3L", "n", "15", "str", "\"hello\"");
         assertMetaObjectsOrStringValues(source, true, "i", "integer", "n", "double", "str", "character");
         stepOut();
         performWork();
@@ -297,21 +297,21 @@ public class FastRDebugTest {
             debuggerSession.suspendNextExecution();
         });
 
-        assertLocation(1, "main()", "x", 10, "ab", 10, "main", srcFunMain.getCharacters());
+        assertLocation(1, "main()", "x", "10L", "ab", "10L", "main", srcFunMain.getCharacters());
         stepInto(1);
         assertLocation(4, "i = 3L");
         stepOver(1);
-        assertLocation(5, "n = 15L", "i", 3);
+        assertLocation(5, "n = 15L", "i", "3L");
         stepOver(1);
-        assertLocation(6, "str = \"hello\"", "i", 3, "n", 15);
+        assertLocation(6, "str = \"hello\"", "i", "3L", "n", "15L");
         stepOver(1);
-        assertLocation(7, "i <- i + 1L", "i", 3, "n", 15, "str", "hello");
+        assertLocation(7, "i <- i + 1L", "i", "3L", "n", "15L", "str", "\"hello\"");
         stepOver(1);
-        assertLocation(8, "ab <<- i", "i", 4, "n", 15, "str", "hello");
+        assertLocation(8, "ab <<- i", "i", "4L", "n", "15L", "str", "\"hello\"");
         stepOver(1);
-        assertScope(9, "i", true, false, "ab", 4, "x", 4);
+        assertScope(9, "i", true, false, "ab", "4L", "x", "4L");
         stepOut();
-        assertLocation(1, "main()", "x", 4, "ab", 4, "main", srcFunMain.getCharacters());
+        assertLocation(1, "main()", "x", "4L", "ab", "4L", "main", srcFunMain.getCharacters());
         performWork();
 
         final Source evalSource = sourceFromText("main()\n", "evaltest.r");
@@ -345,12 +345,12 @@ public class FastRDebugTest {
         stepOver(1);
         stepInto(1);
         stepOver(1);
-        assertScope(3, "e()", false, false, "x", 10);
+        assertScope(3, "e()", false, false, "x", "10L");
         stepInto(1);
         assertLocation(7, "x <<- 123L");
-        assertScope(7, "x <<- 123L", true, false, "x", 0);
+        assertScope(7, "x <<- 123L", true, false, "x", "0L");
         stepOver(1);
-        assertScope(8, "x", true, false, "x", 123);
+        assertScope(8, "x", true, false, "x", "123L");
         continueExecution();
         performWork();
 
@@ -383,7 +383,7 @@ public class FastRDebugTest {
         assertArguments(1, "main(1, 2, 3, 4)");
 
         stepInto(1);
-        assertArguments(2, "x <- 10L", "a", "1.0", "b", "2.0", "c", "3.0", "d", "4.0");
+        assertArguments(2, "x <- 10L", "a", "1", "b", "2", "c", "3", "d", "4");
         continueExecution();
         performWork();
 
@@ -418,16 +418,16 @@ public class FastRDebugTest {
         stepOver(1);
         stepInto(1);
         stepOver(2);
-        assertScope(4, "e()", false, false, "x", 10);
+        assertScope(4, "e()", false, false, "x", "10L");
         stepInto(1);
         assertLocation(8, "x <<- 123L");
-        assertScope(8, "x <<- 123L", true, false, "x", 10);
+        assertScope(8, "x <<- 123L", true, false, "x", "10L");
         stepOver(1);
         stepOut();
-        assertScope(9, "x", false, false, "x", 123);
+        assertScope(9, "x", false, false, "x", "123L");
         assertIdentifiers(false, "x", "e");
         stepOut();
-        assertScope(9, "x", false, false, "x", 0);
+        assertScope(9, "x", false, false, "x", "0L");
         continueExecution();
         performWork();
 
@@ -516,17 +516,17 @@ public class FastRDebugTest {
             debuggerSession.install(Breakpoint.newBuilder(DebuggerTester.getSourceImpl(source)).lineIs(6).build());
         });
 
-        assertArguments(6, "x <- n + m", "n", "<unevaluated>", "m", "20.0");
-        assertScope(6, "x <- n + m", false, true, "n", "<unevaluated>", "m", "20.0");
+        assertArguments(6, "x <- n + m", "n", "<unevaluated>", "m", "20");
+        assertScope(6, "x <- n + m", false, true, "n", "<unevaluated>", "m", "20");
         stepOver(4);
-        assertArguments(10, "x", "n", "9.0", "m", "10.0");
-        assertScope(10, "x", false, true, "n", "9.0", "m", "10.0", "x", "121.0");
+        assertArguments(10, "x", "n", "9", "m", "10");
+        assertScope(10, "x", false, true, "n", "9", "m", "10", "x", "121");
         run.addLast(() -> suspendedEvent.prepareUnwindFrame(suspendedEvent.getTopStackFrame()));
         assertArguments(3, "return fnc(i <- i + 1, 20)");
-        assertScope(3, "return fnc(i <- i + 1, 20)", false, true, "i", "11.0");
+        assertScope(3, "return fnc(i <- i + 1, 20)", false, true, "i", "11");
         continueExecution();
-        assertArguments(6, "x <- n + m", "n", "11.0", "m", "20.0");
-        assertScope(6, "x <- n + m", false, true, "n", "11.0", "m", "20.0");
+        assertArguments(6, "x <- n + m", "n", "11", "m", "20");
+        assertScope(6, "x <- n + m", false, true, "n", "11", "m", "20");
         continueExecution();
 
         performWork();

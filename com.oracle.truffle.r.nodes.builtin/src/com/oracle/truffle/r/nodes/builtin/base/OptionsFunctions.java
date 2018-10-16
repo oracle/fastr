@@ -156,9 +156,11 @@ public class OptionsFunctions {
                     } else {
                         throw error(Message.INVALID_UNNAMED_ARGUMENT);
                     }
-                    Object optionVal = options.getValue(optionName);
-                    data.add(optionVal == null ? RNull.instance : optionVal);
-                    names.add(optionName);
+                    if (optionName != null) {
+                        Object optionVal = options.getValue(optionName);
+                        data.add(optionVal == null ? RNull.instance : optionVal);
+                        names.add(optionName);
+                    }
                 } else {
                     // setting
                     Object previousVal = options.getValue(argName);

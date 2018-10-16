@@ -170,6 +170,8 @@ public final class FFIProcessor extends AbstractProcessor {
         List<? extends VariableElement> params = m.getParameters();
         StringBuilder arguments = new StringBuilder();
         StringBuilder unwrapNodes = new StringBuilder();
+        StringBuilder unwrappedArgs = new StringBuilder();
+        CharSequence resultOwnerRHS = null;
         boolean needsUnwrapImport = false;
         for (int i = 0; i < params.size(); i++) {
             if (i != 0) {
@@ -179,6 +181,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
             RFFICpointer[] pointerAnnotations = params.get(i).getAnnotationsByType(RFFICpointer.class);
             RFFICstring[] stringAnnotations = params.get(i).getAnnotationsByType(RFFICstring.class);
+            RFFIResultOwner[] resultOwnerAnnotations = params.get(i).getAnnotationsByType(RFFIResultOwner.class);
 
             String paramName = params.get(i).getSimpleName().toString();
             String paramTypeName = getTypeName(paramType);
@@ -191,13 +194,20 @@ public final class FFIProcessor extends AbstractProcessor {
                 arguments.append('(').append(paramTypeName).append(") ");
             }
             needsUnwrapImport |= needsUnwrap;
+            unwrappedArgs.append("                    final Object ").append(paramName).append("Unwrapped = ");
             if (needsUnwrap) {
-                arguments.append(paramName).append("Unwrap").append(".execute(");
                 unwrapNodes.append("                @Child private FFIUnwrapNode ").append(paramName).append("Unwrap").append(" = FFIUnwrapNode.create();\n");
+                unwrappedArgs.append(paramName).append("Unwrap").append(".execute(");
             }
-            arguments.append("arguments.get(").append(i).append(")");
+            unwrappedArgs.append("arguments.get(").append(i).append(")");
+            arguments.append(paramName).append("Unwrapped");
             if (needsUnwrap) {
-                arguments.append(')');
+                unwrappedArgs.append(')');
+            }
+            unwrappedArgs.append(";\n");
+
+            if (resultOwnerAnnotations.length > 0) {
+                resultOwnerRHS = new StringBuilder(paramName).append("Unwrapped");
             }
         }
 
@@ -319,17 +329,20 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    }\n");
         w.append("                    RFFIContext ctx = RContext.getInstance().getStateRFFI();\n");
         if (returnKind != TypeKind.VOID) {
+            w.append("                    Object resultRObj0;\n");
             w.append("                    Object resultRObj;\n");
         }
         w.append("                    ctx.beforeUpcall(" + canRunGc + ");\n");
+        w.append(unwrappedArgs);
+        if (resultOwnerRHS != null) {
+            StringBuilder resultOwner = new StringBuilder("                    Object resultOwner = ").append(resultOwnerRHS).append(";\n");
+            w.append(resultOwner);
+        }
         w.append("                    try {\n");
         if (returnKind == TypeKind.VOID) {
             w.append("                        ");
         } else {
-            w.append("                        resultRObj = ");
-        }
-        if (needsReturnWrap) {
-            w.append("returnWrap.execute(");
+            w.append("                        resultRObj0 = ");
         }
         if (nodeClass != null) {
             w.append("node.executeObject");
@@ -340,11 +353,28 @@ public final class FFIProcessor extends AbstractProcessor {
         if (useFrame) {
             w.append("frame, ");
         }
-        w.append(arguments).append(")");
-        if (needsReturnWrap) {
-            w.append(");\n");
+        w.append(arguments).append(");\n");
+
+        if (returnKind != TypeKind.VOID) {
+            w.append("                        resultRObj = ");
+            if (needsReturnWrap) {
+                w.append("returnWrap.execute(");
+            }
+            w.append("resultRObj0");
+            if (needsReturnWrap) {
+                w.append(");\n");
+            } else {
+                w.append(";\n");
+            }
+        }
+        if (resultOwnerRHS != null) {
+            w.append("                        ctx.protectChild(resultOwner, resultRObj);\n");
         } else {
-            w.append(";\n");
+            if (returnKind != TypeKind.VOID) {
+                w.append("                        if (resultRObj0 != resultRObj) {\n");
+                w.append("                            ctx.protectChild(resultRObj0, resultRObj);\n");
+                w.append("                        }\n");
+            }
         }
         w.append("                    } catch (Throwable ex) {\n");
         w.append("                        CompilerDirectives.transferToInterpreter();\n");

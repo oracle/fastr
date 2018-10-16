@@ -48,6 +48,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.env.frame.REnvFrameAccess;
 import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
+import com.oracle.truffle.r.runtime.interop.Foreign2R;
+import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 /**
  * Represents a variable scope for external tools like a debugger.<br>
@@ -211,6 +213,8 @@ public final class RScope {
 
         protected abstract String[] collectArgs();
 
+        protected abstract Object getArgument(String name);
+
         @MessageResolution(receiverType = VariablesObject.class)
         static final class VariablesMessageResolution {
 
@@ -247,6 +251,7 @@ public final class RScope {
 
             @Resolve(message = "READ")
             abstract static class VarsMapReadNode extends Node {
+                @Child private R2Foreign r2Foreign = R2Foreign.create();
 
                 @TruffleBoundary
                 public Object access(VariablesObject varMap, String name) {
@@ -254,18 +259,23 @@ public final class RScope {
                         throw UnsupportedMessageException.raise(Message.READ);
                     }
                     Object value = varMap.frameAccess.get(name);
+                    if (value == null) {
+                        // internal builtin argument?
+                        value = ((EnvVariablesObject) varMap).getArgument(name);
+                    }
 
                     // If Java-null is returned, the identifier does not exist !
                     if (value == null) {
                         throw UnknownIdentifierException.raise(name);
                     } else {
-                        return getInteropValue(value);
+                        return r2Foreign.execute(getInteropValue(value));
                     }
                 }
             }
 
             @Resolve(message = "WRITE")
             abstract static class VarsMapWriteNode extends Node {
+                @Child private Foreign2R foreign2R = Foreign2R.create();
 
                 @TruffleBoundary
                 public Object access(VariablesObject varMap, String name, Object value) {
@@ -273,7 +283,7 @@ public final class RScope {
                         throw UnsupportedMessageException.raise(Message.WRITE);
                     }
                     try {
-                        varMap.frameAccess.put(name, value);
+                        varMap.frameAccess.put(name, foreign2R.execute(value));
                         return value;
                     } catch (PutException e) {
                         throw RInternalError.shouldNotReachHere(e);
@@ -294,7 +304,6 @@ public final class RScope {
 
         @Override
         protected String[] collectArgs() {
-
             if (env != REnvironment.emptyEnv()) {
                 assert RArguments.isRFrame(env.getFrame());
                 RFunction f = RArguments.getFunction(env.getFrame());
@@ -312,6 +321,27 @@ public final class RScope {
             }
             return new String[0];
         }
+
+        @Override
+        public Object getArgument(String name) {
+            if (env != REnvironment.emptyEnv()) {
+                assert RArguments.isRFrame(env.getFrame());
+                RFunction f = RArguments.getFunction(env.getFrame());
+                ArgumentsSignature signature;
+                if (f != null) {
+                    signature = RContext.getRRuntimeASTAccess().getArgumentsSignature(f);
+                } else {
+                    signature = RArguments.getSuppliedSignature(env.getFrame());
+                }
+                for (int i = 0; i < signature.getLength(); i++) {
+                    if (name.equals(signature.getName(i))) {
+                        return RArguments.getArgument(env.getFrame(), i);
+                    }
+                }
+            }
+            return null;
+        }
+
     }
 
     static final class GenericVariablesObject extends VariablesObject {
@@ -324,6 +354,12 @@ public final class RScope {
         protected String[] collectArgs() {
             return new String[0];
         }
+
+        @Override
+        protected Object getArgument(String name) {
+            return null;
+        }
+
     }
 
     static final class ArgumentNamesObject implements TruffleObject {

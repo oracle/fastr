@@ -139,7 +139,7 @@ public final class Closure {
     }
 
     /**
-     * Evaluates this clousure in {@code envir} using caller {@code caller}.
+     * Evaluates this closure in {@code envir} using caller {@code caller}.
      */
     public Object eval(REnvironment envir, RCaller caller) {
         CompilerAsserts.neverPartOfCompilation();
