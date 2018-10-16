@@ -221,12 +221,7 @@ public final class RError extends RuntimeException implements TruffleException {
                 // will be catched and handled in .fastr.interop.try builtin
                 throw new FastRInteropTryException(e);
             } else {
-                Throwable cause = e.getCause();
-                // TODO
-                // - e.getCause() seems to work for java, but how to inspect guest lang exceptions
-                // - stacktrace in log or console?
-                // Object eo = ((TruffleException) e).getExceptionObject() ?
-
+                Throwable cause = e instanceof TruffleException ? RContext.getInstance().getEnv().asHostException(e) : e.getCause();
                 String clsName = cause.getClass().getName();
                 String msg = cause.getMessage();
                 msg = msg != null ? String.format("Foreign function failed: %s: %s", clsName, msg) : String.format("Foreign function failed: %s", clsName);
