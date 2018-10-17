@@ -96,7 +96,7 @@ public abstract class PrecedenceNode extends RBaseNode {
 
     @Specialization
     @SuppressWarnings("unused")
-    protected int doCharSXPWrapper(CharSXPWrapper func, boolean recursive) {
+    protected int doCharSXPWrapper(CharSXPWrapper charsxp, boolean recursive) {
         return LIST_PRECEDENCE;
     }
 

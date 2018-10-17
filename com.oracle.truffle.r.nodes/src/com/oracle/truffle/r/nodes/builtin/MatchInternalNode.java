@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.builtin;
 
+import java.util.Arrays;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -30,7 +32,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
@@ -51,7 +52,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
-import java.util.Arrays;
 
 public abstract class MatchInternalNode extends RBaseNode {
 
@@ -455,9 +455,9 @@ public abstract class MatchInternalNode extends RBaseNode {
     @Specialization(guards = {"x.getLength() == 1", "isCharSXP(x)", "isCharSXP(table)"})
     @CompilerDirectives.TruffleBoundary
     protected int matchSizeOne(RList x, RList table, int nomatch,
-                               @Cached("create()") NAProfile naProfile,
-                               @Cached("create()") BranchProfile foundProfile,
-                               @Cached("create()") BranchProfile notFoundProfile) {
+                    @Cached("create()") NAProfile naProfile,
+                    @Cached("create()") BranchProfile foundProfile,
+                    @Cached("create()") BranchProfile notFoundProfile) {
         Object data = x.getDataAt(0);
         Object tableData;
 
