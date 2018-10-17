@@ -1,3 +1,12 @@
+# 1.0 RC 8
+
+Bug fixes
+
+* slot (`@`) was not working with foreign arrays
+* memory leak when invoking some native functions
+* one `symbol` was reported multiple times to the memory profiler
+* maintain the same ownership relation between SEXPs as GNU-R does to prevent an unexpected collection of some SEXPs
+
 # 1.0 RC 7
 
 API changes
