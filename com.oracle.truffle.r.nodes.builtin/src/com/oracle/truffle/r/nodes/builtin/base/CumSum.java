@@ -99,7 +99,7 @@ public abstract class CumSum extends RBuiltinNode.Arg1 {
         return RDataFactory.createIntVector(new int[0], true, extractNamesNode.execute(x));
     }
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected RIntVector cumsumInt(RAbstractIntVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {

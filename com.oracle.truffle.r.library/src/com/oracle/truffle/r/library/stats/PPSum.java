@@ -23,11 +23,13 @@
 package com.oracle.truffle.r.library.stats;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.library.stats.PPSumFactory.IntgrtVecNodeGen;
 import com.oracle.truffle.r.library.stats.PPSumFactory.PPSumExternalNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -36,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 
 public abstract class PPSum {
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class PPSumExternal extends RExternalBuiltinNode.Arg2 {
         static {
             Casts casts = new Casts(PPSumExternal.class);
@@ -43,7 +46,7 @@ public abstract class PPSum {
             casts.arg(1).asIntegerVector().findFirst();
         }
 
-        @Specialization(guards = "uAccess.supports(u)")
+        @Specialization(guards = {"uAccess.supports(u)", "LIMIT_1_GUARD"})
         protected RDoubleVector doPPSum(RAbstractDoubleVector u, int sl,
                         @Cached("create()") VectorFactory factory,
                         @Cached("u.access()") VectorAccess uAccess) {

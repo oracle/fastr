@@ -28,12 +28,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.SplitNodeGen.GetSplitNamesNodeGen;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -55,6 +57,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * TODO: GNU R preserves the corresponding values of names attribute. There are (ignored) tests for
  * this in TestBuiltin_split.
  */
+@ImportStatic(DSLConfig.class)
 @RBuiltin(name = "split", kind = INTERNAL, parameterNames = {"x", "f"}, behavior = PURE)
 public abstract class Split extends RBuiltinNode.Arg2 {
 
@@ -279,7 +282,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
         protected abstract void execute(VectorAccess fAccess, SequentialIterator fIter, RStringVector names, String[][] namesArr, int[] resultNamesIdxs);
 
-        @Specialization(guards = "namesAccess.supports(names)")
+        @Specialization(guards = {"namesAccess.supports(names)", "LIMIT_1_GUARD"})
         protected void fillNames(VectorAccess fAccess, SequentialIterator fIter, RStringVector names, String[][] namesArr, int[] resultNamesIdxs,
                         @Cached("names.access()") VectorAccess namesAccess) {
             try (SequentialIterator namesIter = namesAccess.access(names)) {

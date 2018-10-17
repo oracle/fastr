@@ -68,7 +68,7 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
         return RDataFactory.createEmptyDoubleVector();
     }
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = {"xAccess.supports(x)", "LIMIT_1_GUARD"})
     protected RDoubleVector cumprodDouble(RAbstractDoubleVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {
@@ -97,7 +97,7 @@ public abstract class CumProd extends RBuiltinNode.Arg1 {
         return cumprodDouble(x, x.slowPathAccess());
     }
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = {"xAccess.supports(x)", "LIMIT_1_GUARD"})
     protected RComplexVector cumprodComplex(RAbstractComplexVector x,
                     @Cached("x.access()") VectorAccess xAccess) {
         try (SequentialIterator iter = xAccess.access(x)) {

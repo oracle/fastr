@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractD
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -51,7 +52,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
-@ImportStatic(RRuntime.class)
+@ImportStatic({RRuntime.class, DSLConfig.class})
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class IsNA extends RBuiltinNode.Arg1 {
 
@@ -147,7 +148,7 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
         }
     }
 
-    @Specialization(guards = "access.supports(vector)")
+    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
     protected RLogicalVector isNACached(RAbstractVector vector,
                     @Cached("vector.access()") VectorAccess access) {
         return isNAVector(vector, access);

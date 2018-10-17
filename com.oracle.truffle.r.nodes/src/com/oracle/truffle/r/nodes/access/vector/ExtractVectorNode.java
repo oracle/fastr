@@ -43,10 +43,10 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -180,6 +180,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         return recursiveExtract.execute(dataSlot, positions, exact, dropDimensions);
     }
 
+    @ImportStatic(DSLConfig.class)
     abstract static class ExtractSingleName extends Node {
 
         public abstract String execute(Object value);
@@ -193,7 +194,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
             return value;
         }
 
-        @Specialization(guards = "access.supports(value)")
+        @Specialization(guards = {"access.supports(value)", "LIMIT_1_GUARD"})
         protected static String extractCached(RAbstractStringVector value,
                         @Cached("value.access()") VectorAccess access) {
             try (RandomIterator iter = access.randomAccess(value)) {

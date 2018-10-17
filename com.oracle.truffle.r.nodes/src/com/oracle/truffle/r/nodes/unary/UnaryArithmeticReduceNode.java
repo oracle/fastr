@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -60,7 +61,7 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  *
  * FastR handles finite consistently (setting na.rm = TRUE if finite = TRUE) in the range builtin.
  */
-@ImportStatic({RRuntime.class})
+@ImportStatic({RRuntime.class, DSLConfig.class})
 @TypeSystemReference(RTypes.class)
 public abstract class UnaryArithmeticReduceNode extends RBaseNode {
 
@@ -248,7 +249,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = "access.supports(vector)")
+    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
     protected Object doIntCached(RAbstractIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
                     @Cached("vector.access()") VectorAccess access) {
         return doInt(vector, naRm, access);
@@ -259,7 +260,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return doInt(vector, naRm, vector.slowPathAccess());
     }
 
-    @Specialization(guards = "access.supports(vector)")
+    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
     protected Object doLogicalCached(RAbstractLogicalVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
                     @Cached("vector.access()") VectorAccess access) {
         return doInt(vector, naRm, access);
@@ -302,7 +303,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = "access.supports(vector)")
+    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
     protected double doDoubleCached(RAbstractDoubleVector vector, boolean naRm, boolean finite,
                     @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile,
