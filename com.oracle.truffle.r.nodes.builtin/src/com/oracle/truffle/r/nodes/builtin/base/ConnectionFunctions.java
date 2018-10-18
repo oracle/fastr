@@ -1072,7 +1072,7 @@ public abstract class ConnectionFunctions {
             return s.getBytes(StandardCharsets.UTF_8);
         }
 
-        @Specialization(guards = {"objectAccess.supports(object)", "LIMIT_1_GUARD"})
+        @Specialization(guards = "objectAccess.supports(object)", limit = "getVectorAccessCacheSize()")
         protected ByteBuffer write(RAbstractVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes,
                         @Cached("object.access()") VectorAccess objectAccess) {
             try (SequentialIterator iter = objectAccess.access(object)) {

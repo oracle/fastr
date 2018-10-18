@@ -282,7 +282,7 @@ public abstract class Split extends RBuiltinNode.Arg2 {
 
         protected abstract void execute(VectorAccess fAccess, SequentialIterator fIter, RStringVector names, String[][] namesArr, int[] resultNamesIdxs);
 
-        @Specialization(guards = {"namesAccess.supports(names)", "LIMIT_1_GUARD"})
+        @Specialization(guards = "namesAccess.supports(names)", limit = "getVectorAccessCacheSize()")
         protected void fillNames(VectorAccess fAccess, SequentialIterator fIter, RStringVector names, String[][] namesArr, int[] resultNamesIdxs,
                         @Cached("names.access()") VectorAccess namesAccess) {
             try (SequentialIterator namesIter = namesAccess.access(names)) {

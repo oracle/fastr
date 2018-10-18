@@ -194,7 +194,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
             return value;
         }
 
-        @Specialization(guards = {"access.supports(value)", "LIMIT_1_GUARD"})
+        @Specialization(guards = "access.supports(value)", limit = "getVectorAccessCacheSize()")
         protected static String extractCached(RAbstractStringVector value,
                         @Cached("value.access()") VectorAccess access) {
             try (RandomIterator iter = access.randomAccess(value)) {

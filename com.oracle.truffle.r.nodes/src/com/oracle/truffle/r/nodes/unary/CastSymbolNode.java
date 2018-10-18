@@ -110,7 +110,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
         return asSymbol(value);
     }
 
-    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RSymbol doVector(RAbstractAtomicVector vector,
                     @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
                     @Cached("vector.access()") VectorAccess access) {

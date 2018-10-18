@@ -81,7 +81,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         return RError.SHOW_CALLER;
     }
 
-    @Specialization(guards = {"probsAccess.supports(probs)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "probsAccess.supports(probs)", limit = "getVectorAccessCacheSize()")
     protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probs,
                     @Cached("probs.access()") VectorAccess probsAccess) {
         try (SequentialIterator probsIter = probsAccess.access(probs)) {

@@ -148,7 +148,7 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
         }
     }
 
-    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RLogicalVector isNACached(RAbstractVector vector,
                     @Cached("vector.access()") VectorAccess access) {
         return isNAVector(vector, access);

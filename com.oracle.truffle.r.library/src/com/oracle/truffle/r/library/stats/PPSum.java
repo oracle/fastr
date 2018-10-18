@@ -46,7 +46,7 @@ public abstract class PPSum {
             casts.arg(1).asIntegerVector().findFirst();
         }
 
-        @Specialization(guards = {"uAccess.supports(u)", "LIMIT_1_GUARD"})
+        @Specialization(guards = "uAccess.supports(u)", limit = "getVectorAccessCacheSize()")
         protected RDoubleVector doPPSum(RAbstractDoubleVector u, int sl,
                         @Cached("create()") VectorFactory factory,
                         @Cached("u.access()") VectorAccess uAccess) {

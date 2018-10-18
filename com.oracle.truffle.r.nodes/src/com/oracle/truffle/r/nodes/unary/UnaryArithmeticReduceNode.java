@@ -249,7 +249,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected Object doIntCached(RAbstractIntVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
                     @Cached("vector.access()") VectorAccess access) {
         return doInt(vector, naRm, access);
@@ -260,7 +260,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return doInt(vector, naRm, vector.slowPathAccess());
     }
 
-    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected Object doLogicalCached(RAbstractLogicalVector vector, boolean naRm, @SuppressWarnings("unused") boolean finite,
                     @Cached("vector.access()") VectorAccess access) {
         return doInt(vector, naRm, access);
@@ -303,7 +303,7 @@ public abstract class UnaryArithmeticReduceNode extends RBaseNode {
         return result;
     }
 
-    @Specialization(guards = {"access.supports(vector)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected double doDoubleCached(RAbstractDoubleVector vector, boolean naRm, boolean finite,
                     @Cached("createBinaryProfile()") ConditionProfile finiteProfile,
                     @Cached("createBinaryProfile()") ConditionProfile isInfiniteProfile,

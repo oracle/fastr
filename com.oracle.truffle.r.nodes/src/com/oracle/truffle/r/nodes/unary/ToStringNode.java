@@ -185,7 +185,7 @@ public abstract class ToStringNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = {"vectorAccess.supports(vector)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "vectorAccess.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected String toStringVectorCached(RAbstractVector vector, String separator,
                     @Cached("vector.access()") VectorAccess vectorAccess) {
         return vectorToString(vector, separator, vectorAccess);

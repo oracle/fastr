@@ -109,7 +109,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = {"xAccess.supports(x)", "LIMIT_1_GUARD"})
+    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected byte anyNACached(RAbstractAtomicVector x, @SuppressWarnings("unused") boolean recursive,
                     @Cached("x.access()") VectorAccess xAccess) {
         switch (xAccess.getType()) {
