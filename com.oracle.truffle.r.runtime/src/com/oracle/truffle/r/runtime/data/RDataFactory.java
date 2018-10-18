@@ -996,7 +996,7 @@ public final class RDataFactory {
     }
 
     public static RIntSequence createDescendingRange(int start, int end) {
-        assert start > end;
+        assert start >= end;
         return traceDataCreated(new RIntSequence(start, -1, start - end + 1));
     }
 
@@ -1004,14 +1004,21 @@ public final class RDataFactory {
         return traceDataCreated(new RIntSequence(start, stride, length));
     }
 
+    private static final double FLT_EPSILON = 1.19209290e-7;
+
+    private static int effectiveLength(double start, double end) {
+        double r = Math.abs(end - start);
+        return (int) (r + 1 + FLT_EPSILON);
+    }
+
     public static RDoubleSequence createAscendingRange(double start, double end) {
         assert start <= end;
-        return traceDataCreated(new RDoubleSequence(start, 1, (int) ((end - start) + 1)));
+        return traceDataCreated(new RDoubleSequence(start, 1, effectiveLength(start, end)));
     }
 
     public static RDoubleSequence createDescendingRange(double start, double end) {
         assert start > end;
-        return traceDataCreated(new RDoubleSequence(start, -1, (int) ((start - end) + 1)));
+        return traceDataCreated(new RDoubleSequence(start, -1, effectiveLength(start, end)));
     }
 
     public static RDoubleSequence createDoubleSequence(double start, double stride, int length) {

@@ -28,10 +28,12 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -52,6 +54,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+@ImportStatic(DSLConfig.class)
 @TypeSystemReference(RTypes.class)
 public abstract class ToStringNode extends RBaseNode {
 
@@ -182,7 +185,7 @@ public abstract class ToStringNode extends RBaseNode {
         }
     }
 
-    @Specialization(guards = "vectorAccess.supports(vector)")
+    @Specialization(guards = "vectorAccess.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected String toStringVectorCached(RAbstractVector vector, String separator,
                     @Cached("vector.access()") VectorAccess vectorAccess) {
         return vectorToString(vector, separator, vectorAccess);

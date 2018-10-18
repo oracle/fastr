@@ -25,8 +25,10 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -41,6 +43,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
+@ImportStatic(DSLConfig.class)
 public abstract class CastSymbolNode extends CastBaseNode {
 
     @Child private ToStringNode toString = ToStringNodeGen.create();
@@ -107,7 +110,7 @@ public abstract class CastSymbolNode extends CastBaseNode {
         return asSymbol(value);
     }
 
-    @Specialization(guards = "access.supports(vector)")
+    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
     protected RSymbol doVector(RAbstractAtomicVector vector,
                     @Cached("createBinaryProfile()") ConditionProfile emptyProfile,
                     @Cached("vector.access()") VectorAccess access) {
