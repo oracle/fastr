@@ -24,6 +24,7 @@ import java.util.HashSet;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
 /**
@@ -33,19 +34,19 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
  */
 public class DuplicationHelper {
     private final RAbstractContainer x;
-    private final HashSet<Object> vectorContents = new HashSet<>();
-    private final HashSet<Object> incompContents;
+    private final HashSet<DupEntry> vectorContents = new HashSet<>();
+    private final HashSet<DupEntry> incompContents;
     private final byte[] dupVec;
     private int index;
 
     public DuplicationHelper(RAbstractContainer x, RAbstractContainer incomparables, boolean justIndex, boolean fromLast) {
         this.x = x;
-        vectorContents.add(x.getDataAtAsObject(fromLast ? x.getLength() - 1 : 0));
+        vectorContents.add(new DupEntry(x.getDataAtAsObject(fromLast ? x.getLength() - 1 : 0)));
 
         if (incomparables != null) {
             incompContents = new HashSet<>();
             for (int i = 0; i < incomparables.getLength(); i++) {
-                incompContents.add(incomparables.getDataAtAsObject(i));
+                incompContents.add(new DupEntry(incomparables.getDataAtAsObject(i)));
             }
         } else {
             incompContents = null;
@@ -54,8 +55,9 @@ public class DuplicationHelper {
     }
 
     public boolean doIt(int i) {
-        if (incompContents == null || !incompContents.contains(x.getDataAtAsObject(i))) {
-            if (vectorContents.contains(x.getDataAtAsObject(i))) {
+        DupEntry entry = new DupEntry(x.getDataAtAsObject(i));
+        if (incompContents == null || !incompContents.contains(entry)) {
+            if (vectorContents.contains(entry)) {
                 if (dupVec == null) {
                     index = i + 1;
                     return true;
@@ -63,7 +65,7 @@ public class DuplicationHelper {
                     dupVec[i] = RRuntime.LOGICAL_TRUE;
                 }
             } else {
-                vectorContents.add(x.getDataAtAsObject(i));
+                vectorContents.add(entry);
             }
         } else {
             if (dupVec != null) {
@@ -98,5 +100,56 @@ public class DuplicationHelper {
             }
         }
         return ds;
+    }
+
+    private static final class DupEntry {
+
+        private final Object element;
+
+        DupEntry(Object element) {
+            this.element = element;
+        }
+
+        @Override
+        public int hashCode() {
+            if (element instanceof RAbstractContainer && !(element instanceof RComplex)) {
+                return ((RAbstractContainer) element).getRType().hashCode();
+            } else {
+                return element.hashCode();
+            }
+        }
+
+        @Override
+        public boolean equals(Object o) {
+            Object other = o;
+            if (other instanceof DupEntry) {
+                other = ((DupEntry) other).element;
+            }
+            return equals(this.element, other);
+        }
+
+        static boolean equals(Object o1, Object o2) {
+            if (o1 instanceof RAbstractContainer && o2 instanceof RAbstractContainer && !(o1 instanceof RComplex) && !(o2 instanceof RComplex)) {
+                RAbstractContainer cont1 = (RAbstractContainer) o1;
+                RAbstractContainer cont2 = (RAbstractContainer) o2;
+
+                if (cont1.getLength() != cont2.getLength()) {
+                    return false;
+                }
+
+                for (int i = 0; i < cont1.getLength(); i++) {
+                    Object el1 = cont1.getDataAtAsObject(i);
+                    Object el2 = cont2.getDataAtAsObject(i);
+                    if (!equals(el1, el2)) {
+                        return false;
+                    }
+                }
+
+                return true;
+
+            } else {
+                return o1.equals(o2);
+            }
+        }
     }
 }

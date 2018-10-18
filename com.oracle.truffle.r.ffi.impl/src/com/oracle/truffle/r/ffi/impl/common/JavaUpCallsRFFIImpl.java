@@ -673,7 +673,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             if (v < actual) {
                 RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
             }
-            if (v == 2) {
+            if (v >= 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect
                 // it to never become non-shared again, which could happen in FastR
                 r.makeSharedPermanent();
