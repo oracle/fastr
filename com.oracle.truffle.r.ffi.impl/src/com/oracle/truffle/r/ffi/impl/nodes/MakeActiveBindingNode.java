@@ -59,7 +59,6 @@ public abstract class MakeActiveBindingNode extends RBaseNode {
         }
 
         String name = sym.getName();
-        System.out.println("Making active binding: " + name);
         MaterializedFrame frame = env.getFrame();
         Object binding = ReadVariableNode.lookupAny(name, frame, true);
         if (binding == null) {

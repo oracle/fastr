@@ -58,10 +58,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
-import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -179,7 +180,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         RCaller rCaller = getCaller(frame, environment);
         try {
-            return RContext.getEngine().eval(expr, environment, rCaller);
+            RFunction evalFun = getFunctionArgument();
+            return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
         } catch (ReturnException ret) {
             if (returnTopLevelProfile.profile(ret.getTarget() == rCaller)) {
                 return ret.getResult();
@@ -196,7 +198,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         RCaller rCaller = getCaller(frame, environment);
         try {
-            return RContext.getEngine().eval(expr, environment, rCaller);
+            RFunction evalFun = getFunctionArgument();
+            return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
         } catch (ReturnException ret) {
             if (returnTopLevelProfile.profile(ret.getTarget() == rCaller)) {
                 return ret.getResult();
@@ -206,6 +209,14 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         } finally {
             visibility.executeAfterCall(frame, rCaller);
         }
+    }
+
+    /**
+     * This follows GNU-R. If you asks for sys.function, of the 'eval' frame, you get
+     * ".Primitive('eval')", which can be invoked.
+     */
+    private RFunction getFunctionArgument() {
+        return RContext.getInstance().lookupBuiltin("eval");
     }
 
     protected static Get createGet() {
