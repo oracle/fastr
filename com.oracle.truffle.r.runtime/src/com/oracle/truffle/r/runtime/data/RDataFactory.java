@@ -1006,7 +1006,7 @@ public final class RDataFactory {
 
     private static final double FLT_EPSILON = 1.19209290e-7;
 
-    private static int effectiveLength(double start, double end) {
+    public static int effectiveLength(double start, double end) {
         double r = Math.abs(end - start);
         return (int) (r + 1 + FLT_EPSILON);
     }

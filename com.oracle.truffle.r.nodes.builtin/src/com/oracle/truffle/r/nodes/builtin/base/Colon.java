@@ -85,8 +85,6 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
     @Child private ColonCastNode rightCast = ColonCastNodeGen.create();
     @Child private ColonInternal internal = ColonInternalNodeGen.create();
 
-    private static final double FLT_EPSILON = 1.19209290e-7;
-
     static {
         Casts.noCasts(Colon.class);
     }
@@ -163,7 +161,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             if (isDouble.profile(right > Integer.MAX_VALUE)) {
                 return RDataFactory.createAscendingRange(left, right);
             } else {
-                return RDataFactory.createIntSequence(left, 1, effectiveLength(left, right));
+                return RDataFactory.createIntSequence(left, 1, RDataFactory.effectiveLength(left, right));
             }
         }
 
@@ -176,7 +174,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             if (isDouble.profile(right <= Integer.MIN_VALUE)) {
                 return RDataFactory.createDescendingRange(left, right);
             } else {
-                return RDataFactory.createIntSequence(left, -1, effectiveLength(left, right));
+                return RDataFactory.createIntSequence(left, -1, RDataFactory.effectiveLength(left, right));
             }
         }
 
@@ -215,11 +213,6 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             if (r >= Integer.MAX_VALUE) {
                 throw error(RError.Message.TOO_LONG_VECTOR);
             }
-        }
-
-        private static int effectiveLength(double start, double end) {
-            double r = Math.abs(end - start);
-            return (int) (r + 1 + FLT_EPSILON);
         }
     }
 

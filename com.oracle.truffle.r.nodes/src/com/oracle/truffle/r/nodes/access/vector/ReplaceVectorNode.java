@@ -37,6 +37,7 @@ import com.oracle.truffle.r.nodes.binary.BoxPrimitiveNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.objects.GetS4DataSlot;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -61,7 +62,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
 public abstract class ReplaceVectorNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = 5;
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(5);
 
     protected final ElementAccessMode mode;
     private final boolean recursive;

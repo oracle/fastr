@@ -25,17 +25,20 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.IsListFactorNodeGen.IsListFactorInternalNodeGen;
 import com.oracle.truffle.r.nodes.unary.IsFactorNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 // from apply.c
 
+@ImportStatic({DSLConfig.class})
 @RBuiltin(name = "islistfactor", kind = INTERNAL, parameterNames = {"x", "recursive"}, behavior = PURE)
 public abstract class IsListFactor extends RBuiltinNode.Arg2 {
 
@@ -87,7 +90,7 @@ public abstract class IsListFactor extends RBuiltinNode.Arg2 {
     }
 
     // Note: the limit should never be reached
-    @Specialization(guards = "recursive == node.recursive", limit = "2")
+    @Specialization(guards = "recursive == node.recursive", limit = "99")
     protected byte isListFactor(Object value, @SuppressWarnings("unused") boolean recursive,
                     @Cached("createNode(recursive)") IsListFactorInternal node) {
         return RRuntime.asLogical(node.execute(value));
