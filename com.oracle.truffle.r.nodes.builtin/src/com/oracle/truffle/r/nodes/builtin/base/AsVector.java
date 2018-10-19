@@ -157,7 +157,7 @@ public abstract class AsVector extends RBuiltinNode.Arg2 {
         if (RRuntime.isForeignObject(x)) {
             if (type == RType.List) {
                 // already returns list, no need to cast
-                return convertForeign.convertToList((TruffleObject) x, true, true);
+                return convertForeign.convertToList((TruffleObject) x, true, false);
             }
             Object o = convertForeign.convert((TruffleObject) x, true, true);
             if (!RRuntime.isForeignObject(o)) {

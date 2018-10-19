@@ -781,21 +781,20 @@ public class TestJavaInterop extends TestBase {
         // foreign heterogenous arrays
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.list(ta$heterogenousPrimitiveArray)", "list(1, 'a', '1'))");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.list(ta$heterogenousPrimitiveArray2HomDimensions)", "list(c('a', 'b', 'c'), c(1, 2, 3))");
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.list(ta$heterogenousPrimitiveArray2HomDimensions)", "list(c('a', 'b', 'c'), c(1, 2, 3))");
 
         // foreign object with members
         assertEvalFastR("talc <- new('" + TestAsListClass.class.getName() + "')" + "; as.list(talc)", "list(b=c(T, F, T), i=c(1, 2, 3))");
 
-        String result = "b2 <- c(T, T, F, F, T, T); i2 <- c(1, 1, 2, 2, 3, 3); list(b=b2, i=i2)";
+        String result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i2 <- matrix(c(1, 1, 2, 2, 3, 3), 2, 3); list(b=b2, i=i2)";
         assertEvalFastR("talc <- new('" + TestAsListClass2.class.getName() + "')" + "; as.list(talc)", result);
 
-        result = "b3 <- c(T, T, T, T, F, F, F, F, T, T, T, T); " + "i3 <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); list(b=b3, i=i3)";
+        result = "b3 <- array(c(T, T, T, T, F, F, F, F, T, T, T, T), c(2, 2, 3)); " + "i3 <- array(c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3), c(2, 2, 3)); list(b=b3, i=i3)";
         assertEvalFastR("talc <- new('" + TestAsListClass3.class.getName() + "')" + "; as.list(talc)", result);
 
-        result = "b2 <- c(T, T, F, F, T, T); i <- c(1, 2, 3); oa <- list(c(T, F, T), c('a', 'b', 'c')); list(b=b2, i=i, oa=oa, n=NULL)";
+        result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i <- c(1, 2, 3); oa <- list(c(T, F, T), c('a', 'b', 'c')); list(b=b2, i=i, oa=oa, n=NULL)";
         assertEvalFastR("talc <- new('" + TestAsListClassMixed.class.getName() + "')" + "; as.list(talc)", result);
 
-        assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$b", "c(T, T, F, F, T, T)");
+        assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$b", "matrix(c(T, T, F, F, T, T), 2, 3)");
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$i", "c(1, 2, 3)");
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$oa", "list(c(T, F, T)");
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$n", "NULL");
@@ -830,13 +829,13 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " .fastr.interop.asVector(ta$heterogenousPrimitiveArray)", "list(1, 'a', '1'))");
         assertEvalFastR(CREATE_TEST_ARRAYS + " .fastr.interop.asVector(ta$heterogenousPrimitiveArray2HomDimensions, T)", "list(c('a', 'b', 'c'), c(1, 2, 3))");
 
-        String result = "b2 <- c(T, T, F, F, T, T); i2 <- c(1, 1, 2, 2, 3, 3); dim(b2) <- c(2, 3); dim(i2) <- c(2, 3); list(b=b2, i=i2)";
+        String result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i2 <- matrix(c(1, 1, 2, 2, 3, 3), 2, 3); list(b=b2, i=i2)";
         assertEvalFastR("talc <- new('" + TestAsListClass2.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)", result);
 
-        result = "b3 <- c(T, T, T, T, F, F, F, F, T, T, T, T); " + "i3 <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); dim(b3) <- c(2, 2, 3); dim(i3) <- c(2, 2, 3); list(b=b3, i=i3)";
+        result = "b3 <- array(c(T, T, T, T, F, F, F, F, T, T, T, T), c(2, 2, 3)); " + "i3 <- array(c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3), c(2, 2, 3)); list(b=b3, i=i3)";
         assertEvalFastR("talc <- new('" + TestAsListClass3.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)", result);
 
-        result = "b2 <- c(T, T, F, F, T, T); dim(b2) <- c(2, 3); i <- c(1, 2, 3); oa <- ; list(b=b2, i=i, oa=oa, n=NULL)";
+        result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i <- c(1, 2, 3); oa <- ; list(b=b2, i=i, oa=oa, n=NULL)";
         assertEvalFastR("talc <- new('" + TestAsListClassMixed.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)", result);
 
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)$b", "matrix(c(T, T, F, F, T, T), c(2,3))");
