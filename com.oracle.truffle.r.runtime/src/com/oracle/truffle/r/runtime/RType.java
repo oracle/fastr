@@ -62,7 +62,8 @@ public enum RType {
     RInteropChar("interopt.char", -1),
     RInteropFloat("interopt.float", -1),
     RInteropLong("interopt.long", -1),
-    RInteropShort("interopt.short", -1);
+    RInteropShort("interopt.short", -1),
+    Char("char", -1);
 
     public static final int NO_PRECEDENCE = -1;
     public static final int NUMBER_OF_PRECEDENCES = 9;

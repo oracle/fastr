@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -91,6 +92,11 @@ public abstract class ToStringNode extends RBaseNode {
     @Specialization
     protected String toString(RSymbol symbol, @SuppressWarnings("unused") String separator) {
         return symbol.getName();
+    }
+
+    @Specialization
+    protected String toString(CharSXPWrapper charsxp, @SuppressWarnings("unused") String separator) {
+        return charsxp.getContents();
     }
 
     @Specialization

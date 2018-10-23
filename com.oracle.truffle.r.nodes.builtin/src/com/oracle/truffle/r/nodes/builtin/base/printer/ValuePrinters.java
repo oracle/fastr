@@ -31,6 +31,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RExpression;
@@ -64,6 +65,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
         printers.put(RExpression.class, ExpressionPrinter.INSTANCE);
         printers.put(RExternalPtr.class, ExternalPtrPrinter.INSTANCE);
         printers.put(RS4Object.class, S4ObjectPrinter.INSTANCE);
+        printers.put(CharSXPWrapper.class, CharSXPPrinter.INSTANCE);
     }
 
     @SuppressWarnings({"rawtypes", "unchecked"})

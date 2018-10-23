@@ -36,6 +36,13 @@ public interface RTypedValue extends RTruffleObject {
     int GP_BITS_MASK = 0xFFFF << GP_BITS_MASK_SHIFT;
 
     int S4_MASK_SHIFTED = 1 << (4 + GP_BITS_MASK_SHIFT);
+    int ASCII_MASK_SHIFTED = 1 << 14;
+
+    int BYTES_MASK = 1 << 1;
+    int LATIN1_MASK = 1 << 2;
+    int UTF8_MASK = 1 << 3;
+    int CACHED_MASK = 1 << 5;
+    int ASCII_MASK = 1 << 6;
 
     RType getRType();
 

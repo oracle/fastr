@@ -582,13 +582,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (x instanceof RTypedValue) {
             int gpBits = ((RTypedValue) x).getGPBits();
             return gpBits;
-        } else if (x instanceof CharSXPWrapper) {
-            // TODO returning ASCII_MASK works for data.table,
-            // but properly CharSXPWrapper has to implement RTypedValue ...
-            // see also CHARSXP charset bits in include/Defn.h
-            // #define ASCII_MASK (1<<6)
-            // return 1 << 6;
-            throw RInternalError.shouldNotReachHere("Not yet implemented - CharSXPWrapper has to implement RTypedValue!");
         }
         throw RInternalError.shouldNotReachHere();
     }
