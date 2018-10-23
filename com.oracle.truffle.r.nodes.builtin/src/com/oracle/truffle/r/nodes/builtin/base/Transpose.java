@@ -26,7 +26,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
@@ -43,6 +45,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -56,9 +59,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
+import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "t.default", kind = INTERNAL, parameterNames = {"x"}, behavior = PURE)
+@ImportStatic({RRuntime.class, ConvertForeignObjectNode.class})
 public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     private final BranchProfile hasDimNamesProfile = BranchProfile.create();
@@ -78,6 +83,10 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     static {
         Casts.noCasts(Transpose.class);
+    }
+
+    protected static Transpose create() {
+        return TransposeNodeGen.create();
     }
 
     public abstract Object execute(RAbstractVector o);
@@ -272,6 +281,17 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
             }
             removeAttributeNode.execute(attributes, "names");
         }
+    }
+
+    @Specialization(guards = {"isForeignObject(x)"})
+    protected Object transposeForeign(TruffleObject x,
+                    @Cached("create()") ConvertForeignObjectNode convertForeign,
+                    @Cached("create()") Transpose recursive) {
+        if (convertForeign.isForeignArray(x)) {
+            RAbstractVector vec = (RAbstractVector) convertForeign.convert(x);
+            return recursive.execute(vec);
+        }
+        throw error(Message.ARGUMENT_NOT_MATRIX);
     }
 
     @Fallback

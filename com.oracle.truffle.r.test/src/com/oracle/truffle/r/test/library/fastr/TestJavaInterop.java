@@ -657,6 +657,13 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
+    public void testTranspose() {
+        assertEvalFastR(CREATE_TEST_ARRAYS + " t(ta$stringArray)", "t(c('a', 'b', 'c'))");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " t(ta$stringArray2)", "t(matrix(c('a', 'a', 'b', 'b', 'c', 'c'), c(2, 3)))");
+        assertEvalFastR(CREATE_TEST_ARRAYS + " t(ta)", errorIn("t.default(ta)", "argument is not a matrix"));
+    }
+
+    @Test
     public void testAsVectorFromArray() throws NoSuchFieldException, IllegalArgumentException, IllegalAccessException {
         testAsVectorFromArray("fieldStaticBooleanArray", "logical");
         testAsVectorFromArray("fieldStaticByteArray", "integer");

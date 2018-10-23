@@ -32,9 +32,5 @@ as.array.polyglot.value <- function(x, ...) {
 as.data.frame.polyglot.value <- function(x, row.names = NULL, optional = FALSE, ..., nm = paste(deparse(substitute(x), 
     width.cutoff = 500L), collapse = " ")) {
     v <- .fastr.interop.asVector(x, recursive=TRUE, dropDimensions=FALSE)
-    if (!optional && !is.null(v) && is.atomic(v)) {
-        v <- list(v)        
-        names(v) <- nm
-    }    
-    as.data.frame(v, row.names=row.names, optional=optional, ...)
+    as.data.frame(v, row.names=row.names, optional=optional, nm=nm, ...)
 }
