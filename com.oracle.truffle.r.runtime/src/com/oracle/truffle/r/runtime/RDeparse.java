@@ -839,6 +839,9 @@ public class RDeparse {
                     } else {
                         append(quotify(name, BACKTICK));
                     }
+                    if ("...".equals(name) && argument instanceof RSyntaxLookup && "...".equals(((RSyntaxLookup) argument).getIdentifier())) {
+                        continue;
+                    }
                     if (!formals || argument != null) {
                         append(" = ");
                     }
