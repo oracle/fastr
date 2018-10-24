@@ -528,6 +528,7 @@ public final class RError extends RuntimeException implements TruffleException {
         MISSING_ARGUMENTS("'missing' can only be used for arguments"),
         INVALID_ENVIRONMENT("invalid environment"),
         INVALID_ENVIRONMENT_SPECIFIED("invalid environment specified"),
+        ARG_MUST_BE_ENV("argument must be an environment"),
         ENVIR_NOT_LENGTH_ONE("numeric 'envir' arg not of length one"),
         FMT_NOT_CHARACTER("'fmt' is not a character vector"),
         UNSUPPORTED_TYPE("unsupported type"),
