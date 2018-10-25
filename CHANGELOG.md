@@ -20,6 +20,7 @@ Bug fixes:
 * `format.POSIXlt` uses the same time zone database as rest of the system. #29
 * `dev.control(displaylist = 'inhibit')` caused `ClassCastException`
 * `download.file` follows redirects.
+* Static members of Java interop objects are not ignroed during printing and deparsing.
 
 # 1.0 RC 9
 

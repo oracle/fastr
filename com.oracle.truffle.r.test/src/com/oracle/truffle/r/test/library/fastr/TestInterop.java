@@ -193,6 +193,9 @@ public class TestInterop extends TestBase {
     @Test
     public void testPrinting() {
         assertEvalFastR("v <- import('testPOJO'); print(v)", "cat('[polyglot value]\\n" +
+                        "$class\\n" +
+                        "[polyglot value]\\n" +
+                        "\\n" +
                         "$stringValue\\n" +
                         "[1] \"foo\"\\n" +
                         "\\n" +
