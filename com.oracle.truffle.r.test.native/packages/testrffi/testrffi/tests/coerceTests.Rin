@@ -38,5 +38,9 @@ initialTest("testrffi", "rffi.coerceVector(%0, %1)", coercion_values, coercion_m
 
 extraTest("rffi.coerceVector(%0, %1)", coercion_values_for_expr, EXPRSXP)
 
+# some more special cases for pairlist (2L) and language (6L)
+extraTest("rffi.coerceVector(%0, 2L)", c('as.pairlist(list(1,2,3))', 'quote(a+b)', 'NULL'))
+extraTest("rffi.coerceVector(%0, 6L)", c('as.pairlist(list(1,2,3))', 'quote(a+b)', 'NULL'))
+
 # Ignored.Unimplemented
 # extraTest(paste0("rffi.coerceVector(structure(list(1,'x'), names=c('q','w'),dim=c(2,1),myattr='q'), ", EXPRSXP, ")"))

@@ -106,12 +106,36 @@ public final class CoerceNodes {
             return current;
         }
 
+        @Specialization
+        protected Object convert(RNull x) {
+            if (type == SEXPTYPE.LISTSXP) {
+                return x;
+            } else {
+                return doFallback(x);
+            }
+        }
+
+        @Specialization
+        protected Object convert(RPairList list) {
+            if (list.isLanguage() || type == SEXPTYPE.LISTSXP) {
+                return list;
+            } else {
+                return doFallback(list);
+            }
+        }
+
+        @Fallback
+        @TruffleBoundary
+        protected Object doFallback(Object x) {
+            throw error(Message.UNIMPLEMENTED_TYPE_IN_FUNCTION, Utils.getTypeName(x), "coercePairList");
+        }
+
         private static void adjustSharing(RAbstractVector origin, Object element) {
             if (origin instanceof RShareable) {
                 int v = getSharingLevel((RShareable) origin);
                 if (element instanceof RShareable) {
                     RShareable r = (RShareable) element;
-                    if (v == 2) {
+                    if (v >= 2) {
                         // we play it safe: if the caller wants this instance to be shared, they may
                         // expect it to never become non-shared again, which could happen in FastR
                         r.makeSharedPermanent();
