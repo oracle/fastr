@@ -165,6 +165,7 @@ import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticSpecial;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -854,6 +855,10 @@ public class BasePackage extends RBuiltinPackage {
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
         RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
+        if (function == null) {
+            throw new RInternalError("failed adding the fast path for the R function " + name +
+                            ". The function was not found. This could be due to previous errors that prevented it from being loaded.");
+        }
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 
