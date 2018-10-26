@@ -239,6 +239,7 @@ public abstract class S3DispatchFunctions {
         private final ConditionProfile genericCallFrameNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile genericDefFrameNullProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile alternateClassHeaderProfile = ConditionProfile.createBinaryProfile();
+        private ConditionProfile needToBoxStringProfile = ConditionProfile.createBinaryProfile();
 
         private final ValueProfile parameterSignatureProfile = ValueProfile.createIdentityProfile();
         private final ValueProfile suppliedParameterSignatureProfile = ValueProfile.createIdentityProfile();
@@ -321,8 +322,15 @@ public abstract class S3DispatchFunctions {
             if (alternateClassHeaderProfile.profile(storedClass == null || storedClass == RNull.instance)) {
                 return getAlternateClassHr(frame);
             } else {
-                return (RStringVector) storedClass;
+                return boxString(storedClass);
             }
+        }
+
+        private RStringVector boxString(Object value) {
+            if (needToBoxStringProfile.profile(value instanceof String)) {
+                return RDataFactory.createStringVector((String) value);
+            }
+            return (RStringVector) value;
         }
 
         private RStringVector getAlternateClassHr(VirtualFrame frame) {
