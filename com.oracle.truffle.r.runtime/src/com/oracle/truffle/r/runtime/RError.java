@@ -574,6 +574,7 @@ public final class RError extends RuntimeException implements TruffleException {
         ARGUMENT_NOT_VECTOR("argument %d is not a vector"),
         CANNOT_COERCE("cannot coerce type '%s' to vector of type '%s'"),
         CANNOT_COERCE_RFFI("(%s) object cannot be coerced to type '%s'"),
+        CANNOT_COERCE_QUOTED("'%s' object cannot be coerced to type '%s'"),
         ARGUMENT_ONLY_FIRST("argument '%s' has length > 1 and only the first element will be used"),
         ARGUMENT_ONLY_FIRST_1("only the first element of '%s' argument used"),
         ARGUMENT_WRONG_LENGTH("wrong length for argument"),
