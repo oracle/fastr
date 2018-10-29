@@ -141,6 +141,15 @@ public class TestFunctions extends TestBase {
         assertEval("{ foo <- function (x) { x } ; foo(1,2,3) }");
 
         assertEval("{ x <- function(a,b) { a^b } ; f <- function() { x <- 211 ; sapply(1, x, 2) } ; f() }");
+
+        // weird syntax, that doesn't work, but should not cause errors
+        assertEval("{ foo <- function(x, ...=NULL) x; list(foo(42), foo(21,33)); }");
+        assertEval("{ foo <- function(x, ..) x; list(foo(42), foo(21,33)); }");
+        assertEval("{ side <- function(x) { cat('side effect ', x, '\\n'); x }; foo <- function(x, ...=side(42)) x;  foo(3) }");
+        assertEval("{ side <- function(x) { cat('side effect ', x, '\\n'); x }; foo <- function(x, ..1=side(42)) x;  foo(3) }");
+
+        // the weird parameter is still used in positional arg matching
+        assertEval("{ foo <- function(x, ..1, y) y; foo(21,33,22); }");
     }
 
     @Test

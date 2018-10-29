@@ -134,7 +134,7 @@ public abstract class DispatchGeneric extends RBaseNode {
     private InheritsCheckNode getInheritsInternalDispatchCheckNode() {
         if (inheritsInternalDispatchCheckNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inheritsInternalDispatchCheckNode = insert(new InheritsCheckNode("internalDispatchMethod"));
+            inheritsInternalDispatchCheckNode = insert(InheritsCheckNode.create("internalDispatchMethod"));
         }
         return inheritsInternalDispatchCheckNode;
     }

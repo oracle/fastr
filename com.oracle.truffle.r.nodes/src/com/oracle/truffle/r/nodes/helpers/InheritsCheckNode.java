@@ -28,7 +28,6 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
-import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -40,18 +39,38 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
  */
 public final class InheritsCheckNode extends Node {
 
-    @Child private ClassHierarchyNode classHierarchy = ClassHierarchyNodeGen.create(false, false);
+    @Child private ClassHierarchyNode classHierarchy;
     private final ConditionProfile nullClassProfile = ConditionProfile.createBinaryProfile();
     @CompilationFinal private ConditionProfile exactMatchProfile;
     private final String checkedClazz;
 
-    public InheritsCheckNode(String checkedClazz) {
+    private InheritsCheckNode(String checkedClazz) {
         this.checkedClazz = checkedClazz;
         assert RType.fromMode(checkedClazz) == null : "Class '" + checkedClazz + "' cannot be checked by InheritsCheckNode";
     }
 
+    private InheritsCheckNode(String checkedClazz, boolean withImplicit) {
+        if (withImplicit) {
+            classHierarchy = ClassHierarchyNode.createWithImplicit();
+        } else {
+            classHierarchy = ClassHierarchyNode.create();
+        }
+        this.checkedClazz = checkedClazz;
+        if (!withImplicit) {
+            assert RType.fromMode(checkedClazz) == null : "Class '" + checkedClazz + "' cannot be checked by InheritsCheckNode";
+        }
+    }
+
+    public static InheritsCheckNode create(String checkedClazz) {
+        return new InheritsCheckNode(checkedClazz, false);
+    }
+
+    public static InheritsCheckNode createWithImplicit(String checkedClazz) {
+        return new InheritsCheckNode(checkedClazz, true);
+    }
+
     public static InheritsCheckNode createFactor() {
-        return new InheritsCheckNode(RRuntime.CLASS_FACTOR);
+        return new InheritsCheckNode(RRuntime.CLASS_FACTOR, false);
     }
 
     public boolean execute(Object value) {

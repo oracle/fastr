@@ -149,10 +149,12 @@ default.packages <- c("R", "base", "grid", "splines", "utils",
 # manually maintained list of packages that are OK to ignore when installing "suggests"
 # the name is that package and the values are regexps of suggests that can be ignored for that package
 # if this configuration gets too complex or updated too often, we can move it to separate config file
+ignore.all.but <- function(...) structure(as.vector(list(...)), class='negation')
 ignore.suggests <- list(
-	rstudioapi = c('*'), # rstudioapi executes almost no real tests, it is mostly just test of install & load
-	glmnet = c('knitr'),  # probably used for vignettes only
-    quantmod = c('*') # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+	rstudioapi = '*', # rstudioapi executes almost no real tests, it is mostly just test of install & load
+	glmnet = 'knitr',  # probably used for vignettes only
+	PerformanceAnalytics = ignore.all.but('testthat'), # not gated yet. We can run almost all tests except for few examples that use some suggests including data.table
+	quantmod = '*' # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 )
 
 choice.depends <- function(pkg, choice=c("direct","suggests")) {
@@ -396,7 +398,7 @@ equal.fastr.error.log.sizes <- function(older, newer) {
         # An error log file has been removed or the file list did not change.
         # Compare sizes of the files.
         all(older[names(newer)] == newer)
-    } 
+    }
 }
 
 installed.ok <- function(pkgname, initial_error_log_size) {
@@ -411,7 +413,7 @@ installed.ok <- function(pkgname, initial_error_log_size) {
 	if (file.exists(get.pkgdir(paste0("00LOCK-", pkgname)))) {
 		return(FALSE)
 	}
-	
+
 	if (!equal.fastr.error.log.sizes(initial_error_log_size, fastr.errors.log.sizes())) {
 		# This is a really nasty case where the error happens during
 		# the test load step. It is not detected by the package
@@ -642,10 +644,13 @@ install.pkgs <- function(pkgnames, dependents.install=F, log=T) {
 install.suggests <- function(pkgnames) {
 	for (pkgname in pkgnames) {
 		suggests <- install.order(avail.pkgs, avail.pkgs[pkgname, ], "suggests")
-		ignore.pattern <- ignore.suggests[pkgname]
+		ignore.pattern <- ignore.suggests[[pkgname]]
 		if (!is.null(ignore.pattern)) {
-			ignore <- suggests[grepl(ignore.pattern, suggests)]
-			suggests <- setdiff(suggests, ignore)
+			ignore <- character(0)
+			for (i in seq_along(ignore.pattern)) {
+				ignore <- c(ignore, suggests[grepl(ignore.pattern[[i]], suggests)])
+			}
+			suggests <- if (class(ignore.pattern) == 'negation') ignore else setdiff(suggests, ignore)
 			cat("NOTE: ignoring suggested:", paste(ignore, collapse=','), '\n')
 		}
 		if (length(suggests) > 0) {
@@ -807,7 +812,7 @@ install.pkg <- function(pkgname) {
     if (rc == 0L) {
         # be paranoid and also check file system and log
 	    success <- installed.ok(pkgname, error_log_size)
-    } 	
+    }
     log.message(paste0("installation succeeded for ", pkgname, ": ", success), level=1)
     names(success) <- pkgname
 	install.status <<- append(install.status, success)
@@ -1198,4 +1203,3 @@ important.pkg.table <- NULL
 if (!interactive()) {
     run()
 }
-

@@ -211,7 +211,7 @@ public abstract class CastLogicalNode extends CastLogicalBaseNode {
     protected boolean isFactor(RAbstractIntVector o) {
         if (inheritsFactorCheck == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            inheritsFactorCheck = insert(new InheritsCheckNode(RRuntime.CLASS_FACTOR));
+            inheritsFactorCheck = insert(InheritsCheckNode.create(RRuntime.CLASS_FACTOR));
         }
         return inheritsFactorCheck.execute(o);
     }
