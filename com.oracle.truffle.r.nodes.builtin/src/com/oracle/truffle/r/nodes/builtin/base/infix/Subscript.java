@@ -34,8 +34,6 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubscriptSpecial;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubscriptSpecial2;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubscriptSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubscriptSpecialNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;

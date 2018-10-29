@@ -47,18 +47,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * @see com.oracle.truffle.r.runtime.builtins.RSpecialFactory
  */
 public class SpecialsUtils {
-    public static interface SubInterface extends NodeInterface {
+    public interface SubInterface extends NodeInterface {
 
-        public abstract Object execute(Object vec, Object index);
+        Object execute(Object vec, Object index);
 
-        public abstract Object execute(Object vec, int index);
+        Object execute(Object vec, int index);
     }
 
-    public static interface Sub2Interface extends NodeInterface {
+    public interface Sub2Interface extends NodeInterface {
 
-        public abstract Object execute(Object vector, Object index1, Object index2);
+        Object execute(Object vector, Object index1, Object index2);
 
-        public abstract Object execute(Object vec, int index1, int index2);
+        Object execute(Object vec, int index1, int index2);
     }
 
     private static final String valueArgName = Utils.intern("value");

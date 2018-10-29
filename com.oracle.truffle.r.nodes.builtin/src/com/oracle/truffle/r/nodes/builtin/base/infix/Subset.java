@@ -34,8 +34,6 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial2;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial2NodeGen;
-import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecialNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
