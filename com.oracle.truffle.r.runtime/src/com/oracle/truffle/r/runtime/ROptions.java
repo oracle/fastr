@@ -130,7 +130,7 @@ public class ROptions {
             RPairList ppl = null;
             RPairList head = null;
             for (Map.Entry<String, Object> entry : getValues()) {
-                RPairList pl = RDataFactory.createPairList(entry.getValue(), RNull.instance, RDataFactory.createSymbol(entry.getKey()));
+                RPairList pl = RDataFactory.createPairList(entry.getValue(), RNull.instance, RDataFactory.createSymbol(Utils.intern(entry.getKey())));
                 if (ppl != null) {
                     ppl.setCdr(pl);
                 } else {
