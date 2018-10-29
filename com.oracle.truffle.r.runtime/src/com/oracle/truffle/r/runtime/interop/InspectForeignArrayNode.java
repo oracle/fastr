@@ -62,17 +62,17 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
      */
     public ArrayInfo getArrayInfo(TruffleObject obj) {
         ArrayInfo info = new ArrayInfo();
-        if (execute(obj, true, info, 0)) {
+        if (execute(obj, true, info, 0, false)) {
             return info;
         }
         return null;
     }
 
-    protected abstract boolean execute(Object obj, boolean recursive, ArrayInfo data, int depth);
+    protected abstract boolean execute(Object obj, boolean recursive, ArrayInfo data, int depth, boolean skipIfList);
 
     @Specialization(guards = {"isForeignArray(obj, hasSize)"})
     @CompilerDirectives.TruffleBoundary
-    protected boolean inspectArray(TruffleObject obj, boolean recursive, ArrayInfo data, int depth) {
+    protected boolean inspectArray(TruffleObject obj, boolean recursive, ArrayInfo data, int depth, boolean skipIfList) {
         try {
             ArrayInfo arrayInfo = data == null ? new ArrayInfo() : data;
             int size = (int) ForeignAccess.sendGetSize(getSize, obj);
@@ -85,7 +85,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
                     boolean isArray = isForeignArray(element, hasSize);
 
                     if (recursive && isArray) {
-                        if (!recurse(arrayInfo, element, depth)) {
+                        if (!recurse(arrayInfo, element, depth, skipIfList)) {
                             return false;
                         }
                     } else if (!recursive && isArray) {
@@ -96,7 +96,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
                         return false;
                     } else {
                         RType elementType = arrayInfo.typeCheck.check(getForeign2R().execute(element));
-                        if (elementType == RType.List) {
+                        if (skipIfList && elementType == RType.List) {
                             return false;
                         }
                     }
@@ -110,16 +110,16 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
 
     @Fallback
     protected boolean fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") ArrayInfo data,
-                    @SuppressWarnings("unused") int depth) {
+                    @SuppressWarnings("unused") int depth, @SuppressWarnings("unused") boolean skipIfList) {
         return false;
     }
 
-    private boolean recurse(ArrayInfo arrayInfo, Object element, int depth) {
+    private boolean recurse(ArrayInfo arrayInfo, Object element, int depth, boolean skipIfList) {
         if (inspectTruffleObject == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             inspectTruffleObject = insert(create());
         }
-        return inspectTruffleObject.execute(element, true, arrayInfo, depth + 1);
+        return inspectTruffleObject.execute(element, true, arrayInfo, depth + 1, skipIfList);
     }
 
     public static final class ArrayInfo {
@@ -137,7 +137,7 @@ public abstract class InspectForeignArrayNode extends RBaseNode {
             return isRectMultiDim() ? dims.stream().mapToInt((i) -> i.intValue()).toArray() : null;
         }
 
-        private boolean isRectMultiDim() {
+        boolean isRectMultiDim() {
             return canUseDims && dims.size() > 1;
         }
 

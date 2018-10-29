@@ -57,6 +57,7 @@ import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmen
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.RList2EnvNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.CopyNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.EnvFunctionsFactory.EnvToListNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
@@ -672,6 +673,10 @@ public class EnvFunctions {
             casts.arg("x").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
             casts.arg("all.names").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("sorted").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+        }
+
+        public static EnvToList create() {
+            return EnvToListNodeGen.create();
         }
 
         private Object copy(VirtualFrame frame, Object operand) {

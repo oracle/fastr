@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 
 import java.lang.ref.WeakReference;
@@ -44,8 +45,9 @@ import java.util.WeakHashMap;
  *
  * N.B. Use limited to RFFI implementations.
  */
-public final class CharSXPWrapper extends RObject implements RTruffleObject {
+public final class CharSXPWrapper extends RObject implements RTruffleObject, RTypedValue {
     private static final CharSXPWrapper NA = new CharSXPWrapper(RRuntime.STRING_NA);
+    private int typedValueInfo = ASCII_MASK_SHIFTED;
     private String contents;
     private byte[] bytes;
     private static final Map<CharSXPWrapper, WeakReference<CharSXPWrapper>> instances = new WeakHashMap<>(2048);
@@ -161,6 +163,21 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject {
         }
         final CharSXPWrapper other = (CharSXPWrapper) obj;
         return this.contents.equals(other.contents);
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.Char;
+    }
+
+    @Override
+    public int getTypedValueInfo() {
+        return typedValueInfo;
+    }
+
+    @Override
+    public void setTypedValueInfo(int value) {
+        typedValueInfo = value;
     }
 
 }

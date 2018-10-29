@@ -989,6 +989,8 @@ public class FastRInterop {
     @RBuiltin(name = ".fastr.interop.new", visibility = ON, kind = PRIMITIVE, parameterNames = {"class", "..."}, behavior = COMPLEX)
     public abstract static class InteropNew extends RBuiltinNode.Arg2 {
 
+        @Child private Node sendInvoke;
+
         static {
             Casts.noCasts(InteropNew.class);
         }
@@ -1022,27 +1024,39 @@ public class FastRInterop {
                                 int[] dims = new int[vec.getLength()];
 
                                 for (int i = 0; i < vec.getLength(); i++) {
-                                    Array.setInt(dims, i, vec.getDataAt(i));
+                                    dims[i] = vec.getDataAt(i);
                                 }
+
                                 cls = cls.getComponentType();
                                 while (cls.isArray()) {
                                     cls = cls.getComponentType();
                                 }
 
-                                Object a = Array.newInstance(cls, dims);
-                                return context.getEnv().asGuestValue(a);
+                                if (sendInvoke == null) {
+                                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                                    sendInvoke = insert(Message.INVOKE.createNode());
+                                }
+                                TruffleObject arrayCompanion = (TruffleObject) env.lookupHostSymbol("java.lang.reflect.Array");
+                                try {
+                                    return ForeignAccess.sendInvoke(sendInvoke, arrayCompanion, "newInstance", context.getEnv().asGuestValue(cls), context.getEnv().asGuestValue(dims));
+                                } catch (ArityException | UnknownIdentifierException | UnsupportedMessageException | UnsupportedTypeException ex) {
+                                    throw javaInstantiationError(ute);
+                                }
                             }
                         }
                     }
                 }
-                String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + ute.getMessage();
-                throw error(RError.Message.GENERIC, msg);
+                throw javaInstantiationError(ute);
             } catch (IllegalStateException | SecurityException | IllegalArgumentException | ArityException | UnsupportedMessageException e) {
-                String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + e.getMessage();
-                throw error(RError.Message.GENERIC, msg);
+                throw javaInstantiationError(e);
             } catch (RuntimeException e) {
                 throw RError.handleInteropException(this, e);
             }
+        }
+
+        private RError javaInstantiationError(Exception e) throws RError {
+            String msg = isTesting ? "error during Java object instantiation" : "error during Java object instantiation: " + e.getMessage();
+            throw error(RError.Message.GENERIC, msg);
         }
 
         @Fallback
@@ -1115,7 +1129,7 @@ public class FastRInterop {
                 CompilerDirectives.transferToInterpreter();
                 Throwable cause = e.getCause();
                 if (cause instanceof TruffleException || cause.getCause() instanceof ClassNotFoundException) {
-                    cause = cause.getCause();
+                    cause = cause instanceof TruffleException ? RContext.getInstance().getEnv().asHostException(cause) : cause.getCause();
                     if (RRuntime.fromLogical(check)) {
                         String causeName = cause.getClass().getName();
                         String msg = cause.getMessage();

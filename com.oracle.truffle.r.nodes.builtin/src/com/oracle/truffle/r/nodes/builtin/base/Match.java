@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.unary.CastStringNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -77,6 +78,15 @@ public abstract class Match extends RBuiltinNode.Arg4 {
 
     protected static ProfiledMatchInternalNode createInternal() {
         return ProfiledMatchInternalNodeGen.create();
+    }
+
+    protected boolean isCharSXP(RAbstractListVector list) {
+        for (int i = 0; i < list.getLength(); i++) {
+            if (!(RType.getRType(list.getDataAt(i)).equals(RType.Char))) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Specialization
@@ -126,6 +136,12 @@ public abstract class Match extends RBuiltinNode.Arg4 {
                     @Cached("create()") RFactorNodes.GetLevels getLevelsNode,
                     @Cached("createInternal()") ProfiledMatchInternalNode match) {
         return match.execute(x, RClosures.createFactorToVector(table, true, getLevelsNode.execute(table)), nomatch);
+    }
+
+    @Specialization(guards = {"isCharSXP(x)", "isCharSXP(table)"})
+    protected Object matchDoubleList(RAbstractListVector x, RAbstractListVector table, int nomatchObj, @SuppressWarnings("unused") Object incomparables,
+                    @Cached("createInternal()") ProfiledMatchInternalNode match) {
+        return match.execute(x, table, nomatchObj);
     }
 
     @Specialization(guards = {"!isRAbstractIntVector(table) || !isFactor(table)"})

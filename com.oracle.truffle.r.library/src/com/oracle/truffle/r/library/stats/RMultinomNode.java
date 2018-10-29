@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.RError.Message.NEGATIVE_PROBABILITY;
 import static com.oracle.truffle.r.runtime.RError.Message.NO_POSITIVE_PROBABILITIES;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -52,6 +54,7 @@ import com.oracle.truffle.r.runtime.rng.RRNG;
 /**
  * Implements the vectorization of {@link RMultinomNode}.
  */
+@ImportStatic(DSLConfig.class)
 public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
 
     private final Rbinom rbinom = new Rbinom();
@@ -78,7 +81,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
         return RError.SHOW_CALLER;
     }
 
-    @Specialization(guards = "probsAccess.supports(probs)")
+    @Specialization(guards = "probsAccess.supports(probs)", limit = "getVectorAccessCacheSize()")
     protected RIntVector doMultinom(int n, int size, RAbstractDoubleVector probs,
                     @Cached("probs.access()") VectorAccess probsAccess) {
         try (SequentialIterator probsIter = probsAccess.access(probs)) {

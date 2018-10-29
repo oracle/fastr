@@ -40,7 +40,7 @@ public class ProfiledSpecialsUtils {
     @NodeChild(value = "index", type = ConvertIndex.class)
     protected abstract static class ProfiledSubscriptSpecialBase extends RNode {
 
-        protected static final int CACHE_LIMIT = 3;
+        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
         protected final boolean inReplacement;
 
         @Child protected SubscriptSpecialBase defaultAccessNode;
@@ -158,7 +158,7 @@ public class ProfiledSpecialsUtils {
     @NodeChild(value = "value", type = ConvertValue.class)
     public abstract static class ProfiledUpdateSubscriptSpecialBase extends RNode {
 
-        protected static final int CACHE_LIMIT = 3;
+        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
         protected final boolean inReplacement;
 
         public abstract Object execute(VirtualFrame frame, Object vector, Object index, Object value);
@@ -196,7 +196,7 @@ public class ProfiledSpecialsUtils {
     @NodeChild(value = "value", type = ConvertValue.class)
     public abstract static class ProfiledUpdateSubscriptSpecial2 extends RNode {
 
-        protected static final int CACHE_LIMIT = 3;
+        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
         protected final boolean inReplacement;
 
         public abstract Object execute(VirtualFrame frame, Object vector, Object index1, Object index2, Object value);

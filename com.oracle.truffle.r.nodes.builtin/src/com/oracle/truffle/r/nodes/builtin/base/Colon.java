@@ -161,7 +161,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             if (isDouble.profile(right > Integer.MAX_VALUE)) {
                 return RDataFactory.createAscendingRange(left, right);
             } else {
-                return RDataFactory.createAscendingRange(left, (int) right);
+                return RDataFactory.createIntSequence(left, 1, RDataFactory.effectiveLength(left, right));
             }
         }
 
@@ -174,7 +174,7 @@ public abstract class Colon extends RBuiltinNode.Arg2 {
             if (isDouble.profile(right <= Integer.MIN_VALUE)) {
                 return RDataFactory.createDescendingRange(left, right);
             } else {
-                return RDataFactory.createDescendingRange(left, (int) right);
+                return RDataFactory.createIntSequence(left, -1, RDataFactory.effectiveLength(left, right));
             }
         }
 

@@ -120,7 +120,7 @@ public abstract class RepeatLength extends RBuiltinNode.Arg2 {
         return RDataFactory.createLogicalVector(array, value != RRuntime.LOGICAL_NA);
     }
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = "xAccess.supports(x)", limit = "getGenericVectorAccessCacheSize()")
     protected RAbstractVector repLenCached(RAbstractVector x, int length,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("createNew(xAccess.getType())") VectorAccess resultAccess,

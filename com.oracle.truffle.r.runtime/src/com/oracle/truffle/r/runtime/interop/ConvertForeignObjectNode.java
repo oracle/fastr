@@ -47,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignWrapper;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -77,6 +78,9 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * <b>dropDimensions</b> parameter, either honored by the conversion or a flat vector/list is
  * returned.
  * </p>
+ * 
+ * <b>Note</b> currently are {@link RForeignWrapper}-s used only in case of homogenous 1-dimensional
+ * arrays resulting to a logical, double, integer or character vector.
  */
 @ImportStatic({Message.class, RRuntime.class, RType.class})
 public abstract class ConvertForeignObjectNode extends RBaseNode {
@@ -86,12 +90,14 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
     @Child protected Foreign2R foreign2RNode;
     @Child protected Node keyInfoNode;
     @Child private ConvertForeignObjectNode recurseNode;
+    @Child private ForeignArrayToListNode arrayToList;
+    @Child private ForeignArrayToVectorNode arrayToVector;
 
     public static ConvertForeignObjectNode create() {
         return ConvertForeignObjectNodeGen.create();
     }
 
-    protected abstract Object execute(Object obj, boolean recursive, boolean dropDimensions, RType type);
+    protected abstract Object execute(Object obj, boolean recursive, boolean dropDimensions, boolean toList);
 
     /**
      * Converts the provided foreign array to a vector or list.
@@ -147,7 +153,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
      *
      */
     public Object convert(TruffleObject truffleObject, boolean recursive, boolean dropDimensions) {
-        return execute(truffleObject, recursive, dropDimensions, RType.Any);
+        return execute(truffleObject, recursive, dropDimensions, false);
     }
 
     /**
@@ -168,7 +174,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
      * @return a list if obj is a foreign array, otherwise obj
      */
     public Object convertToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions) {
-        return execute(truffleObject, recursive, dropDimensions, RType.List);
+        return execute(truffleObject, recursive, dropDimensions, true);
     }
 
     /**
@@ -223,7 +229,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 };
                 byte[] byteArray = new byte[size];
                 if (dims != null) {
-                    return createVector(dims, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete, dropDimensions ? null : dims));
+                    return createByColVector(dims, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, byteArray, wba, (complete) -> RDataFactory.createLogicalVector(byteArray, complete));
                 }
@@ -235,7 +241,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 };
                 double[] doubleArray = new double[size];
                 if (dims != null) {
-                    return createVector(dims, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete, dropDimensions ? null : dims));
+                    return createByColVector(dims, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, doubleArray, wda, (complete) -> RDataFactory.createDoubleVector(doubleArray, complete));
                 }
@@ -247,7 +253,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 };
                 int[] intArray = new int[size];
                 if (dims != null) {
-                    return createVector(dims, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete, dropDimensions ? null : dims));
+                    return createByColVector(dims, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, intArray, wia, (complete) -> RDataFactory.createIntVector(intArray, complete));
                 }
@@ -259,19 +265,18 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 };
                 String[] stringArray = new String[size];
                 if (dims != null) {
-                    return createVector(dims, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete, dropDimensions ? null : dims));
+                    return createByColVector(dims, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete, dropDimensions ? null : dims));
                 } else {
                     return createFlatVector(size, stringArray, wsa, (complete) -> RDataFactory.createStringVector(stringArray, complete));
                 }
             case List:
             case Null:
-                // return createList(elements, null, dropDimensions ? null : dims, size);
                 if (dims != null) {
                     WriteArray<Object[]> wa = (array, resultIdx, sourceIdx, complete) -> {
                         array[resultIdx] = elements[sourceIdx];
                     };
                     Object[] array = new Object[size];
-                    return createVector(dims, array, wa, (complete) -> RDataFactory.createList(array, dropDimensions ? null : dims));
+                    return createByColVector(dims, array, wa, (complete) -> RDataFactory.createList(array, dropDimensions ? null : dims));
                 } else {
                     return RDataFactory.createList(elements);
                 }
@@ -293,7 +298,11 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return createResult.apply(complete[0]);
     }
 
-    private static <A> RAbstractVector createVector(int[] dims, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RVector<?>> createResult) {
+    /**
+     * Creates a vector where the elements are positioned 'by collumn' according to the provided
+     * dimensions, no matter if dim attribute is set or not.
+     */
+    private static <A> RAbstractVector createByColVector(int[] dims, A resultArray, WriteArray<A> writeResultArray, Function<Boolean, RVector<?>> createResult) {
         boolean[] complete = new boolean[]{true};
         assert dims.length > 1;
         populateResultArray(dims, new int[dims.length], 0, new int[]{0}, resultArray, writeResultArray, complete);
@@ -337,12 +346,11 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return idx;
     }
 
-    @Specialization(guards = {"isForeignArray(truffleObject)", "type != List"})
-    protected Object convertArray(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") RType type,
-                    @Cached("create()") InspectForeignArrayNode inspectTruffleObject,
-                    @Cached("create()") CopyForeignArrayNode copyArray) {
+    @Specialization(guards = {"isForeignArray(truffleObject)", "!toList"})
+    protected Object convertArray(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList,
+                    @Cached("create()") InspectForeignArrayNode inspectTruffleObject) {
         ArrayInfo arrayInfo = new ArrayInfo();
-        inspectTruffleObject.execute(truffleObject, recursive, arrayInfo, 0);
+        inspectTruffleObject.execute(truffleObject, recursive, arrayInfo, 0, true);
 
         RType inspectedType = arrayInfo.getType();
         switch (inspectedType) {
@@ -350,57 +358,58 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                 if (arrayInfo.isOneDim()) {
                     return new RForeignBooleanWrapper(truffleObject);
                 } else {
-                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    if (arrayInfo.isRectMultiDim()) {
+                        return getArrayToVectorNode().toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    } else {
+                        throw error(RError.Message.GENERIC, "A non rectangular array cannot be converted to a vector, only to a list.");
+                    }
                 }
             case Double:
                 if (arrayInfo.isOneDim()) {
                     return new RForeignDoubleWrapper(truffleObject);
                 } else {
-                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    if (arrayInfo.isRectMultiDim()) {
+                        return getArrayToVectorNode().toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    } else {
+                        throw error(RError.Message.GENERIC, "A non rectangular array cannot be converted to a vector, only to a list.");
+                    }
                 }
             case Integer:
                 if (arrayInfo.isOneDim()) {
                     return new RForeignIntWrapper(truffleObject);
                 } else {
-                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    if (arrayInfo.isRectMultiDim()) {
+                        return getArrayToVectorNode().toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    } else {
+                        throw error(RError.Message.GENERIC, "A non rectangular array cannot be converted to a vector, only to a list.");
+                    }
                 }
             case Character:
                 if (arrayInfo.isOneDim()) {
                     return new RForeignStringWrapper(truffleObject);
                 } else {
-                    return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    if (arrayInfo.isRectMultiDim()) {
+                        return getArrayToVectorNode().toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), dropDimensions);
+                    } else {
+                        throw error(RError.Message.GENERIC, "A non rectangular array cannot be converted to a vector, only to a list.");
+                    }
                 }
             case List:
             case Null:
-                return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), false);
+                return getArrayToListNode().toList(truffleObject, recursive);
             default:
                 throw RInternalError.shouldNotReachHere("did not handle properly: " + inspectedType);
         }
     }
 
-    @Specialization(guards = {"isForeignArray(truffleObject)", "type == List"})
-    protected Object convertArrayToList(TruffleObject truffleObject, boolean recursive, @SuppressWarnings("unused") boolean dropDimensions, @SuppressWarnings("unused") RType type,
-                    @Cached("create()") InspectForeignArrayNode inspectTruffleObject,
-                    @Cached("create()") CopyForeignArrayNode copyArray) {
-        ArrayInfo arrayInfo = new ArrayInfo();
-        inspectTruffleObject.execute(truffleObject, recursive, arrayInfo, 0);
-
-        RType inspectedType = arrayInfo.getType();
-        if (inspectedType != RType.List) {
-            // as if in as.list(atomicVector/Matrix) - e.g. as.list(matrix(1:4, c(2,2)))
-            // => results in a flat list
-            return copyArray.toVector(truffleObject, recursive, type, arrayInfo.getDims(), true);
-        } else {
-            // as if in as.list(heterogenous Matrix)
-            // - e.g. l<-list(1,'a',2,3);dim(l)<-c(2,2);as.list(matrix(l,c(2,2)))
-            // => keeps the lists dimensions
-            return copyArray.toVector(truffleObject, recursive, arrayInfo.getType(), arrayInfo.getDims(), false);
-        }
+    @Specialization(guards = {"isForeignArray(truffleObject)", "toList"})
+    protected Object convertArrayToList(TruffleObject truffleObject, boolean recursive, @SuppressWarnings("unused") boolean dropDimensions, @SuppressWarnings("unused") boolean toList) {
+        return getArrayToListNode().toList(truffleObject, recursive);
     }
 
-    @Specialization(guards = {"isForeignObject(truffleObject)", "!isForeignArray(truffleObject)", "type == List"})
+    @Specialization(guards = {"isForeignObject(truffleObject)", "!isForeignArray(truffleObject)", "toList"})
     @TruffleBoundary
-    protected Object convertObjectToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") RType type,
+    protected Object convertObjectToList(TruffleObject truffleObject, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean toList,
                     @Cached("create()") GetForeignKeysNode namesNode) {
         Object namesObj = namesNode.execute(truffleObject, false);
         if (namesObj == RNull.instance) {
@@ -417,7 +426,7 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
                     Object o = ForeignAccess.sendRead(getReadNode(), truffleObject, name);
                     o = getForeign2RNode().execute(o);
                     if (isForeignArray(o, hasSizeNode)) {
-                        o = getRecurseNode().execute(o, recursive, dropDimensions, RType.Any);
+                        o = getRecurseNode().execute(o, recursive, dropDimensions, false);
                     }
                     elements.add(o);
                     elementNames.add(name);
@@ -429,10 +438,14 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
         return RDataFactory.createList(elements.toArray(new Object[elements.size()]), RDataFactory.createStringVector(elementNames.toArray(new String[elementNames.size()]), true));
     }
 
-    @Specialization(guards = {"doNotConvert(obj, type)"})
+    @Specialization(guards = {"doNotConvert(obj, toList)"})
     protected Object doObject(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean dropDimensions,
-                    @SuppressWarnings("unused") RType type) {
+                    @SuppressWarnings("unused") boolean toList) {
         return obj;
+    }
+
+    protected boolean doNotConvert(Object obj, boolean toList) {
+        return !RRuntime.isForeignObject(obj) || (!isForeignArray(obj) && !toList);
     }
 
     protected boolean doNotConvert(Object obj, RType type) {
@@ -469,6 +482,22 @@ public abstract class ConvertForeignObjectNode extends RBaseNode {
             foreign2RNode = insert(Foreign2RNodeGen.create());
         }
         return foreign2RNode;
+    }
+
+    private ForeignArrayToListNode getArrayToListNode() {
+        if (arrayToList == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            arrayToList = insert(ForeignArrayToListNodeGen.create());
+        }
+        return arrayToList;
+    }
+
+    private ForeignArrayToVectorNode getArrayToVectorNode() {
+        if (arrayToVector == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            arrayToVector = insert(ForeignArrayToVectorNodeGen.create());
+        }
+        return arrayToVector;
     }
 
 }

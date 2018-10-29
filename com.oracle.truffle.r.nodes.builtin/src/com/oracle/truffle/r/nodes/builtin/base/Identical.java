@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -144,6 +145,13 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     @SuppressWarnings("unused")
     @Specialization
     protected byte doInternalIdentical(String x, String y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
+        return RRuntime.asLogical(x.equals(y));
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization
+    protected byte doInternalIdentical(CharSXPWrapper x, CharSXPWrapper y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment,
+                    boolean ignoreSrcref) {
         return RRuntime.asLogical(x.equals(y));
     }
 

@@ -22,6 +22,15 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
+import static com.oracle.truffle.r.runtime.RVisibility.OFF;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
+import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+
+import java.io.IOException;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -30,28 +39,23 @@ import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
-import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.conn.StdConnections;
-import com.oracle.truffle.r.runtime.data.RRaw;
-import java.io.IOException;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.constant;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-import static com.oracle.truffle.r.runtime.RVisibility.OFF;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
-import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
+import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
 /**
  * Internal inspect builtin.
@@ -124,6 +128,24 @@ public abstract class Inspect extends RBuiltinNode.Arg2 {
         sb.append("] ");
         if (obj instanceof String) {
             sb.append('"').append(obj).append("\"\n");
+        } else if (obj instanceof CharSXPWrapper) {
+            int typeinfo = ((CharSXPWrapper) obj).getTypedValueInfo();
+            if (typeinfo == RTypedValue.BYTES_MASK) {
+                sb.append("[bytes] ");
+            }
+            if (typeinfo == RTypedValue.LATIN1_MASK) {
+                sb.append("[latin1] ");
+            }
+            if (typeinfo == RTypedValue.UTF8_MASK) {
+                sb.append("[UTF8] ");
+            }
+            if (typeinfo == RTypedValue.CACHED_MASK) {
+                sb.append("[cached] ");
+            }
+            if (typeinfo == RTypedValue.ASCII_MASK) {
+                sb.append("[ASCII] ");
+            }
+            sb.append('"').append(((CharSXPWrapper) obj).getContents()).append("\"\n");
         } else if (obj instanceof Double) {
             // GNU R uses Rprintf("%g",val) but String.format("%g", val) differs
             sb.append(obj);
