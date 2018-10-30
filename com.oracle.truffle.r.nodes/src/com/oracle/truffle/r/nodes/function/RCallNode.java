@@ -84,6 +84,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -672,7 +673,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 RInternalError.reportError(e);
                 throw RError.interopError(RError.findParentRBase(this), e, function);
             } catch (RuntimeException e) {
-                throw RError.handleInteropException(this, e);
+                throw RErrorHandling.handleInteropException(this, e);
             }
         }
 

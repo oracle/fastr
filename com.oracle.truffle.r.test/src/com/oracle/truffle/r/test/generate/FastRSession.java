@@ -56,7 +56,9 @@ import com.oracle.truffle.api.debug.SuspendedCallback;
 import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
+import com.oracle.truffle.r.launcher.REPL;
 import com.oracle.truffle.r.launcher.RStartParams;
+import com.oracle.truffle.r.launcher.StringConsoleHandler;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
@@ -69,6 +71,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.engine.interop.VectorMRTest;
+import java.util.Arrays;
 
 public final class FastRSession implements RSession {
 
@@ -258,6 +261,35 @@ public final class FastRSession implements RSession {
                 t.printStackTrace();
             }
             throw t;
+        } finally {
+            if (timer != null) {
+                timer.cancel();
+            }
+        }
+        try {
+            return output.toString("UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+            return "<exception>";
+        }
+    }
+
+    public String evalInREPL(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) throws Throwable {
+        assert contextKind != null;
+        Timer timer = null;
+        output.reset();
+        input.setContents(expression);
+        try (Context evalContext = createContext(contextKind, allowHostAccess)) {
+            // set up some interop objects used by fastr-specific tests:
+            if (testClass != null) {
+                testClass.addPolyglotSymbols(evalContext);
+            }
+            timer = scheduleTimeBoxing(evalContext.getEngine(), longTimeout ? longTimeoutValue : timeoutValue);
+            REPL.readEvalPrint(evalContext, new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false, output);
+            String consoleInput = readLine();
+            while (consoleInput != null) {
+                consoleInput = readLine();
+            }
         } finally {
             if (timer != null) {
                 timer.cancel();
