@@ -787,7 +787,7 @@ SEXP test_DATAPTR(SEXP strings, SEXP testSingleChar) {
         // pointer to CHARSXP array
         void* data = DATAPTR(strings);
         for (int i = 0; i < LENGTH(strings); ++i) {
-            printf("DATAPTR(strings)[%d] == '%s'\n", i, R_CHAR(((SEXP*)data)[i]));
+            printf("DATAPTR(strings)[%d] == '%s'\n", i, CHAR(((SEXP*)data)[i]));
         }
     }
     fflush(stdout);
@@ -812,8 +812,59 @@ SEXP test_R_nchar(SEXP x) {
     return resVec;
 }
 
-SEXP test_forceAndCall(SEXP e, SEXP n, SEXP rho)
-{
+SEXP test_forceAndCall(SEXP e, SEXP n, SEXP rho) {
     SEXP val = R_forceAndCall(e, Rf_asInteger(n), rho);
     return val;
+}
+
+SEXP test_constant_types() {
+    SEXP res = PROTECT(allocVector(INTSXP, 43));
+    int* data = INTEGER(res);
+    int i = 0;
+    data[i++] = TYPEOF(R_GlobalEnv);
+    data[i++] = TYPEOF(R_BaseEnv);
+    data[i++] = TYPEOF(R_BaseNamespace);
+    data[i++] = TYPEOF(R_NamespaceRegistry);
+    data[i++] = TYPEOF(R_NilValue);
+    data[i++] = -1; // TYPEOF(R_UnboundValue); TODO: this is 'mkSymMarker(R_NilValue)' in GNU-R
+    data[i++] = TYPEOF(R_MissingArg);
+    data[i++] = TYPEOF(R_EmptyEnv);
+    data[i++] = TYPEOF(R_Bracket2Symbol);
+    data[i++] = TYPEOF(R_BracketSymbol);
+    data[i++] = TYPEOF(R_BraceSymbol);
+    data[i++] = TYPEOF(R_DoubleColonSymbol);
+    data[i++] = TYPEOF(R_ClassSymbol);
+    data[i++] = TYPEOF(R_DeviceSymbol);
+    data[i++] = TYPEOF(R_DimNamesSymbol);
+    data[i++] = TYPEOF(R_DimSymbol);
+    data[i++] = TYPEOF(R_DollarSymbol);
+    data[i++] = TYPEOF(R_DotsSymbol);
+    data[i++] = TYPEOF(R_DropSymbol);
+    data[i++] = TYPEOF(R_LastvalueSymbol);
+    data[i++] = TYPEOF(R_LevelsSymbol);
+    data[i++] = TYPEOF(R_ModeSymbol);
+    data[i++] = TYPEOF(R_NameSymbol);
+    data[i++] = TYPEOF(R_NamesSymbol);
+    data[i++] = TYPEOF(R_NaRmSymbol);
+    data[i++] = TYPEOF(R_PackageSymbol);
+    data[i++] = TYPEOF(R_QuoteSymbol);
+    data[i++] = TYPEOF(R_RowNamesSymbol);
+    data[i++] = TYPEOF(R_SeedsSymbol);
+    data[i++] = TYPEOF(R_SourceSymbol);
+    data[i++] = TYPEOF(R_TspSymbol);
+    data[i++] = TYPEOF(R_dot_defined);
+    data[i++] = TYPEOF(R_dot_Method);
+    data[i++] = TYPEOF(R_dot_target);
+    data[i++] = TYPEOF(R_dot_packageName);
+    data[i++] = TYPEOF(R_dot_Generic);
+    data[i++] = TYPEOF(R_BlankString);
+    data[i++] = TYPEOF(R_BlankScalarString);
+    data[i++] = TYPEOF(R_BaseSymbol);
+    data[i++] = TYPEOF(R_NamespaceEnvSymbol);
+    data[i++] = TYPEOF(R_SortListSymbol);
+    data[i++] = TYPEOF(R_SpecSymbol);
+    data[i++] = TYPEOF(R_TripleColonSymbol);
+    data[i++] = TYPEOF(R_PreviousSymbol);
+    UNPROTECT(1);
+    return res;
 }

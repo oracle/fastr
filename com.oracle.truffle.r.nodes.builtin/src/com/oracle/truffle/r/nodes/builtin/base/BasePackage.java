@@ -165,6 +165,7 @@ import com.oracle.truffle.r.nodes.unary.UnaryArithmeticBuiltinNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticSpecial;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNode;
 import com.oracle.truffle.r.nodes.unary.UnaryNotNodeGen;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -414,6 +415,7 @@ public class BasePackage extends RBuiltinPackage {
         add(DynLoadFunctions.GetSymbolInfo.class, DynLoadFunctionsFactory.GetSymbolInfoNodeGen::create);
         add(DynLoadFunctions.IsLoaded.class, DynLoadFunctionsFactory.IsLoadedNodeGen::create);
         add(VersionFunctions.ExtSoftVersion.class, VersionFunctionsFactory.ExtSoftVersionNodeGen::create);
+        add(EApply.class, EApplyNodeGen::create);
         add(EncodeString.class, EncodeStringNodeGen::create);
         add(EncodingFunctions.Encoding.class, EncodingFunctionsFactory.EncodingNodeGen::create);
         add(EncodingFunctions.SetEncoding.class, EncodingFunctionsFactory.SetEncodingNodeGen::create);
@@ -859,6 +861,10 @@ public class BasePackage extends RBuiltinPackage {
 
     private static void addFastPath(MaterializedFrame baseFrame, String name, FastPathFactory factory) {
         RFunction function = ReadVariableNode.lookupFunction(name, baseFrame);
+        if (function == null) {
+            throw new RInternalError("failed adding the fast path for the R function " + name +
+                            ". The function was not found. This could be due to previous errors that prevented it from being loaded.");
+        }
         ((RRootNode) function.getRootNode()).setFastPath(factory);
     }
 

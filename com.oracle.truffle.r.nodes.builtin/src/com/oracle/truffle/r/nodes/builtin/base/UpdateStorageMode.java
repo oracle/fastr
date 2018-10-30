@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.attributes.ArrayAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -62,13 +63,23 @@ public abstract class UpdateStorageMode extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
+    protected Object updateNull(@SuppressWarnings("unused") RNull x, String value,
+                    @Cached("createEqualityProfile()") ValueProfile valueProfile) {
+        RType mode = typeFromMode.execute(valueProfile.profile(value));
+        checkMode(mode);
+        return mode.create(0, false);
+    }
+
+    protected static boolean notNull(Object x) {
+        return RNull.instance != x;
+    }
+
+    @Specialization(guards = "notNull(x)")
     protected Object update(Object x, String value,
                     @Cached("create()") ArrayAttributeNode attrAttrAccess,
                     @Cached("create()") SetAttributeNode setAttrNode) {
         RType mode = typeFromMode.execute(value);
-        if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
-            throw error(RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
-        }
+        checkMode(mode);
         initTypeOfNode();
         RType typeX = typeof.execute(x);
         if (typeX == mode) {
@@ -113,6 +124,12 @@ public abstract class UpdateStorageMode extends RBuiltinNode.Arg2 {
             }
         }
         throw error(RError.Message.INVALID_UNNAMED_VALUE);
+    }
+
+    private void checkMode(RType mode) {
+        if (mode == RType.DefunctReal || mode == RType.DefunctSingle) {
+            throw error(RError.Message.USE_DEFUNCT, mode.getName(), mode == RType.DefunctSingle ? "mode<-" : "double");
+        }
     }
 
     private void initCastTypeNode() {

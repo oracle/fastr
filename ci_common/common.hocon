@@ -228,7 +228,7 @@ rbcheck : ${common} {
 internalPkgtest: ${common} {
   run : [
     ["mx", "build"]
-    ["mx", "pkgtest", "--repos", "FASTR", "--pkg-filelist", "com.oracle.truffle.r.test.native/packages/pkg-filelist"]
+    ["mx", "pkgtest", "--verbose", "--repos", "FASTR", "--pkg-filelist", "com.oracle.truffle.r.test.native/packages/pkg-filelist"]
   ]
   logs: ${common.logs}
 }

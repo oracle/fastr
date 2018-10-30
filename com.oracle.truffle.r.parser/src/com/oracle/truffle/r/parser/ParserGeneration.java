@@ -102,5 +102,6 @@ public class ParserGeneration {
         "refactored: use file for interactive single-line source",
         "create lookups for field accesses where appropriate",
         "allow unicode escape literals with {...}",
+        "allow 'function(...=NULL)', which has no effect, but also causes not error in GNU-R",
     };
 }

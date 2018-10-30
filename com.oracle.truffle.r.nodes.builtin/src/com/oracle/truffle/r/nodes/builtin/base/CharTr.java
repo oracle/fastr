@@ -54,7 +54,7 @@ public abstract class CharTr extends RBuiltinNode.Arg3 {
         return CharTrNodeGen.create();
     }
 
-    @Specialization(guards = "vectorReuse.supports(values)")
+    @Specialization(guards = "vectorReuse.supports(values)", limit = "getVectorAccessCacheSize()")
     RAbstractStringVector doIt(String oldStr, String newStr, RAbstractStringVector values,
                     @Cached("createTemporary(values)") VectorReuse vectorReuse,
                     @Cached("create()") RemoveRegAttributesNode removeRegAttributesNode) {

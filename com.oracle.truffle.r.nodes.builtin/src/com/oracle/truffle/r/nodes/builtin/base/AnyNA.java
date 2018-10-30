@@ -29,10 +29,12 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -44,6 +46,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
+@ImportStatic(DSLConfig.class)
 @RBuiltin(name = "anyNA", kind = PRIMITIVE, parameterNames = {"x", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUMMARY)
 public abstract class AnyNA extends RBuiltinNode.Arg2 {
 
@@ -106,7 +109,7 @@ public abstract class AnyNA extends RBuiltinNode.Arg2 {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected byte anyNACached(RAbstractAtomicVector x, @SuppressWarnings("unused") boolean recursive,
                     @Cached("x.access()") VectorAccess xAccess) {
         switch (xAccess.getType()) {

@@ -36,6 +36,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
@@ -878,6 +879,9 @@ public class RDeparse {
                     } else {
                         append(quotify(name, BACKTICK));
                     }
+                    if ("...".equals(name) && argument instanceof RSyntaxLookup && "...".equals(((RSyntaxLookup) argument).getIdentifier())) {
+                        continue;
+                    }
                     if (!formals || argument != null) {
                         append(" = ");
                     }
@@ -904,6 +908,11 @@ public class RDeparse {
 
             if (RRuntime.isForeignObject(v)) {
                 sb.append("[polyglot.value]");
+                return this;
+            }
+
+            if (v instanceof CharSXPWrapper) {
+                sb.append("<CHARSXP: \"" + ((CharSXPWrapper) v).getContents() + "\">");
                 return this;
             }
 

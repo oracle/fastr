@@ -28,6 +28,13 @@ package com.oracle.truffle.r.runtime;
 public final class DSLConfig {
     private static final double DSL_CACHE_SIZE_FACTOR = FastROptions.DSLCacheSizeFactor.getNonNegativeDoubleValue();
 
+    /**
+     * Some DSL {@code limit}s must be set to either constant {@code 1} or constant {@code 0},
+     * otherwise the DSL compiler will fail. To allow these to be still configured, we set the limit
+     * to {@code 1} and use this final field as a guard.
+     */
+    public static final boolean LIMIT_1_GUARD = FastROptions.DSLCacheSizeFactor.getNonNegativeDoubleValue() != 0;
+
     private DSLConfig() {
         // only static methods
     }

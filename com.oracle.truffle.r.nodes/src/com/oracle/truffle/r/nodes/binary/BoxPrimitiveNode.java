@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.binary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -61,6 +62,11 @@ public abstract class BoxPrimitiveNode extends CastNode {
     @Specialization
     protected static RString doString(String value) {
         return RString.valueOf(value);
+    }
+
+    @Specialization
+    protected static CharSXPWrapper doCharSXPWrapper(CharSXPWrapper value) {
+        return value;
     }
 
     /*

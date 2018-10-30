@@ -29,6 +29,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
@@ -56,6 +57,11 @@ public abstract class TypeofNode extends UnaryNode {
     @Specialization
     protected static RType doString(@SuppressWarnings("unused") String x) {
         return RType.Character;
+    }
+
+    @Specialization
+    protected static RType doCharSXP(@SuppressWarnings("unused") CharSXPWrapper x) {
+        return RType.Char;
     }
 
     @Specialization

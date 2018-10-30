@@ -63,7 +63,7 @@ public abstract class MaxCol extends RBuiltinNode.Arg2 {
 
     private final ValueProfile tieProfile = ValueProfile.createEqualityProfile();
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     RAbstractIntVector findMaxCol(RAbstractContainer x, int tieArg,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("create()") VectorFactory vectorFactory,

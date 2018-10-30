@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -72,6 +73,7 @@ import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.ConnectionFunctionsFactory.WriteDataNodeGen;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.HeadPhaseBuilder;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -1048,6 +1050,7 @@ public abstract class ConnectionFunctions {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     @TypeSystemReference(RTypes.class)
     public abstract static class WriteDataNode extends RBaseNode {
 
@@ -1069,7 +1072,7 @@ public abstract class ConnectionFunctions {
             return s.getBytes(StandardCharsets.UTF_8);
         }
 
-        @Specialization(guards = "objectAccess.supports(object)")
+        @Specialization(guards = "objectAccess.supports(object)", limit = "getVectorAccessCacheSize()")
         protected ByteBuffer write(RAbstractVector object, @SuppressWarnings("unused") int size, boolean swap, @SuppressWarnings("unused") boolean useBytes,
                         @Cached("object.access()") VectorAccess objectAccess) {
             try (SequentialIterator iter = objectAccess.access(object)) {

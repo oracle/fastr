@@ -70,7 +70,7 @@ public abstract class FormatInfo extends RBuiltinNode.Arg3 {
         return s.length();
     }
 
-    @Specialization(guards = "vAccess.supports(v)")
+    @Specialization(guards = "vAccess.supports(v)", limit = "getVectorAccessCacheSize()")
     protected Object doVector(RAbstractVector v, int digits, int nsmall,
                     @Cached("v.access()") VectorAccess vAccess,
                     @Cached("create()") VectorFactory factory) {

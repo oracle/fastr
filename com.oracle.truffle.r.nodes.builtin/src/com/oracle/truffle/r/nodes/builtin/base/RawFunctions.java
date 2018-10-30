@@ -59,7 +59,7 @@ public class RawFunctions {
             casts.arg("x").defaultError(RError.Message.ARG_MUST_BE_CHARACTER_VECTOR_LENGTH_ONE).mustBe(stringValue()).asStringVector().mustBe(notEmpty());
         }
 
-        @Specialization(guards = "xAccess.supports(x)")
+        @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
         protected RRawVector charToRaw(RAbstractStringVector x,
                         @Cached("x.access()") VectorAccess xAccess) {
             try (RandomIterator iter = xAccess.randomAccess(x)) {
@@ -101,7 +101,7 @@ public class RawFunctions {
             return new String(new byte[]{value});
         }
 
-        @Specialization(guards = "xAccess.supports(x)")
+        @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
         protected Object rawToChar(RAbstractRawVector x, boolean multiple,
                         @Cached("x.access()") VectorAccess xAccess) {
             try (SequentialIterator iter = xAccess.access(x)) {
@@ -142,7 +142,7 @@ public class RawFunctions {
             casts.arg("n").defaultError(RError.Message.MUST_BE_SMALL_INT, "shift").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(-8).and(lte(8)));
         }
 
-        @Specialization(guards = "xAccess.supports(x)")
+        @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
         protected RRawVector rawShift(RAbstractRawVector x, int n,
                         @Cached("createBinaryProfile()") ConditionProfile negativeShiftProfile,
                         @Cached("x.access()") VectorAccess xAccess) {

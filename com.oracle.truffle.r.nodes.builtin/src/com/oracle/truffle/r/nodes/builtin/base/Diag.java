@@ -81,7 +81,7 @@ public abstract class Diag extends RBuiltinNode.Arg3 {
         return RDataFactory.createDoubleVector(data, !RRuntime.isNA(x), new int[]{nrow, ncol});
     }
 
-    @Specialization(guards = "xAccess.supports(x)")
+    @Specialization(guards = "xAccess.supports(x)", limit = "getVectorAccessCacheSize()")
     protected RAbstractVector diagCached(RAbstractVector x, int nrow, int ncol,
                     @Cached("x.access()") VectorAccess xAccess,
                     @Cached("createNew(xAccess.getType())") VectorAccess resultAccess,

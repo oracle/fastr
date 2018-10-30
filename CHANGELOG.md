@@ -1,3 +1,30 @@
+# 1.0 RC 9
+
+New features
+
+* various improvements in handling of foreign objects in R
+
+Added missing R builtins and C API
+
+* eapply builtin
+* rapply builtin
+
+Bug fixes:
+
+* colon builtin calculated length incorrectly in some circumstances
+* `storage.mode<-` works with NULL
+* Rf_coerceVector works with pairlists and language objects
+* allow formal parameter names: '..1', '..1=default', '...=default'
+
+# 1.0 RC 8
+
+Bug fixes
+
+* slot (`@`) was not working with foreign arrays
+* memory leak when invoking some native functions
+* one `symbol` was reported multiple times to the memory profiler
+* maintain the same ownership relation between SEXPs as GNU-R does to prevent an unexpected collection of some SEXPs
+
 # 1.0 RC 7
 
 API changes

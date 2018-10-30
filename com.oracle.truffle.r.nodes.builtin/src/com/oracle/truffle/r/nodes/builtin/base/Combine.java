@@ -68,6 +68,7 @@ import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -127,6 +128,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
                         !(args.getArgument(0) instanceof RPairList) &&
                         !(args.getArgument(0) instanceof RSymbol) &&
                         !(args.getArgument(0) instanceof RS4Object) &&
+                        !(args.getArgument(0) instanceof CharSXPWrapper) &&
                         !RRuntime.isForeignObject(args.getArgument(0));
     }
 
