@@ -58,4 +58,16 @@ public class TestBuiltin_storagemodeassign extends TestBase {
         assertEval("{ x <- c(1L, 2L); storage.mode(x) <- \"not.double\"}");
         assertEval("{ x <- c(1L, 2L); dim(x)<-c(1,2); storage.mode(x) <- \"double\"; x}");
     }
+
+    @Test
+    public void testUpdateStorageModeWithNull() {
+        assertEval(template("{ x <- NULL; storage.mode(x) <- '%0'; x }", new String[]{"integer", "character", "logical", "double", "numeric", "raw"}));
+    }
+
+    @Test
+    public void testErrors() {
+        // TODO: need to fix cast pipeline and specializations in UpdateStorageMode
+        assertEval(Ignored.ImplementationError, template("{ x <- %0; storage.mode(x) <- 'integer'; }", new String[]{"new.env()", "quote(a+b)", "as.pairlist(1)"}));
+        assertEval("{ x <- 1; storage.mode(x) <- 42.5; }");
+    }
 }

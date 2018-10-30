@@ -394,12 +394,13 @@ par_decl [List<Argument<T>> l]
     : i=ID                     { $l.add(RCodeBuilder.argument(src($i), $i.text, null)); }
     | i=ID n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($i, last()), $i.text, $e.v)); }
     | v=VARIADIC               { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
-    // The 3 following cases were not handled ... and everything was working fine.
-    // They are added for completeness, however note that a function created
-    // with such a signature will always fail if it tries to access them!
-    | VARIADIC n_ ASSIGN n_ expr { throw RInternalError.shouldNotReachHere("... = value parameter"); }
-    | DD                         { throw RInternalError.shouldNotReachHere("..X parameter"); }
-    | DD n_ ASSIGN n_ expr       { throw RInternalError.shouldNotReachHere("..X = value parameter"); }
+    // The 3 following cases (e.g. "...=42") are weirdness of the reference implementation,
+    // the formal argument must be actually created, because they play their role in positional argument matching,
+    // but the expression for the default value (if any) is never executed and the value of the paremter
+    // cannot be accessed (at least it seems so).
+    | v=VARIADIC n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
+    | v=DD                           { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
+    | v=DD n_ ASSIGN n_ expr         { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
     ;
 
 tilde_expr returns [T v]
