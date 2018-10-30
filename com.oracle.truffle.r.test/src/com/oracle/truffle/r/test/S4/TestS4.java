@@ -124,8 +124,7 @@ public class TestS4 extends TestRBase {
 
         assertEval("{ setGeneric(\"gen\", function(o) standardGeneric(\"gen\")); res<-print(setGeneric(\"gen\", function(o) standardGeneric(\"gen\"))); removeGeneric(\"gen\"); res }");
 
-        assertEval(Output.IgnoreWarningMessage,
-                        "{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
+        assertEval("{ setClass(\"foo\"); setMethod(\"diag<-\", \"foo\", function(x, value) 42); removeMethod(\"diag<-\", \"foo\"); removeGeneric(\"diag<-\"); removeClass(\"foo\") }");
 
         assertEval("{ setClass('A'); setClass('A1', contains = 'A'); setClass('A2', contains = 'A1'); setGeneric('foo', function(a, b) standardGeneric('foo')); setMethod('foo', signature('A1', 'A2'), function(a, b) '1-2'); setMethod('foo', signature('A2', 'A1'), function(a, b) '2-1'); foo(new('A2'), new('A2')) }");
 
