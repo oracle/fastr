@@ -30,7 +30,7 @@ public class RSyntaxTags {
 
     public final class LoopTag extends Tag {
         private LoopTag() {
-
+            // no instances
         }
     }
 

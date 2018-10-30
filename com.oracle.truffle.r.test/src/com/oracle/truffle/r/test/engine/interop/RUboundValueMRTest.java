@@ -43,5 +43,4 @@ public class RUboundValueMRTest extends AbstractMRTest {
     protected TruffleObject createEmptyTruffleObject() throws Exception {
         return null;
     }
-
 }

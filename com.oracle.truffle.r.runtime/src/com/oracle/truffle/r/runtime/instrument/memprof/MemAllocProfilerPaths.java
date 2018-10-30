@@ -399,5 +399,4 @@ public final class MemAllocProfilerPaths {
             add(other.allocated, other.count);
         }
     }
-
 }

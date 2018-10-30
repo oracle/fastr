@@ -27,63 +27,21 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.dsl.Fallback;
-import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.api.nodes.NodeCost;
-import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.helpers.UpdateListField;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.UpdateFieldSpecialNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastListNode;
 import com.oracle.truffle.r.nodes.unary.CastListNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
-import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-
-@NodeInfo(cost = NodeCost.NONE)
-@NodeChild(value = "arguments", type = RNode[].class)
-abstract class UpdateFieldSpecial extends RNode {
-
-    @Child private UpdateListField updateListField;
-
-    /**
-     * {@link RNull} and lists have special handling when they are RHS of update. Nulls delete the
-     * field and lists can cause cycles.
-     */
-    static boolean isNotRNullRList(Object value) {
-        return value != RNull.instance && !(value instanceof RList);
-    }
-
-    @Specialization(guards = {"!list.isShared()", "isNotRNullRList(value)"})
-    public Object doList(RList list, String field, Object value) {
-        // Note: special call construction turns lookups into string constants for field accesses
-        if (updateListField == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            updateListField = insert(UpdateListField.create());
-        }
-        boolean result = updateListField.execute(list, field, value);
-        if (!result) {
-            throw RSpecialFactory.throwFullCallNeeded(value);
-        } else {
-            return list;
-        }
-    }
-
-    @SuppressWarnings("unused")
-    @Fallback
-    public RList doFallback(Object container, Object field, Object value) {
-        throw RSpecialFactory.throwFullCallNeeded(value);
-    }
-}
 
 @RBuiltin(name = "$<-", kind = PRIMITIVE, parameterNames = {"", "", "value"}, isFieldAccess = true, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class UpdateField extends RBuiltinNode.Arg3 {

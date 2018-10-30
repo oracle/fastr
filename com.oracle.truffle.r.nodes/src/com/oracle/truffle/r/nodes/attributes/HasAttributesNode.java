@@ -60,5 +60,4 @@ public abstract class HasAttributesNode extends RBaseNode {
     protected boolean handleOthers(@SuppressWarnings("unused") Object x) {
         return false;
     }
-
 }
