@@ -75,10 +75,12 @@ import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
@@ -283,7 +285,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     return ((RPromise) value).getRawValue();
                 }
                 if (value instanceof RArgsValuesAndNames) {
-                    return ((RArgsValuesAndNames) value).toPairlist();
+                    RArgsValuesAndNames argsValsNames = (RArgsValuesAndNames) value;
+                    return argsValsNames.isEmpty() ? RSymbol.MISSING : argsValsNames.toPairlist();
+                }
+                if (value == RMissing.instance || value == REmpty.instance) {
+                    return RSymbol.MISSING;
                 }
                 return value;
             }

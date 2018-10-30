@@ -261,3 +261,7 @@ rffi.test_R_nchar <- function(x) {
 rffi.test_forceAndCall <- function(call, args, rho) {
 	.Call('test_forceAndCall', call, args, rho)
 }
+
+rffi.test_constantTypes <- function(env) {
+    .Call('test_constant_types')
+}

@@ -224,7 +224,7 @@ public final class AttributesAccessNodes {
                     CompilerDirectives.transferToInterpreter();
                     // GNUR seems to set the attr name to NULL and fails when printing
                     // To be compatible we don't fail, but at least print warning...
-                    RError.warning(NO_CALLER, Message.GENERIC, String.format("SET_ATTRIB: tag in the attributes pairlist must be a symbol. %s given.", Utils.getTypeName(tag)));
+                    RError.warning(NO_CALLER, Message.NO_TAG_IN_SET_ATTRIB, Utils.getTypeName(tag));
                     continue;
                 }
                 setAttribNode.execute(target, ((RSymbol) tag).getName(), attr.car());
