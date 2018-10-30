@@ -493,7 +493,7 @@ public final class StatsFunctionsNodes {
 
     public abstract static class Zeroin2 extends RExternalBuiltinNode.Arg7 {
 
-        private final RExplicitCallNode callNode = RExplicitCallNode.create();
+        @Child private RExplicitCallNode callNode = RExplicitCallNode.create();
 
         public static Zeroin2 create() {
             return Zeroin2NodeGen.create();
