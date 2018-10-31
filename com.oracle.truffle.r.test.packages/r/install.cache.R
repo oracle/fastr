@@ -326,7 +326,7 @@ pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.obje
     os.file.option <- if (os.object.dest != "") paste("--file", os.object.dest) else ""
 
     # assemble command line
-    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.cmd.args, os.bucket.option, "--name", os.object.qname, "--file", os.object.dest)
+    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.bucket.option, os.cmd.args, os.object.qname, "--file", os.object.dest)
     log.message("object store client command line: ", cmd.line, level=1)
 
     rc <- system(cmd.line, ignore.stdout=verbose)
@@ -339,17 +339,21 @@ pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.obje
 
 # get an object from the object store; TRUE on success, FALSE otherwise
 pkg.cache.os.get <- function(pkg.cache.env, os.object.name, os.object.dest) {
-    pkg.cache.os.run.client("get", "", os.object.name, os.object.dest)
+    pkg.cache.os.run.client("get", "--name", os.object.name, os.object.dest)
 }
 
 # put an object to the object store; TRUE on success, FALSE otherwise
 pkg.cache.os.put <- function(pkg.cache.env, os.object.name, os.object.dest) {
-    pkg.cache.os.run.client("put", "--force", os.object.name, os.object.dest)
+    pkg.cache.os.run.client("put", "--force --name", os.object.name, os.object.dest)
 }
 
-# delete a single object from the object storage (not recursive)
-pkg.cache.os.delete <- function(pkg.cache.env, os.object.name) {
-    pkg.cache.os.run.client("delete", "", os.object.name)
+# delete objects from the object storage
+pkg.cache.os.delete <- function(pkg.cache.env, os.object.name, recursive=FALSE) {
+    if (recursive) {
+        pkg.cache.os.run.client("bulk-delete", "--force --prefix", os.object.name)
+    } else {
+        pkg.cache.os.run.client("delete", "--force --name", os.object.name)
+    }
 }
 
 pkg.cache.mode.oci <- function(pkg.cache.env) {
@@ -496,8 +500,7 @@ pkg.cache.delete.version <- function(pkg.cache.env, version.dir.basename) {
 
     log.message("removing oldest version dir ", version.dir.basename, level=1)
     if (pkg.cache.mode.oci(pkg.cache.env)) {
-        # TODO implement; use 'bulk-delete'
-        TRUE
+        pkg.cache.os.delete(pkg.cache.env, version.dir.basename, recursive=TRUE)
     } else {
         # delete directory
         tryCatch({
