@@ -302,13 +302,17 @@ pkg.cache.cleanup.pkg.versions <- function(pkg.cache.env, version.dir, pkgname) 
             }
         }, error = function(e) {
             log.message("could not cleanup old package versions of '", pkgname, "' because: ", e$message)
+            return (NULL)
         })
     } else if(pkg.cache.mode.oci(pkg.cache.env)) {
         # TODO
-    }
+        # pkg.cache.os.list(pkg.cache.env, version.dir)
+    } 
+    NULL
 }
 
-pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.object.dest="") {
+# return value: if 'capture.output=FALSE' then TRUE/FALSE; otherwise the captured output
+pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.object.dest="", capture.output=FALSE) {
     # consider env var 'FASTR_OS_PKG_CACHE_PREFIX'
     pkg.cache.os.prefix <- Sys.getenv("FASTR_OS_PKG_CACHE_PREFIX")
 
@@ -326,19 +330,25 @@ pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.obje
     os.file.option <- if (os.object.dest != "") paste("--file", os.object.dest) else ""
 
     # assemble command line
-    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.bucket.option, os.cmd.args, os.object.qname, "--file", os.object.dest)
+    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.bucket.option, os.cmd.args, os.object.qname, os.file.option)
     log.message("object store client command line: ", cmd.line, level=1)
 
-    rc <- system(cmd.line, ignore.stdout=verbose)
+    result <- system(cmd.line, ignore.stdout=verbose, intern=capture.output)
+
+    # status code is stored in attribute 'status'
+    rc <- if (capture.output) attr(result, "status") else result
+
     if (rc != 0L) {
         log.message("object store ", os.cmd, " failed with status code=", rc)
-        FALSE
     }
-    TRUE
+
+    if (capture.output) result else (rc == 0L)
 }
 
 # get an object from the object store; TRUE on success, FALSE otherwise
 pkg.cache.os.get <- function(pkg.cache.env, os.object.name, os.object.dest) {
+    # ensure that 'os.object.dest' does not exist
+    unlink(os.object.dest)
     pkg.cache.os.run.client("get", "--name", os.object.name, os.object.dest)
 }
 
@@ -353,6 +363,18 @@ pkg.cache.os.delete <- function(pkg.cache.env, os.object.name, recursive=FALSE) 
         pkg.cache.os.run.client("bulk-delete", "--force --prefix", os.object.name)
     } else {
         pkg.cache.os.run.client("delete", "--force --name", os.object.name)
+    }
+}
+
+# list objects in the object storage
+pkg.cache.os.list <- function(pkg.cache.env, os.prefix) {
+    result <- pkg.cache.os.run.client("list", "--force --prefix", os.object.name, capture.output=TRUE)
+    if (require(jsonlite)) {
+        parsed <- fromJSON(result)
+        parsed$data[,"name"]
+    } else {
+        log.message("package 'jsonlite' not available")
+        character(0)
     }
 }
 
