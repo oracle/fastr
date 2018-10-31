@@ -1036,6 +1036,7 @@ parse.args <- function() {
 
 cat.args <- function() {
 	if (verbose) {
+		cat("tempdir:", tempdir(), "\n")
 		cat("cran.mirror:", cran.mirror, "\n")
 		cat("initial.blacklist.file:", initial.blacklist.file, "\n")
 		cat("blacklist.file:", blacklist.file, "\n")
@@ -1054,7 +1055,7 @@ cat.args <- function() {
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
 		cat("testdir.path", testdir, "\n")
-		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "\n")
+		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "; mode=", pkg.cache$mode, "\n")
 	}
 }
 
@@ -1165,7 +1166,7 @@ if (!is.null(curScriptDir)) {
 
 quiet <- F
 repo.list <- c("CRAN")
-pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE))
+pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE, mode="local"))
 cran.mirror <- NA
 blacklist.file <- NA
 initial.blacklist.file <- NA

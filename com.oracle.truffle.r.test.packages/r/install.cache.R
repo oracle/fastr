@@ -29,7 +29,7 @@ pkg.cache.max.retries <- 3L
 pkg.cache.lock.expiration <- 3600
 
 pkg.cache.lock <- function(pkg.cache.env, version.dir) {
-    if (!as.logical(pkg.cache.env$sync)) {
+    if (!(as.logical(pkg.cache.env$sync) && pkg.cache.mode.local(pkg.cache.env))) {
         return (TRUE)
     }
 
@@ -100,7 +100,7 @@ pkg.cache.lock.cleanup.expired <- function(lock.file) {
 }
 
 pkg.cache.unlock <- function(pkg.cache.env, version.dir) {
-    if (!as.logical(pkg.cache.env$sync)) {
+    if (!(as.logical(pkg.cache.env$sync) && pkg.cache.mode.local(pkg.cache.env))) {
         return (TRUE)
     }
 
@@ -148,7 +148,17 @@ pkg.cache.install <- function(pkg.cache.env, pkgname, pkg.version, lib.install, 
 }
 
 pkg.cache.entry.filename <- function(pkg) {
-    paste0(as.character(pkg["Package"]), "_", as.character(pkg["Version"]), ".gz")
+    paste0(as.character(pkg["Package"]), "_", as.character(pkg["Version"]), ".zip")
+}
+
+pkg.cache.file.path <- function(pkg.cache.env, version.dir, cache.entry.name) {
+    if (pkg.cache.mode.oci(pkg.cache.env)) {
+        # In mode="os", we temporarily store the archive file to the package cache dir 
+        # which is in this case just a working directory for transferring the files.
+        file.path(pkg.cache.env$dir, cache.entry.name)
+    } else {
+        file.path(version.dir, cache.entry.name)
+    }
 }
 
 pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
@@ -163,35 +173,58 @@ pkg.cache.get <- function(pkg.cache.env, pkg, lib) {
         return (FALSE)
     }
 
-    pkgname <- as.character(pkg["Package"])
+    pkg.name <- as.character(pkg["Package"])
     pkg.version <- as.character(pkg["Version"])
 
     log.message("using package cache directory ", version.dir, level=1)
     cache.entry.name <- pkg.cache.entry.filename(pkg)
 
-    # lookup package dir
-    pkg.dirs <- list.files(version.dir, full.names=FALSE, recursive=FALSE)
-    if (!is.na(match(cache.entry.name, pkg.dirs))) {
-        # cache hit
-        fromPath <- file.path(version.dir, cache.entry.name)
-        toPath <- lib
+    fromPath <- pkg.cache.file.path(pkg.cache.env, version.dir, cache.entry.name)
+    if (pkg.cache.mode.oci(pkg.cache.env)) {
+        dest.file <- fromPath
+        object.name <- paste0(version.dir, "/", cache.entry.name)
+        if (!pkg.cache.os.get(pkg.cache.env, object.name, dest.file)) {
+            pkg.cache.unlock(pkg.cache.env, version.dir)
+            log.message("cache miss for package ", pkg.name, level=1)
+            return (FALSE)
+        }
+    } 
 
-        # extract cached package to library directory
-        tryCatch({
+
+    toPath <- lib
+    # extract cached package to library directory
+    tryCatch({
+        if (file.exists(fromPath)) {
             unzip(fromPath, exdir=toPath, unzip = getOption("unzip"))
             log.message("package cache hit, using package from ", fromPath)
             pkg.cache.unlock(pkg.cache.env, version.dir)
             return (TRUE)
-        }, error = function(e) {
-            pkg.cache.unlock(pkg.cache.env, version.dir)
-            log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
-            return (FALSE)
-        })
-    } 
+        } else {
+            log.message("cache miss for package ", pkg.name, " (path=", fromPath, ")", level=1)
+        }
+    }, error = function(e) {
+        log.message("could not extract cached package from ", fromPath , " to ", toPath, level=1)
+    })
     pkg.cache.unlock(pkg.cache.env, version.dir)
-    log.message("cache miss for package ", pkgname, level=1)
     
     FALSE
+}
+
+pkg.cache.create.version.dir <- function(pkg.cache.env, version.dir) {
+    # we don't need to create anything in mode="os"
+    if (pkg.cache.mode.local(pkg.cache.env)) {
+        tryCatch({
+            # Create version directory if inexisting
+            if (!dir.exists(version.dir)) {
+                log.message("creating version directory ", version.dir, level=1)
+                dir.create(version.dir, recursive=T)
+            }
+        }, error = function(e) {
+            log.message("could not insert package '", pkgname, "' because: ", e$message)
+            return (FALSE)
+        })
+    }
+    TRUE
 }
 
 pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
@@ -206,50 +239,49 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
         return (FALSE)
     }
 
-    tryCatch({
-        # Create version directory if inexisting
-        if (!dir.exists(version.dir)) {
-            log.message("creating version directory ", version.dir, level=1)
-            dir.create(version.dir, recursive=T)
-        }
+    # create the version directory
+    if (!pkg.cache.create.version.dir(pkg.cache.env, version.dir)) {
+        return (FALSE)
+    }
 
-        # lock version directory
-        if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
-            log.message("could not insert: version dir ", version.dir, " is locked", level=1)
-            return (FALSE)
-        }
-    }, error = function(e) {
-        log.message("could not insert package '", pkgname, "' because: ", e$message)
-    })
+    # lock version directory
+    if (!pkg.cache.lock(pkg.cache.env, version.dir)) {
+        log.message("could not insert: version dir ", version.dir, " is locked", level=1)
+        return (FALSE)
+    }
 
     tryCatch({
         pkg.version <- as.character(pkg["Version"])
         fromPath <- file.path(lib, pkgname)
-        toPath <- file.path(version.dir, pkg.cache.entry.filename(pkg))
+        cache.entry.name <- pkg.cache.entry.filename(pkg)
+        toPath <- pkg.cache.file.path(pkg.cache.env, version.dir, cache.entry.name)
 
         # to produce a ZIP with relative paths, we need to change the working dir
         prev.wd <- getwd()
         setwd(lib)
 
         # cleanup older package versions
-        tryCatch({
-            fs <- list.files(version.dir, full.names=TRUE, recursive=FALSE)
-            pkg.cached.versions.idxs <- grepl(pkgname, fs)
-            if (length(pkg.cached.versions.idxs) != 0L) {
-                log.message("cleaning up old package versions '", fs[pkg.cached.versions.idxs], "'", level=1)
-                unlink(fs[pkg.cached.versions.idxs], recursive=FALSE)
-            }
-        }, error = function(e) {
-            log.message("could not cleanup old package versions of '", pkgname, "' because: ", e$message)
-        })
+        pkg.cache.cleanup.pkg.versions(pkg.cache.env, version.dir, pkgname)
 
         if(zip(toPath, pkgname, flags="-r9Xq") != 0L) {
             pkg.cache.unlock(pkg.cache.env, version.dir)
             log.message("could not compress package dir ", fromPath , " and store it to ", toPath, level=1)
             return (FALSE)
         }
+
+        # transfer archive file to object store
+        if (pkg.cache.mode.oci(pkg.cache.env)) {
+            object.name <- paste0(version.dir, "/", cache.entry.name)
+            pkg.cache.os.put(pkg.cache.env, object.name, toPath)
+            dest.name <- object.name
+
+            # delete temporary file (in any case)
+            unlink(toPath)
+        } else {
+            dest.name <- toPath
+        }
         setwd(prev.wd)
-        log.message("successfully inserted package ", pkgname , " to package cache (", toPath, ")")
+        log.message("successfully inserted package ", pkgname , " to package cache (", dest.name, ")")
         pkg.cache.unlock(pkg.cache.env, version.dir)
         return (TRUE)
     }, error = function(e) {
@@ -259,30 +291,135 @@ pkg.cache.insert <- function(pkg.cache.env, pkg, lib) {
     FALSE
 }
 
+pkg.cache.cleanup.pkg.versions <- function(pkg.cache.env, version.dir, pkgname) {
+    if (pkg.cache.mode.local(pkg.cache.env)) {
+        tryCatch({
+            fs <- list.files(version.dir, full.names=TRUE, recursive=FALSE)
+            pkg.cached.versions.idxs <- grepl(pkgname, fs)
+            if (length(pkg.cached.versions.idxs) != 0L) {
+                log.message("cleaning up old package versions '", fs[pkg.cached.versions.idxs], "'", level=1)
+                unlink(fs[pkg.cached.versions.idxs], recursive=FALSE)
+            }
+        }, error = function(e) {
+            log.message("could not cleanup old package versions of '", pkgname, "' because: ", e$message)
+            return (NULL)
+        })
+    } else if(pkg.cache.mode.oci(pkg.cache.env)) {
+        # TODO
+        # pkg.cache.os.list(pkg.cache.env, version.dir)
+    } 
+    NULL
+}
+
+# return value: if 'capture.output=FALSE' then TRUE/FALSE; otherwise the captured output
+pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.object.dest="", capture.output=FALSE) {
+    # consider env var 'FASTR_OS_PKG_CACHE_PREFIX'
+    pkg.cache.os.prefix <- Sys.getenv("FASTR_OS_PKG_CACHE_PREFIX")
+
+    # assemble final object name
+    os.object.qname <- paste0(pkg.cache.os.prefix, os.object.name)
+
+    # consider env var 'FASTR_OCI_CLIENT_ARGS'
+    os.client.args <- Sys.getenv("FASTR_OCI_CLIENT_ARGS")
+
+    # consider env var 'FASTR_OS_BUCKET_NAME'
+    os.bucket.name <- Sys.getenv("FASTR_OS_BUCKET_NAME")
+    os.bucket.option <- if (os.bucket.name != "") paste("-bn", os.bucket.name) else ""
+
+    # optional: 'os.object.dest'
+    os.file.option <- if (os.object.dest != "") paste("--file", os.object.dest) else ""
+
+    # assemble command line
+    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.bucket.option, os.cmd.args, os.object.qname, os.file.option)
+    log.message("object store client command line: ", cmd.line, level=1)
+
+    result <- system(cmd.line, ignore.stdout=verbose, intern=capture.output)
+
+    # status code is stored in attribute 'status'
+    rc <- if (capture.output) attr(result, "status") else result
+
+    if (rc != 0L) {
+        log.message("object store ", os.cmd, " failed with status code=", rc)
+    }
+
+    if (capture.output) result else (rc == 0L)
+}
+
+# get an object from the object store; TRUE on success, FALSE otherwise
+pkg.cache.os.get <- function(pkg.cache.env, os.object.name, os.object.dest) {
+    # ensure that 'os.object.dest' does not exist
+    unlink(os.object.dest)
+    pkg.cache.os.run.client("get", "--name", os.object.name, os.object.dest)
+}
+
+# put an object to the object store; TRUE on success, FALSE otherwise
+pkg.cache.os.put <- function(pkg.cache.env, os.object.name, os.object.dest) {
+    pkg.cache.os.run.client("put", "--force --name", os.object.name, os.object.dest)
+}
+
+# delete objects from the object storage
+pkg.cache.os.delete <- function(pkg.cache.env, os.object.name, recursive=FALSE) {
+    if (recursive) {
+        pkg.cache.os.run.client("bulk-delete", "--force --prefix", os.object.name)
+    } else {
+        pkg.cache.os.run.client("delete", "--force --name", os.object.name)
+    }
+}
+
+# list objects in the object storage
+pkg.cache.os.list <- function(pkg.cache.env, os.prefix) {
+    result <- pkg.cache.os.run.client("list", "--force --prefix", os.object.name, capture.output=TRUE)
+    if (require(jsonlite)) {
+        parsed <- fromJSON(result)
+        parsed$data[,"name"]
+    } else {
+        log.message("package 'jsonlite' not available")
+        character(0)
+    }
+}
+
+pkg.cache.mode.oci <- function(pkg.cache.env) {
+    pkg.cache.env$mode == "os"
+}
+
+pkg.cache.mode.local <- function(pkg.cache.env) {
+    !pkg.cache.mode.oci(pkg.cache.env)
+}
+
 pkg.cache.check <- function(pkg.cache.env) {
     # check if caching is enabled
     if (!pkg.cache.is.enabled(pkg.cache.env)) {
         return (NULL)
     }
 
-    # check if package cache directory can be accessed
-    if (dir.exists(pkg.cache.env$dir) && any(file.access(pkg.cache.env$dir, mode = 6) == -1)) {
-        log.message("cannot access package cache dir ", pkg.cache.env$dir, level=1)
-        return (NULL)
-    }
+    if (pkg.cache.mode.oci(pkg.cache.env)) {
+        version.table <- pkg.cache.os.initialized(pkg.cache.env)
+        if (is.null(version.table)) {
+            pkg.cache.init(pkg.cache.env, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
+        }
+    } else {
+        # check if package cache directory can be accessed
+        if (dir.exists(pkg.cache.env$dir) && any(file.access(pkg.cache.env$dir, mode = 6) == -1)) {
+            log.message("cannot access package cache dir ", pkg.cache.env$dir, level=1)
+            return (NULL)
+        }
 
-    # check cache directory has valid structure
-    if (!is.valid.cache.dir(pkg.cache.env$dir, pkg.cache.env$table.file.name)) {
-        pkg.cache.init(pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
+        # check cache directory has valid structure
+        if (!is.valid.cache.dir(pkg.cache.env$dir, pkg.cache.env$table.file.name)) {
+            pkg.cache.init(pkg.cache.env, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
+        }
     }
-
     # get version sub-directory
     version.dir <- pkg.cache.get.version(pkg.cache.env, pkg.cache.env$dir, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
     if (is.null(version.dir)) {
         log.message("cannot access or create version subdir for ", as.character(pkg.cache.env$version), level=1)
     }
 
-    version.dir
+    if (pkg.cache.mode.local(pkg.cache.env)) {
+        file.path(pkg.cache.env$dir, version.dir)
+    } else {
+        version.dir
+    }
 }
 
 is.valid.cache.dir <- function(cache.dir, table.file.name) {
@@ -305,64 +442,118 @@ is.valid.cache.dir <- function(cache.dir, table.file.name) {
     })
 }
 
+# checks if the package cache structure is initialized on the object storage
+pkg.cache.os.initialized <- function(pkg.cache.env) {
+    table.file.name <- pkg.cache.env$table.file.name
+    dst.file <- file.path(pkg.cache.env$dir, table.file.name)
+
+    # download version table file to temporary location
+    if (!pkg.cache.os.get(pkg.cache.env, table.file.name, dst.file)) {
+        # error already logged
+        return (NULL)
+    }
+
+
+    if (any(file.access(dst.file, mode = 6) == -1)) {
+        # delete temporary file
+        unlink(dst.file)
+        return (NULL)
+    }
+
+    tryCatch({
+        version.table <- read.csv(dst.file)
+        # delete temporary file
+        unlink(dst.file)
+        version.table
+    }, error = function(e) {
+        log.message("could not read package cache's version table: ", e$message, level=1)
+        # delete temporary file
+        unlink(dst.file)
+        NULL
+    })
+}
+
 # Generates a package cache API version directory using the first 20 characters (if available) from the version.
 pkg.cache.gen.version.dir.name <- function(version) {
     paste0("library", substr(version, 1, max(20,length(version))))
 }
 
-pkg.cache.init <- function(cache.dir, version, table.file.name, cache.size) {
+pkg.cache.init <- function(pkg.cache.env, version, table.file.name, cache.size) {
     if (is.null(version)) {
         # This has been logged during argument parsing.
         return (NULL)
     }
 
-    if (!dir.exists(cache.dir)) {
-        log.message("creating cache directory ", cache.dir, level=1)
+    log.message("initializing package cache (mode=", pkg.cache.env$mode, ")")
 
-        tryCatch({
-            dir.create(cache.dir, recursive=T)
-        }, error = function(e) {
-            log.message("could create package cache dir '", cache.dir, "' because: ", e$message)
-        })
+    cache.dir <- pkg.cache.env$dir
+    if (pkg.cache.mode.local(pkg.cache.env)) {
+        if (!dir.exists(cache.dir)) {
+            log.message("creating cache directory ", cache.dir, level=1)
+
+            tryCatch({
+                dir.create(cache.dir, recursive=T)
+            }, error = function(e) {
+                log.message("could create package cache dir '", cache.dir, "' because: ", e$message)
+            })
+        }
     }
 
-    version.table.name <- file.path(cache.dir, table.file.name)
-
     # create package lib dir for this version (if not existing)
-    version.table <- pkg.cache.create.version(cache.dir, version, table.file.name, cache.size, data.frame(version=character(0),dir=character(0),ctime=double(0)))
+    initial.version.table <- data.frame(version=character(0),dir=character(0),ctime=double(0))
+    version.table <- pkg.cache.create.version(pkg.cache.env, version, initial.version.table)
+
+    version.table.name <- file.path(cache.dir, table.file.name)
     tryCatch({
         write.csv(version.table, version.table.name, row.names=FALSE)
     }, error = function(e) {
         log.message("could not write version table to file ", version.table.name, " because: ", e$message)
     })
+
+    # in mode="os", we need to upload the file to the object store
+    if (pkg.cache.mode.oci(pkg.cache.env)) {
+        pkg.cache.os.put(pkg.cache.env, table.file.name, version.table.name)
+    }
+
     NULL
 }
 
+pkg.cache.delete.version <- function(pkg.cache.env, version.dir.basename) {
+
+    log.message("removing oldest version dir ", version.dir.basename, level=1)
+    if (pkg.cache.mode.oci(pkg.cache.env)) {
+        pkg.cache.os.delete(pkg.cache.env, version.dir.basename, recursive=TRUE)
+    } else {
+        # delete directory
+        tryCatch({
+            oldest.dir <- file.path(pkg.cache.env$dir, version.dir.basename)
+            version.table <- version.table[-order[[1]],]
+            unlink(oldest.dir, recursive=TRUE)
+        }, error = function(e) {
+            log.message("could not remove directory ", oldest.dir, " from cache", level=1)
+        })
+    }
+}
+
+
 # creates package lib dir for this version (if not existing)
-pkg.cache.create.version <- function(cache.dir, version, table.file.name, cache.size, version.table) {
-    version.table.name <- file.path(cache.dir, table.file.name)
+pkg.cache.create.version <- function(pkg.cache.env, version, version.table) {
     version.subdir <- pkg.cache.gen.version.dir.name(version)
-    version.dir <- file.path(cache.dir, version.subdir)
 
     # We do not create the version directory here because we cannot guarantee that this will stay in sync
     # with the version table anyway.
 
     # Do cleanup if cache dir size exceeds
+    cache.size <- pkg.cache.env$size
     while (cache.size > 0 && nrow(version.table) >= cache.size) {
         # Remove oldest version (if any)
         order <- order(version.table$ctime)
         if (length(order) > 0) {
             oldest.entry <- version.table[order[[1]],]
-            oldest.dir <- file.path(cache.dir, as.character(oldest.entry$dir))
-            log.message("removing oldest version ", as.character(oldest.entry$version), " with dir ", oldest.dir, level=1)
             version.table <- version.table[-order[[1]],]
 
             # delete directory
-            tryCatch({
-                unlink(oldest.dir, recursive=TRUE)
-            }, error = function(e) {
-                log.message("could not remove directory ", oldest.dir, " from cache", level=1)
-            })
+            pkg.cache.delete.version(pkg.cache.env, as.character(oldest.entry$dir))
         } else {
             # just to be sure
             break ()
@@ -374,23 +565,24 @@ pkg.cache.create.version <- function(cache.dir, version, table.file.name, cache.
     rbind(version.table, data.frame(version=version,dir=version.subdir,ctime=as.double(Sys.time())))
 }
 
-pkg.cache.get.version <- function(pkg.cache.env, cache.dir, cache.version, table.file.name, cache.size) {
+pkg.cache.read.version.from.table <- function(pkg.cache.env, cache.version, version.table.file) {
     if (is.null(cache.version)) {
         return (NULL)
     }
 
-    # look for 'version.table'
-    version.table.name <- file.path(cache.dir, table.file.name)
-    if (any(file.access(version.table.name, mode = 6) == -1)) {
+    if (any(file.access(version.table.file, mode = 6) == -1)) {
         return (NULL)
     }
 
     tryCatch({
-        version.table <- read.csv(version.table.name)
+        # read the version table file
+        version.table <- read.csv(version.table.file)
+
+        # get subdir for given version (create if not exists)
         version.subdir <- as.character(version.table[version.table$version == cache.version, "dir"])
         updated.version.table <- NULL
         if (length(version.subdir) == 0L) {
-            updated.version.table <- pkg.cache.create.version(cache.dir, cache.version, table.file.name, cache.size, version.table)
+            updated.version.table <- pkg.cache.create.version(pkg.cache.env, cache.version, version.table)
         }
         if (!is.null(updated.version.table)) {
             version.subdir <- as.character(updated.version.table[updated.version.table$version == cache.version, "dir"])
@@ -400,19 +592,37 @@ pkg.cache.get.version <- function(pkg.cache.env, cache.dir, cache.version, table
             }
 
             tryCatch({
-                write.csv(updated.version.table, version.table.name, row.names=FALSE)
+                write.csv(updated.version.table, version.table.file, row.names=FALSE)
                 pkg.cache.unlock(pkg.cache.env, cache.dir)
             }, error = function(e) {
                 pkg.cache.unlock(pkg.cache.env, cache.dir)
             })
+
+            # send updated file to object store
+            if (pkg.cache.mode.oci(pkg.cache.env)) {
+                if (!pkg.cache.os.put(pkg.cache.env, pkg.cache.env$table.file.name, version.table.file)) {
+                    return (NULL)
+                }
+            }
+
         }
 
         # return the version directory
-        file.path(cache.dir, version.subdir)
+        version.subdir
     }, error = function(e) {
         log.message("error reading/writing 'version.table': ", e$message, level=1)
         NULL
     })
+}
+
+pkg.cache.get.version <- function(pkg.cache.env, cache.dir, cache.version, table.file.name, cache.size) {
+
+    version.table.file <- file.path(cache.dir, table.file.name)
+    if (pkg.cache.mode.oci(pkg.cache.env)) {
+        pkg.cache.os.get(pkg.cache.env, table.file.name, version.table.file)
+    }
+
+    pkg.cache.read.version.from.table(pkg.cache.env, cache.version, version.table.file)
 }
 
 # list of recommended and base packages

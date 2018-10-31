@@ -167,6 +167,9 @@ def _installpkgs(args, **kwargs):
         env = os.environ.copy()
         kwargs['env'] = env
 
+    if "FASTR_WORKING_DIR" in os.environ:
+        env["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
+
     script = _installpkgs_script()
     if _graalvm() is None:
         mx.logv("Using FastR binary: mx rscript")
