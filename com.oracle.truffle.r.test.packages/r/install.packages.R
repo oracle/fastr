@@ -1165,7 +1165,7 @@ if (!is.null(curScriptDir)) {
 
 quiet <- F
 repo.list <- c("CRAN")
-pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE, mode="os"))
+pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE, mode="local"))
 cran.mirror <- NA
 blacklist.file <- NA
 initial.blacklist.file <- NA
