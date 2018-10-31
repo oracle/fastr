@@ -308,7 +308,7 @@ pkg.cache.cleanup.pkg.versions <- function(pkg.cache.env, version.dir, pkgname) 
     }
 }
 
-pkg.cache.os.run.client <- function(os.cmd, os.object.name, os.object.dest="") {
+pkg.cache.os.run.client <- function(os.cmd, os.cmd.args, os.object.name, os.object.dest="") {
     # consider env var 'FASTR_OS_PKG_CACHE_PREFIX'
     pkg.cache.os.prefix <- Sys.getenv("FASTR_OS_PKG_CACHE_PREFIX")
 
@@ -326,10 +326,10 @@ pkg.cache.os.run.client <- function(os.cmd, os.object.name, os.object.dest="") {
     os.file.option <- if (os.object.dest != "") paste("--file", os.object.dest) else ""
 
     # assemble command line
-    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.bucket.option, "--name", os.object.qname, "--file", os.object.dest)
-    log.message("OCI get command line: ", cmd.line, level=1)
+    cmd.line <- paste("oci", os.client.args, "os object", os.cmd, os.cmd.args, os.bucket.option, "--name", os.object.qname, "--file", os.object.dest)
+    log.message("object store client command line: ", cmd.line, level=1)
 
-    rc <- system(cmd.line, show.output.on.console=verbose)
+    rc <- system(cmd.line, ignore.stdout=verbose)
     if (rc != 0L) {
         log.message("object store ", os.cmd, " failed with status code=", rc)
         FALSE
@@ -339,17 +339,17 @@ pkg.cache.os.run.client <- function(os.cmd, os.object.name, os.object.dest="") {
 
 # get an object from the object store; TRUE on success, FALSE otherwise
 pkg.cache.os.get <- function(pkg.cache.env, os.object.name, os.object.dest) {
-    pkg.cache.os.run.client("get", os.object.name, os.object.dest)
+    pkg.cache.os.run.client("get", "", os.object.name, os.object.dest)
 }
 
 # put an object to the object store; TRUE on success, FALSE otherwise
 pkg.cache.os.put <- function(pkg.cache.env, os.object.name, os.object.dest) {
-    pkg.cache.os.run.client("put", os.object.name, os.object.dest)
+    pkg.cache.os.run.client("put", "--force", os.object.name, os.object.dest)
 }
 
 # delete a single object from the object storage (not recursive)
 pkg.cache.os.delete <- function(pkg.cache.env, os.object.name) {
-    pkg.cache.os.run.client("delete", os.object.name)
+    pkg.cache.os.run.client("delete", "", os.object.name)
 }
 
 pkg.cache.mode.oci <- function(pkg.cache.env) {
@@ -361,14 +361,14 @@ pkg.cache.mode.local <- function(pkg.cache.env) {
 }
 
 pkg.cache.check <- function(pkg.cache.env) {
-    cat("##### FOO\n")
     # check if caching is enabled
     if (!pkg.cache.is.enabled(pkg.cache.env)) {
         return (NULL)
     }
 
     if (pkg.cache.mode.oci(pkg.cache.env)) {
-        if (!pkg.cache.os.initialized(pkg.cache.env)) {
+        version.table <- pkg.cache.os.initialized(pkg.cache.env)
+        if (is.null(version.table)) {
             pkg.cache.init(pkg.cache.env, as.character(pkg.cache.env$version), pkg.cache.env$table.file.name, pkg.cache.env$size)
         }
     } else {
@@ -422,29 +422,28 @@ pkg.cache.os.initialized <- function(pkg.cache.env) {
     dst.file <- file.path(pkg.cache.env$dir, table.file.name)
 
     # download version table file to temporary location
-    rc <- pkg.cache.os.get(pkg.cache.env, table.file.name, dst.file)
-    if (rc != 0L) {
+    if (!pkg.cache.os.get(pkg.cache.env, table.file.name, dst.file)) {
         # error already logged
-        return (FALSE)
+        return (NULL)
     }
 
 
     if (any(file.access(dst.file, mode = 6) == -1)) {
         # delete temporary file
         unlink(dst.file)
-        return (FALSE)
+        return (NULL)
     }
 
     tryCatch({
         version.table <- read.csv(dst.file)
         # delete temporary file
         unlink(dst.file)
-        TRUE
+        version.table
     }, error = function(e) {
         log.message("could not read package cache's version table: ", e$message, level=1)
         # delete temporary file
         unlink(dst.file)
-        FALSE
+        NULL
     })
 }
 
@@ -461,8 +460,8 @@ pkg.cache.init <- function(pkg.cache.env, version, table.file.name, cache.size) 
 
     log.message("initializing package cache (mode=", pkg.cache.env$mode, ")")
 
+    cache.dir <- pkg.cache.env$dir
     if (pkg.cache.mode.local(pkg.cache.env)) {
-        cache.dir <- pkg.cache.env$dir
         if (!dir.exists(cache.dir)) {
             log.message("creating cache directory ", cache.dir, level=1)
 
