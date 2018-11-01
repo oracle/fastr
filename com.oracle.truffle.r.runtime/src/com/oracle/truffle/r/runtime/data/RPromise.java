@@ -210,9 +210,6 @@ public class RPromise extends RObject implements RTypedValue {
      * @param newValue
      */
     public final void setValue(Object newValue) {
-        if (newValue == RUnboundValue.instance) {
-            System.out.println("setValue");
-        }
         assert !isEvaluated();
         assert newValue != null;
         this.value = newValue;

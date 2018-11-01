@@ -215,7 +215,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
      * This follows GNU-R. If you asks for sys.function, of the 'eval' frame, you get
      * ".Primitive('eval')", which can be invoked.
      */
-    private RFunction getFunctionArgument() {
+    private static RFunction getFunctionArgument() {
         return RContext.getInstance().lookupBuiltin("eval");
     }
 
