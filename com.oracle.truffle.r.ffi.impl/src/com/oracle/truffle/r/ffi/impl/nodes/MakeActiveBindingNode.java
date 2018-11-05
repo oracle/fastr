@@ -22,9 +22,8 @@
  */
 package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -42,8 +41,6 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class MakeActiveBindingNode extends RBaseNode {
 
-    @CompilationFinal private BranchProfile frameSlotBranchProfile;
-
     public static MakeActiveBindingNode create() {
         return MakeActiveBindingNodeGen.create();
     }
@@ -52,12 +49,7 @@ public abstract class MakeActiveBindingNode extends RBaseNode {
 
     @Specialization
     @TruffleBoundary
-    protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env) {
-        if (frameSlotBranchProfile == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            frameSlotBranchProfile = BranchProfile.create();
-        }
-
+    protected Object makeActiveBinding(RSymbol sym, RFunction fun, REnvironment env, @Cached("create()") BranchProfile frameSlotBranchProfile) {
         String name = sym.getName();
         MaterializedFrame frame = env.getFrame();
         Object binding = ReadVariableNode.lookupAny(name, frame, true);
