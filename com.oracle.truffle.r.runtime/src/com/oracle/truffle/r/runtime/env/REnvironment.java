@@ -858,6 +858,11 @@ public abstract class REnvironment extends RAttributeStorage {
     }
 
     @TruffleBoundary
+    public boolean isActiveBinding(String key) {
+        return frameAccess.isActiveBinding(key);
+    }
+
+    @TruffleBoundary
     public void put(String key, Object value) throws PutException {
         if (locked) {
             // if the binding exists already, can try to update it

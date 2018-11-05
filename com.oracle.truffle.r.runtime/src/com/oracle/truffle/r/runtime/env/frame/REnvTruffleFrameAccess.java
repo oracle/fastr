@@ -92,6 +92,19 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    public boolean isActiveBinding(String key) {
+        CompilerAsserts.neverPartOfCompilation();
+        FrameDescriptor fd = frame.getFrameDescriptor();
+        FrameSlot slot = fd.findFrameSlot(key);
+        if (slot == null) {
+            return false;
+        } else {
+            Object value = FrameSlotChangeMonitor.getValue(slot, frame);
+            return ActiveBinding.isActiveBinding(value);
+        }
+    }
+
+    @Override
     public void put(String key, Object value) throws PutException {
         CompilerAsserts.neverPartOfCompilation();
         assert key != null;
