@@ -4,6 +4,10 @@ New features:
 
 * interop and tooling: READ and WRITE of ActiveBinding may have side effects. This is communicated via `KEY_INFO` to the tools and other languages (e.g., a debugger may warn before evaluating an ActiveBinding).
 
+Added missing R builtins and C API
+
+* pos.to.env builtin
+
 Bug fixes:
 
 * tooling: top level statements are not marked as functions (e.g., a debugger will not treat them as such anymore).

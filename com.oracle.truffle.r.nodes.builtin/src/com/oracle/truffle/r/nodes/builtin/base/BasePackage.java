@@ -540,6 +540,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FortranAndCFunctions.Fortran.class, FortranAndCFunctionsFactory.FortranNodeGen::create);
         add(FrameFunctions.MatchCall.class, FrameFunctionsFactory.MatchCallNodeGen::create);
         add(FrameFunctions.ParentFrame.class, FrameFunctionsFactory.ParentFrameNodeGen::create);
+        add(PosToEnv.class, PosToEnv::create);
         add(FrameFunctions.SysCall.class, FrameFunctionsFactory.SysCallNodeGen::create);
         add(FrameFunctions.SysCalls.class, FrameFunctionsFactory.SysCallsNodeGen::create);
         add(FrameFunctions.SysFrame.class, FrameFunctionsFactory.SysFrameNodeGen::create);
