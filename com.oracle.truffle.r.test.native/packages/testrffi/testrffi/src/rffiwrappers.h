@@ -34,6 +34,16 @@
 #include <R_ext/Connections.h>
 #include <Rmath.h>
 
+SEXP api_OBJECT(SEXP x);
+
+SEXP api_Rf_nrows(SEXP x);
+
+SEXP api_ATTRIB(SEXP obj);
+
+SEXP api_Rf_error(SEXP msg);
+
+SEXP api_Rf_cons(SEXP car, SEXP cdr);
+
 SEXP api_Rf_ScalarInteger(SEXP value);
 
 SEXP api_Rf_ScalarLogical(SEXP value);
@@ -54,8 +64,6 @@ SEXP api_Rf_coerceVector(SEXP x, SEXP mode);
 
 SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding);
 
-SEXP api_Rf_cons(SEXP car, SEXP cdr);
-
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg);
 
 SEXP api_R_getClassDef(SEXP clazz);
@@ -69,8 +77,6 @@ SEXP api_Rf_findVar(SEXP symbolArg, SEXP envArg);
 SEXP api_Rf_findVarInFrame(SEXP envArg, SEXP symbolArg);
 
 SEXP api_Rf_findVarInFrame3(SEXP envArg, SEXP symbolArg, SEXP doGet);
-
-SEXP api_ATTRIB(SEXP obj);
 
 SEXP api_Rf_getAttrib(SEXP obj, SEXP name);
 
@@ -90,8 +96,6 @@ SEXP api_Rf_isNull(SEXP x);
 
 SEXP api_Rf_PairToVectorList(SEXP x);
 
-SEXP api_Rf_error(SEXP msg);
-
 SEXP api_Rf_warning(SEXP msg);
 
 SEXP api_Rf_warningcall(SEXP call, SEXP msg);
@@ -103,8 +107,6 @@ SEXP api_Rf_allocVector(SEXP mode, SEXP n);
 SEXP api_Rf_allocArray(SEXP mode, SEXP dimsObj);
 
 SEXP api_Rf_allocMatrix(SEXP mode, SEXP nrow, SEXP ncol);
-
-SEXP api_Rf_nrows(SEXP x);
 
 SEXP api_Rf_ncols(SEXP x);
 
@@ -546,5 +548,5 @@ SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName
 
 SEXP api_Rf_isObject(SEXP x);
 
-SEXP api_OBJECT(SEXP x);
+SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
 
