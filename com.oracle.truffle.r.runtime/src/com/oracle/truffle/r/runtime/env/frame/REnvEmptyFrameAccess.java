@@ -46,6 +46,11 @@ public final class REnvEmptyFrameAccess extends REnvFrameAccess {
     }
 
     @Override
+    public boolean isActiveBinding(String key) {
+        return false;
+    }
+
+    @Override
     public void put(String key, Object value) throws REnvironment.PutException {
         throw RInternalError.shouldNotReachHere();
     }

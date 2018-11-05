@@ -242,7 +242,9 @@ public final class RScope {
                     if (!receiver.frameAccess.bindingIsLocked(identifier)) {
                         result |= KeyInfo.MODIFIABLE;
                     }
-                    if (receiver.frameAccess.get(identifier) instanceof RFunction) {
+                    if (receiver.frameAccess.isActiveBinding(identifier)) {
+                        result |= KeyInfo.READ_SIDE_EFFECTS | KeyInfo.WRITE_SIDE_EFFECTS;
+                    } else if (receiver.frameAccess.get(identifier) instanceof RFunction) {
                         result |= KeyInfo.INVOCABLE;
                     }
                     return result;
