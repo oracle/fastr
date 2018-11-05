@@ -807,7 +807,12 @@ fastr.errors.log.sizes <- function() {
 # installs a single package or retrieves it from the cache
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr.errors.log.sizes()
+
+    # save and restore working dir in case the installation process doesn't
+    prev.wd <- getwd()
     rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source")[[1]], lib.install)
+    setwd(prev.wd)
+
     success <- FALSE
     if (rc == 0L) {
         # be paranoid and also check file system and log
