@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -92,6 +93,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
+    @TruffleBoundary
     public Object R_Home() {
         byte[] sbytes = REnvVars.rHome().getBytes();
         return new NativeCharArray(sbytes);

@@ -80,15 +80,15 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -226,7 +226,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         REnvironment env = (REnvironment) envArg;
         RSymbol name = (RSymbol) symbolArg;
         try {
-            env.put(name.getName(), value);
+            if (value == RUnboundValue.instance) {
+                env.rm(name.getName());
+            } else {
+                env.put(name.getName(), value);
+            }
         } catch (PutException ex) {
             throw RError.error(RError.SHOW_CALLER2, ex);
         }
@@ -2436,6 +2440,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_forceAndCall(Object e, Object f, int n, Object args) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public void R_MakeActiveBinding(Object symArg, Object funArg, Object envArg) {
         throw implementedAsNode();
     }
 

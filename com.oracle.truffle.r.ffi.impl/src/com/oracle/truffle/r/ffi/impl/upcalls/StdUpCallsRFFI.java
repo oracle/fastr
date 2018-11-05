@@ -57,6 +57,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADDDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADDRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCADRNode;
 import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodes.SETCARNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MakeActiveBindingNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MathFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
@@ -935,4 +936,7 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(IsObjectNode.class)
     int Rf_isObject(Object x);
+
+    @RFFIUpCallNode(MakeActiveBindingNode.class)
+    void R_MakeActiveBinding(Object sym, Object fun, Object env);
 }

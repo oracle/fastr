@@ -221,6 +221,7 @@ public final class REnvVars implements RContext.ContextState {
      * startup possibly before the initial context is initialized and, therefore, before
      * {@link #envVars} is available.
      */
+    @TruffleBoundary
     public static String rHome() {
         if (rHome == null) {
             rHome = System.getenv(R_HOME);

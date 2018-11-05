@@ -44,6 +44,7 @@ import java.util.zip.ZipInputStream;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -180,6 +181,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         }
     }
 
+    @TruffleBoundary
     public static LLVMArchive getZipLLVMIR(String path) {
         List<String> nativeLibs = Collections.emptyList();
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(path + "l")))) {
@@ -248,6 +250,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
          * the IR has not been parsed yet.
          */
         @Override
+        @TruffleBoundary
         public Object execute(String path, boolean local, boolean now) {
             try {
                 LLVMArchive ar = getZipLLVMIR(path);
@@ -365,6 +368,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
      */
     private LLVM_IR[] libRModules;
 
+    @TruffleBoundary
     private static CallTarget parseLLVM(String libName, LLVM_IR ir) {
         if (ir instanceof LLVM_IR.Binary) {
             LLVM_IR.Binary bir = (LLVM_IR.Binary) ir;

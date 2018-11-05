@@ -335,3 +335,21 @@ foo()
 foo <- function(x) rffi.findvar('x', environment())
 typeof(foo())
 foo()
+
+# active bindings
+f <- local( {
+	x <- 1
+    function(v) {
+    	if (missing(v))
+        	cat("get\n")
+		else {
+        	cat("set\n")
+            x <<- v
+		}
+		x
+    }
+})
+api.R_MakeActiveBinding(as.symbol("fred"), f, .GlobalEnv)
+bindingIsActive("fred", .GlobalEnv)
+fred
+fred <- 2
