@@ -86,8 +86,8 @@ def _copylib(lib, libpath, plain_libpath_base, target):
             try:
                 mx.log('install_name_tool -id @rpath/' + plain_libpath_base + ' ' + plain_libpath_base)
                 subprocess.check_call(['install_name_tool', '-id', '@rpath/' + plain_libpath_base, plain_libpath_base])
-                mx.log('install_name_tool --add_rpath ' + target + ' ' + plain_libpath_base)
-                subprocess.check_call(['install_name_tool', '-add_rpath', target, plain_libpath_base])
+                mx.log('install_name_tool --add_rpath @loader_path/ ' + plain_libpath_base)
+                subprocess.check_call(['install_name_tool', '-add_rpath', '@loader_path/', plain_libpath_base])
             except subprocess.CalledProcessError:
                 mx.abort('copylib: install_name_tool failed')
 
