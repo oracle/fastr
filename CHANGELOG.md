@@ -12,6 +12,7 @@ Bug fixes:
 
 * tooling: top level statements are not marked as functions (e.g., a debugger will not treat them as such anymore).
 * update rpath correctly for redistributed libraries when producing a release build. This issue caused linking problems for MacOS users. #26
+* UseMethod caused internal error under some specific circumstances (happens during installation of the R.oo package)
 
 # 1.0 RC 9
 

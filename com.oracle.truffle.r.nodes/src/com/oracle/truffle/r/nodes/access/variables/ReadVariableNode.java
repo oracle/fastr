@@ -766,10 +766,11 @@ public final class ReadVariableNode extends RBaseNode {
                         } else {
                             if (forcePromises) {
                                 value = evalPromiseSlowPathWithName(identifier, null, promise);
-                                return (RFunction) value;
-                            } else {
-                                return null;
+                                if (RRuntime.checkType(value, RType.Function)) {
+                                    return (RFunction) value;
+                                }
                             }
+                            return null;
                         }
                     }
                     if (RRuntime.checkType(value, RType.Function)) {
