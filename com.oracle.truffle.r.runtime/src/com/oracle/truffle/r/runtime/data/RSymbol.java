@@ -47,11 +47,10 @@ public final class RSymbol extends RAttributeStorage {
 
     public static final RSymbol MISSING = RDataFactory.createSymbol("");
 
-    private final String name;
     private CharSXPWrapper nameWrapper;
 
     private RSymbol(String name) {
-        this.name = name;
+        this.nameWrapper = CharSXPWrapper.create(name);
     }
 
     @TruffleBoundary
@@ -70,13 +69,10 @@ public final class RSymbol extends RAttributeStorage {
     }
 
     public String getName() {
-        return name;
+        return nameWrapper.getContents();
     }
 
     public CharSXPWrapper getWrappedName() {
-        if (nameWrapper == null) {
-            nameWrapper = CharSXPWrapper.createInterned(name);
-        }
         return nameWrapper;
     }
 
@@ -99,7 +95,7 @@ public final class RSymbol extends RAttributeStorage {
         if (obj == this) {
             return true;
         } else if (obj instanceof RSymbol) {
-            return ((RSymbol) obj).getName() == this.name;
+            return ((RSymbol) obj).getName() == this.nameWrapper.getContents();
         }
         return false;
     }

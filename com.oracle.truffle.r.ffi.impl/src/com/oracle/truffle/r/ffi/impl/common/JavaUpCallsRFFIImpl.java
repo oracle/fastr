@@ -739,7 +739,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             return x;
         }
         guaranteeInstanceOf(x, RSymbol.class);
-        return CharSXPWrapper.create(((RSymbol) x).getName());
+        return ((RSymbol) x).getWrappedName();
     }
 
     @Override
