@@ -26,13 +26,13 @@ import java.io.OutputStream;
 import java.io.PrintStream;
 import java.util.List;
 
-class StringConsoleHandler extends ConsoleHandler {
+public class StringConsoleHandler extends ConsoleHandler {
     private final PrintStream output;
     private final List<String> lines;
     private String prompt;
     private int currentLine;
 
-    StringConsoleHandler(List<String> lines, OutputStream output) {
+    public StringConsoleHandler(List<String> lines, OutputStream output) {
         this.lines = lines;
         this.output = output instanceof PrintStream ? (PrintStream) output : new PrintStream(output);
     }

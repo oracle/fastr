@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.library.fastr.TestJavaInterop.TestClass.TestPOJO;
-import java.lang.reflect.Constructor;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
@@ -509,7 +508,7 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- 'x'; to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"x\"\n')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- c('x', 'y'); to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"y\"\n" +
-                        errorIn("In to$fieldStringArray[c(TRUE, FALSE)] <- c(\"x\", \"y\")", "number of items to replace is not a multiple of replacement length", true, true) + "')");
+                        errorIn("In to$fieldStringArray[c(TRUE, FALSE)] <- c(\"x\", \"y\")", "number of items to replace is not a multiple of replacement length", true, true, null) + "', sep='  ')");
     }
 
     @Test
@@ -1403,7 +1402,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " " + operator + " T", fail ? expectedKO : expectedOK);
 
         expectedOK = toRVector(t, vec) + operator + " c(T, T, F)";
-        expectedKO = errorIn("to$" + vec + " " + operator + " c(T, T, F)", "invalid 'x' type in 'x " + operator + " y'");
+        expectedKO = errorIn("to$" + vec + " " + operator + " c(T, T, F)", "invalid 'x' type in 'x " + operator + " y'", false, false, "");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " " + operator + " c(T, T, F)", fail ? expectedKO : expectedOK);
 
         expectedOK = "T " + operator + " " + toRVector(t, vec);
@@ -1466,22 +1465,77 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testException() {
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException"));
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException: msg"));
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException"));
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException: msg"));
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.lang.RuntimeException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:35)",
+                                        false, false, ""),
+                        true);
 
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')", errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: java.io.IOException"));
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
-                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: java.io.IOException: msg"));
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: java.lang.RuntimeException"));
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: java.lang.RuntimeException: msg"));
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.lang.RuntimeException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:41)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.io.IOException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:35)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.io.IOException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:41)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')",
+                        errorIn("to$exception(\"java.io.IOException\")",
+                                        "java.io.IOException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:50)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
+                        errorIn("to$exception(\"java.io.IOException\", \"msg\")",
+                                        "java.io.IOException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:54)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\")",
+                                        "java.lang.RuntimeException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:50)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")",
+                                        "java.lang.RuntimeException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:54)",
+                                        false, false, ""),
+                        true);
     }
 
     private String getRValue(Object value) {
@@ -1666,17 +1720,17 @@ public class TestJavaInterop extends TestBase {
     }
 
     private static String errorIn(String left, String right) {
-        return errorIn(left, right, false, false);
+        return errorIn(left, right, false, false, "  ");
     }
 
-    private static String errorIn(String left, String right, boolean warning, boolean onlyText) {
+    private static String errorIn(String left, String right, boolean warning, boolean onlyText, String sep) {
         String errorIn;
         if (warning) {
             errorIn = "Warning message:\n";
         } else {
             errorIn = "Error in ";
         }
-        String delim = " :";
+        String delim = " : ";
 
         StringBuilder sb = new StringBuilder();
         if (!onlyText) {
@@ -1685,14 +1739,19 @@ public class TestJavaInterop extends TestBase {
         sb.append(errorIn);
         sb.append(left.replaceAll("\\'", "\\\\\\'"));
         sb.append(delim);
-        if (errorIn.length() + left.length() + delim.length() + 1 + right.length() >= 74) {
+        if (errorIn.length() + left.length() + delim.length() + 1 + right.length() >= 75) {
             sb.append("', '\n', '");
         }
-        sb.append(' ');
         sb.append(right.replaceAll("\\'", "\\\\\\'"));
         sb.append("', '\n");
         if (!onlyText) {
-            sb.append("')");
+            if (sep != null) {
+                sb.append("', sep='");
+                sb.append(sep);
+                sb.append("')");
+            } else {
+                sb.append("')");
+            }
         }
         return sb.toString();
     }
@@ -2461,50 +2520,6 @@ public class TestJavaInterop extends TestBase {
                     }
                 }
             }
-        }
-    }
-
-    public static class TestExceptionsClass {
-
-        public TestExceptionsClass() {
-
-        }
-
-        public TestExceptionsClass(String className) throws Throwable {
-            if (className != null) {
-                throwEx(className);
-            }
-        }
-
-        public TestExceptionsClass(String className, String msg) throws Throwable {
-            if (className != null) {
-                throwEx(className, msg);
-            }
-        }
-
-        public static void exception(String className) throws Throwable {
-            throwEx(className);
-        }
-
-        public static void exception(String className, String msg) throws Throwable {
-            throwEx(className, msg);
-        }
-
-        private static void throwEx(String className) throws Throwable {
-            throwEx(className, null);
-        }
-
-        private static void throwEx(String className, String msg) throws Throwable {
-            Class<?> clazz = Class.forName(className);
-            Object t;
-            if (msg == null) {
-                t = clazz.newInstance();
-            } else {
-                Constructor<?> ctor = clazz.getDeclaredConstructor(String.class);
-                t = ctor.newInstance(msg);
-            }
-            assert t instanceof Throwable : "throwable instance expected: " + className;
-            throw (Throwable) t;
         }
     }
 

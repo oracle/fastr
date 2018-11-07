@@ -26,6 +26,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.TruffleLanguage.ContextReference;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -91,6 +92,9 @@ class EngineRootNode extends RootNode {
             throw e;
         } catch (Throwable t) {
             CompilerDirectives.transferToInterpreter();
+            if (t instanceof TruffleException && !((TruffleException) t).isInternalError()) {
+                throw t;
+            }
             // other errors didn't produce an output yet
             RInternalError.reportError(t);
             throw t;
