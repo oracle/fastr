@@ -258,7 +258,7 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
             RSyntaxCall call = (RSyntaxCall) node;
             RSyntaxElement lhs = call.getSyntaxLHS();
             if (lhs instanceof RSyntaxLookup) {
-                if (((RSyntaxLookup) lhs).getIdentifier().equals("<-")) {
+                if (((RSyntaxLookup) lhs).getIdentifier().equals("<-") || ((RSyntaxLookup) lhs).getIdentifier().equals("<<-")) {
                     return true;
                 }
                 for (RSyntaxElement arg : call.getSyntaxArguments()) {
