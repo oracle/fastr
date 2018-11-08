@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
@@ -57,10 +58,11 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import java.nio.file.Files;
 
 public final class Utils {
 
@@ -375,6 +377,37 @@ public final class Utils {
             return s.substring(1, s.length() - 1);
         } else {
             return s;
+        }
+    }
+
+    /**
+     * Helper for logging: create a summary describing the give value (Java class, vector length,
+     * first few elements, etc.).
+     */
+    public static String getDebugInfo(Object value) {
+        StringBuilder sb = new StringBuilder();
+        printDebugInfo(sb, value);
+        return sb.toString();
+    }
+
+    /**
+     * @see #getDebugInfo(Object)
+     */
+    public static void printDebugInfo(StringBuilder sb, Object arg) {
+        if (arg instanceof RSymbol) {
+            sb.append("\"" + arg.toString() + "\"");
+        } else if (arg instanceof RAbstractVector) {
+            RAbstractVector vec = (RAbstractVector) arg;
+            if (vec.getLength() == 0) {
+                sb.append("empty");
+            } else {
+                sb.append("len:" + vec.getLength() + ";data:");
+                for (int i = 0; i < Math.min(3, vec.getLength()); i++) {
+                    String str = ((RAbstractVector) arg).getDataAtAsObject(0).toString();
+                    str = str.length() > 30 ? str.substring(0, 27) + "..." : str;
+                    sb.append(',').append(str);
+                }
+            }
         }
     }
 
