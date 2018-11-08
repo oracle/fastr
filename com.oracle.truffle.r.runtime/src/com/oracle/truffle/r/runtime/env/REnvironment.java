@@ -556,6 +556,10 @@ public abstract class REnvironment extends RAttributeStorage {
         return 0;
     }
 
+    public static REnvironment getFromSearchPath(RContext ctx, int index) {
+        return ctx.stateREnvironment.searchPath.get(index);
+    }
+
     public static REnvironment getNamespaceRegistry() {
         return RContext.getInstance().stateREnvironment.getNamespaceRegistry();
     }
