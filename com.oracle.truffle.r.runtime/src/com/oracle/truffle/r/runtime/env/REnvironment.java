@@ -342,7 +342,7 @@ public abstract class REnvironment extends RAttributeStorage {
      */
     public static void baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
         // TODO if namespaceRegistry is ever used in an eval an internal env won't suffice.
-        REnvironment namespaceRegistry = RDataFactory.createInternalEnv();
+        REnvironment namespaceRegistry = RDataFactory.createInternalEnv(null);
         ContextStateImpl state = RContext.getInstance().stateREnvironment;
         Base baseEnv = new Base(baseFrame, initialGlobalFrame);
         namespaceRegistry.safePut("base", baseEnv.namespaceEnv);
