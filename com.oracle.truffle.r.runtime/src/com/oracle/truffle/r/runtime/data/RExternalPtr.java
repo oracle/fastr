@@ -92,4 +92,9 @@ public final class RExternalPtr extends RAttributeStorage implements RTypedValue
     public RType getRType() {
         return RType.ExternalPtr;
     }
+
+    @Override
+    public String toString() {
+        return getAddr() == null ? "<pointer: 0x?>" : String.format("<pointer: 0x%s>", Long.toHexString(getAddr().asAddress()));
+    }
 }
