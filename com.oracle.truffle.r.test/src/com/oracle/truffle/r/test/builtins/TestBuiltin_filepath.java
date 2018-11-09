@@ -56,4 +56,9 @@ public class TestBuiltin_filepath extends TestBase {
     public void testfilepath7() {
         assertEval("argv <- structure(list('.', 'Pkgs'), .Names = c('', ''));do.call('file.path', argv)");
     }
+
+    @Test
+    public void testfilepath() {
+        assertEval("file.path('xyzqwrtyerta', NULL)");
+    }
 }
