@@ -37,12 +37,13 @@ import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubsetSpecial2;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSET)
+@RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSET, allowMissingInVarArgs = true)
 public abstract class Subset extends RBuiltinNode.Arg3 {
 
     @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, behavior = PURE_SUBSET)
@@ -89,6 +90,12 @@ public abstract class Subset extends RBuiltinNode.Arg3 {
 
     @Specialization(guards = "!indexes.isEmpty()")
     protected Object get(Object x, RArgsValuesAndNames indexes, Object drop) {
-        return extractNode.apply(x, indexes.getArguments(), RLogical.TRUE, drop);
+        Object[] args = indexes.getArguments();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] == RMissing.instance) {
+                args[i] = REmpty.instance;
+            }
+        }
+        return extractNode.apply(x, args, RLogical.TRUE, drop);
     }
 }
