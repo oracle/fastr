@@ -66,6 +66,11 @@ public @interface RBuiltin {
     int[] nonEvalArgs() default {};
 
     /**
+     * Do not throw error if VarArgs are to be evaluated and there is a RMissing value.
+     */
+    boolean allowMissingInVarArgs() default false;
+
+    /**
      * The visibility of the output of the builtin. If the visibility is set to
      * {@link RVisibility#CUSTOM}, then it is responsibility of the execute method/specializations
      * to set the visibility in using {@code SetVisibilityNode}.
