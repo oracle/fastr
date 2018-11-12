@@ -38,11 +38,6 @@ final class ExternalPtrPrinter extends AbstractValuePrinter<RExternalPtr> {
     @Override
     @TruffleBoundary
     protected void printValue(RExternalPtr value, PrintContext printCtx) throws IOException {
-        // same like in RDeparse
-        if (value.getAddr().isLong()) {
-            printCtx.output().print(String.format("<pointer: %s>", Double.toHexString(value.getAddr().asAddress())));
-        } else {
-            printCtx.output().print(String.format("<pointer: external ptr 0x %s>", Long.toHexString(System.identityHashCode(value.getAddr().asTruffleObject()))));
-        }
+        printCtx.output().print(value.toString());
     }
 }

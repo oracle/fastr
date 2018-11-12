@@ -63,7 +63,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
-import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.interop.TruffleObjectConverter;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
@@ -768,14 +767,7 @@ public class RDeparse {
                 }
                 append(')');
             } else if (value instanceof RExternalPtr) {
-                SymbolHandle handle = ((RExternalPtr) value).getAddr();
-                if (handle == null) {
-                    append("<pointer: 0x?>");
-                } else if (handle.isLong()) {
-                    append("<pointer: 0x").append(Long.toHexString(handle.asAddress())).append('>');
-                } else {
-                    append("<pointer: external ptr 0x").append(Long.toHexString(System.identityHashCode(handle.asTruffleObject()))).append('>');
-                }
+                append(((RExternalPtr) value).toString());
             } else if (value instanceof REnvironment) {
                 append("<environment>");
             } else if (value instanceof REmpty) {

@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -87,8 +88,8 @@ public abstract class CastRawNode extends CastBaseNode {
     public abstract Object executeRaw(Object o);
 
     @Specialization
-    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
-        return RNull.instance;
+    protected RAbstractRawVector doNull(@SuppressWarnings("unused") RNull operand) {
+        return RDataFactory.createEmptyRawVector();
     }
 
     @Specialization

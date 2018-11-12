@@ -1279,8 +1279,12 @@ public final class RDataFactory {
     private static final AtomicInteger environmentCount = new AtomicInteger();
 
     @TruffleBoundary
+    public static REnvironment createInternalEnv(String name) {
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), name));
+    }
+
     public static REnvironment createInternalEnv() {
-        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
+        return createInternalEnv(REnvironment.UNNAMED);
     }
 
     @TruffleBoundary

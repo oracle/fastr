@@ -26,19 +26,27 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.builtin.InternalNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
-import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RPromise;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * .Internal is resolved during AST creation, so this builtin is only a dummy to make the name
- * visible.
+ * .Internal is normally resolved during AST creation and the {@link InternalNode} is created
+ * instead. However, some packages use it indirectly to fool the CRAN checks. The typical pattern is
+ * {@code get('.Internal')(myInternal(1,2,3))}.
  */
 @RBuiltin(name = ".Internal", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"call"}, nonEvalArgs = 0, behavior = COMPLEX)
 public abstract class Internal extends RBuiltinNode.Arg1 {
@@ -48,12 +56,30 @@ public abstract class Internal extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected Object doInternal(VirtualFrame frame, RPromise promise, @Cached("new()") PromiseHelperNode promiseHelper) {
-        return promiseHelper.evaluate(frame, promise);
+    protected Object doInternal(VirtualFrame frame, RPromise promise,
+                    @Cached("createExecuteInternal()") ExecuteInternalNode executeInternalNode) {
+        if (!(promise.getClosure().getExpr() instanceof RSyntaxCall)) {
+            return doInvalidArg(null);
+        }
+        return executeInternalNode.execute(frame.materialize(), promise);
     }
 
     @Fallback
-    protected Object doInternal(@SuppressWarnings("unused") Object x) {
-        throw RInternalError.unimplemented();
+    protected Object doInvalidArg(@SuppressWarnings("unused") Object x) {
+        throw error(Message.INVALID_ARG, ".Internal()");
+    }
+
+    protected static ExecuteInternalNode createExecuteInternal() {
+        return new ExecuteInternalNode();
+    }
+
+    protected static final class ExecuteInternalNode extends TruffleBoundaryNode {
+        @TruffleBoundary
+        public Object execute(MaterializedFrame frame, RPromise callPromise) {
+            RSyntaxCall call = (RSyntaxCall) callPromise.getClosure().getExpr();
+            RSyntaxLookup lookup = (RSyntaxLookup) call.getSyntaxLHS();
+            InternalNode internalNode = insert(InternalNode.create(RSyntaxNode.SOURCE_UNAVAILABLE, lookup, ArgumentsSignature.empty(1), new RSyntaxNode[]{(RSyntaxNode) call}));
+            return internalNode.execute(frame);
+        }
     }
 }

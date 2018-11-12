@@ -26,9 +26,11 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RError.ErrorContext;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 
 public abstract class CastStringBaseNode extends CastBaseNode {
 
@@ -86,8 +88,8 @@ public abstract class CastStringBaseNode extends CastBaseNode {
     }
 
     @Specialization
-    protected RNull doNull(@SuppressWarnings("unused") RNull operand) {
-        return RNull.instance;
+    protected RStringVector doNull(@SuppressWarnings("unused") RNull operand) {
+        return RDataFactory.createEmptyStringVector();
     }
 
     @Specialization

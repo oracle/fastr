@@ -22,7 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
@@ -36,7 +36,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
-@RBuiltin(name = "pos.to.env", kind = PRIMITIVE, parameterNames = {"pos"}, behavior = PURE)
+@RBuiltin(name = "pos.to.env", kind = PRIMITIVE, parameterNames = {"pos"}, behavior = READS_STATE)
 public abstract class PosToEnv extends RBuiltinNode.Arg1 {
 
     static {

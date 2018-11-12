@@ -12,7 +12,12 @@ Bug fixes:
 
 * tooling: top level statements are not marked as functions (e.g., a debugger will not treat them as such anymore).
 * update rpath correctly for redistributed libraries when producing a release build. This issue caused linking problems for MacOS users. #26
-* UseMethod caused internal error under some specific circumstances (happens during installation of the R.oo package)
+* UseMethod caused internal error under some specific circumstances (happens during installation of the R.oo package).
+* fully support indirect use of .Internal, e.g. in `(get('.Internal'))(paste0(list(1,2),','))`.
+* `as.character(external-pointer)` does not crash, but prints the pointer address. #28
+* `file.path` with `NULL` as one of its arguments gives correct result (empty character vector).
+* `format.POSIXlt` uses the same time zone database as rest of the system. #29
+* `dev.control(displaylist = 'inhibit')` caused `ClassCastException`
 
 # 1.0 RC 9
 
