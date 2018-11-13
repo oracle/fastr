@@ -336,7 +336,8 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.native",
         "com.oracle.truffle.r.engine",
-        "com.oracle.truffle.r.ffi.impl"
+        "com.oracle.truffle.r.ffi.impl",
+        "com.oracle.truffle.r.launcher"
       ],
       "max_jobs" : "8",
       "native" : True,
