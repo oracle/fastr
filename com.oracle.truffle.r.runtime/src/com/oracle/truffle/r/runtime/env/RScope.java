@@ -117,6 +117,11 @@ public final class RScope {
     }
 
     public static Iterable<Scope> createLocalScopes(RContext context, Node node, Frame frame) {
+        if (frame == null) {
+            // All variables are created dynamically in R, we could provide at least formal argument
+            // names, but note that during the runtime the formal argument may not be provided.
+            return Collections.emptySet();
+        }
         REnvironment env = getEnv(frame);
         if (env == context.stateREnvironment.getGlobalEnv()) {
             return Collections.emptySet();
