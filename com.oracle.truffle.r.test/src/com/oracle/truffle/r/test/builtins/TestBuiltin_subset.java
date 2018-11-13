@@ -156,6 +156,7 @@ public class TestBuiltin_subset extends TestBase {
     @Test
     public void testSubsetMissing() {
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[missng]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[missng]}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {.subset(l, missng)}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[missng,]}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[,missng]}; f(l)");
@@ -169,18 +170,36 @@ public class TestBuiltin_subset extends TestBase {
         assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[,missng]}; f(m)");
         assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[,,missng]}; f(m)");
 
-        assertEval(Output.IgnoreErrorMessage, "m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[missng]]}; f(m)");
-
         assertEval("l <- list(x='a', y='b'); l[]");
         assertEval("l <- list(x='a', y='b'); .subset(l)");
-        assertEval(Ignored.ImplementationError, "l <- list(x='a', y='b'); l[[]]");
-        assertEval(Ignored.ImplementationError, "l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng]]}; f(l)");
-        assertEval(Ignored.ImplementationError, "l <- list(x='a', y='b'); f <- function(l, missng) {l[[1, missng]]}; f(l)");
+
+        assertEval("m <- matrix(c(1:4), 2, 2); m[[]]");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[]]}; f(m)");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[missng]]}; f(m)");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[1, missng]]}; f(m)");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[missng, 1]]}; f(m)");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[missng, ]]}; f(m)");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[, missng]]}; f(m)");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[missng, missng]]}; f(m)");
+        assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[,]]}; f(m)");
+
+        assertEval("l <- list(x='a', y='b'); l[[]]");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[1, missng]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng, 1]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng, ]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[,missng]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng, missng]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[,]]}; f(l)");
     }
 
     @Test
     public void testSubsetAssign() {
         assertEval("{z <- 1 ; f <- function(d) { b <- matrix(1:4,nrow=2,ncol=2) ; invisible(b[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]) }; f(0) ; z; f(1L) ; z}");
-        assertEval("(z <- 1 ; f <- function(d) { b <- data.frame(x='a', y='b') ; invisible(b[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]) }; f(0) ; z; f(1L) ; z}");
+        assertEval("{z <- 1 ; f <- function(d) { b <- data.frame(x='a', y='b') ; invisible(b[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]) }; f(0) ; z; f(1L) ; z}");
+
+        assertEval("{z <- 1 ; f <- function(d) { b <- matrix(1:4,nrow=2,ncol=2) ; invisible(b[[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]]) }; f(0) ; z; f(1L) ; z}");
+        assertEval(Output.IgnoreWarningContext, "{z <- 1 ; f <- function(d) { b <- data.frame(x='a', y='b') ; invisible(b[[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]]) }; f(0) ; z; f(1L) ; z}");
     }
 }
