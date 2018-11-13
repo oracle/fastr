@@ -28,16 +28,19 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
+import java.util.function.Supplier;
 
 public abstract class SubsetDataFrameFastPath extends RFastPathNode {
 
     @Child private ExtractVectorNode extractNode = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, false);
 
     @Specialization(guards = {"positions.getLength() == 2", "positions.getSignature().getNonNullCount() == 0"})
-    protected Object subscript2(RAbstractListVector df, RArgsValuesAndNames positions, Object exact,
+    protected Object subset2(RAbstractListVector df, RArgsValuesAndNames positions, Object exact,
                     @Cached("create()") AsScalarNode asScalar1,
                     @Cached("create()") AsScalarNode asScalar2) {
         Object pos2 = asScalar2.execute(positions.getArgument(1));
@@ -56,5 +59,29 @@ public abstract class SubsetDataFrameFastPath extends RFastPathNode {
     @SuppressWarnings("unused")
     protected Object fallback(Object df, Object positions, Object exact) {
         return null;
+    }
+
+    public static FastPathFactory createFastPathFactory(Supplier<RFastPathNode> factory) {
+        return new FastPathFactory() {
+            @Override
+            public RFastPathNode create() {
+                return factory.get();
+            }
+
+            @Override
+            public RVisibility getVisibility() {
+                return RVisibility.ON;
+            }
+
+            @Override
+            public boolean evaluatesArgument(int index) {
+                return !(index == 1 || index == 2);
+            }
+
+            @Override
+            public boolean forcedEagerPromise(int index) {
+                return false;
+            }
+        };
     }
 }
