@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
+import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSCRIPT;
@@ -29,16 +30,19 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
+import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubscriptSpecial;
 import com.oracle.truffle.r.nodes.builtin.base.infix.special.SubscriptSpecial2;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -46,9 +50,11 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSCRIPT)
+@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSCRIPT, allowMissingInVarArgs = true)
 @TypeSystemReference(RTypes.class)
 public abstract class Subscript extends RBuiltinNode.Arg4 {
+
+    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
     @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE_SUBSCRIPT)
     public abstract class DefaultBuiltin {
@@ -79,7 +85,7 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
 
     @SuppressWarnings("unused")
     @Specialization
-    protected RNull getNoInd(RNull x, Object inds, Object exactVec, Object drop) {
+    protected RNull get(RNull x, Object inds, Object exactVec, Object drop) {
         return x;
     }
 
@@ -95,12 +101,35 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
         throw error(RError.Message.NO_INDEX);
     }
 
-    @Specialization(guards = "!indexes.isEmpty()")
-    protected Object get(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop) {
+    @Specialization(guards = {"!indexes.isEmpty()", "argsLen == indexes.getLength()"}, limit = "CACHE_LIMIT")
+    @ExplodeLoop
+    protected Object getIndexes(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop,
+                    @Cached("indexes.getLength()") int argsLen) {
         /*
          * "drop" is not actually used by this builtin, but it needs to be in the argument list
          * (because the "drop" argument needs to be skipped).
          */
-        return extractNode.apply(x, indexes.getArguments(), exact, RLogical.TRUE);
+        Object[] args = indexes.getArguments();
+        for (int i = 0; i < argsLen; i++) {
+            if (args[i] == RMissing.instance) {
+                args[i] = REmpty.instance;
+            }
+        }
+        return extractNode.apply(x, args, exact, RLogical.TRUE);
+    }
+
+    @Specialization(guards = "!indexes.isEmpty()", replaces = "getIndexes")
+    protected Object getIndexesGeneric(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop) {
+        /*
+         * "drop" is not actually used by this builtin, but it needs to be in the argument list
+         * (because the "drop" argument needs to be skipped).
+         */
+        Object[] args = indexes.getArguments();
+        for (int i = 0; i < args.length; i++) {
+            if (args[i] == RMissing.instance) {
+                args[i] = REmpty.instance;
+            }
+        }
+        return extractNode.apply(x, args, exact, RLogical.TRUE);
     }
 }
