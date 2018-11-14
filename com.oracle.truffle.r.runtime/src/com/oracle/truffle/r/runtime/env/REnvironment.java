@@ -516,6 +516,7 @@ public abstract class REnvironment extends RAttributeStorage {
     /**
      * Data for the {@code search} function.
      */
+    @TruffleBoundary
     public static String[] searchPath() {
         SearchPath searchPath = RContext.getInstance().stateREnvironment.getSearchPath();
         String[] result = new String[searchPath.size()];

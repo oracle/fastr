@@ -33,6 +33,8 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
+import java.util.function.Supplier;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
@@ -66,6 +68,7 @@ import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
 /**
  * Contains the {@code eval} {@code .Internal} implementation.
@@ -178,7 +181,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     @Specialization(guards = "expr.isLanguage()")
     protected Object doEval(VirtualFrame frame, RPairList expr, Object envir, Object enclos) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
-        RCaller rCaller = getCaller(frame, environment);
+        RCaller rCaller = getCaller(frame, environment, () -> expr.createNode());
         try {
             RFunction evalFun = getFunctionArgument();
             return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
@@ -196,7 +199,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     @Specialization
     protected Object doEval(VirtualFrame frame, RExpression expr, Object envir, Object enclos) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
-        RCaller rCaller = getCaller(frame, environment);
+        // TODO: how the call should look like for an expression? Block statement?
+        RCaller rCaller = getCaller(frame, environment, () -> RArguments.getCall(frame).getSyntaxNode());
         try {
             RFunction evalFun = getFunctionArgument();
             return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
@@ -265,6 +269,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     protected static boolean isVariadicSymbol(RSymbol sym) {
         String x = sym.getName();
+        // TODO: variadic symbols can have two digits up to ".99"
         if (x != ArgumentsSignature.VARARG_NAME && x.length() > 2 && x.charAt(0) == '.' && x.charAt(1) == '.') {
             for (int i = 2; i < x.length(); i++) {
                 if (!Character.isDigit(x.charAt(i))) {
@@ -290,13 +295,11 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         return expr;
     }
 
-    private RCaller getCaller(VirtualFrame frame, REnvironment environment) {
+    private RCaller getCaller(VirtualFrame frame, REnvironment environment, Supplier<RSyntaxElement> call) {
         if (environment instanceof REnvironment.Function) {
-            // A copy of the original call must be made to reflect the current stack depth that is
-            // stored in the "depth" field of the caller. Otherwise the frame functions such as
-            // "sys.parents" or "sys.calls" would provide invalid results.
-            final RCaller origCall = RArguments.getCall(environment.getFrame());
-            return RCaller.createForFrame(frame, origCall);
+            RCaller current = RArguments.getCall(frame);
+            // TODO: payload should be the expression eval'ed probably
+            return RCaller.create(current.getDepth() + 1, current, call);
         } else {
             return RCaller.create(frame, getOriginalCall());
         }
