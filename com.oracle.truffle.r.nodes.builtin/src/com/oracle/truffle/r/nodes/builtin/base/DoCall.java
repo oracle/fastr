@@ -125,6 +125,15 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         return internal.execute(frame, null, func, argsAsList, quote, env);
     }
 
+    /**
+     * GNU-R translates {@code do.call} simply to {@code eval}, which has consequences w.r.t. how
+     * the stack should look like. The stack frame of {@code do.call} and all the frames underneath
+     * it should be visible to {@code sys.frame}, so the caller frame passed to the callee via
+     * arguments (see {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionBaseNode}) should
+     * be the execution frame of do.call (not the frame where the function should be evaluated given
+     * as an argument to do.call) so that the stack walking via caller frames does not skip
+     * {@code do.call}.
+     */
     @ImportStatic(DSLConfig.class)
     protected abstract static class DoCallInternal extends Node {
         @Child private GetNamesAttributeNode getNamesNode;
@@ -147,10 +156,14 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         /**
          * Because the underlying AST in {@link RExplicitCallNode} may cache frame slots, i.e.
          * expect the {@link FrameDescriptor} to never change, we're caching this AST and also
-         * {@link GetVisibilityNode} for each {@link FrameDescriptor} we encounter.
+         * {@link GetVisibilityNode} for each {@link FrameDescriptor} we encounter. We cannot use
+         * the {@code virtualFrame} for executing the {@link RExplicitCallNode}, because the call
+         * before dispatching into the actual function (and creating a new frame for it) may be
+         * still reading some values from the frame, e.g. to decide on the dispatching, so it must
+         * see the correct frame.
          */
         @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "getCacheSize(20)")
-        public Object doFastPath(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+        public Object doFastPathInEvalFrame(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
                         @Cached("getFrameDescriptor(env)") @SuppressWarnings("unused") FrameDescriptor fd,
                         @Cached("create()") RExplicitCallNode explicitCallNode,
                         @Cached("create()") GetVisibilityNode getVisibilityNode,
@@ -158,10 +171,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
             RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
-            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, funcName, func, args);
+            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
             MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
 
-            Object resultValue = explicitCallNode.execute(evalFrame, func, args, caller);
+            Object resultValue = explicitCallNode.execute(evalFrame, func, args, caller, virtualFrame.materialize());
             setVisibility(virtualFrame, getVisibilityNode.execute(evalFrame));
             return resultValue;
         }
@@ -170,17 +183,18 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * Slow-path version avoids the problem by creating {@link RExplicitCallNode} for every call
          * again and again and putting it behind truffle boundary to avoid deoptimization.
          */
-        @Specialization(replaces = "doFastPath")
-        public Object doSlowPath(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
+        @Specialization(replaces = "doFastPathInEvalFrame")
+        public Object doSlowPathInEvalFrame(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
                         @Cached("create()") SlowPathExplicitCall slowPathExplicitCall,
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
-            RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
-            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, funcName, func, args);
+            RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile,
+                            containsRSymbolProfile, argsAsList);
+            RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
             MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
 
-            Object resultValue = slowPathExplicitCall.execute(evalFrame, caller, func, args);
+            Object resultValue = slowPathExplicitCall.execute(evalFrame, virtualFrame.materialize(), caller, func, args);
             setVisibility(virtualFrame, getVisibilitySlowPath(evalFrame));
             return resultValue;
         }
@@ -206,7 +220,9 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * @see RCaller
          * @see RArguments
          */
-        private static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, String funcName, RFunction func, RArgsValuesAndNames args) {
+        private static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, @SuppressWarnings("unused") REnvironment env, String funcName, RFunction func,
+                        RArgsValuesAndNames args) {
+            // TODO: use the "env" for the sys parent in RCaller...
             Supplier<RSyntaxElement> callerSyntax;
             if (funcName != null) {
                 callerSyntax = RCallerHelper.createFromArguments(funcName, args);
@@ -289,9 +305,9 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         @TruffleBoundary
-        public Object execute(MaterializedFrame evalFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
+        public Object execute(MaterializedFrame evalFrame, Object callerFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
             slowPathCallNode = insert(RExplicitCallNode.create());
-            return slowPathCallNode.execute(evalFrame, func, args, caller);
+            return slowPathCallNode.execute(evalFrame, func, args, caller, callerFrame);
         }
     }
 }

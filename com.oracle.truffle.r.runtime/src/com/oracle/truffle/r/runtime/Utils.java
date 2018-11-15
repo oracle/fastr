@@ -450,9 +450,10 @@ public final class Utils {
 
     /**
      * Like {@link #getStackFrame(FrameAccess, RCaller)}, but identifying the stack with its depth.
+     * Along the way it invalidates the assumptions that the caller frame is needed.
      */
     @TruffleBoundary
-    public static Frame getStackFrame(FrameAccess fa, int depth) {
+    public static Frame getStackFrame(FrameAccess fa, int depth, boolean notifyCallers) {
         RError.performanceWarning("slow frame access - getStackFrame2");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
@@ -464,6 +465,13 @@ public final class Utils {
                     Frame f = RArguments.unwrap(pf);
                     if (RArguments.isRFrame(f)) {
                         RCaller call = RArguments.getCall(f);
+                        if (notifyCallers) {
+                            Object callerFrame = RArguments.getCallerFrame(f);
+                            if (callerFrame instanceof CallerFrameClosure) {
+                                CallerFrameClosure closure = (CallerFrameClosure) callerFrame;
+                                closure.setNeedsCallerFrame();
+                            }
+                        }
                         return (!call.isPromise() && call.getDepth() == depth) ? f : null;
                     } else {
                         return null;
@@ -506,7 +514,7 @@ public final class Utils {
 
     /**
      * Retrieve the caller frame of the current frame.
-     *
+     * <p>
      * TODO Calls to this method should be validated with respect to whether promise evaluation is
      * in progress.
      */
