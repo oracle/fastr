@@ -121,6 +121,7 @@ usage <- function() {
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
 					  "[--find-top100]",
+					  "[--find-top n]",
 					  "[--run-tests]",
 					  "[--testdir dir]",
 					  "[--print-ok-installs]",
@@ -1007,7 +1008,9 @@ parse.args <- function() {
 		} else if (a == "--invert-pkgset") {
 			invert.pkgset <<- TRUE
 		} else if (a == "--find-top100") {
-			find.top100 <<- TRUE
+			find.top.pkgs <<- 100L
+		} else if (a == "--find-top") {
+			find.top.pkgs <<- as.integer(get.argvalue())
 		} else if (a == "--important-pkgs") {
 			important.pkg.table.file <<- get.argvalue()
 			if (is.na(important.pkg.table.file)) {
@@ -1105,20 +1108,80 @@ get.initial.package.blacklist <- function() {
 	}
 }
 
-do.find.top100 <- function() {
-	avail.pkgs <- available.packages(type="source");
+do.find.top.pkgs <- function(n) {
+    names <- if (n <= 100L) {
+        do.find.top.cranlogs(n) 
+    } else {
+        do.find.top.rstudio(n)
+    }
+    if (!is.null(names)) {
+        do.find.top.print.list(names)
+    }
+}
+
+do.find.top.cranlogs <- function(n) {
 	if (!require('cranlogs', quietly = T)) {
 		install.packages('cranlogs', quiet = T)
 		library('cranlogs', quietly = T)
 	}
-	top100 <- cran_top_downloads(when = c("last-day", "last-week", "last-month"), count = 100)
-	names <- top100[['package']]
-	l = length(names)
-	for (i in 1:l) {
+	top100 <- cran_top_downloads(when = c("last-day", "last-week", "last-month"), count = n)
+	top100[['package']]
+}
+
+do.find.top.rstudio <- function(n) {
+    # RStudio provides data since Oct 1, 2012
+    start <- as.Date('2012-10-01')
+    today <- Sys.Date()
+
+    all.days <- seq(start, today, by = 'day')
+
+    year <- as.POSIXlt(all.days)$year + 1900
+    urls <- rev(paste0('http://cran-logs.rstudio.com/', year, '/', all.days, '.csv.gz'))
+
+    tmp.file <- tempfile()
+    download.url <- ""
+    for (i in 1:length(urls)) {
+        tryCatch({
+            download.url <- urls[[i]]
+            download.file(download.url, tmp.file, quiet = !verbose)
+            # break after the first successful download
+            log.message("successfully downloaded: ", download.url, level=1)
+            break ()
+        }, error = function(e) e)
+    }
+
+    if (file.exists(tmp.file)) {
+        pkg.table <- read.csv(tmp.file)
+
+        # remove duplicate downloads from same IP and select column "package" only
+        #pkg.table <- unique(pkt.table[,c("package", "ip_id")])
+
+        # add a column for the count (initialized with 1L)
+        pkg.table <- cbind(pkg.table, count=rep(1L, nrow(pkg.table)))[,c("package", "count")]
+
+        # group by column 'count' using aggregate function 'sum'
+        pkg.table.with.count <- aggregate(count ~ package, pkg.table, sum)
+
+        # order by download count (ascending)
+        pkg.table.with.count <- pkg.table.with.count[order(-pkg.table.with.count$count), ]
+
+        # return just the names of the top 'n' but still ordered by download count
+        as.character(pkg.table.with.count[1:n, "package"])
+    } else {
+        log.message("Could not download ", download.url, " to ", tmp.file)
+    }
+}
+
+do.find.top.print.list <- function(names) {
+	avail.pkgs <- available.packages(type="source")
+	for (i in 1:length(names)) {
 		pkgname <- names[[i]]
-		pkg <- avail.pkgs[pkgname, ]
-		list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
-		cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep = ",")
+        # the names could contain filtered packages
+        if (pkgname %in% avail.pkgs[, "Package"]) {
+            pkg <- avail.pkgs[pkgname, ]
+            list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
+            cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep = ",")
+        } 
 	}
 }
 
@@ -1147,9 +1210,9 @@ getCurrentScriptDir <- function() {
 
 run <- function() {
     parse.args()
-    if (find.top100) {
+    if (!is.na(find.top.pkgs)) {
         set.repos()
-        do.find.top100()
+        do.find.top.pkgs(find.top.pkgs)
     } else {
         run.setup()
         do.it()
@@ -1202,7 +1265,7 @@ gnur <- FALSE
 list.versions <- FALSE
 list.canonical <- FALSE
 invert.pkgset <- F
-find.top100 <- F
+find.top.pkgs <- NA
 important.pkg.table.file <- NA
 important.pkg.table <- NULL
 
