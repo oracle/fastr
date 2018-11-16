@@ -65,7 +65,25 @@ public abstract class Download extends RExternalBuiltinNode.Arg5 {
     @TruffleBoundary
     protected int download(String urlString, String destFile, boolean quiet, @SuppressWarnings("unused") String mode, @SuppressWarnings("unused") boolean cacheOK) {
         try {
-            URLConnection con = new URL(urlString).openConnection();
+            String urlStr = urlString;
+            URLConnection con;
+            while (true) {
+                con = new URL(urlStr).openConnection();
+                if (con instanceof HttpURLConnection) {
+                    HttpURLConnection httpCon = (HttpURLConnection) con;
+                    httpCon.setInstanceFollowRedirects(false);
+                    httpCon.connect();
+                    int response = httpCon.getResponseCode();
+                    if (response == HttpURLConnection.HTTP_MOVED_PERM || response == HttpURLConnection.HTTP_MOVED_TEMP) {
+                        urlStr = httpCon.getHeaderField("Location");
+                    } else {
+                        break;
+                    }
+                } else {
+                    break;
+                }
+            }
+
             try (InputStream in = con.getInputStream()) {
                 long len = Files.copy(in, Paths.get(destFile), StandardCopyOption.REPLACE_EXISTING);
                 if (!quiet) {
