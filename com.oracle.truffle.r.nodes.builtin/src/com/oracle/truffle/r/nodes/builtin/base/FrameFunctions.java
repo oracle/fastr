@@ -108,6 +108,8 @@ public class FrameFunctions {
 
         private final ConditionProfile currentFrameProfile = ConditionProfile.createBinaryProfile();
         private final ConditionProfile globalFrameProfile = ConditionProfile.createBinaryProfile();
+        private final BranchProfile iterateProfile = BranchProfile.create();
+        private final BranchProfile slowPathProfile = BranchProfile.create();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
@@ -183,11 +185,13 @@ public class FrameFunctions {
             }
         }
 
-        private static final int ITERATE_LEVELS = 2;
+        // TODO: allow to configure these two fields for testing purposes
+        private static final int ITERATE_LEVELS = 3;
+        private static final boolean NOTIFY_CALLERS = true;
 
         @ExplodeLoop
         protected Frame getNumberedFrame(VirtualFrame frame, int actualFrame, boolean materialize) {
-            if (currentFrameProfile.profile(RArguments.getDepth(frame) == actualFrame)) {
+            if (currentFrameProfile.profile(RArguments.isRFrame(frame) && RArguments.getDepth(frame) == actualFrame)) {
                 return materialize ? frame.materialize() : frame;
             } else if (globalFrameProfile.profile(actualFrame == 0)) {
                 // Note: this is optimization and necessity, because in the case of invocation of R
@@ -195,26 +199,62 @@ public class FrameFunctions {
                 // for global environment
                 return REnvironment.globalEnv().getFrame();
             } else {
+                MaterializedFrame current = null;
                 if (RArguments.getDepth(frame) - actualFrame <= ITERATE_LEVELS) {
-                    Frame current = frame;
+                    iterateProfile.enter();
+                    current = getCallerFrame(frame);
                     for (int i = 0; i < ITERATE_LEVELS; i++) {
-                        current = current == null ? null : getCallerFrame(current);
-                        if (current != null && RArguments.getDepth(current) == actualFrame) {
-                            return current;
+                        if (current == null) {
+                            break;
                         }
+                        MaterializedFrame result = RArguments.getActualMaterializedFrame(current, actualFrame, false);
+                        if (result != null) {
+                            return result;
+                        }
+                        current = getCallerFrame(current);
                     }
                 }
-                Frame result = Utils.getStackFrame(access, actualFrame);
-                return materialize ? (MaterializedFrame) result : result;
+                slowPathProfile.enter();
+                return getNumberedFrameSlowPath(current == null ? frame.materialize() : current.materialize(), actualFrame, materialize);
             }
+        }
+
+        private Frame getNumberedFrameSlowPath(MaterializedFrame frame, int actualFrame, boolean materialize) {
+            Frame resultViaCaller = getNumberedCallerFrameSlowPath(frame, actualFrame);
+            if (resultViaCaller != null) {
+                return materialize ? (MaterializedFrame) resultViaCaller : resultViaCaller;
+            }
+            Frame result = Utils.getStackFrame(access, actualFrame, NOTIFY_CALLERS);
+            return materialize ? (MaterializedFrame) result : result;
+        }
+
+        @TruffleBoundary
+        private static Frame getNumberedCallerFrameSlowPath(MaterializedFrame frame, int actualFrame) {
+            /*
+             * Even in the slow path case, we need to walk all frames and call
+             * "setNeedsCallerFrame", so that subsequent calls will not need Utils.getStackFrame.
+             */
+            MaterializedFrame current = frame;
+            while (current != null) {
+                MaterializedFrame result = RArguments.getActualMaterializedFrame(current, actualFrame, true);
+                if (result != null) {
+                    return result;
+                }
+                current = getCallerFrame(current);
+            }
+            return null;
         }
 
         private static MaterializedFrame getCallerFrame(Frame current) {
             Object callerFrame = RArguments.getCallerFrame(current);
             if (callerFrame instanceof CallerFrameClosure) {
-                CallerFrameClosure closure = (CallerFrameClosure) callerFrame;
-                closure.setNeedsCallerFrame();
-                return closure.getMaterializedCallerFrame();
+                if (NOTIFY_CALLERS) {
+                    CallerFrameClosure closure = (CallerFrameClosure) callerFrame;
+                    closure.setNeedsCallerFrame();
+                    return closure.getMaterializedCallerFrame();
+                } else {
+                    return null;
+                }
             }
             assert callerFrame == null || callerFrame instanceof Frame;
             return (MaterializedFrame) callerFrame;
