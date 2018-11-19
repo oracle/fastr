@@ -53,6 +53,7 @@ import com.oracle.truffle.r.library.stats.CompleteCases;
 import com.oracle.truffle.r.library.stats.CovcorNodeGen;
 import com.oracle.truffle.r.library.stats.CutreeNodeGen;
 import com.oracle.truffle.r.library.stats.DoubleCentreNodeGen;
+import com.oracle.truffle.r.library.stats.Fmin;
 import com.oracle.truffle.r.library.stats.Influence;
 import com.oracle.truffle.r.library.stats.PPSum;
 import com.oracle.truffle.r.library.stats.PPSum.PPSumExternal;
@@ -907,6 +908,11 @@ public class CallAndExternalFunctions {
                     return getExternalModelBuiltinNode(name);
                 case "zeroin2":
                     return StatsFunctionsNodes.Zeroin2.create();
+
+                // stats:
+                case "do_fmin":
+                    return Fmin.create();
+
                 default:
                     return null;
             }

@@ -6,7 +6,8 @@ New features:
 
 Added missing R builtins and C API
 
-* pos.to.env builtin
+* `pos.to.env` builtin
+* private `do_fmin` external function from the stats packages used by public R function `optimize`
 
 Bug fixes:
 

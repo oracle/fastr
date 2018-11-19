@@ -1,5 +1,6 @@
 mx.fastr/suite.py,no.copyright
 com.oracle.truffle.r.ffi.impl/src/com/oracle/truffle/r/ffi/impl/nodes/AsRealNode.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Fmin.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/Arrows.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/DoSetViewPort.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/DoSetViewPortBuiltin.java,gnu_r_murrel_core.copyright
