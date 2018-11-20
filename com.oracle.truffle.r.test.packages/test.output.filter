@@ -88,3 +88,8 @@ ROCR => D/detaching ‘ROCR.hiv’
 quantmod => D-2/  PDF device not supported.
 quantmod => D/  incomplete final line found
 quantmod => s/There were [0-9]+ warnings \(use warnings\(\) to see them\)/
+
+# --------
+sqldf => D/A svUnit test suite run in
+sqldf => D/test.all (in runit.all.R) run in
+sqldf => d/\> 
