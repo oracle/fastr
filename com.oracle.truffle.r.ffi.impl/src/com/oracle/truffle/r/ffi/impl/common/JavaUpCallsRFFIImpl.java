@@ -470,6 +470,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             case LISTSXP:
             case LANGSXP:
                 return RDataFactory.createPairList(ni, type);
+            case NILSXP:
+                return RNull.instance;
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
