@@ -43,6 +43,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
+import com.oracle.truffle.r.nodes.binary.CastTypeNode;
+import com.oracle.truffle.r.nodes.binary.CastTypeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.base.Eval.EvalEnvCast;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -64,7 +66,6 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -257,7 +258,6 @@ public class GetFunctions {
             casts.arg("x").mustBe(stringValue()).asStringVector();
             casts.arg("envir").mustBe(instanceOf(REnvironment.class).or(instanceOf(RS4Object.class)), RError.Message.MUST_BE_ENVIRON2, "second argument");
             casts.arg("mode").mustBe(stringValue()).asStringVector();
-            casts.arg("ifnotfound").mustBe(RAbstractListVector.class);
             casts.arg("inherits").asLogicalVector().findFirst().map(toBoolean());
         }
 
@@ -357,6 +357,20 @@ public class GetFunctions {
                         @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
                         @Cached("new()") S4ToEnvNode s4ToEnv) {
             return mget(frame, xv, (REnvironment) s4ToEnv.execute(s4Envir), mode, ifNotFound, inherits, argsAndValuesProfile, missingProfile, inheritsProfile);
+        }
+
+        @Specialization
+        protected RList mget(VirtualFrame frame, RAbstractStringVector xv, REnvironment env, RAbstractStringVector mode, Object ifNotFound, boolean inherits,
+                        @Cached("createBinaryProfile()") ConditionProfile argsAndValuesProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile missingProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile inheritsProfile,
+                        @Cached("createCastType()") CastTypeNode castTypeNode) {
+            Object l = castTypeNode.execute(ifNotFound, RType.List);
+            return mget(frame, xv, env, mode, (RList) l, inherits, argsAndValuesProfile, missingProfile, inheritsProfile);
+        }
+
+        protected static CastTypeNode createCastType() {
+            return CastTypeNodeGen.create();
         }
 
         private void doIfNotFound(VirtualFrame frame, State state, int i, String x, RList ifNotFound) {
