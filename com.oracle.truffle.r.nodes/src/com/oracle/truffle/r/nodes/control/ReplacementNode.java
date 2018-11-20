@@ -154,7 +154,7 @@ abstract class ReplacementNode extends OperatorNode {
             newArgs[1] = builder.lookup(oldArgs[1].getLazySourceSection(), ((RSyntaxLookup) oldArgs[1]).getIdentifier() + "<-", true);
             newSyntaxLHS = RCallSpecialNode.createCall(callLHS.getLazySourceSection(), builder.process(callLHS.getSyntaxLHS(), codeBuilderContext).asRNode(), callLHS.getSyntaxSignature(), newArgs);
         }
-        return RCallSpecialNode.createCallInReplace(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes, 0, argNodes.length - 1).asRNode();
+        return RCallSpecialNode.createCallInReplace(source, newSyntaxLHS.asRNode(), ArgumentsSignature.get(names), argNodes, argNodes.length - 1).asRNode();
     }
 
     static RPairList getLanguage(WriteVariableNode wvn) {
@@ -169,11 +169,11 @@ abstract class ReplacementNode extends OperatorNode {
         return RContext.getASTBuilder().lookup(source, idenifier, false);
     }
 
-    private static RNode createReplacementTarget(RSyntaxLookup variable, boolean isSuper, boolean localPeek) {
+    private static RNode createReplacementTarget(RSyntaxLookup variable, boolean isSuper, boolean isSpecial) {
         if (isSuper) {
             return ReadVariableNode.wrap(variable.getLazySourceSection(), ReadVariableNode.createSuperLookup(variable.getIdentifier())).asRNode();
         } else {
-            return localPeek ? new PeekLocalVariableNode(variable.getIdentifier())
+            return isSpecial ? new PeekLocalVariableNode(variable.getIdentifier())
                             : ReadVariableNode.wrap(variable.getLazySourceSection(), ReadVariableNode.create(variable.getIdentifier(), true)).asRNode();
         }
     }
