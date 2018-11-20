@@ -68,12 +68,12 @@ suite = {
       },
     },
 
-    "XZ-1.6" : {
-      "sha1" : "05b6f921f1810bdf90e25471968f741f87168b64",
+    "XZ-1.8" : {
+      "sha1" : "c4f7d054303948eb6a4066194253886c8af07128",
       "maven" : {
         "groupId" : "org.tukaani",
         "artifactId" : "xz",
-        "version" : "1.6",
+        "version" : "1.8",
       },
     },
   },
@@ -209,7 +209,7 @@ suite = {
       "dependencies" : [
         "com.oracle.truffle.r.launcher",
         "truffle:TRUFFLE_API",
-        "XZ-1.6",
+        "XZ-1.8",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -402,7 +402,7 @@ suite = {
         "truffle:JLINE",
         "ANTLR-3.5",
         "GNUR",
-        "XZ-1.6",
+        "XZ-1.8",
       ],
       "distDependencies" : [
         "truffle:TRUFFLE_API",
@@ -421,7 +421,7 @@ suite = {
         "truffle:JLINE",
         "ANTLR-3.5",
         "GNUR",
-        "XZ-1.6",
+        "XZ-1.8",
       ],
     },
 
