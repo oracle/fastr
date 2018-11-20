@@ -69,6 +69,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -670,9 +671,9 @@ public class EnvFunctions {
 
         static {
             Casts casts = new Casts(EnvToList.class);
-            casts.arg("x").mustBe(REnvironment.class, Message.NOT_AN_ENVIRONMENT);
-            casts.arg("all.names").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
-            casts.arg("sorted").mustNotBeNull().asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+            casts.arg("x").mustBe(REnvironment.class, Message.ARG_MUST_BE_ENV);
+            casts.arg("all.names").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
+            casts.arg("sorted").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         }
 
         public static EnvToList create() {
@@ -713,7 +714,7 @@ public class EnvFunctions {
 
         protected abstract Object execute(VirtualFrame frame, Object o);
 
-        @Child private CopyNode recursiveCopy;
+        @Child private CopyNode recursiveCopyNode;
         @Child private PromiseHelperNode promiseHelper;
 
         @Specialization
@@ -733,7 +734,7 @@ public class EnvFunctions {
 
         @Specialization
         RFunction copy(RFunction f) {
-            return f.copy();
+            return f;
         }
 
         @Specialization
@@ -757,7 +758,7 @@ public class EnvFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
             }
-            return promiseHelper.evaluate(frame, promise);
+            return recursiveCopy(frame, promiseHelper.evaluate(frame, promise));
         }
 
         @Specialization
@@ -770,9 +771,23 @@ public class EnvFunctions {
             return o.copy();
         }
 
+        @Specialization
+        Object copy(RArgsValuesAndNames args) {
+            return args;
+        }
+
         @Fallback
-        Object copy(@SuppressWarnings("unused") Object o) {
-            throw RInternalError.unimplemented("copying of object in the environment not supported");
+        @TruffleBoundary
+        Object copy(Object o) {
+            throw RInternalError.unimplemented("copying of object " + o + " in the environment not supported");
+        }
+
+        private Object recursiveCopy(VirtualFrame frame, Object obj) {
+            if (recursiveCopyNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                recursiveCopyNode = insert(CopyNodeGen.create());
+            }
+            return recursiveCopyNode.execute(frame, obj);
         }
     }
 }
