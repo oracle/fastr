@@ -79,7 +79,9 @@ public abstract class OnExit extends RBuiltinNode.Arg2 {
             assert expr.getRep() instanceof ConstantNode : "only ConstantNode expected for defaulted promise";
             FrameSlotChangeMonitor.setObject(frame, onExitSlot, RDataFactory.createPairList());
         } else {
-            assert !expr.isEvaluated() : "promise cannot already be evaluated";
+            // if optimized then avaluated already true,
+            // otherwise he expresion has to be evaluated exactly at this point
+            assert expr.isOptimized() || !expr.isEvaluated() : "promise cannot already be evaluated";
             Object value;
             try {
                 value = FrameSlotChangeMonitor.getObject(onExitSlot, frame);
