@@ -129,8 +129,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object getCCallable(String pkgName, String functionName) {
-        DLLInfo lib = DLL.safeFindLibrary(pkgName);
-        CEntry result = lib.lookupCEntry(functionName);
+        CEntry result = DLLInfo.lookupCEntry(pkgName, functionName);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, RError.Message.UNKNOWN_OBJECT, functionName);
         }
