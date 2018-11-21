@@ -779,9 +779,9 @@ public class DLL {
             // }
 
             String mName = name;
-            // assume Fortran underscore, although GnuR has cc code for this
+            // assume Fortran underscore and lower case, although GnuR has cc code for this
             if (rns != null && rns.nst == NativeSymbolType.Fortran) {
-                mName = name + "_";
+                mName = name.toLowerCase() + "_";
             }
             try {
                 if (dllInfo.unsuccessfulLookups.contains(mName)) {
