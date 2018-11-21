@@ -8,6 +8,7 @@ Added missing R builtins and C API
 
 * `pos.to.env` builtin
 * private `do_fmin` external function from the stats packages used by public R function `optimize`
+* `beta` #33
 
 Bug fixes:
 

@@ -54,6 +54,9 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RandFunction
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RMultinomNode.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SplineFunctions.java,gnu_r_splines.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsFunctionsNodes.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Approx.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/ApproxTest.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Zeroin2.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/DirChmod.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/ToolsText.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.java,gnu_r.copyright

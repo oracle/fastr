@@ -286,6 +286,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ChooseFunctions.Choose.class, ChooseFunctionsFactory.ChooseNodeGen::create);
         add(ChooseFunctions.LChoose.class, ChooseFunctionsFactory.LChooseNodeGen::create);
         add(BetaFunctions.LBeta.class, BetaFunctionsFactory.LBetaNodeGen::create);
+        add(BetaFunctions.BetaBuiltin.class, BetaFunctionsFactory.BetaBuiltinNodeGen::create);
         add(Bincode.class, BincodeNodeGen::create);
         add(Bind.CbindInternal.class, BindNodeGen.CbindInternalNodeGen::create);
         add(Bind.RbindInternal.class, BindNodeGen.RbindInternalNodeGen::create);
