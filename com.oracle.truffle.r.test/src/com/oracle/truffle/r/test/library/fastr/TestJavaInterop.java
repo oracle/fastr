@@ -533,6 +533,8 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR("names(java.type('int[]'))", "'class'");
         assertEvalFastR("names(new(java.type('int[]'), 3))", "NULL");
+        assertEvalFastR("{ java.addToClasspath(paste0(Sys.getenv('R_HOME'),'/mxbuild/dists/fastr-unit-tests.jar')); tec<-new('com.oracle.truffle.r.test.library.fastr.TestExceptionsClass'); tec }",
+                        "cat('[polyglot value]\\n$exception\\n[polyglot value]\\n\\n$class\\n[polyglot value]\\n\\n')");
     }
 
     @Test
@@ -2030,7 +2032,7 @@ public class TestJavaInterop extends TestBase {
 
             @Override
             public String toString() {
-                return String.format("TetsPOJO[data='%s']", data);
+                return String.format("TestPOJO[data='%s']", data);
             }
         }
 
