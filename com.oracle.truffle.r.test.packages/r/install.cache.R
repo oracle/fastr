@@ -587,15 +587,15 @@ pkg.cache.read.version.from.table <- function(pkg.cache.env, cache.version, vers
         if (!is.null(updated.version.table)) {
             version.subdir <- as.character(updated.version.table[updated.version.table$version == cache.version, "dir"])
 
-            if (!pkg.cache.lock(pkg.cache.env, cache.dir)) {
+            if (!pkg.cache.lock(pkg.cache.env, pkg.cache.env$dir)) {
                 return (NULL)
             }
 
             tryCatch({
                 write.csv(updated.version.table, version.table.file, row.names=FALSE)
-                pkg.cache.unlock(pkg.cache.env, cache.dir)
+                pkg.cache.unlock(pkg.cache.env, pkg.cache.env$dir)
             }, error = function(e) {
-                pkg.cache.unlock(pkg.cache.env, cache.dir)
+                pkg.cache.unlock(pkg.cache.env, pkg.cache.env$dir)
             })
 
             # send updated file to object store
