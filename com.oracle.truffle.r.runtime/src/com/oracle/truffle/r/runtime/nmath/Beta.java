@@ -20,13 +20,21 @@
 package com.oracle.truffle.r.runtime.nmath;
 
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
+
 import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.gammafn;
 import static com.oracle.truffle.r.runtime.nmath.LBeta.lbeta;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.ML_POSINF;
 
-public class Beta {
+public final class Beta implements Function2_1 {
 
+    public static final Beta INSTANCE = new Beta();
     private static final double xmax = GammaFunctions.gfn_xmax;
+
+    @Override
+    public double evaluate(double a, double b, @SuppressWarnings("unused") boolean x) {
+        return beta(a, b);
+    }
 
     public static double beta(double a, double b) {
         if (Double.isNaN(a) || Double.isNaN(b)) {
@@ -54,5 +62,4 @@ public class Beta {
             return Math.exp(val);
         }
     }
-
 }

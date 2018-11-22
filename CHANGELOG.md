@@ -2,28 +2,29 @@
 
 New features:
 
-* interop and tooling: READ and WRITE of ActiveBinding may have side effects. This is communicated via `KEY_INFO` to the tools and other languages (e.g., a debugger may warn before evaluating an ActiveBinding).
+* interop and tooling: READ and WRITE of ActiveBinding may have side effects. This is communicated via `KEY_INFO` to the tools and other languages (e.g., a debugger may warn before evaluating an ActiveBinding)
 
 Added missing R builtins and C API
 
 * `pos.to.env` builtin
 * private `do_fmin` external function from the stats packages used by public R function `optimize`
+* `beta` #33
 
 Bug fixes:
 
-* tooling: top level statements are not marked as functions (e.g., a debugger will not treat them as such anymore).
-* update rpath correctly for redistributed libraries when producing a release build. This issue caused linking problems for MacOS users. #26
-* UseMethod caused internal error under some specific circumstances (happens during installation of the R.oo package).
-* fully support indirect use of .Internal, e.g. in `(get('.Internal'))(paste0(list(1,2),','))`.
-* `as.character(external-pointer)` does not crash, but prints the pointer address. #28
-* `file.path` with `NULL` as one of its arguments gives correct result (empty character vector).
-* `format.POSIXlt` uses the same time zone database as rest of the system. #29
+* tooling: top level statements are not marked as functions (e.g., a debugger will not treat them as such anymore)
+* update rpath correctly for redistributed libraries when producing a release build. This issue caused linking problems for MacOS users #26
+* UseMethod caused internal error under some specific circumstances (happens during installation of the R.oo package)
+* fully support indirect use of .Internal, e.g. in `(get('.Internal'))(paste0(list(1,2),','))`
+* `as.character(external-pointer)` does not crash, but prints the pointer address #28
+* `file.path` with `NULL` as one of its arguments gives correct result (empty character vector)
+* `format.POSIXlt` uses the same time zone database as rest of the system #29
 * `dev.control(displaylist = 'inhibit')` caused `ClassCastException`
 * `download.file` follows redirects.
-* Static members of Java interop objects are not ignored during printing and deparsing.
+* static members of Java interop objects are not ignored during printing and deparsing
 * fixed internal error in `on.exit(NULL)`
 * fixed `mget` to accept also non list values for `ifnotfound`
-
+* updating dimensions of a vector always resets the dimnames. #34
 
 # 1.0 RC 9
 

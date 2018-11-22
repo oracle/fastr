@@ -26,7 +26,16 @@ import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammacor;
 import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammafn;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN_SQRT_2PI;
 
-public final class LBeta {
+import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function2_1;
+
+public final class LBeta implements Function2_1 {
+    public static final LBeta INSTANCE = new LBeta();
+
+    @Override
+    public double evaluate(double a, double b, @SuppressWarnings("unused") boolean x) {
+        return lbeta(a, b);
+    }
+
     public static double lbeta(double a, double b) {
         double corr;
         double p;

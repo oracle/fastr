@@ -47,6 +47,8 @@ import com.oracle.truffle.r.library.methods.SlotFactory.R_hasSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SlotFactory.R_setSlotNodeGen;
 import com.oracle.truffle.r.library.methods.SubstituteDirectNodeGen;
 import com.oracle.truffle.r.library.parallel.ParallelFunctionsFactory.MCIsChildNodeGen;
+import com.oracle.truffle.r.library.stats.Approx;
+import com.oracle.truffle.r.library.stats.ApproxTest;
 import com.oracle.truffle.r.library.stats.BinDist;
 import com.oracle.truffle.r.library.stats.CdistNodeGen;
 import com.oracle.truffle.r.library.stats.CompleteCases;
@@ -67,6 +69,7 @@ import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineCoefNodeG
 import com.oracle.truffle.r.library.stats.SplineFunctionsFactory.SplineEvalNodeGen;
 import com.oracle.truffle.r.library.stats.StatsFunctionsNodes;
 import com.oracle.truffle.r.library.stats.WilcoxFreeNode;
+import com.oracle.truffle.r.library.stats.Zeroin2;
 import com.oracle.truffle.r.library.stats.deriv.D;
 import com.oracle.truffle.r.library.stats.deriv.Deriv;
 import com.oracle.truffle.r.library.tools.C_ParseRdNodeGen;
@@ -525,9 +528,9 @@ public class CallAndExternalFunctions {
                 case "rmultinom":
                     return RMultinomNode.create();
                 case "Approx":
-                    return StatsFunctionsNodes.Approx.create();
+                    return Approx.create();
                 case "ApproxTest":
-                    return StatsFunctionsNodes.ApproxTest.create();
+                    return ApproxTest.create();
                 case "Cdist":
                     return CdistNodeGen.create();
                 case "DoubleCentre":
@@ -907,7 +910,7 @@ public class CallAndExternalFunctions {
                 case "modelframe":
                     return getExternalModelBuiltinNode(name);
                 case "zeroin2":
-                    return StatsFunctionsNodes.Zeroin2.create();
+                    return Zeroin2.create();
 
                 // stats:
                 case "do_fmin":

@@ -93,4 +93,11 @@ public class TestBuiltin_dimassign extends TestBase {
         assertEval("dim(environment()) <- c(1,2)");
         assertEval("f <- function() {}; dim(f) <- c(1,2)");
     }
+
+    @Test
+    public void testDimAssign() {
+        assertEval("{ a <- array(NA,dim=c(2,3,4),dimnames=list(1:2,1:3,1:4)); dim(a) <- c(2, 12); dimnames(a); }");
+        // setting the dims to the same value still removes the dimnames
+        assertEval("{ a <- array(NA,dim=c(2,3,4),dimnames=list(1:2,1:3,1:4)); dim(a) <- c(2,3,4); dimnames(a); }");
+    }
 }
