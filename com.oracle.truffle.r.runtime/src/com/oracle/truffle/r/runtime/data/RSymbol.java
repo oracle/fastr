@@ -50,7 +50,7 @@ public final class RSymbol extends RAttributeStorage {
     private CharSXPWrapper nameWrapper;
 
     private RSymbol(String name) {
-        this.nameWrapper = CharSXPWrapper.create(name);
+        this.nameWrapper = CharSXPWrapper.createInterned(name);
     }
 
     @TruffleBoundary
