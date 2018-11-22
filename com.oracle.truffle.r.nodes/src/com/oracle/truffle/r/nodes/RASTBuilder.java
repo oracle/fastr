@@ -132,7 +132,15 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         // switch the args if needed
                         RSyntaxNode lhsArg = args.get(switchArgs ? 1 : 0).value;
                         RSyntaxNode rhsArg = args.get(switchArgs ? 0 : 1).value;
-                        return new ReplacementDispatchNode(source, lhsLookup, lhsArg, rhsArg, isSuper, context.getReplacementVarsStartIndex());
+                        String lhsName = args.get(0).name;
+                        String rhsName = args.get(1).name;
+                        ArgumentsSignature names;
+                        if (lhsName == null && rhsName == null) {
+                            names = ArgumentsSignature.empty(2);
+                        } else {
+                            names = ArgumentsSignature.get(lhsName, rhsName);
+                        }
+                        return new ReplacementDispatchNode(source, lhsLookup, lhsArg, rhsArg, isSuper, context.getReplacementVarsStartIndex(), names);
                 }
             } else if (args.size() == 3) {
                 switch (symbol) {
