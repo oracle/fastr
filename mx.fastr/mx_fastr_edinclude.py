@@ -49,7 +49,7 @@ use_internals_section = '''#ifdef FASTR
 '''
 
 sexp = '''#ifdef FASTR
-typedef void *SEXP;
+typedef struct FASTR_SEXP_STRUCT *SEXP;
 #define DATAPTR(x)\t\tR_DATAPTR(x)
 void *(R_DATAPTR)(SEXP x);
 
@@ -128,7 +128,10 @@ def is_internal_var(line):
 
 context_defs = '''#ifdef FASTR
 typedef void *CTXT;
-typedef void *SEXP;
+struct FASTR_SEXP_STRUCT {
+    char dummy;
+};
+typedef struct FASTR_SEXP_STRUCT *SEXP;
 extern CTXT FASTR_GlobalContext();
 #define R_GlobalContext FASTR_GlobalContext()
 extern CTXT R_getGlobalFunctionContext();

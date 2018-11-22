@@ -1631,8 +1631,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public int registerCCallable(String pkgName, String functionName, Object address) {
-        DLLInfo lib = DLL.safeFindLibrary(pkgName);
-        lib.registerCEntry(new CEntry(functionName, new SymbolHandle(address)));
+        DLLInfo.registerCEntry(pkgName, new CEntry(functionName, new SymbolHandle(address)));
         return 0;
     }
 

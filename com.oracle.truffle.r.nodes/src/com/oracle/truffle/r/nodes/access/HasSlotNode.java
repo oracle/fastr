@@ -53,11 +53,16 @@ public abstract class HasSlotNode extends BaseAccessSlotNode {
         return false;
     }
 
-    @Specialization(guards = {"slotAccessAllowed(object)"})
+    @Specialization(guards = {"slotAccessAllowed(object)", "!isDotData(name)"})
     protected boolean getSlotS4Cached(RAttributable object, String name,
                     @Cached("createAttrAccess()") GetAttributeNode attrAccess,
                     @Cached("create()") InitAttributesNode initAttrNode) {
         return attrAccess.execute(initAttrNode.execute(object), name) != null;
+    }
+
+    @Specialization(guards = {"slotAccessAllowed(object)", "isDotData(name)"})
+    protected boolean getSlotS4Cached(@SuppressWarnings("unused") RAttributable object, @SuppressWarnings("unused") String name) {
+        return true;
     }
 
     @Specialization(guards = {"!slotAccessAllowed(object)", "isDotData(name)"})

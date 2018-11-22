@@ -21,7 +21,9 @@ package com.oracle.truffle.r.runtime.ffi;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CallTarget;
@@ -220,7 +222,7 @@ public class DLL {
         private boolean dynamicLookup;
         private boolean forceSymbols;
         private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
-        private ArrayList<CEntry> cEntryTable = null;
+        private static Map<String, ArrayList<CEntry>> cEntryTable = new HashMap<>();
         private final HashSet<String> unsuccessfulLookups = new HashSet<>();
         /**
          * A synthetic DLLInfo faking {@link RFunction}-s as if they were real native symbols to
@@ -299,16 +301,19 @@ public class DLL {
             }
         }
 
-        public void registerCEntry(CEntry entry) {
-            if (cEntryTable == null) {
-                cEntryTable = new ArrayList<>();
+        public static synchronized void registerCEntry(String pkgName, CEntry entry) {
+            ArrayList<CEntry> pEnv = cEntryTable.get(pkgName);
+            if (pEnv == null) {
+                pEnv = new ArrayList<>();
+                cEntryTable.put(pkgName, pEnv);
             }
-            cEntryTable.add(entry);
+            pEnv.add(entry);
         }
 
-        public CEntry lookupCEntry(String symbol) {
-            if (cEntryTable != null) {
-                for (CEntry entry : cEntryTable) {
+        public static synchronized CEntry lookupCEntry(String pkgName, String symbol) {
+            ArrayList<CEntry> pEnv = cEntryTable.get(pkgName);
+            if (pEnv != null) {
+                for (CEntry entry : pEnv) {
                     if (entry.symbol.equals(symbol)) {
                         return entry;
                     }
