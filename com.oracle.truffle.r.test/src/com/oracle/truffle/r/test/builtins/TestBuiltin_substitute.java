@@ -150,5 +150,6 @@ public class TestBuiltin_substitute extends TestBase {
         assertEval("{ foo <- function(...) bar(3+2); bar <- function(...) { list(...); substitute(list(...)); }; foo(1+2); }");
 
         assertEval("typeof(substitute())");
+        assertEval("substitute(`:=`(a=3,b=3))");
     }
 }
