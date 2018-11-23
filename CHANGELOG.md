@@ -25,6 +25,7 @@ Bug fixes:
 * fixed internal error in `on.exit(NULL)`
 * fixed `mget` to accept also non list values for `ifnotfound`
 * updating dimensions of a vector always resets the dimnames. #34
+* `env2list` used in, e.g., `as.list.environment` can handle `...` inside the environment
 
 # 1.0 RC 9
 
