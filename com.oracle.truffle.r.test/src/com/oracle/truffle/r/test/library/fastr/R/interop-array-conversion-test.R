@@ -143,7 +143,7 @@ createJavaClass <- function(className, javaSource) {
         dir.create(tmpDir)
     }
     writeLines(javaSource, javaFileName)
-    system(paste0("javac ", javaFileName))
+    system(paste0("$JAVA_HOME/bin/javac ", javaFileName))
     java.addToClasspath(tmpDir)
 }
 
