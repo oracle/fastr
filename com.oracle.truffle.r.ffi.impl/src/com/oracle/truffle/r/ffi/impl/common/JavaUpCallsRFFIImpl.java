@@ -678,7 +678,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             RShareable r = (RShareable) x;
             int actual = getNamed(r);
             if (v < actual) {
-                RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
+              //  RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
             }
             if (v == 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect
@@ -2412,6 +2412,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public Object REAL(Object x) {
         if ((x instanceof RAbstractStringVector) || (x instanceof RAbstractListBaseVector)) {
             RFFIUtils.unimplemented("REAL is being called for type " + Utils.getTypeName(x));
