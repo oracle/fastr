@@ -3,6 +3,8 @@
 New features:
 
 * interop and tooling: READ and WRITE of ActiveBinding may have side effects. This is communicated via `KEY_INFO` to the tools and other languages (e.g., a debugger may warn before evaluating an ActiveBinding)
+* the MRAN mirror used by FastR as default repo was moved to https://mran.microsoft.com/snapshot/2018-06-20
+* new function `install.fastr.packages` to install FastR rJava replacement and possibly other packages in the future
 
 Added missing R builtins and C API
 
