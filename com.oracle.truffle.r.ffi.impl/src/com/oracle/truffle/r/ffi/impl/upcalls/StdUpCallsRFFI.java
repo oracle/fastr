@@ -203,7 +203,7 @@ public interface StdUpCallsRFFI {
     /**
      * WARNING: argument order reversed from Rf_findVarInFrame!
      */
-    Object Rf_findVar(Object symbolArg, Object envArg);
+    Object Rf_findVar(Object symbolArg, @RFFIResultOwner Object envArg);
 
     Object Rf_findVarInFrame(@RFFIResultOwner Object envArg, Object symbolArg);
 

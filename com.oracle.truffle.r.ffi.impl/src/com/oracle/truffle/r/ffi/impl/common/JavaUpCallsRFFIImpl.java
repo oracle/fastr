@@ -96,6 +96,8 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -739,7 +741,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             return x;
         }
         guaranteeInstanceOf(x, RSymbol.class);
-        return CharSXPWrapper.create(((RSymbol) x).getName());
+        return ((RSymbol) x).getWrappedName();
     }
 
     @Override
@@ -2410,8 +2412,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public Object REAL(Object x) {
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RDoubleVector.class));
+        if ((x instanceof RAbstractStringVector) || (x instanceof RAbstractListBaseVector)) {
+            RFFIUtils.unimplemented("REAL is being called for type " + Utils.getTypeName(x));
+        }
+        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
     }
 
     @Override

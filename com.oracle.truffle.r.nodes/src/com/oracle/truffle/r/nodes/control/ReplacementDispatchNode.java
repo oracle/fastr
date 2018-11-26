@@ -61,14 +61,16 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
     private final boolean isSuper;
     private final int tempNamesStartIndex;
+    private final ArgumentsSignature names;
 
-    public ReplacementDispatchNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex) {
+    public ReplacementDispatchNode(SourceSection src, RSyntaxLookup operator, RSyntaxNode lhs, RSyntaxNode rhs, boolean isSuper, int tempNamesStartIndex, ArgumentsSignature names) {
         super(src, operator);
         assert lhs != null && rhs != null;
         this.lhs = lhs.asRNode();
         this.rhs = rhs.asRNode();
         this.isSuper = isSuper;
         this.tempNamesStartIndex = tempNamesStartIndex;
+        this.names = names;
     }
 
     @Override
@@ -123,7 +125,7 @@ public final class ReplacementDispatchNode extends OperatorNode {
 
     @Override
     public ArgumentsSignature getSyntaxSignature() {
-        return ArgumentsSignature.empty(2);
+        return names;
     }
 
     @Override

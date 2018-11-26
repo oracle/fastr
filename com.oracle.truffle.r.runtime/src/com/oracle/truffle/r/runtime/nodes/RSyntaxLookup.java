@@ -82,6 +82,7 @@ public interface RSyntaxLookup extends RSyntaxElement {
      * section.
      */
     static RSyntaxLookup createDummyLookup(SourceSection source, String identifier, boolean isFunctionLookup) {
+        assert Utils.isInterned(identifier);
         return new RSyntaxLookup() {
             @Override
             public SourceSection getLazySourceSection() {
