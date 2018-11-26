@@ -281,3 +281,7 @@ rffi.shareStringElement <- function(x, xi, y, yi) {
 rffi.shareListElement <- function(x, xi, y, yi) {
 	.Call('shareListElement', x, xi, y, yi)
 }
+
+rffi.test_setVar <- function(symbol, value, env) {
+    .Call('test_Rf_setVar', symbol, value, env)
+}

@@ -34,6 +34,8 @@
 #include <R_ext/Connections.h>
 #include <Rmath.h>
 
+SEXP api_OBJECT(SEXP x);
+
 SEXP api_Rf_ScalarInteger(SEXP value);
 
 SEXP api_Rf_ScalarLogical(SEXP value);
@@ -216,6 +218,8 @@ SEXP api_Rf_GetOption1(SEXP tag);
 
 SEXP api_Rf_gsetVar(SEXP symbol, SEXP value, SEXP rho);
 
+SEXP api_Rf_setVar(SEXP symbol, SEXP value, SEXP rho);
+
 SEXP api_DUPLICATE_ATTRIB(SEXP to, SEXP from);
 
 SEXP api_R_compute_identical(SEXP x, SEXP y, SEXP flags);
@@ -255,6 +259,10 @@ SEXP api_GetRNGstate();
 SEXP api_PutRNGstate();
 
 SEXP api_unif_rand();
+
+SEXP api_norm_rand();
+
+SEXP api_exp_rand();
 
 SEXP api_Rf_classgets(SEXP x, SEXP y);
 
@@ -549,6 +557,4 @@ SEXP api_R_nchar(SEXP string, SEXP type, SEXP allowNA, SEXP keepNA, SEXP msgName
 SEXP api_Rf_isObject(SEXP x);
 
 SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env);
-
-SEXP api_OBJECT(SEXP x);
 

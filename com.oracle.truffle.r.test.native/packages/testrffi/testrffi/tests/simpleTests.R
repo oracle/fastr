@@ -372,3 +372,13 @@ rffi.shareIntElement(i1, 1L, i2, 2L)
 d1 <- c(1, 2)
 d2 <- c(3, 4)
 rffi.shareDoubleElement(d1, 1L, d2, 2L)
+
+# setVar
+e <- new.env()
+e$x <- 1
+rffi.test_setVar(as.symbol('x'), 42, e)
+stopifnot(identical(e$x, 42))
+rffi.test_setVar(as.symbol('y'), 42, e)
+stopifnot(identical(e$y, NULL))
+stopifnot(identical(globalenv()$y, 42))
+

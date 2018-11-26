@@ -384,9 +384,10 @@ void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
     checkExitCall();
 }
 
-void Rf_setVar(SEXP x, SEXP y, SEXP z) {
-    TRACE0();
-    unimplemented("Rf_setVar");
+void Rf_setVar(SEXP symbol, SEXP value, SEXP rho) {
+    TRACE3(symbol, value, rho);
+    ((call_Rf_setVar) callbacks[Rf_setVar_x])(symbol, value, rho);
+    checkExitCall();
 }
 
 SEXP Rf_dimgets(SEXP x, SEXP y) {

@@ -419,6 +419,8 @@ public interface StdUpCallsRFFI {
 
     void Rf_gsetVar(Object symbol, Object value, Object rho);
 
+    void Rf_setVar(Object symbol, Object value, Object rho);
+
     void DUPLICATE_ATTRIB(Object to, Object from);
 
     int R_compute_identical(Object x, Object y, int flags);

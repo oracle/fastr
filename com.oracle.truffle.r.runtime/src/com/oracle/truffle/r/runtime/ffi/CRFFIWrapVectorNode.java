@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -29,6 +30,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
@@ -70,8 +72,17 @@ public abstract class CRFFIWrapVectorNode extends Node {
     }
 
     @Fallback
-    protected VectorRFFIWrapper fallback(@SuppressWarnings("unused") Object vector) {
-        throw RInternalError.shouldNotReachHere("Unimplemented native conversion of argument");
+    protected Object fallback(Object vector) {
+        if (vector instanceof RObject) { // Used for passing RFunction so far
+            return wrapNode.execute(vector);
+        }
+        return fallbackError(vector);
+    }
+
+    @TruffleBoundary
+    private static Object fallbackError(Object vector) {
+        throw RInternalError.shouldNotReachHere("Unimplemented native conversion of argument " + vector +
+                        " of class " + (vector != null ? vector.getClass() : "<null>"));
     }
 
     public abstract static class CRFFIWrapVectorsNode extends Node {
