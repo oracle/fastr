@@ -17,3 +17,4 @@ ROCR
 quantmod
 reshape2
 sqldf
+RcppBDT
