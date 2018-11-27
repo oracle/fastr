@@ -64,6 +64,7 @@ import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSource;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
@@ -79,11 +80,6 @@ public final class FastRSession implements RSession {
 
     private static final String TEST_TIMEOUT_PROPERTY = "fastr.test.timeout";
     private static int timeoutValue = 10000;
-    /**
-     * The long timeout is used for package installation and currently needs to be 5 mins for the
-     * {@code Matrix} package.
-     */
-    private static int longTimeoutValue = 300000;
 
     private static FastRSession singleton;
 
@@ -142,7 +138,6 @@ public final class FastRSession implements RSession {
         if (timeOutProp != null) {
             if (timeOutProp.length() == 0) {
                 timeoutValue = Integer.MAX_VALUE;
-                longTimeoutValue = Integer.MAX_VALUE;
             } else {
                 int timeoutGiven = Integer.parseInt(timeOutProp);
                 timeoutValue = timeoutGiven * 1000;
@@ -210,11 +205,11 @@ public final class FastRSession implements RSession {
     }
 
     @Override
-    public String eval(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout) throws Throwable {
-        return eval(testClass, expression, contextKind, longTimeout, true);
+    public String eval(TestBase testClass, String expression, ContextKind contextKind, long timeout) throws Throwable {
+        return eval(testClass, expression, contextKind, timeout, true);
     }
 
-    public String eval(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) throws Throwable {
+    public String eval(TestBase testClass, String expression, ContextKind contextKind, long timeout, boolean allowHostAccess) throws Throwable {
         assert contextKind != null;
         Timer timer = null;
         output.reset();
@@ -224,7 +219,7 @@ public final class FastRSession implements RSession {
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
             }
-            timer = scheduleTimeBoxing(evalContext.getEngine(), longTimeout ? longTimeoutValue : timeoutValue);
+            timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
             String consoleInput = readLine();
             while (consoleInput != null) {
                 try {
@@ -274,7 +269,7 @@ public final class FastRSession implements RSession {
         }
     }
 
-    public String evalInREPL(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) throws Throwable {
+    public String evalInREPL(TestBase testClass, String expression, ContextKind contextKind, long timeout, boolean allowHostAccess) throws Throwable {
         assert contextKind != null;
         Timer timer = null;
         output.reset();
@@ -284,7 +279,7 @@ public final class FastRSession implements RSession {
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
             }
-            timer = scheduleTimeBoxing(evalContext.getEngine(), longTimeout ? longTimeoutValue : timeoutValue);
+            timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
             REPL.readEvalPrint(evalContext, new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false, output);
             String consoleInput = readLine();
             while (consoleInput != null) {
@@ -318,6 +313,10 @@ public final class FastRSession implements RSession {
                 debugger.startSession(new SuspendedCallback() {
                     @Override
                     public void onSuspend(SuspendedEvent event) {
+                        // print diagnostic info
+                        Thread.dumpStack();
+                        System.out.println(Utils.createStackTrace(true));
+
                         event.prepareKill();
                     }
                 }).suspendNextExecution();

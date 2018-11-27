@@ -68,13 +68,13 @@ public class TestRBase extends TestBase {
             String[] lines = entryValue.split("\n");
             TestTrait testTrait = getTestTrait(lines);
             try {
-                Path dir = TestBase.createTestDir(getTestDir());
+                Path dir = TestBase.createTestDir(testDirName);
                 Path p = dir.resolve(Paths.get(entryName).getFileName());
                 Files.write(p, entryValue.getBytes());
                 if (testTrait == null) {
-                    assertEval(TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                    assertEval(30000, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
                 } else {
-                    assertEval(testTrait, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
+                    assertEval(30000, testTrait, TestBase.template("{ source(\"%0\") }", new String[]{p.toString()}));
                 }
             } catch (IOException ex) {
                 assert false;

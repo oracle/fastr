@@ -52,12 +52,12 @@ public class TestBuiltin_asmatrix extends TestBase {
 
     @Test
     public void testIgnoredMatrixExpression1() {
-        Assert.assertEquals(expectedOut1, fastREval("{ matrix(1i,10,10) }", ContextKind.SHARE_PARENT_RW, false));
+        Assert.assertEquals(expectedOut1, fastREval("{ matrix(1i,10,10) }", ContextKind.SHARE_PARENT_RW));
     }
 
     @Test
     public void testIgnoredMatrixExpression2() {
-        Assert.assertEquals(expectedOut2, fastREval("{ matrix(c(1i,NA),10,10) }", ContextKind.SHARE_PARENT_RW, false));
+        Assert.assertEquals(expectedOut2, fastREval("{ matrix(c(1i,NA),10,10) }", ContextKind.SHARE_PARENT_RW));
     }
 
     @Test

@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
+import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
 
 /**
@@ -152,8 +153,7 @@ public class TestBase {
 
     public enum Context implements TestTrait {
         NonShared, // Test requires a new non-shared {@link RContext}.
-        NoJavaInterop, // Test requires a {@link RContext} with disabled host access.
-        LongTimeout; // Test requires a long timeout
+        NoJavaInterop; // Test requires a {@link RContext} with disabled host access.
 
         @Override
         public String getName() {
@@ -475,27 +475,35 @@ public class TestBase {
      * respect.
      */
     protected void assertEval(String... input) {
-        evalAndCompare(input);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT);
+    }
+
+    protected void assertEval(long timeout, String... input) {
+        evalAndCompare(input, timeout);
     }
 
     protected void assertEval(TestTrait trait1, String... input) {
-        evalAndCompare(input, trait1);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1);
+    }
+
+    protected void assertEval(long timeout, TestTrait trait1, String... input) {
+        evalAndCompare(input, timeout, trait1);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, String... input) {
-        evalAndCompare(input, trait1, trait2);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, String... input) {
-        evalAndCompare(input, trait1, trait2, trait3);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2, trait3);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, TestTrait trait4, String... input) {
-        evalAndCompare(input, trait1, trait2, trait3, trait4);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2, trait3, trait4);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, TestTrait trait4, TestTrait trait5, String... input) {
-        evalAndCompare(input, trait1, trait2, trait3, trait4, trait5);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2, trait3, trait4, trait5);
     }
 
     protected void afterMicroTest() {
@@ -504,19 +512,19 @@ public class TestBase {
 
     // support testing of FastR-only functionality (equivalent GNU R output provided separately)
     protected boolean assertEvalFastR(TestTrait trait1, String input, String gnuROutput) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1);
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), USE_DEFAULT_TIMEOUT, trait1);
     }
 
     protected boolean assertEvalFastR(TestTrait trait1, TestTrait trait2, String input, String gnuROutput) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1, trait2);
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), USE_DEFAULT_TIMEOUT, trait1, trait2);
     }
 
     protected boolean assertEvalFastR(String input, String gnuROutput) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input));
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), USE_DEFAULT_TIMEOUT);
     }
 
     protected boolean assertEvalFastR(String input, String gnuROutput, boolean useREPL) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL);
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL, USE_DEFAULT_TIMEOUT);
     }
 
     private static String[] getAssertEvalFastR(String gnuROutput, String input) {
@@ -654,11 +662,11 @@ public class TestBase {
         }
     }
 
-    private boolean evalAndCompare(String[] inputs, TestTrait... traitsList) {
-        return evalAndCompare(inputs, false, traitsList);
+    private boolean evalAndCompare(String[] inputs, long timeout, TestTrait... traitsList) {
+        return evalAndCompare(inputs, false, timeout, traitsList);
     }
 
-    private boolean evalAndCompare(String[] inputs, boolean useREPL, TestTrait... traitsList) {
+    private boolean evalAndCompare(String[] inputs, boolean useREPL, long timeout, TestTrait... traitsList) {
         WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
         ContextKind contextKind = traits.context.contains(Context.NonShared) ? ContextKind.SHARE_NOTHING : ContextKind.SHARE_PARENT_RW;
@@ -670,7 +678,7 @@ public class TestBase {
             if (skipFastREval) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout), !traits.context.contains(Context.NoJavaInterop), useREPL);
+                String result = fastREval(input, contextKind, timeout, !traits.context.contains(Context.NoJavaInterop), useREPL);
                 CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
@@ -1010,24 +1018,20 @@ public class TestBase {
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout) {
-        return fastREval(input, contextKind, longTimeout, true);
+    protected String fastREval(String input, ContextKind contextKind) {
+        return fastREval(input, contextKind, USE_DEFAULT_TIMEOUT, true, false);
     }
 
-    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
-        return fastREval(input, contextKind, longTimeout, allowHostAccess, false);
-    }
-
-    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess, boolean useREPL) {
+    protected String fastREval(String input, ContextKind contextKind, long timeout, boolean allowHostAccess, boolean useREPL) {
         assert contextKind != null;
         microTestInfo.expression = input;
         String result;
         try {
             beforeEval();
             if (useREPL) {
-                result = fastROutputManager.fastRSession.evalInREPL(this, input, contextKind, longTimeout, allowHostAccess);
+                result = fastROutputManager.fastRSession.evalInREPL(this, input, contextKind, timeout, allowHostAccess);
             } else {
-                result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout, allowHostAccess);
+                result = fastROutputManager.fastRSession.eval(this, input, contextKind, timeout, allowHostAccess);
 
             }
         } catch (Throwable e) {
@@ -1051,13 +1055,13 @@ public class TestBase {
         return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
     }
 
-    protected String fastRREPLEval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
+    protected String fastRREPLEval(String input, ContextKind contextKind, long timeout, boolean allowHostAccess) {
         assert contextKind != null;
         microTestInfo.expression = input;
         String result;
         try {
             beforeEval();
-            result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout, allowHostAccess);
+            result = fastROutputManager.fastRSession.eval(this, input, contextKind, timeout, allowHostAccess);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
@@ -1085,19 +1089,6 @@ public class TestBase {
 
     protected static boolean checkOnly() {
         return expectedOutputManager.checkOnly;
-    }
-
-    /**
-     * Used only for package installation to avoid explicitly using {@link ProcessBuilder}. Instead
-     * we go via the {@code system2} R function (which may call {@link ProcessBuilder} internally).
-     *
-     */
-    protected static String evalInstallPackage(String system2Command) throws Throwable {
-        if (generatingExpected()) {
-            return expectedOutputManager.getRSession().eval(null, system2Command, null, true);
-        } else {
-            return fastROutputManager.fastRSession.eval(null, system2Command, ContextKind.SHARE_PARENT_RW, true);
-        }
     }
 
     /**

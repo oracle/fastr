@@ -50,6 +50,7 @@ import com.oracle.truffle.r.test.TestBase.Ignored;
 import com.oracle.truffle.r.test.TestBase.Output;
 import com.oracle.truffle.r.test.TestTrait;
 import com.oracle.truffle.r.test.WhiteList;
+import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
 
 /**
  * Supports the management of expected test output.
@@ -442,7 +443,7 @@ public class TestOutputManager {
             if (!checkOnly) {
                 try {
                     testClass.beforeEval();
-                    expected = rSession.eval(testClass, test, null, false);
+                    expected = rSession.eval(testClass, test, null, USE_DEFAULT_TIMEOUT);
                 } catch (Throwable e) {
                     throw RInternalError.shouldNotReachHere("unexpected exception thrown by GNUR session: " + e);
                 }
