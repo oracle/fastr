@@ -156,7 +156,6 @@ public class TestBuiltin_subset extends TestBase {
     @Test
     public void testSubsetMissing() {
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[missng]}; f(l)");
-        assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[missng]}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {.subset(l, missng)}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[missng,]}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[,missng]}; f(l)");

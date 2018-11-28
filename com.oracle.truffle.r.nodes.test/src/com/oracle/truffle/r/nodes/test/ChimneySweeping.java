@@ -66,6 +66,7 @@ import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import static org.junit.Assert.fail;
 import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
+import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
 
 /**
  * Use the following command to sweep all builtins
@@ -488,11 +489,11 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
 
             String output;
             try {
-                output = diagSuite.fastRSession.eval(null, call, ContextKind.SHARE_PARENT_RW, false);
+                output = diagSuite.fastRSession.eval(null, call, ContextKind.SHARE_PARENT_RW, USE_DEFAULT_TIMEOUT);
             } catch (Throwable t) {
                 output = "ERROR: " + t.getMessage();
             }
-            String outputGnu = diagSuite.gnuRSession.eval(null, call, null, false);
+            String outputGnu = diagSuite.gnuRSession.eval(null, call, null, USE_DEFAULT_TIMEOUT);
 
             List<String> outputPair = Arrays.asList(output, outputGnu);
 
