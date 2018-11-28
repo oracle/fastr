@@ -47,6 +47,12 @@ public @interface RBuiltin {
     String[] parameterNames();
 
     /**
+     * Only meaningful for {@link RBuiltinKind#PRIMITIVE}, because some builtins do not have
+     * arguments matched by name or they may have some special kind of matching.
+     */
+    ArgumentMatchingMode argumentMatchingMode() default ArgumentMatchingMode.MATCH_BY_NAME;
+
+    /**
      * A list of aliases for {@code name()}.
      */
     String[] aliases() default {};
@@ -92,7 +98,7 @@ public @interface RBuiltin {
     /**
      * Field accesses must have at leas two arguments. The call dispatching mechanism will change
      * the second argument accordingly: if it is symbol lookup, the symbol name will be used as
-     * String constant instead, if it already is a String constant the will be used as is, otherwise
+     * String constant instead, if it already is a String constant it will be used as is, otherwise
      * error is raised. This special handling for field accessed is necessary, because they are also
      * internal generics and the user provided overloads only accept a String as the second
      * argument. However, there is a difference between field access with string and with a lookup

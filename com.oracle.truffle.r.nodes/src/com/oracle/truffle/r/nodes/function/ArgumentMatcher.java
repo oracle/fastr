@@ -604,23 +604,32 @@ public class ArgumentMatcher {
         // MATCH in two phases: first by exact name (if we have actual: 'x', 'xa' and formal 'xa',
         // then actual 'x' should not steal the position of 'xa'), then by partial
         boolean[] matchedSuppliedArgs = new boolean[signature.getLength()];
-        boolean[] formalsMatchedByExactName = new boolean[formalSignature.getLength()];
-        for (boolean byExactName : new boolean[]{true, false}) {
-            for (int suppliedIndex = 0; suppliedIndex < signature.getLength(); suppliedIndex++) {
-                String suppliedName = signature.getName(suppliedIndex);
-                boolean wasMatchedByExactName = !byExactName && matchedSuppliedArgs[suppliedIndex];
-                if (wasMatchedByExactName || suppliedName == null || suppliedName.isEmpty()) {
-                    continue;
-                }
+        // Note: primitive builtins have several ways of matching the actual to formal signatures
+        boolean matchByName = RBuiltinDescriptor.matchArgumentsByName(builtin);
+        if (matchByName) {
+            boolean[] formalsMatchedByExactName = new boolean[formalSignature.getLength()];
+            int suppliedStart = RBuiltinDescriptor.getSkipArgsCountForNameMatching(builtin);
+            for (boolean byExactName : new boolean[]{true, false}) {
+                for (int suppliedIndex = suppliedStart; suppliedIndex < signature.getLength(); suppliedIndex++) {
+                    String suppliedName = signature.getName(suppliedIndex);
+                    boolean wasMatchedByExactName = !byExactName && matchedSuppliedArgs[suppliedIndex];
+                    if (wasMatchedByExactName || suppliedName == null || suppliedName.isEmpty()) {
+                        continue;
+                    }
 
-                // Search for argument name inside formal arguments
-                int formalIndex = findParameterPosition(formalSignature, suppliedName, resultPermutation, suppliedIndex, hasVarArgs, callingNode, varArgIndex, errorString, builtin,
-                                formalsMatchedByExactName, byExactName);
-                if (formalIndex != MatchPermutation.UNMATCHED) {
-                    resultPermutation[formalIndex] = suppliedIndex;
-                    resultSignature[formalIndex] = suppliedName;
-                    formalsMatchedByExactName[formalIndex] = byExactName;
-                    matchedSuppliedArgs[suppliedIndex] = true;
+                    // Search for argument name inside formal arguments
+                    int formalIndex = findParameterPosition(formalSignature, suppliedName, resultPermutation,
+                                    suppliedIndex, hasVarArgs, callingNode, varArgIndex, errorString, builtin,
+                                    formalsMatchedByExactName, byExactName);
+                    if (formalIndex != MatchPermutation.UNMATCHED) {
+                        resultPermutation[formalIndex] = suppliedIndex;
+                        resultSignature[formalIndex] = suppliedName;
+                        formalsMatchedByExactName[formalIndex] = byExactName;
+                        matchedSuppliedArgs[suppliedIndex] = true;
+                    }
+                }
+                if (RBuiltinDescriptor.hasExactOnlyArgsMatching(builtin)) {
+                    break;
                 }
             }
         }
@@ -637,11 +646,16 @@ public class ArgumentMatcher {
                         // no more unmatched supplied arguments
                         break outer;
                     }
+                    if (RBuiltinDescriptor.allowPositionalMatchOfNamed(builtin)) {
+                        break;
+                    }
                     if (!matchedSuppliedArgs[suppliedIndex]) {
                         String suppliedName = signature.getName(suppliedIndex);
                         String formalName = formalSignature.getName(formalIndex);
                         if (suppliedName == null || suppliedName.isEmpty() || formalName == null || formalName.isEmpty()) {
-                            // unnamed parameter, match by position
+                            // unnamed actual parameter => match by position
+                            // named actual parameters must be either matched by their name, or else
+                            // they are left for "..."
                             break;
                         }
                     }
@@ -746,7 +760,7 @@ public class ArgumentMatcher {
         assert suppliedName != null && !suppliedName.isEmpty();
         for (int i = 0; i < formalsSignature.getLength(); i++) {
             String formalName = formalsSignature.getName(i);
-            if (!formalsSignature.isVarArg(i) && formalName != null) {
+            if (!formalsSignature.isVarArg(i) && formalName != null && !formalName.isEmpty()) {
                 if (formalName.equals(suppliedName)) {
                     if (resultPermutation[i] != MatchPermutation.UNMATCHED) {
                         if (builtin != null && builtin.getKind() == RBuiltinKind.PRIMITIVE && hasVarArgs) {
@@ -790,7 +804,7 @@ public class ArgumentMatcher {
             String formalName = formalsSignature.getName(i);
             hasNullFormal |= formalName == null;
             if (formalName != null) {
-                if (formalName.startsWith(suppliedName) && ((varArgIndex != ArgumentsSignature.NO_VARARG && i < varArgIndex) || varArgIndex == ArgumentsSignature.NO_VARARG)) {
+                if (formalName.startsWith(suppliedName) && (varArgIndex == ArgumentsSignature.NO_VARARG || i < varArgIndex)) {
                     // partial-match only if the formal argument is positioned before ...
                     if (found >= 0) {
                         throw callingNode.error(RError.Message.ARGUMENT_MATCHES_MULTIPLE, 1 + suppliedIndex);

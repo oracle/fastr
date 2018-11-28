@@ -24,7 +24,6 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.function.Supplier;
 
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
@@ -33,8 +32,8 @@ public final class RBuiltinFactory extends RBuiltinDescriptor {
 
     private final Supplier<RBuiltinNode> constructor;
 
-    RBuiltinFactory(RBuiltin annotation, Class<?> builtinMetaClass, Class<?> builtinNodeClass, ArgumentsSignature signature, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
-        super(annotation, builtinMetaClass, builtinNodeClass, signature, specialCall);
+    RBuiltinFactory(RBuiltin annotation, Class<?> builtinMetaClass, Class<?> builtinNodeClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
+        super(annotation, builtinMetaClass, builtinNodeClass, specialCall);
         this.constructor = constructor;
     }
 
