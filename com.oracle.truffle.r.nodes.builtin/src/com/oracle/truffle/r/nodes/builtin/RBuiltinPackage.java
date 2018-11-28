@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -163,11 +162,17 @@ public abstract class RBuiltinPackage {
     protected void add(Class<?> builtinMetaClass, Class<?> builtinClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
         RBuiltin annotation = builtinMetaClass.getAnnotation(RBuiltin.class);
         String[] parameterNames = annotation.parameterNames();
-        parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
+        assert noNull(parameterNames) : "Null in parameter names of " + annotation.name();
         ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
+        putBuiltin(new RBuiltinFactory(annotation, builtinMetaClass, builtinClass, signature, constructor, specialCall));
+    }
 
-        putBuiltin(new RBuiltinFactory(annotation.name(), builtinMetaClass, builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(),
-                        annotation.allowMissingInVarArgs(), annotation.splitCaller(), annotation.isFieldAccess(), annotation.lookupVarArgs(),
-                        annotation.alwaysSplit(), annotation.dispatch(), annotation.genericName(), constructor, annotation.behavior(), specialCall));
+    private static boolean noNull(String[] names) {
+        for (int i = 0; i < names.length; i++) {
+            if (names[i] == null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

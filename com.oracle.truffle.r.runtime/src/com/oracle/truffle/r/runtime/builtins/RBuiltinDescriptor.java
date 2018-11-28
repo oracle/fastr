@@ -56,26 +56,25 @@ public abstract class RBuiltinDescriptor {
     @CompilationFinal(dimensions = 1) private final boolean[] evaluatesArgument;
     private final boolean isFieldAccess;
 
-    public RBuiltinDescriptor(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature,
-                    int[] nonEvalArgs, boolean allowMissingInVarArgs, boolean splitCaller, boolean isFieldAccess, boolean lookupVarArgs,
-                    boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
-        this.lookupVarArgs = lookupVarArgs;
+    public RBuiltinDescriptor(RBuiltin annotation, Class<?> builtinMetaClass, Class<?> builtinNodeClass, ArgumentsSignature signature, RSpecialFactory specialCall) {
+        // Note: we use own final fields to avoid using the RBuiltin interface
+        this.lookupVarArgs = annotation.lookupVarArgs();
         this.specialCall = specialCall;
-        this.name = Utils.intern(name);
+        this.name = Utils.intern(annotation.name());
         this.builtinMetaClass = builtinMetaClass;
         this.builtinNodeClass = builtinNodeClass;
-        this.visibility = visibility;
-        this.aliases = aliases;
-        this.kind = kind;
+        this.visibility = annotation.visibility();
+        this.aliases = annotation.aliases();
+        this.kind = annotation.kind();
         this.signature = signature;
-        this.nonEvalArgs = nonEvalArgs;
-        this.allowMissingInVarArgs = allowMissingInVarArgs;
-        this.splitCaller = splitCaller;
-        this.alwaysSplit = alwaysSplit;
-        this.dispatch = dispatch;
-        this.genericName = Utils.intern(genericName);
-        this.behavior = behavior;
-        this.isFieldAccess = isFieldAccess;
+        this.nonEvalArgs = annotation.nonEvalArgs();
+        this.allowMissingInVarArgs = annotation.allowMissingInVarArgs();
+        this.splitCaller = annotation.splitCaller();
+        this.alwaysSplit = annotation.alwaysSplit();
+        this.dispatch = annotation.dispatch();
+        this.genericName = Utils.intern(annotation.genericName());
+        this.behavior = annotation.behavior();
+        this.isFieldAccess = annotation.isFieldAccess();
 
         evaluatesArgument = new boolean[signature.getLength()];
         Arrays.fill(evaluatesArgument, true);
