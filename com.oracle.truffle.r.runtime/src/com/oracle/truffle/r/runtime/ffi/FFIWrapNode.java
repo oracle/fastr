@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RScalarList;
 import com.oracle.truffle.r.runtime.data.RScalarVector;
 import com.oracle.truffle.r.runtime.data.RSequence;
 import com.oracle.truffle.r.runtime.data.RString;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
 public abstract class FFIWrapNode extends Node {
 
@@ -115,6 +116,11 @@ public abstract class FFIWrapNode extends Node {
     @Specialization
     protected static Object wrap(RSequence seq) {
         return seq.createVector();
+    }
+
+    @Specialization
+    protected static Object wrap(SymbolHandle sym) {
+        return sym.asAddress();
     }
 
     @Fallback

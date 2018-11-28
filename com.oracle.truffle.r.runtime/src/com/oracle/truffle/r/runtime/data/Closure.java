@@ -141,14 +141,14 @@ public final class Closure {
     /**
      * Evaluates this closure in {@code envir} using caller {@code caller}.
      */
-    public Object eval(REnvironment envir, RCaller caller) {
+    public Object eval(REnvironment envir, Object callerFrame, RCaller caller, RFunction function) {
         CompilerAsserts.neverPartOfCompilation();
 
         FrameDescriptor desc = envir.getFrame().getFrameDescriptor();
         RootCallTarget callTarget = getCallTarget(desc, false);
         // Note: because we're creating new frame, we must not reuse expr, which may have cached
         // some frame slots
-        MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), (RFunction) null, caller);
+        MaterializedFrame vFrame = VirtualEvalFrame.create(envir.getFrame(), function, callerFrame, caller);
         return callTarget.call(vFrame);
     }
 

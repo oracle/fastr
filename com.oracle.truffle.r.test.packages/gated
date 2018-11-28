@@ -15,3 +15,5 @@ compare
 shinythemes
 ROCR
 quantmod
+reshape2
+sqldf

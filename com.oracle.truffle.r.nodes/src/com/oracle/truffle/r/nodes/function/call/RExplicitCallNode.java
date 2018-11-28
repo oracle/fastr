@@ -49,18 +49,20 @@ public abstract class RExplicitCallNode extends Node {
     }
 
     public final Object call(VirtualFrame frame, RFunction function, RArgsValuesAndNames args) {
-        return execute(frame, function, args, null);
+        return execute(frame, function, args, null, null);
     }
 
-    public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller);
+    public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
 
     private final RFrameSlot argsIdentifier = RFrameSlot.createTemp(true);
     private final RFrameSlot callerIdentifier = RFrameSlot.createTemp(true);
+    private final RFrameSlot callerFrameIdentifier = RFrameSlot.createTemp(true);
     @CompilationFinal private FrameSlot argsFrameSlot;
     @CompilationFinal private FrameSlot callerFrameSlot;
+    @CompilationFinal private FrameSlot callerFrameFrameSlot;
 
     @Specialization
-    protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller,
+    protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
                     @Cached("createExplicitCall()") RCallBaseNode call) {
         if (argsFrameSlot == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -70,17 +72,23 @@ public abstract class RExplicitCallNode extends Node {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callerFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), callerIdentifier, FrameSlotKind.Object);
         }
+        if (callerFrameFrameSlot == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            callerFrameFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), callerFrameIdentifier, FrameSlotKind.Object);
+        }
         try {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, args);
             FrameSlotChangeMonitor.setObject(frame, callerFrameSlot, caller == null ? RNull.instance : caller);
+            FrameSlotChangeMonitor.setObject(frame, callerFrameFrameSlot, callerFrame == null ? RNull.instance : callerFrame);
             return call.execute(frame, function);
         } finally {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
             FrameSlotChangeMonitor.setObject(frame, callerFrameSlot, null);
+            FrameSlotChangeMonitor.setObject(frame, callerFrameFrameSlot, null);
         }
     }
 
     protected RCallBaseNode createExplicitCall() {
-        return RCallNode.createExplicitCall(argsIdentifier, callerIdentifier);
+        return RCallNode.createExplicitCall(argsIdentifier, callerIdentifier, callerFrameIdentifier);
     }
 }

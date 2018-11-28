@@ -43,6 +43,7 @@ public abstract class RBuiltinDescriptor {
     private final RBuiltinKind kind;
     private final ArgumentsSignature signature;
     private final int[] nonEvalArgs;
+    private final boolean allowMissingInVarArgs;
     private final boolean splitCaller;
     private final boolean alwaysSplit;
     private final RDispatch dispatch;
@@ -56,7 +57,7 @@ public abstract class RBuiltinDescriptor {
     private final boolean isFieldAccess;
 
     public RBuiltinDescriptor(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature,
-                    int[] nonEvalArgs, boolean splitCaller, boolean isFieldAccess, boolean lookupVarArgs,
+                    int[] nonEvalArgs, boolean allowMissingInVarArgs, boolean splitCaller, boolean isFieldAccess, boolean lookupVarArgs,
                     boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
         this.lookupVarArgs = lookupVarArgs;
         this.specialCall = specialCall;
@@ -68,6 +69,7 @@ public abstract class RBuiltinDescriptor {
         this.kind = kind;
         this.signature = signature;
         this.nonEvalArgs = nonEvalArgs;
+        this.allowMissingInVarArgs = allowMissingInVarArgs;
         this.splitCaller = splitCaller;
         this.alwaysSplit = alwaysSplit;
         this.dispatch = dispatch;
@@ -130,6 +132,10 @@ public abstract class RBuiltinDescriptor {
 
     public final boolean evaluatesArg(int index) {
         return evaluatesArgument[index];
+    }
+
+    public final boolean allowMissingInVarArgs() {
+        return allowMissingInVarArgs;
     }
 
     public final int getPrimMethodIndex() {

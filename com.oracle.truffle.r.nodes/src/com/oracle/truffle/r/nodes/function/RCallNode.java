@@ -84,6 +84,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
@@ -149,8 +150,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     private final int[] varArgIndexes;
     private final ArgumentsSignature signature;
     @Child private ReadVariableNode lookupVarArgs;
-    protected final LocalReadVariableNode explicitArgs;
+    @Child public LocalReadVariableNode explicitArgs;
 
+    @Child public LocalReadVariableNode explicitCallerFrame;
     @Child public LocalReadVariableNode explicitCaller;
 
     private final ConditionProfile nullBuiltinProfile = ConditionProfile.createBinaryProfile();
@@ -171,6 +173,15 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
+    protected Object getCallerFrame(VirtualFrame frame) {
+        if (explicitArgs == null) {
+            return null;
+        } else {
+            Object result = explicitCallerFrame.execute(frame);
+            return result == RNull.instance ? null : result;
+        }
+    }
+
     protected RCallNode(SourceSection sourceSection, RSyntaxNode[] arguments, ArgumentsSignature signature) {
         assert sourceSection != null;
         this.sourceSection = sourceSection;
@@ -181,12 +192,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         this.signature = signature;
     }
 
-    protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier, Object explicitCallerIdentifier) {
+    protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier, Object explicitCallerIdentifier, Object explicitCallerFrameIdentifier) {
         assert sourceSection != null;
         this.sourceSection = sourceSection;
         this.arguments = null;
         this.explicitArgs = LocalReadVariableNode.create(explicitArgsIdentifier, false);
         this.explicitCaller = LocalReadVariableNode.create(explicitCallerIdentifier, false);
+        this.explicitCallerFrame = LocalReadVariableNode.create(explicitCallerFrameIdentifier, false);
         this.varArgIndexes = null;
         this.lookupVarArgs = null;
         this.signature = null;
@@ -672,7 +684,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 RInternalError.reportError(e);
                 throw RError.interopError(RError.findParentRBase(this), e, function);
             } catch (RuntimeException e) {
-                throw RError.handleInteropException(this, e);
+                throw RErrorHandling.handleInteropException(this, e);
             }
         }
 
@@ -779,8 +791,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * allows to invoke a function with argument(s) supplied by hand. Consider using
      * {@link com.oracle.truffle.r.nodes.function.call.RExplicitCallNode} instead.
      */
-    public static RCallNode createExplicitCall(Object explicitArgsIdentifier, Object explicitCallerIdentifier) {
-        return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, explicitCallerIdentifier, null);
+    public static RCallNode createExplicitCall(Object explicitArgsIdentifier, Object explicitCallerIdentifier, Object explicitCallerFrameIdentifier) {
+        return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, explicitCallerIdentifier, explicitCallerFrameIdentifier, null);
     }
 
     static boolean needsSplitting(RootCallTarget target) {
@@ -1151,7 +1163,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     call.setNeedsCallerFrame();
                 }
             }
-            MaterializedFrame callerFrame = s3Args != null ? s3Args.callEnv : null;
+            Object callerFrame = s3Args != null ? s3Args.callEnv : originalCall.getCallerFrame(frame);
             RCaller caller = originalCall.createCaller(frame, function);
 
             return call.execute(frame, function, caller, callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(), s3Args);

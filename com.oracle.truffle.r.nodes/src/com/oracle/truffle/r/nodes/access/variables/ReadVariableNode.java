@@ -78,6 +78,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.FrameAndSlo
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.LookupResult;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -124,6 +125,10 @@ final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSynta
     public boolean isFunctionLookup() {
         return read.isFunctionLookup();
     }
+
+    LookupNode copyAsSilenMissing() {
+        return new LookupNode(getLazySourceSection(), new ReadVariableNode(read, true));
+    }
 }
 
 /**
@@ -144,10 +149,7 @@ public final class ReadVariableNode extends RBaseNode {
         // start the lookup in the enclosing frame
         Super,
         // whether a promise should be forced to check its type or not during lookup
-        ForcedTypeCheck,
-        // whether reads of RMissing should not throw error and just proceed, this is the case for
-        // inlined varargs, which should not show missing value error
-        SilentMissing
+        ForcedTypeCheck
     }
 
     public static ReadVariableNode create(String name) {
@@ -160,10 +162,6 @@ public final class ReadVariableNode extends RBaseNode {
 
     public static ReadVariableNode createSilent(String name, RType mode) {
         return new ReadVariableNode(name, mode, ReadKind.Silent);
-    }
-
-    public static ReadVariableNode createSilentMissing(String name, RType mode) {
-        return new ReadVariableNode(name, mode, ReadKind.SilentMissing);
     }
 
     public static ReadVariableNode createSuperLookup(String name) {
@@ -180,6 +178,24 @@ public final class ReadVariableNode extends RBaseNode {
 
     public static RSyntaxNode wrap(SourceSection sourceSection, ReadVariableNode read) {
         return new LookupNode(sourceSection, read);
+    }
+
+    public static RNode wrapAsSilentMissing(RNode node) {
+        if (node instanceof LookupNode) {
+            return wrapAsSilentMissing((LookupNode) node);
+        }
+        return null;
+    }
+
+    public static RNode wrapAsSilentMissing(RSyntaxNode node) {
+        if (node instanceof LookupNode) {
+            return wrapAsSilentMissing((LookupNode) node);
+        }
+        return null;
+    }
+
+    private static RNode wrapAsSilentMissing(LookupNode node) {
+        return node.copyAsSilenMissing();
     }
 
     @Child private PromiseHelperNode promiseHelper;
@@ -200,14 +216,26 @@ public final class ReadVariableNode extends RBaseNode {
     private final RType mode;
     private final ReadKind kind;
     private int invalidationCount;
+    // whether reads of RMissing should not throw error and just proceed, this is the case for
+    // inlined varargs, which should not show missing value error
+    private final boolean silentMissing;
 
     @CompilationFinal(dimensions = 1) private final boolean[] seenValueKinds = new boolean[FrameSlotKind.values().length];
 
+    ReadVariableNode(ReadVariableNode node, boolean silentMissing) {
+        this(node.identifier, node.mode, node.kind, silentMissing);
+    }
+
     private ReadVariableNode(Object identifier, RType mode, ReadKind kind) {
+        this(identifier, mode, kind, false);
+    }
+
+    private ReadVariableNode(Object identifier, RType mode, ReadKind kind, boolean silentMissing) {
         this.identifier = identifier;
         this.identifierAsString = Utils.intern(identifier.toString());
         this.mode = mode;
         this.kind = kind;
+        this.silentMissing = silentMissing;
 
         this.copyProfile = kind != ReadKind.Copying ? null : ConditionProfile.createBinaryProfile();
     }
@@ -766,10 +794,11 @@ public final class ReadVariableNode extends RBaseNode {
                         } else {
                             if (forcePromises) {
                                 value = evalPromiseSlowPathWithName(identifier, null, promise);
-                                return (RFunction) value;
-                            } else {
-                                return null;
+                                if (RRuntime.checkType(value, RType.Function)) {
+                                    return (RFunction) value;
+                                }
                             }
+                            return null;
                         }
                     }
                     if (RRuntime.checkType(value, RType.Function)) {
@@ -897,7 +926,7 @@ public final class ReadVariableNode extends RBaseNode {
         if ((isNullProfile == null && obj == null) || (isNullProfile != null && isNullProfile.profile(obj == null))) {
             return false;
         }
-        if (kind != ReadKind.SilentMissing && obj == RMissing.instance) {
+        if (!silentMissing && obj == RMissing.instance) {
             unexpectedMissingProfile.enter();
             throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
@@ -937,7 +966,7 @@ public final class ReadVariableNode extends RBaseNode {
         if (obj == null) {
             return false;
         }
-        if (kind != ReadKind.SilentMissing && obj == RMissing.instance) {
+        if (!silentMissing && obj == RMissing.instance) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, getIdentifier());
         }
         if (mode == RType.Any) {

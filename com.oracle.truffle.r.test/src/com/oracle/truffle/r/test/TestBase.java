@@ -515,6 +515,10 @@ public class TestBase {
         return evalAndCompare(getAssertEvalFastR(gnuROutput, input));
     }
 
+    protected boolean assertEvalFastR(String input, String gnuROutput, boolean useREPL) {
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL);
+    }
+
     private static String[] getAssertEvalFastR(String gnuROutput, String input) {
         return new String[]{"if (!any(R.version$engine == \"FastR\")) { " + gnuROutput + " } else { " + input + " }"};
     }
@@ -651,6 +655,10 @@ public class TestBase {
     }
 
     private boolean evalAndCompare(String[] inputs, TestTrait... traitsList) {
+        return evalAndCompare(inputs, false, traitsList);
+    }
+
+    private boolean evalAndCompare(String[] inputs, boolean useREPL, TestTrait... traitsList) {
         WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
         ContextKind contextKind = traits.context.contains(Context.NonShared) ? ContextKind.SHARE_NOTHING : ContextKind.SHARE_PARENT_RW;
@@ -662,7 +670,7 @@ public class TestBase {
             if (skipFastREval) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout), !traits.context.contains(Context.NoJavaInterop));
+                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout), !traits.context.contains(Context.NoJavaInterop), useREPL);
                 CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
@@ -1007,6 +1015,43 @@ public class TestBase {
     }
 
     protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
+        return fastREval(input, contextKind, longTimeout, allowHostAccess, false);
+    }
+
+    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess, boolean useREPL) {
+        assert contextKind != null;
+        microTestInfo.expression = input;
+        String result;
+        try {
+            beforeEval();
+            if (useREPL) {
+                result = fastROutputManager.fastRSession.evalInREPL(this, input, contextKind, longTimeout, allowHostAccess);
+            } else {
+                result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout, allowHostAccess);
+
+            }
+        } catch (Throwable e) {
+            String clazz;
+            if (e instanceof RInternalError && e.getCause() != null) {
+                clazz = e.getCause().getClass().getSimpleName();
+            } else {
+                clazz = e.getClass().getSimpleName();
+            }
+            Integer count = exceptionCounts.get(clazz);
+            exceptionCounts.put(clazz, count == null ? 1 : count + 1);
+            result = e.toString();
+            if (!ProcessFailedTests || ShowFailedTestsResults) {
+                e.printStackTrace();
+            }
+        }
+        if (fastROutputManager.outputFile != null) {
+            fastROutputManager.addTestResult(testElementName, input, result, keepTrailingWhiteSpace);
+        }
+        microTestInfo.fastROutput = result;
+        return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
+    }
+
+    protected String fastRREPLEval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
         assert contextKind != null;
         microTestInfo.expression = input;
         String result;

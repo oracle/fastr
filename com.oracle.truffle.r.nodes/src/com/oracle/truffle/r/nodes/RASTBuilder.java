@@ -71,8 +71,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxConstant;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -85,33 +83,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
 
-    /**
-     * Recognize whether the LHS of the call element under construction corresponds to an indirect
-     * invocation of {@code .Internal}, i.e.: {@code (get(".Internal", baseenv()))}.
-     *
-     * @param lhs the LHS of the call element under construction
-     */
-    private static boolean isInternalIndirect(RSyntaxNode lhs) {
-        if (lhs instanceof RSyntaxCall && (((RSyntaxCall) lhs).getSyntaxLHS()) instanceof RSyntaxLookup) {
-            RSyntaxCall lhsCall = (RSyntaxCall) lhs;
-            RSyntaxLookup lhsCallLhsLookup = (RSyntaxLookup) lhsCall.getSyntaxLHS();
-            if ("(".equals(lhsCallLhsLookup.getIdentifier()) && lhsCall.getSyntaxArguments().length == 1 && lhsCall.getSyntaxArguments()[0] instanceof RSyntaxCall) {
-                RSyntaxCall lhsCallFirstArgCall = (RSyntaxCall) lhsCall.getSyntaxArguments()[0];
-                if (lhsCallFirstArgCall.getSyntaxLHS() instanceof RSyntaxLookup) {
-                    RSyntaxLookup lhsCallFirstArgCallLhsLookup = (RSyntaxLookup) lhsCallFirstArgCall.getSyntaxLHS();
-                    if ("get".equals(lhsCallFirstArgCallLhsLookup.getIdentifier()) && lhsCallFirstArgCall.getSyntaxArguments().length == 2 &&
-                                    lhsCallFirstArgCall.getSyntaxArguments()[0] instanceof RSyntaxConstant) {
-                        RSyntaxConstant firstArg = (RSyntaxConstant) lhsCallFirstArgCall.getSyntaxArguments()[0];
-                        if (".Internal".equals(firstArg.getValue())) {
-                            return true;
-                        }
-                    }
-                }
-            }
-        }
-        return false;
-    }
-
     @Override
     public RSyntaxNode call(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args, DynamicObject attributes) {
         RSyntaxNode sn = createCall(source, lhs, args);
@@ -120,10 +91,6 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     private RSyntaxNode createCall(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args) {
-        if (isInternalIndirect(lhs)) {
-            final RSyntaxLookup dummyLHS = (RSyntaxLookup) ReadVariableNode.wrap(RSyntaxNode.INTERNAL, ReadVariableNode.create(".Internal"));
-            return InternalNode.create(source, dummyLHS, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
-        }
         if (lhs instanceof RSyntaxLookup) {
             RSyntaxLookup lhsLookup = (RSyntaxLookup) lhs;
             String symbol = lhsLookup.getIdentifier();
@@ -165,7 +132,15 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                         // switch the args if needed
                         RSyntaxNode lhsArg = args.get(switchArgs ? 1 : 0).value;
                         RSyntaxNode rhsArg = args.get(switchArgs ? 0 : 1).value;
-                        return new ReplacementDispatchNode(source, lhsLookup, lhsArg, rhsArg, isSuper, context.getReplacementVarsStartIndex());
+                        String lhsName = args.get(0).name;
+                        String rhsName = args.get(1).name;
+                        ArgumentsSignature names;
+                        if (lhsName == null && rhsName == null) {
+                            names = ArgumentsSignature.empty(2);
+                        } else {
+                            names = ArgumentsSignature.get(lhsName, rhsName);
+                        }
+                        return new ReplacementDispatchNode(source, lhsLookup, lhsArg, rhsArg, isSuper, context.getReplacementVarsStartIndex(), names);
                 }
             } else if (args.size() == 3) {
                 switch (symbol) {

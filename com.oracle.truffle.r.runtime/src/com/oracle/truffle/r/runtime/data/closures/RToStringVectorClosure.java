@@ -174,7 +174,7 @@ final class RFactorToStringVectorClosure extends RToStringVectorClosure {
         } else {
             String l = levels.getDataAt(val - 1);
             if (!levels.isComplete() && RRuntime.isNA(l)) {
-                return "NA"; // for comparison
+                return RRuntime.STRING_NA;
             } else {
                 return l;
             }

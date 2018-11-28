@@ -259,11 +259,16 @@ public class REnvironmentMR {
 
         @Specialization
         protected int access(REnvironment receiver, String identifier) {
-            Object val = receiver.get(identifier);
-            if (val == null) {
-                return 0;
-            }
+            Object val = null;
             int result = KeyInfo.READABLE;
+            if (receiver.isActiveBinding(identifier)) {
+                result |= KeyInfo.READ_SIDE_EFFECTS | KeyInfo.WRITE_SIDE_EFFECTS;
+            } else {
+                val = receiver.get(identifier);
+                if (val == null) {
+                    return 0;
+                }
+            }
             if (!receiver.isLocked() && !receiver.bindingIsLocked(identifier)) {
                 result |= KeyInfo.MODIFIABLE;
             }

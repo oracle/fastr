@@ -299,5 +299,4 @@ public final class RandFunctionsNodes {
         }
 
     }
-
 }

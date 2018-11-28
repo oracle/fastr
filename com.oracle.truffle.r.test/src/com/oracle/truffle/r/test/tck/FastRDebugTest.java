@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.tck;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
@@ -47,6 +48,7 @@ import com.oracle.truffle.api.debug.DebugStackFrame;
 import com.oracle.truffle.api.debug.DebugValue;
 import com.oracle.truffle.api.debug.Debugger;
 import com.oracle.truffle.api.debug.DebuggerSession;
+import com.oracle.truffle.api.debug.SuspendAnchor;
 import com.oracle.truffle.api.debug.SuspendedEvent;
 import com.oracle.truffle.api.debug.SuspensionFilter;
 import com.oracle.truffle.api.source.SourceSection;
@@ -535,6 +537,61 @@ public class FastRDebugTest {
         assertExecutedOK();
     }
 
+    @Test
+    public void testActiveBinding() throws Throwable {
+        final Source source = sourceFromText("" +
+                        "makeActiveBinding(\"bar\", function(x) { if (missing(x)) { 42; } else { cat(\"setting \", x, \"\\n\"); } }, .GlobalEnv)\n" +
+                        "x <- bar\n" +
+                        "bar <- 24\n", "activeBindingTest.r");
+        run.addLast(() -> {
+            assertNull(suspendedEvent);
+            assertNotNull(debuggerSession);
+            debuggerSession.setSteppingFilter(SuspensionFilter.newBuilder().ignoreLanguageContextInitialization(true).build());
+            debuggerSession.suspendNextExecution();
+        });
+        stepOver(1);
+        assertLocation(2, 1, SuspendAnchor.BEFORE, "x <- bar", false, true);
+        run.addLast(() -> {
+            DebugValue bar = suspendedEvent.getSession().getTopScope("R").getDeclaredValue("bar");
+            assertTrue(bar.isReadable());
+            assertTrue(bar.hasReadSideEffects());
+            assertTrue(bar.hasWriteSideEffects());
+            if (!run.isEmpty()) {
+                run.removeFirst().run();
+            }
+        });
+        stepInto(1);
+        assertLocation(1, 40, SuspendAnchor.BEFORE, "if (missing(x)) { 42; } else { cat(\"setting \", x, \"\\n\"); }", false, true, "x", "");
+        stepOver(1);
+        assertLocation(1, 58, SuspendAnchor.BEFORE, "42", false, true, "x", "");
+        stepOver(1);
+        // Bug: Location is 1, 1, ""; the node is com.oracle.truffle.r.nodes.function.RCallNodeGen
+        // The node has CallTag and SourceSection(source=internal, index=0, length=0, characters=)
+        // Expected: assertLocation(2, 9, SuspendAnchor.AFTER, "x <- bar", false, true);
+        stepOver(1);
+        assertLocation(3, 1, SuspendAnchor.BEFORE, "bar <- 24", false, true);
+        run.addLast(() -> {
+            DebugValue x = suspendedEvent.getSession().getTopScope("R").getDeclaredValue("x");
+            assertTrue(x.isReadable());
+            assertFalse(x.hasReadSideEffects());
+            assertFalse(x.hasWriteSideEffects());
+            if (!run.isEmpty()) {
+                run.removeFirst().run();
+            }
+        });
+        stepInto(1);
+        assertLocation(1, 40, SuspendAnchor.BEFORE, "if (missing(x)) { 42; } else { cat(\"setting \", x, \"\\n\"); }", false, true, "x", 24);
+        stepOver(1);
+        assertLocation(1, 71, SuspendAnchor.BEFORE, "cat(\"setting \", x, \"\\n\")", false, true, "x", 24);
+        stepOver(1);
+        // Expected: assertLocation(3, 10, SuspendAnchor.AFTER, "bar <- 24", false, true, "x", 42);
+        continueExecution();
+
+        performWork();
+        context.eval(source);
+        assertExecutedOK();
+    }
+
     private void performWork() {
         try {
             if (ex == null && !run.isEmpty()) {
@@ -587,12 +644,31 @@ public class FastRDebugTest {
     }
 
     private void assertLocation(final int line, final String code, final Object... expectedFrame) {
+        assertLocation(line, -1, null, code, false, false, expectedFrame);
+    }
+
+    private void assertLocation(final int line, final int column, final SuspendAnchor anchor, final String code, boolean includeAncestors, boolean completeMatch, final Object... expectedFrame) {
         run.addLast(() -> {
             try {
                 assertNotNull(suspendedEvent);
-                final int currentLine = suspendedEvent.getSourceSection().getStartLine();
+                if (anchor != null) {
+                    assertEquals(anchor, suspendedEvent.getSuspendAnchor());
+                }
+                SourceSection sourceSection = suspendedEvent.getSourceSection();
+                final int currentLine;
+                final int currentColumn;
+                if (anchor == null || anchor == SuspendAnchor.BEFORE) {
+                    currentLine = sourceSection.getStartLine();
+                    currentColumn = sourceSection.getStartColumn();
+                } else {
+                    currentLine = sourceSection.getEndLine();
+                    currentColumn = sourceSection.getEndColumn();
+                }
                 assertEquals(line, currentLine);
-                String currentCode = suspendedEvent.getSourceSection().getCharacters().toString();
+                if (column != -1) {
+                    assertEquals(column, currentColumn);
+                }
+                String currentCode = sourceSection.getCharacters().toString();
                 // Trim extra lines in currentCode
                 int nl = currentCode.indexOf('\n');
                 if (nl >= 0) {
@@ -600,7 +676,7 @@ public class FastRDebugTest {
                 }
                 currentCode = currentCode.trim();
                 assertEquals(code, currentCode);
-                compareScope(line, code, false, false, expectedFrame);
+                compareScope(line, code, includeAncestors, completeMatch, expectedFrame);
             } catch (RuntimeException | Error e) {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();

@@ -197,17 +197,25 @@ public interface Engine {
      */
     Object parseAndEval(Source sourceDesc, MaterializedFrame frame, boolean printResult) throws ParseException;
 
+    default Object eval(RExpression expr, REnvironment envir, RCaller caller) {
+        return eval(expr, envir, null, caller, null);
+    }
+
     /**
      * Support for the {@code eval} {@code .Internal}. If the {@code caller} argument is null, it is
      * taken from the environment's frame.
      */
-    Object eval(RExpression expr, REnvironment envir, RCaller caller);
+    Object eval(RExpression expr, REnvironment envir, Object callerFrame, RCaller caller, RFunction function);
+
+    default Object eval(RPairList expr, REnvironment envir, RCaller caller) {
+        return eval(expr, envir, null, caller, null);
+    }
 
     /**
      * Variant of {@link #eval(RExpression, REnvironment, RCaller)} for a single language element.
      * If the {@code caller} argument is null, it is taken from the environment's frame.
      */
-    Object eval(RPairList expr, REnvironment envir, RCaller caller);
+    Object eval(RPairList expr, REnvironment envir, Object callerFrame, RCaller caller, RFunction function);
 
     /**
      * Evaluate {@code expr} in {@code frame}.

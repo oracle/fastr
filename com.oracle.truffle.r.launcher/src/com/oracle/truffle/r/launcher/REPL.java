@@ -26,6 +26,10 @@ import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -40,7 +44,7 @@ import jline.console.UserInterruptException;
 /**
  * Implements the read-eval-print loop.
  *
- * @see #readEvalPrint(Context, ConsoleHandler, File, boolean)
+ * @see #readEvalPrint(Context, ConsoleHandler, File, boolean, OutputStream)
  */
 public class REPL {
     /**
@@ -57,8 +61,8 @@ public class REPL {
     private static final Source SET_CONSOLE_PROMPT_HANDLER = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).buildLiteral();
     private static final Source GET_EXECUTOR = Source.newBuilder("R", ".fastr.getExecutor()", "<get-executor>").internal(true).buildLiteral();
 
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, boolean useExecutor) {
-        return readEvalPrint(context, consoleHandler, null, useExecutor);
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, boolean useExecutor, OutputStream errStream) {
+        return readEvalPrint(context, consoleHandler, null, useExecutor, errStream);
     }
 
     /**
@@ -71,7 +75,7 @@ public class REPL {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor) {
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor, OutputStream errStream) {
         final ExecutorService executor;
         if (useExecutor) {
             executor = context.eval(GET_EXECUTOR).asHostObject();
@@ -139,10 +143,13 @@ public class REPL {
                             } else if (e.isExit()) {
                                 // usually from quit
                                 throw new ExitException(e.getExitStatus());
-                            } else if (e.isHostException() || e.isInternalError()) {
+                            } else if (e.isInternalError()) {
                                 // we continue the repl even though the system may be broken
                                 lastStatus = 1;
-                            } else if (e.isGuestException()) {
+                            } else if (e.isHostException() || e.isGuestException()) {
+                                // the 'Error in 'caller' : part of the message was already printed
+                                // in ErrorHandling.handleInteropException
+                                printPolyglotStackTrace(e, errStream);
                                 // drop through to continue REPL and remember last eval was an error
                                 lastStatus = 1;
                             }
@@ -172,6 +179,48 @@ public class REPL {
             ex.printStackTrace();
             return 1;
         }
+    }
+
+    public static void printPolyglotStackTrace(PolyglotException e, OutputStream output) throws IOException {
+        List<PolyglotException.StackFrame> stackTrace = new ArrayList<>();
+        for (PolyglotException.StackFrame s : e.getPolyglotStackTrace()) {
+            stackTrace.add(s);
+        }
+
+        // remove trailing host frames
+        for (ListIterator<PolyglotException.StackFrame> iterator = stackTrace.listIterator(stackTrace.size()); iterator.hasPrevious();) {
+            PolyglotException.StackFrame s = iterator.previous();
+            if (s.isHostFrame()) {
+                iterator.remove();
+            } else {
+                break;
+            }
+        }
+
+        // remove trailing <R> frames
+        for (ListIterator<PolyglotException.StackFrame> iterator = stackTrace.listIterator(stackTrace.size()); iterator.hasPrevious();) {
+            PolyglotException.StackFrame s = iterator.previous();
+            if (s.getLanguage().getId().equals("R")) {
+                iterator.remove();
+            } else {
+                break;
+            }
+        }
+
+        if (stackTrace.isEmpty()) {
+            return;
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append(e.isHostException() ? e.asHostException().toString() : e.getMessage());
+        sb.append('\n');
+        for (PolyglotException.StackFrame s : stackTrace) {
+            sb.append("\tat ");
+            sb.append(s);
+            sb.append('\n');
+        }
+        output.write(sb.toString().getBytes());
+        output.flush();
     }
 
     /**

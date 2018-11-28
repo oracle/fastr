@@ -22,78 +22,60 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asIntegerVector;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.numericValue;
-import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
+import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_ARITHMETIC;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
-import com.oracle.truffle.r.nodes.attributes.UnaryCopyAttributesNode;
+import com.oracle.truffle.r.library.stats.StatsFunctionsNodes.Function2_1Node;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
-import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
-import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 
 /**
  * Base package builtins beta and lbeta.
  */
 public class BetaFunctions {
 
-    @RBuiltin(name = "lbeta", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE)
+    @RBuiltin(name = "lbeta", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE_ARITHMETIC)
     public abstract static class LBeta extends RBuiltinNode.Arg2 {
-
         static {
             Casts casts = new Casts(LBeta.class);
-            casts.arg(0).mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
-            casts.arg(1).mustBe(numericValue(), Message.NON_NUMERIC_MATH).mapIf(logicalValue(), asIntegerVector());
+            casts.arg(0).mustBe(numericValue(), Message.NON_NUMERIC_MATH).asDoubleVector(true, true, true);
+            casts.arg(1).mustBe(numericValue(), Message.NON_NUMERIC_MATH).asDoubleVector(true, true, true);
         }
 
-        @Child private UnaryCopyAttributesNode copyAttrs = UnaryCopyAttributesNode.create();
-
-        @Specialization(guards = {"aAccess.supports(a)", "bAccess.supports(b)"})
-        protected RAbstractDoubleVector doVectors(RAbstractVector a, RAbstractVector b,
-                        @Cached("a.access()") VectorAccess aAccess,
-                        @Cached("b.access()") VectorAccess bAccess,
-                        @Cached("create()") VectorFactory factory) {
-            try (SequentialIterator aIter = aAccess.access(a); SequentialIterator bIter = bAccess.access(b)) {
-                int resultLen = Math.max(aAccess.getLength(aIter), bAccess.getLength(bIter));
-                double[] result = new double[resultLen];
-                for (int i = 0; i < resultLen; i++) {
-                    aAccess.nextWithWrap(aIter);
-                    bAccess.nextWithWrap(bIter);
-                    result[i] = lbeta(aAccess.getDouble(aIter), bAccess.getDouble(bIter));
-                }
-                RDoubleVector resultVector = factory.createDoubleVector(result, a.isComplete() && b.isComplete());
-                if (resultLen == aAccess.getLength(aIter)) {
-                    copyAttrs.execute(resultVector, a);
-                } else {
-                    copyAttrs.execute(resultVector, b);
-                }
-                return resultVector;
-            }
+        @Specialization
+        protected Object doVectors(RAbstractDoubleVector a, RAbstractDoubleVector b,
+                        @Cached("createFuncNode()") Function2_1Node funcNode) {
+            // Note: we call execute, which skips the casts of the Function2_1Node
+            return funcNode.execute(a, b, true);
         }
 
-        @Specialization(replaces = "doVectors")
-        protected RAbstractDoubleVector doVectorsGeneric(RAbstractVector a, RAbstractVector b,
-                        @Cached("create()") VectorFactory factory) {
-            return doVectors(a, b, a.slowPathAccess(), b.slowPathAccess(), factory);
+        protected Function2_1Node createFuncNode() {
+            return Function2_1Node.create(com.oracle.truffle.r.runtime.nmath.LBeta.INSTANCE);
         }
-
-        private static double lbeta(double a, double b) {
-            if (RRuntime.isNA(a) || RRuntime.isNA(b)) {
-                return RRuntime.DOUBLE_NA;
-            }
-            return com.oracle.truffle.r.runtime.nmath.LBeta.lbeta(a, b);
-        }
-
     }
 
+    @RBuiltin(name = "beta", kind = INTERNAL, parameterNames = {"a", "b"}, behavior = PURE_ARITHMETIC)
+    public abstract static class BetaBuiltin extends RBuiltinNode.Arg2 {
+        static {
+            Casts casts = new Casts(BetaBuiltin.class);
+            casts.arg(0).mustBe(numericValue(), Message.NON_NUMERIC_MATH).asDoubleVector(true, true, true);
+            casts.arg(1).mustBe(numericValue(), Message.NON_NUMERIC_MATH).asDoubleVector(true, true, true);
+        }
+
+        @Specialization
+        protected Object doVectors(RAbstractDoubleVector a, RAbstractDoubleVector b,
+                        @Cached("createFuncNode()") Function2_1Node funcNode) {
+            // Note: we call execute, which skips the casts of the Function2_1Node
+            return funcNode.execute(a, b, true);
+        }
+
+        protected Function2_1Node createFuncNode() {
+            return Function2_1Node.create(com.oracle.truffle.r.runtime.nmath.Beta.INSTANCE);
+        }
+    }
 }

@@ -121,6 +121,7 @@ usage <- function() {
 					  "[--run-mode mode]",
 					  "[--pkg-filelist file]",
 					  "[--find-top100]",
+					  "[--find-top n]",
 					  "[--run-tests]",
 					  "[--testdir dir]",
 					  "[--print-ok-installs]",
@@ -154,7 +155,9 @@ ignore.suggests <- list(
 	rstudioapi = '*', # rstudioapi executes almost no real tests, it is mostly just test of install & load
 	glmnet = 'knitr',  # probably used for vignettes only
 	PerformanceAnalytics = ignore.all.but('testthat'), # not gated yet. We can run almost all tests except for few examples that use some suggests including data.table
-	quantmod = '*' # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+	mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
+	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+	sqldf = 'tcltk|RPostgreSQL|RJDBC|rJava|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
 )
 
 choice.depends <- function(pkg, choice=c("direct","suggests")) {
@@ -807,7 +810,12 @@ fastr.errors.log.sizes <- function() {
 # installs a single package or retrieves it from the cache
 install.pkg <- function(pkgname) {
 	error_log_size <- fastr.errors.log.sizes()
+
+    # save and restore working dir in case the installation process doesn't
+    prev.wd <- getwd()
     rc <- pkg.cache.internal.install(pkg.cache, pkgname, contrib.url(getOption("repos"), "source")[[1]], lib.install)
+    setwd(prev.wd)
+
     success <- FALSE
     if (rc == 0L) {
         # be paranoid and also check file system and log
@@ -1002,7 +1010,9 @@ parse.args <- function() {
 		} else if (a == "--invert-pkgset") {
 			invert.pkgset <<- TRUE
 		} else if (a == "--find-top100") {
-			find.top100 <<- TRUE
+			find.top.pkgs <<- 100L
+		} else if (a == "--find-top") {
+			find.top.pkgs <<- as.integer(get.argvalue())
 		} else if (a == "--important-pkgs") {
 			important.pkg.table.file <<- get.argvalue()
 			if (is.na(important.pkg.table.file)) {
@@ -1036,6 +1046,7 @@ parse.args <- function() {
 
 cat.args <- function() {
 	if (verbose) {
+		cat("tempdir:", tempdir(), "\n")
 		cat("cran.mirror:", cran.mirror, "\n")
 		cat("initial.blacklist.file:", initial.blacklist.file, "\n")
 		cat("blacklist.file:", blacklist.file, "\n")
@@ -1054,7 +1065,7 @@ cat.args <- function() {
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
 		cat("invert.pkgset:", invert.pkgset, "\n")
 		cat("testdir.path", testdir, "\n")
-		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "\n")
+		cat("pkg.cache: enabled=", pkg.cache$enabled, "; vm=", pkg.cache$vm, "; dir=", pkg.cache$dir, "; mode=", pkg.cache$mode, "\n")
 	}
 }
 
@@ -1099,20 +1110,80 @@ get.initial.package.blacklist <- function() {
 	}
 }
 
-do.find.top100 <- function() {
-	avail.pkgs <- available.packages(type="source");
+do.find.top.pkgs <- function(n) {
+    names <- if (n <= 100L) {
+        do.find.top.cranlogs(n) 
+    } else {
+        do.find.top.rstudio(n)
+    }
+    if (!is.null(names)) {
+        do.find.top.print.list(names)
+    }
+}
+
+do.find.top.cranlogs <- function(n) {
 	if (!require('cranlogs', quietly = T)) {
 		install.packages('cranlogs', quiet = T)
 		library('cranlogs', quietly = T)
 	}
-	top100 <- cran_top_downloads(when = c("last-day", "last-week", "last-month"), count = 100)
-	names <- top100[['package']]
-	l = length(names)
-	for (i in 1:l) {
+	top100 <- cran_top_downloads(when = c("last-day", "last-week", "last-month"), count = n)
+	top100[['package']]
+}
+
+do.find.top.rstudio <- function(n) {
+    # RStudio provides data since Oct 1, 2012
+    start <- as.Date('2012-10-01')
+    today <- Sys.Date()
+
+    all.days <- seq(start, today, by = 'day')
+
+    year <- as.POSIXlt(all.days)$year + 1900
+    urls <- rev(paste0('http://cran-logs.rstudio.com/', year, '/', all.days, '.csv.gz'))
+
+    tmp.file <- tempfile()
+    download.url <- ""
+    for (i in 1:length(urls)) {
+        tryCatch({
+            download.url <- urls[[i]]
+            download.file(download.url, tmp.file, quiet = !verbose)
+            # break after the first successful download
+            log.message("successfully downloaded: ", download.url, level=1)
+            break ()
+        }, error = function(e) e)
+    }
+
+    if (file.exists(tmp.file)) {
+        pkg.table <- read.csv(tmp.file)
+
+        # remove duplicate downloads from same IP and select column "package" only
+        #pkg.table <- unique(pkt.table[,c("package", "ip_id")])
+
+        # add a column for the count (initialized with 1L)
+        pkg.table <- cbind(pkg.table, count=rep(1L, nrow(pkg.table)))[,c("package", "count")]
+
+        # group by column 'count' using aggregate function 'sum'
+        pkg.table.with.count <- aggregate(count ~ package, pkg.table, sum)
+
+        # order by download count (ascending)
+        pkg.table.with.count <- pkg.table.with.count[order(-pkg.table.with.count$count), ]
+
+        # return just the names of the top 'n' but still ordered by download count
+        as.character(pkg.table.with.count[1:n, "package"])
+    } else {
+        log.message("Could not download ", download.url, " to ", tmp.file)
+    }
+}
+
+do.find.top.print.list <- function(names) {
+	avail.pkgs <- available.packages(type="source")
+	for (i in 1:length(names)) {
 		pkgname <- names[[i]]
-		pkg <- avail.pkgs[pkgname, ]
-		list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
-		cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep = ",")
+        # the names could contain filtered packages
+        if (pkgname %in% avail.pkgs[, "Package"]) {
+            pkg <- avail.pkgs[pkgname, ]
+            list.contriburl = ifelse(list.canonical, "https://cran.r-project.org/src/contrib", pkg["Repository"])
+            cat(pkg["Package"], pkg["Version"], paste0(list.contriburl, "/", pkgname, "_", pkg["Version"], ".tar.gz"), "\n", sep = ",")
+        } 
 	}
 }
 
@@ -1141,9 +1212,9 @@ getCurrentScriptDir <- function() {
 
 run <- function() {
     parse.args()
-    if (find.top100) {
+    if (!is.na(find.top.pkgs)) {
         set.repos()
-        do.find.top100()
+        do.find.top.pkgs(find.top.pkgs)
     } else {
         run.setup()
         do.it()
@@ -1165,7 +1236,7 @@ if (!is.null(curScriptDir)) {
 
 quiet <- F
 repo.list <- c("CRAN")
-pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE))
+pkg.cache <- as.environment(list(enabled=FALSE, table.file.name="version.table", size=2L, sync=FALSE, mode="local"))
 cran.mirror <- NA
 blacklist.file <- NA
 initial.blacklist.file <- NA
@@ -1196,7 +1267,7 @@ gnur <- FALSE
 list.versions <- FALSE
 list.canonical <- FALSE
 invert.pkgset <- F
-find.top100 <- F
+find.top.pkgs <- NA
 important.pkg.table.file <- NA
 important.pkg.table <- NULL
 

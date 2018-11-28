@@ -38,7 +38,7 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
+import com.oracle.truffle.r.nodes.access.variables.DynamicReadFunctionVariableNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -47,7 +47,6 @@ import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -228,19 +227,19 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
     private static UseMethodFunctionLookupCachedNode specialize(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame,
                     MaterializedFrame genericDefFrame,
                     S3FunctionLookupNode next) {
-        ArrayList<ReadVariableNode> unsuccessfulReadsCaller = new ArrayList<>();
-        ArrayList<LocalReadVariableNode> unsuccessfulReadsTable = new ArrayList<>();
+        ArrayList<DynamicReadFunctionVariableNode> unsuccessfulReadsCaller = new ArrayList<>();
+        ArrayList<DynamicReadFunctionVariableNode> unsuccessfulReadsTable = new ArrayList<>();
         class SuccessfulReads {
-            ReadVariableNode successfulRead;
-            LocalReadVariableNode successfulReadTable;
-            LocalReadVariableNode methodsTableRead;
+            DynamicReadFunctionVariableNode successfulRead;
+            DynamicReadFunctionVariableNode successfulReadTable;
+            DynamicReadFunctionVariableNode methodsTableRead;
         }
         SuccessfulReads reads = new SuccessfulReads();
 
         LookupOperation op = (lookupFrame, name, inMethodsTable) -> {
             Object result;
             if (inMethodsTable) {
-                LocalReadVariableNode read = LocalReadVariableNode.create(name, true);
+                DynamicReadFunctionVariableNode read = DynamicReadFunctionVariableNode.createLocal(name);
                 result = read.execute(frame, lookupFrame);
                 if (result == null) {
                     unsuccessfulReadsTable.add(read);
@@ -248,7 +247,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                     reads.successfulReadTable = read;
                 }
             } else {
-                ReadVariableNode read = ReadVariableNode.createSilent(name, RType.Function);
+                DynamicReadFunctionVariableNode read = DynamicReadFunctionVariableNode.create(name);
                 result = read.execute(frame, lookupFrame);
                 if (result == null) {
                     unsuccessfulReadsCaller.add(read);
@@ -261,7 +260,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
 
         GetMethodsTable getTable = () -> {
             if (genericDefFrame != null) {
-                reads.methodsTableRead = LocalReadVariableNode.create(RRuntime.RS3MethodsTable, true);
+                reads.methodsTableRead = DynamicReadFunctionVariableNode.createLocal(RRuntime.RS3MethodsTable);
                 return reads.methodsTableRead.execute(frame, genericDefFrame);
             } else {
                 return null;
@@ -312,12 +311,12 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         @Child private S3FunctionLookupNode next;
 
         @CompilationFinal(dimensions = 1) private final String[] cachedTypeContents;
-        @Children private final ReadVariableNode[] unsuccessfulReadsCallerFrame;
-        @Child private LocalReadVariableNode readS3MethodsTable;
-        @Children private final LocalReadVariableNode[] unsuccessfulReadsTable;
+        @Children private final DynamicReadFunctionVariableNode[] unsuccessfulReadsCallerFrame;
+        @Child private DynamicReadFunctionVariableNode readS3MethodsTable;
+        @Children private final DynamicReadFunctionVariableNode[] unsuccessfulReadsTable;
         // if unsuccessfulReadsDefFrame != null, then this read will go to the def frame
-        @Child private ReadVariableNode successfulRead;
-        @Child private LocalReadVariableNode successfulReadTable;
+        @Child private DynamicReadFunctionVariableNode successfulRead;
+        @Child private DynamicReadFunctionVariableNode successfulReadTable;
 
         private final String cachedGenericName;
         private final RStringVector cachedType;
@@ -334,8 +333,9 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         private final RFunction builtin;
 
         UseMethodFunctionLookupCachedNode(boolean throwsError, boolean nextMethod, boolean defaultMethod, String genericName, RStringVector type, String group, RFunction builtin,
-                        List<ReadVariableNode> unsuccessfulReadsCaller, List<LocalReadVariableNode> unsuccessfulReadsTable, LocalReadVariableNode readS3MethodsTable, ReadVariableNode successfulRead,
-                        LocalReadVariableNode successfulReadTable, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch, S3FunctionLookupNode next) {
+                        List<DynamicReadFunctionVariableNode> unsuccessfulReadsCaller, List<DynamicReadFunctionVariableNode> unsuccessfulReadsTable, DynamicReadFunctionVariableNode readS3MethodsTable,
+                        DynamicReadFunctionVariableNode successfulRead,
+                        DynamicReadFunctionVariableNode successfulReadTable, RFunction function, Object clazz, String targetFunctionName, boolean groupMatch, S3FunctionLookupNode next) {
             super(throwsError, nextMethod, defaultMethod);
             this.cachedGenericName = genericName;
             this.cachedGroup = group;
@@ -344,8 +344,8 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             this.next = next;
             this.cachedType = type;
             this.cachedTypeContents = type.getDataCopy();
-            this.unsuccessfulReadsCallerFrame = unsuccessfulReadsCaller.toArray(new ReadVariableNode[unsuccessfulReadsCaller.size()]);
-            this.unsuccessfulReadsTable = unsuccessfulReadsTable.toArray(new LocalReadVariableNode[unsuccessfulReadsTable.size()]);
+            this.unsuccessfulReadsCallerFrame = unsuccessfulReadsCaller.toArray(new DynamicReadFunctionVariableNode[unsuccessfulReadsCaller.size()]);
+            this.unsuccessfulReadsTable = unsuccessfulReadsTable.toArray(new DynamicReadFunctionVariableNode[unsuccessfulReadsTable.size()]);
             this.successfulRead = successfulRead;
             this.successfulReadTable = successfulReadTable;
             this.result = new Result(genericName, function != null ? function : builtin, clazz, targetFunctionName, groupMatch);
@@ -365,7 +365,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
                     methodsTable = null;
                 } else {
                     methodsTable = (REnvironment) methodsTableProfile.profile(readS3MethodsTable.execute(frame, genericDefFrame));
-                    if (methodsTable != null && !executeReads(unsuccessfulReadsTable, methodsTable.getFrame())) {
+                    if (methodsTable != null && !executeReads(frame, unsuccessfulReadsTable, methodsTable.getFrame())) {
                         break;
                     }
                 }
@@ -391,20 +391,9 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         }
 
         @ExplodeLoop
-        private static boolean executeReads(VirtualFrame frame, ReadVariableNode[] reads, Frame callerFrame) {
-            for (ReadVariableNode read : reads) {
+        private static boolean executeReads(VirtualFrame frame, DynamicReadFunctionVariableNode[] reads, Frame callerFrame) {
+            for (DynamicReadFunctionVariableNode read : reads) {
                 if (read.execute(frame, callerFrame) != null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    return false;
-                }
-            }
-            return true;
-        }
-
-        @ExplodeLoop
-        private static boolean executeReads(LocalReadVariableNode[] reads, Frame callerFrame) {
-            for (LocalReadVariableNode read : reads) {
-                if (read.execute(null, callerFrame) != null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     return false;
                 }

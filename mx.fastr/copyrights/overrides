@@ -1,5 +1,6 @@
 mx.fastr/suite.py,no.copyright
 com.oracle.truffle.r.ffi.impl/src/com/oracle/truffle/r/ffi/impl/nodes/AsRealNode.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Fmin.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/Arrows.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/DoSetViewPort.java,gnu_r_murrel_core.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/fastrGrid/DoSetViewPortBuiltin.java,gnu_r_murrel_core.copyright
@@ -53,6 +54,9 @@ com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RandFunction
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/RMultinomNode.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/SplineFunctions.java,gnu_r_splines.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/StatsFunctionsNodes.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Approx.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/ApproxTest.java,gnu_r_gentleman_ihaka.copyright
+com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/stats/Zeroin2.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/DirChmod.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/tools/ToolsText.java,gnu_r.copyright
 com.oracle.truffle.r.library/src/com/oracle/truffle/r/library/utils/CountFields.java,gnu_r.copyright

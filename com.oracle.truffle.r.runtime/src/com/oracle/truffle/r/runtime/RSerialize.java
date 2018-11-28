@@ -57,6 +57,7 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.launcher.RVersionNumber;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -438,6 +439,18 @@ public class RSerialize {
             }
         }
 
+        protected RAbstractStringVector readStringVec() throws IOException {
+            if (stream.readInt() != 0) {
+                throw RError.error(RError.NO_CALLER, Message.GENERIC, "names in persistent strings are not supported yet");
+            }
+            int len = stream.readInt();
+            String[] data = new String[len];
+            for (int i = 0; i < len; i++) {
+                data[i] = (String) readItem();
+            }
+            return RDataFactory.createStringVector(data, RDataFactory.INCOMPLETE_VECTOR);
+        }
+
         protected Object readItem(int flags) throws IOException {
             int levs = flags >>> 12;
             Object result = null;
@@ -536,7 +549,9 @@ public class RSerialize {
                 }
 
                 case PACKAGESXP: {
-                    String s = stream.readString(stream.readInt());
+                    RAbstractStringVector sVec = readStringVec();
+                    assert sVec.getLength() == 1 : "unsupported yet";
+                    String s = sVec.getDataAt(0);
                     /*
                      * TODO GnuR eval's findPackageEnv, but we don't want to eval here. That will
                      * call require, so we can only find packages that are already loaded.
@@ -1024,7 +1039,7 @@ public class RSerialize {
                     }
                     if (hasattr) {
                         readItem();
-                        assert false;
+                        // TODO: why "assert false;"???
                     }
                     Object tag = readItem();
                     Object car = readBCLang(SEXPTYPE.mapInt(stream.readInt()), reps);
@@ -2722,7 +2737,9 @@ public class RSerialize {
                         body = process(list.getDataAt(0), false, null);
                         break;
                     case LISTSXP:
-                        assert pl.cdr() == RNull.instance || (pl.cadr() == RNull.instance && pl.cddr() == RNull.instance);
+                        // TODO: it is not clear why is this assertion here
+                        // assert pl.cdr() == RNull.instance || (pl.cadr() == RNull.instance &&
+                        // pl.cddr() == RNull.instance);
                         body = process(pl.car(), false, null);
                         break;
                     case LANGSXP:

@@ -31,9 +31,7 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
-import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
-import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -212,23 +210,6 @@ public final class RError extends RuntimeException implements TruffleException {
     @TruffleBoundary
     public static RError interopError(RBaseNode node, Throwable e, TruffleObject o) {
         throw error0(node, RError.Message.GENERIC, "Foreign function failed: " + (e.getMessage() != null ? e.getMessage() : e.toString()) + " on object " + o);
-    }
-
-    @TruffleBoundary
-    public static RError handleInteropException(Node node, RuntimeException e) {
-        if (e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) {
-            if (RContext.getInstance().stateInteropTry.isInTry()) {
-                // will be catched and handled in .fastr.interop.try builtin
-                throw new FastRInteropTryException(e);
-            } else {
-                Throwable cause = e instanceof TruffleException ? RContext.getInstance().getEnv().asHostException(e) : e.getCause();
-                String clsName = cause.getClass().getName();
-                String msg = cause.getMessage();
-                msg = msg != null ? String.format("Foreign function failed: %s: %s", clsName, msg) : String.format("Foreign function failed: %s", clsName);
-                throw RError.error(findParentRBase(node), RError.Message.GENERIC, msg);
-            }
-        }
-        throw e;
     }
 
     @TruffleBoundary
@@ -984,6 +965,8 @@ public final class RError extends RuntimeException implements TruffleException {
         LINE_MALFORMED("Line starting '%s ...' is malformed!"),
         IS_NOT_GRAPHICAL_PAR("\"%s\" is not a graphical parameter"),
         GRAPHICAL_PAR_CANNOT_BE_SET("graphical parameter \"%s\" cannot be set"),
+        NO_TAG_IN_SET_ATTRIB(
+                        "SET_ATTRIB: tag in the attributes pairlist must be a symbol. %s given. It is possible that the code intends to set the TAG after the call to SET_ATTRIB, but this is not supported in FastR."),
         WRONG_ARGS_COMBINATION("Wrong arguments combination, please refer to ?%s for more details."),
         COULD_NOT_FIND_LANGUAGE("Could not find language corresponding to extension '%s', you can specify the language id explicitly, please refer to ?%s for more details."),
         LANGUAGE_NOT_AVAILABLE("Language with id '%s' is not available. Did you start R with --polyglot?"),

@@ -24,7 +24,9 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RLogical;
@@ -37,6 +39,7 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
     @Child private ExtractVectorNode getPositionExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
     @Child private ExtractVectorNode recursiveSubscriptExtract = ExtractVectorNode.createRecursive(ElementAccessMode.SUBSCRIPT);
     @Child private ExtractVectorNode subscriptExtract = ExtractVectorNode.create(ElementAccessMode.SUBSCRIPT, true);
+    private ConditionProfile emptyProfile = ConditionProfile.createBinaryProfile();
 
     RecursiveExtractSubscriptNode(RAbstractContainer vector, Object position) {
         super(vector, position);
@@ -48,7 +51,12 @@ abstract class RecursiveExtractSubscriptNode extends RecursiveSubscriptNode {
 
     public final Object apply(Object vector, Object[] positions, Object exact, Object dropDimensions) {
         Object firstPosition = positions[0];
-        int length = positionLengthNode.executeInteger(firstPosition);
+        int length;
+        if (emptyProfile.profile(positions[0] == REmpty.instance)) {
+            length = 1;
+        } else {
+            length = positionLengthNode.executeInteger(firstPosition);
+        }
         return execute(vector, positions, firstPosition, length, exact, dropDimensions);
     }
 

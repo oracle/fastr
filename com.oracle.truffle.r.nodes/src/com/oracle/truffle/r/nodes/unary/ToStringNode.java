@@ -40,6 +40,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
@@ -114,6 +115,12 @@ public abstract class ToStringNode extends RBaseNode {
     @Specialization
     protected String toString(int operand, @SuppressWarnings("unused") String separator) {
         return RRuntime.intToString(operand);
+    }
+
+    @Specialization
+    @TruffleBoundary
+    protected String toString(RExternalPtr externalPtr, @SuppressWarnings("unused") String separator) {
+        return externalPtr.toString();
     }
 
     @Specialization

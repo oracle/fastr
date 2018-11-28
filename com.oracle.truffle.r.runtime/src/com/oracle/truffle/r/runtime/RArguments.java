@@ -27,6 +27,7 @@ import java.util.Arrays;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.ValueType;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -42,28 +43,28 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  *
  * The frame layout, depicted, is as follows:
  * <pre>
- *                            +--------------------+
- * INDEX_ENVIRONMENT       -> | REnvironment       |
- *                            +--------------------+
- * INDEX_FUNCTION          -> | RFunction          |
- *                            +--------------------+
- * INDEX_CALL              -> | RCaller            |
- *                            +--------------------+
- * INDEX_CALLER_FRAME   ->    | MaterializedFrame  |
- *                            +--------------------+
- * INDEX_ENCLOSING_FRAME   -> | MaterializedFrame  |
- *                            +--------------------+
- * INDEX_DISPATCH_ARGS     -> | DispatchArgs       |
- *                            +--------------------+
- * INDEX_IS_IRREGULAR      -> | isIrregular        |
- *                            +--------------------+
- * INDEX_SUPPLIED_SIGNATURE-> | ArgumentsSignature |
- *                            +--------------------+
- * INDEX_ARGUMENTS         -> | arg_0              |
- *                            | arg_1              |
- *                            | ...                |
- *                            | arg_(nArgs-1)      |
- *                            +--------------------+
+ *                            +---------------------------------------+
+ * INDEX_ENVIRONMENT       -> | REnvironment                          |
+ *                            +---------------------------------------+
+ * INDEX_FUNCTION          -> | RFunction                             |
+ *                            +---------------------------------------+
+ * INDEX_CALL              -> | RCaller                               |
+ *                            +---------------------------------------+
+ * INDEX_CALLER_FRAME   ->    | CallerFrameClosure/MaterializedFrame  |
+ *                            +---------------------------------------+
+ * INDEX_ENCLOSING_FRAME   -> | MaterializedFrame                     |
+ *                            +---------------------------------------+
+ * INDEX_DISPATCH_ARGS     -> | DispatchArgs                          |
+ *                            +---------------------------------------+
+ * INDEX_IS_IRREGULAR      -> | isIrregular                           |
+ *                            +---------------------------------------+
+ * INDEX_SUPPLIED_SIGNATURE-> | ArgumentsSignature                    |
+ *                            +---------------------------------------+
+ * INDEX_ARGUMENTS         -> | arg_0                                 |
+ *                            | arg_1                                 |
+ *                            | ...                                   |
+ *                            | arg_(nArgs-1)                         |
+ *                            +---------------------------------------+
  *
  * If the formal parameter is "..." then the corresponding argument slot will
  * always be of type {@link RArgsValuesAndNames}.
@@ -80,6 +81,11 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * The INDEX_SUPPLIED_SIGNATURE is set to the permutation of the supplied signature that corresponds
  * to how the supplied arguments were permuted. The purpose of this slot is to store the names in the
  * original signature (especially positional vs. named) for later use in UseMethod.
+ * 
+ * The INDEX_CALLER_FRAME slot is used for either a {@link CallerFrameClosure} or the materialized
+ * caller frame itself. Passing the materialized caller frame via arguments allows us to walk
+ * the call stack without calling {@link com.oracle.truffle.api.TruffleRuntime#iterateFrames( FrameInstanceVisitor)},
+ * which would case deopts.
  *
  * @see RCaller
  */
@@ -347,12 +353,48 @@ public final class RArguments {
         return arguments.length == 1 && arguments[0] instanceof Frame ? (Frame) arguments[0] : frame;
     }
 
+    private static MaterializedFrame unwrapMaterializedFrame(MaterializedFrame frame) {
+        Object[] arguments = frame.getArguments();
+        return arguments.length == 1 && arguments[0] instanceof Frame ? (MaterializedFrame) arguments[0] : frame;
+    }
+
     /**
-     * Checks {@code frame} corresponds to an R evaluation. Note that a
-     * {@code com.oracle.truffle.r.runtime.VirtualEvalFrame} will not return {@code true} to this
-     * call but it will if {@link #unwrap} is called first.
+     * If the given frame is the frame that has the requested depth it is returned. If the given
+     * frame wraps the frame that has the requested depth then the wrapped frame is returned. This
+     * means that for promise evaluation frames we consider the original frame where the promise
+     * should be evaluated, not the ad-hoc {@link VirtualEvalFrame} created to actually evaluate the
+     * promise.
+     */
+    public static MaterializedFrame getActualMaterializedFrame(MaterializedFrame frame, int depth, boolean fullyUnrollPromiseFrames) {
+        MaterializedFrame f = unwrapMaterializedFrame(frame);
+        if (!isRFrame(f)) {
+            return null;
+        }
+        if (fullyUnrollPromiseFrames) {
+            while (isPromiseFrame(f) && f instanceof VirtualEvalFrame) {
+                f = ((VirtualEvalFrame) frame).getOriginalFrame();
+            }
+        } else {
+            if (isPromiseFrame(f) && f instanceof VirtualEvalFrame) {
+                f = ((VirtualEvalFrame) frame).getOriginalFrame();
+                if (isPromiseFrame(f) && f instanceof VirtualEvalFrame) {
+                    return null;
+                }
+            }
+        }
+        return getDepth(f) == depth ? f : null;
+    }
+
+    private static boolean isPromiseFrame(Frame frame) {
+        return getCall(frame).isPromise();
+    }
+
+    /**
+     * Checks {@code frame} corresponds to an R evaluation including artificial frames created for
+     * {@code do.call}, {@code eval} and similar. The frame must be already unwrapped.
      */
     public static boolean isRFrame(Frame frame) {
+        // TODO: exclude promise frames here?
         Object[] arguments = frame.getArguments();
         return arguments.length >= MINIMAL_ARRAY_LENGTH && (arguments[INDEX_ENVIRONMENT] instanceof REnvironment || arguments[INDEX_FUNCTION] instanceof RFunction);
     }

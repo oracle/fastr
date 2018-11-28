@@ -78,6 +78,9 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
     private void saveImage() throws DeviceCloseException {
         try {
             Path parent = Paths.get(filename).getParent();
+            if (Paths.get(filename).equals(Paths.get("/dev/null"))) {
+                return;
+            }
             if (parent != null && !Files.exists(parent)) {
                 // Bug in JDK? when the path contains directory that does not exist, the code throws
                 // NPE and prints out to the standard output (!) stack trace of

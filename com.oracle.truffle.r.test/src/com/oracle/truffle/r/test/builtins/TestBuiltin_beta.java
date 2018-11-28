@@ -29,25 +29,39 @@ public class TestBuiltin_beta extends TestBase {
 
     @Test
     public void testbeta1() {
-        // FIXME RInternalError: not implemented: .Internal beta
-        assertEval(Ignored.Unimplemented, "argv <- list(FALSE, FALSE); .Internal(beta(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(FALSE, FALSE); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testbeta2() {
-        // FIXME RInternalError: not implemented: .Internal beta
-        assertEval(Ignored.Unimplemented, "argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
+        assertEval("argv <- list(logical(0), logical(0)); .Internal(beta(argv[[1]], argv[[2]]))");
     }
 
     @Test
     public void testbeta4() {
-        // FIXME RInternalError: not implemented: .Internal beta
-        assertEval(Ignored.Unimplemented, "argv <- structure(list(a = 0.01, b = 171), .Names = c('a', 'b'));do.call('beta', argv)");
+        assertEval("argv <- structure(list(a = 0.01, b = 171), .Names = c('a', 'b'));do.call('beta', argv)");
     }
 
     @Test
     public void testbeta5() {
-        // FIXME RInternalError: not implemented: .Internal beta
-        assertEval(Ignored.Unimplemented, "argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c('a',     'b'));do.call('beta', argv)");
+        assertEval("argv <- structure(list(a = 1e-200, b = 1e-200), .Names = c('a',     'b'));do.call('beta', argv)");
+    }
+
+    @Test
+    public void testbetabuiltin() {
+        assertEval("{ .Internal(beta(NA, 1)) }");
+        assertEval("{ .Internal(beta(1, NA)) }");
+        assertEval("{ .Internal(beta(NULL, 1)) }");
+        assertEval("{ .Internal(beta(1, NULL)) }");
+        assertEval("{ .Internal(beta(FALSE, FALSE)) }");
+        assertEval("{ .Internal(beta(logical(0), logical(0))) }");
+        assertEval("{ .Internal(beta(2, 2.2)) }");
+        assertEval("{ .Internal(beta(0:2, 2.2)) }");
+        assertEval("{ .Internal(beta(c(2.2, 3.3), 2)) }");
+        assertEval("{ .Internal(beta(c(2.2, 3.3), c(2,3,4))) }");
+        assertEval("{ .Internal(beta(c(2.2, 3.3, 4.4), c(2,3))) }");
+        assertEval(".Internal(beta(structure(array(21:24, dim=c(2,2)), dimnames=list(a=c('a1','a2'),b=c('b1','b2'))), 2))");
+        assertEval(".Internal(beta(47, structure(array(21:24, dim=c(2,2)), dimnames=list(a=c('a1','a2'),b=c('b1','b2')))))");
+        assertEval(".Internal(beta(structure(47, myattr='hello'), 2))");
     }
 }

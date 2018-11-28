@@ -66,8 +66,7 @@ public class TestBuiltin_storagemodeassign extends TestBase {
 
     @Test
     public void testErrors() {
-        // TODO: need to fix cast pipeline and specializations in UpdateStorageMode
-        assertEval(Ignored.ImplementationError, template("{ x <- %0; storage.mode(x) <- 'integer'; }", new String[]{"new.env()", "quote(a+b)", "as.pairlist(1)"}));
+        assertEval(template("{ x <- %0; storage.mode(x) <- 'integer'; }", new String[]{"new.env()", "quote(a+b)", "as.pairlist(1)"}));
         assertEval("{ x <- 1; storage.mode(x) <- 42.5; }");
     }
 }

@@ -111,5 +111,4 @@ public class TestBuiltin_dimnamesassign extends TestBase {
     public void testDimnamesElementAssign() {
         assertEval("{ x<-matrix(12,3,4); dimnames(x)[[2]]<-c('a','b','c','d'); x }");
     }
-
 }

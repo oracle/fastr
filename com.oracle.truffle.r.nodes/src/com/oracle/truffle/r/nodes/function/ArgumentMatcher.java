@@ -49,7 +49,6 @@ import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
@@ -68,7 +67,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.EvaluatedArgumentsVisitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
@@ -402,6 +400,7 @@ public class ArgumentMatcher {
             if (suppliedIndex == MatchPermutation.VARARGS) {
                 int varArgsLen = match.varargsPermutation.length;
                 boolean shouldInline = shouldInlineArgument(builtin, formalIndex, fastPath);
+                boolean shouldWrapSilentMissing = allowMissingInVarArgs(builtin, shouldInline);
                 String[] newNames = new String[varArgsLen];
                 RNode[] newVarArgs = new RNode[varArgsLen];
                 int index = 0;
@@ -418,7 +417,7 @@ public class ArgumentMatcher {
                         }
                     }
                     newNames[index] = match.varargsSignature.getName(i);
-                    newVarArgs[index] = shouldInline ? updateInlinedArg(varArg) : varArg;
+                    newVarArgs[index] = shouldWrapSilentMissing ? wrapSilentMissing(varArg) : varArg;
                     index++;
                 }
 
@@ -490,6 +489,10 @@ public class ArgumentMatcher {
         return builtin != null && builtin.evaluatesArg(formalIndex);
     }
 
+    private static boolean allowMissingInVarArgs(RBuiltinDescriptor builtin, boolean shouldInline) {
+        return shouldInline && (builtin == null || builtin.allowMissingInVarArgs());
+    }
+
     /**
      * Reads of the {@link RMissing} values must not be reported as error in inlined varargs. This
      * method updates any wrapped ReadVariableNode to just return missing values without raising an
@@ -497,18 +500,24 @@ public class ArgumentMatcher {
      *
      * see {@code com.oracle.truffle.r.nodes.function.PromiseNode.InlineVarArgsNode}
      */
-    private static RNode updateInlinedArg(RNode node) {
+    private static RNode wrapSilentMissing(RNode node) {
+
         if (!(node instanceof WrapArgumentNode)) {
+            RNode rw = ReadVariableNode.wrapAsSilentMissing(node);
+            if (rw != null) {
+                return rw;
+            }
             return node;
         }
+
         WrapArgumentNode wrapper = (WrapArgumentNode) node;
         RSyntaxNode syntaxNode = wrapper.getOperand().asRSyntaxNode();
-        if (!(syntaxNode instanceof RSyntaxLookup)) {
-            return node;
+
+        RNode rw = ReadVariableNode.wrapAsSilentMissing(syntaxNode);
+        if (rw != null) {
+            return WrapArgumentNode.create(rw, wrapper.getIndex());
         }
-        RSyntaxLookup lookup = (RSyntaxLookup) syntaxNode;
-        ReadVariableNode newRvn = ReadVariableNode.createSilentMissing(lookup.getIdentifier(), lookup.isFunctionLookup() ? RType.Function : RType.Any);
-        return WrapArgumentNode.create(ReadVariableNode.wrap(lookup.getLazySourceSection(), newRvn).asRNode(), wrapper.getIndex());
+        return node;
     }
 
     private static RNode wrapUnmatched(FormalArguments formals, RBuiltinDescriptor builtin, int formalIndex, boolean noOpt) {

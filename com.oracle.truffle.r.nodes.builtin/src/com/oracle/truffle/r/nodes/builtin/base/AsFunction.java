@@ -49,8 +49,8 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -133,7 +133,7 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
         } else if (bodyObject instanceof RSymbol) {
             body = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) bodyObject).getName(), false).asRNode();
         } else {
-            assert bodyObject instanceof Integer || bodyObject instanceof Double || bodyObject instanceof Byte || bodyObject instanceof String;
+            assert bodyObject == RNull.instance || bodyObject instanceof Integer || bodyObject instanceof Double || bodyObject instanceof Byte || bodyObject instanceof String;
             body = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, bodyObject).asRNode();
         }
         if (!RBaseNode.isRSyntaxNode(body)) {

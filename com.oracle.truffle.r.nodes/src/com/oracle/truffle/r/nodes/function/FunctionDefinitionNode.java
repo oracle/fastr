@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -314,6 +315,9 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
                 runOnExitHandlers = false;
                 throw e;
             } else if (e instanceof FastRInteropTryException) {
+                CompilerDirectives.transferToInterpreter();
+                throw e;
+            } else if (e instanceof TruffleException && !((TruffleException) e).isInternalError()) {
                 CompilerDirectives.transferToInterpreter();
                 throw e;
             } else {

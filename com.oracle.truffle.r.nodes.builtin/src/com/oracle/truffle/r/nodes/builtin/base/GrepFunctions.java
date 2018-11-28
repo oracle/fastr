@@ -880,8 +880,6 @@ public class GrepFunctions {
                                 captureStart = new int[captureNames.length * vector.getLength()];
                                 captureLength = new int[captureNames.length * vector.getLength()];
                             }
-                            assert captureNames.length == res.captureStart.length || captureNames.length - 1 == res.captureStart.length : captureNames.length + ", " + res.captureStart.length;
-                            assert captureNames.length == res.captureLength.length || captureNames.length - 1 == res.captureLength.length : captureNames.length + ", " + res.captureLength.length;
                             for (int j = 0; j < res.captureStart.length; j++) {
                                 // well, res.captureStart might be shorter then
                                 // res.captureNames (but never more then by 1?),
@@ -963,7 +961,6 @@ public class GrepFunctions {
                 while (true) {
                     int captureCount = execNode.execute(pcre.result, 0, text, offset, 0, ovector);
                     if (captureCount >= 0) {
-                        assert captureCount - 1 == captureNames.length || captureCount == captureNames.length : captureCount + ", " + captureNames.length;
 
                         int[] captureStart = null;
                         int[] captureLength = null;

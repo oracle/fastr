@@ -98,21 +98,12 @@ public abstract class MaterializeNode extends Node {
     }
 
     private RList materializeContents(RList list) {
-        boolean changed = false;
-        RList materializedContents = null;
         for (int i = 0; i < list.getLength(); i++) {
             Object element = list.getDataAt(i);
             Object materializedElem = doGenericSlowPath(element);
             if (materializedElem != element) {
-                materializedContents = (RList) list.copy();
-                changed = true;
+                list.setDataAt(i, materializedElem);
             }
-            if (changed && materializedElem != element) {
-                materializedContents.setDataAt(i, materializedElem);
-            }
-        }
-        if (changed) {
-            return materializedContents;
         }
         return list;
     }
