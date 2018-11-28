@@ -134,3 +134,5 @@ extern SEXP test_forceAndCall(SEXP call, SEXP args, SEXP rho);
 extern SEXP test_constant_types();
 
 extern SEXP shareStringElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex);
+
+extern SEXP shareListElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex);

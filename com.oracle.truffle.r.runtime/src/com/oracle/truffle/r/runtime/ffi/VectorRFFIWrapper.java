@@ -41,6 +41,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
@@ -273,16 +274,22 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @Resolve(message = "READ")
         abstract static class VectorWrapperReadNode extends Node {
             @Child private Node readMsg = Message.READ.createNode();
+            private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
 
             public Object access(VectorRFFIWrapper receiver, Object index) {
                 try {
-                    if (receiver.vector instanceof RStringVector) {
+                    if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
                         ((RStringVector) receiver.vector).wrapStrings();
                         // TODO: for now character vector shouldn't return plain java.lang.String,
                         // otherwise we'd need to make sure that all the places that expect CharSXP
                         // can also deal with java.lang.String
+                        return ((RStringVector) receiver.vector).getWrappedDataAt(((Number) index).intValue());
+                    } else if (isListProfile.profile(receiver.vector instanceof RList)) {
+                        return ((RList) receiver.vector).getDataAt(((Number) index).intValue());
+                    } else {
+                        return ForeignAccess.sendRead(readMsg, receiver.vector, index);
                     }
-                    return ForeignAccess.sendRead(readMsg, receiver.vector, index);
                 } catch (UnsupportedMessageException | UnknownIdentifierException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }
@@ -292,10 +299,24 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @Resolve(message = "WRITE")
         abstract static class VectorWrapperWriteNode extends Node {
             @Child private Node writeMsg = Message.WRITE.createNode();
+            private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
 
             public Object access(VectorRFFIWrapper receiver, Object index, Object value) {
+                Object usedValue = value;
                 try {
-                    return ForeignAccess.sendWrite(writeMsg, receiver.vector, index, value);
+                    if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
+                        assert value instanceof Long;
+                        usedValue = NativeDataAccess.lookup((long) value);
+                        assert usedValue instanceof CharSXPWrapper;
+                        int ind = ((Number) index).intValue();
+                        ((RStringVector) receiver.vector).setWrappedDataAt(ind, (CharSXPWrapper) usedValue);
+                        return receiver.vector;
+                    } else if (isListProfile.profile(receiver.vector instanceof RList)) {
+                        assert value instanceof Long;
+                        usedValue = NativeDataAccess.lookup((long) value);
+                    }
+                    return ForeignAccess.sendWrite(writeMsg, receiver.vector, index, usedValue);
                 } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException e) {
                     throw RInternalError.shouldNotReachHere(e);
                 }

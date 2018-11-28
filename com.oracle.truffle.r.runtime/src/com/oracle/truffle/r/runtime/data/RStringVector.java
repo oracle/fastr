@@ -357,6 +357,16 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
         }
     }
 
+    public void setWrappedDataAt(int index, CharSXPWrapper elem) {
+        if (!isNativized()) {
+            wrapStrings();
+            assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
+            data[index] = elem;
+        } else {
+            NativeDataAccess.setNativeMirrorStringData(getNativeMirror(), index, elem);
+        }
+    }
+
     private static RStringVector createStringVector(Object[] data, boolean complete, int[] dims) {
         if (noWrappedStrings.isValid() || data instanceof String[]) {
             return RDataFactory.createStringVector((String[]) data, complete, dims);
