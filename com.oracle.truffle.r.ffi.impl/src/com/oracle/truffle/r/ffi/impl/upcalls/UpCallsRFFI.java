@@ -30,4 +30,5 @@ import com.oracle.truffle.r.ffi.processor.RFFIUpCallRoot;
 @RFFIUpCallRoot
 public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpCallsRFFI, DLLUpCallsRFFI, MemoryUpCallsRFFI, FastRUpCalls {
 
+
 }
