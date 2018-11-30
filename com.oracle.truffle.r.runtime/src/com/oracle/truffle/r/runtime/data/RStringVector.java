@@ -363,6 +363,7 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
             assert data instanceof CharSXPWrapper[] : "wrap the string vector data with wrapStrings() before using getWrappedDataAt(int)";
             data[index] = elem;
         } else {
+            data[index] = elem;
             NativeDataAccess.setNativeMirrorStringData(getNativeMirror(), index, elem);
         }
     }

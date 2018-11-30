@@ -305,16 +305,25 @@ public final class VectorRFFIWrapper implements TruffleObject {
             public Object access(VectorRFFIWrapper receiver, Object index, Object value) {
                 Object usedValue = value;
                 try {
+                    int ind = ((Number) index).intValue();
                     if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
-                        assert value instanceof Long;
-                        usedValue = NativeDataAccess.lookup((long) value);
-                        assert usedValue instanceof CharSXPWrapper;
-                        int ind = ((Number) index).intValue();
-                        ((RStringVector) receiver.vector).setWrappedDataAt(ind, (CharSXPWrapper) usedValue);
+                        RStringVector sv = (RStringVector) receiver.vector;
+                        if (value instanceof Long) {
+                            usedValue = NativeDataAccess.lookup((long) value);
+                            assert usedValue instanceof CharSXPWrapper;
+                            sv.setWrappedDataAt(ind, (CharSXPWrapper) usedValue);
+                        } else if (value instanceof CharSXPWrapper) {
+                            sv.setWrappedDataAt(ind, (CharSXPWrapper) value);
+                        } else {
+                            throw RInternalError.shouldNotReachHere("" + value.getClass());
+                        }
                         return receiver.vector;
                     } else if (isListProfile.profile(receiver.vector instanceof RList)) {
-                        assert value instanceof Long;
-                        usedValue = NativeDataAccess.lookup((long) value);
+                        if (value instanceof Long) {
+                            usedValue = NativeDataAccess.lookup((long) value);
+                        }
+                        ((RList) receiver.vector).setDataAt(ind, usedValue);
+                        return receiver.vector;
                     }
                     return ForeignAccess.sendWrite(writeMsg, receiver.vector, index, usedValue);
                 } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException e) {

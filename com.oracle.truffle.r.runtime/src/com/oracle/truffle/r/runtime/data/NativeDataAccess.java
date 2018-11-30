@@ -196,6 +196,11 @@ public final class NativeDataAccess {
          */
         private Reference<Object> nativeWrapperRef;
 
+        /**
+         * Indicates that the address points to a memory allocated by an external process.
+         */
+        private boolean external;
+
         NativeMirror(RObject owner) {
             super(owner, nativeReferenceQueue());
             this.id = counter.addAndGet(2);
@@ -283,7 +288,7 @@ public final class NativeDataAccess {
             if (dataAddress == getEmptyDataAddress()) {
                 // RFFILog.printf("1. freeing data at %16x (id=%16x)", dataAddress, id);
                 assert (dataAddress = 0xbadbad) != 0;
-            } else if (dataAddress != 0) {
+            } else if (dataAddress != 0 && !external) {
                 // RFFILog.printf("2. freeing data at %16x (id=%16x)", dataAddress, id);
                 freeNativeMemory(dataAddress);
                 assert (dataAddress = 0xbadbad) != 0;
@@ -1200,6 +1205,7 @@ public final class NativeDataAccess {
         mirror.dataAddress = address;
         mirror.length = length;
 
+        mirror.external = true;
     }
 
     public static void setNativeWrapper(RObject obj, Object wrapper) {
@@ -1230,7 +1236,7 @@ public final class NativeDataAccess {
 
     private static void freeNativeMemory(long address) {
         // Uncomment for debugging
-        // System.out.printf("DEBUG: feeing %x\n", address);
+        // System.out.printf("DEBUG: freeing %x\n", address);
         UnsafeAdapter.UNSAFE.freeMemory(address);
     }
 }
