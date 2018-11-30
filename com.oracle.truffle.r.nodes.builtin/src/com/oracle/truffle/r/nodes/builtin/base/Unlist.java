@@ -189,20 +189,6 @@ public abstract class Unlist extends RBuiltinNode.Arg3 {
             int totalSize = 0;
             try {
                 int size = (int) ForeignAccess.sendGetSize(getSize, obj);
-
-                RContext context = RContext.getInstance();
-                if (context.getEnv().isHostObject(obj)) {
-                    Object o = context.getEnv().asHostObject(obj);
-                    Class<?> ct = o.getClass().getComponentType();
-                    // check array component type, if not array of:
-                    // arrays, iterables or Objects then no need to recurse
-
-                    // TODO well that is not exactly correct, but would be quite crazy
-                    if (ct != null && !(ct.isArray() || ct.isAssignableFrom(Iterable.class) || ct == Object.class)) {
-                        return size;
-                    }
-                }
-
                 for (int i = 0; i < size; i++) {
                     Object element = ForeignAccess.sendRead(read, obj, i);
                     element = foreign2R.execute(element);
