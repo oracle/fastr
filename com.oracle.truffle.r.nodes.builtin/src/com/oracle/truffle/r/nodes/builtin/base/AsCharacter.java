@@ -23,11 +23,12 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.asStringVector;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.missingValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.emptyStringVector;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.ArgumentMatchingMode.NO_MATCH_BY_NAME;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -46,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
-@RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."}, dispatch = INTERNAL_GENERIC, behavior = PURE)
+@RBuiltin(name = "as.character", kind = PRIMITIVE, parameterNames = {"x", "..."}, argumentMatchingMode = NO_MATCH_BY_NAME, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class AsCharacter extends RBuiltinNode.Arg2 {
 
     static {
