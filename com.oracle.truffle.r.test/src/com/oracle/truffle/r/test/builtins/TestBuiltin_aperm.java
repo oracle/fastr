@@ -219,5 +219,4 @@ public class TestBuiltin_aperm extends TestBase {
         // dimnames
         assertEval("{ a<-array(1:24, c(2,3,4), dimnames=list(x=c('x1','x2'),y=c('y1','y2','y3'),z=c('z1','z2','z3','z4'))); b<-aperm(a,c(3,1,2)); a; b; dimnames(b)$x[1]<-'c'; dimnames(a)$x; }");
     }
-
 }

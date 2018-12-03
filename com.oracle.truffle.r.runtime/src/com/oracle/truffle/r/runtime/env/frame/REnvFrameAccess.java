@@ -39,6 +39,8 @@ public abstract class REnvFrameAccess {
      */
     public abstract Object get(String key);
 
+    public abstract boolean isActiveBinding(String key);
+
     /**
      * Set the value of object named {@code name} to {@code value}. if {@code value == null},
      * effectively removes the name.

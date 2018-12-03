@@ -43,7 +43,6 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
-import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 @RBuiltin(name = "dim<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateDim extends RBuiltinNode.Arg2 {
@@ -58,6 +57,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
     protected RAbstractVector updateDimNull(RAbstractVector vector, @SuppressWarnings("unused") RNull dimensions,
                     @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         RVector<?> result = reuseNonSharedNode.getResult(vector).materialize();
+        // Note: resetDimensions already removes names and dimnames
         result.resetDimensions(null);
         return result;
     }
@@ -73,12 +73,14 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
                     @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                     @Cached("createDim()") SetFixedAttributeNode putDimensions,
                     @Cached("createNames()") RemoveFixedAttributeNode removeNames,
+                    @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
                     @Cached("createNonShared(vector)") VectorReuse reuseNonSharedNode) {
         RIntVector dimensionsMaterialized = dimensions.materialize();
         int[] dimsData = dimensionsMaterialized.getDataCopy();
         RVector.verifyDimensions(vector.getLength(), dimsData, this);
         RVector<?> result = reuseNonSharedNode.getResult(vector).materialize();
         removeNames.execute(result);
+        removeDimNames.execute(result);
 
         DynamicObject attrs = result.getAttributes();
         if (initAttrProfile.profile(attrs == null)) {
@@ -95,16 +97,13 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
                     @Cached("createBinaryProfile()") ConditionProfile initAttrProfile,
                     @Cached("createDim()") SetFixedAttributeNode putDimensions,
                     @Cached("createNames()") RemoveFixedAttributeNode removeNames,
+                    @Cached("createDimNames()") RemoveFixedAttributeNode removeDimNames,
                     @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
-        return updateDim(vector, dimensions, initAttrProfile, putDimensions, removeNames, reuseNonSharedNode);
+        return updateDim(vector, dimensions, initAttrProfile, putDimensions, removeNames, removeDimNames, reuseNonSharedNode);
     }
 
     @Specialization(guards = "!isRAbstractVector(obj)")
     protected RAbstractVector noVector(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") RAbstractIntVector dimensions) {
         throw error(RError.Message.INVALID_FIRST_ARGUMENT);
-    }
-
-    protected boolean isAstractVector(Object obj) {
-        return RBaseNode.isRAbstractVector(obj);
     }
 }

@@ -241,6 +241,15 @@ SEXP char_length(SEXP x) {
 	return ScalarInteger(count);
 }
 
+SEXP shareStringElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	SEXP *xPtr = STRING_PTR(x);
+	SEXP *yPtr = STRING_PTR(y);
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
 SEXP mkStringFromChar(void) {
 	return mkString("hello");
 }

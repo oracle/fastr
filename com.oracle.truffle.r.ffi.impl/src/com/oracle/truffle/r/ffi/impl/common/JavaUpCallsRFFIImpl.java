@@ -80,15 +80,15 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -96,6 +96,8 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -226,7 +228,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         REnvironment env = (REnvironment) envArg;
         RSymbol name = (RSymbol) symbolArg;
         try {
-            env.put(name.getName(), value);
+            if (value == RUnboundValue.instance) {
+                env.rm(name.getName());
+            } else {
+                env.put(name.getName(), value);
+            }
         } catch (PutException ex) {
             throw RError.error(RError.SHOW_CALLER2, ex);
         }
@@ -466,6 +472,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             case LISTSXP:
             case LANGSXP:
                 return RDataFactory.createPairList(ni, type);
+            case NILSXP:
+                return RNull.instance;
             default:
                 throw unimplemented("unexpected SEXPTYPE " + type);
         }
@@ -733,7 +741,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             return x;
         }
         guaranteeInstanceOf(x, RSymbol.class);
-        return CharSXPWrapper.create(((RSymbol) x).getName());
+        return ((RSymbol) x).getWrappedName();
     }
 
     @Override
@@ -1625,8 +1633,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public int registerCCallable(String pkgName, String functionName, Object address) {
-        DLLInfo lib = DLL.safeFindLibrary(pkgName);
-        lib.registerCEntry(new CEntry(functionName, new SymbolHandle(address)));
+        DLLInfo.registerCEntry(pkgName, new CEntry(functionName, new SymbolHandle(address)));
         return 0;
     }
 
@@ -2405,8 +2412,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    @TruffleBoundary
     public Object REAL(Object x) {
-        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RDoubleVector.class));
+        if ((x instanceof RAbstractStringVector) || (x instanceof RAbstractListBaseVector)) {
+            RFFIUtils.unimplemented("REAL is being called for type " + Utils.getTypeName(x));
+        }
+        return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
     }
 
     @Override
@@ -2436,6 +2447,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object R_forceAndCall(Object e, Object f, int n, Object args) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public void R_MakeActiveBinding(Object symArg, Object funArg, Object envArg) {
         throw implementedAsNode();
     }
 

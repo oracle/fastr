@@ -134,6 +134,9 @@ final class PositionsCheckNode extends RBaseNode {
                 throw error(RError.Message.IMPROPER_SUBSCRIPT);
             }
         } else {
+            if (mode.isSubscript()) {
+                throw error(RError.Message.INCORRECT_SUBSCRIPTS);
+            }
             throw error(RError.Message.INCORRECT_DIMENSIONS);
         }
     }

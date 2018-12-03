@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -92,6 +93,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     }
 
     @Override
+    @TruffleBoundary
     public Object R_Home() {
         byte[] sbytes = REnvVars.rHome().getBytes();
         return new NativeCharArray(sbytes);
@@ -127,8 +129,7 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     @Override
     public Object getCCallable(String pkgName, String functionName) {
-        DLLInfo lib = DLL.safeFindLibrary(pkgName);
-        CEntry result = lib.lookupCEntry(functionName);
+        CEntry result = DLLInfo.lookupCEntry(pkgName, functionName);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, RError.Message.UNKNOWN_OBJECT, functionName);
         }

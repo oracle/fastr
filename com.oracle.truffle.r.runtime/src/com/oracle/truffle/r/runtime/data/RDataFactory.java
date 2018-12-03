@@ -745,6 +745,10 @@ public final class RDataFactory {
             return traceDataCreated(RDataFactory.createStringVectorFromScalar(value));
         }
 
+        public RStringVector createStringVectorFromNative(long address, int length) {
+            return traceDataCreated(RStringVector.fromNative(address, length));
+        }
+
         public RLogicalVector createLogicalVectorFromScalar(boolean value) {
             return traceDataCreated(RDataFactory.createLogicalVectorFromScalar(value));
         }
@@ -1073,6 +1077,10 @@ public final class RDataFactory {
         return createStringVector(new String[]{value}, !RRuntime.isNA(value));
     }
 
+    public static RStringVector createStringVectorFromNative(long address, int length) {
+        return traceDataCreated(RStringVector.fromNative(address, length));
+    }
+
     public static RLogicalVector createLogicalVectorFromScalar(boolean value) {
         return createLogicalVector(new byte[]{value ? RRuntime.LOGICAL_TRUE : RRuntime.LOGICAL_FALSE}, COMPLETE_VECTOR);
     }
@@ -1279,8 +1287,12 @@ public final class RDataFactory {
     private static final AtomicInteger environmentCount = new AtomicInteger();
 
     @TruffleBoundary
+    public static REnvironment createInternalEnv(String name) {
+        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), name));
+    }
+
     public static REnvironment createInternalEnv() {
-        return traceDataCreated(new REnvironment.NewEnv(RRuntime.createNonFunctionFrame("<internal-env-" + environmentCount.incrementAndGet() + ">"), REnvironment.UNNAMED));
+        return createInternalEnv(REnvironment.UNNAMED);
     }
 
     @TruffleBoundary

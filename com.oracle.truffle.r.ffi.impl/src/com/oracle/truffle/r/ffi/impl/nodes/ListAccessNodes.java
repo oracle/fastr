@@ -32,8 +32,9 @@ import com.oracle.truffle.r.ffi.impl.nodes.ListAccessNodesFactory.SETCARNodeGen;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypes;
 
@@ -66,6 +67,11 @@ public final class ListAccessNodes {
         @Specialization
         protected Object car(@SuppressWarnings("unused") RNull nil) {
             return RNull.instance;
+        }
+
+        @Specialization
+        protected Object car(RExternalPtr extPtr) {
+            return extPtr.getAddr();
         }
 
         @Fallback

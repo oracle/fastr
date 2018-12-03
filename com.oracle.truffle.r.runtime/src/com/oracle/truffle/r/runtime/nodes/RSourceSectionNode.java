@@ -33,9 +33,7 @@ import com.oracle.truffle.r.runtime.RDeparse;
  * level of indirection for such a trivial piece of code.
  */
 public abstract class RSourceSectionNode extends RAttributableNode implements RSyntaxNode {
-    /**
-     * temp disambiguate for debugging until sourceSection removed from Node.
-     */
+
     @CompilationFinal private SourceSection sourceSection;
 
     protected RSourceSectionNode(SourceSection sourceSection) {

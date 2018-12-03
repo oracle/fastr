@@ -24,23 +24,16 @@ package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.function.Supplier;
 
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.RDispatch;
-import com.oracle.truffle.r.runtime.RVisibility;
-import com.oracle.truffle.r.runtime.builtins.RBehavior;
+import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
-import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory;
 
 public final class RBuiltinFactory extends RBuiltinDescriptor {
 
     private final Supplier<RBuiltinNode> constructor;
 
-    RBuiltinFactory(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature, int[] nonEvalArgs,
-                    boolean splitCaller, boolean isFieldAccess, boolean lookupVarArgs,
-                    boolean alwaysSplit, RDispatch dispatch, String genericName, Supplier<RBuiltinNode> constructor, RBehavior behavior, RSpecialFactory specialCall) {
-        super(name, builtinMetaClass, builtinNodeClass, visibility, aliases, kind, signature, nonEvalArgs, splitCaller, isFieldAccess, lookupVarArgs, alwaysSplit, dispatch, genericName, behavior,
-                        specialCall);
+    RBuiltinFactory(RBuiltin annotation, Class<?> builtinMetaClass, Class<?> builtinNodeClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
+        super(annotation, builtinMetaClass, builtinNodeClass, specialCall);
         this.constructor = constructor;
     }
 

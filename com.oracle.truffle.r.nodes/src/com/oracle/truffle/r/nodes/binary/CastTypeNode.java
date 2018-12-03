@@ -38,9 +38,12 @@ import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastRawNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
 import com.oracle.truffle.r.nodes.unary.TypeofNode;
+import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.ConvertForeignObjectNode;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -74,6 +77,28 @@ public abstract class CastTypeNode extends RBaseNode {
     protected static Object doCastUnknown(RAbstractVector value, RType type) {
         // FIXME should we really return null here?
         return null;
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization()
+    @TruffleBoundary
+    protected Object doCastREnvironment(REnvironment value, RType type) {
+        throw RError.error(getErrorContext(), RError.Message.ENVIRONMENTS_COERCE);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "!isLanguage(value)")
+    @TruffleBoundary
+    protected Object doCastRPairList(RPairList value, RType type,
+                    @Cached("create()") CastTypeNode recurse) {
+        return recurse.execute(value.toRList(), type);
+    }
+
+    @SuppressWarnings("unused")
+    @Specialization(guards = "isLanguage(value)")
+    @TruffleBoundary
+    protected Object doCastLanguage(RPairList value, RType type) {
+        throw RError.error(getErrorContext(), RError.Message.CANNOT_COERCE_QUOTED, RType.PairList.getName(), type.getName());
     }
 
     @SuppressWarnings("unused")
@@ -126,5 +151,9 @@ public abstract class CastTypeNode extends RBaseNode {
 
     protected static boolean isNull(Object value) {
         return value == null;
+    }
+
+    protected static boolean isLanguage(RPairList list) {
+        return list.getRType() == RType.Language;
     }
 }

@@ -33,4 +33,9 @@ public class TestDistributionsSpecialCases extends TestBase {
         assertEval("qnbinom(3.1471252498071100763e-05, 425.56250000596048721, mu=121241.593505859375, lower.tail=F, log.p=F)");
         assertEval("qt(0.8312011718749999778, 5.42101086242752217e-20, 34.00390632153467152, lower.tail=T, log.p=F)");
     }
+
+    @Test
+    public void testAttributesTransfer() {
+        assertEval("dexp(structure(array(21:24, dim=c(2,2)), dimnames=list(a=c('a1','a2'),b=c('b1','b2'))))");
+    }
 }

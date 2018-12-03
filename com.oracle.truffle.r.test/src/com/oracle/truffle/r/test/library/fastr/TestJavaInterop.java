@@ -40,7 +40,6 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.library.fastr.TestJavaInterop.TestClass.TestPOJO;
-import java.lang.reflect.Constructor;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
 import org.graalvm.polyglot.proxy.ProxyObject;
@@ -509,7 +508,7 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- 'x'; to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"x\"\n')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + " to$fieldStringArray[c(TRUE, FALSE)] <- c('x', 'y'); to$fieldStringArray", "cat('[polyglot value]\n[1] \"x\" \"b\" \"y\"\n" +
-                        errorIn("In to$fieldStringArray[c(TRUE, FALSE)] <- c(\"x\", \"y\")", "number of items to replace is not a multiple of replacement length", true, true) + "')");
+                        errorIn("In to$fieldStringArray[c(TRUE, FALSE)] <- c(\"x\", \"y\")", "number of items to replace is not a multiple of replacement length", true, true, null) + "', sep='  ')");
     }
 
     @Test
@@ -534,6 +533,8 @@ public class TestJavaInterop extends TestBase {
 
         assertEvalFastR("names(java.type('int[]'))", "'class'");
         assertEvalFastR("names(new(java.type('int[]'), 3))", "NULL");
+        assertEvalFastR("{ java.addToClasspath(paste0(Sys.getenv('R_HOME'),'/mxbuild/dists/fastr-unit-tests.jar')); tec<-new('com.oracle.truffle.r.test.library.fastr.TestExceptionsClass'); tec }",
+                        "cat('[polyglot value]\\n$exception\\n[polyglot value]\\n\\n$class\\n[polyglot value]\\n\\n')");
     }
 
     @Test
@@ -781,21 +782,20 @@ public class TestJavaInterop extends TestBase {
         // foreign heterogenous arrays
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.list(ta$heterogenousPrimitiveArray)", "list(1, 'a', '1'))");
         assertEvalFastR(CREATE_TEST_ARRAYS + " as.list(ta$heterogenousPrimitiveArray2HomDimensions)", "list(c('a', 'b', 'c'), c(1, 2, 3))");
-        assertEvalFastR(CREATE_TEST_ARRAYS + " as.list(ta$heterogenousPrimitiveArray2HomDimensions)", "list(c('a', 'b', 'c'), c(1, 2, 3))");
 
         // foreign object with members
         assertEvalFastR("talc <- new('" + TestAsListClass.class.getName() + "')" + "; as.list(talc)", "list(b=c(T, F, T), i=c(1, 2, 3))");
 
-        String result = "b2 <- c(T, T, F, F, T, T); i2 <- c(1, 1, 2, 2, 3, 3); list(b=b2, i=i2)";
+        String result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i2 <- matrix(c(1, 1, 2, 2, 3, 3), 2, 3); list(b=b2, i=i2)";
         assertEvalFastR("talc <- new('" + TestAsListClass2.class.getName() + "')" + "; as.list(talc)", result);
 
-        result = "b3 <- c(T, T, T, T, F, F, F, F, T, T, T, T); " + "i3 <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); list(b=b3, i=i3)";
+        result = "b3 <- array(c(T, T, T, T, F, F, F, F, T, T, T, T), c(2, 2, 3)); " + "i3 <- array(c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3), c(2, 2, 3)); list(b=b3, i=i3)";
         assertEvalFastR("talc <- new('" + TestAsListClass3.class.getName() + "')" + "; as.list(talc)", result);
 
-        result = "b2 <- c(T, T, F, F, T, T); i <- c(1, 2, 3); oa <- list(c(T, F, T), c('a', 'b', 'c')); list(b=b2, i=i, oa=oa, n=NULL)";
+        result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i <- c(1, 2, 3); oa <- list(c(T, F, T), c('a', 'b', 'c')); list(b=b2, i=i, oa=oa, n=NULL)";
         assertEvalFastR("talc <- new('" + TestAsListClassMixed.class.getName() + "')" + "; as.list(talc)", result);
 
-        assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$b", "c(T, T, F, F, T, T)");
+        assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$b", "matrix(c(T, T, F, F, T, T), 2, 3)");
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$i", "c(1, 2, 3)");
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$oa", "list(c(T, F, T)");
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; as.list(talc)$n", "NULL");
@@ -830,13 +830,13 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TEST_ARRAYS + " .fastr.interop.asVector(ta$heterogenousPrimitiveArray)", "list(1, 'a', '1'))");
         assertEvalFastR(CREATE_TEST_ARRAYS + " .fastr.interop.asVector(ta$heterogenousPrimitiveArray2HomDimensions, T)", "list(c('a', 'b', 'c'), c(1, 2, 3))");
 
-        String result = "b2 <- c(T, T, F, F, T, T); i2 <- c(1, 1, 2, 2, 3, 3); dim(b2) <- c(2, 3); dim(i2) <- c(2, 3); list(b=b2, i=i2)";
+        String result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i2 <- matrix(c(1, 1, 2, 2, 3, 3), 2, 3); list(b=b2, i=i2)";
         assertEvalFastR("talc <- new('" + TestAsListClass2.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)", result);
 
-        result = "b3 <- c(T, T, T, T, F, F, F, F, T, T, T, T); " + "i3 <- c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3); dim(b3) <- c(2, 2, 3); dim(i3) <- c(2, 2, 3); list(b=b3, i=i3)";
+        result = "b3 <- array(c(T, T, T, T, F, F, F, F, T, T, T, T), c(2, 2, 3)); " + "i3 <- array(c(1, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3), c(2, 2, 3)); list(b=b3, i=i3)";
         assertEvalFastR("talc <- new('" + TestAsListClass3.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)", result);
 
-        result = "b2 <- c(T, T, F, F, T, T); dim(b2) <- c(2, 3); i <- c(1, 2, 3); oa <- ; list(b=b2, i=i, oa=oa, n=NULL)";
+        result = "b2 <- matrix(c(T, T, F, F, T, T), 2, 3); i <- c(1, 2, 3); oa <- ; list(b=b2, i=i, oa=oa, n=NULL)";
         assertEvalFastR("talc <- new('" + TestAsListClassMixed.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)", result);
 
         assertEvalFastR("talc <- new('" + TestAsListClassMixedWithObject.class.getName() + "')" + "; .fastr.interop.asVector(talc, T)$b", "matrix(c(T, T, F, F, T, T), c(2,3))");
@@ -1404,7 +1404,7 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " " + operator + " T", fail ? expectedKO : expectedOK);
 
         expectedOK = toRVector(t, vec) + operator + " c(T, T, F)";
-        expectedKO = errorIn("to$" + vec + " " + operator + " c(T, T, F)", "invalid 'x' type in 'x " + operator + " y'");
+        expectedKO = errorIn("to$" + vec + " " + operator + " c(T, T, F)", "invalid 'x' type in 'x " + operator + " y'", false, false, "");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$" + vec + " " + operator + " c(T, T, F)", fail ? expectedKO : expectedOK);
 
         expectedOK = "T " + operator + " " + toRVector(t, vec);
@@ -1467,22 +1467,77 @@ public class TestJavaInterop extends TestBase {
 
     @Test
     public void testException() {
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException"));
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.io.IOException: msg"));
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException"));
-        assertEvalFastR("to <- new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg');",
-                        errorIn(".fastr.interop.new(Class, ...)", "Foreign function failed: java.lang.RuntimeException: msg"));
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.lang.RuntimeException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:35)",
+                                        false, false, ""),
+                        true);
 
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')", errorIn("to$exception(\"java.io.IOException\")", "Foreign function failed: java.io.IOException"));
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
-                        errorIn("to$exception(\"java.io.IOException\", \"msg\")", "Foreign function failed: java.io.IOException: msg"));
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\")", "Foreign function failed: java.lang.RuntimeException"));
-        assertEvalFastR(CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")", "Foreign function failed: java.lang.RuntimeException: msg"));
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.lang.RuntimeException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:41)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.io.IOException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:35)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg')",
+                        errorIn(".fastr.interop.new(Class, ...)",
+                                        "java.io.IOException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:41)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')",
+                        errorIn("to$exception(\"java.io.IOException\")",
+                                        "java.io.IOException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:50)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
+                        errorIn("to$exception(\"java.io.IOException\", \"msg\")",
+                                        "java.io.IOException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:54)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\")",
+                                        "java.lang.RuntimeException\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:50)",
+                                        false, false, ""),
+                        true);
+
+        assertEvalFastR(
+                        CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
+                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")",
+                                        "java.lang.RuntimeException: msg\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
+                                                        "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:54)",
+                                        false, false, ""),
+                        true);
     }
 
     private String getRValue(Object value) {
@@ -1667,17 +1722,17 @@ public class TestJavaInterop extends TestBase {
     }
 
     private static String errorIn(String left, String right) {
-        return errorIn(left, right, false, false);
+        return errorIn(left, right, false, false, "  ");
     }
 
-    private static String errorIn(String left, String right, boolean warning, boolean onlyText) {
+    private static String errorIn(String left, String right, boolean warning, boolean onlyText, String sep) {
         String errorIn;
         if (warning) {
             errorIn = "Warning message:\n";
         } else {
             errorIn = "Error in ";
         }
-        String delim = " :";
+        String delim = " : ";
 
         StringBuilder sb = new StringBuilder();
         if (!onlyText) {
@@ -1686,14 +1741,19 @@ public class TestJavaInterop extends TestBase {
         sb.append(errorIn);
         sb.append(left.replaceAll("\\'", "\\\\\\'"));
         sb.append(delim);
-        if (errorIn.length() + left.length() + delim.length() + 1 + right.length() >= 74) {
+        if (errorIn.length() + left.length() + delim.length() + 1 + right.length() >= 75) {
             sb.append("', '\n', '");
         }
-        sb.append(' ');
         sb.append(right.replaceAll("\\'", "\\\\\\'"));
         sb.append("', '\n");
         if (!onlyText) {
-            sb.append("')");
+            if (sep != null) {
+                sb.append("', sep='");
+                sb.append(sep);
+                sb.append("')");
+            } else {
+                sb.append("')");
+            }
         }
         return sb.toString();
     }
@@ -1972,7 +2032,7 @@ public class TestJavaInterop extends TestBase {
 
             @Override
             public String toString() {
-                return String.format("TetsPOJO[data='%s']", data);
+                return String.format("TestPOJO[data='%s']", data);
             }
         }
 
@@ -2462,50 +2522,6 @@ public class TestJavaInterop extends TestBase {
                     }
                 }
             }
-        }
-    }
-
-    public static class TestExceptionsClass {
-
-        public TestExceptionsClass() {
-
-        }
-
-        public TestExceptionsClass(String className) throws Throwable {
-            if (className != null) {
-                throwEx(className);
-            }
-        }
-
-        public TestExceptionsClass(String className, String msg) throws Throwable {
-            if (className != null) {
-                throwEx(className, msg);
-            }
-        }
-
-        public static void exception(String className) throws Throwable {
-            throwEx(className);
-        }
-
-        public static void exception(String className, String msg) throws Throwable {
-            throwEx(className, msg);
-        }
-
-        private static void throwEx(String className) throws Throwable {
-            throwEx(className, null);
-        }
-
-        private static void throwEx(String className, String msg) throws Throwable {
-            Class<?> clazz = Class.forName(className);
-            Object t;
-            if (msg == null) {
-                t = clazz.newInstance();
-            } else {
-                Constructor<?> ctor = clazz.getDeclaredConstructor(String.class);
-                t = ctor.newInstance(msg);
-            }
-            assert t instanceof Throwable : "throwable instance expected: " + className;
-            throw (Throwable) t;
         }
     }
 

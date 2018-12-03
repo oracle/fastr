@@ -32,11 +32,10 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.data.RSymbol;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
 
@@ -121,32 +120,20 @@ public class RFFIUtils {
                 sb.append("null");
                 continue;
             }
-            sb.append(arg.getClass().getSimpleName()).append('(').append(arg.hashCode());
+            sb.append(arg.getClass().getSimpleName()).append('(').append(arg.hashCode()).append(';');
             if (arg instanceof TruffleObject && ForeignAccess.sendIsPointer(getIsPointerNode(), (TruffleObject) arg)) {
                 try {
-                    sb.append(";ptr:").append(String.valueOf(ForeignAccess.sendAsPointer(getAsPointerNode(), (TruffleObject) arg)));
+                    sb.append("ptr:").append(Long.toHexString(ForeignAccess.sendAsPointer(getAsPointerNode(), (TruffleObject) arg)));
                 } catch (UnsupportedMessageException e) {
                     throw RInternalError.shouldNotReachHere();
                 }
-            } else if (arg instanceof RSymbol) {
-                sb.append(';').append("\"" + arg.toString() + "\"");
-            } else if (arg instanceof RAbstractVector) {
-                RAbstractVector vec = (RAbstractVector) arg;
-                if (vec.getLength() == 0) {
-                    sb.append(";empty");
-                } else {
-                    sb.append(";len:" + vec.getLength() + ";data:");
-                    for (int i = 0; i < Math.min(3, vec.getLength()); i++) {
-                        String str = ((RAbstractVector) arg).getDataAtAsObject(0).toString();
-                        str = str.length() > 30 ? str.substring(0, 27) + "..." : str;
-                        sb.append(',').append(str);
-                    }
-                }
+            } else {
+                Utils.printDebugInfo(sb, arg);
             }
             // Note: it makes sense to include native mirrors only once they have been create
             // already
             if (mode.logNativeMirror && arg instanceof RObject) {
-                sb.append(";" + ((RObject) arg).getNativeMirror());
+                sb.append(((RObject) arg).getNativeMirror());
             }
             sb.append(')');
         }

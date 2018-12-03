@@ -784,7 +784,7 @@ public class FileFunctions {
         }
     }
 
-    // TODO handle the general case, which is similar to paste
+    // TODO handle the general case, which is similar to paste, dispatch to as.character S3 methods
     @RBuiltin(name = "file.path", kind = INTERNAL, parameterNames = {"paths", "fsep"}, behavior = IO)
     public abstract static class FilePath extends RBuiltinNode.Arg2 {
 
@@ -814,10 +814,10 @@ public class FileFunctions {
         @Specialization(guards = "!lengthZero(args)")
         @TruffleBoundary
         protected RStringVector doFilePath(RList args, String fsep) {
-            Object[] argValues = args.getDataWithoutCopying();
             int resultLength = 0;
-            for (int i = 0; i < argValues.length; i++) {
-                Object elem = argValues[i];
+            int argsLen = args.getLength();
+            for (int i = 0; i < argsLen; i++) {
+                Object elem = args.getDataAt(i);
                 int argLength;
                 if (elem instanceof RAbstractContainer) {
                     argLength = ((RAbstractContainer) elem).getLength();
@@ -832,8 +832,8 @@ public class FileFunctions {
                 return RDataFactory.createEmptyStringVector();
             }
             String[] result = new String[resultLength];
-            String[][] inputs = new String[argValues.length][];
-            for (int i = 0; i < argValues.length; i++) {
+            String[][] inputs = new String[argsLen][];
+            for (int i = 0; i < argsLen; i++) {
                 Object elem = args.getDataAt(i);
                 if (elem instanceof RTypedValue && ((RTypedValue) elem).isS4()) {
                     throw RError.nyi(this, "list files: S4 elem");
@@ -847,20 +847,29 @@ public class FileFunctions {
                 if (elem instanceof String) {
                     inputs[i] = new String[]{(String) elem};
                 } else if (elem instanceof RStringVector) {
+                    if (((RStringVector) elem).getLength() == 0) {
+                        return RDataFactory.createEmptyStringVector();
+                    }
                     inputs[i] = ((RStringVector) elem).getReadonlyStringData();
                 } else {
                     throw error(RError.Message.NON_STRING_ARG_TO_INTERNAL_PASTE);
                 }
             }
+            StringBuilder pathBuilder = new StringBuilder();
             for (int i = 0; i < resultLength; i++) {
-                String path = "";
+                pathBuilder.setLength(0);
+                int len = 0;
                 for (int j = 0; j < inputs.length; j++) {
-                    path += inputs[j][i % inputs[j].length];
+                    len += inputs[j][i % inputs[j].length].length() + 1;
+                }
+                pathBuilder.ensureCapacity(len);
+                for (int j = 0; j < inputs.length; j++) {
+                    pathBuilder.append(inputs[j][i % inputs[j].length]);
                     if (j != inputs.length - 1) {
-                        path += fsep;
+                        pathBuilder.append(fsep);
                     }
                 }
-                result[i] = path;
+                result[i] = pathBuilder.toString();
             }
             return RDataFactory.createStringVector(result, RDataFactory.COMPLETE_VECTOR);
         }

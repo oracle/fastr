@@ -40,12 +40,11 @@ public abstract class RScalar extends RObject implements RTypedValue {
 
     @Override
     public final int getGPBits() {
-        throw RInternalError.shouldNotReachHere();
+        return 0;
     }
 
     @Override
     public final void setGPBits(int gpbits) {
-        throw RInternalError.shouldNotReachHere();
     }
 
     @Override

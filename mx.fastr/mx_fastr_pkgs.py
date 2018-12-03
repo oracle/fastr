@@ -167,6 +167,9 @@ def _installpkgs(args, **kwargs):
         env = os.environ.copy()
         kwargs['env'] = env
 
+    if "FASTR_WORKING_DIR" in os.environ:
+        env["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
+
     script = _installpkgs_script()
     if _graalvm() is None:
         mx.logv("Using FastR binary: mx rscript")
@@ -948,12 +951,16 @@ def pkgtest_cmp(args):
 
 
 def find_top100(args):
-    libinstall = join(_fastr_suite_dir(), "top100.tmp")
+    find_top(["100"])
+
+
+def find_top(args):
+    n = args[-1]
+    libinstall = join(_fastr_suite_dir(), "top%s.tmp" % n)
     if not os.path.exists(libinstall):
         os.mkdir(libinstall)
     os.environ['R_LIBS_USER'] = libinstall
-    _installpkgs(['--find-top100', '--use-installed-pkgs'])
-
+    _installpkgs(['--use-installed-pkgs', '--find-top', n])
 
 def remove_dup_pkgs(args):
     pkgs = args[0].split(",")

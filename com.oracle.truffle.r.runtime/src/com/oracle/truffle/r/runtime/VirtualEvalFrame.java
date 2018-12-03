@@ -219,6 +219,10 @@ public abstract class VirtualEvalFrame implements MaterializedFrame {
     }
 
     public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, RCaller call) {
+        return create(originalFrame, function, null, call);
+    }
+
+    public static VirtualEvalFrame create(MaterializedFrame originalFrame, RFunction function, Object callerFrame, RCaller call) {
         Object[] arguments = Arrays.copyOf(originalFrame.getArguments(), originalFrame.getArguments().length);
         arguments[RArguments.INDEX_IS_IRREGULAR] = true;
         arguments[RArguments.INDEX_FUNCTION] = function;
@@ -227,6 +231,9 @@ public abstract class VirtualEvalFrame implements MaterializedFrame {
             arguments[RArguments.INDEX_CALL] = call;
         } else if (arguments[RArguments.INDEX_CALL] == null) {
             arguments[RArguments.INDEX_CALL] = RCaller.topLevel;
+        }
+        if (callerFrame != null) {
+            arguments[RArguments.INDEX_CALLER_FRAME] = callerFrame;
         }
         MaterializedFrame unwrappedFrame = originalFrame instanceof VirtualEvalFrame ? ((VirtualEvalFrame) originalFrame).getOriginalFrame() : originalFrame;
         @SuppressWarnings("unchecked")

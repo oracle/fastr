@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.TreeMap;
@@ -32,7 +31,6 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
@@ -162,12 +160,6 @@ public abstract class RBuiltinPackage {
 
     protected void add(Class<?> builtinMetaClass, Class<?> builtinClass, Supplier<RBuiltinNode> constructor, RSpecialFactory specialCall) {
         RBuiltin annotation = builtinMetaClass.getAnnotation(RBuiltin.class);
-        String[] parameterNames = annotation.parameterNames();
-        parameterNames = Arrays.stream(parameterNames).map(n -> n.isEmpty() ? null : n).toArray(String[]::new);
-        ArgumentsSignature signature = ArgumentsSignature.get(parameterNames);
-
-        putBuiltin(new RBuiltinFactory(annotation.name(), builtinMetaClass, builtinClass, annotation.visibility(), annotation.aliases(), annotation.kind(), signature, annotation.nonEvalArgs(),
-                        annotation.splitCaller(), annotation.isFieldAccess(), annotation.lookupVarArgs(),
-                        annotation.alwaysSplit(), annotation.dispatch(), annotation.genericName(), constructor, annotation.behavior(), specialCall));
+        putBuiltin(new RBuiltinFactory(annotation, builtinMetaClass, builtinClass, constructor, specialCall));
     }
 }

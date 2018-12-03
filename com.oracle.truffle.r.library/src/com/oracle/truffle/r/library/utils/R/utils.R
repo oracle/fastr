@@ -20,14 +20,53 @@
 # questions.
 
 eval(expression({
-	excludedPkgs <- c("rJava")
-	excludedPkgsMsgs <- c(paste0(
-		"CRAN rJava is not supported on FastR, but you can download and install rJava compatible replacement package ",
-		"from https://github.com/oracle/fastr/master/com.oracle.truffle.r.pkgs/rJava.\n",
-		"  Install it using 'R --jvm CMD INSTALL {fastr}/com.oracle.truffle.r.pkgs/rJava' and make sure that 'which R' points to FastR. "))
+
+	.fastr.addHelpPath('/com/oracle/truffle/r/library/utils/Rd')
+
+	fastrRepoPath <- NULL
+
+	install.fastr.packages <- function(pkgs) {
+		if (is.null(fastrRepoPath) || !file.exists(fastrRepoPath)) {
+			workDir <- tempdir()
+			download.file('https://api.github.com/repos/oracle/fastr/tarball/master', file.path(workDir, 'fastr-repo.tar.gz'))
+			origFiles <- list.files(workDir)
+			untar(file.path(workDir, 'fastr-repo.tar.gz'), exdir=workDir)
+			repoName <- setdiff(list.files(workDir), origFiles)
+			fastrRepoPath <<- file.path(workDir, repoName)
+		}
+		for (pkg in pkgs) {
+			pkgPath <- file.path(fastrRepoPath, 'com.oracle.truffle.r.pkgs', pkg)
+			if (file.exists(pkgPath)) {
+				install.packages(pkgPath, repos=NULL)
+			} else {
+				stop(paste0("FastR doesn't provide patched version of package ", pkg, ". Use install.packages to install it."));
+			}
+		}
+		invisible(NULL)
+	}
+
+	pkgWarnings <- c(
+		rJava = c(paste0(
+			"CRAN rJava is not supported on FastR, but you can download and install rJava compatible replacement package ",
+			"from https://github.com/oracle/fastr/master/com.oracle.truffle.r.pkgs/rJava.\n",
+			"You can run function install.fastr.packages('rJava') to install it from GitHub.")),
+		data.table = c(paste0(
+			"CRAN data.table uses some C API that FastR cannot emulate, there is a patched version of data.table available ",
+			"at https://github.com/oracle/fastr/master/com.oracle.truffle.r.pkgs/data.table.\n",
+			"You can run function install.fastr.packages('data.table') to install it from GitHub.")),
+		dplyr = c(paste0(
+			"The current version of CRAN dplyr uses some C API that FastR cannot emulate.\n",
+			"For the best results we recommend installing revision dbbb918771bb6f803f5f9a126a38b613f7af0211 from https://github.com/tidyverse/dplyr and its dependencies from CRAN.\n",
+			"The installation of dplyr via `install.packages('dplyr')` already installed all the dependencies. If you wish so you can now override the problematic version of dplyr with:\n",
+			"install.packages('https://api.github.com/repos/tidyverse/dplyr/tarball/dbbb918771bb6f803f5f9a126a38b613f7af0211', repos=NULL)"))
+	)
+
+	excludedPkgs <- c('rJava', 'data.table')
 
 	fastRPkgFilter <- function (av) {
 		# The following statement will assign the url of the FastR clone of rJava, when ready (possibly on GitHub).
+		# Note: this will not work, the following code is creating the URL like so: {repo}/{pkgName}_{version}.
+		# What we can do is to override certain URLs in the Download builtin
 		#av["rJava","Repository"] <- "https://github.com/oracle/fastr/master/com.oracle.truffle.r.pkgs/rJava"
 		found <- rownames(av) %in% excludedPkgs
 		if (any(found)) {
@@ -39,15 +78,18 @@ eval(expression({
 	
 	getDependencies.original <- getDependencies
 	getDependencies <- function(pkgs, dependencies = NA, available = NULL, lib = .libPaths()[1L], binary = FALSE) {
-		res <- getDependencies.original(pkgs, dependencies, available, lib, binary)	
-
-		found <- excludedPkgs %in% pkgs
+		res <- getDependencies.original(pkgs, dependencies, available, lib, binary)
+		found <- names(pkgWarnings) %in% pkgs
 		if (any(found)) {
-			foundPkgMsgs <- excludedPkgsMsgs[which(found)]
-			warning(paste(foundPkgMsgs, collapse="\n"), call. = FALSE)
+			for (w in pkgWarnings[found]) {
+				warning(w, call. = FALSE)
+			}
 		}
-		
 		res
 	}
 	
 }), asNamespace("utils"))
+
+# export new public functions
+exports <- asNamespace("utils")[[".__NAMESPACE__."]][['exports']]
+assign('install.fastr.packages', 'install.fastr.packages', envir = exports)

@@ -87,7 +87,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
                 names = RClosures.createFactorToVector((RAbstractIntVector) names, true, levels);
             }
         }
-        Object newNames = castString(names);
+        Object newNames = names == RNull.instance ? names : castString(names);
         RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         if (newNames == RNull.instance) {
             if (getDimNode == null) {

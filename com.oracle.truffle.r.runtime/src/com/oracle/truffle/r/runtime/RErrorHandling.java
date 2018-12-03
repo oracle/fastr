@@ -24,6 +24,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.Node;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import com.oracle.truffle.r.runtime.interop.FastRInteropTryException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -576,6 +578,29 @@ public class RErrorHandling {
     private static MaterializedFrame safeCurrentFrame() {
         Frame frame = Utils.getActualCurrentFrame();
         return frame == null ? REnvironment.globalEnv().getFrame() : frame.materialize();
+    }
+
+    @TruffleBoundary
+    public static RError handleInteropException(Node callObj, RuntimeException e) {
+        if (e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) {
+            if (RContext.getInstance().stateInteropTry.isInTry()) {
+                // will be catched and handled in .fastr.interop.try builtin
+                throw new FastRInteropTryException(e);
+            } else {
+                // unfortunatelly, the whole error report has to be printed in two steps:
+                // 1.) first print the caller part of the error message, while we still have the
+                // caller node
+                Object caller = callObj instanceof RBaseNode ? findCaller((RBaseNode) callObj) : findCaller(RError.findParentRBase(callObj));
+                String errorMessage = createErrorMessage(caller, "");
+                Utils.writeStderr(errorMessage, true);
+                // 2.) and pass-over (re-throw) the foreign exception to truffle,
+                // once it is caught in REPL wrapped in a PolylotException we will be
+                // able to print the guest lang polyglot stacktrace via
+                // PolyglotException.getPolyglotStackTrace()
+                throw e;
+            }
+        }
+        throw e;
     }
 
     /**

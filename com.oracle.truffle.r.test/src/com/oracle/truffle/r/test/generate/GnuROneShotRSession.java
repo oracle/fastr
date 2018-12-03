@@ -46,8 +46,8 @@ public class GnuROneShotRSession implements RSession {
 
     private static final String[] GNUR_COMMANDLINE = new String[]{"<R>", "--vanilla", "--slave", "--silent", "--no-restore"};
     private static final String FASTR_TESTGEN_GNUR = "FASTR_TESTGEN_GNUR";
-    private static final int DEFAULT_TIMEOUT_MINS = 5;
-    private static int timeoutMins = DEFAULT_TIMEOUT_MINS;
+    private static final int DEFAULT_TIMEOUT = 5000;
+    private static int timeoutValue = DEFAULT_TIMEOUT;
 
     //@formatter:off
     protected static final String GNUR_OPTIONS =
@@ -66,7 +66,7 @@ public class GnuROneShotRSession implements RSession {
         String timeout = System.getenv("FASTR_TESTGEN_TIMEOUT");
         if (timeout != null) {
             try {
-                timeoutMins = Integer.parseInt(timeout);
+                timeoutValue = Integer.parseInt(timeout) * 1000 * 60; // given in minutes
             } catch (NumberFormatException ex) {
                 System.err.println("ignoring invalid value for FASTR_TESTGEN_TIMEOUT");
             }
@@ -91,7 +91,7 @@ public class GnuROneShotRSession implements RSession {
     }
 
     @Override
-    public String eval(TestBase testBase, String expression, ContextKind contextKind, boolean longTimeout) throws Throwable {
+    public String eval(TestBase testBase, String expression, ContextKind contextKind, long timeout) throws Throwable {
         if (expression.contains("library(") && !TestBase.generatingExpected()) {
             System.out.println("==============================================");
             System.out.println("LIBRARY LOADING WHEN NOT GENERATING EXPECTED OUTPUT");
@@ -104,8 +104,8 @@ public class GnuROneShotRSession implements RSession {
         ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable("gnur eval", gnuRoutput);
         readThread.start();
         send(gnuRinput, expression.getBytes(), NL, QUIT);
-        int thisTimeout = longTimeout ? timeoutMins * 2 : timeoutMins;
-        if (!p.waitFor(thisTimeout, TimeUnit.MINUTES)) {
+        long thisTimeout = timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout;
+        if (!p.waitFor(thisTimeout, TimeUnit.MILLISECONDS)) {
             throw new RuntimeException(String.format("GNU R process timed out on: '%s'\n", expression));
         }
         readThread.join();

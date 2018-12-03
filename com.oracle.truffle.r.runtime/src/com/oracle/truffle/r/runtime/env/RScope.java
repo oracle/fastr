@@ -117,6 +117,11 @@ public final class RScope {
     }
 
     public static Iterable<Scope> createLocalScopes(RContext context, Node node, Frame frame) {
+        if (frame == null) {
+            // All variables are created dynamically in R, we could provide at least formal argument
+            // names, but note that during the runtime the formal argument may not be provided.
+            return Collections.emptySet();
+        }
         REnvironment env = getEnv(frame);
         if (env == context.stateREnvironment.getGlobalEnv()) {
             return Collections.emptySet();
@@ -242,7 +247,9 @@ public final class RScope {
                     if (!receiver.frameAccess.bindingIsLocked(identifier)) {
                         result |= KeyInfo.MODIFIABLE;
                     }
-                    if (receiver.frameAccess.get(identifier) instanceof RFunction) {
+                    if (receiver.frameAccess.isActiveBinding(identifier)) {
+                        result |= KeyInfo.READ_SIDE_EFFECTS | KeyInfo.WRITE_SIDE_EFFECTS;
+                    } else if (receiver.frameAccess.get(identifier) instanceof RFunction) {
                         result |= KeyInfo.INVOCABLE;
                     }
                     return result;

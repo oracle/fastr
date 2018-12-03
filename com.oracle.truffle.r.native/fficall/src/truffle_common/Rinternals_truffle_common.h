@@ -1378,7 +1378,8 @@ void R_unLockBinding(SEXP sym, SEXP env) {
 
 void R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
     TRACE0();
-    unimplemented("R_MakeActiveBinding");
+    ((call_R_MakeActiveBinding) callbacks[R_MakeActiveBinding_x])(sym, fun, env);
+    checkExitCall();
 }
 
 Rboolean R_BindingIsLocked(SEXP sym, SEXP env) {

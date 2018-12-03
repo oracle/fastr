@@ -211,6 +211,9 @@ public class TestBuiltin_match extends TestBase {
         assertEval("{ match(\"a\", factor(c(\"a\", \"b\", \"a\"))) }");
         assertEval("{ match(factor(c(\"a\", \"b\", \"a\")), \"a\") }");
 
+        assertEval("{ fa <- structure(1:2, .Label = c('a', NA), class = 'factor'); match(fa, c('a', NA_character_)) }");
+        assertEval("{ fa <- structure(1:2, .Label = c('a', NA), class = 'factor'); fa2 <- structure(1:3, .Label = c('a', NA, 'b'), class = 'factor'); match(fa, fa2) }");
+
         assertEval("{ match(42, NULL) }");
         assertEval("{ match(c(7, 42), NULL) }");
         assertEval(Ignored.ImplementationError, "{ match(c(7, 42), NULL, integer()) }");

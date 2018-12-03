@@ -264,6 +264,9 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("rep(numeric(), times=3)");
 
         assertEval("rep(NULL)");
+
+        // argument matching for primitives...
+        assertEval("rep(4, x=3)");
     }
 
     @Test

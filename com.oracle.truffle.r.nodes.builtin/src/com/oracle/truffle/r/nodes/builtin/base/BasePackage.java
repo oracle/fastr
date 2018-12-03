@@ -49,6 +49,7 @@ import com.oracle.truffle.r.nodes.builtin.base.fastpaths.IsElementFastPathNodeGe
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.MatrixFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SetDiffFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubscriptDataFrameFastPathNodeGen;
+import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubsetDataFrameFastPath;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.SubsetDataFrameFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.ComplexFastPathNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.fastpaths.VectorFastPathsFactory.DoubleFastPathNodeGen;
@@ -125,6 +126,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory.FastRInterop
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPaths;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPathsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastROptionBuiltin;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRPatchPackage;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRPatchPackageNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSource;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSourceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
@@ -285,6 +288,7 @@ public class BasePackage extends RBuiltinPackage {
         add(ChooseFunctions.Choose.class, ChooseFunctionsFactory.ChooseNodeGen::create);
         add(ChooseFunctions.LChoose.class, ChooseFunctionsFactory.LChooseNodeGen::create);
         add(BetaFunctions.LBeta.class, BetaFunctionsFactory.LBetaNodeGen::create);
+        add(BetaFunctions.BetaBuiltin.class, BetaFunctionsFactory.BetaBuiltinNodeGen::create);
         add(Bincode.class, BincodeNodeGen::create);
         add(Bind.CbindInternal.class, BindNodeGen.CbindInternalNodeGen::create);
         add(Bind.RbindInternal.class, BindNodeGen.RbindInternalNodeGen::create);
@@ -462,6 +466,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRRegisterFunctions.class, FastRRegisterFunctionsNodeGen::create);
         add(FastrDqrls.class, FastrDqrlsNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
+        add(FastRPatchPackage.class, FastRPatchPackageNodeGen::create);
         add(FastRDispatchNativeHandlers.class, FastRDispatchNativeHandlers::new);
         add(FastRInitEventLoop.class, FastRInitEventLoopNodeGen::create);
         add(FastRSetBreakpoint.class, FastRSetBreakpointNodeGen::create);
@@ -540,6 +545,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FortranAndCFunctions.Fortran.class, FortranAndCFunctionsFactory.FortranNodeGen::create);
         add(FrameFunctions.MatchCall.class, FrameFunctionsFactory.MatchCallNodeGen::create);
         add(FrameFunctions.ParentFrame.class, FrameFunctionsFactory.ParentFrameNodeGen::create);
+        add(PosToEnv.class, PosToEnv::create);
         add(FrameFunctions.SysCall.class, FrameFunctionsFactory.SysCallNodeGen::create);
         add(FrameFunctions.SysCalls.class, FrameFunctionsFactory.SysCallsNodeGen::create);
         add(FrameFunctions.SysFrame.class, FrameFunctionsFactory.SysFrameNodeGen::create);
@@ -881,7 +887,7 @@ public class BasePackage extends RBuiltinPackage {
     public void loadOverrides(MaterializedFrame baseFrame) {
         super.loadOverrides(baseFrame);
         addFastPath(baseFrame, "[[.data.frame", SubscriptDataFrameFastPathNodeGen::create, RVisibility.ON);
-        addFastPath(baseFrame, "[.data.frame", SubsetDataFrameFastPathNodeGen::create, RVisibility.ON);
+        addFastPath(baseFrame, "[.data.frame", SubsetDataFrameFastPath.createFastPathFactory(SubsetDataFrameFastPathNodeGen::create));
         addFastPath(baseFrame, "matrix", MatrixFastPathNodeGen::create, Matrix.class);
         addFastPath(baseFrame, "setdiff", SetDiffFastPathNodeGen::create, RVisibility.ON);
         addFastPath(baseFrame, "get", GetFastPathNodeGen::create, RVisibility.ON);

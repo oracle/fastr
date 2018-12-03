@@ -20,43 +20,63 @@
 # questions.
 
 eval(expression({
-setBreakpoint <- function (srcfile, line, nameonly = TRUE, envir = parent.frame(), 
-    lastenv, verbose = TRUE, tracer, print = FALSE, clear = FALSE, 
-    ...) 
-{
-    res <- .fastr.setBreakpoint(srcfile, line, clear)
-    if(is.null(res))
-    	res <- structure(list(), class="findLineNumResult")
-    if (verbose) 
-        print(res, steps = !clear)
-}
-}), asNamespace("utils"))
+    setBreakpoint <- function (srcfile, line, nameonly = TRUE, envir = parent.frame(),
+        lastenv, verbose = TRUE, tracer, print = FALSE, clear = FALSE,
+        ...) {
+        res <- .fastr.setBreakpoint(srcfile, line, clear)
+        if(is.null(res))
+            res <- structure(list(), class="findLineNumResult")
+        if (verbose)
+            print(res, steps = !clear)
+    }
 
-eval(expression({
-index.search.orig <- utils:::index.search 
-index.search <- function (topic, paths, firstOnly = FALSE) 
-{
-    res <- index.search.orig(topic, paths, firstOnly)
-    
-    if(length(res) == 0) {
-        fastrHelpRd <- .fastr.helpPath(topic)
-        if(!is.null(fastrHelpRd)) {
-            res <- fastrHelpRd
+    index.search.orig <- utils:::index.search
+    index.search <- function (topic, paths, firstOnly = FALSE) {
+        res <- index.search.orig(topic, paths, firstOnly)
+
+        if(length(res) == 0) {
+            fastrHelpRd <- .fastr.helpPath(topic)
+            if(!is.null(fastrHelpRd)) {
+                res <- fastrHelpRd
+            }
         }
-    }
-    res
-}
-}), asNamespace("utils"))
-
-eval(expression({
-.getHelpFile.orig <- utils:::.getHelpFile
-.getHelpFile <- function (file) 
-{
-    fastrHelpRd <- .fastr.helpRd(file)
-    if(!is.null(fastrHelpRd)) {
-        return(tools::parse_Rd(textConnection(fastrHelpRd)))
+        res
     }
 
-    .getHelpFile.orig(file)
-}
+    .getHelpFile.orig <- utils:::.getHelpFile
+    .getHelpFile <- function (file) {
+        fastrHelpRd <- .fastr.helpRd(file)
+        if(!is.null(fastrHelpRd)) {
+            return(tools::parse_Rd(textConnection(fastrHelpRd)))
+        }
+
+        .getHelpFile.orig(file)
+    }
+
+    untar.orig <- untar
+    untar <- function (tarfile, files = NULL, list = FALSE, exdir = ".", compressed = NA,
+        extras = NULL, verbose = FALSE, restore_times = TRUE, tar = Sys.getenv("TAR")) {
+
+        # if the argument "tar" is "Sys.getenv(R_INSTALL_TAR, ...)" we know we're decompressing package sources
+        tarArg <- substitute(tar);
+        patching <- tarArg[[1]] == 'Sys.getenv' && tarArg[[2]] == 'R_INSTALL_TAR'
+        if (patching) {
+            # in order to find out to which directory the tarball decompresses
+            # note: GNU-R does the same trick to find this out
+            of <- dir(exdir, full.names = TRUE)
+        }
+
+        result <- untar.orig(tarfile, files, list, exdir, compressed, extras, verbose, restore_times, tar)
+
+        if (patching) {
+            nf <- dir(exdir, full.names = TRUE)
+            new <- setdiff(nf, of)
+            # if it decompressed to 0 or more than 1 directories, GNU-R will handle the error reporting
+            if (length(new) == 1L) {
+                .fastr.patch.package(new)
+            }
+        }
+        result
+    }
+
 }), asNamespace("utils"))

@@ -40,7 +40,7 @@ F2C_H_INCLUDE="${DIR}/../include/"
 if [ -f "${DIR}/f2c" ]
 then
 	# For a package build
-	F2C="${DIR}/../f2c/f2c/f2c"
+	F2C="${DIR}/f2c"
 else
 	# For the FastR build
 	F2C="${DIR}/../../bin/f2c"

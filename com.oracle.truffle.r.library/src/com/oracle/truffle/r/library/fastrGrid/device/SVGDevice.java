@@ -217,6 +217,9 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     private void saveFile() throws DeviceCloseException {
         closeSVGDocument(data);
         try {
+            if (Paths.get(filename).equals(Paths.get("/dev/null"))) {
+                return;
+            }
             Files.write(Paths.get(filename), Collections.singleton(data.toString()), StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new DeviceCloseException(e);

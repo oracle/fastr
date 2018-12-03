@@ -67,12 +67,12 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.logicalValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
-import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
@@ -188,6 +188,11 @@ public class FastRInterop {
         protected Object eval(VirtualFrame frame, String languageId, @SuppressWarnings("unused") RMissing code, String path) {
             try {
                 return foreign2rNode.execute(parseFileAndCall(path, languageId));
+            } catch (RuntimeException e) {
+                if (e instanceof TruffleException) {
+                    throw RErrorHandling.handleInteropException(this, e);
+                }
+                throw e;
             } finally {
                 setVisibilityNode.execute(frame, false);
             }
@@ -481,10 +486,10 @@ public class FastRInterop {
             } else {
                 interopExceptionProfile.enter();
                 if (result instanceof RuntimeException) {
-                    throw RError.handleInteropException(this, (RuntimeException) result);
+                    throw RErrorHandling.handleInteropException(this, (RuntimeException) result);
                 } else {
                     assert result instanceof Throwable : "class " + clazz + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
-                    throw RError.handleInteropException(this, new RuntimeException((Throwable) result));
+                    throw RErrorHandling.handleInteropException(this, new RuntimeException((Throwable) result));
                 }
             }
         }
@@ -931,10 +936,10 @@ public class FastRInterop {
             }
             interopExceptionProfile.enter();
             if (result instanceof RuntimeException) {
-                throw RError.handleInteropException(this, (RuntimeException) result);
+                throw RErrorHandling.handleInteropException(this, (RuntimeException) result);
             } else {
                 assert result instanceof Throwable : "class " + className + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
-                throw RError.handleInteropException(this, new RuntimeException((Throwable) result));
+                throw RErrorHandling.handleInteropException(this, new RuntimeException((Throwable) result));
             }
         }
 
@@ -1050,7 +1055,7 @@ public class FastRInterop {
             } catch (IllegalStateException | SecurityException | IllegalArgumentException | ArityException | UnsupportedMessageException e) {
                 throw javaInstantiationError(e);
             } catch (RuntimeException e) {
-                throw RError.handleInteropException(this, e);
+                throw RErrorHandling.handleInteropException(this, e);
             }
         }
 
@@ -1204,7 +1209,7 @@ public class FastRInterop {
     public abstract static class FastRInteropClearException extends RBuiltinNode.Arg0 {
 
         static {
-            NodeWithArgumentCasts.Casts.noCasts(FastRInteropClearException.class);
+            Casts.noCasts(FastRInteropClearException.class);
         }
 
         @Specialization

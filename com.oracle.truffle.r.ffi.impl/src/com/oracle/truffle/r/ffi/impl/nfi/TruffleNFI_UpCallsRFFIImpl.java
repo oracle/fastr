@@ -34,11 +34,10 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
-import com.oracle.truffle.r.runtime.ffi.DLL;
-import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
+import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
@@ -70,8 +69,7 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     @TruffleBoundary
     public Object getCCallable(String pkgName, String functionName) {
-        DLLInfo lib = DLL.safeFindLibrary(pkgName);
-        CEntry result = lib.lookupCEntry(functionName);
+        CEntry result = DLLInfo.lookupCEntry(pkgName, functionName);
         if (result == null) {
             throw RError.error(RError.NO_CALLER, RError.Message.UNKNOWN_OBJECT, functionName);
         }

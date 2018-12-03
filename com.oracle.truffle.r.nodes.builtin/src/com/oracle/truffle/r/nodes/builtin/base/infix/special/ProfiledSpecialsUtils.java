@@ -20,15 +20,15 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.builtin.base.infix;
+package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertIndex;
-import com.oracle.truffle.r.nodes.builtin.base.infix.SpecialsUtils.ConvertValue;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertIndex;
+import com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.ConvertValue;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -43,30 +43,30 @@ public class ProfiledSpecialsUtils {
         protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
         protected final boolean inReplacement;
 
-        @Child protected SubscriptSpecialBase defaultAccessNode;
+        @Child protected AccessSpecial defaultAccessNode;
 
         protected ProfiledSubscriptSpecialBase(boolean inReplacement) {
             this.inReplacement = inReplacement;
         }
 
-        protected SubscriptSpecialBase createAccessNode() {
+        protected AccessSpecial createAccessNode() {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
-        public Object access(VirtualFrame frame, RAbstractVector vector, Object index,
+        public Object access(RAbstractVector vector, Object index,
                         @Cached(value = "vector.getClass()") Class<?> clazz,
-                        @Cached("createAccessNode()") SubscriptSpecialBase accessNodeCached) {
-            return accessNodeCached.execute(frame, clazz.cast(vector), index);
+                        @Cached("createAccessNode()") AccessSpecial accessNodeCached) {
+            return accessNodeCached.execute(clazz.cast(vector), index);
         }
 
         @Specialization(replaces = "access")
-        public Object accessGeneric(VirtualFrame frame, Object vector, Object index) {
+        public Object accessGeneric(Object vector, Object index) {
             if (defaultAccessNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 defaultAccessNode = insert(createAccessNode());
             }
-            return defaultAccessNode.execute(frame, vector, index);
+            return defaultAccessNode.execute(vector, index);
         }
     }
 
@@ -77,7 +77,7 @@ public class ProfiledSpecialsUtils {
         }
 
         @Override
-        protected SubscriptSpecialBase createAccessNode() {
+        protected AccessSpecial createAccessNode() {
             return SubscriptSpecialNodeGen.create(inReplacement);
         }
     }
@@ -89,7 +89,7 @@ public class ProfiledSpecialsUtils {
         }
 
         @Override
-        protected SubscriptSpecialBase createAccessNode() {
+        protected AccessSpecial createAccessNode() {
             return SubsetSpecialNodeGen.create(inReplacement);
         }
     }
@@ -102,30 +102,30 @@ public class ProfiledSpecialsUtils {
         protected static final int CACHE_LIMIT = DSLConfig.getVectorAccessCacheSize();
         protected final boolean inReplacement;
 
-        @Child protected SubscriptSpecial2Base defaultAccessNode;
+        @Child protected AccessSpecial2 defaultAccessNode;
 
         protected ProfiledSubscriptSpecial2Base(boolean inReplacement) {
             this.inReplacement = inReplacement;
         }
 
-        protected SubscriptSpecial2Base createAccessNode() {
+        protected AccessSpecial2 createAccessNode() {
             throw RInternalError.shouldNotReachHere();
         }
 
         @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
-        public Object access(VirtualFrame frame, RAbstractVector vector, Object index1, Object index2,
+        public Object access(RAbstractVector vector, Object index1, Object index2,
                         @Cached("vector.getClass()") Class<?> clazz,
-                        @Cached("createAccessNode()") SubscriptSpecial2Base accessNodeCached) {
-            return accessNodeCached.execute(frame, clazz.cast(vector), index1, index2);
+                        @Cached("createAccessNode()") AccessSpecial2 accessNodeCached) {
+            return accessNodeCached.execute(clazz.cast(vector), index1, index2);
         }
 
         @Specialization(replaces = "access")
-        public Object accessGeneric(VirtualFrame frame, Object vector, Object index1, Object index2) {
+        public Object accessGeneric(Object vector, Object index1, Object index2) {
             if (defaultAccessNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 defaultAccessNode = insert(createAccessNode());
             }
-            return defaultAccessNode.execute(frame, vector, index1, index2);
+            return defaultAccessNode.execute(vector, index1, index2);
         }
     }
 
@@ -136,7 +136,7 @@ public class ProfiledSpecialsUtils {
         }
 
         @Override
-        protected SubscriptSpecial2Base createAccessNode() {
+        protected AccessSpecial2 createAccessNode() {
             return SubscriptSpecial2NodeGen.create(inReplacement);
         }
     }
@@ -148,7 +148,7 @@ public class ProfiledSpecialsUtils {
         }
 
         @Override
-        protected SubscriptSpecial2Base createAccessNode() {
+        protected AccessSpecial2 createAccessNode() {
             return SubsetSpecial2NodeGen.create(inReplacement);
         }
     }

@@ -416,7 +416,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object eval(RExpression exprs, REnvironment envir, RCaller caller) {
+    public Object eval(RExpression exprs, REnvironment envir, Object callerFrame, RCaller caller, RFunction function) {
         Object result = RNull.instance;
         for (int i = 0; i < exprs.getLength(); i++) {
             Object obj = exprs.getDataAt(i);
@@ -428,7 +428,7 @@ final class REngine implements Engine, Engine.Timings {
                     throw RError.error(RError.SHOW_CALLER, RError.Message.ARGUMENT_MISSING, identifier);
                 }
             } else if ((obj instanceof RPairList && ((RPairList) obj).isLanguage())) {
-                result = eval((RPairList) obj, envir, caller);
+                result = eval((RPairList) obj, envir, callerFrame, caller, function);
             } else {
                 result = obj;
             }
@@ -438,9 +438,9 @@ final class REngine implements Engine, Engine.Timings {
 
     @Override
     @TruffleBoundary
-    public Object eval(RPairList expr, REnvironment envir, RCaller caller) {
+    public Object eval(RPairList expr, REnvironment envir, Object callerFrame, RCaller caller, RFunction function) {
         assert expr.isLanguage();
-        return expr.getClosure().eval(envir, caller);
+        return expr.getClosure().eval(envir, callerFrame, caller, function);
     }
 
     @Override

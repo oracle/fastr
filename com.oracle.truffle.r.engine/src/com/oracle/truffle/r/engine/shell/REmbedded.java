@@ -133,7 +133,7 @@ public class REmbedded {
         RContext ctx = RContext.getInstance();
         ctx.completeEmbeddedInitialization();
         ctx.getRFFI().initializeEmbedded(ctx);
-        int status = REPL.readEvalPrint(context, consoleHandler, false);
+        int status = REPL.readEvalPrint(context, consoleHandler, false, System.err);
         context.leave();
         context.close();
         Utils.systemExit(status);

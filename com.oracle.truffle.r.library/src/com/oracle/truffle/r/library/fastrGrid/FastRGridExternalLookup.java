@@ -31,9 +31,9 @@ import com.oracle.truffle.r.library.fastrGrid.color.Col2RGB;
 import com.oracle.truffle.r.library.fastrGrid.color.RGB;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCairo;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevCurr;
-import com.oracle.truffle.r.library.fastrGrid.grDevices.DevSet;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevHoldFlush;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevOff;
+import com.oracle.truffle.r.library.fastrGrid.grDevices.DevSet;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.DevSize;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.InitWindowedDevice;
 import com.oracle.truffle.r.library.fastrGrid.grDevices.PDF;
@@ -44,6 +44,7 @@ import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.RInternalCodeBuiltinNode;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -169,7 +170,7 @@ public final class FastRGridExternalLookup {
             case "getDisplayList":
                 return new GridStateGetNode(GridState::getDisplayList);
             case "setDisplayList":
-                return GridStateSetNode.create((state, val) -> state.setDisplayList((RList) val));
+                return GridStateSetNode.create(FastRGridExternalLookup::setDisplayList);
             case "getDLindex":
                 return new GridStateGetNode(GridState::getDisplayListIndex);
             case "setDLindex":
@@ -202,6 +203,10 @@ public final class FastRGridExternalLookup {
             default:
                 return null;
         }
+    }
+
+    private static void setDisplayList(GridState state, Object val) {
+        state.setDisplayList(val == RNull.instance ? RDataFactory.createList() : (RList) val);
     }
 
     public static RExternalBuiltinNode lookupDotCallGraphics(String name) {

@@ -29,6 +29,7 @@ import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.attribute.FileTime;
@@ -57,10 +58,11 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor.MultiSlotData;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
-import java.nio.file.Files;
 
 public final class Utils {
 
@@ -379,6 +381,37 @@ public final class Utils {
     }
 
     /**
+     * Helper for logging: create a summary describing the give value (Java class, vector length,
+     * first few elements, etc.).
+     */
+    public static String getDebugInfo(Object value) {
+        StringBuilder sb = new StringBuilder();
+        printDebugInfo(sb, value);
+        return sb.toString();
+    }
+
+    /**
+     * @see #getDebugInfo(Object)
+     */
+    public static void printDebugInfo(StringBuilder sb, Object arg) {
+        if (arg instanceof RSymbol) {
+            sb.append("\"" + arg.toString() + "\"");
+        } else if (arg instanceof RAbstractVector) {
+            RAbstractVector vec = (RAbstractVector) arg;
+            if (vec.getLength() == 0) {
+                sb.append("empty");
+            } else {
+                sb.append("len:" + vec.getLength() + ";data:");
+                for (int i = 0; i < Math.min(3, vec.getLength()); i++) {
+                    String str = ((RAbstractVector) arg).getDataAtAsObject(0).toString();
+                    str = str.length() > 30 ? str.substring(0, 27) + "..." : str;
+                    sb.append(',').append(str);
+                }
+            }
+        }
+    }
+
+    /**
      * Retrieve a frame from the call stack. N.B. To avoid the iterator overhead use
      * {@link #getActualCurrentFrame()} for the current frame.
      *
@@ -417,9 +450,10 @@ public final class Utils {
 
     /**
      * Like {@link #getStackFrame(FrameAccess, RCaller)}, but identifying the stack with its depth.
+     * Along the way it invalidates the assumptions that the caller frame is needed.
      */
     @TruffleBoundary
-    public static Frame getStackFrame(FrameAccess fa, int depth) {
+    public static Frame getStackFrame(FrameAccess fa, int depth, boolean notifyCallers) {
         RError.performanceWarning("slow frame access - getStackFrame2");
         return Truffle.getRuntime().iterateFrames(new FrameInstanceVisitor<Frame>() {
             boolean first = true;
@@ -431,6 +465,13 @@ public final class Utils {
                     Frame f = RArguments.unwrap(pf);
                     if (RArguments.isRFrame(f)) {
                         RCaller call = RArguments.getCall(f);
+                        if (notifyCallers) {
+                            Object callerFrame = RArguments.getCallerFrame(f);
+                            if (callerFrame instanceof CallerFrameClosure) {
+                                CallerFrameClosure closure = (CallerFrameClosure) callerFrame;
+                                closure.setNeedsCallerFrame();
+                            }
+                        }
                         return (!call.isPromise() && call.getDepth() == depth) ? f : null;
                     } else {
                         return null;
@@ -473,7 +514,7 @@ public final class Utils {
 
     /**
      * Retrieve the caller frame of the current frame.
-     *
+     * <p>
      * TODO Calls to this method should be validated with respect to whether promise evaluation is
      * in progress.
      */

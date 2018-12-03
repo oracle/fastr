@@ -57,5 +57,13 @@ public class TestBuiltin_mget extends TestBase {
         assertEval("mget('abc', ifnotfound = list(`[`))");
         assertEval("mget('abc', ifnotfound = list(function(x) cat('NOT FOUND', x, '\\n')))");
         assertEval("mget('abc', ifnotfound = list(function(x, y = 'default value') cat('NOT FOUND', x, ',', y, '\\n')))");
+
+        assertEval("mget('abc', ifnotfound = NA)");
+        assertEval("mget('abc', ifnotfound = NA_complex_)");
+        assertEval("mget('abc', ifnotfound = 'a')");
+        assertEval("mget('abc', ifnotfound = c('a1', 'b1'))");
+        assertEval("mget(c('a', 'b'), ifnotfound = c('a1', 'b1'))");
+        assertEval("mget(c('a', 'b'), ifnotfound = new.env())");
+
     }
 }

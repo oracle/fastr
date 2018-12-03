@@ -342,7 +342,7 @@ public abstract class REnvironment extends RAttributeStorage {
      */
     public static void baseInitialize(MaterializedFrame baseFrame, MaterializedFrame initialGlobalFrame) {
         // TODO if namespaceRegistry is ever used in an eval an internal env won't suffice.
-        REnvironment namespaceRegistry = RDataFactory.createInternalEnv();
+        REnvironment namespaceRegistry = RDataFactory.createInternalEnv(null);
         ContextStateImpl state = RContext.getInstance().stateREnvironment;
         Base baseEnv = new Base(baseFrame, initialGlobalFrame);
         namespaceRegistry.safePut("base", baseEnv.namespaceEnv);
@@ -516,6 +516,7 @@ public abstract class REnvironment extends RAttributeStorage {
     /**
      * Data for the {@code search} function.
      */
+    @TruffleBoundary
     public static String[] searchPath() {
         SearchPath searchPath = RContext.getInstance().stateREnvironment.getSearchPath();
         String[] result = new String[searchPath.size()];
@@ -554,6 +555,10 @@ public abstract class REnvironment extends RAttributeStorage {
             }
         }
         return 0;
+    }
+
+    public static REnvironment getFromSearchPath(RContext ctx, int index) {
+        return ctx.stateREnvironment.searchPath.get(index);
     }
 
     public static REnvironment getNamespaceRegistry() {
@@ -855,6 +860,11 @@ public abstract class REnvironment extends RAttributeStorage {
     @TruffleBoundary
     public Object get(String key) {
         return frameAccess.get(key);
+    }
+
+    @TruffleBoundary
+    public boolean isActiveBinding(String key) {
+        return frameAccess.isActiveBinding(key);
     }
 
     @TruffleBoundary

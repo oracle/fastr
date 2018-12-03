@@ -211,7 +211,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             }
             srcFile = new File(fileOption);
         }
-        return REPL.readEvalPrint(context, consoleHandler, srcFile, true);
+        return REPL.readEvalPrint(context, consoleHandler, srcFile, true, errStream);
     }
 
     @Override
