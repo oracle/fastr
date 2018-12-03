@@ -84,6 +84,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
@@ -957,8 +958,8 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = ".fastr.interop.asVector", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive", "dropDimensions"}, behavior = COMPLEX)
-    public abstract static class AsVector extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = ".fastr.interop.asVector", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive", "dropDimensions", "charToInt"}, behavior = COMPLEX)
+    public abstract static class AsVector extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(AsVector.class);
@@ -967,15 +968,16 @@ public class FastRInterop {
                             notLogicalNA()).map(Predef.toBoolean());
             casts.arg("dropDimensions").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
+            casts.arg("charToInt").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+                            notLogicalNA()).map(Predef.toBoolean());
         }
 
-        private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
-
-        @Specialization(guards = {"isForeignObject(obj)"})
+        @Specialization(guards = {"isForeignObject(obj)", "!charToInt"})
         @TruffleBoundary
-        public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions,
+        public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean charToInt,
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("create()") ConvertForeignObjectNode convertForeign) {
+                        @Cached("create()") ConvertForeignObjectNode convertForeign,
+                        @Cached("createBinaryProfile()") ConditionProfile isArrayProfile) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
                 return convertForeign.convert(obj, recursive, dropDimensions);
             } else {
@@ -984,9 +986,25 @@ public class FastRInterop {
             }
         }
 
+        @Specialization(guards = {"isForeignObject(obj)", "charToInt"})
+        @TruffleBoundary
+        public Object charToIntVector(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean dropDimensions,
+                        @SuppressWarnings("unused") boolean charToInt) {
+            // it is up to the caler to ensure that the truffel object is a char array
+            assert isCharArray(RContext.getInstance().getEnv().asHostObject(obj)) : RContext.getInstance().getEnv().asHostObject(obj).getClass().getName();
+            // we also do not care about dims, which have to be evaluated and set by other means
+            return new RForeignIntWrapper(obj);
+        }
+
         @Fallback
-        public Object fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive, @SuppressWarnings("unused") Object dropDimensions) {
+        public Object fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive, @SuppressWarnings("unused") Object dropDimensions,
+                        @SuppressWarnings("unused") Object charToInt) {
             return RNull.instance;
+        }
+
+        private static boolean isCharArray(Object obj) {
+            return obj.getClass().getName().equals("[C") ||
+                            obj.getClass().getName().equals("[Ljava.lang.Character;");
         }
     }
 
