@@ -197,7 +197,7 @@ public final class NativeDataAccess {
         private Reference<Object> nativeWrapperRef;
 
         /**
-         * Indicates that the address points to a memory allocated by an external process.
+         * Indicates that the address points to memory not allocated by FastR.
          */
         private boolean external;
 
