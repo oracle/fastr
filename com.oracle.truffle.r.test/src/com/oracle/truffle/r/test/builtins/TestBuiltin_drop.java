@@ -93,5 +93,6 @@ public class TestBuiltin_drop extends TestBase {
         assertEval("{ x <- array(1:12, dim = c(1,3,1,1,2,1,2)); drop(x) }");
         assertEval("drop(array(1:9, c(3,3,1), list(1:3, 4:6, 'b')))");
         assertEval("a <- matrix(1:6, 3, 2, dimnames=list(1:3, c(' ','x'))); b <- array(c(1,2), dim=c(2), dimnames=list(c('int', 'x'))); drop(a %*% b);");
+        assertEval("drop(structure(c(0, 0), .Dim = c(2L, 1L), .Dimnames = list(NULL, 'abc')))");
     }
 }
