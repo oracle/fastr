@@ -145,7 +145,7 @@ public abstract class Drop extends RBuiltinNode.Arg1 {
         if (value instanceof RAbstractStringVector) {
             return ((RAbstractStringVector) value).materialize();
         } else {
-            assert value instanceof String : "Drop: expected String or RAbstractStringVector in dimnames" + value;
+            assert value instanceof String : value;
             return RDataFactory.createStringVector(new String[]{(String) value}, true);
         }
     }
