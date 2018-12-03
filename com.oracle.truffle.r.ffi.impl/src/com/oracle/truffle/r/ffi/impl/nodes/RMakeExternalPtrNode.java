@@ -27,6 +27,7 @@ import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
@@ -34,11 +35,21 @@ import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 public final class RMakeExternalPtrNode extends FFIUpCallNode.Arg3 {
 
     @Child Node asPointerNode = Message.AS_POINTER.createNode();
+    @Child Node isPointerNode = Message.IS_POINTER.createNode();
+    @Child Node toNativeNode = Message.TO_NATIVE.createNode();
+    private final ConditionProfile isPointerProfile = ConditionProfile.createBinaryProfile();
 
     @Override
     public Object executeObject(Object addrObj, Object tag, Object prot) {
         try {
-            long addr = ForeignAccess.sendAsPointer(asPointerNode, (TruffleObject) addrObj);
+            long addr;
+            if (isPointerProfile.profile(ForeignAccess.sendIsPointer(isPointerNode, (TruffleObject) addrObj))) {
+                addr = ForeignAccess.sendAsPointer(asPointerNode, (TruffleObject) addrObj);
+            } else {
+                TruffleObject nativized = (TruffleObject) ForeignAccess.sendToNative(toNativeNode, (TruffleObject) addrObj);
+                assert ForeignAccess.sendIsPointer(isPointerNode, nativized);
+                addr = ForeignAccess.sendAsPointer(asPointerNode, nativized);
+            }
             return RDataFactory.createExternalPtr(new SymbolHandle(addr), tag, prot);
         } catch (InteropException e) {
             throw RInternalError.shouldNotReachHere(e);
