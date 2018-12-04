@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNames
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -181,7 +182,8 @@ public abstract class CopyAttributesNode extends RBaseNode {
 
         putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
 
-        if (result != left) {
+        RSharingAttributeStorage.verify(left);
+        if (result != left || (left instanceof RSharingAttributeStorage && ((RSharingAttributeStorage) left).isTemporary())) {
             RList newDimNames = extractDimNamesNode.execute(left);
             if (hasDimNames.profile(newDimNames != null)) {
                 putDimNames.execute(result.getAttributes(), newDimNames);
