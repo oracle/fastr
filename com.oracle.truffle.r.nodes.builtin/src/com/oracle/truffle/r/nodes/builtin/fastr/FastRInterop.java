@@ -58,6 +58,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -169,7 +170,8 @@ public class FastRInterop {
         protected CallTarget parse(String languageId, String code) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
-            if (languageId != null && env.getLanguages().get(languageId) == null) {
+            LanguageInfo languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
+            if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
                 throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
             }
             Source sourceObject = RSource.fromTextInternalInvisible(code, RSource.Internal.EVAL_WRAPPER, languageId);
@@ -190,7 +192,7 @@ public class FastRInterop {
             try {
                 return foreign2rNode.execute(parseFileAndCall(path, languageId));
             } catch (RuntimeException e) {
-                if (e instanceof TruffleException) {
+                if (e instanceof TruffleException && !(e instanceof RError)) {
                     throw RErrorHandling.handleInteropException(this, e);
                 }
                 throw e;
@@ -221,12 +223,14 @@ public class FastRInterop {
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
             File file = new File(Utils.tildeExpand(path, false));
+            LanguageInfo languageInfo = null;
             try {
                 Env env = RContext.getInstance().getEnv();
                 TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
                 String languageId = languageIdArg;
-                if (languageId != null && env.getLanguages().get(languageId) == null) {
-                    throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
+                languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
+                if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
+                    throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageIdArg);
                 }
                 if (languageId == null) {
                     languageId = Source.findLanguage(tFile);
@@ -240,6 +244,8 @@ public class FastRInterop {
                 if (languageIdArg == null) {
                     String[] tokens = file.getName().split("\\.(?=[^\\.]+$)");
                     throw error(RError.Message.COULD_NOT_FIND_LANGUAGE, tokens[tokens.length - 1], "eval.polyglot");
+                } else if (languageInfo == null || languageInfo.isInternal()) {
+                    throw t;
                 } else {
                     throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
                 }
