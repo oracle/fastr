@@ -462,6 +462,10 @@ public interface StdUpCallsRFFI {
 
     double unif_rand();
 
+    double norm_rand();
+
+    double exp_rand();
+
     Object Rf_classgets(Object x, Object y);
 
     @RFFIUpCallNode(RMakeExternalPtrNode.class)

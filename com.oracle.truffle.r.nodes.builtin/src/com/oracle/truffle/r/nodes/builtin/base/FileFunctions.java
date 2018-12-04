@@ -62,6 +62,7 @@ import java.util.function.BiFunction;
 import java.util.function.BiPredicate;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 import java.util.stream.Stream;
 
 import com.oracle.truffle.api.CompilerDirectives;
@@ -645,7 +646,14 @@ public class FileFunctions {
                         boolean ignoreCase, boolean includeDirsIn, boolean noDotDot) {
             boolean includeDirs = !recursive || includeDirsIn;
             int flags = ignoreCase ? Pattern.CASE_INSENSITIVE : 0;
-            Pattern pattern = patternString == null ? null : Pattern.compile(patternString, flags);
+            Pattern pattern = null;
+            try {
+                pattern = patternString == null ? null : Pattern.compile(patternString, flags);
+            } catch (PatternSyntaxException e) {
+                // Try to convert the pattern from the wildcard syntax to regexp
+                String regexpPatternString = Utils.wildcardToRegex(patternString);
+                pattern = Pattern.compile(regexpPatternString, flags);
+            }
             // Curiously the result is not a vector of same length as the input,
             // as typical for R, but a single vector, which means duplicates may occur
             ArrayList<String> files = new ArrayList<>();

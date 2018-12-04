@@ -59,4 +59,11 @@ public class TestBuiltin_listfiles extends TestBase {
         // TODO Why does GnuR not require the leading "." when Java does?
         assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\".*.tx\") }");
     }
+
+    @Test
+    public void testFileListingUsingFilePatterns() {
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"*.txt\") }");
+        assertEval("{ list.files(\"test/r/simple/data/tree1\", pattern=\"$$$.txt\") }");
+    }
+
 }
