@@ -179,7 +179,6 @@ d4e7268543efee032a82d9bde312b34c *tests/main.R
 6e8ff5d0e3ffe0bff606a006dcbca24e *tests/testthat/test-S4.R
 19d2c1a56e20560c13418539c56fbe9a *tests/testthat/test-data.frame-like.R
 4304c919f6e28ea84d1ca05708ccaae8 *vignettes/Makefile
-5dcf8be4b810d38fc5d4d0817167b079 *vignettes/css/bootstrap.css
 40824ef7a5e4b01cfeabb26a382fa289 *vignettes/datatable-faq.Rmd
 e9fff1a46fdf96e3572b583bc89e8f86 *vignettes/datatable-intro.Rmd
 3f2980389baaff06c2d6b401b26d71bf *vignettes/datatable-keys-fast-subset.Rmd
