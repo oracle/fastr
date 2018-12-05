@@ -97,7 +97,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -651,6 +650,12 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             return ((RExpression) vec).getDataAt((int) i);
         }
         RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
+        if (list.getLength() == i) {
+            // Some packages abuse that there seems to be no bounds checking and the
+            // one-after-the-last element returns NULL, which they use to find out if they reached
+            // the end of the list...
+            return RNull.instance;
+        }
         return list.getDataAt((int) i);
     }
 
@@ -2414,8 +2419,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object INTEGER(Object x) {
-        // also handles LOGICAL
-        assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
+        // Note: there is no validation in GNU-R and so packages call this with all types of vectors
         return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RVector.class));
     }
 
@@ -2427,9 +2431,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object REAL(Object x) {
-        if ((x instanceof RAbstractStringVector) || (x instanceof RAbstractListBaseVector)) {
-            RFFIUtils.unimplemented("REAL is being called for type " + Utils.getTypeName(x));
-        }
+        // Note: there is no validation in GNU-R and so packages call this with all types of vectors
         return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
     }
 
