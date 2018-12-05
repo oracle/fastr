@@ -267,6 +267,8 @@ public class TestSimpleComparison extends TestBase {
         assertEval(ArithmeticWhiteList.WHITELIST, "{ c(1+1i,2+1i) == c(0/0+1i,2+1i) }");
 
         assertEval(Output.IgnoreErrorContext, "{ m <- matrix(nrow=2, ncol=2, 1:4) ; m == 1:16 }");
+
+        assertEval("{ list(a=\"1\", NULL) == \"bbb\" }");
     }
 
     @Test

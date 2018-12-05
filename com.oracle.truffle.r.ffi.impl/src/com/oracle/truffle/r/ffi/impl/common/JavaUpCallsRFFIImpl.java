@@ -117,6 +117,7 @@ import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nmath.RMath;
+import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -1211,6 +1212,18 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public double unif_rand() {
         return RRNG.unifRand();
+    }
+
+    @Override
+    @TruffleBoundary
+    public double norm_rand() {
+        return RandomNumberProvider.fromCurrentRNG().normRand();
+    }
+
+    @Override
+    @TruffleBoundary
+    public double exp_rand() {
+        return RandomNumberProvider.fromCurrentRNG().expRand();
     }
 
     // Checkstyle: stop method name check
