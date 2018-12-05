@@ -17,7 +17,9 @@ Differences over standard binary search (e.g. bsearch in stdlib.h) :
   o limit the roll distance to a user provided value
 */
 
+#ifndef ENC_KNOWN
 #define ENC_KNOWN(x) (LEVELS(x) & 12)
+#endif
 // 12 = LATIN1_MASK (1<<2) | UTF8_MASK (1<<3)  // Would use these definitions from Defn.h, but that appears to be private to R. Hence 12.
 
 #define EQ 1

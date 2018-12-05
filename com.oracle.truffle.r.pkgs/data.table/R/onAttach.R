@@ -16,7 +16,7 @@
     packageStartupMessage("data.table ", v, if(dev) paste0(" IN DEVELOPMENT built ", d))
     if (dev && (Sys.Date() - as.Date(d))>28)
         packageStartupMessage("**********\nThis development version of data.table was built more than 4 weeks ago. Please update.\n**********")
-    if (!.Call(ChasOpenMP))
+    if (!.Call(ChasOpenMP) && FALSE)
         packageStartupMessage("**********\nThis installation of data.table has not detected OpenMP support. It should still work but in single-threaded mode. If this is a Mac, please ensure you are using R>=3.4.0 and have installed the MacOS binary package from CRAN: see ?install.packages, the 'type=' argument and the 'Binary packages' section. If you compiled from source, please reinstall and precisely follow the installation instructions on the data.table homepage. This warning message should not occur on Windows or Linux. If it does and you've followed the installation instructions on the data.table homepage, please file a GitHub issue.\n**********")
     packageStartupMessage('  The fastest way to learn (by data.table authors): https://www.datacamp.com/courses/data-analysis-the-data-table-way')
     packageStartupMessage('  Documentation: ?data.table, example(data.table) and browseVignettes("data.table")')
