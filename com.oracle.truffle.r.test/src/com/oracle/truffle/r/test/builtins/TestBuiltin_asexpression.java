@@ -50,4 +50,11 @@ public class TestBuiltin_asexpression extends TestBase {
     public void noCopyCheck() {
         assertEvalFastR("{ x <- as.expression(quote(x+2)); .fastr.identity(x) == .fastr.identity(as.expression(x)); }", "[1] TRUE");
     }
+
+    @Test
+    public void fromLanguage() {
+        assertEval("{ as.expression(parse(text='a+b')[[1]]) }");
+        assertEval("{ as.expression(parse(text='a+b+c')[[1]]) }");
+    }
+
 }
