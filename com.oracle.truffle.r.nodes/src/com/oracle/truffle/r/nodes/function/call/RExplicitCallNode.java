@@ -32,10 +32,10 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.RCallBaseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
+import com.oracle.truffle.r.nodes.function.RCallNode.ExplicitArgs;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 
@@ -55,11 +55,7 @@ public abstract class RExplicitCallNode extends Node {
     public abstract Object execute(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller explicitCaller, Object callerFrame);
 
     private final RFrameSlot argsIdentifier = RFrameSlot.createTemp(true);
-    private final RFrameSlot callerIdentifier = RFrameSlot.createTemp(true);
-    private final RFrameSlot callerFrameIdentifier = RFrameSlot.createTemp(true);
     @CompilationFinal private FrameSlot argsFrameSlot;
-    @CompilationFinal private FrameSlot callerFrameSlot;
-    @CompilationFinal private FrameSlot callerFrameFrameSlot;
 
     @Specialization
     protected Object doCall(VirtualFrame frame, RFunction function, RArgsValuesAndNames args, RCaller caller, Object callerFrame,
@@ -68,27 +64,15 @@ public abstract class RExplicitCallNode extends Node {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             argsFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), argsIdentifier, FrameSlotKind.Object);
         }
-        if (callerFrameSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callerFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), callerIdentifier, FrameSlotKind.Object);
-        }
-        if (callerFrameFrameSlot == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            callerFrameFrameSlot = FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), callerFrameIdentifier, FrameSlotKind.Object);
-        }
         try {
-            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, args);
-            FrameSlotChangeMonitor.setObject(frame, callerFrameSlot, caller == null ? RNull.instance : caller);
-            FrameSlotChangeMonitor.setObject(frame, callerFrameFrameSlot, callerFrame == null ? RNull.instance : callerFrame);
+            FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, new ExplicitArgs(args, caller, callerFrame));
             return call.execute(frame, function);
         } finally {
             FrameSlotChangeMonitor.setObject(frame, argsFrameSlot, null);
-            FrameSlotChangeMonitor.setObject(frame, callerFrameSlot, null);
-            FrameSlotChangeMonitor.setObject(frame, callerFrameFrameSlot, null);
         }
     }
 
     protected RCallBaseNode createExplicitCall() {
-        return RCallNode.createExplicitCall(argsIdentifier, callerIdentifier, callerFrameIdentifier);
+        return RCallNode.createExplicitCall(argsIdentifier);
     }
 }
