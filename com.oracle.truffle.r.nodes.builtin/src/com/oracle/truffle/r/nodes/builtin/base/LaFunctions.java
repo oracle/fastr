@@ -789,7 +789,7 @@ public class LaFunctions {
             } else {
                 avals = aDouble.getDataCopy();
             }
-            int info = dgesvNode.execute(n, p, aDouble.getDataCopy(), n, ipiv, bData, n);
+            int info = dgesvNode.execute(n, p, avals, n, ipiv, bData, n);
             if (info < 0) {
                 throw error(Message.LAPACK_INVALID_VALUE, -info, "dgesv");
             }
