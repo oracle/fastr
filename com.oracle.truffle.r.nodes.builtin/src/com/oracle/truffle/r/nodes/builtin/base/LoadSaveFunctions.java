@@ -30,7 +30,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.IO;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -46,6 +45,7 @@ import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
@@ -141,8 +141,7 @@ public class LoadSaveFunctions {
         @Specialization
         @TruffleBoundary
         protected RStringVector load(String pathIn, @SuppressWarnings("unused") REnvironment envir) {
-            String path = Utils.tildeExpand(pathIn);
-            try (BufferedInputStream bs = new BufferedInputStream(new FileInputStream(path))) {
+            try (BufferedInputStream bs = new BufferedInputStream(RContext.getInstance().getEnv().getTruffleFile(Utils.tildeExpand(pathIn)).newInputStream())) {
                 int magic = readMagic(bs);
                 switch (magic) {
                     case R_MAGIC_EMPTY:

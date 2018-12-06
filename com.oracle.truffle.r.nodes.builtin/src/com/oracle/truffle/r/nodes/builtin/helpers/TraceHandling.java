@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.builtin.helpers;
 
-import java.io.FileWriter;
 import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -46,6 +45,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import java.io.Writer;
 
 /**
  * Handles everything related to the R {@code .PrimTrace and .fastr.trace} functionality.
@@ -280,11 +280,11 @@ public class TraceHandling {
     }
 
     private static class FileOutputHandler extends OutputHandler {
-        private FileWriter fileWriter;
+        private Writer fileWriter;
 
         FileOutputHandler() {
             try {
-                fileWriter = new FileWriter("fastr_tracecalls.log");
+                fileWriter = RContext.getInstance().getEnv().getTruffleFile("fastr_tracecalls.log").newBufferedWriter();
             } catch (IOException e) {
                 RSuicide.rSuicide("failed to open 'fastr_tracecalls.log'" + e.getMessage());
             }

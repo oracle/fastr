@@ -25,20 +25,20 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 
 import java.io.BufferedOutputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import java.nio.file.StandardOpenOption;
 
 public class ToolsText {
 
@@ -101,15 +101,17 @@ public class ToolsText {
             int n2 = file2.getLength();
             byte[] data = new byte[n2];
             if (!RRuntime.isNA(file1)) {
-                try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
+                Env env = RContext.getInstance().getEnv();
+                TruffleFile tFile1 = env.getTruffleFile(file1);
+                try (BufferedOutputStream out = new BufferedOutputStream(tFile1.newOutputStream(StandardOpenOption.APPEND))) {
                     for (int i = 0; i < file2.getLength(); i++) {
                         String file2e = file2.getDataAt(i);
                         if (RRuntime.isNA(file2e)) {
                             continue;
                         }
-                        Path path2 = FileSystems.getDefault().getPath(file2e);
+                        TruffleFile tFile2 = env.getTruffleFile(file2e);
                         try {
-                            byte[] path2Data = Files.readAllBytes(path2);
+                            byte[] path2Data = tFile2.readAllBytes();
                             byte[] header = ("#line 1 \"" + file2e + "\"\n").getBytes();
                             out.write(header);
                             out.write(path2Data);

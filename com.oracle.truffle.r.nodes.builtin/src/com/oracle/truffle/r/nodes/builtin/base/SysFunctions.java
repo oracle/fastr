@@ -314,7 +314,7 @@ public class SysFunctions {
                 if (path.length() == 0 || RRuntime.isNA(path)) {
                     continue;
                 }
-                int result = FileSystemUtils.chmod(path, octmode.getDataAt(i % octmode.getLength()));
+                int result = FileSystemUtils.chmod(RContext.getInstance().getEnv().getTruffleFile(path), octmode.getDataAt(i % octmode.getLength()));
                 data[i] = RRuntime.asLogical(result == 0);
             }
             return RDataFactory.createLogicalVector(data, RDataFactory.COMPLETE_VECTOR);

@@ -32,7 +32,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 
@@ -222,11 +221,10 @@ public class FastRInterop {
 
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
-            File file = new File(Utils.tildeExpand(path, false));
+            Env env = RContext.getInstance().getEnv();
+            TruffleFile tFile = env.getTruffleFile(Utils.tildeExpand(path, false)).getAbsoluteFile();
             LanguageInfo languageInfo = null;
             try {
-                Env env = RContext.getInstance().getEnv();
-                TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
                 String languageId = languageIdArg;
                 languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
                 if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
@@ -235,14 +233,14 @@ public class FastRInterop {
                 if (languageId == null) {
                     languageId = Source.findLanguage(tFile);
                 }
-                SourceBuilder sourceBuilder = Source.newBuilder(languageId, tFile).name(file.getName());
+                SourceBuilder sourceBuilder = Source.newBuilder(languageId, tFile).name(tFile.getName());
                 Source sourceObject = sourceBuilder.build();
                 return env.parse(sourceObject);
             } catch (IOException e) {
                 throw error(RError.Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {
                 if (languageIdArg == null) {
-                    String[] tokens = file.getName().split("\\.(?=[^\\.]+$)");
+                    String[] tokens = tFile.getName().split("\\.(?=[^\\.]+$)");
                     throw error(RError.Message.COULD_NOT_FIND_LANGUAGE, tokens[tokens.length - 1], "eval.polyglot");
                 } else if (languageInfo == null || languageInfo.isInternal()) {
                     throw t;

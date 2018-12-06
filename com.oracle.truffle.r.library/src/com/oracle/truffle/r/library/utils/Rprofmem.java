@@ -26,7 +26,6 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.doubleValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.PrintStream;
 
@@ -48,6 +47,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.RprofState;
+import java.nio.file.StandardOpenOption;
 
 public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
 
@@ -73,7 +73,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
             }
             boolean append = RRuntime.fromLogical(appendL);
             try {
-                PrintStream out = new PrintStream(new FileOutputStream(filename, append));
+                PrintStream out = new PrintStream(RContext.getInstance().getEnv().getTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
                 RDataFactory.addListener(LISTENER);
             } catch (IOException ex) {
