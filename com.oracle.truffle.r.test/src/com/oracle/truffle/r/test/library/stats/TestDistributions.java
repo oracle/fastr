@@ -127,6 +127,7 @@ public class TestDistributions extends TestBase {
                     addErrorParamValues("-1").
                     test("20, 0.3", withDefaultQ("1", "2", "10", "20", "21")).
                     test("10000, 0.01", withQuantiles("1", "10", "100", "500", "900", "1000")).
+                    test("382403676160, 2.2226668680885774867e-19", withQuantiles("-1.8239023575061796834e-06")).
                     // non-probability value is error for the second parameter
                     test("10, -0.1", withQuantiles("2")).
                     test("10, 5", withQuantiles("2")),

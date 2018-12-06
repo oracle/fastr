@@ -66,12 +66,17 @@ public final class DPois implements Function2_1 {
             return (x == 0) ? rd1(giveLog) : rd0(giveLog);
         }
         if (!RRuntime.isFinite(lambda)) {
+            // including for the case where x = lambda = +Inf
             return rd0(giveLog);
         }
         if (x < 0) {
             return rd0(giveLog);
         }
         if (x <= lambda * DBL_MIN) {
+            if (!RRuntime.isFinite(x)) {
+                // lambda < x = +Inf
+                return rd0(giveLog);
+            }
             return (rdexp(-lambda, giveLog));
         }
         if (lambda < x * DBL_MIN) {

@@ -129,7 +129,7 @@ public final class Qbinom implements Function3_2 {
         /* fuzz to ensure left continuity: */
         p *= 1 - 64 * RRuntime.EPSILON;
 
-        QuantileSearch search = new QuantileSearch(n, (quantile, lt, lp) -> pbinom.evaluate(quantile, n, pr, lt, lp));
+        QuantileSearch search = new QuantileSearch(n, (quantile, lt, lp) -> pbinom.evaluate(quantile, n, pr, lt, lp), true);
         if (smallNProfile.profile(n < 1e5)) {
             return search.simpleSearch(y, p, 1);
         } else {
