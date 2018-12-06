@@ -714,7 +714,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ e <- quote(f(x=a, y=b)); names(e[-1]) }");
 
         assertEval("{ x<-quote(function(x, y) 42); x[[2]] }");
-        assertEval(Ignored.NewRVersionMigration, "{ x<-quote(function(x, y) 42); x[2] }");
+        assertEval("{ x<-quote(function(x, y) 42); x[2] }");
         assertEval("{ x<-quote(function(x, y) 42); x[NA] }");
         assertEval("{ x<-quote(function(x, y) 42); x[NaN] }");
         assertEval("{ x<-quote(function(x, y) 42); typeof(x[[2]][[1]]) }");
@@ -1916,7 +1916,7 @@ public class TestSimpleVectors extends TestBase {
         assertEval("{ b <- 1:3 ; dim(b) <- c(1,3) ;  b[integer()] <- 3:5 ; b }");
 
         // lazy evaluation...
-        assertEval(Ignored.NewRVersionMigration, "{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
+        assertEval("{ x<-1:5 ; x[x[4]<-2] <- (x[4]<-100) ; x }");
         assertEval("{ x<-5:1 ; x[x[2]<-2] }");
 
         /*
