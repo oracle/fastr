@@ -5,6 +5,7 @@ Bug fixes:
 * internal error in `mapply` with empty arguments list
 * `comment` and `comment<-` work with S4 objects
 * `iconvlist()` was failing on argument error
+* `range` works properly with lists
 
 # 1.0 RC 10
 

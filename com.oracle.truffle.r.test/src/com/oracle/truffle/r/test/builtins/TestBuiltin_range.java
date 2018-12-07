@@ -196,4 +196,11 @@ public class TestBuiltin_range extends TestBase {
         assertEval(template("range(c('a', 'b', 'c')%0)", OPTIONAL_ARGS));
         assertEval(template("range(c('1', '2', '3')%0)", OPTIONAL_ARGS));
     }
+
+    @Test
+    public void testRangeCornerCases() {
+        assertEval("range(list(1,2,3,6))");
+        assertEval("range(list(1,2,3,6), 44, 1)");
+        assertEval("range(list(1,2,3,'a'), 44, 'zz')");
+    }
 }

@@ -349,6 +349,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
                 resultFunction = result.function;
             } else {
+                // We always call the builtin even if there is "xyz.default" function.
+                // This means that the builtin can implement a fast-path of the "default" function
+                // for class-less dispatch argument values
+                // Note: e.g., "range" relies on this
                 s3Args = null;
                 resultFunction = function;
             }
