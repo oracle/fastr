@@ -51,6 +51,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
@@ -59,7 +60,7 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
 
     static {
         Casts casts = new Casts(IConv.class);
-        casts.arg("x").mustBe(stringValue(), RError.Message.NOT_CHARACTER_VECTOR, "x");
+        casts.arg("x").allowNull().mustBe(stringValue(), RError.Message.NOT_CHARACTER_VECTOR, "x");
         // with default error message, NO_CALLER does not work
         casts.arg("from").defaultError(RError.Message.INVALID_ARGUMENT, "from").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
         casts.arg("to").defaultError(RError.Message.INVALID_ARGUMENT, "to").mustBe(stringValue()).asStringVector().mustBe(size(1)).findFirst();
@@ -67,6 +68,18 @@ public abstract class IConv extends RBuiltinNode.Arg6 {
         casts.arg("mark").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
         casts.arg("toRaw").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
 
+    }
+
+    @Specialization
+    protected Object listLocales(@SuppressWarnings("unused") RNull value, @SuppressWarnings("unused") String from, @SuppressWarnings("unused") String to, @SuppressWarnings("unused") String sub,
+                    @SuppressWarnings("unused") boolean mark, @SuppressWarnings("unused") boolean toRaw) {
+        // GNU-R internally abuses this builtin to also list locales, this does not seem to be
+        // documented, but is used from "listiconv".
+        // NOTE: for this case GNU-R would not validate the remaining arguments, hopefully no-one is
+        // relying on that...
+        // TODO: GNU-R has code that creates the list #ifdef HAVE_ICONVLIST, otherwise it also
+        // returns NULL
+        return RNull.instance;
     }
 
     @Specialization
