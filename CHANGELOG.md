@@ -1,3 +1,10 @@
+# 1.0 RC 11
+
+Bug fixes:
+
+* internal error in `mapply` with empty arguments list
+* `comment` and `comment<-` work with S4 objects
+
 # 1.0 RC 10
 
 New features:

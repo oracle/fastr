@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
@@ -34,7 +35,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 @RBuiltin(name = "comment", kind = INTERNAL, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Comment extends RBuiltinNode.Arg1 {
@@ -49,10 +50,10 @@ public abstract class Comment extends RBuiltinNode.Arg1 {
     }
 
     @Specialization
-    protected Object dim(RAbstractContainer container,
+    protected Object dim(RSharingAttributeStorage x,
                     @Cached("createBinaryProfile()") ConditionProfile hasCommentProfile,
                     @Cached("createGetCommentAttrNode()") GetFixedAttributeNode getCommentAttrNode) {
-        Object commentAttr = getCommentAttrNode.execute(container);
+        Object commentAttr = getCommentAttrNode.execute(x);
         if (hasCommentProfile.profile(commentAttr != null)) {
             return commentAttr;
         } else {
@@ -60,8 +61,9 @@ public abstract class Comment extends RBuiltinNode.Arg1 {
         }
     }
 
-    @Specialization(guards = "!isRAbstractContainer(vector)")
+    @Fallback
     protected RNull dim(@SuppressWarnings("unused") Object vector) {
+        RSharingAttributeStorage.verify(vector);
         return RNull.instance;
     }
 }
