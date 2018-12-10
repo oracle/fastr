@@ -39,18 +39,25 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.ops.BinaryArithmetic;
 
 @RBuiltin(name = "range", kind = PRIMITIVE, parameterNames = {"...", "na.rm", "finite"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE)
 public abstract class Range extends RBuiltinNode.Arg3 {
 
+    /*
+     * Note: the GNU-R implementation forces promises and then just calls range.default. It seems
+     * safe to implement our version of range.default here, as the RCallNode would itself dispatch
+     * to "range.default" if the dispatching object has some class and otherwise to the builtin.
+     * This means that if there is a chance that "c", "max" and other primitives used in
+     * "range.default" would dispatch to some crazy S3 overloads, the control flow should not reach
+     * to this builtin anyway.
+     */
+
     private static final ReduceSemantics minSemantics = new ReduceSemantics(RRuntime.INT_MAX_VALUE, Double.POSITIVE_INFINITY, false, RError.Message.NO_NONMISSING_MIN,
                     RError.Message.NO_NONMISSING_MIN_NA, null, false, true, true);
     private static final ReduceSemantics maxSemantics = new ReduceSemantics(RRuntime.INT_MIN_VALUE, Double.NEGATIVE_INFINITY, false, RError.Message.NO_NONMISSING_MAX,
                     RError.Message.NO_NONMISSING_MAX_NA, null, false, true, true);
-
-    @Child private UnaryArithmeticReduceNode minReduce = UnaryArithmeticReduceNodeGen.create(minSemantics, BinaryArithmetic.MIN);
-    @Child private UnaryArithmeticReduceNode maxReduce = UnaryArithmeticReduceNodeGen.create(maxSemantics, BinaryArithmetic.MAX);
 
     static {
         Casts casts = new Casts(Range.class);
@@ -63,10 +70,23 @@ public abstract class Range extends RBuiltinNode.Arg3 {
         return new Object[]{RArgsValuesAndNames.EMPTY, RRuntime.LOGICAL_FALSE, RRuntime.LOGICAL_FALSE};
     }
 
-    @Specialization(guards = "args.getLength() == 1")
-    protected RVector<?> rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite) {
+    @Specialization(guards = {"args.getLength() == 1", "isAtomicVector(args.getArgument(0))"})
+    protected RVector<?> rangeLengthOne(RArgsValuesAndNames args, boolean naRm, boolean finite,
+                    @Cached("createMinReduce()") UnaryArithmeticReduceNode minReduce,
+                    @Cached("createMaxReduce()") UnaryArithmeticReduceNode maxReduce) {
         Object min = minReduce.executeReduce(args.getArgument(0), naRm || finite, finite);
         Object max = maxReduce.executeReduce(args.getArgument(0), naRm || finite, finite);
+        return createResult(min, max);
+    }
+
+    @Specialization(replaces = "rangeLengthOne")
+    protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite,
+                    @Cached("createMinReduce()") UnaryArithmeticReduceNode minReduce,
+                    @Cached("createMaxReduce()") UnaryArithmeticReduceNode maxReduce,
+                    @Cached("create()") Combine combine) {
+        Object combined = combine.executeCombine(args, true);
+        Object min = minReduce.executeReduce(combined, naRm || finite, finite);
+        Object max = maxReduce.executeReduce(combined, naRm || finite, finite);
         return createResult(min, max);
     }
 
@@ -80,12 +100,15 @@ public abstract class Range extends RBuiltinNode.Arg3 {
         }
     }
 
-    @Specialization(replaces = "rangeLengthOne")
-    protected RVector<?> range(RArgsValuesAndNames args, boolean naRm, boolean finite,
-                    @Cached("create()") Combine combine) {
-        Object combined = combine.executeCombine(args, false);
-        Object min = minReduce.executeReduce(combined, naRm || finite, finite);
-        Object max = maxReduce.executeReduce(combined, naRm || finite, finite);
-        return createResult(min, max);
+    protected static boolean isAtomicVector(Object vec) {
+        return vec instanceof RAbstractAtomicVector;
+    }
+
+    protected UnaryArithmeticReduceNode createMinReduce() {
+        return UnaryArithmeticReduceNodeGen.create(minSemantics, BinaryArithmetic.MIN);
+    }
+
+    protected UnaryArithmeticReduceNode createMaxReduce() {
+        return UnaryArithmeticReduceNodeGen.create(maxSemantics, BinaryArithmetic.MAX);
     }
 }

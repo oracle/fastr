@@ -46,4 +46,9 @@ public class TestBuiltin_comment extends TestBase {
     public void testcomment4() {
         assertEval("argv <- list(structure(1:12, .Dim = 3:4, comment = c('This is my very important data from experiment #0234', 'Jun 5, 1998'))); .Internal(comment(argv[[1]]))");
     }
+
+    @Test
+    public void testCommentS4() {
+        assertEval("{ setClass('CommentS4Test', representation(f='numeric')); x <- new('CommentS4Test'); attr(x, 'comment') <- 'comment ABC'; comment(x); }");
+    }
 }

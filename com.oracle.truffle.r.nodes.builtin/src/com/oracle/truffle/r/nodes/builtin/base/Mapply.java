@@ -175,7 +175,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
 
         @ExplodeLoop
         private static int getDotsLengths(RAbstractListVector dots, int dotsLength, ElementNode[] cachedElementNodeArray, int[] lengths) {
-            int maxLength = -1;
+            int maxLength = 0;
             for (int i = 0; i < dotsLength; i++) {
                 int length = cachedElementNodeArray[i].lengthNode.executeInteger(dots.getDataAt(i));
                 if (length > maxLength) {
@@ -200,7 +200,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
             int dotsLength = dots.getLength();
             int moreArgsLength = moreArgs.getLength();
             int[] lengths = new int[dotsLength];
-            int maxLength = -1;
+            int maxLength = 0;
             for (int i = 0; i < dotsLength; i++) {
                 int length = lengthNode.executeInteger(dots.getDataAt(i));
                 if (length > maxLength) {
