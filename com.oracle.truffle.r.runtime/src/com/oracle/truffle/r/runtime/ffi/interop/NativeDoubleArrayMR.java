@@ -53,6 +53,26 @@ public class NativeDoubleArrayMR {
             receiver.write((int) index, value);
             return value;
         }
+
+        protected double access(NativeDoubleArray receiver, int index, int value) {
+            receiver.write(index, value);
+            return value;
+        }
+
+        protected double access(NativeDoubleArray receiver, long index, int value) {
+            receiver.write((int) index, value);
+            return value;
+        }
+
+        protected double access(NativeDoubleArray receiver, int index, long value) {
+            receiver.write(index, value);
+            return value;
+        }
+
+        protected double access(NativeDoubleArray receiver, long index, long value) {
+            receiver.write((int) index, value);
+            return value;
+        }
     }
 
     @Resolve(message = "TO_NATIVE")
