@@ -124,10 +124,9 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     }
 
     @Override
-    public void setDataAt(Object store, int index, Object valueArg) {
-        assert valueArg != null : "lists must not contain nulls";
-        Object value = valueArg;
-        assert store == getInternalStore();
+    public void setDataAt(Object store, int index, Object value) {
+        assert value != null : "lists must not contain nulls";
+        assert isNativized() || store == getInternalStore();
         NativeDataAccess.setData(this, ((Object[]) store), index, value);
     }
 
