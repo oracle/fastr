@@ -28,14 +28,12 @@ import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
-import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -48,6 +46,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -55,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
+import java.io.Writer;
 
 /**
  * Outputs the deparsed source for functions in one or more loaded packages to the
@@ -154,8 +154,8 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
     private void saveSource(String pkg, String fname, String deparseResult) {
         RSerialize.setSaveDeparse(false);
         try {
-            Path target = targetPath(pkg, fname);
-            try (FileWriter wr = new FileWriter(target.toFile())) {
+            TruffleFile target = targetPath(pkg, fname);
+            try (Writer wr = target.newBufferedWriter()) {
                 wr.write(deparseResult);
             }
         } catch (IOException ex) {
@@ -173,15 +173,13 @@ public abstract class FastRPkgSource extends RBuiltinNode.Arg2 {
         return result;
     }
 
-    private static Path targetPath(String pkg, String fnameArg) throws IOException {
-        Path targetDir = dirPath().resolve(pkg);
-        Files.createDirectories(targetDir);
+    private static TruffleFile targetPath(String pkg, String fnameArg) throws IOException {
+        Env env = RContext.getInstance().getEnv();
+        TruffleFile targetDir = env.getTruffleFile(REnvVars.rHome()).resolve(PKGSOURCE_PROJECT).resolve(pkg);
+        targetDir.createDirectories();
         String fname = mungeName(fnameArg);
-        Path target = targetDir.resolve(fname + ".R");
+        TruffleFile target = targetDir.resolve(fname + ".R");
         return target;
     }
 
-    private static Path dirPath() {
-        return FileSystems.getDefault().getPath(REnvVars.rHome(), PKGSOURCE_PROJECT);
-    }
 }

@@ -23,11 +23,9 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.nio.file.FileSystem;
 import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -41,6 +39,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleRuntime;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -195,36 +194,29 @@ public final class Utils {
          * The initial working directory on startup. This and {@link #current} are always absolute
          * paths.
          */
-        private FileSystem fileSystem;
         private final String initial;
         private String current;
-        private Path currentPath;
+        private TruffleFile currentPath;
 
         private WorkingDirectoryState() {
-            if (fileSystem == null) {
-                fileSystem = FileSystems.getDefault();
-            }
             initial = System.getProperty("user.dir");
             current = initial;
-            currentPath = fileSystem.getPath(initial);
+            currentPath = RContext.getInstance().getEnv().getTruffleFile(initial);
         }
 
-        private Path getCurrentPath() {
+        private TruffleFile getCurrentPath() {
             return currentPath;
         }
 
         private void setCurrent(String path) {
             current = path;
-            currentPath = fileSystem.getPath(path);
+            currentPath = RContext.getInstance().getEnv().getTruffleFile(path);
         }
 
         private boolean isInitial() {
             return current.equals(initial);
         }
 
-        private FileSystem getFileSystem() {
-            return fileSystem;
-        }
     }
 
     /**
@@ -245,11 +237,14 @@ public final class Utils {
     }
 
     /**
-     * Returns a {@link Path} for a log file with base name {@code fileNamePrefix}, adding '_pid'
-     * and process-id and '.log' and taking into account whether the system is running in embedded
-     * mode. In the latter case, we can't assume that the cwd is writable so '/tmp' is attempted.
-     * For regular mode dirs are attempted in this order: cwd, user's home, '/tmp', rHome. If none
-     * of the dirs is writable null is returned.
+     * Returns a path for a log file with base name {@code fileNamePrefix}, adding '_pid' and
+     * process-id and '.log' and taking into account whether the system is running in embedded mode.
+     * In the latter case, we can't assume that the cwd is writable so '/tmp' is attempted. For
+     * regular mode dirs are attempted in this order: cwd, user's home, '/tmp', rHome. If none of
+     * the dirs is writable null is returned. <br/>
+     * Currently {@link Path} object is returned since {@link RContext} instance (in order to obtain
+     * a {@link TruffleFile} instance) might be uninitialized at time when log writing would be
+     * needed.
      */
     public static Path getLogPath(String fileNamePrefix) {
         String tmpDir = robustGetProperty("java.io.tmpdir");
@@ -340,20 +335,20 @@ public final class Utils {
                  * support in Java as much of it works relative to the initial setting.
                  */
                 if (path.length() == 0) {
-                    return keepRelative ? path : wdState().getCurrentPath().toString();
+                    return keepRelative ? path : wdState().getCurrentPath().getPath();
                 } else {
-                    Path p = wdState().getFileSystem().getPath(path);
+                    TruffleFile p = RContext.getInstance().getEnv().getTruffleFile(path);
                     if (p.isAbsolute()) {
                         return path;
                     } else {
-                        Path currentPath = wdState().getCurrentPath();
-                        Path truePath = currentPath.resolve(p);
+                        TruffleFile currentPath = wdState().getCurrentPath();
+                        TruffleFile truePath = currentPath.resolve(p.getPath());
                         if (keepRelative) {
                             // relativize it (it was relative to start with)
                             if (".".equals(path) || "..".equals(path)) {
                                 return path;
                             } else {
-                                return currentPath.relativize(truePath).toString();
+                                return currentPath.relativize(truePath).getPath();
                             }
                         } else {
                             return truePath.toString();
@@ -789,8 +784,8 @@ public final class Utils {
     }
 
     private static boolean isWriteableDirectory(String path) {
-        File f = new File(path);
-        return f.exists() && f.isDirectory() && f.canWrite();
+        TruffleFile f = RContext.getInstance().getEnv().getTruffleFile(path);
+        return f.exists() && f.isDirectory() && f.isWritable();
     }
 
     public static String getUserTempDir() {
@@ -822,4 +817,43 @@ public final class Utils {
     public static int getPid() {
         return (int) BaseRFFI.GetpidRootNode.create().getCallTarget().call();
     }
+
+    public static String wildcardToRegex(String wildcard) {
+        StringBuffer s = new StringBuffer(wildcard.length());
+        s.append('^');
+        for (int i = 0, is = wildcard.length(); i < is; i++) {
+            char c = wildcard.charAt(i);
+            switch (c) {
+                case '*':
+                    s.append(".*");
+                    break;
+                case '?':
+                    s.append(".");
+                    break;
+                case '^': // escape character in cmd.exe
+                    s.append("\\");
+                    break;
+                // escape special regexp-characters
+                case '(':
+                case ')':
+                case '[':
+                case ']':
+                case '$':
+                case '.':
+                case '{':
+                case '}':
+                case '|':
+                case '\\':
+                    s.append("\\");
+                    s.append(c);
+                    break;
+                default:
+                    s.append(c);
+                    break;
+            }
+        }
+        s.append('$');
+        return (s.toString());
+    }
+
 }

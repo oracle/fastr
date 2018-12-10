@@ -25,19 +25,20 @@ package com.oracle.truffle.r.library.tools;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 
 import java.io.BufferedInputStream;
-import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
@@ -59,15 +60,16 @@ public abstract class Rmd5 extends RExternalBuiltinNode.Arg1 {
         } catch (NoSuchAlgorithmException ex) {
             throw RInternalError.shouldNotReachHere("no MD5");
         }
+        Env env = RContext.getInstance().getEnv();
         String[] data = new String[files.getLength()];
         for (int i = 0; i < data.length; i++) {
-            File file = new File(files.getDataAt(i));
+            TruffleFile file = env.getTruffleFile(files.getDataAt(i));
             String dataValue = RRuntime.STRING_NA;
-            if (!(file.exists() && file.canRead())) {
+            if (!(file.exists() && file.isReadable())) {
                 complete = false;
             } else {
-                try (BufferedInputStream in = new BufferedInputStream(new FileInputStream(file))) {
-                    byte[] bytes = new byte[(int) file.length()];
+                try (BufferedInputStream in = new BufferedInputStream(file.newInputStream())) {
+                    byte[] bytes = new byte[(int) file.size()];
                     in.read(bytes);
                     dataValue = Utils.toHexString(digest.digest(bytes));
                 } catch (IOException ex) {

@@ -419,6 +419,12 @@ public class ListMR {
         }
 
         @Specialization
+        protected Object write(TruffleObject receiver, long idx, Object valueObj) {
+            // idx + 1 R is indexing from 1
+            return write(receiver, new Object[]{idx + 1}, valueObj);
+        }
+
+        @Specialization
         protected Object write(TruffleObject receiver, String field, Object valueObj) {
             return write(receiver, new Object[]{field}, valueObj);
         }

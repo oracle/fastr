@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.BufferedReader;
-import java.io.File;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URL;
@@ -38,6 +37,7 @@ import java.util.jar.JarFile;
 
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory.Handler;
 import com.oracle.truffle.r.runtime.context.RContext;
+import java.io.File;
 
 /**
  * Default implementation uses the default mechanism in {@code java.lang.Class}.

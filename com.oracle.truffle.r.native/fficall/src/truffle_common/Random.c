@@ -36,11 +36,9 @@ double unif_rand() {
 }
 
 double norm_rand() {
-	unimplemented("norm_rand");
-	return 0;
+	return ((call_norm_rand) callbacks[norm_rand_x])();
 }
 
 double exp_rand() {
-	unimplemented("exp_rand");
-	return 0;
+	return ((call_exp_rand) callbacks[exp_rand_x])();
 }
