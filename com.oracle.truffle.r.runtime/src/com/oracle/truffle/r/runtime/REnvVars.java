@@ -23,14 +23,7 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
 import java.io.IOException;
-import java.nio.file.FileSystem;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.HashMap;
 import java.util.List;
@@ -38,11 +31,14 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RCmdOptions.RCmdOption;
 import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
+import java.nio.file.FileSystems;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.
@@ -71,8 +67,8 @@ public final class REnvVars implements RContext.ContextState {
         // set the standard vars defined by R
         checkRHome();
         // Always read the system file
-        FileSystem fileSystem = FileSystems.getDefault();
-        safeReadEnvironFile(fileSystem.getPath(rHome, "etc", "Renviron").toString());
+        TruffleFile rHomeDir = context.getEnv().getTruffleFile(rHome);
+        safeReadEnvironFile(rHomeDir.resolve("etc").resolve("Renviron").getPath());
 
         String internalArgs = System.getenv("FASTR_INTERNAL_ARGS");
         if (context.getEnv().isHostLookupAllowed()) {
@@ -86,9 +82,9 @@ public final class REnvVars implements RContext.ContextState {
             envVars.put("FASTR_INTERNAL_ARGS", internalArgs);
         }
 
-        envVars.put("R_DOC_DIR", fileSystem.getPath(rHome, "doc").toString());
-        envVars.put("R_INCLUDE_DIR", fileSystem.getPath(rHome, "include").toString());
-        envVars.put("R_SHARE_DIR", fileSystem.getPath(rHome, "share").toString());
+        envVars.put("R_DOC_DIR", rHomeDir.resolve("doc").toString());
+        envVars.put("R_INCLUDE_DIR", rHomeDir.resolve("include").toString());
+        envVars.put("R_SHARE_DIR", rHomeDir.resolve("share").toString());
         String rLibsUserProperty = envVars.get("R_LIBS_USER");
         if (rLibsUserProperty == null) {
             if (isMacOS()) {
@@ -103,20 +99,21 @@ public final class REnvVars implements RContext.ContextState {
         if (!context.getStartParams().noRenviron()) {
             String siteFile = envVars.get("R_ENVIRON");
             if (siteFile == null) {
-                siteFile = fileSystem.getPath(rHome, "etc", "Renviron.site").toString();
+                siteFile = rHomeDir.resolve("etc").resolve("Renviron.site").toString();
             }
-            if (new File(siteFile).exists()) {
+            Env env = context.getEnv();
+            if (env.getTruffleFile(siteFile).exists()) {
                 safeReadEnvironFile(siteFile);
             }
             String userFile = envVars.get("R_ENVIRON_USER");
             if (userFile == null) {
                 String dotRenviron = ".Renviron";
-                userFile = fileSystem.getPath((String) BaseRFFI.GetwdRootNode.create().getCallTarget().call(), dotRenviron).toString();
-                if (!new File(userFile).exists()) {
-                    userFile = fileSystem.getPath(System.getProperty("user.home"), dotRenviron).toString();
+                userFile = env.getTruffleFile((String) BaseRFFI.GetwdRootNode.create().getCallTarget().call()).resolve(dotRenviron).toString();
+                if (!env.getTruffleFile(userFile).exists()) {
+                    userFile = env.getTruffleFile(System.getProperty("user.home")).resolve(dotRenviron).toString();
                 }
             }
-            if (userFile != null && new File(userFile).exists()) {
+            if (userFile != null && env.getTruffleFile(userFile).exists()) {
                 safeReadEnvironFile(userFile);
             }
         }
@@ -225,11 +222,11 @@ public final class REnvVars implements RContext.ContextState {
     public static String rHome() {
         if (rHome == null) {
             rHome = System.getenv(R_HOME);
-            Path rHomePath;
+            TruffleFile rHomePath;
             if (rHome == null) {
                 rHomePath = getRHomePath();
             } else {
-                rHomePath = Paths.get(rHome);
+                rHomePath = RContext.getInstance().getEnv().getTruffleFile(rHome);
             }
             if (!validateRHome(rHomePath, markerFile())) {
                 RSuicide.rSuicide("R_HOME is not set correctly");
@@ -264,34 +261,34 @@ public final class REnvVars implements RContext.ContextState {
      *
      * @return either a valid {@code R_HOME} or {@code null}
      */
-    private static Path getRHomePath() {
-        Path path = Paths.get(codeSource.getLocation().getPath()).getParent();
+    private static TruffleFile getRHomePath() {
+        TruffleFile rHomePath = RContext.getInstance().getEnv().getTruffleFile(codeSource.getLocation().getPath()).getParent();
         String markerFile = markerFile();
-        while (path != null) {
-            if (validateRHome(path, markerFile)) {
-                return path;
+        while (rHomePath != null) {
+            if (validateRHome(rHomePath, markerFile)) {
+                return rHomePath;
             }
-            path = path.getParent();
+            rHomePath = rHomePath.getParent();
         }
-        return path;
+        return rHomePath;
     }
 
     /**
      * Sanity check on the expected structure of an {@code R_HOME}.
      */
     @TruffleBoundary
-    private static boolean validateRHome(Path path, String markerFile) {
-        if (path == null) {
+    private static boolean validateRHome(TruffleFile rHomePath, String markerFile) {
+        if (rHomePath == null) {
             return false;
         }
-        Path etc = path.resolve("etc");
-        Path absMarkerFile = etc.resolve(markerFile);
-        return Files.exists(etc) && Files.isDirectory(etc) && Files.exists(absMarkerFile) && isFastR(absMarkerFile);
+        TruffleFile etc = rHomePath.resolve("etc");
+        TruffleFile absMarkerFile = etc.resolve(markerFile);
+        return etc.exists() && etc.isDirectory() && absMarkerFile.exists() && isFastR(absMarkerFile);
     }
 
-    private static boolean isFastR(Path makeconf) {
+    private static boolean isFastR(TruffleFile makeconf) {
         try {
-            List<String> lines = Files.readAllLines(makeconf);
+            List<String> lines = FileSystemUtils.readAllLines(makeconf);
             for (String line : lines) {
                 if (line.startsWith("CFLAGS")) {
                     return line.contains("-DFASTR");
@@ -334,7 +331,7 @@ public final class REnvVars implements RContext.ContextState {
     }
 
     public void readEnvironFile(String path) throws IOException {
-        try (BufferedReader r = new BufferedReader(new FileReader(path))) {
+        try (BufferedReader r = RContext.getInstance().getEnv().getTruffleFile(path).newBufferedReader()) {
             String line = null;
             while ((line = r.readLine()) != null) {
                 if (line.startsWith("#") || line.length() == 0) {
@@ -363,13 +360,14 @@ public final class REnvVars implements RContext.ContextState {
     public static String getCRANMirror() {
         String cranMirror = System.getenv("CRAN_MIRROR");
         if (cranMirror == null) {
-            Path defCranMirrorPath = Paths.get(REnvVars.rHome()).resolve("etc").resolve("DEFAULT_CRAN_MIRROR");
-            if (!Files.exists(defCranMirrorPath)) {
+            Env env = RContext.getInstance().getEnv();
+            TruffleFile defCranMirror = env.getTruffleFile(REnvVars.rHome()).resolve("etc").resolve("DEFAULT_CRAN_MIRROR");
+            if (!defCranMirror.exists()) {
                 throw RSuicide.rSuicide("Missing etc/DEFAULT_CRAN_MIRROR file");
             }
             List<String> cranMirrors;
             try {
-                cranMirrors = Files.readAllLines(defCranMirrorPath);
+                cranMirrors = FileSystemUtils.readAllLines(defCranMirror);
             } catch (IOException e) {
                 throw RSuicide.rSuicide("Invalid etc/DEFAULT_CRAN_MIRROR file");
             }

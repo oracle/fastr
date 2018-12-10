@@ -24,21 +24,15 @@ package com.oracle.truffle.r.runtime.conn;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
-import java.nio.channels.FileChannel;
 import java.nio.file.OpenOption;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.ArrayList;
 import java.util.EnumSet;
-import java.util.List;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
 
@@ -56,7 +50,12 @@ import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import java.nio.channels.SeekableByteChannel;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Set;
 
 public class FileConnections {
     public static final int GZIP_BUFFER_SIZE = (2 << 20);
@@ -172,13 +171,14 @@ public class FileConnections {
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
-                return new CompressedInputRConnection(base, new GZIPInputStream(new FileInputStream(base.path), GZIP_BUFFER_SIZE));
+                return new CompressedInputRConnection(base, new GZIPInputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newInputStream(), GZIP_BUFFER_SIZE));
             case Append:
             case AppendBinary:
-                return new CompressedOutputRConnection(base, new GZIPOutputStream(new FileOutputStream(base.path, true), GZIP_BUFFER_SIZE), true);
+                return new CompressedOutputRConnection(base,
+                                new GZIPOutputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream(StandardOpenOption.APPEND), GZIP_BUFFER_SIZE), true);
             case Write:
             case WriteBinary:
-                return new CompressedOutputRConnection(base, new GZIPOutputStream(new FileOutputStream(base.path, false), GZIP_BUFFER_SIZE), true);
+                return new CompressedOutputRConnection(base, new GZIPOutputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream(), GZIP_BUFFER_SIZE), true);
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
         }
@@ -189,13 +189,15 @@ public class FileConnections {
         switch (base.getOpenMode().abstractOpenMode) {
             case Read:
             case ReadBinary:
-                return new CompressedInputRConnection(base, new XZInputStream(new FileInputStream(base.path)));
+                return new CompressedInputRConnection(base, new XZInputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newInputStream()));
             case Append:
             case AppendBinary:
-                return new CompressedOutputRConnection(base, new XZOutputStream(new FileOutputStream(base.path, true), new LZMA2Options(), XZ.CHECK_CRC32), false);
+                return new CompressedOutputRConnection(base,
+                                new XZOutputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream(StandardOpenOption.APPEND), new LZMA2Options(), XZ.CHECK_CRC32), false);
             case Write:
             case WriteBinary:
-                return new CompressedOutputRConnection(base, new XZOutputStream(new FileOutputStream(base.path, false), new LZMA2Options(), XZ.CHECK_CRC32), false);
+                return new CompressedOutputRConnection(base, new XZOutputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream(), new LZMA2Options(), XZ.CHECK_CRC32),
+                                false);
             default:
                 throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
         }
@@ -272,11 +274,11 @@ public class FileConnections {
 
     static class FileReadBinaryRConnection extends DelegateReadRConnection {
 
-        private final FileChannel channel;
+        private final SeekableByteChannel channel;
 
         FileReadBinaryRConnection(BasePathRConnection base) throws IOException {
             super(base);
-            channel = FileChannel.open(Paths.get(base.path), StandardOpenOption.READ);
+            channel = RContext.getInstance().getEnv().getTruffleFile(base.path).newByteChannel(Collections.singleton(StandardOpenOption.READ));
         }
 
         @Override
@@ -326,11 +328,11 @@ public class FileConnections {
 
     private static class FileWriteBinaryConnection extends DelegateWriteRConnection {
 
-        private final FileChannel channel;
+        private final SeekableByteChannel channel;
 
         FileWriteBinaryConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base, 0);
-            List<OpenOption> opts = new ArrayList<>();
+            Set<OpenOption> opts = new HashSet<>();
             opts.add(StandardOpenOption.WRITE);
             opts.add(StandardOpenOption.CREATE);
             if (append) {
@@ -338,7 +340,7 @@ public class FileConnections {
             } else {
                 opts.add(StandardOpenOption.TRUNCATE_EXISTING);
             }
-            channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
+            channel = RContext.getInstance().getEnv().getTruffleFile(base.path).newByteChannel(opts);
         }
 
         @Override
@@ -364,18 +366,18 @@ public class FileConnections {
 
     private static class FileReadWriteTextConnection extends DelegateReadWriteRConnection {
 
-        private final FileChannel channel;
+        private final SeekableByteChannel channel;
         private long readOffset;
         private long writeOffset;
         private SeekRWMode lastMode = SeekRWMode.READ;
 
         FileReadWriteTextConnection(BasePathRConnection base, boolean append) throws IOException {
             super(base);
-            List<OpenOption> opts = new ArrayList<>();
+            Set<OpenOption> opts = new HashSet<>();
             opts.add(StandardOpenOption.READ);
             opts.add(StandardOpenOption.WRITE);
             opts.add(StandardOpenOption.CREATE);
-            channel = FileChannel.open(Paths.get(base.path), opts.toArray(new OpenOption[opts.size()]));
+            channel = RContext.getInstance().getEnv().getTruffleFile(base.path).newByteChannel(opts);
             if (append) {
                 writeOffset = channel.size();
             } else {

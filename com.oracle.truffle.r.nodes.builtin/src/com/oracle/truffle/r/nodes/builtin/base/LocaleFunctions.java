@@ -34,13 +34,14 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.nio.charset.Charset;
+import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RLocale;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -127,8 +128,10 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object localeconv() {
-            RError.nyi(this, "localeconv");
-            return RNull.instance;
+            DecimalFormat format = (DecimalFormat) DecimalFormat.getInstance();
+            DecimalFormatSymbols symbols = format.getDecimalFormatSymbols();
+            char sep = symbols.getDecimalSeparator();
+            return RDataFactory.createList(new Object[]{sep}, RDataFactory.createStringVectorFromScalar("decimal_point"));
         }
     }
 

@@ -241,11 +241,38 @@ SEXP char_length(SEXP x) {
 	return ScalarInteger(count);
 }
 
+SEXP shareIntElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	int *xPtr = INTEGER(x);
+	int *yPtr = INTEGER(y);
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
+SEXP shareDoubleElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	double *xPtr = REAL(x);
+	double *yPtr = REAL(y);
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
 SEXP shareStringElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
 	int *xi = INTEGER(xIndex);
 	int *yi = INTEGER(yIndex);
 	SEXP *xPtr = STRING_PTR(x);
 	SEXP *yPtr = STRING_PTR(y);
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
+SEXP shareListElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	SEXP *xPtr = ((SEXP *) DATAPTR(x));
+	SEXP *yPtr = ((SEXP *) DATAPTR(y));
 	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
 	return x;
 }

@@ -38,6 +38,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -131,7 +132,10 @@ public abstract class Drop extends RBuiltinNode.Arg1 {
         // copy dimnames to names if possible
         RList dimNames = getDimNamesNode.getDimNames(x);
         if (noDimNamesProfile.profile(dimNames != null) && nonOneIndex < dimNames.getLength()) {
-            setNamesNode.setNames(result, ensureStringVector(dimNames.getDataAt(nonOneIndex)));
+            Object names = dimNames.getDataAt(nonOneIndex);
+            if (names != RNull.instance) {
+                setNamesNode.setNames(result, ensureStringVector(names));
+            }
         }
 
         return result;
@@ -141,7 +145,7 @@ public abstract class Drop extends RBuiltinNode.Arg1 {
         if (value instanceof RAbstractStringVector) {
             return ((RAbstractStringVector) value).materialize();
         } else {
-            assert value instanceof String : "Drop: expected String or RAbstractStringVector in dimnames";
+            assert value instanceof String : value;
             return RDataFactory.createStringVector(new String[]{(String) value}, true);
         }
     }

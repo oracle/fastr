@@ -55,7 +55,8 @@ public final class RList extends RListBase implements RAbstractListVector {
 
     @Override
     protected RList internalCopy() {
-        return new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null, null);
+        Object[] localData = getDataWithoutCopying();
+        return new RList(Arrays.copyOf(localData, localData.length), getDimensionsInternal(), null, null);
     }
 
     @TruffleBoundary
@@ -67,7 +68,8 @@ public final class RList extends RListBase implements RAbstractListVector {
     protected RList internalDeepCopy() {
         // TOOD: only used for nested list updates, but still could be made faster (through a
         // separate AST node?)
-        RList listCopy = new RList(Arrays.copyOf(data, data.length), getDimensionsInternal(), null, null);
+        Object[] localData = getDataWithoutCopying();
+        RList listCopy = new RList(Arrays.copyOf(localData, localData.length), getDimensionsInternal(), null, null);
         for (int i = 0; i < listCopy.getLength(); i++) {
             Object el = listCopy.getDataAt(i);
             if (el instanceof RVector) {
@@ -85,16 +87,12 @@ public final class RList extends RListBase implements RAbstractListVector {
 
     @Override
     public RList copyWithNewDimensions(int[] newDimensions) {
-        return RDataFactory.createList(data, newDimensions);
+        return RDataFactory.createList(getDataWithoutCopying(), newDimensions);
     }
 
     @Override
     protected RList internalCopyResized(int size, boolean fillNA, int[] dimensions) {
         return RDataFactory.createList(copyResizedData(size, fillNA), dimensions);
-    }
-
-    public long allocateNativeContents() {
-        return NativeDataAccess.allocateNativeContents(this, data);
     }
 
     private static final class FastPathAccess extends FastPathFromListAccess {
@@ -110,12 +108,20 @@ public final class RList extends RListBase implements RAbstractListVector {
 
         @Override
         protected Object getListElementImpl(AccessIterator accessIter, int index) {
-            return ((Object[]) accessIter.getStore())[index];
+            if (hasStore) {
+                return ((Object[]) accessIter.getStore())[index];
+            } else {
+                return NativeDataAccess.getListElementNativeMirrorData(accessIter.getStore(), index);
+            }
         }
 
         @Override
         protected void setListElementImpl(AccessIterator accessIter, int index, Object value) {
-            ((Object[]) accessIter.getStore())[index] = value;
+            if (hasStore) {
+                ((Object[]) accessIter.getStore())[index] = value;
+            } else {
+                NativeDataAccess.setNativeMirrorListData(accessIter.getStore(), index, value);
+            }
         }
     }
 
@@ -132,12 +138,12 @@ public final class RList extends RListBase implements RAbstractListVector {
 
         @Override
         protected Object getListElementImpl(AccessIterator accessIter, int index) {
-            return ((RList) accessIter.getStore()).data[index];
+            return ((RList) accessIter.getStore()).getDataAt(index);
         }
 
         @Override
         protected void setListElementImpl(AccessIterator accessIter, int index, Object value) {
-            ((RList) accessIter.getStore()).data[index] = value;
+            ((RList) accessIter.getStore()).setDataAt(index, value);
         }
     };
 

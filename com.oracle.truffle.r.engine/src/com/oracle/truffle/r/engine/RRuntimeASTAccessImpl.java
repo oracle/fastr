@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.engine;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -433,7 +432,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
                 }
                 try {
-                    in = new FileInputStream(file);
+                    in = RContext.getInstance().getEnv().getTruffleFile(file).newInputStream();
                 } catch (IOException ex) {
                     throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
                 }

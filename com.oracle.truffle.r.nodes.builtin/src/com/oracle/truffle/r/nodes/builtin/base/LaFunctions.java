@@ -789,7 +789,7 @@ public class LaFunctions {
             } else {
                 avals = aDouble.getDataCopy();
             }
-            int info = dgesvNode.execute(n, p, aDouble.getDataCopy(), n, ipiv, bData, n);
+            int info = dgesvNode.execute(n, p, avals, n, ipiv, bData, n);
             if (info < 0) {
                 throw error(Message.LAPACK_INVALID_VALUE, -info, "dgesv");
             }
@@ -815,7 +815,7 @@ public class LaFunctions {
         static {
             Casts casts = new Casts(Svd.class);
             casts.arg("jobu").defaultError(Message.MUST_BE_STRING, "jobu").mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
-            casts.arg("x").mustNotBeNull().mustBe(doubleValue()).asDoubleVectorClosure(true, true, true);
+            casts.arg("x").mustNotBeNull().asDoubleVectorClosure(true, true, true);
             casts.arg("s").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);
             casts.arg("u").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);
             casts.arg("vt").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);

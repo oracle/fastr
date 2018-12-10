@@ -32,7 +32,6 @@ import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.RVisibility.ON;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Array;
 
@@ -58,6 +57,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.DirectCallNode;
+import com.oracle.truffle.api.nodes.LanguageInfo;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -84,6 +84,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropByte;
@@ -168,7 +169,8 @@ public class FastRInterop {
         protected CallTarget parse(String languageId, String code) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
-            if (languageId != null && env.getLanguages().get(languageId) == null) {
+            LanguageInfo languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
+            if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
                 throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
             }
             Source sourceObject = RSource.fromTextInternalInvisible(code, RSource.Internal.EVAL_WRAPPER, languageId);
@@ -189,7 +191,7 @@ public class FastRInterop {
             try {
                 return foreign2rNode.execute(parseFileAndCall(path, languageId));
             } catch (RuntimeException e) {
-                if (e instanceof TruffleException) {
+                if (e instanceof TruffleException && !(e instanceof RError)) {
                     throw RErrorHandling.handleInteropException(this, e);
                 }
                 throw e;
@@ -219,26 +221,29 @@ public class FastRInterop {
 
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
-            File file = new File(Utils.tildeExpand(path, false));
+            Env env = RContext.getInstance().getEnv();
+            TruffleFile tFile = env.getTruffleFile(Utils.tildeExpand(path, false)).getAbsoluteFile();
+            LanguageInfo languageInfo = null;
             try {
-                Env env = RContext.getInstance().getEnv();
-                TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
                 String languageId = languageIdArg;
-                if (languageId != null && env.getLanguages().get(languageId) == null) {
-                    throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
+                languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
+                if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
+                    throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageIdArg);
                 }
                 if (languageId == null) {
                     languageId = Source.findLanguage(tFile);
                 }
-                SourceBuilder sourceBuilder = Source.newBuilder(languageId, tFile).name(file.getName());
+                SourceBuilder sourceBuilder = Source.newBuilder(languageId, tFile).name(tFile.getName());
                 Source sourceObject = sourceBuilder.build();
                 return env.parse(sourceObject);
             } catch (IOException e) {
                 throw error(RError.Message.GENERIC, "Error reading file: " + e.getMessage());
             } catch (Throwable t) {
                 if (languageIdArg == null) {
-                    String[] tokens = file.getName().split("\\.(?=[^\\.]+$)");
+                    String[] tokens = tFile.getName().split("\\.(?=[^\\.]+$)");
                     throw error(RError.Message.COULD_NOT_FIND_LANGUAGE, tokens[tokens.length - 1], "eval.polyglot");
+                } else if (languageInfo == null || languageInfo.isInternal()) {
+                    throw t;
                 } else {
                     throw error(RError.Message.GENERIC, "Error while parsing: " + t.getMessage());
                 }
@@ -957,8 +962,8 @@ public class FastRInterop {
     }
 
     @ImportStatic({Message.class, RRuntime.class})
-    @RBuiltin(name = ".fastr.interop.asVector", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive", "dropDimensions"}, behavior = COMPLEX)
-    public abstract static class AsVector extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = ".fastr.interop.asVector", visibility = ON, kind = PRIMITIVE, parameterNames = {"array", "recursive", "dropDimensions", "charToInt"}, behavior = COMPLEX)
+    public abstract static class AsVector extends RBuiltinNode.Arg4 {
 
         static {
             Casts casts = new Casts(AsVector.class);
@@ -967,15 +972,16 @@ public class FastRInterop {
                             notLogicalNA()).map(Predef.toBoolean());
             casts.arg("dropDimensions").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
                             notLogicalNA()).map(Predef.toBoolean());
+            casts.arg("charToInt").mapMissing(Predef.constant(RRuntime.LOGICAL_FALSE)).mustBe(logicalValue().or(Predef.nullValue())).asLogicalVector().mustBe(singleElement()).findFirst().mustBe(
+                            notLogicalNA()).map(Predef.toBoolean());
         }
 
-        private final ConditionProfile isArrayProfile = ConditionProfile.createBinaryProfile();
-
-        @Specialization(guards = {"isForeignObject(obj)"})
+        @Specialization(guards = {"isForeignObject(obj)", "!charToInt"})
         @TruffleBoundary
-        public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions,
+        public Object asVector(TruffleObject obj, boolean recursive, boolean dropDimensions, @SuppressWarnings("unused") boolean charToInt,
                         @Cached("HAS_SIZE.createNode()") Node hasSize,
-                        @Cached("create()") ConvertForeignObjectNode convertForeign) {
+                        @Cached("create()") ConvertForeignObjectNode convertForeign,
+                        @Cached("createBinaryProfile()") ConditionProfile isArrayProfile) {
             if (isArrayProfile.profile(ForeignAccess.sendHasSize(hasSize, obj))) {
                 return convertForeign.convert(obj, recursive, dropDimensions);
             } else {
@@ -984,9 +990,25 @@ public class FastRInterop {
             }
         }
 
+        @Specialization(guards = {"isForeignObject(obj)", "charToInt"})
+        @TruffleBoundary
+        public Object charToIntVector(TruffleObject obj, @SuppressWarnings("unused") boolean recursive, @SuppressWarnings("unused") boolean dropDimensions,
+                        @SuppressWarnings("unused") boolean charToInt) {
+            // it is up to the caler to ensure that the truffel object is a char array
+            assert isCharArray(RContext.getInstance().getEnv().asHostObject(obj)) : RContext.getInstance().getEnv().asHostObject(obj).getClass().getName();
+            // we also do not care about dims, which have to be evaluated and set by other means
+            return new RForeignIntWrapper(obj);
+        }
+
         @Fallback
-        public Object fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive, @SuppressWarnings("unused") Object dropDimensions) {
+        public Object fallback(@SuppressWarnings("unused") Object obj, @SuppressWarnings("unused") Object recursive, @SuppressWarnings("unused") Object dropDimensions,
+                        @SuppressWarnings("unused") Object charToInt) {
             return RNull.instance;
+        }
+
+        private static boolean isCharArray(Object obj) {
+            return obj.getClass().getName().equals("[C") ||
+                            obj.getClass().getName().equals("[Ljava.lang.Character;");
         }
     }
 

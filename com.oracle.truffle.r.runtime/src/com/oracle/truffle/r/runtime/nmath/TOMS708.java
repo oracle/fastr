@@ -1020,7 +1020,7 @@ public final class TOMS708 {
 
             double r0 = r;
             r = anp1 / bnp1;
-            if (fabs(r - r0) <= eps * r) {
+            if (n >= 10000 && fabs(r - r0) <= eps * r) {
                 break;
             }
 

@@ -212,7 +212,7 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         Object store = result.getInternalStore();
         for (int i = 0; i < source.getLength(); i++) {
             Object value = source.getDataAt(i);
-            if (value == RNull.instance) {
+            if (value == RNull.instance && type != RType.Character) {
                 return null;
             }
             if (type == RType.Character) {

@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.ClosureCache.RNodeClosureCache;
 import com.oracle.truffle.r.runtime.data.ClosureCache.SymbolClosureCache;
@@ -86,6 +87,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @RBuiltin(name = ".fastr.do.call", visibility = CUSTOM, kind = RBuiltinKind.INTERNAL, parameterNames = {"what", "args", "quote", "envir"}, behavior = COMPLEX, splitCaller = true)
 public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSyntaxNodeChildren {
@@ -140,8 +142,6 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         @Child private SetVisibilityNode setVisibilityNode;
         private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
         private final ValueProfile frameProfile = ValueProfile.createClassProfile();
-        private final RNodeClosureCache languagesClosureCache = new RNodeClosureCache();
-        private final SymbolClosureCache symbolsClosureCache = new SymbolClosureCache();
 
         public static DoCallInternal create() {
             return DoCallInternalNodeGen.create();
@@ -162,15 +162,17 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * still reading some values from the frame, e.g. to decide on the dispatching, so it must
          * see the correct frame.
          */
-        @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "getCacheSize(20)")
+        @Specialization(guards = {"getFrameDescriptor(env) == fd"}, limit = "getCacheSize(10)")
         public Object doFastPathInEvalFrame(VirtualFrame virtualFrame, String funcName, RFunction func, RList argsAsList, boolean quote, REnvironment env,
                         @Cached("getFrameDescriptor(env)") @SuppressWarnings("unused") FrameDescriptor fd,
                         @Cached("create()") RExplicitCallNode explicitCallNode,
                         @Cached("create()") GetVisibilityNode getVisibilityNode,
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
+                        @Cached("new()") SymbolClosureCache symbolsClosureCache,
+                        @Cached("new()") RNodeClosureCache languagesClosureCache,
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
-            RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
+            RArgsValuesAndNames args = getArguments(languagesClosureCache, symbolsClosureCache, promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
             RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
             MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
 
@@ -189,7 +191,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         @Cached("createBinaryProfile()") ConditionProfile quoteProfile,
                         @Cached("create()") BranchProfile containsRSymbolProfile) {
             MaterializedFrame promiseFrame = env.getFrame(frameAccessProfile).materialize();
-            RArgsValuesAndNames args = getArguments(promiseFrame, quote, quoteProfile,
+            RArgsValuesAndNames args = getArguments(null, null, promiseFrame, quote, quoteProfile,
                             containsRSymbolProfile, argsAsList);
             RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
             MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
@@ -232,7 +234,7 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             return RCaller.create(RArguments.getDepth(virtualFrame) + 1, RArguments.getCall(envFrame), callerSyntax);
         }
 
-        private RArgsValuesAndNames getArguments(MaterializedFrame promiseFrame, boolean quote, ConditionProfile quoteProfile,
+        private RArgsValuesAndNames getArguments(RNodeClosureCache nodeCache, SymbolClosureCache closureCache, MaterializedFrame promiseFrame, boolean quote, ConditionProfile quoteProfile,
                         BranchProfile containsRSymbolProfile, RList argsAsList) {
             Object[] argValues = argsAsList.getDataCopy();
             if (quoteProfile.profile(!quote)) {
@@ -244,10 +246,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
                         if (symbol.getName().isEmpty()) {
                             argValues[i] = REmpty.instance;
                         } else {
-                            argValues[i] = createLookupPromise(promiseFrame, symbol.getName());
+                            argValues[i] = closureCache == null ? createLookupPromise(promiseFrame, symbol.getName()) : createCachedLookupPromise(closureCache, promiseFrame, symbol.getName());
                         }
                     } else if ((arg instanceof RPairList && ((RPairList) arg).isLanguage())) {
-                        argValues[i] = createLanguagePromise(promiseFrame, (RPairList) arg);
+                        argValues[i] = createLanguagePromise(nodeCache, promiseFrame, (RPairList) arg);
                     }
                 }
             }
@@ -256,13 +258,19 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
         }
 
         @TruffleBoundary
-        private RPromise createLanguagePromise(MaterializedFrame promiseFrame, RPairList arg) {
-            return RDataFactory.createPromise(PromiseState.Supplied, arg.getClosure(languagesClosureCache), promiseFrame);
+        private static RPromise createLanguagePromise(RNodeClosureCache cache, MaterializedFrame promiseFrame, RPairList arg) {
+            return RDataFactory.createPromise(PromiseState.Supplied, arg.getClosure(cache), promiseFrame);
         }
 
         @TruffleBoundary
-        private RPromise createLookupPromise(MaterializedFrame callerFrame, String name) {
-            Closure closure = symbolsClosureCache.getOrCreatePromiseClosure(name);
+        private static RPromise createCachedLookupPromise(SymbolClosureCache cache, MaterializedFrame callerFrame, String name) {
+            Closure closure = cache.getOrCreatePromiseClosure(name);
+            return RDataFactory.createPromise(PromiseState.Supplied, closure, callerFrame);
+        }
+
+        @TruffleBoundary
+        private static RPromise createLookupPromise(MaterializedFrame callerFrame, String name) {
+            Closure closure = Closure.create(name, RContext.getASTBuilder().lookup(RSyntaxNode.SOURCE_UNAVAILABLE, name, false).asRNode());
             return RDataFactory.createPromise(PromiseState.Supplied, closure, callerFrame);
         }
 

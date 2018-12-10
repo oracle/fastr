@@ -346,8 +346,21 @@ bindingIsActive("fred", .GlobalEnv)
 fred
 fred <- 2
 
-# sharing string elements
+# sharing elements in native data
 x <- c("abc")
 y <- c("xyz")
 # x[0] = y[0]
 rffi.shareStringElement(x, 1L, y, 1L) 
+
+l1 <- list(1:2, c("a", "b"))
+l2 <- list(3:4, c("c", "d"))
+rffi.shareListElement(l1, 1L, l2, 1L)
+rffi.shareListElement(l1, 1L, l2, 2L)
+
+i1 <- c(1L, 2L)
+i2 <- c(3L, 4L)
+rffi.shareIntElement(i1, 1L, i2, 2L)
+
+d1 <- c(1, 2)
+d2 <- c(3, 4)
+rffi.shareDoubleElement(d1, 1L, d2, 2L)

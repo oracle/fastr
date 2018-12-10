@@ -47,6 +47,9 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 public abstract class RListBase extends RVector<Object[]> implements RAbstractListBaseVector {
 
+    /**
+     * After nativized, the data array degenerates to a reference holder.
+     */
     protected Object[] data;
 
     RListBase(Object[] data) {
@@ -60,18 +63,33 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
         initDimsNamesDimNames(dims, names, dimNames);
     }
 
+    boolean isNativized() {
+        return NativeDataAccess.isAllocated(this);
+    }
+
     @Override
     public final int getLength() {
-        return data.length;
+        return NativeDataAccess.getDataLength(this, getInternalStore());
     }
 
     @Override
     public void setLength(int l) {
-        if (l != data.length) {
-            Object[] newData = new Object[l];
-            System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
-            fence = 42; // make sure the array is really initialized before we set it to this.data
-            this.data = newData;
+        if (!isNativized()) {
+            if (l != data.length) {
+                try {
+                    Object[] newData = new Object[l];
+                    System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
+                    for (int i = data.length; i < l; i++) {
+                        newData[i] = RNull.instance;
+                    }
+                    NativeDataAccess.setDataLength(this, data, l);
+                } finally {
+                    assert NativeDataAccess.isAllocated(this);
+                    complete = false;
+                }
+            }
+        } else {
+            NativeDataAccess.setDataLength(this, null, l);
         }
     }
 
@@ -87,7 +105,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     @Override
     public Object[] getInternalStore() {
-        return data;
+        return isNativized() ? null : data;
     }
 
     /**
@@ -109,13 +127,13 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     public void setDataAt(Object store, int index, Object valueArg) {
         assert valueArg != null : "lists must not contain nulls";
         Object value = valueArg;
-        assert store == data;
-        ((Object[]) store)[index] = value;
+        assert store == getInternalStore();
+        NativeDataAccess.setData(this, ((Object[]) store), index, value);
     }
 
     @Override
     public Object[] getInternalManagedData() {
-        return data;
+        return getInternalStore();
     }
 
     /**
@@ -124,7 +142,11 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
      */
     @Override
     public final Object[] getReadonlyData() {
-        return data;
+        if (!isNativized()) {
+            return data;
+        } else {
+            return NativeDataAccess.copyListNativeData(getNativeMirror());
+        }
     }
 
     public final Object[] getDataWithoutCopying() {
@@ -133,9 +155,13 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     @Override
     public final Object[] getDataCopy() {
-        Object[] copy = new Object[data.length];
-        System.arraycopy(data, 0, copy, 0, data.length);
-        return copy;
+        if (!isNativized()) {
+            Object[] copy = new Object[data.length];
+            System.arraycopy(data, 0, copy, 0, data.length);
+            return copy;
+        } else {
+            return NativeDataAccess.copyListNativeData(getNativeMirror());
+        }
     }
 
     /**
@@ -145,13 +171,13 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
      */
     @Override
     public final Object getDataAt(int i) {
-        return data[i];
+        return NativeDataAccess.getData(this, getInternalStore(), i);
     }
 
     public final RListBase updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {
         assert !this.isShared() : "data in shared list must not be updated, make a copy";
         assert right != null : "lists must not contain nulls";
-        data[i] = right;
+        NativeDataAccess.setData(this, data, i, right);
         return this;
     }
 
@@ -164,7 +190,7 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     @Override
     public final void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
         RAbstractListVector other = (RAbstractListVector) fromVector;
-        data[toIndex] = other.getDataAt(fromIndex);
+        setDataAt(toIndex, other.getDataAt(fromIndex));
     }
 
     /**
@@ -178,8 +204,9 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
     }
 
     protected final Object[] copyResizedData(int size, boolean fillNA) {
-        Object[] newData = Arrays.copyOf(data, size);
-        return resizeData(newData, this.data, this.getLength(), fillNA);
+        Object[] localData = getReadonlyData();
+        Object[] newData = Arrays.copyOf(localData, size);
+        return resizeData(newData, localData, this.getLength(), fillNA);
     }
 
     private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
@@ -200,6 +227,16 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     @Override
     public final void setElement(int i, Object value) {
-        data[i] = value;
+        setDataAt(i, value);
     }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, getInternalStore(), data.length);
+        } finally {
+            assert NativeDataAccess.isAllocated(this);
+            complete = false;
+        }
+    }
+
 }

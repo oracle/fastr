@@ -2078,4 +2078,22 @@ public class TestBuiltin_operators extends TestBase {
     public void testPrecedence() {
         assertEval("{ 3 %% 2 %in% 1}");
     }
+
+    @Test
+    public void testCopyAttribOnBinaryBoolean() {
+        String[] lhs = {"lhs <- array(FALSE,dim=c(2,3),dimnames=list(c('ly1','ly2'),c('lx1','lx2','lx3')))",
+                        "lhs <- array(FALSE,dim=c(2,3))",
+                        "lhs <- c(FALSE, FALSE)"};
+        String[] rhs = {"rhs <- array(FALSE,dim=c(2,3),dimnames=list(c('ry1','ry2'),c('rx1','rx2','rx3')))",
+                        "rhs <- array(FALSE,dim=c(2,3))",
+                        "rhs <- c(FALSE, FALSE)",
+        };
+        assertEval(template("{ %0; %1; lhs == rhs }", lhs, rhs));
+        assertEval(template("{ %0; %1; as.logical(lhs) == rhs }", lhs, rhs));
+        assertEval(template("{ %0; %1; lhs == as.logical(rhs) }", lhs, rhs));
+
+        assertEval(template("{ %0; %1; temp <- as.logical(lhs); temp == rhs }", lhs, rhs));
+        assertEval(template("{ %0; %1; temp <- as.logical(rhs); lhs == temp }", lhs, rhs));
+    }
+
 }
