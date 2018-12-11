@@ -57,13 +57,13 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     if (!mc.preschedule) {              # sequential (non-scheduled)
         FUN <- match.fun(FUN)
         if (length(X) <= cores) { # we can use one-shot parallel
-    		cl <- makeForkCluster(length(X))
+    		cl <- makeSHAREDcluster(length(X))
 			# there is no actual fork, so we must set seeds explicitly
 			if (mc.set.seed) mc.set.children.streams(cl)	
 			res <- tryCatch(parallel::clusterApply(cl, X, FUN, ...),
 					error=function(e) warning("function(s) calls resulted in an error"))			
         } else { # more complicated, we have to wait for jobs selectively
-    		cl <- makeForkCluster(cores)
+    		cl <- makeSHAREDcluster(cores)
 			# there is no actual fork, so we must set seeds explicitly
 			if (mc.set.seed) mc.set.children.streams(cl)
 			res <- tryCatch(clusterApplyLB(cl, X, FUN, ...),
@@ -79,7 +79,7 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
     schedule <- lapply(seq_len(cores),
                        function(i) X[seq(i, length(X), by = cores)])
     res <- vector("list", length(X))
-    cl <- makeForkCluster(cores)
+    cl <- makeSHAREDcluster(cores)
 	# there is no actual fork, so we must set seeds explicitly
 	if (mc.set.seed) mc.set.children.streams(cl)	
 
