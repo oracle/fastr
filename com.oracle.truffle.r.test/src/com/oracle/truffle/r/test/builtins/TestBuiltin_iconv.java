@@ -98,4 +98,10 @@ public class TestBuiltin_iconv extends TestBase {
         assertEval("iconv('foo²²', 'UTF8', 'ASCII', sub='f')");
         assertEval("iconv('foo²²', 'UTF8', 'ASCII', sub='')");
     }
+
+    @Test
+    public void testInternalIconvUsageWithNULL() {
+        // just testing that it doesn't crash, the output is locale and system dependent
+        assertEval("invisible(.Internal(iconv(NULL, '', '', '', TRUE, FALSE)))");
+    }
 }

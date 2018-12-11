@@ -1460,7 +1460,8 @@ public class TestJavaInterop extends TestBase {
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldCharArray)", "c('a', 'c')");
         assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to$fieldStringArray)", "c('a', 'c')");
 
-        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("range(to)", "invalid 'type' (polyglot.value) of argument"));
+        // GR-12968: Combine builtin with polyglot value and recursive=T
+        assertEvalFastR(Ignored.ImplementationError, CREATE_TRUFFLE_OBJECT + "range(to)", errorIn("range(to)", "invalid 'type' (polyglot.value) of argument"));
     }
 
     private static final String CREATE_EXCEPTIONS_TO = "to <- new('" + TestExceptionsClass.class.getName() + "');";

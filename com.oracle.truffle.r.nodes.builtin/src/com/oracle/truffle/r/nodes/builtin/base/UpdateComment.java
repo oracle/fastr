@@ -22,21 +22,22 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
-import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 @RBuiltin(name = "comment<-", kind = INTERNAL, parameterNames = {"x", "value"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
@@ -45,7 +46,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     static {
         Casts casts = new Casts(UpdateComment.class);
         casts.arg("x").mustNotBeMissing();
-        casts.arg("value").mustNotBeMissing().mustBe(Predef.stringValue().or(Predef.nullValue()));
+        casts.arg("value").mustNotBeMissing().allowNull().mustBe(stringValue()).asStringVector();
     }
 
     protected SetFixedAttributeNode createGetCommentAttrNode() {
@@ -59,7 +60,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     @Child private SetFixedAttributeNode setCommentAttrNode;
 
     @Specialization
-    protected Object dim(RAbstractContainer container, RAbstractStringVector value) {
+    protected Object dim(RSharingAttributeStorage container, RAbstractStringVector value) {
         if (setCommentAttrNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             setCommentAttrNode = insert(createGetCommentAttrNode());
@@ -69,15 +70,17 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object dim(RAbstractContainer container, @SuppressWarnings("unused") RNull value,
+    protected Object dim(RSharingAttributeStorage container, @SuppressWarnings("unused") RNull value,
                     @Cached("createRemoveCommentAttrNode()") RemoveFixedAttributeNode removeCommentNode) {
         removeCommentNode.execute(container);
         return container;
     }
 
-    @SuppressWarnings("unused")
-    @Specialization(guards = "!isRAbstractContainer(vector)")
-    protected RNull dim(Object vector, Object value) {
-        return RNull.instance;
+    @Fallback
+    protected Object dim(Object vector, Object value) {
+        // cast pipeline should ensure this:
+        assert value == RNull.instance || value instanceof RAbstractStringVector;
+        RSharingAttributeStorage.verify(vector);
+        return vector;
     }
 }
