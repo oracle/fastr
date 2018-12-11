@@ -33,8 +33,11 @@ public abstract class LLVM_IR {
      */
     public final String name;
 
-    protected LLVM_IR(String name) {
+    public final String libPath;
+
+    protected LLVM_IR(String name, String libPath) {
         this.name = name;
+        this.libPath = libPath;
     }
 
     @Override
@@ -48,8 +51,8 @@ public abstract class LLVM_IR {
     public static final class Text extends LLVM_IR {
         public final String text;
 
-        public Text(String name, String text) {
-            super(name);
+        public Text(String name, String text, String libPath) {
+            super(name, libPath);
             this.text = text;
         }
     }
@@ -61,10 +64,10 @@ public abstract class LLVM_IR {
         public final byte[] binary;
         public final String base64;
 
-        public Binary(String name, byte[] binary) {
-            super(name);
+        public Binary(String name, byte[] binary, String libPath) {
+            super(name, libPath);
             this.binary = binary;
-            base64 = Base64.getEncoder().encodeToString(binary);
+            this.base64 = Base64.getEncoder().encodeToString(binary);
         }
     }
 }
