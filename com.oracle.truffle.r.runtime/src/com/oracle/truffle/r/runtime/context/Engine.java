@@ -244,9 +244,9 @@ public interface Engine {
 
     /**
      * Checks for the existence of (startup/shutdown) function {@code name} and, if present, invokes
-     * the function with the given {@code args}.
+     * it using the given code.
      */
-    void checkAndRunStartupShutdownFunction(String name, String... args);
+    void checkAndRunStartupShutdownFunction(String name, String code);
 
     /**
      * Wraps the Truffle AST in {@code body} in an anonymous function and returns a
