@@ -25,15 +25,20 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.io.PrintStream;
 import java.nio.file.FileSystems;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.LinkedList;
@@ -45,6 +50,7 @@ import java.util.zip.ZipInputStream;
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -52,6 +58,8 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
@@ -208,7 +216,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 if (ix > 0) {
                     name = name.substring(0, ix);
                 }
-                LLVM_IR.Binary ir = new LLVM_IR.Binary(name, bytes);
+                LLVM_IR.Binary ir = new LLVM_IR.Binary(name, bytes, path);
                 irList.add(ir);
                 // debugging
                 if (System.getenv("FASTR_LLVM_DEBUG") != null) {
@@ -382,14 +390,72 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         long start = System.nanoTime();
         RContext context = RContext.getInstance();
         long nanos = 1000 * 1000 * 1000;
-        String mimeType = "application/x-llvm-ir-bitcode-base64";
-        String language = Source.findLanguage(mimeType);
-        Source source = Source.newBuilder(language, ir.base64, ir.name).mimeType(mimeType).build();
+        Source source;
+        boolean traceBitcode = isLibTraced(libName);
+        if (traceBitcode) {
+            String mimeType = "application/x-llvm-ir-bitcode";
+            String language = Source.findLanguage(mimeType);
+            try {
+                Path irFile = new File(ir.libPath).getParentFile().toPath().resolve(ir.name + ".bc");
+                Path llFile = new File(ir.libPath).getParentFile().toPath().resolve(ir.name + ".ll");
+                byte[] decoded = null;
+                if (!irFile.toFile().exists()) {
+                    decoded = Base64.getDecoder().decode(ir.base64);
+                    Files.write(irFile, decoded);
+                }
+                if (!llFile.toFile().exists()) {
+                    decoded = decoded != null ? decoded : Base64.getDecoder().decode(ir.base64);
+                    disassemble(llFile.toFile(), decoded);
+                }
+                TruffleFile irTruffleFile = RContext.getInstance().getEnv().getTruffleFile(irFile.toUri());
+                source = Source.newBuilder(language, irTruffleFile).mimeType(mimeType).build();
+            } catch (IOException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        } else {
+            String mimeType = "application/x-llvm-ir-bitcode-base64";
+            String language = Source.findLanguage(mimeType);
+            source = Source.newBuilder(language, ir.base64, ir.name).mimeType(mimeType).build();
+        }
         CallTarget result = context.getEnv().parse(source);
         if (System.getenv("LLVM_PARSE_TIME") != null) {
             long end = System.nanoTime();
             System.out.printf("parsed %s:%s in %f secs%n", libName, ir.name, ((double) (end - start)) / (double) nanos);
         }
         return result;
+    }
+
+    private static boolean isLibTraced(String libName) {
+        String tracedLibs = System.getenv(FastROptions.TRACE_LLVM_LIBS);
+        if (tracedLibs == null || tracedLibs.isEmpty()) {
+            return false;
+        }
+
+        String[] libNames = tracedLibs.split(",");
+        for (String ln : libNames) {
+            if (libName.equals(ln)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static void disassemble(File llFile, byte[] ir) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder("llvm-dis");
+            pb.redirectOutput(llFile);
+            Process p = pb.start();
+            InputStream os = p.getInputStream();
+            OutputStream is = p.getOutputStream();
+            ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable("llvm-dis", os);
+            readThread.start();
+            is.write(ir);
+            is.close();
+            @SuppressWarnings("unused")
+            int rc = p.waitFor();
+        } catch (Exception e) {
+            throw RInternalError.shouldNotReachHere(e);
+        }
     }
 }
