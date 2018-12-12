@@ -35,5 +35,17 @@ public class TestBuiltin_exists extends TestBase {
         assertEval("exists('.Device', inherit=FALSE)");
         assertEval("x <- 42; exists('x', mode='numeric')");
         assertEval("x <- '42'; exists('x', mode='numeric')");
+        assertEval("exists('foo', mode='helloworld')");
+        assertEval("{ foo <- 42L; exists('foo', mode='helloworld') }");
+    }
+
+    private final String[] VALUES = new String[]{"1L", "T", "3.4", "c(1L,3L)", "c(1.2, 3.3)", "as.raw(c(1,3))", "c(T,F)", "c(3+i, 1+i)", "as.symbol('a')", "quote(a+3)", "expression(a+3)",
+                    "function() 42", "as.pairlist(1)", "NULL", "environment", "stats:::C_acf$address"};
+    private final String[] MODES = new String[]{"integer", "double", "numeric", "raw", "complex", "logical", "function", "name", "symbol", "language", "character", "list", "expression", "pairlist",
+                    "NULL", "new.env()", "externalptr"};
+
+    @Test
+    public void testExistsWithMode() {
+        assertEval(template("{ foo <- %0; exists('foo', mode='%1'); }", VALUES, MODES));
     }
 }
