@@ -63,6 +63,9 @@ public abstract class Exists extends RBuiltinNode.Arg4 {
     @TruffleBoundary
     protected byte existsStringEnv(String name, REnvironment env, String mode, boolean inherits) {
         RType modeType = typeFromMode.execute(mode);
+        if (modeType == null) {
+            return RRuntime.LOGICAL_FALSE;
+        }
         if (!inherits) {
             Object obj = env.get(name);
             if (modeType != RType.Any && obj instanceof RPromise) {
