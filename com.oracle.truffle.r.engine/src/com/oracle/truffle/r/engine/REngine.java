@@ -80,8 +80,8 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
-import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.RootBodyNode;
+import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -171,7 +171,7 @@ final class REngine implements Engine, Engine.Timings {
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
             }
-            checkAndRunStartupShutdownFunction(".OptRequireMethods");
+            checkAndRunStartupShutdownFunction(".OptRequireMethods", ".OptRequireMethods()");
 
             suppressWarnings = false;
             Source siteProfile = context.stateRProfile.siteProfile();
@@ -192,37 +192,25 @@ final class REngine implements Engine, Engine.Timings {
             }
             if (context.getStartParams().restore()) {
                 // call sys.load.image(".RData", RCmdOption.QUIET
-                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getStartParams().isQuiet() ? "TRUE" : "FALSE"});
+                checkAndRunStartupShutdownFunction("sys.load.image", "sys.load.image('.RData'," + (context.getStartParams().isQuiet() ? "TRUE" : "FALSE") + ')');
             }
-            checkAndRunStartupShutdownFunction(".First");
-            checkAndRunStartupShutdownFunction(".First.sys");
+            checkAndRunStartupShutdownFunction(".First", ".First()");
+            checkAndRunStartupShutdownFunction(".First.sys", ".First.sys()");
 
             StartupTiming.timestamp("After Profiles Loaded");
         }
     }
 
     @Override
-    public void checkAndRunStartupShutdownFunction(String name, String... args) {
+    public void checkAndRunStartupShutdownFunction(String name, String code) {
+        // sanity check: code should be invocation of the function, so it should contain
+        // "{name}(some-args)"
+        assert code.contains("(") && code.contains(name);
         Object func = REnvironment.globalEnv().findFunction(name);
         if (func != null) {
-            String call = name;
-            if (args.length == 0) {
-                call += "()";
-            } else {
-                call += "(";
-                if (args.length > 0) {
-                    for (int i = 0; i < args.length; i++) {
-                        call += args[i];
-                        if (i != args.length - 1) {
-                            call += ", ";
-                        }
-                    }
-                }
-                call += ")";
-            }
             // Should this print the result?
             try {
-                parseAndEval(RSource.fromTextInternal(call, RSource.Internal.STARTUP_SHUTDOWN), globalFrame, false);
+                parseAndEval(RSource.fromTextInternal(code, RSource.Internal.STARTUP_SHUTDOWN), globalFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing startup function");
             }

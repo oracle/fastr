@@ -97,7 +97,7 @@ public abstract class RCleanUp {
                  * we do not have an efficient way to tell if the global environment is "dirty", so
                  * we save always
                  */
-                RContext.getEngine().checkAndRunStartupShutdownFunction("sys.save.image", new String[]{"\".RData\""});
+                RContext.getEngine().checkAndRunStartupShutdownFunction("sys.save.image", "sys.save.image('.RData')");
                 // TODO: write out history
                 break;
             case NOSAVE:
@@ -130,9 +130,9 @@ public abstract class RCleanUp {
     }
 
     private static void runDotLast() {
-        RContext.getEngine().checkAndRunStartupShutdownFunction(".Last");
+        RContext.getEngine().checkAndRunStartupShutdownFunction(".Last", ".Last()");
         // TODO errors should return to toplevel if interactive
-        RContext.getEngine().checkAndRunStartupShutdownFunction(".Last.sys");
+        RContext.getEngine().checkAndRunStartupShutdownFunction(".Last.sys", ".Last.sys()");
     }
 
     private static final class UserDefinedCleanUpRootNode extends RootNode {

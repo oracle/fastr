@@ -171,6 +171,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
     @Override
     protected void launch(Builder contextBuilder) {
+        StartupTiming.timestamp("RMain.launch");
         assert client != null;
         if (rArguments == null) {
             // validateArguments did not set the value
@@ -205,14 +206,18 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     }
 
     protected int execute() {
+        StartupTiming.timestamp("RMain.execute");
         if (preparedContext == null) {
             // launch did not set the value
             return 1;
         }
-        return execute(preparedContext);
+        int result = execute(preparedContext);
+        StartupTiming.printSummary();
+        return result;
     }
 
     protected int execute(Context context) {
+        StartupTiming.timestamp("RMain.execute");
         String fileOption = options.getString(RCmdOption.FILE);
         File srcFile = null;
         if (fileOption != null) {
@@ -221,7 +226,9 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             }
             srcFile = new File(fileOption);
         }
-        return REPL.readEvalPrint(context, consoleHandler, srcFile, true, errStream);
+        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true, errStream);
+        StartupTiming.printSummary();
+        return result;
     }
 
     @Override
