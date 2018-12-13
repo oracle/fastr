@@ -38,7 +38,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
  */
 public enum FastROptions {
     PrintErrorStacktraces("Prints Java and R stack traces for all errors", false),
-    PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", true),
+    PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", false),
     // TODO: this should be logging category
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
     TraceCalls("Trace all R function calls", false),

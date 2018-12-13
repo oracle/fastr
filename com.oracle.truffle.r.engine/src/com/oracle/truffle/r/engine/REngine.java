@@ -653,7 +653,10 @@ final class REngine implements Engine, Engine.Timings {
 
     @TruffleBoundary
     private static boolean checkResult(Object result) {
-        return RAbstractVector.verify((RAbstractVector) result);
+        if (result instanceof RAbstractVector) {
+            return RAbstractVector.verify((RAbstractVector) result);
+        }
+        return true;
     }
 
     @Override
