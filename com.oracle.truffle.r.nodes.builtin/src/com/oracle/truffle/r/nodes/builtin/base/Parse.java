@@ -65,9 +65,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -551,7 +551,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 tt = TokenType.STR_CONST;
             } else if (value instanceof RComplex) {
                 tt = TokenType.NUM_CONST;
-            } else if (value == REmpty.instance || value == RMissing.instance) {
+            } else if (value == REmpty.instance || value == RMissing.instance || value == RSymbol.MISSING) {
                 return null;    // ignored
             } else {
                 throw RInternalError.shouldNotReachHere("Unknown RSyntaxConstant in ParseDataVisitor " + (value == null ? "null" : value.getClass().getSimpleName()));
