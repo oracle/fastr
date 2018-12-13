@@ -31,13 +31,20 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.launcher.RVersionNumber;
+import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDouble;
+import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RLogical;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -47,9 +54,12 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractComplexVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 public class RRuntime {
@@ -941,22 +951,53 @@ public class RRuntime {
     }
 
     public static boolean checkType(Object obj, RType type) {
-        if (type == RType.Any) {
-            return true;
+        switch (type) {
+            case Any:
+                return true;
+            case Null:
+                return obj == RNull.instance;
+            case Raw:
+                return obj instanceof RAbstractRawVector;
+            case Logical:
+                return obj instanceof Byte || obj instanceof RAbstractLogicalVector;
+            case Integer:
+            case Double:
+            case Numeric:
+                // Note: e.g. foo <- 3.4; exists("foo", mode = "integer") really gives TRUE
+                return obj instanceof Integer || obj instanceof Double ||
+                                obj instanceof RAbstractIntVector || obj instanceof RAbstractDoubleVector;
+            case Complex:
+                return obj instanceof RAbstractComplexVector;
+            case Character:
+                return obj instanceof String || obj instanceof RAbstractStringVector;
+            case List:
+                return obj instanceof RAbstractListVector;
+            case Expression:
+                return obj instanceof RExpression;
+            case Special:
+            case Builtin:
+            case Closure:
+            case Function:
+                return (obj instanceof RFunction) || (obj instanceof TruffleObject && !(obj instanceof RTypedValue));
+            case Symbol:
+                return obj instanceof RSymbol;
+            case Environment:
+                return obj instanceof REnvironment;
+            case PairList:
+                return obj instanceof RPairList && !((RPairList) obj).isLanguage();
+            case Language:
+                return obj instanceof RPairList && ((RPairList) obj).isLanguage();
+            case S4Object:
+                return obj instanceof RS4Object;
+            case Connection:
+                return obj instanceof RConnection;
+            case Char:
+                return obj instanceof CharSXPWrapper;
+            case ExternalPtr:
+                return obj instanceof RExternalPtr;
+            default:
+                return false;
         }
-        if (type == RType.Function || type == RType.Closure || type == RType.Builtin || type == RType.Special) {
-            return (obj instanceof RFunction) || (obj instanceof TruffleObject && !(obj instanceof RTypedValue));
-        }
-        if (type == RType.Character) {
-            return obj instanceof String || obj instanceof RStringVector;
-        }
-        if (type == RType.Logical) {
-            return obj instanceof Byte;
-        }
-        if (type == RType.Integer || type == RType.Double) {
-            return obj instanceof Integer || obj instanceof Double;
-        }
-        return false;
     }
 
     /**
