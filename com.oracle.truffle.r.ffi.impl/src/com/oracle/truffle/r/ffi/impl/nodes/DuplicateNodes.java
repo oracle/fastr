@@ -88,8 +88,8 @@ public final class DuplicateNodes {
     public abstract static class RfDuplicated extends FFIUpCallNode.Arg2 {
         @Specialization
         public RLogicalVector doDuplicate(RAbstractVector vec, int fromLast,
-                                          @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile,
-                                          @Cached("create()")VectorFactory factory) {
+                        @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile,
+                        @Cached("create()") VectorFactory factory) {
             if (isEmptyProfile.profile(vec.getLength() <= 1)) {
                 return (RLogicalVector) factory.createEmptyVector(RType.Logical);
             } else {
