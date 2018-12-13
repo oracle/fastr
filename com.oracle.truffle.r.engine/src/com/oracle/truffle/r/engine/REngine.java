@@ -378,15 +378,18 @@ final class REngine implements Engine, Engine.Timings {
                 int lineIndex = 1;
                 int startLine = lineIndex;
                 StringBuilder sb = new StringBuilder();
+                String nextLineInput = br.readLine();
+                ParseException lastParseException = null;
                 while (true) {
-                    String input = br.readLine();
+                    String input = nextLineInput;
                     if (input == null) {
                         if (sb.length() != 0) {
                             // end of file, but not end of statement => error
-                            statements.add(new SyntaxErrorNode(null, fullSource.createSection(startLine, 1, sb.length())));
+                            statements.add(new SyntaxErrorNode(lastParseException, fullSource.createSection(startLine, 1, sb.length())));
                         }
                         break;
                     }
+                    nextLineInput = br.readLine();
                     sb.append(input);
                     Source src = Source.newBuilder(RRuntime.R_LANGUAGE_ID, sb.toString(), file + "#" + startLine + "-" + lineIndex).uri(uri).build();
                     lineIndex++;
@@ -395,7 +398,10 @@ final class REngine implements Engine, Engine.Timings {
                         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
                         currentStmts = parser.statements(src, fullSource, startLine, new RASTBuilder(), context.getLanguage());
                     } catch (IncompleteSourceException e) {
-                        sb.append('\n');
+                        lastParseException = e;
+                        if (nextLineInput != null) {
+                            sb.append('\n');
+                        }
                         continue;
                     } catch (ParseException e) {
                         statements.add(new SyntaxErrorNode(e, fullSource.createSection(startLine, 1, sb.length())));

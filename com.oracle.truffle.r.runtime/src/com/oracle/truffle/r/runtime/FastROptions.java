@@ -77,6 +77,13 @@ public enum FastROptions {
                     "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true),
     StartupTiming("Records and prints various timestamps during initialization", false);
 
+    /**
+     * Setting this environment variable activates the tracing of the bitcode of selected LLVM
+     * libraries. The libraries are specified as a comma-separated list of library names. For
+     * instance: <code>TRACE_LLVM_LIBS=dplyr,Rcpp</code>
+     */
+    public static final String TRACE_LLVM_LIBS = "TRACE_LLVM_LIBS";
+
     private final String help;
     private final boolean isBoolean;
     private final Object defaultValue;
