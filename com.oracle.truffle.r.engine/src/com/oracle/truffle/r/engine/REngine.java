@@ -653,10 +653,7 @@ final class REngine implements Engine, Engine.Timings {
 
     @TruffleBoundary
     private static boolean checkResult(Object result) {
-        if (FastROptions.CheckResultCompleteness.getBooleanValue() && result instanceof RAbstractVector) {
-            assert RAbstractVector.verify((RAbstractVector) result);
-        }
-        return true;
+        return RAbstractVector.verify((RAbstractVector) result);
     }
 
     @Override
