@@ -28,11 +28,10 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.DuplicateNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfDuplicatedNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicated3NodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfAnyDuplicatedNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodesFactory.RfDuplicatedNodeGen;
 import com.oracle.truffle.r.nodes.function.RMissingHelper;
-import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
@@ -91,7 +90,7 @@ public final class DuplicateNodes {
                         @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile,
                         @Cached("create()") VectorFactory factory) {
             if (isEmptyProfile.profile(vec.getLength() <= 1)) {
-                return (RLogicalVector) factory.createLogicalVector(0);
+                return factory.createEmptyLogicalVector();
             } else {
                 DuplicationHelper ds = DuplicationHelper.analyze(vec, null, true, fromLast != 0);
                 return factory.createLogicalVector(ds.getDupVec(), RDataFactory.COMPLETE_VECTOR);
