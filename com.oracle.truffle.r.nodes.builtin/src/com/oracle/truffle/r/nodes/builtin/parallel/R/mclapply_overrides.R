@@ -83,7 +83,7 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
 	# there is no actual fork, so we must set seeds explicitly
 	if (mc.set.seed) mc.set.children.streams(cl)	
 
-	job.res <- tryCatch(parallel::parLapply(cl, unlist(schedule), FUN, ...), 
+	job.res <- tryCatch(parallel::parLapply(cl, unlist(schedule, recursive=FALSE), FUN, ...), 
 			error=function(e) warning("scheduled core(s) encountered errors in user code"))			
     for (i in seq_len(cores)) {
 		len = length(sindex[[i]])
