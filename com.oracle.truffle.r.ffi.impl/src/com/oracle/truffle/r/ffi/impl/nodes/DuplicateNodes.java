@@ -91,7 +91,7 @@ public final class DuplicateNodes {
                         @Cached("createBinaryProfile()") ConditionProfile isEmptyProfile,
                         @Cached("create()") VectorFactory factory) {
             if (isEmptyProfile.profile(vec.getLength() <= 1)) {
-                return (RLogicalVector) factory.createEmptyVector(RType.Logical);
+                return (RLogicalVector) factory.createLogicalVector(0);
             } else {
                 DuplicationHelper ds = DuplicationHelper.analyze(vec, null, true, fromLast != 0);
                 return factory.createLogicalVector(ds.getDupVec(), RDataFactory.COMPLETE_VECTOR);
