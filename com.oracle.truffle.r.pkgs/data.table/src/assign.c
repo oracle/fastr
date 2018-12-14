@@ -2,6 +2,7 @@
 #include <Rdefines.h>
 #include <Rmath.h>
 #include <Rversion.h>
+#include <assert.h>
 
 static SEXP *saveds=NULL;
 static R_len_t *savedtl=NULL, nalloc=0, nsaved=0;
@@ -280,6 +281,7 @@ SEXP assign(SEXP dt, SEXP rows, SEXP cols, SEXP newcolnames, SEXP values, SEXP v
     // newcolnames : add these columns (if any)
     // cols : column names or numbers corresponding to the values to set
     // rows : row numbers to assign
+    R_len_t in;
     R_len_t i, j, nrow, targetlen, vlen, r, oldncol, oldtncol, coln, protecti=0, newcolnum;
     SEXP targetcol, RHS, names, nullint, thisvalue, thisv, targetlevels, newcol, s, colnam, class, tmp, colorder, key, index, a;
     SEXP bindingIsLocked = getAttrib(dt, install(".data.table.locked"));
@@ -693,16 +695,28 @@ SEXP assign(SEXP dt, SEXP rows, SEXP cols, SEXP newcolnames, SEXP values, SEXP v
                 // A new column being assigned NULL would have been warned above, added above, and now deleted (just easier
                 // to code it this way e.g. so that other columns may be added or removed ok by the same query).
                 size=sizeof(SEXP *);
-                memmove((char *)DATAPTR(dt)+coln*size,
+                /*memmove((char *)DATAPTR(dt)+coln*size,
                         (char *)DATAPTR(dt)+(coln+1)*size,
-                        (LENGTH(dt)-coln-1)*size);
+                        (LENGTH(dt)-coln-1)*size);*/
+                // This removes a column (element of a list)
+                // shifts all columns left to coln by one to left, overriding coln and duplicating the last element in the list
+                // Java GC issue: we won't find out that the element under coln was removed and still hold to it on Java side
+                assert(coln < LENGTH(dt));
+                for(in = coln; in < LENGTH(dt) - 1; in++) {
+                    SET_VECTOR_ELT(dt, in, VECTOR_ELT(dt, in+1));
+                }
+                // set the last element (now equal to the last but one element) to NULL and change the length
                 SET_VECTOR_ELT(dt, LENGTH(dt)-1, R_NilValue);
                 SETLENGTH(dt, LENGTH(dt)-1);
                 // adding using := by group relies on NULL here to know column slot is empty.
                 // good to tidy up the vector anyway.
-                memmove((char *)DATAPTR(names)+coln*size,
+                /*memmove((char *)DATAPTR(names)+coln*size,
                     (char *)DATAPTR(names)+(coln+1)*size,
-                    (LENGTH(names)-coln-1)*size);
+                    (LENGTH(names)-coln-1)*size);*/
+                // Java GC issue: the same thing for "names" attribute
+                for(in = coln; in < LENGTH(names) - 1; in++) {
+                    SET_STRING_ELT(names, in, STRING_ELT(names, in+1));
+                }
                 SET_STRING_ELT(names, LENGTH(names)-1, NA_STRING);  // no need really, just to be tidy.
                 SETLENGTH(names, LENGTH(names)-1);
                 if (LENGTH(names)==0) {
@@ -771,16 +785,32 @@ void memrecycle(SEXP target, SEXP where, int start, int len, SEXP source)
         default :
             error("Unsupported type '%s'", type2char(TYPEOF(target)));
         }
+#ifndef FASTR
         if (slen == 1) {
             if (size==4) for (; r<len; r++)
                 INTEGER(target)[start+r] = INTEGER(source)[0];   // copies pointer on 32bit, sizes checked in init.c
             else for (; r<len; r++)
                 REAL(target)[start+r] = REAL(source)[0];         // copies pointer on 64bit, sizes checked in init.c
         } else if (slen<10) {    // 10 is just a guess for when memcpy is faster. Certainly memcpy is slower when slen==1, but that's the most common case by far so not high priority to discover the optimum here. TO DO: revisit
-            if (size==4) for (; r<len; r++)
-                INTEGER(target)[start+r] = INTEGER(source)[r%slen];
-            else for (; r<len; r++)
-                REAL(target)[start+r] = REAL(source)[r%slen];
+#endif
+            // FastR only hits this branch
+            // FastR only needs to intercept the containers that contain pointers
+            if (size==4) for (; r<len; r++) {
+                if (TYPEOF(source) == STRSXP)
+                    SET_STRING_ELT(target, start+r, STRING_ELT(source, 0));
+                else if (TYPEOF(source) == VECSXP)
+                    SET_VECTOR_ELT(target, start+r, VECTOR_ELT(source, 0));
+                else
+                    INTEGER(target)[start+r] = INTEGER(source)[r%slen];
+            } else for (; r<len; r++) {
+                if (TYPEOF(source) == STRSXP)
+                    SET_STRING_ELT(target, start+r, STRING_ELT(source, 0));
+                else if (TYPEOF(source) == VECSXP)
+                    SET_VECTOR_ELT(target, start+r, VECTOR_ELT(source, 0));
+                else
+                    REAL(target)[start+r] = REAL(source)[r%slen];
+            }
+#ifndef FASTR
         } else {
             for (r=r>0?1:0; r<(len/slen); r++) {   // if the first slen were done in the switch above, convert r=slen to r=1
                 memcpy((char *)DATAPTR(target) + (start+r*slen)*size,
@@ -791,6 +821,7 @@ void memrecycle(SEXP target, SEXP where, int start, int len, SEXP source)
                    (char *)DATAPTR(source),
                    (len%slen) * size);
         }
+#endif
     } else {
         switch (TYPEOF(target)) {
         case INTSXP : case REALSXP : case LGLSXP :
@@ -933,6 +964,7 @@ SEXP setcolorder(SEXP x, SEXP o)
     SEXP *tmp = Calloc(LENGTH(x),SEXP);
     for (int i=0; i<LENGTH(x); i++)
         tmp[i] = VECTOR_ELT(x, INTEGER(o)[i]-1);
+    // Java GC: reorders columns inside the same object, should be safe
     memcpy((char *)DATAPTR(x),(char *)tmp,LENGTH(x)*sizeof(char *)); // sizeof is of type size_t (unsigned) - so no overflow here
     SEXP names = getAttrib(x,R_NamesSymbol);
     if (isNull(names)) error("dt passed to setcolorder has no names");
