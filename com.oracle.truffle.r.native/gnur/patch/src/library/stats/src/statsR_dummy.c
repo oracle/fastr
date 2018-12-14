@@ -23,7 +23,6 @@
 #define RINTERNAL_CODE { error("function shoul be implemented in R code at %s:%d", __FILE__, __LINE__); return NULL; }
 
 /* auxiliary */
-SEXP getListElement(SEXP list, char *str) UNIMPLEMENTED
 
 /* Declarations for .Call entry points */
 
@@ -156,8 +155,6 @@ SEXP termsform(SEXP args) RINTERNAL_CODE
 SEXP do_fmin(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
 SEXP nlm(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
 SEXP zeroin2(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
-SEXP optim(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
-SEXP optimhess(SEXP call, SEXP op, SEXP args, SEXP rho) UNIMPLEMENTED
 SEXP call_dqagi(SEXP x) UNIMPLEMENTED
 SEXP call_dqags(SEXP x) UNIMPLEMENTED
 
