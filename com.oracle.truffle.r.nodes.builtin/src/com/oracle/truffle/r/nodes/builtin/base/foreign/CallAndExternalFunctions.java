@@ -109,6 +109,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -865,7 +866,6 @@ public class CallAndExternalFunctions {
     @RBuiltin(name = ".External2", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {".NAME", "...", "PACKAGE"}, behavior = COMPLEX)
     public abstract static class DotExternal2 extends Dot {
         private static final Object CALL = "call";
-        private static final Object RHO = "rho";
         /**
          * This argument for the native function should be SPECIALSXP reprenting the .External2
          * builtin. In GnuR SPECIALSXP is index into the table of builtins. External2 and External
@@ -931,22 +931,23 @@ public class CallAndExternalFunctions {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "1", guards = {"cached.symbol == symbol", "builtin == null"})
-        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("new(symbol)") CallNamedFunctionNode cached) {
             Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
-            return dispatch(cached.nativeCallInfo, new Object[]{CALL, getOp(), list, RHO});
+            REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
+            return dispatch(cached.nativeCallInfo, new Object[]{CALL, getOp(), list, rho});
         }
 
         @Specialization
-        protected Object callNamedFunction(String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
+        protected Object callNamedFunction(VirtualFrame frame, String symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(symbol, args, null, rns, findSymbolNode);
+            return callNamedFunctionWithPackage(frame, symbol, args, null, rns, findSymbolNode);
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(String symbol, RArgsValuesAndNames args, String packageName,
+        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String symbol, RArgsValuesAndNames args, String packageName,
                         @Cached("createRegisteredNativeSymbol(ExternalNST)") DLL.RegisteredNativeSymbol rns,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.SymbolHandle func = findSymbolNode.execute(symbol, packageName, rns);
@@ -954,7 +955,8 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.SYMBOL_NOT_IN_TABLE, symbol, "External2", packageName);
             }
             Object list = encodeArgumentPairList(args, symbol);
-            return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, RHO});
+            REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
+            return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, rho});
         }
 
         @Fallback
