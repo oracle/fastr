@@ -57,7 +57,7 @@ public enum FastROptions {
     SharedContexts("Whether all child contexts are to be shared contexts", true),
     SearchPathForcePromises("Whether all promises for frames on shared path are forced in presence of shared contexts", false),
     LoadPackagesNativeCode("Load native code of packages, including builtin packages.", !FastRConfig.ManagedMode),
-    SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
+    SynchronizeNativeCode("allow only one thread to enter packages' native code", true),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
