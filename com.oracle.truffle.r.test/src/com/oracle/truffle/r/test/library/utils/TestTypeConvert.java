@@ -38,6 +38,9 @@ public class TestTypeConvert extends TestBase {
         assertEval("type.convert(c(NA, '44.5'))");  // string NA
         // looks like integer, but is double (because it would be INT_NA)
         assertEval("type.convert('-2147483648')");
+        // read.csv() delegates to read.table() which calls type.convert()
+        assertEval("csv<-read.csv(stringsAsFactors=TRUE, text='col1,col2\\n,1\\n2,\\n'); typeof(csv$col1); csv$col1; typeof(csv$col2); csv$col2; csv");
+        assertEval("csv<-read.csv(stringsAsFactors=TRUE, text='col1,col2\\n,1\\n2,\\n,3\\n'); typeof(csv$col1); csv$col1; typeof(csv$col2); csv$col2; csv");
     }
 
     private static final String[] LIT_VALUES = new String[]{"0xFFF", "0xFFFFFFFFFFF", "123", "2147483648"};

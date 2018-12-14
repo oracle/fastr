@@ -72,7 +72,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
         // naStrings are in addition to NA_character_
-        if (RRuntime.isNA(s)) {
+        if (RRuntime.isNA(s) || s.isEmpty()) { // Blank treated as NA too
             return true;
         }
         for (int i = 0; i < naStrings.getLength(); i++) {
