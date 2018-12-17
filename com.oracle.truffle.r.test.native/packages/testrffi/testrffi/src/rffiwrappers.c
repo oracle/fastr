@@ -43,14 +43,6 @@
 
 #pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 
-SEXP api_OBJECT(SEXP x) {
-    return ScalarInteger(OBJECT(x));
-}
-
-SEXP api_Rf_cons(SEXP car, SEXP cdr) {
-    return Rf_cons(car, cdr);
-}
-
 SEXP api_Rf_ScalarInteger(SEXP value) {
     return Rf_ScalarInteger(INTEGER_VALUE(value));
 }
@@ -89,6 +81,10 @@ SEXP api_Rf_coerceVector(SEXP x, SEXP mode) {
 
 SEXP api_Rf_mkCharLenCE(SEXP bytes, SEXP len, SEXP encoding) {
     return Rf_mkCharLenCE(R_CHAR(STRING_ELT(bytes, 0)), INTEGER_VALUE(len), INTEGER_VALUE(encoding));
+}
+
+SEXP api_Rf_cons(SEXP car, SEXP cdr) {
+    return Rf_cons(car, cdr);
 }
 
 SEXP api_Rf_defineVar(SEXP symbolArg, SEXP value, SEXP envArg) {
@@ -272,6 +268,10 @@ SEXP api_SET_TYPEOF(SEXP x, SEXP v) {
 
 SEXP api_TYPEOF(SEXP x) {
     return ScalarInteger(TYPEOF(x));
+}
+
+SEXP api_Rf_duplicated(SEXP x, SEXP fromLast) {
+    return ScalarInteger(Rf_duplicated(x, INTEGER_VALUE(fromLast)));
 }
 
 SEXP api_Rf_any_duplicated(SEXP x, SEXP fromLast) {
@@ -1113,6 +1113,10 @@ SEXP api_Rf_isObject(SEXP x) {
 SEXP api_R_MakeActiveBinding(SEXP sym, SEXP fun, SEXP env) {
     R_MakeActiveBinding(sym, fun, env);
     return R_NilValue;
+}
+
+SEXP api_OBJECT(SEXP x) {
+    return ScalarInteger(OBJECT(x));
 }
 
 #pragma GCC diagnostic pop

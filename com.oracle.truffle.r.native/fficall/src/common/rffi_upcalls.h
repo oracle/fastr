@@ -56,6 +56,7 @@ typedef SEXP (*call_Rf_getAttrib)(SEXP vec, SEXP name);
 typedef SEXP (*call_Rf_GetOption1)(SEXP tag);
 typedef SEXP (*call_Rf_setAttrib)(SEXP vec, SEXP name, SEXP val);
 typedef SEXP (*call_Rf_duplicate)(SEXP x, int v);
+typedef SEXP (*call_Rf_duplicated)(SEXP x, Rboolean from_last);
 typedef SEXP (*call_Rf_shallow_duplicate)(SEXP x);
 typedef SEXP (*call_Rf_coerceVector)(SEXP x, SEXPTYPE mode);
 typedef R_xlen_t (*call_Rf_any_duplicated)(SEXP x, Rboolean from_last);

@@ -61,6 +61,12 @@ public class TestBuiltin_switch extends TestBase {
         assertEval("{ x <- \"!\"; v <- switch(x, \"\"=v77, \"<=\" =, \"<\" =, \">\" = 99, v55)}");
         // FIXME: swicth does not check for REmpty
         assertEval(Ignored.Unimplemented, "switch('q', a=42,)");
+        assertEval("f <- function(x){switch(\"aa\", aa = x, ab = 42)};f()");
+        assertEval("f <- function(x){switch(\"aa\", aa = , ab = 42)};f()");
+        assertEval("f <- function(x){switch(\"aa\", aa = , ab = x)};f()");
+        assertEval("f <- function(x){switch(\"aa\", aa = , ab = 42)};f(quote(f(1,2,))[[4]])");
+        assertEval("f <- function(x){switch(\"aa\", aa = , ab = x)};f(quote(f(1,2,))[[4]])");
+        assertEval("f <- function(x){switch(\"aa\", aa = x, ab = 42)};f(quote(f(1,2,))[[4]])");
     }
 
     @Test

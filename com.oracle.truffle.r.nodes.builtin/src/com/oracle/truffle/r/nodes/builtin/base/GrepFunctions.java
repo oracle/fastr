@@ -1452,7 +1452,7 @@ public class GrepFunctions {
         protected RList split(RAbstractStringVector x, RAbstractStringVector splitArg, boolean fixed, boolean perlLogical, @SuppressWarnings("unused") boolean useBytes,
                         @Cached("createCommon()") CommonCodeNode common) {
             boolean perl = common.checkPerlFixed(perlLogical, fixed);
-            RStringVector[] result = new RStringVector[x.getLength()];
+            Object[] result = new Object[x.getLength()];
             // treat split = NULL as split = ""
             RAbstractStringVector split = splitArg.getLength() == 0 ? RDataFactory.createStringVectorFromScalar("") : splitArg;
             String[] splits = new String[split.getLength()];

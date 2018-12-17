@@ -37,7 +37,6 @@ import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
-import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -48,6 +47,7 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 
@@ -126,13 +126,13 @@ public abstract class Switch extends RBuiltinNode.Arg2 {
             } else if (xStr.equals(suppliedArgName)) {
                 // match, evaluate the associated arg
                 Object optionalArgValue = promiseHelper.checkEvaluate(frame, optionalArgValues[i]);
-                if (RMissingHelper.isMissing(optionalArgValue)) {
+                if (optionalArgValue == RMissing.instance) {
                     matchedArgIsMissing.enter();
 
                     // Fall-through: If the matched value is missing, take the next non-missing
                     for (int j = i + 1; j < optionalArgValues.length; j++) {
                         Object val = promiseHelper.checkEvaluate(frame, optionalArgValues[j]);
-                        if (!RMissingHelper.isMissing(val)) {
+                        if (val != RMissing.instance) {
                             return val;
                         }
                     }

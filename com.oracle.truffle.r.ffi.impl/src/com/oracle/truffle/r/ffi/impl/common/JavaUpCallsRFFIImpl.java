@@ -742,6 +742,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
+    public Object Rf_duplicated(Object x, int fromLast) {
+        throw implementedAsNode();
+    }
+
+    @Override
     public long Rf_any_duplicated3(Object x, Object incomparables, int fromLast) {
         throw implementedAsNode();
     }
