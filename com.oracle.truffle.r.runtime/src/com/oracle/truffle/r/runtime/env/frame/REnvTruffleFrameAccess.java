@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
+import java.util.List;
 
 /**
  * Variant of {@link REnvFrameAccess} that provides access to an actual Truffle execution frame.
@@ -194,21 +196,17 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
     @TruffleBoundary
     public RStringVector ls(boolean allNames, Pattern pattern, boolean sorted) {
         FrameDescriptor fd = frame.getFrameDescriptor();
-        String[] names = getStringIdentifiers(fd);
-        ArrayList<String> matchedNamesList = new ArrayList<>(names.length);
-        for (int i = 0; i < names.length; i++) {
-            String name = names[i];
-            FrameSlot frameSlot = fd.findFrameSlot(name);
-            Object value = FrameSlotChangeMonitor.getValue(frameSlot, frame);
-            if (value == null || !ActiveBinding.isListed(value)) {
-                continue;
-            }
+
+        ArrayList<String> names = new ArrayList<>(fd.getIdentifiers().size());
+        getStringIdentifiersAndValues(frame, names, null);
+
+        ArrayList<String> matchedNamesList = new ArrayList<>(fd.getIdentifiers().size());
+        for (String name : names) {
             if (REnvironment.includeName(name, allNames, pattern)) {
                 matchedNamesList.add(name);
             }
         }
-        String[] data = new String[matchedNamesList.size()];
-        matchedNamesList.toArray(data);
+        String[] data = matchedNamesList.toArray(new String[matchedNamesList.size()]);
         if (sorted) {
             Locale locale = RContext.getInstance().stateRLocale.getLocale(RLocale.COLLATE);
             Collator collator = locale == Locale.ROOT || locale == null ? null : RLocale.getOrderCollator(locale);
@@ -255,7 +253,19 @@ public final class REnvTruffleFrameAccess extends REnvFrameAccess {
         }
     }
 
-    public static String[] getStringIdentifiers(FrameDescriptor fd) {
-        return fd.getIdentifiers().stream().filter(e -> (e instanceof String)).toArray(String[]::new);
+    public static void getStringIdentifiersAndValues(Frame frame, List<String> names, List<Object> values) {
+        FrameDescriptor fd = frame.getFrameDescriptor();
+        for (FrameSlot frameSlot : fd.getSlots()) {
+            if (frameSlot.getIdentifier() instanceof String) {
+                Object value = FrameSlotChangeMonitor.getValue(frameSlot, frame);
+                if (value == null || !ActiveBinding.isListed(value)) {
+                    continue;
+                }
+                names.add((String) frameSlot.getIdentifier());
+                if (values != null) {
+                    values.add(value);
+                }
+            }
+        }
     }
 }

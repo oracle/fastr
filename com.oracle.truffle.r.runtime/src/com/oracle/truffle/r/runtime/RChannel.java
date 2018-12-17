@@ -49,8 +49,10 @@ import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
-import com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess;
+import static com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess.getStringIdentifiersAndValues;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Implementation of a channel abstraction used for communication between parallel contexts in
@@ -544,13 +546,18 @@ public class RChannel {
 
         @TruffleBoundary
         private SerializedEnv.Bindings createShareable(REnvironment e) throws IOException {
-            String[] names = REnvTruffleFrameAccess.getStringIdentifiers(e.getFrame().getFrameDescriptor());
-            Object[] values = new Object[names.length];
-            int ind = 0;
-            for (String n : names) {
-                values[ind++] = convertPrivate(e.get(n));
+            MaterializedFrame f = e.getFrame();
+            FrameDescriptor fd = f.getFrameDescriptor();
+            List<String> names = new ArrayList<>(fd.getIdentifiers().size());
+            List<Object> values = new ArrayList<>(fd.getIdentifiers().size());
+            getStringIdentifiersAndValues(f, names, values);
+            assert names.size() == values.size();
+
+            Object[] convertedValues = new Object[values.size()];
+            for (int i = 0; i < values.size(); i++) {
+                convertedValues[i] = convertPrivate(values.get(i));
             }
-            return new SerializedEnv.Bindings(names, values);
+            return new SerializedEnv.Bindings(names.toArray(new String[names.size()]), convertedValues);
         }
 
         /*
