@@ -54,7 +54,6 @@ public abstract class RListBase extends RVector<Object[]> implements RAbstractLi
 
     RListBase(Object[] data) {
         super(false);
-        assert data instanceof Object[];
         this.data = data;
         assert RAbstractVector.verify(this);
     }
