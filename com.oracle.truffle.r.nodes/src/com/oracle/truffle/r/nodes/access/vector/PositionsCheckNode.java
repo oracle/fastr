@@ -187,7 +187,7 @@ final class PositionsCheckNode extends RBaseNode {
                                         positionsCheck[0].getPositionClass() == RSymbol.class);
     }
 
-    final class PositionProfile {
+    static final class PositionProfile {
 
         int selectedPositionsCount;
 

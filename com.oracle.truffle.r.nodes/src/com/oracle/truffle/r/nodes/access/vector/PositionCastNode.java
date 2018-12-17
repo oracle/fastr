@@ -136,7 +136,7 @@ abstract class PositionCastNode extends RBaseNode {
 
     @Specialization
     protected RMissing doSymbol(RSymbol position) {
-        if (position.getName().length() == 0) {
+        if (position == RSymbol.MISSING) {
             return doMissing(RMissing.instance);
         } else {
             throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
