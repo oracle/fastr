@@ -85,9 +85,12 @@ mclapply <- function(X, FUN, ..., mc.preschedule = TRUE, mc.set.seed = TRUE,
 
 	job.res <- tryCatch(parallel::parLapply(cl, unlist(schedule, recursive=FALSE), FUN, ...), 
 			error=function(e) warning("scheduled core(s) encountered errors in user code"))			
+    prevLen <- 1
     for (i in seq_len(cores)) {
-		len = length(sindex[[i]])
-        res[sindex[[i]]] <- job.res[seq((i-1)*len+1, i*len)]
+        len = length(sindex[[i]])
+        job.res[seq(prevLen, prevLen + len - 1)]
+        res[sindex[[i]]] <- job.res[seq(prevLen, prevLen + len - 1)]
+        prevLen <- prevLen + len
     }
 	res	
 }; environment(mclapply)<-asNamespace("parallel")})
