@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -36,6 +35,9 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * Mainly executes {@link PositionsCheckNode} for each value in the positions array.
+ */
 final class PositionsCheckNode extends RBaseNode {
 
     @Children private final PositionCheckNode[] positionsCheck;
@@ -58,7 +60,7 @@ final class PositionsCheckNode extends RBaseNode {
         this.positionsLength = positions.length;
     }
 
-    public PositionCheckNode getPositionCheckAt(int index) {
+    PositionCheckNode getPositionCheckAt(int index) {
         return positionsCheck[index];
     }
 
@@ -81,16 +83,12 @@ final class PositionsCheckNode extends RBaseNode {
         return positionsCheck.length;
     }
 
-    public boolean isSingleDimension() {
-        return positionsCheck.length == 1;
-    }
-
-    public boolean isMultiDimension() {
+    private boolean isMultiDimension() {
         return positionsCheck.length > 1;
     }
 
     @ExplodeLoop
-    public PositionProfile[] executeCheck(RAbstractContainer vector, int[] vectorDimensions, int vectorLength, Object[] positions) {
+    PositionProfile[] executeCheck(RAbstractContainer vector, int[] vectorDimensions, int vectorLength, Object[] positions) {
         assert isSupported(positions);
         verifyDimensions(vectorDimensions);
 
@@ -102,11 +100,6 @@ final class PositionsCheckNode extends RBaseNode {
             statistics[i] = profile;
         }
         return statistics;
-    }
-
-    @TruffleBoundary
-    private void print() {
-        System.out.println(positionsCheck.length);
     }
 
     private void verifyDimensions(int[] vectorDimensions) {
@@ -142,7 +135,7 @@ final class PositionsCheckNode extends RBaseNode {
     }
 
     @ExplodeLoop
-    public int getSelectedPositionsCount(PositionProfile[] profiles) {
+    int getSelectedPositionsCount(PositionProfile[] profiles) {
         if (positionsCheck.length == 1) {
             return selectedPositionsCountProfile.profile(profiles[0].selectedPositionsCount);
         } else {
@@ -154,12 +147,12 @@ final class PositionsCheckNode extends RBaseNode {
         }
     }
 
-    public int getCachedSelectedPositionsCount() {
+    int getCachedSelectedPositionsCount() {
         return selectedPositionsCountProfile.getCachedLength();
     }
 
     @ExplodeLoop
-    public boolean getContainsNA(PositionProfile[] profiles) {
+    boolean getContainsNA(PositionProfile[] profiles) {
         if (positionsCheck.length == 1) {
             return containsNAProfile.profile(profiles[0].containsNA);
         } else {
@@ -172,7 +165,7 @@ final class PositionsCheckNode extends RBaseNode {
     }
 
     @ExplodeLoop
-    public int getMaxOutOfBounds(PositionProfile[] replacementStatistics) {
+    int getMaxOutOfBounds(PositionProfile[] replacementStatistics) {
         if (positionsCheck.length == 1) {
             return maxOutOfBoundsProfile.profile(replacementStatistics[0].maxOutOfBoundsIndex);
         } else {
@@ -197,7 +190,7 @@ final class PositionsCheckNode extends RBaseNode {
 
     }
 
-    public boolean isEmptyPosition(int i, Object position) {
+    boolean isEmptyPosition(int i, Object position) {
         return positionsCheck[i].isEmptyPosition(position);
     }
 }

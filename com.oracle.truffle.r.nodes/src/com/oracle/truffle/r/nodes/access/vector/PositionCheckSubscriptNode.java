@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -31,7 +32,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -44,6 +45,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
 
     private final NACheck positionNACheck = NACheck.create();
     private final ConditionProfile greaterZero = ConditionProfile.createBinaryProfile();
+    @Child VectorFactory vectorFactory;
 
     private final boolean recursive;
 
@@ -121,7 +123,7 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
 
         RStringVector names = extractNamesNode.execute(originalVector);
         if (names != null) {
-            return RDataFactory.createIntVector(new int[]{result}, !profile.containsNA, names);
+            return getVectorFactory().createIntVector(new int[]{result}, !profile.containsNA, names);
         } else {
             return RInteger.valueOf(result);
         }
@@ -182,6 +184,14 @@ abstract class PositionCheckSubscriptNode extends PositionCheckNode {
                 throwBoundsError();
             }
         }
+    }
+
+    public VectorFactory getVectorFactory() {
+        if (vectorFactory == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            vectorFactory = insert(VectorFactory.create());
+        }
+        return vectorFactory;
     }
 
     private void throwBoundsError() {
