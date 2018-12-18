@@ -23,6 +23,7 @@
 
 #ifndef _WIN32
 SEXP mc_children() UNIMPLEMENTED
+SEXP mc_cleanup(SEXP sKill, SEXP sDetach, SEXP sShutdown) UNIMPLEMENTED
 SEXP mc_close_fds(SEXP a) UNIMPLEMENTED
 SEXP mc_close_stderr(SEXP a) UNIMPLEMENTED
 SEXP mc_close_stdout(SEXP a) UNIMPLEMENTED
@@ -33,6 +34,7 @@ SEXP mc_fork(SEXP a) UNIMPLEMENTED
 SEXP mc_is_child(void) UNIMPLEMENTED
 SEXP mc_kill(SEXP a, SEXP b) UNIMPLEMENTED
 SEXP mc_master_fd(void) UNIMPLEMENTED
+SEXP mc_prepare_cleanup() UNIMPLEMENTED
 SEXP mc_read_child(SEXP a) UNIMPLEMENTED
 SEXP mc_read_children(SEXP a) UNIMPLEMENTED
 SEXP mc_rm_child(SEXP a) UNIMPLEMENTED
