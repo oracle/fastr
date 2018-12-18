@@ -107,7 +107,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.exact = logicalAsBoolean(exact, DEFAULT_EXACT);
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
-        this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false);
+        this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length,false, false);
     }
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
