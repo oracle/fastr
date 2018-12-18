@@ -135,6 +135,12 @@ abstract class PositionCheckNode extends RBaseNode {
     public final Object execute(PositionProfile profile, RAbstractContainer vector, int[] vectorDimensions, int vectorLength, Object position) {
         Object castPosition = castNode.execute(positionClass.cast(position));
 
+        if (mode.isSubscript() && isMissing()) {
+            if (!isListLike(containerType)) {
+                throw error(Message.SUBSCRIPT_BOUNDS);
+            }
+        }
+
         int dimensionLength;
         if (numDimensions == 1) {
             dimensionLength = vectorLength;
@@ -302,5 +308,9 @@ abstract class PositionCheckNode extends RBaseNode {
         }
         Object castPosition = positionClassProfile.profile(position);
         return castPosition instanceof RAbstractContainer && ((RAbstractContainer) castPosition).getLength() == 0;
+    }
+
+    public boolean isMissing() {
+        return positionClass == RMissing.class || positionClass == REmpty.class || positionClass == RSymbol.class;
     }
 }

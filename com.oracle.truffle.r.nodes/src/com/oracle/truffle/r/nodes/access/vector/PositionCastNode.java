@@ -157,13 +157,11 @@ abstract class PositionCastNode extends RBaseNode {
 
     @Specialization
     protected RMissing doMissing(@SuppressWarnings("unused") RMissing position) {
-        if (mode.isSubscript()) {
-            if (replace) {
-                throw error(RError.Message.MISSING_SUBSCRIPT);
-            } else {
-                throw error(Message.SUBSCRIPT_BOUNDS);
-            }
+        if (mode.isSubscript() && replace) {
+            throw error(RError.Message.MISSING_SUBSCRIPT);
         } else {
+            // Note: behavior in the case of 'isSubscript() && !replace' is handled elsewhere as it
+            // depends on the type of the target vector
             return RMissing.instance;
         }
     }

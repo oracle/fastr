@@ -145,8 +145,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         if (isMissingSingleDimension()) {
-            // special case for x<-matrix(1:4, ncol=2); x[]
-            return originalVector;
+            // subset: special case for x<-matrix(1:4, ncol=2); x[]
+            // subscript: special case for l<-list(1,2,3); l[[]]
+            return mode.isSubset() ? originalVector : RNull.instance;
         }
 
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);

@@ -29,9 +29,6 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
-import com.oracle.truffle.r.runtime.data.REmpty;
-import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -175,9 +172,7 @@ final class PositionsCheckNode extends RBaseNode {
     }
 
     public boolean isMissing() {
-        return positionsCheck.length == 1 && //
-                        (positionsCheck[0].getPositionClass() == RMissing.class || positionsCheck[0].getPositionClass() == REmpty.class || //
-                                        positionsCheck[0].getPositionClass() == RSymbol.class);
+        return positionsCheck.length == 1 && positionsCheck[0].isMissing();
     }
 
     static final class PositionProfile {
