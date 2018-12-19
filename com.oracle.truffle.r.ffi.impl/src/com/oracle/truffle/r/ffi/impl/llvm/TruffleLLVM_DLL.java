@@ -452,8 +452,10 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             readThread.start();
             is.write(ir);
             is.close();
-            @SuppressWarnings("unused")
             int rc = p.waitFor();
+            if (rc != 0) {
+                System.err.printf("Warning: LLVM disassembler exited with status %d\n", rc);
+            }
         } catch (Exception e) {
             throw RInternalError.shouldNotReachHere(e);
         }

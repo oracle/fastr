@@ -256,8 +256,8 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
                 ((double[]) store)[index * 2] = real;
                 ((double[]) store)[index * 2 + 1] = imaginary;
             } else {
-                NativeDataAccess.setNativeMirrorDoubleData(store, index * 2, real);
-                NativeDataAccess.setNativeMirrorDoubleData(store, index * 2 + 1, imaginary);
+                NativeDataAccess.setNativeMirrorComplexRealPartData(store, index, real);
+                NativeDataAccess.setNativeMirrorComplexImaginaryPartData(store, index, imaginary);
             }
         }
     }

@@ -51,6 +51,10 @@ try
 (
 
 fortran=0
+# It's a kind of a coarse-grain measure turning off all optimizations for a C++ source.
+# The reason for it is that clang generates invalid LLVM code for some instances of
+# Rcpp templates.
+no_opt=1
 analyze_args "$@"
 
 if [ $is_link -eq 1 ]

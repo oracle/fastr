@@ -66,6 +66,13 @@ function analyze_args() {
   while [[ $# -gt 0 ]]
   do
     case $1 in
+	  -O2)
+		# See the "no_opt" comment in llvm-c++
+	    if [ -z $no_opt ]
+        then
+		  llvm_args_tmp+=("-O2")
+        fi  
+      ;;
 	  -fpic)
         shift
       ;;

@@ -41,14 +41,6 @@ typedef char* (*call_R_Home)();
 
 __thread void **callbacks = NULL;
 
-void Rinternals_addCallback(void** theCallbacks, int index, void *callback) {
-	if (callbacks == NULL) {
-		callbacks = truffle_managed_malloc(INTERNAL_UPCALLS_TABLE_SIZE * sizeof(void*));
-	}
-//	printf("setting callback %d\n", index);
-	callbacks[index] = callback;
-}
-
 void Rinternals_setCallbacksAddress(void** theCallbacks) {
 	callbacks = theCallbacks;
 }

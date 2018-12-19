@@ -70,6 +70,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RForceAndCallNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RSetExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
@@ -485,7 +486,8 @@ public interface StdUpCallsRFFI {
 
     Object R_ExternalPtrProtected(Object x);
 
-    void R_SetExternalPtrAddr(Object x, long addr);
+    @RFFIUpCallNode(RSetExternalPtrNode.class)
+    void R_SetExternalPtrAddr(Object x, @RFFICpointer Object addr);
 
     void R_SetExternalPtrTag(Object x, Object tag);
 

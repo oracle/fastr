@@ -41,9 +41,11 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -55,6 +57,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -275,7 +278,11 @@ public final class VectorRFFIWrapper implements TruffleObject {
         abstract static class VectorWrapperReadNode extends Node {
             @Child private Node readMsg = Message.READ.createNode();
             private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
+            private final ConditionProfile isLogicalVectorProfile = ConditionProfile.createBinaryProfile();
             private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
+            private final BranchProfile isTrueProfile = BranchProfile.create();
+            private final BranchProfile isFalseProfile = BranchProfile.create();
+            private final BranchProfile isNAProfile = BranchProfile.create();
 
             public Object access(VectorRFFIWrapper receiver, Object index) {
                 try {
@@ -287,6 +294,18 @@ public final class VectorRFFIWrapper implements TruffleObject {
                         return ((RStringVector) receiver.vector).getWrappedDataAt(((Number) index).intValue());
                     } else if (isListProfile.profile(receiver.vector instanceof RList)) {
                         return ((RList) receiver.vector).getDataAt(((Number) index).intValue());
+                    } else if (isLogicalVectorProfile.profile(receiver.vector instanceof RAbstractLogicalVector)) {
+                        Object ret = ForeignAccess.sendRead(readMsg, receiver.vector, index);
+                        if (ret == Boolean.TRUE) {
+                            isTrueProfile.enter();
+                            return 1;
+                        } else if (ret == Boolean.FALSE) {
+                            isFalseProfile.enter();
+                            return 0;
+                        } else {
+                            isNAProfile.enter();
+                            return RRuntime.INT_NA;
+                        }
                     } else {
                         return ForeignAccess.sendRead(readMsg, receiver.vector, index);
                     }

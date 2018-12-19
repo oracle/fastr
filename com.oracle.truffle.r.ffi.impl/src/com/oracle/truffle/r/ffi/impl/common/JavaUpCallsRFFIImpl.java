@@ -1404,9 +1404,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void R_SetExternalPtrAddr(Object x, long addr) {
-        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
-        p.setAddr(new SymbolHandle(addr));
+    public void R_SetExternalPtrAddr(Object x, Object addr) {
+        throw implementedAsNode();
     }
 
     @Override

@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.data;
 
+import java.lang.management.ManagementFactory;
 import java.lang.ref.Reference;
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
@@ -30,6 +31,9 @@ import java.nio.charset.StandardCharsets;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
+
+import javax.management.MBeanServer;
+import javax.management.ObjectName;
 
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CallTarget;
@@ -215,20 +219,26 @@ public final class NativeDataAccess {
             // address == 0 means no nativeMirrors registration and no release() call
             super(ownerVec, (address != 0) ? nativeReferenceQueue() : null);
             this.id = address;
-            this.dataAddress = address;
+            setDataAddress(address);
             if (address != 0) {
                 nativeMirrors.put(id, this);
             }
+        }
+
+        long setDataAddress(long dataAddress) {
+            this.dataAddress = dataAddress;
+            dataAddressToNativeMirrors.put(dataAddress, this);
+            return dataAddress;
         }
 
         @TruffleBoundary
         void allocateNative(Object source, int len, int trueLen, int elementBase, int elementSize) {
             assert dataAddress == 0;
             if (len != 0) {
-                dataAddress = allocateNativeMemory(trueLen * elementSize);
+                setDataAddress(allocateNativeMemory(trueLen * elementSize));
                 UnsafeAdapter.UNSAFE.copyMemory(source, elementBase, null, dataAddress, trueLen * elementSize);
             } else {
-                dataAddress = getEmptyDataAddress();
+                setDataAddress(getEmptyDataAddress());
             }
             this.length = len;
 
@@ -239,7 +249,7 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNativeString(byte[] bytes) {
             assert dataAddress == 0;
-            dataAddress = allocateNativeMemory(bytes.length + 1);
+            setDataAddress(allocateNativeMemory(bytes.length + 1));
             UnsafeAdapter.UNSAFE.copyMemory(bytes, Unsafe.ARRAY_BYTE_BASE_OFFSET, null, dataAddress, bytes.length);
             UnsafeAdapter.UNSAFE.putByte(dataAddress + bytes.length, (byte) 0); // C strings
                                                                                 // terminator
@@ -252,9 +262,9 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNative(CharSXPWrapper[] wrappers) {
             if (wrappers.length == 0) {
-                dataAddress = getEmptyDataAddress();
+                setDataAddress(getEmptyDataAddress());
             } else {
-                long addr = dataAddress = allocateNativeMemory(wrappers.length * Long.BYTES);
+                long addr = setDataAddress(allocateNativeMemory(wrappers.length * Long.BYTES));
                 for (int i = 0; i < wrappers.length; i++) {
                     UnsafeAdapter.UNSAFE.putLong(addr + i * Long.BYTES, asPointer(wrappers[i]));
                 }
@@ -264,9 +274,9 @@ public final class NativeDataAccess {
         @TruffleBoundary
         void allocateNative(Object[] elements) {
             if (elements.length == 0) {
-                dataAddress = getEmptyDataAddress();
+                setDataAddress(getEmptyDataAddress());
             } else {
-                long addr = dataAddress = allocateNativeMemory(elements.length * Long.BYTES);
+                long addr = setDataAddress(allocateNativeMemory(elements.length * Long.BYTES));
                 for (int i = 0; i < elements.length; i++) {
                     Object element = elements[i];
                     if (element instanceof RSequence) {
@@ -287,11 +297,12 @@ public final class NativeDataAccess {
             // RFFILog.printf("gc'ing %16x (dataAddress=%16x)", id, dataAddress);
             if (dataAddress == getEmptyDataAddress()) {
                 // RFFILog.printf("1. freeing data at %16x (id=%16x)", dataAddress, id);
-                assert (dataAddress = 0xbadbad) != 0;
+                assert (setDataAddress(0xbadbad)) != 0;
             } else if (dataAddress != 0 && !external) {
                 // RFFILog.printf("2. freeing data at %16x (id=%16x)", dataAddress, id);
                 freeNativeMemory(dataAddress);
-                assert (dataAddress = 0xbadbad) != 0;
+                dataAddressToNativeMirrors.remove(dataAddress);
+                assert (setDataAddress(0xbadbad)) != 0;
             }
             if (nativeMirrorInfo != null) {
                 nativeMirrorInfo.remove(id); // Possible id(address)-clashing entries not handled
@@ -308,6 +319,7 @@ public final class NativeDataAccess {
     // address value
     private static final AtomicLong counter = new AtomicLong(0xdef000000000001L);
     private static final ConcurrentHashMap<Long, NativeMirror> nativeMirrors = new ConcurrentHashMap<>(512);
+    private static final ConcurrentHashMap<Long, NativeMirror> dataAddressToNativeMirrors = new ConcurrentHashMap<>(512);
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
     public static CallTarget createIsPointer() {
@@ -488,6 +500,20 @@ public final class NativeDataAccess {
         assert address != 0;
         assert index < ((NativeMirror) nativeMirror).length;
         UnsafeAdapter.UNSAFE.putDouble(address + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
+    }
+
+    public static void setNativeMirrorComplexRealPartData(Object nativeMirror, int index, double value) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        UnsafeAdapter.UNSAFE.putDouble(address + 2 * index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
+    }
+
+    public static void setNativeMirrorComplexImaginaryPartData(Object nativeMirror, int index, double value) {
+        long address = ((NativeMirror) nativeMirror).dataAddress;
+        assert address != 0;
+        assert index < ((NativeMirror) nativeMirror).length;
+        UnsafeAdapter.UNSAFE.putDouble(address + (2 * index + 1) * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
     }
 
     public static void setNativeMirrorRawData(Object nativeMirror, int index, byte value) {
@@ -1202,7 +1228,7 @@ public final class NativeDataAccess {
             noStringNative.invalidate();
         }
         NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
-        mirror.dataAddress = address;
+        mirror.setDataAddress(address);
         mirror.length = length;
 
         mirror.external = true;
@@ -1238,5 +1264,60 @@ public final class NativeDataAccess {
         // Uncomment for debugging
         // System.out.printf("DEBUG: freeing %x\n", address);
         UnsafeAdapter.UNSAFE.freeMemory(address);
+    }
+
+    public interface ResourceMBean {
+        int getSize();
+
+        String getItem(String idString);
+
+        String getAttribute(String idString, String attrName);
+
+        String getNativeId(String dataAddressString);
+    }
+
+    public static class Resource implements ResourceMBean {
+
+        @Override
+        public String getItem(String idString) {
+            return lookup(Long.decode(idString)).toString();
+        }
+
+        @Override
+        public String getAttribute(String idString, String attrName) {
+            RObject obj = (RObject) lookup(Long.decode(idString));
+            if (obj instanceof RAttributable) {
+                return "" + ((RAttributable) obj).getAttr(attrName);
+            } else {
+                return "";
+            }
+        }
+
+        @Override
+        public int getSize() {
+            return NativeDataAccess.nativeMirrors.size();
+        }
+
+        @Override
+        public String getNativeId(String dataAddressString) {
+            NativeMirror nativeMirror = NativeDataAccess.dataAddressToNativeMirrors.get(Long.decode(dataAddressString));
+            return nativeMirror == null ? "" : String.format("%16x", nativeMirror.id);
+        }
+
+    }
+
+    static void initMBean() {
+        try {
+            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+            ObjectName name = new ObjectName("Examples:type=JMX,name=ExampleStandardMBean");
+            Resource resource = new Resource();
+            mbs.registerMBean(resource, name);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    static {
+        initMBean();
     }
 }

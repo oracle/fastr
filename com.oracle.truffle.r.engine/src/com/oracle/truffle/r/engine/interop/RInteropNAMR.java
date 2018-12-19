@@ -38,6 +38,20 @@ public class RInteropNAMR {
         }
     }
 
+    @Resolve(message = "IS_BOXED")
+    public abstract static class RInteropNAIsBoxedNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RInteropNA receiver) {
+            return true;
+        }
+    }
+
+    @Resolve(message = "UNBOX")
+    public abstract static class RInteropNAUnboxNode extends Node {
+        protected Object access(@SuppressWarnings("unused") RInteropNA receiver) {
+            return receiver.getValue();
+        }
+    }
+
     @CanResolve
     public abstract static class RInteropNACheck extends Node {
         protected static boolean test(TruffleObject receiver) {
