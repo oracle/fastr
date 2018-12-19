@@ -950,6 +950,33 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     @TruffleBoundary
+    public void Rf_setVar(Object symbol, Object value, Object rho) {
+        if (rho == RNull.instance) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.USE_NULL_ENV_DEFUNCT);
+        }
+        if (!(rho instanceof REnvironment)) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ARG_NOT_AN_ENVIRONMENT, "setVar");
+        }
+        REnvironment env = (REnvironment) rho;
+        String symName = ((RSymbol) symbol).getName();
+        while (env != REnvironment.emptyEnv()) {
+            if (env.get(symName) != null) {
+                if (env.bindingIsLocked(symName)) {
+                    throw RError.error(RError.SHOW_CALLER2, Message.ENV_CHANGE_BINDING, symName);
+                }
+                try {
+                    env.put(symName, value);
+                } catch (PutException ex) {
+                    throw RError.error(RError.SHOW_CALLER2, ex);
+                }
+            }
+            env = env.getParent();
+        }
+        Rf_defineVar(symbol, value, REnvironment.globalEnv());
+    }
+
+    @Override
+    @TruffleBoundary
     public void DUPLICATE_ATTRIB(Object to, Object from) {
         if (from instanceof RAttributable) {
             guaranteeInstanceOf(to, RAttributable.class);

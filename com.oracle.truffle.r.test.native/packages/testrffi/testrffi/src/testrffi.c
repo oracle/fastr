@@ -902,3 +902,8 @@ SEXP test_constant_types() {
     UNPROTECT(1);
     return res;
 }
+
+SEXP test_Rf_setVar(SEXP symbol, SEXP value, SEXP env) {
+    Rf_setVar(symbol, value, env);
+    return R_NilValue;
+}
