@@ -139,7 +139,7 @@ public class TestSimpleValues extends TestBase {
     @Test
     public void testBinaryArithmetic() {
         assertEval("FALSE^(-3)");
-        assertEval(Ignored.NewRVersionMigration, /* Output.MayIgnoreErrorContext, */ArithmeticWhiteList.WHITELIST, template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
+        assertEval(Output.MayIgnoreErrorContext, ArithmeticWhiteList.WHITELIST, template("%0%1%2", ALL_ARITHMETIC_VALUES, BINARY_OPERATORS, ALL_ARITHMETIC_VALUES));
     }
 
     @Test
