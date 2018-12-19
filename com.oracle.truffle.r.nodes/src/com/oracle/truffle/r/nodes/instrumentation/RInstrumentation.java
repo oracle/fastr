@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.instrumentation;
 
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter.IndexRange;
@@ -31,7 +30,6 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -43,12 +41,6 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  */
 public class RInstrumentation {
 
-    /**
-     * The function names that were requested to be used in implicit {@code debug(f)} calls, when
-     * those functions are defined. Global to all contexts.
-     */
-    @CompilationFinal(dimensions = 1) private static String[] debugFunctionNames;
-
     public static FunctionDefinitionNode getFunctionDefinitionNode(RFunction func) {
         assert !func.isBuiltin();
         return (FunctionDefinitionNode) func.getRootNode();
@@ -58,20 +50,8 @@ public class RInstrumentation {
         return func.getRootNode().getSourceSection();
     }
 
-    /**
-     * Create a filter that matches all the statement nodes in {@code func}.
-     */
-    static SourceSectionFilter.Builder createFunctionStatementFilter(RFunction func) {
-        return createFunctionFilter(func, StandardTags.StatementTag.class);
-    }
-
     public static SourceSectionFilter.Builder createFunctionStatementFilter(FunctionDefinitionNode fdn) {
         return createFunctionFilter(fdn, StandardTags.StatementTag.class);
-    }
-
-    static SourceSectionFilter.Builder createFunctionFilter(RFunction func, Class<?> tag) {
-        FunctionDefinitionNode fdn = getFunctionDefinitionNode(func);
-        return createFunctionFilter(fdn, tag);
     }
 
     public static SourceSectionFilter.Builder createFunctionFilter(FunctionDefinitionNode fdn, Class<?> tag) {
@@ -81,7 +61,7 @@ public class RInstrumentation {
         SourceSection fdns = fdn.getSourceSection();
         builder.indexIn(fdns.getCharIndex(), fdns.getCharLength());
         Source source = fdns.getSource();
-        builder.sourceIs(s -> source.equals(s));
+        builder.sourceIs(source::equals);
         return builder;
     }
 
@@ -113,26 +93,11 @@ public class RInstrumentation {
      * global (command-line) options for tracing and timing. They are applied to every context.
      */
     public static void activate(@SuppressWarnings("unused") RContext context) {
-        String rdebugValue = FastROptions.Rdebug.getStringValue();
-        if (rdebugValue != null) {
-            debugFunctionNames = rdebugValue.split(",");
-        }
         // Check for function tracing
         RContext.getRRuntimeASTAccess().traceAllFunctions();
     }
 
     public static Instrumenter getInstrumenter() {
         return RContext.getInstance().getInstrumentationState().getInstrumenter();
-    }
-
-    public static void checkDebugRequested(RFunction func) {
-        if (debugFunctionNames != null) {
-            FunctionDefinitionNode fdn = (FunctionDefinitionNode) func.getRootNode();
-            for (String debugFunctionName : debugFunctionNames) {
-                if (debugFunctionName.equals(fdn.toString())) {
-                    RContext.getRRuntimeASTAccess().enableDebug(func, false);
-                }
-            }
-        }
     }
 }

@@ -213,7 +213,8 @@ public final class RInternalError extends Error implements TruffleException {
                         RSuicide.rSuicide("FastR internal error");
                     }
                 } else {
-                    message += ".";
+                    message += ". You can rerun FastR with --jvm.DR:+" + FastROptions.PrintErrorStacktracesToFile.name() +
+                                    " to turn on internal errors logging. Please attach the log file to the issue if possible.";
                 }
                 if (!FastROptions.PrintErrorStacktraces.getBooleanValue() && !FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
                     System.err.println(message);

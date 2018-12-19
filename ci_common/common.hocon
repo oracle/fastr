@@ -90,6 +90,7 @@ common : ${java8Downloads} ${packagesLinux}  {
   environment : {
 	PKG_TEST_ENV_miniUI : "LC_ALL=C"
 	PKG_TEST_ENV_compare : "LC_ALL=C"
+	FASTR_OPTION_PrintErrorStacktracesToFile: "true"
   }
 }
 

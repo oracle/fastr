@@ -33,7 +33,6 @@ import com.oracle.truffle.r.nodes.RRootNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseDeoptimizeFrameNode;
 import com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
-import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -82,9 +81,7 @@ public final class FunctionExpressionNode extends RSourceSectionNode implements 
             }
             initialized = true;
         }
-        RFunction func = RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, matFrame);
-        RInstrumentation.checkDebugRequested(func);
-        return func;
+        return RDataFactory.createFunction(RFunction.NO_NAME, RFunction.NO_NAME, callTarget, null, matFrame);
     }
 
     public RootCallTarget getCallTarget() {

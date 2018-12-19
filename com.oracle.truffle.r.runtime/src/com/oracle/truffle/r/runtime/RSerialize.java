@@ -2620,8 +2620,6 @@ public class RSerialize {
             FrameSlotChangeMonitor.initializeEnclosingFrame(callTarget.getRootNode().getFrameDescriptor(), enclosingFrame);
             RFunction func = RDataFactory.createFunction(functionName, packageName, callTarget, null, enclosingFrame);
 
-            RContext.getRRuntimeASTAccess().checkDebugRequest(func);
-
             /*
              * TODO: this is missing the code that registers sources with RPackageSource!
              */
