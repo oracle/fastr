@@ -59,8 +59,31 @@ public class ArithmeticWhiteList {
         WHITELIST.add("exp(-abs((0+1i)/(0+0i)))", "[1] NaN\n", "[1] 0\n");
         WHITELIST.add("((0/0)+1i)*(-(1/0))", "[1] NaN+NaNi\n", "[1] NaN-Infi\n");
         WHITELIST.add("((0/0)+1i)*(1/0)", "[1] NaN+NaNi\n", "[1] NaN+Infi\n");
-        WHITELIST.add("((0/0)+1i)-(1+NA)", "[1] NA\n", "[1] NaN+1i\n");
-        WHITELIST.add("((0/0)+1i)-(3.4+NA)", "[1] NA\n", "[1] NaN+1i\n");
+        WHITELIST.add("((0/0)+1i)+(1+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)-(1+NA)", "[1] NaN+NaNi\n", "[1] NaN+1i\n");
+        WHITELIST.add("((0/0)+1i)*(1+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)/(1+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)^(1+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)+(3.4+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)-(3.4+NA)", "[1] NaN+NaNi\n", "[1] NaN+1i\n");
+        WHITELIST.add("((0/0)+1i)*(3.4+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)/(3.4+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)^(3.4+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)+(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(0/0)+(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(-(0/0))+(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)-(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(0/0)-(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(-(0/0))-(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)*(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(0/0)*(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(-(0/0))*(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)/(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(0/0)/(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(-(0/0))/(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("((0/0)+1i)^(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(0/0)^(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
+        WHITELIST.add("(-(0/0))^(1i+NA)", "[1] NaN+NaNi\n", "[1] NA\n");
         WHITELIST.add("((0/0)+1i)/(-0.0)", "[1] NaN+NaNi\n", "[1] NaN-Infi\n");
         WHITELIST.add("((0/0)+1i)/FALSE", "[1] NaN+NaNi\n", "[1] NaN+Infi\n");
         WHITELIST.add("((0/0)+1i)/c(FALSE,FALSE,FALSE)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN+Infi NaN+Infi NaN+Infi\n");
@@ -89,7 +112,5 @@ public class ArithmeticWhiteList {
         WHITELIST.add("c(1i,1i,1i)/(-0.0)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN-Infi NaN-Infi NaN-Infi\n");
         WHITELIST.add("c(1i,1i,1i)/FALSE", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN+Infi NaN+Infi NaN+Infi\n");
         WHITELIST.add("c(1i,1i,1i)/c(FALSE,FALSE,FALSE)", "[1] NaN+NaNi NaN+NaNi NaN+NaNi\n", "[1] NaN+Infi NaN+Infi NaN+Infi\n");
-        WHITELIST.add("{ as.raw(c(1,4)) | raw() }", "raw(0)\n", "logical(0)\n");
-        WHITELIST.add("{ raw() | as.raw(c(1,4))}", "raw(0)\n", "logical(0)\n");
     }
 }
