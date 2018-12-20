@@ -1,8 +1,10 @@
 #include "data.table.h"
 
-#ifndef ENC_KNOWN
-#define ENC_KNOWN(x) (LEVELS(x) & 76)
+// There is a macro ENC_KNOWN defined by FastR (and GNU-R), but it does a different thing!
+#ifdef FASTR
+#undef ENC_KNOWN
 #endif
+#define ENC_KNOWN(x) (LEVELS(x) & 76)
 // LATIN1_MASK (1<<2) | UTF8_MASK (1<<3) | ASCII_MASK (1<<6)
 
 SEXP match_logical(SEXP table, SEXP x) {

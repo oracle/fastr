@@ -59,6 +59,13 @@ public interface RShareable extends RTypedValue {
      */
     RShareable makeSharedPermanent();
 
+    /**
+     * In order to support some hacks of some packages done via C API.
+     * 
+     * @return {@code this}
+     */
+    RShareable makeTemporary();
+
     RTypedValue getNonShared();
 
 }

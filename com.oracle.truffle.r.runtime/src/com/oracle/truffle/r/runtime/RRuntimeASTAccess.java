@@ -159,8 +159,6 @@ public interface RRuntimeASTAccess {
 
     String encodeComplex(RComplex x, int digits);
 
-    void checkDebugRequest(RFunction func);
-
     RAbstractStringVector getClassHierarchy(RAttributable value);
 
     RContext getCurrentContext();

@@ -150,7 +150,7 @@ public final class REnvVars implements RContext.ContextState {
                         proxy = proxy.substring(0, portIndex);
                     }
                     // things like https_proxy='http://proxy-server:1234' are a valid case
-                    // so always cleanup all protocal prefixes
+                    // so always cleanup all protocol prefixes
                     proxy = proxy.replace("http://", "").replace("https://", "").replace("ftp://", "");
                     System.setProperty(protocol + ".proxyHost", proxy);
 
@@ -160,6 +160,7 @@ public final class REnvVars implements RContext.ContextState {
                         System.getProperties().remove(protocol + ".proxyPort");
                     }
 
+                    // the setting for https is taken from http according to JDK docs
                     if ("http".equals(protocol) || "ftp".equals(protocol)) {
                         String noProxy = getEitherCase(protocol + "_no_proxy");
                         if (noProxy == null) {
@@ -167,15 +168,34 @@ public final class REnvVars implements RContext.ContextState {
                         }
 
                         if (noProxy != null) {
-                            System.setProperty(protocol + ".no_proxy", noProxy);
+                            System.setProperty(protocol + ".nonProxyHosts", convertNoProxy(noProxy));
                         } else {
-                            System.getProperties().remove(protocol + ".no_proxy");
+                            System.getProperties().remove(protocol + ".nonProxyHosts");
                         }
                     }
                 }
             }
         }
         return this;
+    }
+
+    // converts the no_proxy env variable syntax to Java syntax for nonProxyHosts
+    private static String convertNoProxy(String value) {
+        String[] items = value.split(",");
+        StringBuilder result = new StringBuilder(value.length());
+        for (int i = 0; i < items.length; i++) {
+            String item = items[i].trim();
+            if (item.startsWith(".")) {
+                // .some.url => *.some.url
+                result.append('*').append(item);
+            } else {
+                result.append(item);
+            }
+            if (i != items.length - 1) {
+                result.append('|');
+            }
+        }
+        return result.toString();
     }
 
     public static REnvVars newContextState(Map<String, String> initialEnvVars) {

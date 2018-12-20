@@ -384,9 +384,10 @@ void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
     checkExitCall();
 }
 
-void Rf_setVar(SEXP x, SEXP y, SEXP z) {
-    TRACE0();
-    unimplemented("Rf_setVar");
+void Rf_setVar(SEXP symbol, SEXP value, SEXP rho) {
+    TRACE3(symbol, value, rho);
+    ((call_Rf_setVar) callbacks[Rf_setVar_x])(symbol, value, rho);
+    checkExitCall();
 }
 
 SEXP Rf_dimgets(SEXP x, SEXP y) {
@@ -460,6 +461,13 @@ SEXP Rf_shallow_duplicate(SEXP x) {
     return result;
 }
 
+SEXP Rf_duplicated(SEXP x, Rboolean from_last) {
+    TRACE0();
+    SEXP result = (R_xlen_t) ((call_Rf_duplicated) callbacks[Rf_duplicated_x])(x, from_last);
+    checkExitCall();
+    return result;
+}
+
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
     TRACE0();
     R_xlen_t result = (R_xlen_t) ((call_Rf_any_duplicated) callbacks[Rf_any_duplicated_x])(x, from_last);
@@ -472,12 +480,6 @@ R_xlen_t Rf_any_duplicated3(SEXP x, SEXP incomp, Rboolean from_last) {
     R_xlen_t result = (R_xlen_t) ((call_Rf_any_duplicated3) callbacks[Rf_any_duplicated3_x])(x, incomp, from_last);
     checkExitCall();
     return result;
-}
-
-SEXP Rf_duplicated(SEXP x, Rboolean y) {
-    TRACE0();
-    unimplemented("Rf_duplicated");
-    return NULL;
 }
 
 SEXP Rf_applyClosure(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b) {

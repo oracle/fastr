@@ -149,7 +149,7 @@ public final class MissingNode extends OperatorNode {
                     return false;
                 } else {
                     if (PromiseState.isEager(promise.getState()) && !((EagerPromise) promise).isDeoptimized()) {
-                        return false;
+                        return isMissingProfile.profile(RMissingHelper.isMissing(((EagerPromise) promise).getEagerValue()));
                     }
                     if (recursiveDesc != null) {
                         promiseHelper.materialize(promise); // Ensure that promise holds a frame

@@ -73,12 +73,12 @@ public final class StartupTiming {
     }
 
     private void putTimestamp(String tsName) {
-        timestamps.add(new Timestamp(System.currentTimeMillis(), tsName));
+        timestamps.add(new Timestamp(System.currentTimeMillis(), Runtime.getRuntime().totalMemory() - Runtime.getRuntime().freeMemory(), tsName));
     }
 
     private void summary(PrintStream out) {
-        out.println("Startup timing table:");
-        out.println("<Timestamp>\t<FromStart>\t<FromPrev>");
+        out.println("Startup performance table:");
+        out.printf("%1$-50s %2$20s %3$20s %4$20s\n", "<Timestamp>", "<FromStart>", "<FromPrev>", "<UsedMem>");
 
         TreeSet<Timestamp> sorted = new TreeSet<>(timestamps);
         long prevTs = startTime;
@@ -87,7 +87,7 @@ public final class StartupTiming {
             long delta = ts.timestamp - prevTs;
             String msg = ts.name;
 
-            out.printf("%s:\t%s ms\t(%s ms)\n", msg, relTs, delta);
+            out.printf("%1$-50s %2$18dms %3$18dms %4$17dKiB\n", msg, relTs, delta, ts.usedMem / 1024);
 
             prevTs = ts.timestamp;
         }
@@ -95,16 +95,18 @@ public final class StartupTiming {
 
     private static final class Timestamp implements Comparable<Timestamp> {
         private final long timestamp;
+        private final long usedMem;
         private final String name;
 
-        Timestamp(long ts, String name) {
+        Timestamp(long ts, long usedMem, String name) {
             this.timestamp = ts;
             this.name = name;
+            this.usedMem = usedMem;
         }
 
         @Override
         public int compareTo(Timestamp other) {
-            return this.timestamp == other.timestamp ? 0 : (this.timestamp < other.timestamp ? -1 : 1);
+            return Long.compare(this.timestamp, other.timestamp);
         }
     }
 }

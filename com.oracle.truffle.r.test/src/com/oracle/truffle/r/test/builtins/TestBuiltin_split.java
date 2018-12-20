@@ -129,6 +129,9 @@ public class TestBuiltin_split extends TestBase {
         assertEval("{ x <- factor(c(\"a\", \"b\", \"a\")); attr(x, \"levels\")<-c(7L, 42L) ; split(1:3, x) }");
         assertEval("{ split(list(1, 2L, 'x', T), as.factor(c('a', 'b', 'a')); }");
         assertEval("{ split(as.raw(1:10), as.factor(c('a', 'b', 'a')); }");
+        assertEval("{ split(1, NA); }");
+        assertEval("{ split(1:2, c(NA, NA)); }");
+        assertEval("{ split(c(5,1,2,6,3,6), c(NA,2)); }");
     }
 
     @Test

@@ -64,6 +64,12 @@ public abstract class RSharingAttributeStorage extends RAttributeStorage impleme
     }
 
     @Override
+    public RShareable makeTemporary() {
+        refCount = 0;
+        return this;
+    }
+
+    @Override
     public final RTypedValue getNonShared() {
         if (isShared()) {
             RShareable res = copy();

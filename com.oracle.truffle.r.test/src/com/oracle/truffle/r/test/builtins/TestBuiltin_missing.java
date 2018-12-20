@@ -59,5 +59,7 @@ public class TestBuiltin_missing extends TestBase {
         assertEval("{ f <- function(a,b,c,d,e,env) (length(objects(env, all.names = TRUE, pattern = \"^[.]__[CTA]_\"))); f2 <- function(env) (length(objects(env, all.names = TRUE, pattern = \"^[.]__[CTA]_\"))); f(); f2() }");
 
         assertEval("{ f <- function(a) { missing(\"a\") };  f(); f(1) }");
+        assertEval(Ignored.ImplementationError, "f <- function(x,y,z){print(missing(x)); g(x)}; g <- function(a){a}; a <- quote(f(1,2,))[[4]]; f(a,1,2)");
+        assertEval(Ignored.ImplementationError, "f <- function(x,y,z){print(missing(x)); g(x)}; g <- function(a){a}; f(,1,2)");
     }
 }

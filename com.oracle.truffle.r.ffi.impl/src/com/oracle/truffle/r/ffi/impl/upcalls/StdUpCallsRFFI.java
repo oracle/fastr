@@ -36,6 +36,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfDuplicated;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated3;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
@@ -314,6 +315,9 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(DuplicateNodes.DuplicateNode.class)
     Object Rf_duplicate(Object x, int deep);
 
+    @RFFIUpCallNode(RfDuplicated.class)
+    Object Rf_duplicated(Object x, int fromLast);
+
     @RFFIUpCallNode(RfAnyDuplicated.class)
     long Rf_any_duplicated(Object x, int fromLast);
 
@@ -414,6 +418,8 @@ public interface StdUpCallsRFFI {
     Object Rf_GetOption1(Object tag);
 
     void Rf_gsetVar(Object symbol, Object value, Object rho);
+
+    void Rf_setVar(Object symbol, Object value, Object rho);
 
     void DUPLICATE_ATTRIB(Object to, Object from);
 

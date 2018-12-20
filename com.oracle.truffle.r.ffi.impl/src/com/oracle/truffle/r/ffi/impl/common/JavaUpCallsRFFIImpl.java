@@ -91,6 +91,7 @@ import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
@@ -661,10 +662,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public int NAMED(Object x) {
-        if (x instanceof RShareable) {
-            return getNamed((RShareable) x);
+        if (x instanceof RSharingAttributeStorage) {
+            return ((RSharingAttributeStorage) x).isTemporary() ? 0 : ((RSharingAttributeStorage) x).isShared() ? 2 : 1;
         } else {
             // Note: it may be that we need to remember this for all types, GNUR does
+            RSharingAttributeStorage.verify(x);
             return 2;
         }
     }
@@ -680,12 +682,10 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         // sense to name the actual value, for compatibilty we simply ignore values that are not
         // RShareable, e.g. RSymbol. However we ignore and report attemps to decrease the ref-count,
         // which as it seems GNUR would just let proceede
+        // Note 2: there is a hack in data.table that uses SET_NAMED(x,0) to make something mutable
+        // so we allow and "support" this one specific use-case.
         if (x instanceof RShareable) {
             RShareable r = (RShareable) x;
-            int actual = getNamed(r);
-            if (v < actual) {
-                RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
-            }
             if (v >= 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect
                 // it to never become non-shared again, which could happen in FastR
@@ -694,11 +694,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             if (v == 1 && r.isTemporary()) {
                 r.incRefCount();
             }
+            if (v == 0) {
+                if (r.isSharedPermanent()) {
+                    CompilerDirectives.transferToInterpreter();
+                    RError.warning(RError.NO_CALLER, RError.Message.GENERIC,
+                                    "Native code of some package requested that a shared permanent value is made temporary. " +
+                                                    "This is a hack that may break things even on GNU-R, but for the sake of compatibility, FastR will proceed.");
+                }
+                r.makeTemporary();
+            }
         }
-    }
-
-    private static int getNamed(RShareable r) {
-        return r.isTemporary() ? 0 : r.isShared() ? 2 : 1;
     }
 
     @Override
@@ -733,6 +738,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public long Rf_any_duplicated(Object x, int fromLast) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object Rf_duplicated(Object x, int fromLast) {
         throw implementedAsNode();
     }
 
@@ -936,6 +946,33 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } catch (PutException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    @TruffleBoundary
+    public void Rf_setVar(Object symbol, Object value, Object rho) {
+        if (rho == RNull.instance) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.USE_NULL_ENV_DEFUNCT);
+        }
+        if (!(rho instanceof REnvironment)) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ARG_NOT_AN_ENVIRONMENT, "setVar");
+        }
+        REnvironment env = (REnvironment) rho;
+        String symName = ((RSymbol) symbol).getName();
+        while (env != REnvironment.emptyEnv()) {
+            if (env.get(symName) != null) {
+                if (env.bindingIsLocked(symName)) {
+                    throw RError.error(RError.SHOW_CALLER2, Message.ENV_CHANGE_BINDING, symName);
+                }
+                try {
+                    env.put(symName, value);
+                } catch (PutException ex) {
+                    throw RError.error(RError.SHOW_CALLER2, ex);
+                }
+            }
+            env = env.getParent();
+        }
+        Rf_defineVar(symbol, value, REnvironment.globalEnv());
     }
 
     @Override
