@@ -122,7 +122,7 @@ abstract class CachedVectorNode extends RBaseNode {
             if (logical.getLength() == 0) {
                 return defaultValue;
             } else {
-                return logical.getDataAt(0) == RRuntime.LOGICAL_TRUE;
+                return RRuntime.fromLogical(logical.getDataAt(0));
             }
         }
     }

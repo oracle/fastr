@@ -156,7 +156,7 @@ final class CachedReplaceVectorNode extends CachedVectorNode {
         Object[] convertedPositions = filterPositions(positions);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, true, true, recursive);
         if (castType != null && !castType.isNull()) {
-            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, false, true, true);
+            this.writeVectorNode = WriteIndexedVectorNode.create(castType, convertedPositions.length, true, true);
         }
     }
 

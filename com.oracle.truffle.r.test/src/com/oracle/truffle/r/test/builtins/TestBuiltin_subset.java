@@ -187,9 +187,14 @@ public class TestBuiltin_subset extends TestBase {
         assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[missng, missng]]}; f(m)");
         assertEval("m <- matrix(c(1:4), 2, 2); f <- function(m, missng) {m[[,]]}; f(m)");
 
-        assertEval(Ignored.NewRVersionMigration, "l <- list(x='a', y='b'); l[[]]");
-        assertEval(Ignored.NewRVersionMigration, "l <- list(x='a', y='b'); f <- function(l, missng) {l[[]]}; f(l)");
-        assertEval(Ignored.NewRVersionMigration, "l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng]]}; f(l)");
+        assertEval("l <- list(x='a', y='b'); l[[]]");
+        assertEval("l <- list('a', 'b'); l[[]]");
+        assertEval("l <- c(1,3,5); l[[]]");
+        assertEval("l <- matrix(1:9, nrow=3); l[[]]");
+        assertEval("l <- as.pairlist(list(x='a', y='b')); l[[]]");
+        assertEval("l <- expression(a+b); l[[]]");
+        assertEval("l <- quote(a+b); l[[]]");
+
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[1, missng]]}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng, 1]]}; f(l)");
         assertEval("l <- list(x='a', y='b'); f <- function(l, missng) {l[[missng, ]]}; f(l)");
