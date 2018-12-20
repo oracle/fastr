@@ -46,8 +46,6 @@ public abstract class CollectArgumentsNode extends RBaseNode {
 
     protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
-    private final ConditionProfile valueMissingProfile = ConditionProfile.createBinaryProfile();
-
     public abstract Object[] execute(VirtualFrame frame, ArgumentsSignature signature);
 
     protected Node[] createArgs(ArgumentsSignature signature, VirtualFrame frame) {
@@ -67,11 +65,20 @@ public abstract class CollectArgumentsNode extends RBaseNode {
     @Specialization(limit = "CACHE_LIMIT", guards = {"cachedSignature == signature"})
     protected Object[] combineCached(VirtualFrame frame, @SuppressWarnings("unused") ArgumentsSignature signature,
                     @Cached("signature") @SuppressWarnings("unused") ArgumentsSignature cachedSignature,
-                    @Cached("createArgs(signature, frame)") Node[] reads) {
+                    @Cached("createArgs(signature, frame)") Node[] reads,
+                    @Cached("createBinaryProfile()") ConditionProfile valueMissingProfile,
+                    @Cached("createBinaryProfile()") ConditionProfile defaultArgumentProfile) {
         Object[] result = new Object[reads.length];
         for (int i = 0; i < reads.length; i++) {
             Object value = reads[i] instanceof ConstantNode ? ((ConstantNode) reads[i]).getValue() : ((LocalReadVariableNode) reads[i]).execute(frame);
-            result[i] = valueMissingProfile.profile(value == null) ? RMissing.instance : value;
+            if (defaultArgumentProfile.profile(value instanceof RPromise && ((RPromise) value).isDefaultArgument())) {
+                // default arguments should be evaluated in the frame of the target function, if we
+                // just use missing here, the target function itself will create the correct promise
+                // for default argument with the correct exec frame
+                result[i] = RMissing.instance;
+            } else {
+                result[i] = valueMissingProfile.profile(value == null) ? RMissing.instance : value;
+            }
         }
         return result;
     }
@@ -90,7 +97,12 @@ public abstract class CollectArgumentsNode extends RBaseNode {
             if (slot == null) {
                 result[i] = RMissing.instance;
             } else {
-                result[i] = FrameSlotChangeMonitor.getValue(slot, frame);
+                Object value = FrameSlotChangeMonitor.getValue(slot, frame);
+                if (value instanceof RPromise && ((RPromise) value).isDefaultArgument()) {
+                    result[i] = RMissing.instance;
+                } else {
+                    result[i] = value == null ? RMissing.instance : value;
+                }
             }
         }
         return result;

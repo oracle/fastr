@@ -141,7 +141,7 @@ public final class FunctionDefinitionNode extends RRootNode implements RSyntaxNo
         return new FunctionDefinitionNode(language, src, frameDesc, argSourceSections, saveArguments, body, formals, name, argPostProcess);
     }
 
-    private FunctionDefinitionNode(TruffleRLanguage language, SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, RNode saveArguments, RSyntaxNode body,
+    private FunctionDefinitionNode(TruffleRLanguage language, SourceSection src, FrameDescriptor frameDesc, SourceSection[] argSourceSections, SaveArgumentsNode saveArguments, RSyntaxNode body,
                     FormalArguments formals,
                     String name, PostProcessArgumentsNode argPostProcess) {
         super(language, frameDesc, RASTBuilder.createFunctionFastPath(body, formals.getSignature()));
