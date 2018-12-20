@@ -156,7 +156,7 @@ ignore.suggests <- list(
 	glmnet = 'knitr',  # probably used for vignettes only
 	PerformanceAnalytics = ignore.all.but('testthat'), # not gated yet. We can run almost all tests except for few examples that use some suggests including data.table
 	shinyjs = 'V8',  # it fails when being installed, but it does not affect the tests result
-	quantmod = '*' # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 	mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
 	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 	sqldf = 'tcltk|RPostgreSQL|RJDBC|rJava|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
