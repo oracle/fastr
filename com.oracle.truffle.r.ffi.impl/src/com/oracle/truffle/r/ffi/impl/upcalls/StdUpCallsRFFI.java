@@ -64,6 +64,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MathFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SET_TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
@@ -269,6 +270,7 @@ public interface StdUpCallsRFFI {
 
     void SETLENGTH(Object x, int l);
 
+    @RFFIUpCallNode(SET_TRUELENGTHNode.class)
     void SET_TRUELENGTH(Object x, int l);
 
     @RFFIUpCallNode(TRUELENGTHNode.class)

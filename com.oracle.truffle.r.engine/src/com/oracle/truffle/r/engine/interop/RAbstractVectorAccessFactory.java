@@ -484,6 +484,8 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
 
     private static final class Check extends RootNode {
 
+        private final ConditionProfile profile = ConditionProfile.createBinaryProfile();
+
         Check() {
             super(null);
         }
@@ -491,7 +493,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
         @Override
         public Object execute(VirtualFrame frame) {
             final Object receiver = ForeignAccess.getReceiver(frame);
-            return receiver instanceof RAbstractAtomicVector && !(receiver instanceof RScalar);
+            return profile.profile(receiver instanceof RAbstractAtomicVector && !(receiver instanceof RScalar));
         }
     }
 }

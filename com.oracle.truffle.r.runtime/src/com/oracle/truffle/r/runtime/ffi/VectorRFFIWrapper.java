@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.NumberToIntNodeGen;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -277,6 +278,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @Resolve(message = "READ")
         abstract static class VectorWrapperReadNode extends Node {
             @Child private Node readMsg = Message.READ.createNode();
+            @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
             private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
             private final ConditionProfile isLogicalVectorProfile = ConditionProfile.createBinaryProfile();
             private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
@@ -291,9 +293,9 @@ public final class VectorRFFIWrapper implements TruffleObject {
                         // TODO: for now character vector shouldn't return plain java.lang.String,
                         // otherwise we'd need to make sure that all the places that expect CharSXP
                         // can also deal with java.lang.String
-                        return ((RStringVector) receiver.vector).getWrappedDataAt(((Number) index).intValue());
+                        return ((RStringVector) receiver.vector).getWrappedDataAt(getIndexNode.executeInteger(index));
                     } else if (isListProfile.profile(receiver.vector instanceof RList)) {
-                        return ((RList) receiver.vector).getDataAt(((Number) index).intValue());
+                        return ((RList) receiver.vector).getDataAt(getIndexNode.executeInteger(index));
                     } else if (isLogicalVectorProfile.profile(receiver.vector instanceof RAbstractLogicalVector)) {
                         Object ret = ForeignAccess.sendRead(readMsg, receiver.vector, index);
                         if (ret == Boolean.TRUE) {
@@ -318,13 +320,15 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @Resolve(message = "WRITE")
         abstract static class VectorWrapperWriteNode extends Node {
             @Child private Node writeMsg = Message.WRITE.createNode();
+            @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
+
             private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
             private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
 
             public Object access(VectorRFFIWrapper receiver, Object index, Object value) {
                 Object usedValue = value;
                 try {
-                    int ind = ((Number) index).intValue();
+                    int ind = getIndexNode.executeInteger(index);
                     if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
                         RStringVector sv = (RStringVector) receiver.vector;
                         if (value instanceof Long) {
@@ -385,4 +389,23 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
     }
 
+    public abstract static class NumberToInt extends Node {
+
+        public abstract int executeInteger(Object value);
+
+        @Specialization
+        protected int doInt(int x) {
+            return x;
+        }
+
+        @Specialization
+        protected int doLong(long x) {
+            return (int) x;
+        }
+
+        @Specialization
+        protected int doDouble(double x) {
+            return (int) x;
+        }
+    }
 }
