@@ -1019,17 +1019,17 @@ void SET_PRCODE(SEXP x, SEXP v) {
     unimplemented("SET_PRCODE");
 }
 
-int TRUELENGTH(SEXP x) {
+R_xlen_t TRUELENGTH(SEXP x) {
     TRACE(TARGp, x);
     return ((call_TRUELENGTH) callbacks[TRUELENGTH_x])(x);
 }
 
-void SETLENGTH(SEXP x, int v) {
+void SETLENGTH(SEXP x, R_xlen_t v) {
     TRACE0();
     ((call_SETLENGTH) callbacks[SETLENGTH_x])(x, v);
 }
 
-void SET_TRUELENGTH(SEXP x, int v) {
+void SET_TRUELENGTH(SEXP x, R_xlen_t v) {
     TRACE0();
     ((call_SET_TRUELENGTH) callbacks[SET_TRUELENGTH_x])(x, v);
 }
@@ -1103,6 +1103,10 @@ Rbyte *RAW(SEXP x) {
     Rbyte *result = ((call_RAW) callbacks[RAW_x])(x);
     checkExitCall();
     return result;
+}
+
+Rbyte *RAW0(SEXP x) {
+    return RAW(x);
 }
 
 const char * R_CHAR(SEXP x) {

@@ -28,8 +28,10 @@ import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.integerValue
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
-import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_ARGUMENT;
+import static com.oracle.truffle.r.runtime.RError.Message.CANNOT_SET_LENGTH;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_UNNAMED_VALUE;
+import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_OF_NULL_UNCHANGED;
+import static com.oracle.truffle.r.runtime.RError.Message.WRONG_LENGTH_ARG;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
@@ -45,13 +47,17 @@ public abstract class UpdateLength extends RBuiltinNode.Arg2 {
     static {
         Casts casts = new Casts(UpdateLength.class);
         // Note: `length<-`(NULL, newLen) really works in GnuR unlike other update builtins
-        casts.arg("x").allowNull().mustBe(abstractVectorValue(), INVALID_UNNAMED_ARGUMENT);
-        casts.arg("value").defaultError(INVALID_UNNAMED_VALUE).mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().mustBe(singleElement()).findFirst();
+        casts.arg("x").allowNull().mustBe(abstractVectorValue(), CANNOT_SET_LENGTH);
+        casts.arg("value").defaultError(INVALID_UNNAMED_VALUE).mustBe(integerValue().or(doubleValue()).or(stringValue())).asIntegerVector().mustBe(singleElement(), WRONG_LENGTH_ARG,
+                        "value").findFirst();
     }
 
     @SuppressWarnings("unused")
     @Specialization
     protected RNull updateLength(RNull value, int length) {
+        if (length > 0) {
+            warning(LENGTH_OF_NULL_UNCHANGED);
+        }
         return RNull.instance;
     }
 

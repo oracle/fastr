@@ -32,7 +32,7 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestBuiltin_deparse extends TestBase {
 
     private void assertEvalDeparsed(String snippet) {
-        assertEval(Output.IgnoreWhitespace, "cat({" + snippet + "})");
+        assertEval("cat({" + snippet + "})");
     }
 
     @Test

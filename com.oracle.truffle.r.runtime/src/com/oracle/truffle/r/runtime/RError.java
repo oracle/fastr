@@ -683,8 +683,11 @@ public final class RError extends RuntimeException implements TruffleException {
         WRONG_LENGTH_ARG("wrong length for '%s' argument"),
         INVALID_TYPE_IN("invalid '%s' type in 'x %s y'"),
         DOT_DOT_MISSING("'..%d' is missing"),
+        DOT_DOT_INDEX_ZERO_OR_LESS("indexing '...' with non-positive index %d"),
         DOT_DOT_SHORT("the ... list does not contain %d elements"),
+        DOT_DOT_NONE("the ... list does not contain any elements"),
         NO_DOT_DOT("..%d used in an incorrect context, no ... to look in"),
+        NO_DOT_DOT_CNTXT("incorrect context: the current call has no '...' to look in"),
         NO_DOT_DOT_DOT("'...' used in an incorrect context"),
         NO_LIST_FOR_CDR("'nthcdr' needs a list to CDR down"),
         INVALID_TYPE_LENGTH("invalid type/length (%s/%d) in vector allocation"),
@@ -965,13 +968,18 @@ public final class RError extends RuntimeException implements TruffleException {
         LINE_MALFORMED("Line starting '%s ...' is malformed!"),
         IS_NOT_GRAPHICAL_PAR("\"%s\" is not a graphical parameter"),
         GRAPHICAL_PAR_CANNOT_BE_SET("graphical parameter \"%s\" cannot be set"),
+        COMMAND_TIMED_OUT("command '%s' timed out after %ds"),
         NO_TAG_IN_SET_ATTRIB(
                         "SET_ATTRIB: tag in the attributes pairlist must be a symbol. %s given. It is possible that the code intends to set the TAG after the call to SET_ATTRIB, but this is not supported in FastR."),
         WRONG_ARGS_COMBINATION("Wrong arguments combination, please refer to ?%s for more details."),
         COULD_NOT_FIND_LANGUAGE("Could not find language corresponding to extension '%s', you can specify the language id explicitly, please refer to ?%s for more details."),
         LANGUAGE_NOT_AVAILABLE("Language with id '%s' is not available. Did you start R with --polyglot?"),
         NO_LANGUAGE_PROVIDED("No language id provided, please refer to ?%s for more details."),
-        NO_CODE_OR_PATH_PROVIDED("No code or path provided, please refer to ?%s for more details.");
+        NO_CODE_OR_PATH_PROVIDED("No code or path provided, please refer to ?%s for more details."),
+        LENGTH_OF_NULL_UNCHANGED("length of NULL cannot be changed"),
+        CANNOT_SET_LENGTH("cannot set length of non-(vector or list)"),
+        LONG_VECTOR_NOT_SUPPORTED("long vector '%s' is not supported"),
+        CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb");
 
         public final String message;
         final boolean hasArgs;

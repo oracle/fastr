@@ -53,19 +53,19 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         new RMain().launch(args);
     }
 
-    public static int runR(String[] args, InputStream inStream, OutputStream outStream, OutputStream errStream) {
-        return runROrRScript("R", args, inStream, outStream, errStream);
+    public static int runR(String[] args, InputStream inStream, OutputStream outStream, OutputStream errStream, int timeoutSecs) {
+        return runROrRScript("R", args, inStream, outStream, errStream, timeoutSecs);
     }
 
-    public static int runRscript(String[] args, InputStream inStream, OutputStream outStream, OutputStream errStream) {
-        return runROrRScript("Rscript", args, inStream, outStream, errStream);
+    public static int runRscript(String[] args, InputStream inStream, OutputStream outStream, OutputStream errStream, int timeoutSecs) {
+        return runROrRScript("Rscript", args, inStream, outStream, errStream, timeoutSecs);
     }
 
-    private static int runROrRScript(String command, String[] args, InputStream inStream, OutputStream outStream, OutputStream errStream) {
+    private static int runROrRScript(String command, String[] args, InputStream inStream, OutputStream outStream, OutputStream errStream, int timeoutSecs) {
         String[] newArgs = new String[args.length + 1];
         System.arraycopy(args, 0, newArgs, 1, args.length);
         newArgs[0] = command;
-        try (RMain cmd = new RMain(false, inStream, outStream, errStream)) {
+        try (RMain cmd = new RMain(false, inStream, outStream, errStream, timeoutSecs)) {
             cmd.launch(newArgs);
             return cmd.execute();
         }
@@ -82,6 +82,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     protected final InputStream inStream;
     protected final OutputStream outStream;
     protected final OutputStream errStream;
+    protected final int timeoutSecs;
 
     /**
      * In launcher mode {@link #launch(String[])} runs the command and uses {@link System#exit(int)}
@@ -98,11 +99,12 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     private boolean useJVM;
     private Context preparedContext; // to transfer between launch and execute when !launcherMode
 
-    private RMain(boolean launcherMode, InputStream inStream, OutputStream outStream, OutputStream errStream) {
+    private RMain(boolean launcherMode, InputStream inStream, OutputStream outStream, OutputStream errStream, int timeoutSecs) {
         this.launcherMode = launcherMode;
         this.inStream = inStream;
         this.outStream = outStream;
         this.errStream = errStream;
+        this.timeoutSecs = timeoutSecs;
     }
 
     private RMain() {
@@ -110,6 +112,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         this.inStream = System.in;
         this.outStream = System.out;
         this.errStream = System.err;
+        this.timeoutSecs = 0;
     }
 
     @Override
@@ -194,8 +197,6 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
 
         this.consoleHandler.setContext(context);
-        Source src = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).buildLiteral();
-        context.eval(src).execute(consoleHandler.getPolyglotWrapper());
         if (launcherMode) {
             try {
                 System.exit(execute(context));

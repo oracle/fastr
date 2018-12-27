@@ -25,6 +25,8 @@ package com.oracle.truffle.r.launcher;
 import java.io.EOFException;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.util.ArrayList;
@@ -77,11 +79,13 @@ public class REPL {
      */
     public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor, OutputStream errStream) {
         final ExecutorService executor;
+        final EventLoopThread eventLoopThread;
         if (useExecutor) {
             executor = context.eval(GET_EXECUTOR).asHostObject();
-            initializeNativeEventLoop(context, executor);
+            eventLoopThread = initializeNativeEventLoop(context, executor);
         } else {
             executor = null;
+            eventLoopThread = null;
         }
         run(executor, () -> context.eval(SET_CONSOLE_PROMPT_HANDLER).execute(consoleHandler.getPolyglotWrapper()));
         int lastStatus = 0;
@@ -178,6 +182,117 @@ public class REPL {
             System.err.println("Unexpected error in REPL");
             ex.printStackTrace();
             return 1;
+        } finally {
+            if (eventLoopThread != null) {
+                eventLoopThread.stopLoop();
+            }
+
+            traceEventLoopLogger.close();
+        }
+    }
+
+    /**
+     * This is a temporary class facilitating catching an occasional hanging attributed to the
+     * native event loop mechanism.
+     */
+    static class SimpleTraceEventLoopLogger {
+        private FileWriter traceEventLoopLogWriter;
+        private long timestamp = System.currentTimeMillis();
+
+        {
+            try {
+                if ("true".equalsIgnoreCase(System.getenv("TRACE_EVENT_LOOP"))) {
+                    traceEventLoopLogWriter = new FileWriter("traceEventLoop.log", true);
+                }
+            } catch (IOException e) {
+            }
+        }
+
+        void log(String msg) {
+            if (traceEventLoopLogWriter != null) {
+                try {
+                    traceEventLoopLogWriter.append(String.format("DEBUG[%d]: traceEventLoop: %s\n", timestamp, msg));
+                    traceEventLoopLogWriter.flush();
+                } catch (IOException e) {
+                }
+            }
+        }
+
+        void close() {
+            if (traceEventLoopLogWriter != null) {
+                try {
+                    traceEventLoopLogWriter.close();
+                } catch (IOException e) {
+                }
+            }
+        }
+    }
+
+    private static SimpleTraceEventLoopLogger traceEventLoopLogger = new SimpleTraceEventLoopLogger();
+
+    static class EventLoopThread extends Thread {
+
+        private final File fifoInFile;
+        private final File fifoOutFile;
+        private final Context context;
+        private final ExecutorService executor;
+
+        EventLoopThread(String fifoInPath, String fifoOutPath, Context context, ExecutorService executor) {
+            this.fifoInFile = new File(fifoInPath);
+            this.fifoOutFile = new File(fifoOutPath);
+            this.context = context;
+            this.executor = executor;
+        }
+
+        void stopLoop() {
+            try {
+                interrupt();
+                final FileOutputStream fis = new FileOutputStream(fifoInFile);
+                fis.write(66);
+                fis.flush();
+                fis.close();
+                join(8000);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        void releaseFifoOut() {
+            try {
+                final FileOutputStream fis = new FileOutputStream(fifoOutFile);
+                fis.write(65);
+                fis.flush();
+                fis.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        @Override
+        public void run() {
+            while (!isInterrupted()) {
+                try {
+                    final FileInputStream fis = new FileInputStream(fifoInFile);
+                    fis.read();
+                    if (isInterrupted()) {
+                        break;
+                    }
+                    fis.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                executor.submit(() -> {
+                    traceEventLoopLogger.log("before dispatching request");
+                    try {
+                        int res = context.eval(Source.newBuilder("R", ".fastr.dispatchNativeHandlers", "<dispatch-native-handlers>").internal(true).buildLiteral()).execute().asInt();
+                        traceEventLoopLogger.log("after dispatching request, res=" + res);
+                    } catch (Throwable ex) {
+                        releaseFifoOut();
+                        traceEventLoopLogger.log("error in dispatching request");
+                        ex.printStackTrace();
+                    }
+                });
+            }
         }
     }
 
@@ -229,37 +344,24 @@ public class REPL {
      *
      * @param context
      * @param executor
+     * @return the event loop thread
      */
-    private static void initializeNativeEventLoop(Context context, final ExecutorService executor) {
+    private static EventLoopThread initializeNativeEventLoop(Context context, final ExecutorService executor) {
         Source initEventLoopSource = Source.newBuilder("R", ".fastr.initEventLoop", "<init-event-loop>").internal(true).buildLiteral();
         Value result = context.eval(initEventLoopSource).execute();
         if (result.isNull()) {
-            return; // event loop is not configured to be run
+            return null; // event loop is not configured to be run
         } else if (result.getMember("result").asInt() != 0) {
             // TODO: it breaks pkgtest when parsing output
             // System.err.println("WARNING: Native event loop unavailable. Error code: " +
             // result.getMember("result").asInt());
+            return null;
         } else {
             final String fifoInPath = result.getMember("fifoInPath").asString();
-            Thread t = new Thread() {
-                @Override
-                public void run() {
-                    final File fifoFile = new File(fifoInPath);
-                    while (!Thread.currentThread().isInterrupted()) {
-                        try {
-                            final FileInputStream fis = new FileInputStream(fifoFile);
-                            fis.read();
-                            fis.close();
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                        executor.submit(() -> {
-                            context.eval(Source.newBuilder("R", ".fastr.dispatchNativeHandlers", "<dispatch-native-handlers>").internal(true).buildLiteral()).execute().asInt();
-                        });
-                    }
-                }
-            };
+            final String fifoOutPath = result.getMember("fifoOutPath").asString();
+            EventLoopThread t = new EventLoopThread(fifoInPath, fifoOutPath, context, executor);
             t.start();
+            return t;
         }
     }
 

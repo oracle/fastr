@@ -22,8 +22,6 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
-import java.util.Arrays;
-
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -35,6 +33,8 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
@@ -46,6 +46,8 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+
+import java.util.Arrays;
 
 /**
  * This class denotes a list of {@link #getArguments()} together with their names given to a
@@ -65,6 +67,8 @@ public final class CallArgumentsNode extends RBaseNode {
     protected final ArgumentsSignature signature;
 
     @Child private PromiseCheckHelperNode promiseHelper;
+    @Child private ShareObjectNode shareObject;
+    @Child private UnShareObjectNode unshareObject;
 
     private final RNodeClosureCache closureCache = new RNodeClosureCache();
 
@@ -227,6 +231,7 @@ public final class CallArgumentsNode extends RBaseNode {
             size += (varArgs.getLength() - 1) * varArgsSymbolIndices.length;
         }
         Object[] values = new Object[size];
+
         int vargsSymbolsIndex = 0;
         int index = 0;
         for (int i = 0; i < arguments.length; i++) {
@@ -238,10 +243,19 @@ public final class CallArgumentsNode extends RBaseNode {
                 if (CompilerDirectives.inInterpreter() && result == null) {
                     throw RInternalError.shouldNotReachHere("invalid null in arguments");
                 }
+                getShareObject().execute(result);
                 values[index] = result;
                 index++;
             }
         }
+
+        for (int i = 0; i < arguments.length; i++) {
+            if (i >= values.length) {
+                break;
+            }
+            getUnshareObject().execute(values[i]);
+        }
+
         return values;
     }
 
@@ -252,10 +266,28 @@ public final class CallArgumentsNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseCheckHelperNode());
             }
-            values[index] = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
+            Object result = promiseHelper.checkEvaluate(frame, varArgInfo.getArgument(j));
+            getShareObject().execute(result);
+            values[index] = result;
             index++;
         }
         return index;
+    }
+
+    private ShareObjectNode getShareObject() {
+        if (shareObject == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            shareObject = insert(ShareObjectNode.create());
+        }
+        return shareObject;
+    }
+
+    private UnShareObjectNode getUnshareObject() {
+        if (unshareObject == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            unshareObject = insert(UnShareObjectNode.create());
+        }
+        return unshareObject;
     }
 
     public boolean containsVarArgsSymbol() {

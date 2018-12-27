@@ -139,6 +139,10 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ log(c(1+1i), 0) }");
 
         assertEval("{ log(c(1+1i, 2+2i), NA) }");
+        assertEval("{ log(c(NA_complex_), NA_complex_) }");
+        assertEval("{ log(c(NA, 3-3i, 2+2i), NA_complex_) }");
+        assertEval("{ log(c(1+1i, NA, NA, 2+2i), NA_complex_) }");
+        assertEval("{ log(c(1+1i, 2+2i, NA), NA_complex_) }");
         assertEval("{ log(c(1+1i, 2+2i), NaN) }");
         assertEval("{ log(c(1+1i, 2+2i), complex(real=1, imaginary=NaN)) }");
         assertEval("{ log(c(1+1i, 2+2i), complex(real=NaN, imaginary=1)) }");
@@ -193,6 +197,11 @@ public class TestBuiltin_log extends TestBase {
         assertEval("{ x <- array(1:3, 1); dimnames(x) <- list('a'); r <- log(x); names(r)[[1]] <- 'new'; list(x=x, r=r); }");
         assertEval("{ x <- array(1:3, 3, list(x=c('x1','x2','x3'))); r <- log(x); r; }");
         assertEval("{ y <- array(1:6, c(2,3), list(y=c('y1','y2'), x=c('x1','x2','x3'))); r <- log(y); r; }");
+    }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ a <- c(1, 2, 4); foo <- function() { a[[1]] <<- 42; 33; }; log(a, foo()) }");
     }
 
 }

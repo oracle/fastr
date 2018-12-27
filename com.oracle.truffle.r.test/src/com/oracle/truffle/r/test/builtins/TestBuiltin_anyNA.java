@@ -62,4 +62,9 @@ public class TestBuiltin_anyNA extends TestBase {
         assertEval("anyNA(list(a = c(1, NA, 3), b = 'a'), recursive = TRUE)");
         assertEval("anyNA(list(a = c(1, 2, 3), b = list(NA, 'a')), recursive = TRUE)");
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ a <- c(1, 2, 4); foo <- function() { a[[1]] <<- NA; FALSE; }; anyNA(a, foo()) }");
+    }
 }

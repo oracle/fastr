@@ -105,7 +105,7 @@ public class TestBuiltin_sum extends TestBase {
     @Test
     public void testsum16() {
         // FIXME Case difference GnuR: "Integer overflow" vs "integer overflow" in FastR
-        assertEval(Output.IgnoreCase, "argv <- list(1073741824L, 1073741824L);sum(argv[[1]],argv[[2]]);");
+        assertEval(/* Output.IgnoreCase, */"argv <- list(1073741824L, 1073741824L);sum(argv[[1]],argv[[2]]);");
     }
 
     @Test
@@ -203,9 +203,14 @@ public class TestBuiltin_sum extends TestBase {
 
         assertEval("sum(c(2147483647L, 1L))");
         assertEval("sum(c(-2147483647L, -1L))");
-        assertEval(Output.IgnoreCase, "sum(c(-2147483647L), c(-1L))");
-        assertEval(Output.IgnoreCase, "sum(c(2147483647L), TRUE)");
+        assertEval(/* Output.IgnoreCase, */"sum(c(-2147483647L), c(-1L))");
+        assertEval(/* Output.IgnoreCase, */"sum(c(2147483647L), TRUE)");
         assertEval("sum(c(2147483647L), 1)");
         assertEval("sum(c(-2147483647L), -1)");
+    }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ x <- c(1, 2, 3); f <- function() { x[1] <<- 10; 2 }; g <- function(){ x[1] <<- 100; 0 }; sum(x, f(), x, g()) }");
     }
 }

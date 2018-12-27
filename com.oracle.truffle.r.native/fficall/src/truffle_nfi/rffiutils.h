@@ -27,8 +27,27 @@
 #include <stdlib.h>
 #include <string.h>
 #include <limits.h>
+#include <setjmp.h>
 #include <Rinternals.h>
 #include <trufflenfi.h>
+
+#define DO_CALL_VOID(call)          \
+    jmp_buf error_jmpbuf;           \
+    pushJmpBuf(&error_jmpbuf);      \
+    if (!setjmp(error_jmpbuf)) {    \
+        call;                       \
+    }                               \
+    popJmpBuf();
+
+#define DO_CALL(call)               \
+    jmp_buf error_jmpbuf;           \
+    pushJmpBuf(&error_jmpbuf);      \
+    SEXP result = R_NilValue;       \
+    if (!setjmp(error_jmpbuf)) {    \
+        result = call;              \
+    }                               \
+    popJmpBuf();                    \
+    return result;
 
 extern int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam);
 
@@ -55,6 +74,13 @@ void checkExitCall();
 
 // invoked from Java to set the exit call flag
 void set_exception_flag();
+
+
+void pushJmpBuf(jmp_buf *buf);
+
+jmp_buf * peekJmpBuf();
+
+void popJmpBuf();
 
 // use for any fatal error
 void fatalError(const char *msg) __attribute__((noreturn));

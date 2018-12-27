@@ -795,6 +795,7 @@ public class GrepFunctions {
     public abstract static class Regexpr extends RBuiltinNode.Arg6 {
 
         @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child private SetFixedAttributeNode setIndexTypeAttrNode = SetFixedAttributeNode.create("index.type");
         @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
         @Child private SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
         @Child private SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
@@ -857,6 +858,8 @@ public class GrepFunctions {
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
                 boolean useBytes = true;
+                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
+                                            // "chars";
                 boolean hasCaptureResult = false;
                 int[] result = new int[vector.getLength()];
                 int[] matchLength = new int[vector.getLength()];
@@ -903,6 +906,7 @@ public class GrepFunctions {
                 RIntVector ret = RDataFactory.createIntVector(result, RDataFactory.COMPLETE_VECTOR);
                 setMatchLengthAttrNode.execute(ret, RDataFactory.createIntVector(matchLength, RDataFactory.COMPLETE_VECTOR));
                 if (useBytes) {
+                    setIndexTypeAttrNode.execute(ret, indexType);
                     setUseBytesAttrNode.execute(ret, RRuntime.LOGICAL_TRUE);
                 }
                 if (hasCaptureResult) {
@@ -1020,6 +1024,7 @@ public class GrepFunctions {
     public abstract static class Regexec extends RBuiltinNode.Arg5 {
 
         @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child private SetFixedAttributeNode setIndexTypeAttrNode = SetFixedAttributeNode.create("index.type");
         @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
 
         static {
@@ -1051,10 +1056,10 @@ public class GrepFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean fixed, boolean useBytes,
+        protected Object regexp(RAbstractStringVector patternArg, RAbstractStringVector vector, boolean ignoreCase, boolean fixed, boolean useBytesL,
                         @Cached("createCommon()") CommonCodeNode common) {
             try {
-                common.checkExtraArgs(false, false, false, useBytes, false);
+                common.checkExtraArgs(false, false, false, useBytesL, false);
                 if (patternArg.getLength() > 1) {
                     throw RInternalError.unimplemented("multi-element patterns in regexpr not implemented yet");
                 }
@@ -1063,6 +1068,9 @@ public class GrepFunctions {
                 pattern = RegExp.checkPreDefinedClasses(pattern);
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
+                boolean useBytes = true;
+                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
+                                            // "chars";
                 for (int i = 0; i < vector.getLength(); i++) {
                     int[] matchPos;
                     int[] matchLength;
@@ -1084,6 +1092,7 @@ public class GrepFunctions {
                     ret.setElement(i, matches);
                 }
                 if (useBytes) {
+                    setIndexTypeAttrNode.execute(ret, indexType);
                     setUseBytesAttrNode.execute(ret, RRuntime.LOGICAL_TRUE);
                 }
                 return ret;
@@ -1130,6 +1139,7 @@ public class GrepFunctions {
     public abstract static class Gregexpr extends Regexpr {
 
         @Child private SetFixedAttributeNode setMatchLengthAttrNode = SetFixedAttributeNode.create("match.length");
+        @Child private SetFixedAttributeNode setIndexTypeAttrNode = SetFixedAttributeNode.create("index.type");
         @Child private SetFixedAttributeNode setUseBytesAttrNode = SetFixedAttributeNode.create("useBytes");
         @Child private SetFixedAttributeNode setCaptureStartAttrNode = SetFixedAttributeNode.create("capture.start");
         @Child private SetFixedAttributeNode setCaptureLengthAttrNode = SetFixedAttributeNode.create("capture.length");
@@ -1181,6 +1191,8 @@ public class GrepFunctions {
                 // TODO: useBytes normally depends on the value of the parameter and (if false) on
                 // whether the string is ASCII
                 boolean useBytes = true;
+                String indexType = "chars"; // TODO: normally should be: useBytes ? "bytes" :
+                                            // "chars";
                 Object[] result = new Object[vector.getLength()];
                 boolean hasAnyCapture = false;
                 RStringVector captureNames = null;
@@ -1195,6 +1207,7 @@ public class GrepFunctions {
                         res = RDataFactory.createIntVector(resData, RDataFactory.COMPLETE_VECTOR);
                         setMatchLengthAttrNode.execute(res, RDataFactory.createIntVector(txt.length()));
                         if (useBytes) {
+                            setIndexTypeAttrNode.execute(res, indexType);
                             setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);
                         }
                     } else {
@@ -1202,6 +1215,7 @@ public class GrepFunctions {
                         res = toIndexOrSizeVector(l, true);
                         setMatchLengthAttrNode.execute(res, toIndexOrSizeVector(l, false));
                         if (useBytes) {
+                            setIndexTypeAttrNode.execute(res, indexType);
                             setUseBytesAttrNode.execute(res, RRuntime.LOGICAL_TRUE);
                         }
                         RIntVector captureStart = toCaptureStartOrLength(l, true);

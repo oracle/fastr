@@ -83,14 +83,4 @@ public abstract class ShareObjectNode extends Node {
         }
         return value;
     }
-
-    public static void unshare(Object value) {
-        RSharingAttributeStorage.verify(value);
-        if (value instanceof RSharingAttributeStorage) {
-            RSharingAttributeStorage shareable = (RSharingAttributeStorage) value;
-            if (!shareable.isSharedPermanent()) {
-                shareable.decRefCount();
-            }
-        }
-    }
 }

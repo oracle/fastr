@@ -60,7 +60,7 @@ public abstract class SystemFunctionFactory {
      * {@code command} is a string with args separated by spaces with the first element enclosed in
      * single quotes.
      */
-    public abstract Object execute(VirtualFrame frame, String command, boolean intern);
+    public abstract Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs);
 
     @TruffleBoundary
     protected void log(String command, String useKind) {

@@ -33,18 +33,18 @@ public class PreferContextSystemFunctionFactory extends SystemFunctionFactory {
     private ProcessSystemFunctionFactory processSystemFunctionFactory;
 
     @Override
-    public Object execute(VirtualFrame frame, String command, boolean intern) {
+    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs) {
         CommandInfo commandInfo = checkRCommand(command);
         if (commandInfo == null) {
             if (processSystemFunctionFactory == null) {
                 processSystemFunctionFactory = new ProcessSystemFunctionFactory();
             }
-            return processSystemFunctionFactory.execute(frame, command, intern);
+            return processSystemFunctionFactory.execute(frame, command, intern, timeoutSecs);
         } else {
             if (contextSystemFunctionFactory == null) {
                 contextSystemFunctionFactory = new ContextSystemFunctionFactory();
             }
-            return contextSystemFunctionFactory.execute(frame, command, intern);
+            return contextSystemFunctionFactory.execute(frame, command, intern, timeoutSecs);
         }
     }
 }

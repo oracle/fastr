@@ -62,23 +62,28 @@ public final class Geom {
     public static final class QGeom implements Function2_2 {
         @Override
         public double evaluate(double p, double prob, boolean lowerTail, boolean logP) {
+            if (Double.isNaN(p) || Double.isNaN(prob)) {
+                return p + prob;
+            }
+
             if (prob <= 0 || prob > 1) {
                 return RMathError.defaultError();
             }
 
+            try {
+                DPQ.rqp01check(p, logP);
+            } catch (EarlyReturn e) {
+                return e.result;
+            }
+            if (prob == 1) {
+                return 0;
+            }
             try {
                 DPQ.rqp01boundaries(p, 0, Double.POSITIVE_INFINITY, lowerTail, logP);
             } catch (EarlyReturn e) {
                 return e.result;
             }
 
-            if (Double.isNaN(p) || Double.isNaN(prob)) {
-                return p + prob;
-            }
-
-            if (prob == 1) {
-                return 0;
-            }
             /* add a fuzz to ensure left continuity, but value must be >= 0 */
             return RMath.fmax2(0, Math.ceil(DPQ.rdtclog(p, lowerTail, logP) / RMath.log1p(-prob) - 1 - 1e-12));
         }

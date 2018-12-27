@@ -93,4 +93,9 @@ public class TestBuiltin_ascall extends TestBase {
 
         assertEval(Output.IgnoreWhitespace, "{ cl <- quote(fun(3)); as.call(cl) }");
     }
+
+    @Test
+    public void testSideEffect() {
+        assertEval("{ a <- c(1, 2, 3); b <- function() { a[1] <<-10 ; 4 }; f <- sum; (g <- as.call(list(f, quote(a), quote(b()), quote(a[1] <- 11)))); eval(g) }");
+    }
 }

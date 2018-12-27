@@ -48,6 +48,17 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+/**
+ * Converts any position value to type supported by {@link PositionCheckNode}, which is string
+ * vector, logical vector, integer vector or missing. There is an exception for doubles and subset
+ * operation: they are not as the conversion must involve bounds check (only for subset), which
+ * cannot be done here.
+ *
+ * Note, a position is an R object, i.e. in {@code x[c(1,3), c(4.5, 5)]} position is vector
+ * {@code c(1,3)} and vector {@code c(4.5,5)} is another position. {@link CachedExtractVectorNode}
+ * gets an array of such positions -- one per each dimension of the target vector and passes that to
+ * the {@link PositionsCheckNode}, which passes it here.
+ */
 abstract class PositionCastNode extends RBaseNode {
 
     private final ElementAccessMode mode;
@@ -64,12 +75,14 @@ abstract class PositionCastNode extends RBaseNode {
 
     public abstract RTypedValue execute(Object position);
 
-    // TODO these boxing specializations can be removed as we enabled boxing of every value.
+    // We use boxing specializations to avoid using the type system in this specific case
     @Specialization
     protected RAbstractVector doInteger(int position) {
         return RInteger.valueOf(position);
     }
 
+    // We handle long indexes as ExtractVectorNode, which uses this node, can be used from the
+    // interop message handler for READ and there the index can be a long.
     @Specialization
     protected RAbstractVector doLong(long position, @Cached("create()") NACheck check) {
         return doDouble(position, check);
@@ -108,7 +121,7 @@ abstract class PositionCastNode extends RBaseNode {
                     @Cached("createIntegerCast()") CastIntegerNode cast,
                     @Cached("create()") BoxPrimitiveNode box) {
         if (mode.isSubscript()) {
-            // double gets casted to integer for subscript
+            // double gets cast to integer for subscript
             return (RAbstractVector) box.execute(cast.doCast(position));
         } else {
             // because we need to perform a special bounds check with doubles
@@ -135,7 +148,7 @@ abstract class PositionCastNode extends RBaseNode {
 
     @Specialization
     protected RMissing doSymbol(RSymbol position) {
-        if (position.getName().length() == 0) {
+        if (position == RSymbol.MISSING) {
             return doMissing(RMissing.instance);
         } else {
             throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
@@ -144,20 +157,18 @@ abstract class PositionCastNode extends RBaseNode {
 
     @Specialization
     protected RMissing doMissing(@SuppressWarnings("unused") RMissing position) {
-        if (mode.isSubscript()) {
-            if (replace) {
-                throw error(RError.Message.MISSING_SUBSCRIPT);
-            } else {
-                throw error(RError.Message.INVALID_SUBSCRIPT_TYPE, "symbol");
-            }
+        if (mode.isSubscript() && replace) {
+            throw error(RError.Message.MISSING_SUBSCRIPT);
         } else {
+            // Note: behavior in the case of 'isSubscript() && !replace' is handled elsewhere as it
+            // depends on the type of the target vector
             return RMissing.instance;
         }
     }
 
     @Specialization
     protected RMissing doEmpty(@SuppressWarnings("unused") REmpty position) {
-        return doMissing(null);
+        return doMissing(RMissing.instance);
     }
 
     @Specialization

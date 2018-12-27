@@ -69,7 +69,6 @@ public class TestBuiltin_dput extends TestBase {
 
     @Test
     public void testdput() {
-        assertEval(Output.IgnoreWhitespace,
-                        "x <- structure(list(A = c(1L, 1L), B = structure(c(1L, 1L), .Label = c('G', 'D'), class = 'factor'), C = structure(c(1L, 1L), .Label = c('G', 'D'), class = 'factor')), .Names = c('A', 'B', 'C'), row.names = 1:2, class = 'data.frame'); dput(x)");
+        assertEval("x <- structure(list(A = c(1L, 1L), B = structure(c(1L, 1L), .Label = c('G', 'D'), class = 'factor'), C = structure(c(1L, 1L), .Label = c('G', 'D'), class = 'factor')), .Names = c('A', 'B', 'C'), row.names = 1:2, class = 'data.frame'); dput(x)");
     }
 }

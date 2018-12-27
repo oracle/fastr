@@ -41,7 +41,7 @@ public class TestUtils extends TestBase {
 
     @Test
     public void testMethods() {
-        assertEval("methods(plot)");
+        assertEval(Ignored.NewRVersionMigration, "methods(plot)");
     }
 
     private static final String[] TEST_OCTSIZE_PARAMS = {"1L", "1.0", Integer.toString(Integer.MAX_VALUE), "NA", "NULL"};

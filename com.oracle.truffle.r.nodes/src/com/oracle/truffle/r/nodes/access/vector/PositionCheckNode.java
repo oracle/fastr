@@ -22,8 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
-import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -32,11 +32,13 @@ import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfi
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -45,19 +47,36 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+/**
+ * Handles casting of a position (there is a position for each dimension of the target vector) to
+ * either integer vector, logical vector or missing, which can than be handled by
+ * {@link WriteIndexedVectorNode}.
+ *
+ * This node delegates to {@link PositionCastNode} that casts to integer, or logical, or missing, or
+ * string vector and then this node handles further error reporting, position value transformation
+ * (e.g., names to integer indexes) and normalization.
+ * 
+ * The subclasses implement logic specific to subset/subscript in the abstract {@code execute}
+ * method, so in practice via {@code Specialization}s called from the generated {@code execute}
+ * method.
+ *
+ * Note one special exception: {@link PositionCastNode} does not cast {@code double}s if the mode is
+ * subset, and instead the double positions are handled in the {@link PositionCheckSubsetNode}.
+ */
 abstract class PositionCheckNode extends RBaseNode {
 
     private final Class<?> positionClass;
     private final int dimensionIndex;
     protected final int numDimensions;
     private final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
-    private final ConditionProfile nullDimensionsProfile = ConditionProfile.createBinaryProfile();
     private final ValueProfile positionClassProfile = ValueProfile.createClassProfile();
     protected final BranchProfile error = BranchProfile.create();
     protected final boolean replace;
     protected final RType containerType;
     @Child private PositionCastNode castNode;
     @Child private PositionCharacterLookupNode characterLookup;
+
+    @Child private Matrix2IndexCache matrix2IndexCache;
 
     private final ElementAccessMode mode;
 
@@ -72,6 +91,9 @@ abstract class PositionCheckNode extends RBaseNode {
         if (positionValue instanceof String || positionValue instanceof RAbstractStringVector) {
             boolean useNAForNotFound = !replace && isListLike(containerType) && mode.isSubscript();
             characterLookup = new PositionCharacterLookupNode(mode, numDimensions, dimensionIndex, useNAForNotFound, exact);
+        }
+        if (mode.isSubset() && numDimensions == 1) {
+            matrix2IndexCache = new Matrix2IndexCache();
         }
     }
 
@@ -110,12 +132,14 @@ abstract class PositionCheckNode extends RBaseNode {
         return numDimensions > 1;
     }
 
-    @Child private Mat2indsubNode mat2indsub;
-    @Child private GetDimAttributeNode getVectorDimsNode;
-    @Child private GetDimAttributeNode getVectorPosDimsNode;
-
     public final Object execute(PositionProfile profile, RAbstractContainer vector, int[] vectorDimensions, int vectorLength, Object position) {
         Object castPosition = castNode.execute(positionClass.cast(position));
+
+        if (mode.isSubscript() && isMissing()) {
+            if (!isListLike(containerType)) {
+                throw error(Message.SUBSCRIPT_BOUNDS);
+            }
+        }
 
         int dimensionLength;
         if (numDimensions == 1) {
@@ -127,27 +151,15 @@ abstract class PositionCheckNode extends RBaseNode {
         }
 
         if (mode.isSubset() && numDimensions == 1) {
-            if (getVectorDimsNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                getVectorDimsNode = insert(GetDimAttributeNode.create());
-            }
-            int[] vectorDim = getVectorDimsNode.getDimensions(vector);
-            if (nullDimensionsProfile.profile(vectorDim != null) && vectorDim.length == 2) {
+            int[] vectorDim = matrix2IndexCache.getVectorDimsNode.getDimensions(vector);
+            if (matrix2IndexCache.nullDimensionsProfile.profile(vectorDim != null) && vectorDim.length == 2) {
                 if (vector instanceof RAbstractVector) {
                     if (castPosition instanceof RAbstractVector) {
-                        if (getVectorPosDimsNode == null) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            getVectorPosDimsNode = insert(GetDimAttributeNode.create());
-                        }
                         RAbstractVector vectorPosition = (RAbstractVector) castPosition;
-                        int[] posDim = getVectorPosDimsNode.getDimensions(vectorPosition);
+                        int[] posDim = matrix2IndexCache.getVectorPosDimsNode.getDimensions(vectorPosition);
                         if (posDim != null && posDim.length == 2 && posDim[1] == vectorDim.length) {
                             if (castPosition instanceof RAbstractIntVector || castPosition instanceof RAbstractDoubleVector) {
-                                if (mat2indsub == null) {
-                                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                                    mat2indsub = insert(Mat2indsubNodeGen.create());
-                                }
-                                castPosition = mat2indsub.execute(vectorDim, vectorPosition, posDim);
+                                castPosition = matrix2IndexCache.mat2indsub.execute(vectorDim, vectorPosition, posDim);
                             }
                         }
                     }
@@ -276,11 +288,29 @@ abstract class PositionCheckNode extends RBaseNode {
         }
     }
 
+    private final class Matrix2IndexCache extends Node {
+        @Child private Mat2indsubNode mat2indsub;
+        @Child private GetDimAttributeNode getVectorDimsNode;
+        @Child private GetDimAttributeNode getVectorPosDimsNode;
+        private final ConditionProfile nullDimensionsProfile;
+
+        Matrix2IndexCache() {
+            this.getVectorDimsNode = GetDimAttributeNode.create();
+            this.nullDimensionsProfile = ConditionProfile.createBinaryProfile();
+            this.mat2indsub = Mat2indsubNodeGen.create();
+            this.getVectorPosDimsNode = GetDimAttributeNode.create();
+        }
+    }
+
     public boolean isEmptyPosition(Object position) {
         if (positionClass == REmpty.class) {
             return false;
         }
         Object castPosition = positionClassProfile.profile(position);
         return castPosition instanceof RAbstractContainer && ((RAbstractContainer) castPosition).getLength() == 0;
+    }
+
+    public boolean isMissing() {
+        return positionClass == RMissing.class || positionClass == REmpty.class || positionClass == RSymbol.class;
     }
 }

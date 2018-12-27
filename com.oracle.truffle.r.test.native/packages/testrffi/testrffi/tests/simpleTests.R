@@ -42,9 +42,7 @@ rffi.isRString(NULL)
 rffi.interactive()
 x <- 1; rffi.findvar("x", globalenv())
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
-	x <- "12345"; rffi.char_length(x)
-}
+# x <- "12345"; rffi.char_length(x)
 
 rffi.test_duplicate(quote(a[,3])[[3]], 1L) # try duplicating empty symbol
 
@@ -53,24 +51,20 @@ stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(strVec))
 rffi.LENGTH(strVec)
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
-	# this will call CHAR(x) on the NA string, which materializes it to native pointer...
-	rffi.char_length(strVec)
-}
+# this will call CHAR(x) on the NA string, which materializes it to native pointer...
+# rffi.char_length(strVec)
 strVec <- rffi.setStringElt(c('hello'), as.character(NA))
 stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(as.character(NA)))
 
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
 	# Encoding tests
-	rffi.getBytes('\u1F602\n')
+	# rffi.getBytes('\u1F602\n')
 	# ignored: FastR does not support explicit encoding yet
 	# latinEncStr <- '\xFD\xDD\xD6\xF0\n'
 	# Encoding(latinEncStr) <- "latin1"
 	# rffi.getBytes(latinEncStr)
-	rffi.getBytes('hello ascii')
-}
+	#rffi.getBytes('hello ascii')
 
 x <- list(1)
 attr(x, 'myattr') <- 'hello';
@@ -257,9 +251,7 @@ api.ATTRIB(data.frame(1, 2, 3))
 
 invisible(rffi.testDATAPTR('hello', testSingleString = T));
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
-	rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
-}
+# rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
 
 # SET_OBJECT
 # FastR does not fully support the SET_OBJECT fully,

@@ -42,7 +42,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  */
 public class ContextSystemFunctionFactory extends SystemFunctionFactory {
     private abstract static class ContextSystemFunctionNode extends RBaseNode {
-        public abstract Object execute(VirtualFrame frame, Object args, Object env, Object intern);
+        public abstract Object execute(VirtualFrame frame, Object args, Object env, Object intern, int timeoutSecs);
 
     }
 
@@ -57,9 +57,9 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         }
 
         @Specialization
-        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
+        protected Object systemFunction(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
             initContextRNode();
-            Object result = contextRNode.execute(frame, args, env, intern);
+            Object result = contextRNode.execute(frame, args, env, intern, timeoutSecs);
             return result;
         }
     }
@@ -75,21 +75,21 @@ public class ContextSystemFunctionFactory extends SystemFunctionFactory {
         }
 
         @Specialization
-        protected Object systemFunction(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
+        protected Object systemFunction(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
             initContextRscriptNode();
-            Object result = contextRscriptNode.execute(args, env, intern);
+            Object result = contextRscriptNode.execute(args, env, intern, timeoutSecs);
             return result;
         }
     }
 
     @Override
-    public Object execute(VirtualFrame frame, String command, boolean intern) {
+    public Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs) {
         log(command, "Context");
         CommandInfo commandInfo = checkRCommand(command);
         if (commandInfo != null) {
             ContextSystemFunctionNode node = Utils.unShQuote(commandInfo.command).equals("R") ? ContextRSystemFunctionNodeGen.create() : ContextRscriptSystemFunctionNodeGen.create();
             Object result = node.execute(frame, RDataFactory.createStringVector(commandInfo.args, RDataFactory.COMPLETE_VECTOR),
-                            RDataFactory.createStringVector(commandInfo.envDefs, RDataFactory.COMPLETE_VECTOR), intern);
+                            RDataFactory.createStringVector(commandInfo.envDefs, RDataFactory.COMPLETE_VECTOR), intern, timeoutSecs);
             return result;
         } else {
             throw cannotExecute(command);
