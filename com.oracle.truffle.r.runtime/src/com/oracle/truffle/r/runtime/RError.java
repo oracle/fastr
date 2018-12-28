@@ -979,6 +979,7 @@ public final class RError extends RuntimeException implements TruffleException {
         LENGTH_OF_NULL_UNCHANGED("length of NULL cannot be changed"),
         CANNOT_SET_LENGTH("cannot set length of non-(vector or list)"),
         LONG_VECTOR_NOT_SUPPORTED("long vector '%s' is not supported"),
+        CANNOT_SET_ATTR_ON("cannot set attribute on a %s"),
         CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb");
 
         public final String message;
