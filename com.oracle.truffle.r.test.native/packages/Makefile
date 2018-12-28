@@ -23,7 +23,7 @@
 
 .PHONY: all clean make_subdirs clean_subdirs clean_recommended
 
-SUBDIRS = testrffi vanilla tests4
+SUBDIRS = testrffi vanilla tests4 gnurtests
 NATIVE_RECOMMENDED_PROJECT = $(subst test.native,native.recommended,$(TOPDIR))
 ifndef GNUR_HOME_BINARY
 FASTR_R_HOME = $(abspath $(TOPDIR)/..)

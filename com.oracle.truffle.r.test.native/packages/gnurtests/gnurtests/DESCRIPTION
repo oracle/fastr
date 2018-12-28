@@ -1,0 +1,10 @@
+Package: gnurtests
+Type: Package
+Title: Empty package that contains the regression tests from GNU-R
+Version: 1.0
+Date: 2018-12-24
+Author: FastR Tester
+Maintainer: FastR Tester <fastr@yahoogroups.com>
+Description: Contains the GNU-R regression tests
+License: GPL-3
+Depends: R (>= 3.1.3)
