@@ -23,70 +23,51 @@
 
 package com.oracle.truffle.r.nodes.builtin.base;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNode;
-import com.oracle.truffle.r.nodes.unary.CastStringNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 
 // oldClass<- (as opposed to class<-), simply sets the attribute (without handling "implicit" attributes)
 @RBuiltin(name = "oldClass<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
 
-    @Child private CastStringNode castStringNode;
     @Child private SetClassAttributeNode setClassAttributeNode = SetClassAttributeNode.create();
+    @Child private ShareObjectNode shareObjectNode;
 
     static {
-        Casts.noCasts(UpdateOldClass.class);
+        Casts casts = new Casts(UpdateOldClass.class);
+        casts.arg("x").asAttributable(true, true, true);
+        casts.arg("value").allowNull().mustBe(stringValue(), Message.SET_INVALID_CLASS_ATTR).asStringVector();
     }
 
-    @Specialization(guards = "!isRAbstractStringVector(className)")
-    protected Object setOldClass(RAbstractContainer arg, RAbstractVector className) {
+    @Specialization
+    protected Object setOldClass(RAttributable arg, RAbstractStringVector className) {
         if (className.getLength() == 0) {
             return setOldClass(arg, RNull.instance);
         }
-        initCastStringNode();
-        Object result = castStringNode.doCast(className);
-        return setOldClass(arg, (RStringVector) result);
-    }
-
-    private void initCastStringNode() {
-        if (castStringNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            castStringNode = insert(CastStringNodeGen.create(false, false, false));
-        }
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected Object setOldClass(RAbstractContainer arg, String className) {
-        return setOldClass(arg, RDataFactory.createStringVector(className));
-    }
-
-    @Specialization
-    @TruffleBoundary
-    protected Object setOldClass(RAbstractContainer arg, RStringVector className) {
-        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
+        RAttributable result = (RAttributable) getShareObjectNode().execute(arg);
         setClassAttributeNode.execute(result, className);
         return result;
     }
 
     @Specialization
     @TruffleBoundary
-    protected Object setOldClass(RAbstractContainer arg, @SuppressWarnings("unused") RNull className) {
-        RAbstractContainer result = (RAbstractContainer) arg.getNonShared();
+    protected Object setOldClass(RAttributable arg, @SuppressWarnings("unused") RNull className) {
+        RAttributable result = (RAttributable) getShareObjectNode().execute(arg);
         setClassAttributeNode.reset(result);
         return result;
     }
@@ -96,8 +77,22 @@ public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
         return RNull.instance;
     }
 
-    @Specialization
+    @Specialization(guards = "!isRNull(className)")
     protected Object setOldClass(@SuppressWarnings("unused") RNull arg, @SuppressWarnings("unused") Object className) {
         throw error(Message.INVALID_NULL_LHS);
+    }
+
+    @Fallback
+    @TruffleBoundary
+    protected Object setOldClass(Object x, @SuppressWarnings("unused") Object className) {
+        throw error(Message.CANNOT_SET_ATTR_ON, Utils.getTypeName(x));
+    }
+
+    public ShareObjectNode getShareObjectNode() {
+        if (shareObjectNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            shareObjectNode = insert(ShareObjectNode.create());
+        }
+        return shareObjectNode;
     }
 }

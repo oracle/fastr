@@ -49,5 +49,15 @@ public class TestBuiltin_oldClassassign extends TestBase {
         assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; class(x) }");
 
         assertEval("{ x<-1; oldClass(x)<-\"integer\"; class(x)<-\"integer\"; oldClass(x) }");
+
+        assertEval("{ x <- new.env(); oldClass(x)<-'mycls'; oldClass(x) }");
+        assertEval("{ x <- function() 42; oldClass(x)<-'mycls'; oldClass(x) }");
+        assertEval("{ x <- as.pairlist(42); oldClass(x)<-'mycls'; oldClass(x) }");
+        assertEval("{ x <- 1; oldClass(x) <- c('a', 'b'); oldClass(x) }");
+    }
+
+    @Test
+    public void testOldClassAssignValidation() {
+        assertEval("{ x <- 1; oldClass(x) <- 42; oldClass(x) }");
     }
 }
