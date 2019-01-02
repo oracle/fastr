@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,12 +25,12 @@ package com.oracle.truffle.r.ffi.impl.nfi;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory.DownCallNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 
-public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
+public class HandleNFIUpCallExceptionNode extends Node implements UpCallsRFFI.HandleUpCallExceptionNode {
     @Child private DownCallNode setFlagNode = TruffleNFI_DownCallNodeFactory.INSTANCE.createDownCallNode(NativeFunction.set_exception_flag);
     private final ConditionProfile isEmbeddedTopLevel = ConditionProfile.createBinaryProfile();
 
@@ -51,6 +51,6 @@ public class HandleNFIUpCallExceptionNode extends Node implements HandleUpCallEx
     }
 
     private static boolean isTopLevel() {
-        return ((TruffleNFI_Context) RContext.getInstance().getRFFI()).getCallDepth() == 0;
+        return RContext.getInstance().getRFFI(TruffleNFI_Context.class).getCallDepth() == 0;
     }
 }

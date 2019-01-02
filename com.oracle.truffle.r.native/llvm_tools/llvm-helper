@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -31,18 +31,31 @@ else
   run_mode="run"
 fi
 
-function runit() {
-  if [ $run_mode == "echo" ]
+package_name=""
+force_native_package=0
+if [ -z "$R_PACKAGE_DIR" ]
+then
+  R_PACKAGE_DIR="."
+else
+  package_name=`basename $R_PACKAGE_DIR`
+  
+  native_packages_base=""
+  if [ -d "${DIR}/../etc" ]
   then
-    echo "$@"
-  elif [ $run_mode == "echorun" ]
-  then
-    echo "$@"
-    "$@"
+	# For a package build
+	native_packages_base="${DIR}/../etc"
   else
-    "$@"
+	# For the FastR build
+	native_packages_base="${DIR}/../run"
   fi
-}
+
+  cat ${native_packages_base}/native-packages | grep "^$package_name$" > /dev/null
+  if [ $? == 0 ]
+  then
+    force_native_package=1
+  fi
+  
+fi
 
 # Input: all the arguments to the original command line
 # Global variables set:
@@ -58,6 +71,7 @@ function analyze_args() {
   llvm_file_ext='.bc'
   
   is_link=0
+  is_print_cmd=0
   out_file_opt=()
   llvm_ir_file=""
   llvm_ir_file_opt=()
@@ -66,15 +80,18 @@ function analyze_args() {
   while [[ $# -gt 0 ]]
   do
     case $1 in
+      -fpic)
+      ;;
+      -print*)
+	    llvm_args_tmp+=("$1")
+        is_print_cmd=1
+      ;;
 	  -O2)
 		# See the "no_opt" comment in llvm-c++
 	    if [ -z $no_opt ]
         then
 		  llvm_args_tmp+=("-O2")
         fi  
-      ;;
-	  -fpic)
-        shift
       ;;
       -c)
         c_opt_found=1
@@ -122,7 +139,31 @@ function analyze_args() {
     llvm_args+=("${llvm_args_tmp[@]}")
   fi
   
-  echo "Effective args: ${llvm_args[@]}"
+  #echo "Effective args: ${llvm_args[@]}"
+}
+
+analyze_args "$@"
+
+ecode=0
+if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
+	${ORIG_CMD} "$@"
+	ecode=$?
+fi
+if [[ $force_native_package -eq 1 || $FASTR_RFFI == 'nfi-only' || $is_print_cmd -eq 1 ]]; then
+    exit $ecode
+fi
+
+function runit() {
+  if [ $run_mode == "echo" ]
+  then
+    echo "$@"
+  elif [ $run_mode == "echorun" ]
+  then
+    echo "$@"
+    "$@"
+  else
+    "$@"
+  fi
 }
 
 function find_source_and_target() {
@@ -215,8 +256,11 @@ function create_bc_lib() {
 		ext=${f##*.}
 		if [ $ext == 'o' ] || [ $ext == 'bc' ]
 		then
-	  		fn="$(dirname $1)/${f%%.*}.bc"
-			bcfiles+="$fn "
+	        if [ -f "$1" ]; then
+	        	# some object files may have been deleted during the build, such as configuration test files
+		  		fn="$(dirname $1)/${f%%.*}.bc"
+				bcfiles+="$fn "
+			fi
 		fi
         ;;
     esac

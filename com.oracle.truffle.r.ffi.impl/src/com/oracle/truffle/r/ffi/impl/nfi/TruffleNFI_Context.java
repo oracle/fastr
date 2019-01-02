@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn
 import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
 
 import java.lang.reflect.Field;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.EnumMap;
 import java.util.concurrent.locks.ReentrantLock;
@@ -60,12 +61,12 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
-import java.util.ArrayDeque;
 
 import sun.misc.Unsafe;
 
@@ -87,13 +88,18 @@ class UnsafeAdapter {
     }
 }
 
-final class TruffleNFI_Context extends RFFIContext {
+public class TruffleNFI_Context extends RFFIContext {
 
     @CompilationFinal private static boolean hasAccessLock;
     private static ReentrantLock accessLock;
 
-    TruffleNFI_Context() {
-        super(new TruffleNFI_C(), new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Call(), new TruffleNFI_DLL(), new TruffleNFI_UserRng(),
+    public TruffleNFI_Context() {
+        this(new RFFIContextState());
+    }
+
+    public TruffleNFI_Context(RFFIContextState rffiContextState) {
+        super(rffiContextState, new TruffleNFI_C(), new BaseRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE, TruffleNFI_DownCallNodeFactory.INSTANCE), new TruffleNFI_Call(), new TruffleNFI_DLL(),
+                        new TruffleNFI_UserRng(),
                         new ZipRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new LapackRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
                         new StatsRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE),
                         new MiscRFFI(TruffleNFI_DownCallNodeFactory.INSTANCE));
@@ -122,6 +128,13 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     private final EnumMap<NativeFunction, TruffleObject> nativeFunctions = new EnumMap<>(NativeFunction.class);
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public <C extends RFFIContext> C as(Class<C> rffiCtxClass) {
+        assert rffiCtxClass == TruffleNFI_Context.class;
+        return (C) this;
+    }
 
     /**
      * Looks up the given given function and returns the NFI function object.
@@ -234,7 +247,7 @@ final class TruffleNFI_Context extends RFFIContext {
             }
         } else {
             // reuse the parent's callbacks table
-            callbacks = ((TruffleNFI_Context) context.getParent().getStateRFFI()).callbacks;
+            callbacks = context.getParent().getStateRFFI().as(TruffleNFI_Context.class).callbacks;
         }
     }
 
@@ -246,6 +259,9 @@ final class TruffleNFI_Context extends RFFIContext {
     private long lastCallbacksAddress;
 
     private long pushCallbacks() {
+        if (rlibDLLInfo == null) {
+            return -1;
+        }
         if (callbacksAddress == 0) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             callbacksAddress = initCallbacksAddress();
@@ -278,6 +294,9 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     private void popCallbacks(long beforeValue) {
+        if (beforeValue < 0) {
+            return;
+        }
         assert !singleThreadOnly || UnsafeAdapter.UNSAFE.getLong(callbacksAddress) == callbacks : "invalid nesting of native calling contexts";
         assert singleThreadOnly || UnsafeAdapter.UNSAFE.getLong(lastCallbacksAddress) == callbacks : "invalid nesting of native calling contexts";
         UnsafeAdapter.UNSAFE.putLong(callbacksAddress, beforeValue);
@@ -298,7 +317,7 @@ final class TruffleNFI_Context extends RFFIContext {
         try {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
             if (context.isInitial()) {
-                DLL.loadLibR(context, librffiPath);
+                loadLibR(context, librffiPath);
             } else {
                 // force initialization of NFI
                 DLLRFFI.DLOpenRootNode.create(context).call(librffiPath, false, false);
@@ -352,8 +371,8 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public long beforeDowncall() {
-        super.beforeDowncall();
+    public long beforeDowncall(RFFIFactory.Type rffiType) {
+        super.beforeDowncall(RFFIFactory.Type.NFI);
         transientAllocations.push(new ArrayList<>());
         if (hasAccessLock) {
             acquireLock();
@@ -362,8 +381,8 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public void afterDowncall(long beforeValue) {
-        super.afterDowncall(beforeValue);
+    public void afterDowncall(long beforeValue, RFFIFactory.Type rffiType) {
+        super.afterDowncall(beforeValue, rffiType);
         popCallbacks(beforeValue);
         for (Long ptr : transientAllocations.pop()) {
             UnsafeAdapter.UNSAFE.freeMemory(ptr);
@@ -380,7 +399,7 @@ final class TruffleNFI_Context extends RFFIContext {
     }
 
     public static TruffleNFI_Context getInstance() {
-        return (TruffleNFI_Context) RContext.getInstance().getStateRFFI();
+        return RContext.getInstance().getStateRFFI(TruffleNFI_Context.class);
     }
 
     public DLLInfo getRLibDLLInfo() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,24 +57,36 @@ import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
  * A facade for the context state for the Truffle LLVM factory. Delegates to the various
  * module-specific pieces of state.
  */
-final class TruffleLLVM_Context extends RFFIContext {
+public class TruffleLLVM_Context extends RFFIContext {
 
     private final TruffleLLVM_DLL.ContextStateImpl dllState = new TruffleLLVM_DLL.ContextStateImpl();
     final TruffleLLVM_Call.ContextStateImpl callState = new TruffleLLVM_Call.ContextStateImpl();
 
-    TruffleLLVM_Context() {
-        super(new TruffleLLVM_C(), new BaseRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new TruffleLLVM_Call(), new TruffleLLVM_DLL(), new TruffleLLVM_UserRng(),
+    public TruffleLLVM_Context() {
+        this(new RFFIContextState());
+    }
+
+    public TruffleLLVM_Context(RFFIContextState rffiContextState) {
+        super(rffiContextState, new TruffleLLVM_C(), new BaseRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE, TruffleLLVM_DownCallNodeFactory.INSTANCE), new TruffleLLVM_Call(), new TruffleLLVM_DLL(),
+                        new TruffleLLVM_UserRng(),
                         new ZipRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new PCRERFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
                         new LapackRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new StatsRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE),
                         new ToolsRFFI(), new REmbedRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE), new MiscRFFI(TruffleLLVM_DownCallNodeFactory.INSTANCE));
     }
 
+    @SuppressWarnings("unchecked")
+    @Override
+    public <C extends RFFIContext> C as(Class<C> rffiCtxClass) {
+        assert rffiCtxClass == TruffleLLVM_Context.class;
+        return (C) this;
+    }
+
     static TruffleLLVM_Context getContextState() {
-        return (TruffleLLVM_Context) RContext.getInstance().getStateRFFI();
+        return RContext.getInstance().getStateRFFI(TruffleLLVM_Context.class);
     }
 
     static TruffleLLVM_Context getContextState(RContext context) {
-        return (TruffleLLVM_Context) context.getStateRFFI();
+        return context.getStateRFFI(TruffleLLVM_Context.class);
     }
 
     @Override
@@ -86,7 +98,7 @@ final class TruffleLLVM_Context extends RFFIContext {
 
         if (context.isInitial()) {
             String librffiPath = LibPaths.getBuiltinLibPath("R");
-            DLL.loadLibR(context, librffiPath);
+            loadLibR(context, librffiPath);
         }
 
         dllState.initialize(context);

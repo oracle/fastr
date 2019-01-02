@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -21,41 +21,34 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+
 ORIG_CMD=$1
 shift
 
-if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
-	${ORIG_CMD} "$@"
-fi
-if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
-    exit 0
-fi
-
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+. $DIR/llvm-helper
 
 SULONG_DIR=""
 if [ -f "${DIR}/../../sulong" ]
 then
 	# For a package build
-	SULONG_DIR="${DIR}/../../sulong"
+	SULONG_DIR="${DIR}/../../graal/sulong"
 else
 	# For the FastR build
-	SULONG_DIR="${DIR}/../../../sulong"
+	SULONG_DIR="${DIR}/../../../graal/sulong"
 fi
 
-. $DIR/llvm-helper
-
-errorOccurred || {
-try
-(
+#errorOccurred || {
+#try
+#(
 
 fortran=0
 # It's a kind of a coarse-grain measure turning off all optimizations for a C++ source.
 # The reason for it is that clang generates invalid LLVM code for some instances of
 # Rcpp templates.
 no_opt=1
-analyze_args "$@"
 
 if [ $is_link -eq 1 ]
 then
@@ -69,7 +62,8 @@ else
   get_llvm_tool
   unamestr=`uname`
   if [[ "$unamestr" == 'Linux' ]]; then
-    llvm_args="-stdlib=libc++ -I/usr/include/libcxxabi ${llvm_args[@]}"
+	llvm_args+=("-stdlib=libc++")
+	llvm_args+=("-I/usr/include/libcxxabi")
   fi
   runit $llvm_tool_bin -DSULONG "-I${SULONG_DIR}/include" "-I${SULONG_DIR}/mxbuild/sulong-libs" "-I${SULONG_DIR}/projects/com.oracle.truffle.llvm.libraries.bitcode/include" "${llvm_args[@]}"
   ecode=$?
@@ -92,8 +86,9 @@ else
   fi
 fi
 
-) || catch || {
-	recordError
-}
-}
+#) || catch || {
+#	recordError
+#    exit $ex_code
+#}
+#}
 

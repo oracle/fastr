@@ -104,9 +104,8 @@ public abstract class RLengthNode extends RBaseNode {
 
     @Specialization(replaces = "doCachedContainer")
     protected int doContainer(RAbstractContainer operand,
-                    @Cached("create()") RLengthNode lengthNode,
                     @Cached("create()") VectorLengthProfile lengthProfile) {
-        return lengthProfile.profile(lengthNode.executeInteger(operand));
+        return lengthProfile.profile(operand.getLength());
     }
 
     protected static Class<? extends RAbstractContainer> getContainerClass(Object value) {
@@ -171,4 +170,5 @@ public abstract class RLengthNode extends RBaseNode {
             throw RError.interopError(this, e, object);
         }
     }
+
 }

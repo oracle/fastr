@@ -495,5 +495,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             final Object receiver = ForeignAccess.getReceiver(frame);
             return profile.profile(receiver instanceof RAbstractAtomicVector && !(receiver instanceof RScalar));
         }
+
     }
+
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
@@ -57,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.NumberToIntNodeGen;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
@@ -281,38 +283,32 @@ public final class VectorRFFIWrapper implements TruffleObject {
             @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
             private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
             private final ConditionProfile isLogicalVectorProfile = ConditionProfile.createBinaryProfile();
-            private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
-            private final BranchProfile isTrueProfile = BranchProfile.create();
-            private final BranchProfile isFalseProfile = BranchProfile.create();
+            private final ConditionProfile isContainerProfile = ConditionProfile.createBinaryProfile();
             private final BranchProfile isNAProfile = BranchProfile.create();
 
             public Object access(VectorRFFIWrapper receiver, Object index) {
-                try {
-                    if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
-                        ((RStringVector) receiver.vector).wrapStrings();
-                        // TODO: for now character vector shouldn't return plain java.lang.String,
-                        // otherwise we'd need to make sure that all the places that expect CharSXP
-                        // can also deal with java.lang.String
-                        return ((RStringVector) receiver.vector).getWrappedDataAt(getIndexNode.executeInteger(index));
-                    } else if (isListProfile.profile(receiver.vector instanceof RList)) {
-                        return ((RList) receiver.vector).getDataAt(getIndexNode.executeInteger(index));
-                    } else if (isLogicalVectorProfile.profile(receiver.vector instanceof RAbstractLogicalVector)) {
-                        Object ret = ForeignAccess.sendRead(readMsg, receiver.vector, index);
-                        if (ret == Boolean.TRUE) {
-                            isTrueProfile.enter();
-                            return 1;
-                        } else if (ret == Boolean.FALSE) {
-                            isFalseProfile.enter();
-                            return 0;
-                        } else {
-                            isNAProfile.enter();
-                            return RRuntime.INT_NA;
-                        }
-                    } else {
-                        return ForeignAccess.sendRead(readMsg, receiver.vector, index);
+                int i = getIndexNode.executeInteger(index);
+                if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
+                    ((RStringVector) receiver.vector).wrapStrings();
+                    // TODO: for now character vector shouldn't return plain java.lang.String,
+                    // otherwise we'd need to make sure that all the places that expect CharSXP
+                    // can also deal with java.lang.String
+                    return ((RStringVector) receiver.vector).getWrappedDataAt(i);
+                } else if (isLogicalVectorProfile.profile(receiver.vector instanceof RAbstractLogicalVector)) {
+                    byte ret = ((RAbstractLogicalVector) receiver.vector).getDataAt(i);
+                    if (ret == RRuntime.LOGICAL_NA) {
+                        isNAProfile.enter();
+                        return RRuntime.INT_NA;
                     }
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                    throw RInternalError.shouldNotReachHere(e);
+                    return ret;
+                } else if (isContainerProfile.profile(receiver.vector instanceof RAbstractContainer)) {
+                    return ((RAbstractContainer) receiver.vector).getDataAtAsObject(i);
+                } else {
+                    try {
+                        return ForeignAccess.sendRead(readMsg, receiver.vector, index);
+                    } catch (InteropException e) {
+                        throw RInternalError.shouldNotReachHere(e);
+                    }
                 }
             }
         }

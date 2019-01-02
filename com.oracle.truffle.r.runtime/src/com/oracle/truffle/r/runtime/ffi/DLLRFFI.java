@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,7 +35,7 @@ public interface DLLRFFI {
          *
          * @return {@code null} on error, opaque handle for following calls otherwise.
          */
-        Object execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError;
+        LibHandle execute(String path, boolean local, boolean now) throws UnsatisfiedLinkError;
 
         static DLOpenNode create() {
             return RFFIFactory.getDLLRFFI().createDLOpenNode();
@@ -121,5 +121,9 @@ public interface DLLRFFI {
         public static RootCallTarget create(RContext context) {
             return context.getOrCreateCachedCallTarget(DLCloseRootNode.class, () -> new DLCloseRootNode(context.getRFFI().dllRFFI.createDLCloseNode()).getCallTarget());
         }
+    }
+
+    public interface LibHandle {
+        RFFIFactory.Type getRFFIType();
     }
 }

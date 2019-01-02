@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.CEntry;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 
@@ -66,6 +67,11 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         }
     }
 
+    @Override
+    public RFFIFactory.Type getRFFIType() {
+        return RFFIFactory.Type.LLVM;
+    }
+
     public Object charSXPToNativeCharArray(Object x) {
         CharSXPWrapper chars = RFFIUtils.guaranteeInstanceOf(x, CharSXPWrapper.class);
         return new NativeCharArray(chars.getContents().getBytes());
@@ -74,6 +80,11 @@ public class TruffleLLVM_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     public Object bytesToNativeCharArray(byte[] bytes) {
         Object result = new NativeCharArray(bytes);
         return result;
+    }
+
+    @Override
+    public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
+        return new HandleLLVMUpCallExceptionNode();
     }
 
     // Checkstyle: stop method name check

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,7 +29,6 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
@@ -59,7 +58,6 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.ProcessOutputManager;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
@@ -69,6 +67,9 @@ import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 
 /**
  * The Truffle version of {@link DLLRFFI}. {@code dlopen} expects to find the LLVM IR in a "library"
@@ -132,7 +133,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
 
     private static TruffleLLVM_DLL truffleDLL;
 
-    TruffleLLVM_DLL() {
+    public TruffleLLVM_DLL() {
         if (truffleDLL != null) {
             libRModules = truffleDLL.libRModules;
         }
@@ -143,7 +144,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         return new ContextStateImpl();
     }
 
-    static class ParsedLLVM_IR {
+    public static class ParsedLLVM_IR {
         final LLVM_IR ir;
         final Object lookupObject;
 
@@ -162,13 +163,22 @@ public class TruffleLLVM_DLL implements DLLRFFI {
 
     }
 
-    static class LLVM_Handle {
+    public static class LLVM_Handle implements LibHandle {
         final String libName;
         final ParsedLLVM_IR[] parsedIRs;
 
-        LLVM_Handle(String libName, ParsedLLVM_IR[] irs) {
+        public LLVM_Handle(LLVM_Handle libHandle) {
+            this(libHandle.libName, libHandle.parsedIRs);
+        }
+
+        public LLVM_Handle(String libName, ParsedLLVM_IR[] irs) {
             this.libName = libName;
             this.parsedIRs = irs;
+        }
+
+        @Override
+        public Type getRFFIType() {
+            return RFFIFactory.Type.LLVM;
         }
 
     }
@@ -190,7 +200,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     @TruffleBoundary
-    public static LLVMArchive getZipLLVMIR(String path) {
+    public static LLVMArchive getZipLLVMIR(String path) throws IOException {
         List<String> nativeLibs = Collections.emptyList();
         try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(path + "l")))) {
             ArrayList<LLVM_IR> irList = new ArrayList<>();
@@ -231,9 +241,6 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             LLVM_IR[] result = new LLVM_IR[irList.size()];
             irList.toArray(result);
             return new LLVMArchive(result, nativeLibs);
-        } catch (IOException ex) {
-            // not a zip file
-            return null;
         }
     }
 
@@ -248,7 +255,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         return libs;
     }
 
-    private static class TruffleLLVM_DLOpenNode extends Node implements DLOpenNode {
+    private static final class TruffleLLVM_DLOpenNode extends Node implements DLOpenNode {
         @Child private TruffleLLVM_NativeDLL.TruffleLLVM_NativeDLOpen nativeDLLOpenNode;
 
         /**
@@ -259,13 +266,13 @@ public class TruffleLLVM_DLL implements DLLRFFI {
          */
         @Override
         @TruffleBoundary
-        public Object execute(String path, boolean local, boolean now) {
+        public LibHandle execute(String path, boolean local, boolean now) {
+            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
+
             try {
                 LLVMArchive ar = getZipLLVMIR(path);
                 LLVM_IR[] irs = ar.irs;
-                if (irs == null) {
-                    return tryOpenNative(path, local, now);
-                }
                 String libName = getLibName(path);
                 if (libName.equals("libR")) {
                     // save for new RContexts
@@ -293,6 +300,8 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 }
                 ex.printStackTrace();
                 throw new UnsatisfiedLinkError(sb.toString());
+            } finally {
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
             }
         }
 
@@ -426,7 +435,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     private static boolean isLibTraced(String libName) {
-        String tracedLibs = System.getenv(FastROptions.TRACE_LLVM_LIBS);
+        String tracedLibs = System.getenv(FastROptions.DEBUG_LLVM_LIBS);
         if (tracedLibs == null || tracedLibs.isEmpty()) {
             return false;
         }
@@ -446,15 +455,12 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             ProcessBuilder pb = new ProcessBuilder("llvm-dis");
             pb.redirectOutput(llFile);
             Process p = pb.start();
-            InputStream os = p.getInputStream();
             OutputStream is = p.getOutputStream();
-            ProcessOutputManager.OutputThreadVariable readThread = new ProcessOutputManager.OutputThreadVariable("llvm-dis", os);
-            readThread.start();
             is.write(ir);
             is.close();
             int rc = p.waitFor();
             if (rc != 0) {
-                System.err.printf("Warning: LLVM disassembler exited with status %d\n", rc);
+                System.err.printf("Warning: LLVM disassembler exited with status %d. Target file %s\n", rc, llFile);
             }
         } catch (Exception e) {
             throw RInternalError.shouldNotReachHere(e);

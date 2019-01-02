@@ -802,6 +802,11 @@ public final class RContext {
         return getStateRFFI();
     }
 
+    public <C extends RFFIContext> C getRFFI(Class<C> rffiCtxClass) {
+        assert getStateRFFI(rffiCtxClass) != null;
+        return getStateRFFI(rffiCtxClass);
+    }
+
     public TruffleContext getTruffleContext() {
         return truffleContext;
     }
@@ -1011,6 +1016,10 @@ public final class RContext {
 
     public RFFIContext getStateRFFI() {
         return stateRFFI;
+    }
+
+    public <C extends RFFIContext> C getStateRFFI(Class<C> rffiCtxClass) {
+        return stateRFFI.as(rffiCtxClass);
     }
 
     /**

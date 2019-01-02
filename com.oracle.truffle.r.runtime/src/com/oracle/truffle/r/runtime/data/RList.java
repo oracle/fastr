@@ -73,7 +73,7 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
     }
 
     @Override
-    public final void setLength(int l) {
+    public void setLength(int l) {
         if (!isNativized()) {
             if (l != data.length) {
                 try {
@@ -94,12 +94,12 @@ public final class RList extends RVector<Object[]> implements RAbstractListVecto
     }
 
     @Override
-    public final int getTrueLength() {
+    public int getTrueLength() {
         return NativeDataAccess.getTrueDataLength(this);
     }
 
     @Override
-    public final void setTrueLength(int truelength) {
+    public void setTrueLength(int truelength) {
         NativeDataAccess.setTrueDataLength(this, truelength);
     }
 

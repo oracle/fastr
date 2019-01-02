@@ -46,6 +46,7 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
@@ -225,9 +226,12 @@ public final class NativeDataAccess {
             }
         }
 
+        @TruffleBoundary
         long setDataAddress(long dataAddress) {
             this.dataAddress = dataAddress;
-            dataAddressToNativeMirrors.put(dataAddress, this);
+            if (dataAddressToNativeMirrors != null) {
+                dataAddressToNativeMirrors.put(dataAddress, this);
+            }
             return dataAddress;
         }
 
@@ -301,7 +305,9 @@ public final class NativeDataAccess {
             } else if (dataAddress != 0 && !external) {
                 // RFFILog.printf("2. freeing data at %16x (id=%16x)", dataAddress, id);
                 freeNativeMemory(dataAddress);
-                dataAddressToNativeMirrors.remove(dataAddress);
+                if (dataAddressToNativeMirrors != null) {
+                    dataAddressToNativeMirrors.remove(dataAddress);
+                }
                 assert (setDataAddress(0xbadbad)) != 0;
             }
             if (nativeMirrorInfo != null) {
@@ -319,7 +325,7 @@ public final class NativeDataAccess {
     // address value
     private static final AtomicLong counter = new AtomicLong(0xdef000000000001L);
     private static final ConcurrentHashMap<Long, NativeMirror> nativeMirrors = new ConcurrentHashMap<>(512);
-    private static final ConcurrentHashMap<Long, NativeMirror> dataAddressToNativeMirrors = new ConcurrentHashMap<>(512);
+    private static final ConcurrentHashMap<Long, NativeMirror> dataAddressToNativeMirrors = System.getenv(FastROptions.DEBUG_LLVM_LIBS) != null ? new ConcurrentHashMap<>(512) : null;
     private static final ConcurrentHashMap<Long, RuntimeException> nativeMirrorInfo = TRACE_MIRROR_ALLOCATION_SITES ? new ConcurrentHashMap<>() : null;
 
     public static CallTarget createIsPointer() {
@@ -1298,21 +1304,21 @@ public final class NativeDataAccess {
         }
     }
 
-    public interface ResourceMBean {
-        int getSize();
+    public interface NativeDataInspectorMBean {
+        int getNativeMirrorsSize();
 
-        String getItem(String idString);
+        String getObject(String idString);
 
         String getAttribute(String idString, String attrName);
 
-        String getNativeId(String dataAddressString);
+        String getNativeIdFromAddress(String dataAddressString);
     }
 
-    public static class Resource implements ResourceMBean {
+    public static class NativeDataInspector implements NativeDataInspectorMBean {
 
         @Override
-        public String getItem(String idString) {
-            return lookup(Long.decode(idString)).toString();
+        public String getObject(String nativeIdString) {
+            return lookup(Long.decode(nativeIdString)).toString();
         }
 
         @Override
@@ -1326,12 +1332,13 @@ public final class NativeDataAccess {
         }
 
         @Override
-        public int getSize() {
+        public int getNativeMirrorsSize() {
             return NativeDataAccess.nativeMirrors.size();
         }
 
         @Override
-        public String getNativeId(String dataAddressString) {
+        public String getNativeIdFromAddress(String dataAddressString) {
+            assert NativeDataAccess.dataAddressToNativeMirrors != null;
             NativeMirror nativeMirror = NativeDataAccess.dataAddressToNativeMirrors.get(Long.decode(dataAddressString));
             return nativeMirror == null ? "" : String.format("%16x", nativeMirror.id);
         }
@@ -1339,13 +1346,15 @@ public final class NativeDataAccess {
     }
 
     static void initMBean() {
-        try {
-            MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
-            ObjectName name = new ObjectName("Examples:type=JMX,name=ExampleStandardMBean");
-            Resource resource = new Resource();
-            mbs.registerMBean(resource, name);
-        } catch (Exception e) {
-            e.printStackTrace();
+        if (System.getenv(FastROptions.DEBUG_LLVM_LIBS) != null) {
+            try {
+                MBeanServer mbs = ManagementFactory.getPlatformMBeanServer();
+                ObjectName name = new ObjectName("FastR:type=JMX,name=NativeDataInspector");
+                NativeDataInspector resource = new NativeDataInspector();
+                mbs.registerMBean(resource, name);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
     }
 

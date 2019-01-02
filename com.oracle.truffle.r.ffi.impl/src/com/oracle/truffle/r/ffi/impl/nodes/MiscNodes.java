@@ -34,7 +34,6 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionEnvironme
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionFormalsNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.OctSizeNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.TRUELENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
@@ -44,6 +43,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionBodyNodeG
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionEnvironmentNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionFormalsNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetObjectNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.TRUELENGTHNodeGen;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
@@ -71,7 +71,6 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
@@ -191,7 +190,7 @@ public final class MiscNodes {
         }
 
         @Specialization
-        protected int truelength(RListBase obj) {
+        protected int truelength(RList obj) {
             return obj.getTrueLength();
         }
 
@@ -252,7 +251,7 @@ public final class MiscNodes {
         }
 
         @Specialization
-        protected RNull truelength(RListBase obj, int trueLength) {
+        protected RNull truelength(RList obj, int trueLength) {
             obj.setTrueLength(trueLength);
             return RNull.instance;
         }

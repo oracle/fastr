@@ -955,4 +955,5 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(MakeActiveBindingNode.class)
     void R_MakeActiveBinding(Object sym, Object fun, Object env);
+
 }
