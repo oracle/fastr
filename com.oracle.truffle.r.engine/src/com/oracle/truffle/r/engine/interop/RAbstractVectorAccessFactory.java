@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.engine.interop;
 
 import java.util.List;
+import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -472,7 +473,16 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
         });
     }
 
-    static class Check extends RootNode {
+    public static final Supplier<RootNode> CHECK_FACTORY = new CheckFactory();
+
+    private static final class CheckFactory implements Supplier<RootNode> {
+        @Override
+        public RootNode get() {
+            return new Check();
+        }
+    }
+
+    private static final class Check extends RootNode {
 
         Check() {
             super(null);
