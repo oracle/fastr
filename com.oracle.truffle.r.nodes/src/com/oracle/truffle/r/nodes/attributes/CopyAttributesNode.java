@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -162,14 +162,14 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 RStringVector vecNames = getNamesNode.getNames(left);
                 if (hasNamesLeft.profile(vecNames != null)) {
                     if (result != left) {
-                        putNames.execute(initAttributes.execute(result), vecNames);
+                        putNames.setAttr(initAttributes.execute(result), vecNames);
                     }
                     return result;
                 }
                 if (result != right) {
                     vecNames = getNamesNode.getNames(right);
                     if (hasNamesRight.profile(vecNames != null)) {
-                        putNames.execute(initAttributes.execute(result), vecNames);
+                        putNames.setAttr(initAttributes.execute(result), vecNames);
                     }
                 }
                 return result;
@@ -180,13 +180,13 @@ public abstract class CopyAttributesNode extends RBaseNode {
             leftHasDimensions.enter();
         }
 
-        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        putDim.setAttr(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
 
         RSharingAttributeStorage.verify(left);
         if (result != left || (left instanceof RSharingAttributeStorage && ((RSharingAttributeStorage) left).isTemporary())) {
             RList newDimNames = extractDimNamesNode.execute(left);
             if (hasDimNames.profile(newDimNames != null)) {
-                putDimNames.execute(result.getAttributes(), newDimNames);
+                putDimNames.setAttr(result.getAttributes(), newDimNames);
 
                 return result;
             }
@@ -235,7 +235,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 if (rightNotResult) {
                     RStringVector vecNames = getNamesNode.getNames(right);
                     if (hasNames.profile(vecNames != null)) {
-                        putNames.execute(initAttributes.execute(result), vecNames);
+                        putNames.setAttr(initAttributes.execute(result), vecNames);
                     }
                 }
                 return result;
@@ -247,7 +247,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         }
 
         RVector.verifyDimensions(result.getLength(), newDimensions, this);
-        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        putDim.setAttr(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         if (rightNotResult) {
             RList newDimNames = extractDimNamesNode.execute(right);
             if (hasDimNames.profile(newDimNames != null)) {
@@ -287,7 +287,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                 if (left != result) {
                     RStringVector vecNames = getNamesNode.getNames(left);
                     if (hasNames.profile(vecNames != null)) {
-                        putNames.execute(initAttributes.execute(result), vecNames);
+                        putNames.setAttr(initAttributes.execute(result), vecNames);
                     }
                 }
                 return result;
@@ -297,7 +297,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
         } else {
             leftHasDimensions.enter();
         }
-        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        putDim.setAttr(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
         if (left != result) {
             RList newDimNames = extractDimNamesNode.execute(left);
             if (hasDimNames.profile(newDimNames != null)) {

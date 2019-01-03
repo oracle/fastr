@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -115,18 +115,18 @@ public abstract class UnaryCopyAttributesNode extends RBaseNode {
             RStringVector vecNames = getNamesNode.getNames(source);
             if (hasNamesSource.profile(vecNames != null)) {
                 updateRefCountNode.execute(updateChildRefCountNode.updateState(source, vecNames));
-                putNames.execute(initAttributes.execute(result), vecNames);
+                putNames.setAttr(initAttributes.execute(result), vecNames);
                 return result;
             }
             return result;
         }
 
-        putDim.execute(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
+        putDim.setAttr(initAttributes.execute(result), RDataFactory.createIntVector(newDimensions, RDataFactory.COMPLETE_VECTOR));
 
         RList newDimNames = extractDimNamesNode.execute(source);
         if (hasDimNames.profile(newDimNames != null)) {
             updateRefCountNode.execute(updateChildRefCountNode.updateState(source, newDimNames));
-            putDimNames.execute(result.getAttributes(), newDimNames);
+            putDimNames.setAttr(result.getAttributes(), newDimNames);
             return result;
         }
         return result;

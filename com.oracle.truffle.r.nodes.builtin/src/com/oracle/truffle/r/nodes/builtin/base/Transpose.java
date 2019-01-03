@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -243,12 +243,12 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     }
 
     private void putNewDimsFromDimnames(RAbstractVector source, RAbstractVector dest, int[] newDim) {
-        putDimensions.execute(initAttributes.execute(dest), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
+        putDimensions.setAttr(initAttributes.execute(dest), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         convertDimNames(source, dest);
     }
 
     private void putNewDimsFromNames(RAbstractVector source, RAbstractVector dest, int[] newDim) {
-        putDimensions.execute(initAttributes.execute(dest), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
+        putDimensions.setAttr(initAttributes.execute(dest), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         convertNamesToDimnames(source, dest);
     }
 
@@ -261,7 +261,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
             RStringVector axisNames = extractAxisNamesNode.execute(dimNames);
             RStringVector transAxisNames = axisNames == null ? null : RDataFactory.createStringVector(new String[]{axisNames.getDataAt(1), axisNames.getDataAt(0)}, true);
             RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)}, transAxisNames);
-            putDimNames.execute(dest.getAttributes(), newDimNames);
+            putDimNames.setAttr(dest.getAttributes(), newDimNames);
         }
     }
 
@@ -274,7 +274,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         if (names != null) {
             RList newDimNames = RDataFactory.createList(new Object[]{RNull.instance, names});
             DynamicObject attributes = dest.getAttributes();
-            putDimNames.execute(attributes, newDimNames);
+            putDimNames.setAttr(attributes, newDimNames);
             if (removeAttributeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 removeAttributeNode = insert(RemoveAttributeNode.create());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
         RPairList lang = RDataFactory.createLanguage(Closure.createLanguageClosure(call));
         setClassAttrNode.execute(lang, FORMULA_CLASS);
         REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
-        setEnvAttrNode.execute(lang, env);
+        setEnvAttrNode.setAttr(lang, env);
         return lang;
     }
 
