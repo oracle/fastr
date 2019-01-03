@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,11 +34,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.ATTRIBNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.CopyMostAttribNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.RfSetAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.SetAttribNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodesFactory.TAGNodeGen;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.GetAttributesNode;
+import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
@@ -88,6 +90,53 @@ public final class AttributesAccessNodes {
                 castStringNode = insert(newCastBuilder().asStringVector().mustBe(singleElement()).findFirst().buildCastNode());
             }
             return (String) castStringNode.doCast(name);
+        }
+    }
+
+    /**
+     * Sets a single attribute.
+     */
+    public abstract static class RfSetAttribNode extends FFIUpCallNode.Arg3 {
+        @Child private CastNode castNameNode;
+
+        public static RfSetAttribNode create() {
+            return RfSetAttribNodeGen.create();
+        }
+
+        @Specialization(guards = "!isNull(value)")
+        protected Object setValue(RAttributable target, Object name, Object value,
+                        @Cached("create()") SetAttributeNode setAttribNode) {
+            setAttribNode.execute(target, (String) getCastNameNode().doCast(name), value);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected Object setValue(@SuppressWarnings("unused") RNull target, @SuppressWarnings("unused") Object name, @SuppressWarnings("unused") Object value) {
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected Object unsetValue(RAttributable target, Object name, @SuppressWarnings("unused") RNull nullVal,
+                        @Cached("create()") RemoveAttributeNode removeAttributeNode) {
+            removeAttributeNode.execute(target, (String) getCastNameNode().doCast(name));
+            return RNull.instance;
+        }
+
+        @Fallback
+        protected Object others(Object target, Object name, Object value) {
+            throw unsupportedTypes("Rf_setAttrib", target, name, value);
+        }
+
+        protected static boolean isNull(Object o) {
+            return o == RNull.instance;
+        }
+
+        private CastNode getCastNameNode() {
+            if (castNameNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                castNameNode = insert(newCastBuilder().asStringVector().findFirst().buildCastNode());
+            }
+            return castNameNode;
         }
     }
 
@@ -208,6 +257,10 @@ public final class AttributesAccessNodes {
         }
     }
 
+    /**
+     * Overrides the attributes pairlist of given object with a new pairlist. In FastR, we have to
+     * convert the pairlist to our representation.
+     */
     public abstract static class SetAttribNode extends FFIUpCallNode.Arg2 {
 
         public static SetAttribNode create() {

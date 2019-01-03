@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.ATTRIB;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.GetAttrib;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.RfSetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.SetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
@@ -216,6 +217,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(GetAttrib.class)
     Object Rf_getAttrib(@RFFIResultOwner Object obj, Object name);
 
+    @RFFIUpCallNode(RfSetAttribNode.class)
     void Rf_setAttrib(Object obj, Object name, Object val);
 
     int Rf_inherits(Object x, @RFFICstring String clazz);

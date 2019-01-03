@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -320,35 +320,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public void Rf_setAttrib(Object obj, Object name, Object val) {
-        if (obj == RNull.instance) {
-            return;
-        }
-        if (obj instanceof RAttributable) {
-            RAttributable attrObj = (RAttributable) obj;
-            String nameAsString;
-            if (name instanceof RSymbol) {
-                nameAsString = ((RSymbol) name).getName();
-            } else {
-                nameAsString = RRuntime.asString(name);
-                assert nameAsString != null;
-            }
-            nameAsString = Utils.intern(nameAsString);
-            if (val == RNull.instance) {
-                if ("class" == nameAsString) {
-                    removeClassAttr(attrObj);
-                } else {
-                    removeAttr(attrObj, nameAsString);
-                }
-            } else if ("class" == nameAsString) {
-                attrObj.initAttributes().define(nameAsString, val);
-            } else {
-                attrObj.setAttr(nameAsString, val);
-            }
-        } else {
-            throw RInternalError.shouldNotReachHere();
-        }
+        throw implementedAsNode();
     }
 
     @TruffleBoundary
