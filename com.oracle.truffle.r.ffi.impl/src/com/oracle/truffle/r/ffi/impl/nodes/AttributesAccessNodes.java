@@ -45,6 +45,7 @@ import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -144,6 +145,7 @@ public final class AttributesAccessNodes {
 
         @Specialization
         public Object doAttributable(RAttributable obj,
+                        @Cached("create()") InternStringNode internStringNode,
                         @Cached("createWithCompactRowNames()") GetAttributesNode getAttributesNode) {
             Object resultObj = getAttributesNode.execute(obj);
             if (resultObj == RNull.instance) {
@@ -153,14 +155,14 @@ public final class AttributesAccessNodes {
             RList list = (RList) resultObj;
             Object result = RNull.instance;
             RStringVector names = list.getNames();
-            assert names.getLength() == list.getLength();
+            assert names != null && names.getLength() == list.getLength();
             for (int i = list.getLength() - 1; i >= 0; i--) {
                 Object item = list.getDataAt(i);
                 String name = names.getDataAt(i);
                 if (name.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                     item = GetRowNamesAttributeNode.ensureRowNamesCompactFormat(item);
                 }
-                RSymbol symbol = RDataFactory.createSymbol(name);
+                RSymbol symbol = RDataFactory.createSymbol(internStringNode.execute(name));
                 result = RDataFactory.createPairList(item, result, symbol);
             }
             return result;
