@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -264,7 +264,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 throw RInternalError.unimplemented("attribute of type " + data.getClass().getSimpleName());
             }
         }
-        setSrcRefAttrNode.execute(exprs, RDataFactory.createList(srcrefData));
+        setSrcRefAttrNode.setAttr(exprs, RDataFactory.createList(srcrefData));
         int[] wholeSrcrefData = new int[8];
         int endOffset = source.getCharacters().length() - 1;
         wholeSrcrefData[0] = source.getLineNumber(0);
@@ -273,8 +273,8 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         wholeSrcrefData[6] = wholeSrcrefData[0];
         wholeSrcrefData[6] = wholeSrcrefData[3];
 
-        setWholeSrcRefAttrNode.execute(exprs, RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
-        setSrcFileAttrNode.execute(exprs, srcFile);
+        setWholeSrcRefAttrNode.setAttr(exprs, RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
+        setSrcFileAttrNode.setAttr(exprs, srcFile);
 
         RIntVector parseData = new ParseDataVisitor(exprs).getParseData();
         srcFile.safePut("parseData", parseData);

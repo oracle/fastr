@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -520,7 +520,7 @@ public class LaFunctions {
                 }
             }
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
-            setLogAttrNode.execute(modulusVec, RRuntime.asLogical(useLog));
+            setLogAttrNode.setAttr(modulusVec, RRuntime.asLogical(useLog));
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
             RVector.setVectorClassAttr(result, DET_CLASS);
             return result;
@@ -593,8 +593,8 @@ public class LaFunctions {
             }
 
             RDoubleVector result = (RDoubleVector) copyAttributesNode.execute(RDataFactory.createDoubleVector(aData, RDataFactory.INCOMPLETE_VECTOR), aIn);
-            setPivotAttrNode.execute(result, RDataFactory.createIntVector(ipiv, false));
-            setRankAttrNode.execute(result, rank[0]);
+            setPivotAttrNode.setAttr(result, RDataFactory.createIntVector(ipiv, false));
+            setRankAttrNode.setAttr(result, rank[0]);
             RList dn = getDimNamesNode.getDimNames(aIn);
             if (dn != null && dn.getDataAt(0) != null) {
                 Object[] dn2 = new Object[m];

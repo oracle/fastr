@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -65,7 +65,7 @@ public abstract class UpdateLevels extends RBuiltinNode.Arg2 {
     protected RAbstractVector updateLevels(RAbstractVector vector, Object levels,
                     @Cached("createSetLevelsAttrNode()") SetFixedAttributeNode setLevelsAttrNode) {
         RVector<?> v = (RVector<?>) vector.getNonShared();
-        setLevelsAttrNode.execute(v, levels);
+        setLevelsAttrNode.setAttr(v, levels);
         return v;
     }
 
