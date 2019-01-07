@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -125,4 +125,34 @@ public class TestBuiltin_attrassign extends TestBase {
         assertEval("x<-NULL; attr(x, 'a') <- NULL");
         assertEval("x<-NULL; attr(x, 'a') <- 42");
     }
+
+    @Test
+    public void testattrassignTsp() {
+        assertEval("x<-42; attr(x, 'tsp') <- 1");
+        assertEval("x<-42; attr(x, 'tsp') <- c(1, 2)");
+        assertEval("x<-42; attr(x, 'tsp') <- c(1, 1, 1)");
+        assertEval("x<-42; attr(x, 'tsp') <- NULL");
+        assertEval("x<-42; attr(x, 'tsp') <- NA");
+        assertEval("x<-c(); attr(x, 'tsp') <- c(1, 1, 1)");
+        assertEval("x<-NULL; attr(x, 'tsp') <- c(1, 1, 1)");
+        assertEval("x<-NA; attr(x, 'tsp') <- c(1, 1, 1)");
+    }
+
+    @Test
+    public void testattrassignComment() {
+        assertEval("x<-42; attr(x, 'comment') <- 1");
+        assertEval("x<-42; attr(x, 'comment') <- c(1, 2)");
+        assertEval("x<-42; attr(x, 'comment') <- 'a'");
+        assertEval("x<-42; attr(x, 'comment') <- c('a', 'b')");
+        assertEval("x<-42; attr(x, 'comment') <- c('a', NA)");
+        assertEval("x<-42; attr(x, 'comment') <- c(NA, 'a', NA)");
+        assertEval("x<-42; attr(x, 'comment') <- c(NA)");
+        assertEval("x<-42; attr(x, 'comment') <- c(NA, NA)");
+        assertEval("x<-42; attr(x, 'comment') <- NULL");
+        assertEval("x<-42; attr(x, 'comment') <- NA");
+        assertEval("x<-c(); attr(x, 'comment') <- 'a'");
+        assertEval("x<-NULL; attr(x, 'comment') <- 'a'");
+        assertEval("x<-NA; attr(x, 'comment') <- 'a'");
+    }
+
 }

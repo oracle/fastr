@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.G
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
+import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -58,9 +59,12 @@ import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
+import com.oracle.truffle.r.runtime.nmath.TOMS708;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * This class defines a number of nodes used to handle the special attributes, such as names, dims,
@@ -77,6 +81,8 @@ public final class SpecialAttributesFunctions {
         private final BranchProfile dimProfile = BranchProfile.create();
         private final BranchProfile dimNamesProfile = BranchProfile.create();
         private final BranchProfile rowNamesProfile = BranchProfile.create();
+        private final BranchProfile tspProfile = BranchProfile.create();
+        private final BranchProfile commentProfile = BranchProfile.create();
         private final BranchProfile classProfile = BranchProfile.create();
 
         public static IsSpecialAttributeNode create() {
@@ -100,6 +106,12 @@ public final class SpecialAttributesFunctions {
             } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
                 rowNamesProfile.enter();
                 return true;
+            } else if (name == RRuntime.TSP_ATTR_KEY) {
+                tspProfile.enter();
+                return true;
+            } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+                commentProfile.enter();
+                return true;
             } else if (name == RRuntime.CLASS_ATTR_KEY) {
                 classProfile.enter();
                 return false;
@@ -116,6 +128,8 @@ public final class SpecialAttributesFunctions {
                             name == RRuntime.DIM_ATTR_KEY ||
                             name == RRuntime.DIMNAMES_ATTR_KEY ||
                             name == RRuntime.ROWNAMES_ATTR_KEY ||
+                            name == RRuntime.TSP_ATTR_KEY ||
+                            name == RRuntime.COMMENT_ATTR_KEY ||
                             name == RRuntime.CLASS_ATTR_KEY;
 
         }
@@ -130,11 +144,15 @@ public final class SpecialAttributesFunctions {
         private final BranchProfile dimProfile = BranchProfile.create();
         private final BranchProfile dimNamesProfile = BranchProfile.create();
         private final BranchProfile rowNamesProfile = BranchProfile.create();
+        private final BranchProfile tspProfile = BranchProfile.create();
+        private final BranchProfile commentProfile = BranchProfile.create();
 
         @Child private SetNamesAttributeNode namesAttrNode;
         @Child private SetDimAttributeNode dimAttrNode;
         @Child private SetDimNamesAttributeNode dimNamesAttrNode;
         @Child private SetRowNamesAttributeNode rowNamesAttrNode;
+        @Child private SetTspAttributeNode tspAttrNode;
+        @Child private SetCommentAttributeNode commentAttrNode;
 
         public static GenericSpecialAttributeNode create() {
             return new GenericSpecialAttributeNode();
@@ -170,6 +188,20 @@ public final class SpecialAttributesFunctions {
                     rowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
                 }
                 rowNamesAttrNode.execute(x, value);
+            } else if (name == RRuntime.TSP_ATTR_KEY) {
+                tspProfile.enter();
+                if (tspAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    tspAttrNode = insert(SetTspAttributeNode.create());
+                }
+                tspAttrNode.execute(x, value);
+            } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+                commentProfile.enter();
+                if (commentAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    commentAttrNode = insert(SetCommentAttributeNode.create());
+                }
+                commentAttrNode.execute(x, value);
             } else if (name == RRuntime.CLASS_ATTR_KEY) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw RInternalError.unimplemented("The \"class\" attribute should be set using a separate method");
@@ -196,6 +228,10 @@ public final class SpecialAttributesFunctions {
             return SetDimNamesAttributeNode.create();
         } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
             return SetRowNamesAttributeNode.create();
+        } else if (name == RRuntime.TSP_ATTR_KEY) {
+            return SetTspAttributeNode.create();
+        } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+            return SetCommentAttributeNode.create();
         } else if (name == RRuntime.CLASS_ATTR_KEY) {
             return SetClassAttributeNode.create();
         } else {
@@ -219,6 +255,10 @@ public final class SpecialAttributesFunctions {
             return RemoveDimNamesAttributeNode.create();
         } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
             return RemoveRowNamesAttributeNode.create();
+        } else if (name == RRuntime.TSP_ATTR_KEY) {
+            return RemoveTspAttributeNode.create();
+        } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+            return RemoveCommentAttributeNode.create();
         } else if (name == RRuntime.CLASS_ATTR_KEY) {
             return RemoveClassAttributeNode.create();
         } else {
@@ -242,6 +282,10 @@ public final class SpecialAttributesFunctions {
             return GetDimNamesAttributeNode.create();
         } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
             return GetRowNamesAttributeNode.create();
+        } else if (name == RRuntime.TSP_ATTR_KEY) {
+            return GetTspAttributeNode.create();
+        } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+            return GetCommentAttributeNode.create();
         } else if (name == RRuntime.CLASS_ATTR_KEY) {
             return GetClassAttributeNode.create();
         } else {
@@ -1036,7 +1080,7 @@ public final class SpecialAttributesFunctions {
     public abstract static class RemoveRowNamesAttributeNode extends RemoveSpecialAttributeNode {
 
         protected RemoveRowNamesAttributeNode() {
-            super(RRuntime.DIMNAMES_ATTR_KEY);
+            super(RRuntime.ROWNAMES_ATTR_KEY);
         }
 
         public static RemoveRowNamesAttributeNode create() {
@@ -1251,6 +1295,217 @@ public final class SpecialAttributesFunctions {
                 updateRefCount.updateState(x, classAttr);
             }
             return classAttr;
+        }
+
+    }
+
+    public abstract static class SetTspAttributeNode extends SetSpecialAttributeNode {
+
+        private final ConditionProfile nullTspProfile = ConditionProfile.createBinaryProfile();
+
+        protected SetTspAttributeNode() {
+            super(RRuntime.TSP_ATTR_KEY);
+        }
+
+        public static SetTspAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.SetTspAttributeNodeGen.create();
+        }
+
+        public void setTsp(RAttributable x, RAbstractDoubleVector tsp) {
+            if (nullTspProfile.profile(tsp == null)) {
+                execute(x, RNull.instance);
+            } else {
+                if (tsp.getLength() != 3) {
+                    throw error(RError.Message.TSP_NUMERIC_LENGTH3);
+                }
+                double start = tsp.getDataAt(0);
+                double end = tsp.getDataAt(1);
+                double frequency = tsp.getDataAt(2);
+                if (frequency <= 0) {
+                    throw error(RError.Message.INVALID_TSP);
+                }
+                int n = RRuntime.nrows(x);
+                if (n == 0) {
+                    throw error(RError.Message.CANNOT_ASSIGN_EMPTY_VECTOR, "tsp");
+                }
+                if (TOMS708.fabs(end - start - (n - 1) / frequency) > 1.e-5) {
+                    throw error(RError.Message.INVALID_TSP);
+                }
+                execute(x, tsp);
+            }
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void resetTsp(RVector<?> x, @SuppressWarnings("unused") RNull rnull,
+                        @Cached("create()") RemoveTspAttributeNode removeTspAttrNode) {
+            removeTspAttrNode.execute(x);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setTspInVector(RAttributable x, RAbstractDoubleVector newTsp,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
+            if (x.getAttributes() == null) {
+                attrNullProfile.enter();
+                x.initAttributes(RAttributesLayout.createTsp(newTsp));
+                updateRefCountNode.execute(newTsp);
+                return;
+            }
+            setAttrInAttributable(x, newTsp, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
+        }
+    }
+
+    public abstract static class RemoveTspAttributeNode extends RemoveSpecialAttributeNode {
+
+        protected RemoveTspAttributeNode() {
+            super(RRuntime.TSP_ATTR_KEY);
+        }
+
+        public static RemoveTspAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.RemoveTspAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization
+        protected void removeAttrFallback(DynamicObject attrs) {
+            super.removeAttrFallback(attrs);
+        }
+    }
+
+    public abstract static class GetTspAttributeNode extends GetFixedAttributeNode {
+
+        protected GetTspAttributeNode() {
+            super(RRuntime.TSP_ATTR_KEY);
+        }
+
+        public static GetTspAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.GetTspAttributeNodeGen.create();
+        }
+
+        public RAbstractDoubleVector getTsp(RAttributable x) {
+            return (RAbstractDoubleVector) execute(x);
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable")
+        protected Object getVectorTsp(RAbstractContainer x,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile nullTspProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            Object res = super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
+            return nullTspProfile.profile(res == null) ? RNull.instance : res;
+        }
+
+    }
+
+    public abstract static class SetCommentAttributeNode extends SetSpecialAttributeNode {
+
+        private final ConditionProfile nullCommentProfile = ConditionProfile.createBinaryProfile();
+
+        @Child private CastToVectorNode castVector;
+
+        protected SetCommentAttributeNode() {
+            super(RRuntime.COMMENT_ATTR_KEY);
+        }
+
+        public static SetCommentAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.SetCommentAttributeNodeGen.create();
+        }
+
+        public void setComment(RAttributable x, Object value) {
+            if (nullCommentProfile.profile(value == null)) {
+                execute(x, RNull.instance);
+            } else {
+                Object comment = null;
+                if (value == RNull.instance) {
+                    comment = value;
+                } else if (value instanceof String) {
+                    if (castVector == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        castVector = insert(CastToVectorNode.create());
+                    }
+                    comment = castVector.doCast(value);
+                } else if (value instanceof RAbstractStringVector) {
+                    RAbstractStringVector str = (RAbstractStringVector) value;
+                    NACheck naCheck = NACheck.create();
+                    naCheck.enable(str);
+                    for (int j = str.getLength() - 1; j >= 0; j--) {
+                        if (!naCheck.check(str.getDataAt(j))) {
+                            comment = value;
+                            break;
+                        }
+                    }
+                }
+                if (comment == null) {
+                    throw error(RError.Message.SET_INVALID_ATTR, "comment");
+                }
+                execute(x, comment);
+            }
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void resetComment(RVector<?> x, @SuppressWarnings("unused") RNull rnull,
+                        @Cached("create()") RemoveCommentAttributeNode removeCommentAttrNode) {
+            removeCommentAttrNode.execute(x);
+        }
+
+        @Specialization(insertBefore = "setAttrInAttributable")
+        protected void setCommentInVector(RAttributable x, RAbstractVector newComment,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                        @Cached("create()") ShareObjectNode updateRefCountNode) {
+            if (x.getAttributes() == null) {
+                attrNullProfile.enter();
+                x.initAttributes(RAttributesLayout.createComment(newComment));
+                updateRefCountNode.execute(newComment);
+                return;
+            }
+            setAttrInAttributable(x, newComment, attrNullProfile, attrStorageProfile, xTypeProfile, updateRefCountNode);
+        }
+    }
+
+    public abstract static class RemoveCommentAttributeNode extends RemoveSpecialAttributeNode {
+
+        protected RemoveCommentAttributeNode() {
+            super(RRuntime.COMMENT_ATTR_KEY);
+        }
+
+        public static RemoveCommentAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.RemoveCommentAttributeNodeGen.create();
+        }
+
+        @Override
+        @Specialization
+        protected void removeAttrFallback(DynamicObject attrs) {
+            super.removeAttrFallback(attrs);
+        }
+    }
+
+    public abstract static class GetCommentAttributeNode extends GetFixedAttributeNode {
+
+        protected GetCommentAttributeNode() {
+            super(RRuntime.COMMENT_ATTR_KEY);
+        }
+
+        public static GetCommentAttributeNode create() {
+            return SpecialAttributesFunctionsFactory.GetCommentAttributeNodeGen.create();
+        }
+
+        public RAbstractStringVector getComment(RAttributable x) {
+            return (RAbstractStringVector) execute(x);
+        }
+
+        @Specialization(insertBefore = "getAttrFromAttributable")
+        protected Object getComment(RAbstractContainer x,
+                        @Cached("create()") BranchProfile attrNullProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
+                        @Cached("createBinaryProfile()") ConditionProfile nullCommentProfile,
+                        @Cached("createClassProfile()") ValueProfile xTypeProfile) {
+            Object res = super.getAttrFromAttributable(x, attrNullProfile, attrStorageProfile, xTypeProfile);
+            return nullCommentProfile.profile(res == null) ? RNull.instance : res;
         }
 
     }

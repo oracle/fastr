@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,8 @@ public final class RAttributesLayout {
     private static final AttrsLayout DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIMNAMES_ATTR_KEY);
     private static final AttrsLayout NAMES_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
     private static final AttrsLayout ROWNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.ROWNAMES_ATTR_KEY);
+    private static final AttrsLayout TSP_ATTRS_LAYOUT = new AttrsLayout(RRuntime.TSP_ATTR_KEY);
+    private static final AttrsLayout COMMENT_ATTRS_LAYOUT = new AttrsLayout(RRuntime.COMMENT_ATTR_KEY);
     private static final AttrsLayout NAMES_AND_DIM_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY);
     private static final AttrsLayout DIM_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
     private static final AttrsLayout NAMES_AND_DIM_AND_DIMNAMES_ATTRS_LAYOUT = new AttrsLayout(RRuntime.NAMES_ATTR_KEY, RRuntime.DIM_ATTR_KEY, RRuntime.DIMNAMES_ATTR_KEY);
@@ -96,6 +98,14 @@ public final class RAttributesLayout {
 
     public static DynamicObject createRowNames(Object rowNames) {
         return ROWNAMES_ATTRS_LAYOUT.factory.newInstance(rowNames);
+    }
+
+    public static DynamicObject createTsp(Object tsp) {
+        return TSP_ATTRS_LAYOUT.factory.newInstance(tsp);
+    }
+
+    public static DynamicObject createComment(Object comment) {
+        return COMMENT_ATTRS_LAYOUT.factory.newInstance(comment);
     }
 
     public static DynamicObject createNamesAndDim(Object names, Object dim) {

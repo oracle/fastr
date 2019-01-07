@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetCommentAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -45,15 +44,11 @@ public abstract class Comment extends RBuiltinNode.Arg1 {
         casts.arg("x").mustNotBeMissing();
     }
 
-    protected GetFixedAttributeNode createGetCommentAttrNode() {
-        return GetFixedAttributeNode.create(RRuntime.COMMENT_ATTR_KEY);
-    }
-
     @Specialization
-    protected Object dim(RSharingAttributeStorage x,
+    protected Object comment(RSharingAttributeStorage x,
                     @Cached("createBinaryProfile()") ConditionProfile hasCommentProfile,
-                    @Cached("createGetCommentAttrNode()") GetFixedAttributeNode getCommentAttrNode) {
-        Object commentAttr = getCommentAttrNode.execute(x);
+                    @Cached("create()") GetCommentAttributeNode getComment) {
+        Object commentAttr = getComment.execute(x);
         if (hasCommentProfile.profile(commentAttr != null)) {
             return commentAttr;
         } else {
@@ -62,7 +57,7 @@ public abstract class Comment extends RBuiltinNode.Arg1 {
     }
 
     @Fallback
-    protected RNull dim(@SuppressWarnings("unused") Object vector) {
+    protected RNull comment(@SuppressWarnings("unused") Object vector) {
         RSharingAttributeStorage.verify(vector);
         return RNull.instance;
     }
