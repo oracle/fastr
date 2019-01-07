@@ -18,3 +18,5 @@ quantmod
 reshape2
 sqldf
 RcppBDT
+lpSolve
+lpSolveAPI
