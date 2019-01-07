@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.AsRealNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.ATTRIB;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.CopyMostAttrib;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.GetAttrib;
+import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.RfSetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.SetAttribNode;
 import com.oracle.truffle.r.ffi.impl.nodes.AttributesAccessNodes.TAG;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.AsCharacterFactor;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.CoerceVectorNode;
 import com.oracle.truffle.r.ffi.impl.nodes.CoerceNodes.VectorToPairListNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DoMakeClassNode;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes;
+import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfDuplicated;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated;
 import com.oracle.truffle.r.ffi.impl.nodes.DuplicateNodes.RfAnyDuplicated3;
 import com.oracle.truffle.r.ffi.impl.nodes.EnvNodes.LockBindingNode;
@@ -215,6 +217,7 @@ public interface StdUpCallsRFFI {
     @RFFIUpCallNode(GetAttrib.class)
     Object Rf_getAttrib(@RFFIResultOwner Object obj, Object name);
 
+    @RFFIUpCallNode(RfSetAttribNode.class)
     void Rf_setAttrib(Object obj, Object name, Object val);
 
     int Rf_inherits(Object x, @RFFICstring String clazz);
@@ -313,6 +316,9 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(DuplicateNodes.DuplicateNode.class)
     Object Rf_duplicate(Object x, int deep);
+
+    @RFFIUpCallNode(RfDuplicated.class)
+    Object Rf_duplicated(Object x, int fromLast);
 
     @RFFIUpCallNode(RfAnyDuplicated.class)
     long Rf_any_duplicated(Object x, int fromLast);
@@ -415,6 +421,8 @@ public interface StdUpCallsRFFI {
 
     void Rf_gsetVar(Object symbol, Object value, Object rho);
 
+    void Rf_setVar(Object symbol, Object value, Object rho);
+
     void DUPLICATE_ATTRIB(Object to, Object from);
 
     int R_compute_identical(Object x, Object y, int flags);
@@ -461,6 +469,10 @@ public interface StdUpCallsRFFI {
     void PutRNGstate();
 
     double unif_rand();
+
+    double norm_rand();
+
+    double exp_rand();
 
     Object Rf_classgets(Object x, Object y);
 

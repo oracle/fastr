@@ -14,8 +14,8 @@ GW32_HEADERS = iconv.h psignal.h
 
 ## This omits GetX11Image.h QuartzDevice.h eventloop.h
 R_EXT_HEADERS = \
-  Applic.h Arith.h BLAS.h Boolean.h Callbacks.h Complex.h Connections.h \
-  Constants.h Error.h \
+  Altrep.h Applic.h Arith.h BLAS.h Boolean.h Callbacks.h Complex.h \
+  Connections.h Constants.h Error.h \
   GraphicsDevice.h GraphicsEngine.h Itermacros.h \
   Lapack.h Linpack.h MathThreads.h Memory.h \
   Parse.h Print.h PrtUtil.h R-ftp-http.h RS.h Rallocators.h Random.h \
@@ -56,9 +56,7 @@ Rversion.h: $(R_HOME)/VERSION $(R_HOME)/SVN-REVISION $(R_HOME)/tools/GETVERSION
 	@sh $(R_HOME)/tools/GETVERSION > $@
 
 Rmath.h0: Rmath.h0.in $(R_HOME)/VERSION Makefile.win
-	@$(SED) -e 's/@RMATH_HAVE_LOG1P@/# define HAVE_LOG1P 1/'  \
-	  -e 's/@RMATH_HAVE_EXPM1@/# define HAVE_EXPM1 1/'  \
-	  -e 's/@RMATH_HAVE_HYPOT@/# define HAVE_HYPOT 1/'  \
+	@$(SED) \
 	  -e  's/@RMATH_HAVE_WORKING_LOG1P@/# define HAVE_WORKING_LOG1P 1/' \
 	  -e "s/@PACKAGE_VERSION@/`sed 's/\([^ ]*\).*/\1/' < $(R_HOME)/VERSION`/" $< > Rmath.h0
 

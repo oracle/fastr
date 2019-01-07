@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.builtin.fastr;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.equalTo;
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.instanceOf;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.singleElement;
@@ -303,11 +304,11 @@ public class FastRContext {
         }
     }
 
-    @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
-    public abstract static class R extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = ".fastr.context.r", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern", "timeout"}, behavior = COMPLEX)
+    public abstract static class R extends RBuiltinNode.Arg4 {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE, 0};
         }
 
         static {
@@ -315,37 +316,38 @@ public class FastRContext {
             casts.arg("args").allowMissing().mustBe(stringValue());
             casts.arg("env").allowMissing().mustBe(stringValue());
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("timeout").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(0));
         }
 
-        public abstract Object execute(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern);
+        public abstract Object execute(VirtualFrame frame, RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs);
 
         @Specialization
         @TruffleBoundary
-        protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
-            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(prependCommand(args, "R"), env.materialize().getDataCopy(), intern);
+        protected Object r(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
+            Object rc = RContext.getRRuntimeASTAccess().rcommandMain(prependCommand(args, "R"), env.materialize().getDataCopy(), intern, timeoutSecs);
             return rc;
         }
 
         @Specialization
-        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern) {
-            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern);
+        protected Object r(@SuppressWarnings("unused") RMissing arg, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
+            return r(RDataFactory.createEmptyStringVector(), RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object r(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern) {
-            return r(RDataFactory.createEmptyStringVector(), env, intern);
+        protected Object r(@SuppressWarnings("unused") RMissing args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
+            return r(RDataFactory.createEmptyStringVector(), env, intern, timeoutSecs);
         }
     }
 
-    @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern"}, behavior = COMPLEX)
-    public abstract static class Rscript extends RBuiltinNode.Arg3 {
+    @RBuiltin(name = ".fastr.context.rscript", kind = PRIMITIVE, visibility = OFF, parameterNames = {"args", "env", "intern", "timeout"}, behavior = COMPLEX)
+    public abstract static class Rscript extends RBuiltinNode.Arg4 {
 
-        public abstract Object execute(RAbstractStringVector args, RAbstractStringVector env, boolean intern);
+        public abstract Object execute(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs);
 
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE};
+            return new Object[]{RMissing.instance, RMissing.instance, RRuntime.LOGICAL_FALSE, 0};
         }
 
         static {
@@ -353,18 +355,19 @@ public class FastRContext {
             casts.arg("args").mustBe(stringValue(), RError.Message.GENERIC, "usage: /path/to/Rscript [--options] [-e expr [-e expr2 ...] | file] [args]").asStringVector();
             casts.arg("env").allowMissing().mustBe(stringValue());
             casts.arg("intern").asLogicalVector().findFirst().map(toBoolean());
+            casts.arg("timeout").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(0));
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern) {
-            return RContext.getRRuntimeASTAccess().rscriptMain(prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern);
+        protected Object rscript(RAbstractStringVector args, RAbstractStringVector env, boolean intern, int timeoutSecs) {
+            return RContext.getRRuntimeASTAccess().rscriptMain(prependCommand(args, "Rscript"), env.materialize().getDataCopy(), intern, timeoutSecs);
         }
 
         @Specialization
         @TruffleBoundary
-        protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern) {
-            return rscript(args, RDataFactory.createEmptyStringVector(), intern);
+        protected Object rscript(RAbstractStringVector args, @SuppressWarnings("unused") RMissing env, boolean intern, int timeoutSecs) {
+            return rscript(args, RDataFactory.createEmptyStringVector(), intern, timeoutSecs);
         }
     }
 

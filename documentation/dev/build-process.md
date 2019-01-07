@@ -84,7 +84,7 @@ then delving into individual scripts that patch and build parts of GNUR. Last se
  * `GNUR_CONFIG_FLAGS` constructed and passed over to the configure utility that generates the `Makeconf` file for GNUR
 	 * the output in `$(GNUR_HOME_BINARY)/gnur_configure.log`
  * optionally (Linux, SunOS) patches the generated `$(GNUR_HOME_BINARY)/Makeconf` by `$(GNUR_HOME_BINARY)/Makeconf < edMakeconf` (adds `-fPIC` to `CFLAGS` and `FFLAGS`, i.e. enables Position Independent Code)
- * builds GNUR in `libdownloads/R-$(R_VERSION)` using special compiler options. **Note: the output is redirected to `libdownloads/R-3.4.0/gnur_make.log` in order not to pollute the main build output.**
+ * builds GNUR in `libdownloads/R-$(R_VERSION)` using special compiler options. **Note: the output is redirected to `libdownloads/R-{version}/gnur_make.log` in order not to pollute the main build output.**
  * A special configuration for Solaris:
   1. the default `iconv` utility is inadequate and has to be replaced by GNU `iconv`
   2. the solaris studio compilers must be used, assumed to be on the `PATH`
@@ -315,55 +315,55 @@ To make a package `pkg` the working directory must be changed to `$FASTR_HOME/co
 
 #### Making base
 ```
-make PACKAGE=base TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=base TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### Making grDevices
 ```
-make PACKAGE=grDevices TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=grDevices TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### building graphics
 ```
-make PACKAGE=graphics TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=graphics TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### Making grid
 ```
-make PACKAGE=grid TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=grid TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### Making methods
 ```
-make PACKAGE=methods TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=methods TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### Making parallel
 ```
-make PACKAGE=parallel TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=parallel TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### Makining splines
 ```
-make PACKAGE=splines TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=splines TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### Making stats
 ```
-make PACKAGE=stats TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library FASTR_LIB_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0 FASTR_R_HOME=$FASTR_HOME
+make PACKAGE=stats TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library FASTR_LIB_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version} FASTR_R_HOME=$FASTR_HOME
 ```
 
 #### Making stats4
 ```
-make PACKAGE=stats4 TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=stats4 TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```
 
 #### Making tools
 ```
-make PACKAGE=tools TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0 FASTR_RFFI=nfi
+make PACKAGE=tools TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version} FASTR_RFFI=nfi
 ```
 
 #### Making utils
 ```
-make PACKAGE=utils TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-3.4.0
+make PACKAGE=utils TOPDIR=$FASTR_HOME/com.oracle.truffle.r.native GNUR_HOME=$FASTR_HOME/com.oracle.truffle.r.native/gnur/patch-build FASTR_LIBRARY_DIR=$FASTR_HOME/library GNUR_HOME_BINARY=$FASTR_HOME/libdownloads/R-{version}
 ```

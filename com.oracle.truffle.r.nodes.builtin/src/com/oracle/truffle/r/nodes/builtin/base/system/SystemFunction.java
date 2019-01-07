@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.system;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gte;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.stringValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
@@ -35,19 +36,20 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 
-@RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern"}, behavior = COMPLEX)
-public abstract class SystemFunction extends RBuiltinNode.Arg2 {
+@RBuiltin(name = "system", visibility = CUSTOM, kind = INTERNAL, parameterNames = {"command", "intern", "timeout"}, behavior = COMPLEX)
+public abstract class SystemFunction extends RBuiltinNode.Arg3 {
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
     static {
         Casts casts = new Casts(SystemFunction.class);
         casts.arg("command").mustBe(stringValue(), RError.Message.SYSTEM_CHAR_ARG).asStringVector().findFirst();
         casts.arg("intern").asLogicalVector().findFirst().mustNotBeNA(RError.Message.SYSTEM_INTERN_NOT_NA).map(toBoolean());
+        casts.arg("timeout").asIntegerVector().findFirst().mustNotBeNA().mustBe(gte(0));
     }
 
     @Specialization
-    protected Object system(VirtualFrame frame, String command, boolean intern) {
-        Object result = SystemFunctionFactory.getInstance().execute(frame, command.trim(), intern);
+    protected Object system(VirtualFrame frame, String command, boolean intern, int timeout) {
+        Object result = SystemFunctionFactory.getInstance().execute(frame, command.trim(), intern, timeout);
         visibility.execute(frame, intern);
         return result;
     }

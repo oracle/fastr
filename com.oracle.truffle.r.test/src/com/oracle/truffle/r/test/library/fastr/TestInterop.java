@@ -91,6 +91,23 @@ public class TestInterop extends TestBase {
         assertEvalFastR("eval.polyglot('R', '1L')", "1L");
         assertEvalFastR("eval.polyglot('R', 'TRUE')", "TRUE");
         assertEvalFastR("eval.polyglot('R', 'as.character(123)')", "as.character(123)");
+
+        assertEvalFastR("eval.polyglot(, 'bar')",
+                        "cat('Error in eval.polyglot(, \"bar\") :\\n  No language id provided, please refer to ?eval.polyglot for more details.\\n')");
+        // Checkstyle: stop
+        assertEvalFastR("eval.polyglot(,,'bar')",
+                        "cat('Error in eval.polyglot(, , \"bar\") :\\n  Could not find language corresponding to extension \\'bar\\', you can specify the language id explicitly, please refer to ?eval.polyglot for more details.\\n')");
+        // Checkstyle: resume
+        assertEvalFastR("eval.polyglot('foo', 'bar')",
+                        "cat('Error in eval.polyglot(\"foo\", \"bar\") :\\n  Language with id \\'foo\\' is not available. Did you start R with --polyglot?\\n')");
+        assertEvalFastR("eval.polyglot('nfi', 'foo.bar')",
+                        "cat('Error in eval.polyglot(\"nfi\", \"foo.bar\") :\\n  Language with id \\'nfi\\' is not available. Did you start R with --polyglot?\\n')");
+        // Checkstyle: stop
+        assertEvalFastR("eval.polyglot('foo',, 'bar')",
+                        "cat('Error in eval.polyglot(\"foo\", , \"bar\") :\\n  Language with id \\'foo\\' is not available. Did you start R with --polyglot?\\n')");
+        assertEvalFastR("eval.polyglot('nfi',,'foo.bar')",
+                        "cat('Error in eval.polyglot(\"nfi\", , \"foo.bar\") :\\n  Language with id \\'nfi\\' is not available. Did you start R with --polyglot?\\n')");
+        // Checkstyle: resume
     }
 
     @Test

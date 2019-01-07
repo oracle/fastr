@@ -29,6 +29,8 @@ import com.oracle.truffle.r.test.TestBase;
  * Represents an R session that may be interactive or non-interactive.
  */
 public interface RSession {
+    long USE_DEFAULT_TIMEOUT = -1;
+
     /**
      * Returns the result of evaluating {@code expression} including errors and warnings.
      *
@@ -42,7 +44,7 @@ public interface RSession {
      * This result will always be non-null or an exception will be thrown in, say, a timeout
      * occurring.
      */
-    String eval(TestBase testClass, String expression, ContextKind contextKind, boolean longTimeout) throws Throwable;
+    String eval(TestBase testClass, String expression, ContextKind contextKind, long timeout) throws Throwable;
 
     /**
      * A name to identify the session.

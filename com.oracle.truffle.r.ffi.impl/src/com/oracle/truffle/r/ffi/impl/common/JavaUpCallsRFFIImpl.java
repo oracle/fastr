@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -91,13 +91,13 @@ import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -117,6 +117,7 @@ import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapper;
 import com.oracle.truffle.r.runtime.gnur.SA_TYPE;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nmath.RMath;
+import com.oracle.truffle.r.runtime.nmath.RandomFunctions.RandomNumberProvider;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
@@ -319,35 +320,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    @TruffleBoundary
     public void Rf_setAttrib(Object obj, Object name, Object val) {
-        if (obj == RNull.instance) {
-            return;
-        }
-        if (obj instanceof RAttributable) {
-            RAttributable attrObj = (RAttributable) obj;
-            String nameAsString;
-            if (name instanceof RSymbol) {
-                nameAsString = ((RSymbol) name).getName();
-            } else {
-                nameAsString = RRuntime.asString(name);
-                assert nameAsString != null;
-            }
-            nameAsString = Utils.intern(nameAsString);
-            if (val == RNull.instance) {
-                if ("class" == nameAsString) {
-                    removeClassAttr(attrObj);
-                } else {
-                    removeAttr(attrObj, nameAsString);
-                }
-            } else if ("class" == nameAsString) {
-                attrObj.initAttributes().define(nameAsString, val);
-            } else {
-                attrObj.setAttr(nameAsString, val);
-            }
-        } else {
-            throw RInternalError.shouldNotReachHere();
-        }
+        throw implementedAsNode();
     }
 
     @TruffleBoundary
@@ -650,15 +624,22 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             return ((RExpression) vec).getDataAt((int) i);
         }
         RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
+        if (list.getLength() == i) {
+            // Some packages abuse that there seems to be no bounds checking and the
+            // one-after-the-last element returns NULL, which they use to find out if they reached
+            // the end of the list...
+            return RNull.instance;
+        }
         return list.getDataAt((int) i);
     }
 
     @Override
     public int NAMED(Object x) {
-        if (x instanceof RShareable) {
-            return getNamed((RShareable) x);
+        if (x instanceof RSharingAttributeStorage) {
+            return ((RSharingAttributeStorage) x).isTemporary() ? 0 : ((RSharingAttributeStorage) x).isShared() ? 2 : 1;
         } else {
             // Note: it may be that we need to remember this for all types, GNUR does
+            RSharingAttributeStorage.verify(x);
             return 2;
         }
     }
@@ -674,13 +655,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         // sense to name the actual value, for compatibilty we simply ignore values that are not
         // RShareable, e.g. RSymbol. However we ignore and report attemps to decrease the ref-count,
         // which as it seems GNUR would just let proceede
+        // Note 2: there is a hack in data.table that uses SET_NAMED(x,0) to make something mutable
+        // so we allow and "support" this one specific use-case.
         if (x instanceof RShareable) {
             RShareable r = (RShareable) x;
-            int actual = getNamed(r);
-            if (v < actual) {
-                RError.warning(RError.NO_CALLER, RError.Message.GENERIC, "Native code attempted to decrease the reference count. This operation is ignored.");
-            }
-            if (v == 2) {
+            if (v >= 2) {
                 // we play it safe: if the caller wants this instance to be shared, they may expect
                 // it to never become non-shared again, which could happen in FastR
                 r.makeSharedPermanent();
@@ -688,11 +667,16 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             if (v == 1 && r.isTemporary()) {
                 r.incRefCount();
             }
+            if (v == 0) {
+                if (r.isSharedPermanent()) {
+                    CompilerDirectives.transferToInterpreter();
+                    RError.warning(RError.NO_CALLER, RError.Message.GENERIC,
+                                    "Native code of some package requested that a shared permanent value is made temporary. " +
+                                                    "This is a hack that may break things even on GNU-R, but for the sake of compatibility, FastR will proceed.");
+                }
+                r.makeTemporary();
+            }
         }
-    }
-
-    private static int getNamed(RShareable r) {
-        return r.isTemporary() ? 0 : r.isShared() ? 2 : 1;
     }
 
     @Override
@@ -727,6 +711,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public long Rf_any_duplicated(Object x, int fromLast) {
+        throw implementedAsNode();
+    }
+
+    @Override
+    public Object Rf_duplicated(Object x, int fromLast) {
         throw implementedAsNode();
     }
 
@@ -930,6 +919,33 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         } catch (PutException e) {
             e.printStackTrace();
         }
+    }
+
+    @Override
+    @TruffleBoundary
+    public void Rf_setVar(Object symbol, Object value, Object rho) {
+        if (rho == RNull.instance) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.USE_NULL_ENV_DEFUNCT);
+        }
+        if (!(rho instanceof REnvironment)) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.ARG_NOT_AN_ENVIRONMENT, "setVar");
+        }
+        REnvironment env = (REnvironment) rho;
+        String symName = ((RSymbol) symbol).getName();
+        while (env != REnvironment.emptyEnv()) {
+            if (env.get(symName) != null) {
+                if (env.bindingIsLocked(symName)) {
+                    throw RError.error(RError.SHOW_CALLER2, Message.ENV_CHANGE_BINDING, symName);
+                }
+                try {
+                    env.put(symName, value);
+                } catch (PutException ex) {
+                    throw RError.error(RError.SHOW_CALLER2, ex);
+                }
+            }
+            env = env.getParent();
+        }
+        Rf_defineVar(symbol, value, REnvironment.globalEnv());
     }
 
     @Override
@@ -1211,6 +1227,18 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public double unif_rand() {
         return RRNG.unifRand();
+    }
+
+    @Override
+    @TruffleBoundary
+    public double norm_rand() {
+        return RandomNumberProvider.fromCurrentRNG().normRand();
+    }
+
+    @Override
+    @TruffleBoundary
+    public double exp_rand() {
+        return RandomNumberProvider.fromCurrentRNG().expRand();
     }
 
     // Checkstyle: stop method name check
@@ -2401,8 +2429,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object INTEGER(Object x) {
-        // also handles LOGICAL
-        assert x instanceof RIntVector || x instanceof RLogicalVector || x == RNull.instance;
+        // Note: there is no validation in GNU-R and so packages call this with all types of vectors
         return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RVector.class));
     }
 
@@ -2414,9 +2441,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object REAL(Object x) {
-        if ((x instanceof RAbstractStringVector) || (x instanceof RAbstractListBaseVector)) {
-            RFFIUtils.unimplemented("REAL is being called for type " + Utils.getTypeName(x));
-        }
+        // Note: there is no validation in GNU-R and so packages call this with all types of vectors
         return VectorRFFIWrapper.get(guaranteeVectorOrNull(x, RAbstractAtomicVector.class));
     }
 

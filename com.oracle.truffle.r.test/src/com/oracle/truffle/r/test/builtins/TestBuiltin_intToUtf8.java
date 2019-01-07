@@ -68,7 +68,8 @@ public class TestBuiltin_intToUtf8 extends TestBase {
         // it's not clear why GNUR does not print these characters
         assertEval(Ignored.ReferenceError, "intToUtf8(2000)");
         assertEval("intToUtf8(65535)");
-        assertEval("intToUtf8(65536)");
+        // GNU-R outputs a real char vs. FastR outputs "\U00010000"
+        assertEval(Ignored.ImplementationError, "intToUtf8(65536)");
         assertEval("intToUtf8(200000)");
         assertEval("intToUtf8(1:100)");
         assertEval("intToUtf8(1:100, FALSE)");

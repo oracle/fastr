@@ -27,6 +27,7 @@ import java.io.PrintWriter;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.data.RExpression;
+import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
@@ -54,7 +55,16 @@ final class ExpressionPrinter extends AbstractValuePrinter<RExpression> {
                 out.print(names.getDataAt(i));
                 out.print(" = ");
             }
-            ValuePrinters.INSTANCE.print(expr.getDataAt(i), valPrintCtx);
+            Object data = expr.getDataAt(i);
+            if (data instanceof RRaw) {
+                // when in expression, raw is printed differently
+                // than in ValuePrinters.INSTANCE.print() -> RawVectorPrinter.print()
+                out.print("as.raw(0x");
+                ValuePrinters.INSTANCE.print(data, valPrintCtx);
+                out.print(")");
+            } else {
+                ValuePrinters.INSTANCE.print(data, valPrintCtx);
+            }
         }
         out.print(')');
     }

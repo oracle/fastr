@@ -33,17 +33,17 @@ import com.oracle.truffle.r.test.TestBase;
 public class TestHelp extends TestBase {
     @Test
     public void testInteropHelp() {
-        assertHelpResult(fastREval("?java.type", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘java.type’ ====", "Access to a java type given by",
+        assertHelpResult(fastREval("?java.type", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘java.type’ ====", "Access to a java type given by",
                         "An polyglot value representing a java type");
-        assertHelpResult(fastREval("help(java.type)", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘java.type’ ====", "Access to a java type given by",
+        assertHelpResult(fastREval("help(java.type)", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘java.type’ ====", "Access to a java type given by",
                         "An polyglot value representing a java type");
-        assertHelpResult(fastREval("example(java.type)", ContextKind.SHARE_PARENT_RW, false), null, "java.type('java.util.ArrayList')", "$class");
+        assertHelpResult(fastREval("example(java.type)", ContextKind.SHARE_PARENT_RW), null, "java.type('java.util.ArrayList')", "$class");
     }
 
     @Test
     public void testGrDevicesHelp() {
-        assertHelpResult(fastREval("?svg.off", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘svg.off’ ====", "SVG");
-        assertHelpResult(fastREval("help(svg.off)", ContextKind.SHARE_PARENT_RW, false), "==== R Help on ‘svg.off’ ====", "SVG");
+        assertHelpResult(fastREval("?svg.off", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
+        assertHelpResult(fastREval("help(svg.off)", ContextKind.SHARE_PARENT_RW), "==== R Help on ‘svg.off’ ====", "SVG");
     }
 
     private static void assertHelpResult(String result, String startsWith, String... contains) {

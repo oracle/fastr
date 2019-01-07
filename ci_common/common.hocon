@@ -1,7 +1,7 @@
 # java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
-java8 : {name : labsjdk, version : "8u172-jvmci-0.47", platformspecific: true}
+java8 : {name : labsjdk, version : "8u192-jvmci-0.52", platformspecific: true}
 java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
 
 java8Downloads : {
@@ -64,6 +64,7 @@ packagesLinux : ${pkgEnvironment} {
     mercurial : ">=2.2"
     "pip:astroid" : "==1.1.0"
     "pip:pylint" : "==1.1.0"
+    "pip:ninja_syntax" : "==1.7.2"
     make : ">=3.83"
     gcc-build-essentials : "==4.9.1" # GCC 4.9.0 fails on cluster
     readline : "==6.3"
@@ -76,6 +77,7 @@ packagesLinux : ${pkgEnvironment} {
 packagesDarwin : {
   "pip:astroid" : "==1.1.0"
   "pip:pylint" : "==1.1.0"
+  "pip:ninja_syntax" : "==1.7.2"
   "pcre" : "==8.38"
 }
 
@@ -88,6 +90,7 @@ common : ${java8Downloads} ${packagesLinux}  {
   environment : {
 	PKG_TEST_ENV_miniUI : "LC_ALL=C"
 	PKG_TEST_ENV_compare : "LC_ALL=C"
+	FASTR_OPTION_PrintErrorStacktracesToFile: "true"
   }
 }
 

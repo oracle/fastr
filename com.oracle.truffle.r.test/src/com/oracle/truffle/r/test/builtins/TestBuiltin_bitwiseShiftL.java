@@ -42,6 +42,12 @@ public class TestBuiltin_bitwiseShiftL extends TestBase {
         assertEval("{ bitwShiftL(c(8,4,2), NULL) }");
 
         assertEval("{ bitwShiftL(TRUE, c(TRUE, FALSE)) }");
+        assertEval("{ bitwShiftL(NULL, NULL) }");
+        assertEval("{ bitwShiftL(1, NULL) }");
+        assertEval("{ bitwShiftL(1L, NULL) }");
+        assertEval("{ bitwShiftL(NULL, 1 }");
+        assertEval("{ bitwShiftL(NULL, 1L) }");
+        assertEval("{ bitwShiftL(NA, NA) }");
 
         assertEval("{ bitwShiftL(c(3+3i), c(3,2,4)) }");
         assertEval("{ bitwShiftL(c(3,2,4), c(3+3i)) }");

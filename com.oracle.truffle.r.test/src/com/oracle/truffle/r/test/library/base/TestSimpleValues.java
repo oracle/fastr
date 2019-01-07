@@ -33,10 +33,6 @@ import com.oracle.truffle.r.test.TestBase;
  */
 public class TestSimpleValues extends TestBase {
 
-    public static final boolean VERBOSE_TEST_OUTPUT = false;
-    public static final boolean GENERATE_INSTEAD_OF_CHECK = false;
-    public static final String SPLIT_CHAR = "|";
-
     private static final String[] SCALAR_NORMAL_VALUES = {"TRUE", "FALSE", "1", "as.raw(10)", "3.4", "1L", "NULL", "1i", "\"hello\"", "0.1234567", "123456789000"};
     private static final String[] SCALAR_SPECIAL_VALUES = {"(1+NA)", "(3.4+NA)", "(1i+NA)", "(0/0)", "((0/0)+1i)", "NULL", "(1/0)", "(-(1/0))", "(-(0/0))", "(-0.0)"};
     private static final String[] VECTOR_VALUES = template("c(%0,%0,%0)", SCALAR_NORMAL_VALUES);

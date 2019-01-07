@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.ArgumentMatchingMode.MATCH_BY_NAME_EXACT_SKIP_FIRST;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSCRIPT;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -50,13 +51,14 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSCRIPT, allowMissingInVarArgs = true)
+@RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact",
+                "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSCRIPT, allowMissingInVarArgs = true)
 @TypeSystemReference(RTypes.class)
 public abstract class Subscript extends RBuiltinNode.Arg4 {
 
     protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
-    @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, behavior = PURE_SUBSCRIPT)
+    @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, behavior = PURE_SUBSCRIPT)
     public abstract class DefaultBuiltin {
         // same implementation as "[[", with different dispatch
     }

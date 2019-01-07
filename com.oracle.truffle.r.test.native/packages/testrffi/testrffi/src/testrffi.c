@@ -241,6 +241,42 @@ SEXP char_length(SEXP x) {
 	return ScalarInteger(count);
 }
 
+SEXP shareIntElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	int *xPtr = INTEGER(x);
+	int *yPtr = INTEGER(y);
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
+SEXP shareDoubleElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	double *xPtr = REAL(x);
+	double *yPtr = REAL(y);
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
+SEXP shareStringElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	SEXP *xPtr = STRING_PTR(x);
+	SEXP *yPtr = STRING_PTR(y);
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
+SEXP shareListElement(SEXP x, SEXP xIndex, SEXP y, SEXP yIndex) {
+	int *xi = INTEGER(xIndex);
+	int *yi = INTEGER(yIndex);
+	SEXP *xPtr = ((SEXP *) DATAPTR(x));
+	SEXP *yPtr = ((SEXP *) DATAPTR(y));
+	xPtr[xi[0] - 1] = yPtr[yi[0] - 1];
+	return x;
+}
+
 SEXP mkStringFromChar(void) {
 	return mkString("hello");
 }
@@ -518,6 +554,7 @@ static Rboolean testrfficonn_open(Rconnection conn) {
         printNow("ERROR: open function did not receive expected argument\n");
         return 0;
     } else {
+	    conn->isopen = TRUE;
         printNow("Custom connection opened\n");
         return 1;
     }
@@ -527,6 +564,7 @@ static void testrfficonn_close(Rconnection conn) {
     if (conn != customConn) {
         printNow("ERROR: close function did not receive expected argument\n");
     } else {
+	    conn->isopen = FALSE;
         printNow("Custom connection closed\n");
     }
 }
@@ -865,4 +903,9 @@ SEXP test_constant_types() {
     data[i++] = TYPEOF(R_PreviousSymbol);
     UNPROTECT(1);
     return res;
+}
+
+SEXP test_Rf_setVar(SEXP symbol, SEXP value, SEXP env) {
+    Rf_setVar(symbol, value, env);
+    return R_NilValue;
 }

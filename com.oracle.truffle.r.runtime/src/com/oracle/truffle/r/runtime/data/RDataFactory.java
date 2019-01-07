@@ -745,6 +745,10 @@ public final class RDataFactory {
             return traceDataCreated(RDataFactory.createStringVectorFromScalar(value));
         }
 
+        public RStringVector createStringVectorFromNative(long address, int length) {
+            return traceDataCreated(RStringVector.fromNative(address, length));
+        }
+
         public RLogicalVector createLogicalVectorFromScalar(boolean value) {
             return traceDataCreated(RDataFactory.createLogicalVectorFromScalar(value));
         }
@@ -1071,6 +1075,10 @@ public final class RDataFactory {
 
     public static RStringVector createStringVectorFromScalar(String value) {
         return createStringVector(new String[]{value}, !RRuntime.isNA(value));
+    }
+
+    public static RStringVector createStringVectorFromNative(long address, int length) {
+        return traceDataCreated(RStringVector.fromNative(address, length));
     }
 
     public static RLogicalVector createLogicalVectorFromScalar(boolean value) {

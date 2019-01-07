@@ -38,8 +38,8 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
  */
 public enum FastROptions {
     PrintErrorStacktraces("Prints Java and R stack traces for all errors", false),
-    PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", true),
-    CheckResultCompleteness("Assert completeness of results vectors after evaluating unit tests and R shell commands", true),
+    PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", false),
+    // TODO: this should be logging category
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
     TraceCalls("Trace all R function calls", false),
     TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
@@ -50,7 +50,7 @@ public enum FastROptions {
     PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
     FullPrecisionSum("Use 128 bit arithmetic in sum builtin", false),
     InvisibleArgs("Argument writes do not trigger state transitions", true),
-    RefCountIncrementOnly("Disable reference count decrements for experimental state transition implementation", false),
+    RefCountIncrementOnly("Disable reference count decrements", false),
     UseInternalGridGraphics("Whether the internal (Java) grid graphics implementation should be used", true),
     UseSpecials("Whether the fast-path special call nodes should be created for simple enough arguments.", true),
     ForceSources("Generate source sections for unserialized code", false),
@@ -58,7 +58,6 @@ public enum FastROptions {
     SearchPathForcePromises("Whether all promises for frames on shared path are forced in presence of shared contexts", false),
     LoadPackagesNativeCode("Load native code of packages, including builtin packages.", !FastRConfig.ManagedMode),
     SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
-    ForeignObjectWrappers("use wrappers for foreign objects (as opposed to full conversion)", true),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
@@ -74,8 +73,14 @@ public enum FastROptions {
 
     IgnoreGraphicsCalls("Silently ignore unimplemented functions from graphics package", false),
     AdditionalOptions("List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. " +
-                    "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true),
-    StartupTiming("Records and prints various timestamps during initialization", false);
+                    "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true);
+
+    /**
+     * Setting this environment variable activates the tracing of the bitcode of selected LLVM
+     * libraries. The libraries are specified as a comma-separated list of library names. For
+     * instance: <code>TRACE_LLVM_LIBS=dplyr,Rcpp</code>
+     */
+    public static final String TRACE_LLVM_LIBS = "TRACE_LLVM_LIBS";
 
     private final String help;
     private final boolean isBoolean;

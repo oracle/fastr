@@ -265,3 +265,23 @@ rffi.test_forceAndCall <- function(call, args, rho) {
 rffi.test_constantTypes <- function(env) {
     .Call('test_constant_types')
 }
+
+rffi.shareIntElement <- function(x, xi, y, yi) {
+	.Call('shareIntElement', x, xi, y, yi)
+}
+
+rffi.shareDoubleElement <- function(x, xi, y, yi) {
+	.Call('shareDoubleElement', x, xi, y, yi)
+}
+
+rffi.shareStringElement <- function(x, xi, y, yi) {
+	.Call('shareStringElement', x, xi, y, yi)
+}
+
+rffi.shareListElement <- function(x, xi, y, yi) {
+	.Call('shareListElement', x, xi, y, yi)
+}
+
+rffi.test_setVar <- function(symbol, value, env) {
+    .Call('test_Rf_setVar', symbol, value, env)
+}

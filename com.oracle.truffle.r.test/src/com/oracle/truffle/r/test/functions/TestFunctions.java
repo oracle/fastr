@@ -287,6 +287,39 @@ public class TestFunctions extends TestBase {
         // Unmatched argument from delegated "..."
         // FastR does not provide "c=3", but only "3" in the error message
         assertEval(Output.IgnoreErrorMessage, "foo <- function(...) bar(...); bar <- function(a,b) list(a,b); foo(a=1,b=2,c=3);");
+
+        // no named arguments matching for some primitives
+        assertEval("as.character(3, x=42)");
+
+        // "drop" argument matched by name, can be anywhere, but not the first one
+        assertEval("matrix(1:6, nrow = 2, dimnames = list(c('a', 'b'), LETTERS[1:3]))[1,,drop=FALSE]");
+        assertEval("matrix(1:6, nrow = 2, dimnames = list(c('a', 'b'), LETTERS[1:3]))[1,drop=FALSE,]");
+        assertEval("matrix(1:6, nrow = 2, dimnames = list(c('a', 'b'), LETTERS[1:3]))[drop=FALSE,1,]");
+        // first actual argument is not considered for matching to "drop" formal argument
+        assertEval("`[`(drop=matrix(1:6, nrow = 2, dimnames = list(c('a', 'b'), LETTERS[1:3])), 1,)");
+        assertEval("`[`(drop=matrix(1:6, nrow = 2, dimnames = list(c('a', 'b'), LETTERS[1:3])), 1,, drop=F)");
+        // "i" and "j" argument names are ignored
+        assertEval("matrix(1:6, nrow = 2, dimnames = list(c('a', 'b'), LETTERS[1:3]))[drop=FALSE,j=1,]");
+
+        assertEval("list(abc=3)[[exact=F,'ab']]");
+        assertEval("list(abc=3)[['ab',exact=F]]");
+        assertEval("list(abc=3)[[exact=F,'ab',drop=T]]");
+        assertEval("list(abc=3)[[drop=T,exact=F,'ab']]");
+
+        assertEval(".subset2(c(1,2,3), 2, exact = T)");
+        assertEval(".subset2(c(1,2,3), exact = T, 2)");
+        assertEval(".subset2(exact = T, c(1,2,3), 2)");
+        assertEval(".subset2(c(1,2,3), exact = T, 2, drop=T)");
+
+        assertEval(".subset(c(1,2,3), drop = T, 2)");
+        assertEval(".subset(c(1,2,3), 2, drop = T)");
+
+        assertEval("c(1,2,3)[[drop=T,3,drop=T]]");
+        assertEval("c(1,2,3)[[extract=T,3,drop=T]]");
+        assertEval("c(1,2,3)[extract=T,3,drop=T]");
+
+        // This would fail if we matched arguments of forceAndCall by name\
+        assertEval("apply(array(1,dim=c(2,3)), 2, function(x,n) x, n = 1)");
     }
 
     @Test
@@ -307,7 +340,7 @@ public class TestFunctions extends TestBase {
         // Checkstyle: resume line length check
 
         assertEval(Output.IgnoreErrorContext, "{ f <- function(x) { ..1 } ;  f(10) }");
-        assertEval(Output.IgnoreErrorContext, "{ f <- function(...) { ..1 } ;  f() }");
+        assertEval("{ f <- function(...) { ..1 } ;  f() }");
 
         assertEval("{ fn1 <- function (a, b) a + b; fn2 <- function (a, b, ...) fn1(a, b, ...); fn2(1, 1) }");
         assertEval("{ asdf <- function(x,...) UseMethod(\"asdf\",x); asdf.numeric <- function(x, ...) print(paste(\"num:\", x, ...)); asdf(1) }");

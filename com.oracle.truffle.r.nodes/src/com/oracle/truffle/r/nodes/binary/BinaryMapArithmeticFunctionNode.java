@@ -164,7 +164,8 @@ public final class BinaryMapArithmeticFunctionNode extends BinaryMapNAFunctionNo
             }
             return RComplex.createNA();
         }
-        if (rightNACheck.check(right)) {
+        if (rightNACheck.check(right) && !(leftNACheck.checkNAorNaN(left.getRealPart()))) {
+
             if (this.arithmetic instanceof BinaryArithmetic.Pow && left.isZero()) {
                 // CORNER: 0^(0i + NA) == NaN + NaNi
                 return RDataFactory.createComplex(Double.NaN, Double.NaN);

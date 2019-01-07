@@ -43,7 +43,7 @@ public abstract class Bincode extends RBuiltinNode.Arg4 {
         Casts casts = new Casts(Bincode.class);
         casts.arg("x").mustNotBeMissing(RError.Message.ARGUMENT_EMPTY, 1).asDoubleVector();
 
-        casts.arg("breaks").mustNotBeMissing(RError.Message.ARGUMENT_EMPTY, 2).asDoubleVector();
+        casts.arg("breaks").mustNotBeMissing(RError.Message.ARGUMENT_EMPTY, 2).mustNotBeNull(RError.Message.LONG_VECTOR_NOT_SUPPORTED, "breaks").asDoubleVector();
 
         casts.arg("right").asLogicalVector().findFirst().map(toBoolean());
 
@@ -54,18 +54,6 @@ public abstract class Bincode extends RBuiltinNode.Arg4 {
     @Specialization
     RIntVector formatC(RNull x, RAbstractDoubleVector breaks, boolean right, boolean includeBorder) {
         return RDataFactory.createEmptyIntVector();
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    RIntVector formatC(RNull x, RNull breaks, boolean right, boolean includeBorder) {
-        return RDataFactory.createEmptyIntVector();
-    }
-
-    @SuppressWarnings("unused")
-    @Specialization
-    RIntVector formatC(RAbstractDoubleVector x, RNull breaks, boolean right, boolean includeBorder) {
-        return RDataFactory.createIntVector(x.getLength(), true);
     }
 
     @Specialization

@@ -70,6 +70,9 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
             if (value instanceof TruffleObject) {
                 return unbox((TruffleObject) value, e);
             }
+            if (value instanceof Character) {
+                return (Character) value;
+            }
             throw RInternalError.shouldNotReachHere(e);
         }
     }
@@ -101,6 +104,7 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
 
         private final ValueProfile resultProfile = ValueProfile.createClassProfile();
         private final ConditionProfile isTruffleObjectProfile = ConditionProfile.createBinaryProfile();
+        private final ConditionProfile isIntProfile = ConditionProfile.createBinaryProfile();
         @Child private Node getSize = Message.GET_SIZE.createNode();
         @Child private Node read = Message.READ.createNode();
         @Child private Node isNull;
@@ -141,7 +145,11 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
                         value = ForeignAccess.sendUnbox(unbox, (TruffleObject) value);
                     }
                 }
-                return ((Number) resultProfile.profile(value)).intValue();
+                if (isIntProfile.profile(value instanceof Number)) {
+                    return ((Number) resultProfile.profile(value)).intValue();
+                } else {
+                    return (Character) resultProfile.profile(value);
+                }
             } catch (UnsupportedMessageException | UnknownIdentifierException | ClassCastException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }
@@ -176,6 +184,9 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
             } catch (ClassCastException e) {
                 if (value instanceof TruffleObject) {
                     return unbox((TruffleObject) value, e);
+                }
+                if (value instanceof Character) {
+                    return (Character) value;
                 }
                 throw RInternalError.shouldNotReachHere(e);
             }

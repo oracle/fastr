@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,10 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
+import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
+import static com.oracle.truffle.r.runtime.RError.Message.LENGTH_ZERO_DIM_INVALID;
+
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
@@ -35,6 +39,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -465,6 +470,7 @@ public final class SpecialAttributesFunctions {
         private final ValueProfile contArgClassProfile = ValueProfile.createClassProfile();
         private final ValueProfile dimArgClassProfile = ValueProfile.createClassProfile();
         private final LoopConditionProfile verifyLoopProfile = LoopConditionProfile.createCountingProfile();
+        @Child private CastNode castValue = newCastBuilder().asIntegerVector().mustBe(notEmpty(), LENGTH_ZERO_DIM_INVALID).buildCastNode();
 
         protected SetDimAttributeNode() {
             super(RRuntime.DIM_ATTR_KEY);
@@ -472,6 +478,11 @@ public final class SpecialAttributesFunctions {
 
         public static SetDimAttributeNode create() {
             return SpecialAttributesFunctionsFactory.SetDimAttributeNodeGen.create();
+        }
+
+        @Override
+        protected Object castValue(Object value) {
+            return castValue.doCast(value);
         }
 
         public void setDimensions(RAbstractContainer x, int[] dims) {

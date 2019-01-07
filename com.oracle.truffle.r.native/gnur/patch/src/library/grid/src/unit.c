@@ -91,15 +91,15 @@ SEXP unitData(SEXP unit, int index) {
 /* Accessor functions for unit arithmetic object
  */
 const char* fName(SEXP ua) {
-    return CHAR(STRING_ELT(gridGetListElement(ua, "fname"), 0));
+    return CHAR(STRING_ELT(getListElement(ua, "fname"), 0));
 }
 
 SEXP arg1(SEXP ua) {
-    return gridGetListElement(ua, "arg1");
+    return getListElement(ua, "arg1");
 }
 
 SEXP arg2(SEXP ua) {
-    return gridGetListElement(ua, "arg2");
+    return getListElement(ua, "arg2");
 }
 
 int fNameMatch(SEXP ua, char *aString) {
@@ -310,14 +310,14 @@ int pureNullUnit(SEXP unit, int index, pGEDevDesc dd) {
 		    PROTECT(findGrobFn = findFun(install("findGrobinDL"), 
 						 R_gridEvalEnv));
 		    PROTECT(R_fcall0 = lang2(findGrobFn, 
-					     gridGetListElement(grob, "name")));
+					     getListElement(grob, "name")));
 		    grob = eval(R_fcall0, R_gridEvalEnv);
 		} else {
 		    PROTECT(findGrobFn =findFun(install("findGrobinChildren"), 
 						R_gridEvalEnv));
 		    PROTECT(R_fcall0 = lang3(findGrobFn, 
-					     gridGetListElement(grob, "name"),
-					     gridGetListElement(savedgrob, 
+					     getListElement(grob, "name"),
+					     getListElement(savedgrob, 
 							    "children")));
 		    grob = eval(R_fcall0, R_gridEvalEnv);
 		}
@@ -356,14 +356,14 @@ int pureNullUnit(SEXP unit, int index, pGEDevDesc dd) {
 		    PROTECT(findGrobFn = findFun(install("findGrobinDL"), 
 						 R_gridEvalEnv));
 		    PROTECT(R_fcall0 = lang2(findGrobFn, 
-					     gridGetListElement(grob, "name")));
+					     getListElement(grob, "name")));
 		    grob = eval(R_fcall0, R_gridEvalEnv);
 		} else {
 		    PROTECT(findGrobFn =findFun(install("findGrobinChildren"), 
 						R_gridEvalEnv));
 		    PROTECT(R_fcall0 = lang3(findGrobFn, 
-					     gridGetListElement(grob, "name"),
-					     gridGetListElement(savedgrob, 
+					     getListElement(grob, "name"),
+					     getListElement(savedgrob, 
 							    "children")));
 		    grob = eval(R_fcall0, R_gridEvalEnv);
 		}
@@ -513,14 +513,14 @@ double evaluateGrobUnit(double value, SEXP grob,
 	    PROTECT(findGrobFn = findFun(install("findGrobinDL"), 
 					 R_gridEvalEnv));
 	    PROTECT(R_fcall0 = lang2(findGrobFn, 
-				     gridGetListElement(grob, "name")));
+				     getListElement(grob, "name")));
 	    PROTECT(grob = eval(R_fcall0, R_gridEvalEnv));
 	} else {
 	    PROTECT(findGrobFn = findFun(install("findGrobinChildren"), 
 					 R_gridEvalEnv));
 	    PROTECT(R_fcall0 = lang3(findGrobFn, 
-				     gridGetListElement(grob, "name"),
-				     gridGetListElement(savedgrob, "children")));
+				     getListElement(grob, "name"),
+				     getListElement(savedgrob, "children")));
 	    PROTECT(grob = eval(R_fcall0, R_gridEvalEnv));
 	}
 	/*

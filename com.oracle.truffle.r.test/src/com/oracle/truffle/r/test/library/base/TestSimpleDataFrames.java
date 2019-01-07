@@ -180,5 +180,7 @@ public class TestSimpleDataFrames extends TestBase {
         assertEval("{ y<-data.frame(c(1,2,3)); length(y) }");
 
         assertEval("x <- data.frame(a=1:3,b=factor(c(\"a\",\"b\",\"c\"))); x[2,]");
+
+        assertEval("val <- c(1:5); deparse(data.frame(val))");
     }
 }

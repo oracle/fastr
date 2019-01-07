@@ -166,58 +166,63 @@ public final class RInternalError extends Error implements TruffleException {
 
     @TruffleBoundary
     private static void reportErrorDefault(Throwable t, int contextId) {
-        String errMsg = t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : t.getClass().getSimpleName();
+        boolean detailedMessage = FastROptions.PrintErrorStacktraces.getBooleanValue() || FastROptions.PrintErrorStacktracesToFile.getBooleanValue();
+        String errMsg = ".";
+        if (detailedMessage) {
+            errMsg = ": \"";
+            errMsg += t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : t.getClass().getSimpleName();
+            errMsg += "\"";
+        }
         reportError(errMsg, t, contextId);
     }
 
     private static void reportError(String errMsg, Throwable throwable, int contextId) {
         try {
             Throwable t = throwable;
-            if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
-                ByteArrayOutputStream out = new ByteArrayOutputStream();
-                t.printStackTrace(new PrintStream(out));
-                String verboseStackTrace;
-                if (t.getCause() != null && t instanceof IOException) {
-                    t = t.getCause();
-                }
-                if (t instanceof RInternalError) {
-                    verboseStackTrace = ((RInternalError) t).getVerboseStackTrace();
-                } else if (t instanceof RError) {
-                    verboseStackTrace = ((RError) t).getVerboseStackTrace();
-                } else {
-                    verboseStackTrace = "";
-                }
-                if (FastROptions.PrintErrorStacktraces.getBooleanValue()) {
-                    System.err.println(out.toString());
-                    System.err.println(verboseStackTrace);
-                }
+            ByteArrayOutputStream out = new ByteArrayOutputStream();
+            t.printStackTrace(new PrintStream(out));
+            String verboseStackTrace;
+            if (t.getCause() != null && t instanceof IOException) {
+                t = t.getCause();
+            }
+            if (t instanceof RInternalError) {
+                verboseStackTrace = ((RInternalError) t).getVerboseStackTrace();
+            } else if (t instanceof RError) {
+                verboseStackTrace = ((RError) t).getVerboseStackTrace();
+            } else {
+                verboseStackTrace = "";
+            }
+            if (FastROptions.PrintErrorStacktraces.getBooleanValue()) {
+                System.err.println(out.toString());
+                System.err.println(verboseStackTrace);
+            }
 
-                String message = "An internal error occurred: \"" + errMsg + "\"\nPlease report an issue at https://github.com/oracle/fastr including the commands";
-                if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                    Path logfile = Utils.getLogPath(getLogFileName(contextId));
-                    if (logfile != null) {
-                        message += " and the error log file '" + logfile + "'.";
-                        try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
-                                        StandardOpenOption.CREATE)) {
-                            writer.append(new Date().toString()).append('\n');
-                            writer.append(out.toString()).append('\n');
-                            writer.append(verboseStackTrace).append("\n\n");
-                        } catch (IOException e) {
-                            e.printStackTrace();
-                        }
-                    } else {
-                        message += ". Cannot write error log file (tried current working directory, user home directory, FastR home directory).";
-                    }
-                    System.err.println(message);
-                    if (RContext.isEmbedded()) {
-                        RSuicide.rSuicide("FastR internal error");
+            String message = "An internal error occurred" + errMsg + "\nPlease report an issue at https://github.com/oracle/fastr including the commands";
+            if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
+                Path logfile = Utils.getLogPath(getLogFileName(contextId));
+                if (logfile != null) {
+                    message += " and the error log file '" + logfile + "'.";
+                    try (BufferedWriter writer = Files.newBufferedWriter(logfile, StandardCharsets.UTF_8, StandardOpenOption.APPEND,
+                                    StandardOpenOption.CREATE)) {
+                        writer.append(new Date().toString()).append('\n');
+                        writer.append(out.toString()).append('\n');
+                        writer.append(verboseStackTrace).append("\n\n");
+                    } catch (IOException e) {
+                        e.printStackTrace();
                     }
                 } else {
-                    message += ".";
+                    message += ". Cannot write error log file (tried current working directory, user home directory, FastR home directory).";
                 }
-                if (!FastROptions.PrintErrorStacktraces.getBooleanValue() && !FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
-                    System.err.println(message);
+                System.err.println(message);
+                if (RContext.isEmbedded()) {
+                    RSuicide.rSuicide("FastR internal error");
                 }
+            } else {
+                message += ". You can rerun FastR with --jvm.DR:+" + FastROptions.PrintErrorStacktracesToFile.name() +
+                                " to turn on internal errors logging. Please attach the log file to the issue if possible.";
+            }
+            if (!FastROptions.PrintErrorStacktraces.getBooleanValue() && !FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
+                System.err.println(message);
             }
         } catch (ExitException | ThreadDeath t) {
             throw t;

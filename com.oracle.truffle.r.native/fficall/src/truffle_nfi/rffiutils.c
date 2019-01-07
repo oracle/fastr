@@ -57,7 +57,7 @@ void set_exception_flag() {
     exceptionFlag = 1;
 }
 
-static void pushJmpBuf(jmp_buf *buf) {
+void pushJmpBuf(jmp_buf *buf) {
     if (callErrorJmpBufStackIndex == ERROR_JMP_BUF_STACK_SIZE) {
         fprintf(stderr, "Maximum native call stack size ERROR_JMP_BUF_STACK_SIZE exceeded. Update the constant ERROR%s.\n", "_JMP_BUF_STACK_SIZE");
         exit(1);
@@ -65,27 +65,13 @@ static void pushJmpBuf(jmp_buf *buf) {
     callErrorJmpBufStack[callErrorJmpBufStackIndex++] = buf;
 }
 
-static void popJmpBuf() {
-    callErrorJmpBufStackIndex--;
+jmp_buf * peekJmpBuf() {
+    return callErrorJmpBufStack[callErrorJmpBufStackIndex - 1];
 }
 
-#define DO_CALL_VOID(call)          \
-    jmp_buf error_jmpbuf;           \
-    pushJmpBuf(&error_jmpbuf);      \
-    if (!setjmp(error_jmpbuf)) {    \
-        call;                       \
-    }                               \
-    popJmpBuf();
-
-#define DO_CALL(call)               \
-    jmp_buf error_jmpbuf;           \
-    pushJmpBuf(&error_jmpbuf);      \
-    SEXP result = R_NilValue;       \
-    if (!setjmp(error_jmpbuf)) {    \
-        result = call;              \
-    }                               \
-    popJmpBuf();                    \
-    return result;
+void popJmpBuf() {
+    callErrorJmpBufStackIndex--;
+}
 
 void dot_call_void0(callvoid0func fun) {
     DO_CALL_VOID(fun());

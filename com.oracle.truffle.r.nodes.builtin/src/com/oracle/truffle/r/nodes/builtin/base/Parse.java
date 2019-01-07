@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -64,9 +65,9 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -205,7 +206,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                  * but GnuR does not appear to do tilde expansion
                  */
                 fileName = Utils.tildeExpand(fileName);
-                File fnf = new File(fileName);
+                TruffleFile fnf = RContext.getInstance().getEnv().getTruffleFile(fileName);
                 String path = null;
                 if (!fnf.isAbsolute()) {
                     String wd = RRuntime.asString(srcFileEnv.get("wd"));
@@ -263,7 +264,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 throw RInternalError.unimplemented("attribute of type " + data.getClass().getSimpleName());
             }
         }
-        setSrcRefAttrNode.execute(exprs, RDataFactory.createList(srcrefData));
+        setSrcRefAttrNode.setAttr(exprs, RDataFactory.createList(srcrefData));
         int[] wholeSrcrefData = new int[8];
         int endOffset = source.getCharacters().length() - 1;
         wholeSrcrefData[0] = source.getLineNumber(0);
@@ -272,8 +273,8 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         wholeSrcrefData[6] = wholeSrcrefData[0];
         wholeSrcrefData[6] = wholeSrcrefData[3];
 
-        setWholeSrcRefAttrNode.execute(exprs, RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
-        setSrcFileAttrNode.execute(exprs, srcFile);
+        setWholeSrcRefAttrNode.setAttr(exprs, RDataFactory.createIntVector(wholeSrcrefData, RDataFactory.COMPLETE_VECTOR));
+        setSrcFileAttrNode.setAttr(exprs, srcFile);
 
         RIntVector parseData = new ParseDataVisitor(exprs).getParseData();
         srcFile.safePut("parseData", parseData);
@@ -550,7 +551,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 tt = TokenType.STR_CONST;
             } else if (value instanceof RComplex) {
                 tt = TokenType.NUM_CONST;
-            } else if (value == REmpty.instance || value == RMissing.instance) {
+            } else if (value == REmpty.instance || value == RMissing.instance || value == RSymbol.MISSING) {
                 return null;    // ignored
             } else {
                 throw RInternalError.shouldNotReachHere("Unknown RSyntaxConstant in ParseDataVisitor " + (value == null ? "null" : value.getClass().getSimpleName()));

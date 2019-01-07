@@ -39,22 +39,23 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@RBuiltin(name = "intToUtf8", kind = INTERNAL, parameterNames = {"x", "multiple"}, behavior = PURE)
-public abstract class IntToUtf8 extends RBuiltinNode.Arg2 {
+@RBuiltin(name = "intToUtf8", kind = INTERNAL, parameterNames = {"x", "multiple", "allow_surrogate_pairs"}, behavior = PURE)
+public abstract class IntToUtf8 extends RBuiltinNode.Arg3 {
 
     static {
         Casts casts = new Casts(IntToUtf8.class);
         casts.arg("x").mustNotBeMissing().asIntegerVector();
         casts.arg("multiple").mustNotBeNull().asLogicalVector().findFirst().map(toBoolean());
+        casts.arg("allow_surrogate_pairs").mustNotBeNull().asLogicalVector().findFirst().map(toBoolean());
     }
 
     @Specialization
-    protected String intToBits(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") boolean multiple) {
+    protected String intToBits(@SuppressWarnings("unused") RNull x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs) {
         return "";
     }
 
     @Specialization(guards = "multiple")
-    protected RAbstractStringVector intToBitsMultiple(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple,
+    protected RAbstractStringVector intToBitsMultiple(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
                     @Cached("create()") NACheck na,
                     @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 
@@ -78,7 +79,7 @@ public abstract class IntToUtf8 extends RBuiltinNode.Arg2 {
     }
 
     @Specialization(guards = "!multiple")
-    protected String intToBits(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple,
+    protected String intToBits(RAbstractIntVector x, @SuppressWarnings("unused") boolean multiple, @SuppressWarnings("unused") boolean allowSurrogatePairs,
                     @Cached("create()") NACheck na,
                     @Cached("createBinaryProfile()") ConditionProfile zeroProfile) {
 

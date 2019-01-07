@@ -22,12 +22,13 @@
  */
 package com.oracle.truffle.r.nodes.builtin.base.infix;
 
-import com.oracle.truffle.api.dsl.Cached;
 import static com.oracle.truffle.r.nodes.builtin.base.infix.special.SpecialsUtils.convertIndex;
 import static com.oracle.truffle.r.runtime.RDispatch.INTERNAL_GENERIC;
+import static com.oracle.truffle.r.runtime.builtins.ArgumentMatchingMode.MATCH_BY_NAME_EXACT_SKIP_FIRST;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSET;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -46,12 +47,13 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
-@RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...", "drop"}, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSET, allowMissingInVarArgs = true)
+@RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...",
+                "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSET, allowMissingInVarArgs = true)
 public abstract class Subset extends RBuiltinNode.Arg3 {
 
     protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
-    @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, behavior = PURE_SUBSET)
+    @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, behavior = PURE_SUBSET)
     public abstract class DefaultBuiltin {
         // same implementation as "[", with different dispatch
     }

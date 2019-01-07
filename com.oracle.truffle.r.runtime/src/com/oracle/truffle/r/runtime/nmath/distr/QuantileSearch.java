@@ -35,6 +35,7 @@ public final class QuantileSearch {
     private double z;
     private final double rightSearchLimit;
     private final DistributionFunc distributionFunc;
+    private final boolean qbinomSearch;
 
     /**
      * @param rightSearchLimit If set to non-negative value, then the search to the right will be
@@ -43,16 +44,27 @@ public final class QuantileSearch {
      *            lowerTail, and logP are fixed.
      */
     public QuantileSearch(double rightSearchLimit, DistributionFunc distributionFunc) {
+        this(rightSearchLimit, distributionFunc, false);
+    }
+
+    /**
+     * @param rightSearchLimit If set to non-negative value, then the search to the right will be
+     *            limited by it
+     * @param distributionFunc The distribution function, all parameters except the quantile,
+     *            lowerTail, and logP are fixed.
+     * @param qbinomSearch Implementation of qbinom in GNU-R does the search slightly differently.
+     */
+    public QuantileSearch(double rightSearchLimit, DistributionFunc distributionFunc, boolean qbinomSearch) {
         this.rightSearchLimit = rightSearchLimit;
         this.distributionFunc = distributionFunc;
+        this.qbinomSearch = qbinomSearch;
     }
 
     /**
      * Constructs the object without {@code rightSearchLimit}.
      */
     public QuantileSearch(DistributionFunc distributionFunc) {
-        this.rightSearchLimit = -1;
-        this.distributionFunc = distributionFunc;
+        this(-1, distributionFunc, false);
     }
 
     public double simpleSearch(double yIn, double p, double incr) {
@@ -100,10 +112,15 @@ public final class QuantileSearch {
         // closer
         if (z >= p) {
             while (true) {
-                if (y == 0 || (z = distributionFunc.eval(y - incr, true, false)) < p) {
+                double newz = z;
+                if (y == 0 || (newz = distributionFunc.eval(y - incr, true, false)) < p) {
+                    if (!qbinomSearch) {
+                        z = newz;
+                    }
                     return y;
                 }
                 y = RMath.fmax2(0, y - incr);
+                z = newz;
             }
         } else {
             while (true) {

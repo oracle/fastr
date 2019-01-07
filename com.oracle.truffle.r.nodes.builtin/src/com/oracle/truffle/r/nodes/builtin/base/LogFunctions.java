@@ -258,29 +258,49 @@ public class LogFunctions {
                         InitDimsNamesDimNamesNode initDimsNamesDimNames, CopyOfRegAttributesNode copyAttrsNode, NACheck xNACheck, NACheck baseNACheck) {
             baseNACheck.enable(base);
             double[] complexVector = new double[vector.getLength() * 2];
+            boolean complete;
             if (baseNACheck.check(base)) {
-                Arrays.fill(complexVector, 0, complexVector.length, RRuntime.DOUBLE_NA);
-            } else if (Double.isNaN(base.getRealPart()) || Double.isNaN(base.getImaginaryPart())) {
-                nanProfile.enter();
-                Arrays.fill(complexVector, 0, complexVector.length, Double.NaN);
-            } else {
-                xNACheck.enable(vector);
-                boolean seenNaN = false;
-                for (int i = 0; i < vector.getLength(); i++) {
+                int fillStartIndex = 0;
+                int len = vector.getLength();
+                for (int i = 0; i < len; i++) {
                     RComplex value = vector.getDataAt(i);
-                    if (xNACheck.check(value)) {
-                        fill(complexVector, i * 2, value);
-                    } else {
-                        RComplex rc = logb(value, base, divNode, false);
-                        seenNaN = isNaN(rc);
-                        fill(complexVector, i * 2, rc);
+                    if (value.isNA()) {
+                        int i2 = i << 1;
+                        if (i2 > fillStartIndex) {
+                            Arrays.fill(complexVector, fillStartIndex, i2, Double.NaN);
+                        }
+                        complexVector[i2++] = RRuntime.COMPLEX_NA_REAL_PART;
+                        complexVector[i2++] = RRuntime.COMPLEX_NA_IMAGINARY_PART;
+                        fillStartIndex = i2;
                     }
                 }
-                if (seenNaN) {
-                    RError.warning(this, RError.Message.NAN_PRODUCED_IN_FUNCTION, "log");
+                complete = (fillStartIndex == 0);
+                if ((len << 1) > fillStartIndex) {
+                    Arrays.fill(complexVector, fillStartIndex, (len << 1), Double.NaN);
                 }
+            } else {
+                if (Double.isNaN(base.getRealPart()) || Double.isNaN(base.getImaginaryPart())) {
+                    nanProfile.enter();
+                    Arrays.fill(complexVector, 0, complexVector.length, Double.NaN);
+                } else {
+                    xNACheck.enable(vector);
+                    boolean seenNaN = false;
+                    for (int i = 0; i < vector.getLength(); i++) {
+                        RComplex value = vector.getDataAt(i);
+                        if (xNACheck.check(value)) {
+                            fill(complexVector, i * 2, value);
+                        } else {
+                            RComplex rc = logb(value, base, divNode, false);
+                            seenNaN = isNaN(rc);
+                            fill(complexVector, i * 2, rc);
+                        }
+                    }
+                    if (seenNaN) {
+                        RError.warning(this, RError.Message.NAN_PRODUCED_IN_FUNCTION, "log");
+                    }
+                }
+                complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
             }
-            boolean complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
             return createResult(vector, complexVector, complete, initDimsNamesDimNames, copyAttrsNode);
         }
 
@@ -291,7 +311,7 @@ public class LogFunctions {
 
         private RComplex logb(RComplex x, RComplex base, BinaryMapArithmeticFunctionNode div, NAProfile naBase) {
             if (naBase.isNA(base)) {
-                return RComplex.createNA();
+                return RComplex.valueOf(Double.NaN, Double.NaN);
             }
             if (isNaN(base)) {
                 nanProfile.enter();

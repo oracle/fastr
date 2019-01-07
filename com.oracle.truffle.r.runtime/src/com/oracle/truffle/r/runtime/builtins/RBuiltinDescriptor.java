@@ -39,10 +39,10 @@ public abstract class RBuiltinDescriptor {
     private final Class<?> builtinMetaClass;
     private final Class<?> builtinNodeClass;
     private final RVisibility visibility;
-    private final String[] aliases;
+    @CompilationFinal(dimensions = 1) private final String[] aliases;
     private final RBuiltinKind kind;
     private final ArgumentsSignature signature;
-    private final int[] nonEvalArgs;
+    @CompilationFinal(dimensions = 1) private final int[] nonEvalArgs;
     private final boolean allowMissingInVarArgs;
     private final boolean splitCaller;
     private final boolean alwaysSplit;
@@ -51,31 +51,38 @@ public abstract class RBuiltinDescriptor {
     private final RBehavior behavior;
     private final boolean lookupVarArgs;
     private final RSpecialFactory specialCall;
+    private final ArgumentMatchingMode argumentMatchingMode;
 
     private final int primitiveMethodIndex;
     @CompilationFinal(dimensions = 1) private final boolean[] evaluatesArgument;
     private final boolean isFieldAccess;
 
-    public RBuiltinDescriptor(String name, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RVisibility visibility, String[] aliases, RBuiltinKind kind, ArgumentsSignature signature,
-                    int[] nonEvalArgs, boolean allowMissingInVarArgs, boolean splitCaller, boolean isFieldAccess, boolean lookupVarArgs,
-                    boolean alwaysSplit, RDispatch dispatch, String genericName, RBehavior behavior, RSpecialFactory specialCall) {
-        this.lookupVarArgs = lookupVarArgs;
+    public RBuiltinDescriptor(RBuiltin annotation, Class<?> builtinMetaClass, Class<?> builtinNodeClass, RSpecialFactory specialCall) {
+        // Note: we use own final fields to avoid using the RBuiltin interface
+        // argument matching mode set => must be primitive
+        assert annotation.argumentMatchingMode() == ArgumentMatchingMode.DEFAULT || annotation.kind() == RBuiltinKind.PRIMITIVE : "argumentMatchingMode only supported for primitives " +
+                        annotation.name();
+        this.lookupVarArgs = annotation.lookupVarArgs();
         this.specialCall = specialCall;
-        this.name = Utils.intern(name);
+        this.name = Utils.intern(annotation.name());
         this.builtinMetaClass = builtinMetaClass;
         this.builtinNodeClass = builtinNodeClass;
-        this.visibility = visibility;
-        this.aliases = aliases;
-        this.kind = kind;
-        this.signature = signature;
-        this.nonEvalArgs = nonEvalArgs;
-        this.allowMissingInVarArgs = allowMissingInVarArgs;
-        this.splitCaller = splitCaller;
-        this.alwaysSplit = alwaysSplit;
-        this.dispatch = dispatch;
-        this.genericName = Utils.intern(genericName);
-        this.behavior = behavior;
-        this.isFieldAccess = isFieldAccess;
+        this.visibility = annotation.visibility();
+        this.aliases = annotation.aliases();
+        this.kind = annotation.kind();
+        this.nonEvalArgs = annotation.nonEvalArgs();
+        this.allowMissingInVarArgs = annotation.allowMissingInVarArgs();
+        this.splitCaller = annotation.splitCaller();
+        this.alwaysSplit = annotation.alwaysSplit();
+        this.dispatch = annotation.dispatch();
+        this.genericName = Utils.intern(annotation.genericName());
+        this.behavior = annotation.behavior();
+        this.isFieldAccess = annotation.isFieldAccess();
+        this.argumentMatchingMode = annotation.argumentMatchingMode();
+
+        String[] parameterNames = annotation.parameterNames();
+        assert noNull(parameterNames) : "Null in parameter names of " + annotation.name();
+        signature = ArgumentsSignature.get(parameterNames);
 
         evaluatesArgument = new boolean[signature.getLength()];
         Arrays.fill(evaluatesArgument, true);
@@ -116,6 +123,11 @@ public abstract class RBuiltinDescriptor {
 
     public final ArgumentsSignature getSignature() {
         return signature;
+    }
+
+    public ArgumentMatchingMode getArgumentMatchingMode() {
+        assert kind == RBuiltinKind.PRIMITIVE : "only valid value for primitives";
+        return dispatch.isGroupGeneric() ? ArgumentMatchingMode.MATCH_BY_NAME : argumentMatchingMode;
     }
 
     public final boolean isAlwaysSplit() {
@@ -178,5 +190,42 @@ public abstract class RBuiltinDescriptor {
 
     public static boolean lookupVarArgs(RBuiltinDescriptor builtin) {
         return builtin == null || builtin.lookupVarArgs;
+    }
+
+    /**
+     * @see ArgumentMatchingMode#isExactOnly()
+     */
+    public static boolean hasExactOnlyArgsMatching(RBuiltinDescriptor builtin) {
+        return builtin != null && builtin.argumentMatchingMode.isExactOnly();
+    }
+
+    /**
+     * @see ArgumentMatchingMode#getSkipArgsCount()
+     */
+    public static int getSkipArgsCountForNameMatching(RBuiltinDescriptor builtin) {
+        return builtin == null ? 0 : builtin.argumentMatchingMode.getSkipArgsCount();
+    }
+
+    /**
+     * @see ArgumentMatchingMode#allowPositionalMatchOfNamed()
+     */
+    public static boolean allowPositionalMatchOfNamed(RBuiltinDescriptor builtin) {
+        return builtin != null && builtin.argumentMatchingMode.allowPositionalMatchOfNamed();
+    }
+
+    /**
+     * @see ArgumentMatchingMode#matchByName()
+     */
+    public static boolean matchArgumentsByName(RBuiltinDescriptor builtin) {
+        return builtin == null || builtin.argumentMatchingMode.matchByName();
+    }
+
+    private static boolean noNull(String[] names) {
+        for (int i = 0; i < names.length; i++) {
+            if (names[i] == null) {
+                return false;
+            }
+        }
+        return true;
     }
 }

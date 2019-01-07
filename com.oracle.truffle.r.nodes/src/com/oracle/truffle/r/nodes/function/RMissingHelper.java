@@ -32,6 +32,7 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
+import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
@@ -51,7 +52,7 @@ public class RMissingHelper {
      * @return Whether the given value represents an argument that has not been provided.
      */
     public static boolean isMissing(Object value) {
-        return value == REmpty.instance || value == RMissing.instance || (value instanceof RArgsValuesAndNames) && ((RArgsValuesAndNames) value).isEmpty();
+        return value == REmpty.instance || value == RMissing.instance || (value instanceof RArgsValuesAndNames) && ((RArgsValuesAndNames) value).isEmpty() || RSymbol.MISSING == value;
     }
 
     /**

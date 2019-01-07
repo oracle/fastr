@@ -101,7 +101,6 @@ import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -152,34 +151,35 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     @Child private ReadVariableNode lookupVarArgs;
     @Child public LocalReadVariableNode explicitArgs;
 
-    @Child public LocalReadVariableNode explicitCallerFrame;
-    @Child public LocalReadVariableNode explicitCaller;
-
     private final ConditionProfile nullBuiltinProfile = ConditionProfile.createBinaryProfile();
 
     // needed for INTERNAL_GENERIC calls:
     @Child private FunctionDispatch internalDispatchCall;
     @Child private GetBasicFunction getBasicFunction;
 
+    private ExplicitArgs readExplicitArgs(VirtualFrame frame) {
+        Object result = explicitArgs.execute(frame);
+        if (result instanceof ExplicitArgs) {
+            return (ExplicitArgs) result;
+        } else {
+            throw RInternalError.shouldNotReachHere("explicit args should always be of type ExplicitArgs");
+        }
+    }
+
     protected RCaller createCaller(VirtualFrame frame, RFunction function) {
         if (explicitArgs == null) {
             return RCaller.create(frame, this);
         } else {
-            Object explicitCallerValue = explicitCaller.execute(frame);
-            if (explicitCallerValue != RNull.instance) {
-                return (RCaller) explicitCallerValue;
+            RCaller explicitCallerValue = readExplicitArgs(frame).caller;
+            if (explicitCallerValue != null) {
+                return explicitCallerValue;
             }
-            return RCaller.create(frame, RCallerHelper.createFromArguments(function, (RArgsValuesAndNames) explicitArgs.execute(frame)));
+            return RCaller.create(frame, RCallerHelper.createFromArguments(function, readExplicitArgs(frame).args));
         }
     }
 
     protected Object getCallerFrame(VirtualFrame frame) {
-        if (explicitArgs == null) {
-            return null;
-        } else {
-            Object result = explicitCallerFrame.execute(frame);
-            return result == RNull.instance ? null : result;
-        }
+        return explicitArgs == null ? null : readExplicitArgs(frame).callerFrame;
     }
 
     protected RCallNode(SourceSection sourceSection, RSyntaxNode[] arguments, ArgumentsSignature signature) {
@@ -192,13 +192,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         this.signature = signature;
     }
 
-    protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier, Object explicitCallerIdentifier, Object explicitCallerFrameIdentifier) {
+    protected RCallNode(SourceSection sourceSection, Object explicitArgsIdentifier) {
         assert sourceSection != null;
         this.sourceSection = sourceSection;
         this.arguments = null;
         this.explicitArgs = LocalReadVariableNode.create(explicitArgsIdentifier, false);
-        this.explicitCaller = LocalReadVariableNode.create(explicitCallerIdentifier, false);
-        this.explicitCallerFrame = LocalReadVariableNode.create(explicitCallerFrameIdentifier, false);
         this.varArgIndexes = null;
         this.lookupVarArgs = null;
         this.signature = null;
@@ -235,7 +233,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
     private RArgsValuesAndNames lookupVarArgs(VirtualFrame frame, RBuiltinDescriptor builtin) {
         if (explicitArgs != null) {
-            return (RArgsValuesAndNames) explicitArgs.execute(frame);
+            return readExplicitArgs(frame).args;
         }
         if (lookupVarArgs == null) {
             return null;
@@ -351,6 +349,10 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 }
                 resultFunction = result.function;
             } else {
+                // We always call the builtin even if there is "xyz.default" function.
+                // This means that the builtin can implement a fast-path of the "default" function
+                // for class-less dispatch argument values
+                // Note: e.g., "range" relies on this
                 s3Args = null;
                 resultFunction = function;
             }
@@ -390,7 +392,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("createBinaryProfile()") ConditionProfile isS4Profile,
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
-        RArgsValuesAndNames argAndNames = (RArgsValuesAndNames) explicitArgs.execute(frame);
+        RArgsValuesAndNames argAndNames = readExplicitArgs(frame).args;
 
         RStringVector type = null;
         if (!argAndNames.isEmpty()) {
@@ -469,8 +471,17 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     @Cached("create()") GetBaseEnvFrameNode getBaseEnvFrameNode) {
 
         RBuiltinDescriptor builtin = builtinProfile.profile(function.getRBuiltin());
-        Object[] args = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getArguments() : callArguments.evaluateFlattenObjects(frame, lookupVarArgs(frame, builtin));
-        ArgumentsSignature argsSignature = explicitArgs != null ? ((RArgsValuesAndNames) explicitArgs.execute(frame)).getSignature() : callArguments.flattenNames(lookupVarArgs(frame, builtin));
+        Object[] args;
+        ArgumentsSignature argsSignature;
+        if (explicitArgs != null) {
+            ExplicitArgs explicitArgsVal = readExplicitArgs(frame);
+            args = explicitArgsVal.args.getArguments();
+            argsSignature = explicitArgsVal.args.getSignature();
+        } else {
+            RArgsValuesAndNames varArgsVal = lookupVarArgs(frame, builtin);
+            args = callArguments.evaluateFlattenObjects(frame, varArgsVal);
+            argsSignature = callArguments.flattenNames(varArgsVal);
+        }
 
         if (emptyArgumentsProfile.profile(args.length == 0)) {
             // nothing to dispatch on, this is a valid situation, e.g. prod() == 1
@@ -609,7 +620,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         protected Object[] evaluateArgs(VirtualFrame frame) {
-            return originalCall.explicitArgs != null ? ((RArgsValuesAndNames) originalCall.explicitArgs.execute(frame)).getArguments()
+            return originalCall.explicitArgs != null ? originalCall.readExplicitArgs(frame).args.getArguments()
                             : arguments.evaluateFlattenObjects(frame, originalCall.lookupVarArgs(frame, null));
         }
 
@@ -791,8 +802,8 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
      * allows to invoke a function with argument(s) supplied by hand. Consider using
      * {@link com.oracle.truffle.r.nodes.function.call.RExplicitCallNode} instead.
      */
-    public static RCallNode createExplicitCall(Object explicitArgsIdentifier, Object explicitCallerIdentifier, Object explicitCallerFrameIdentifier) {
-        return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, explicitCallerIdentifier, explicitCallerFrameIdentifier, null);
+    public static RCallNode createExplicitCall(Object explicitArgsIdentifier) {
+        return RCallNodeGen.create(RSyntaxNode.INTERNAL, explicitArgsIdentifier, null);
     }
 
     static boolean needsSplitting(RootCallTarget target) {
@@ -1214,6 +1225,18 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
     @Override
     public RSyntaxElement[] getSyntaxArguments() {
         return arguments == null ? new RSyntaxElement[]{RSyntaxLookup.createDummyLookup(RSyntaxNode.LAZY_DEPARSE, "...", false)} : arguments;
+    }
+
+    public static final class ExplicitArgs {
+        public final RArgsValuesAndNames args;
+        public final RCaller caller;
+        public final Object callerFrame;
+
+        public ExplicitArgs(RArgsValuesAndNames args, RCaller caller, Object callerFrame) {
+            this.args = args;
+            this.caller = caller;
+            this.callerFrame = callerFrame;
+        }
     }
 
     /**

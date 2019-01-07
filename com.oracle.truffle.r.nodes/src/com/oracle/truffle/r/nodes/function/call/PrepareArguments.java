@@ -38,6 +38,8 @@ import com.oracle.truffle.r.nodes.function.FormalArguments;
 import com.oracle.truffle.r.nodes.function.RCallNode;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsDefaultNodeGen;
 import com.oracle.truffle.r.nodes.function.call.PrepareArgumentsFactory.PrepareArgumentsExplicitNodeGen;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -63,6 +65,8 @@ public abstract class PrepareArguments extends Node {
         protected final RRootNode target;
         protected final CallArgumentsNode sourceArguments; // not used as a node
         protected final boolean noOpt;
+        @Child private ShareObjectNode sharedObject;
+        @Child private UnShareObjectNode unsharedObject;
 
         static final class ArgumentsAndSignature extends Node {
             @Children private final RNode[] matchedArguments;
@@ -90,16 +94,24 @@ public abstract class PrepareArguments extends Node {
         }
 
         @ExplodeLoop
-        private static RArgsValuesAndNames executeArgs(RNode[] arguments, ArgumentsSignature suppliedSignature, VirtualFrame frame) {
+        private RArgsValuesAndNames executeArgs(RNode[] arguments, ArgumentsSignature suppliedSignature, VirtualFrame frame) {
             Object[] result = new Object[arguments.length];
             for (int i = 0; i < arguments.length; i++) {
                 Object value = arguments[i].execute(frame);
+                getShareObject().execute(value);
+
                 if (CompilerDirectives.inInterpreter()) {
                     if (value == null) {
                         throw RInternalError.shouldNotReachHere("Java 'null' not allowed in arguments");
                     }
                 }
                 result[i] = value;
+            }
+            for (int i = 0; i < arguments.length; i++) {
+                if (i >= result.length) {
+                    break;
+                }
+                getUnshareObject().execute(result[i]);
             }
             return new RArgsValuesAndNames(result, suppliedSignature);
         }
@@ -112,6 +124,22 @@ public abstract class PrepareArguments extends Node {
                         @SuppressWarnings("unused") @Cached("s3DefaultArguments") S3DefaultArguments cachedS3DefaultArguments) {
             assert (cachedVarArgSignature != null) == (varArgs != null);
             return executeArgs(arguments.matchedArguments, arguments.matchedSuppliedSignature, frame);
+        }
+
+        private ShareObjectNode getShareObject() {
+            if (sharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                sharedObject = insert(ShareObjectNode.create());
+            }
+            return sharedObject;
+        }
+
+        private UnShareObjectNode getUnshareObject() {
+            if (unsharedObject == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                unsharedObject = insert(UnShareObjectNode.create());
+            }
+            return unsharedObject;
         }
 
         private static final class GenericCallEntry extends Node {

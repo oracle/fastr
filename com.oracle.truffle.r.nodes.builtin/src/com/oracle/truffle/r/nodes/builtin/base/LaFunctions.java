@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -520,7 +520,7 @@ public class LaFunctions {
                 }
             }
             RDoubleVector modulusVec = RDataFactory.createDoubleVectorFromScalar(modulus);
-            setLogAttrNode.execute(modulusVec, RRuntime.asLogical(useLog));
+            setLogAttrNode.setAttr(modulusVec, RRuntime.asLogical(useLog));
             RList result = RDataFactory.createList(new Object[]{modulusVec, sign}, NAMES_VECTOR);
             RVector.setVectorClassAttr(result, DET_CLASS);
             return result;
@@ -593,8 +593,8 @@ public class LaFunctions {
             }
 
             RDoubleVector result = (RDoubleVector) copyAttributesNode.execute(RDataFactory.createDoubleVector(aData, RDataFactory.INCOMPLETE_VECTOR), aIn);
-            setPivotAttrNode.execute(result, RDataFactory.createIntVector(ipiv, false));
-            setRankAttrNode.execute(result, rank[0]);
+            setPivotAttrNode.setAttr(result, RDataFactory.createIntVector(ipiv, false));
+            setRankAttrNode.setAttr(result, rank[0]);
             RList dn = getDimNamesNode.getDimNames(aIn);
             if (dn != null && dn.getDataAt(0) != null) {
                 Object[] dn2 = new Object[m];
@@ -789,7 +789,7 @@ public class LaFunctions {
             } else {
                 avals = aDouble.getDataCopy();
             }
-            int info = dgesvNode.execute(n, p, aDouble.getDataCopy(), n, ipiv, bData, n);
+            int info = dgesvNode.execute(n, p, avals, n, ipiv, bData, n);
             if (info < 0) {
                 throw error(Message.LAPACK_INVALID_VALUE, -info, "dgesv");
             }
@@ -815,7 +815,7 @@ public class LaFunctions {
         static {
             Casts casts = new Casts(Svd.class);
             casts.arg("jobu").defaultError(Message.MUST_BE_STRING, "jobu").mustNotBeNull().mustBe(stringValue()).asStringVector().findFirst();
-            casts.arg("x").mustNotBeNull().mustBe(doubleValue()).asDoubleVectorClosure(true, true, true);
+            casts.arg("x").mustNotBeNull().asDoubleVectorClosure(true, true, true);
             casts.arg("s").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);
             casts.arg("u").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);
             casts.arg("vt").mustNotBeNull().mustBe(doubleValue()).asDoubleVector(true, true, true);

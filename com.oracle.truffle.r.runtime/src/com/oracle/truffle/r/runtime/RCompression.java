@@ -23,14 +23,11 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.ByteArrayInputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.ProcessBuilder.Redirect;
-import java.nio.file.Files;
 import java.nio.file.OpenOption;
-import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Arrays;
 import java.util.zip.GZIPInputStream;
@@ -86,7 +83,7 @@ public class RCompression {
     }
 
     public static Type getCompressionType(String path) throws IOException {
-        try (InputStream is = new FileInputStream(path)) {
+        try (InputStream is = RContext.getInstance().getEnv().getTruffleFile(path).newInputStream()) {
             byte[] buf = new byte[5];
             int count = is.read(buf);
             if (count == 5) {
@@ -240,7 +237,7 @@ public class RCompression {
                 readThread.join();
                 byte[] cData = Arrays.copyOf(readThread.getData(), readThread.getTotalRead());
                 OpenOption[] openOptions = append ? new OpenOption[]{StandardOpenOption.APPEND} : new OpenOption[0];
-                Files.write(Paths.get(path), cData, openOptions);
+                RContext.getInstance().getEnv().getTruffleFile(path).newOutputStream(openOptions).write(cData);
                 return;
             } else {
                 throw new IOException("bzip2 error code: " + rc);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
 
     private static boolean isNA(String s, RAbstractStringVector naStrings) {
         // naStrings are in addition to NA_character_
-        if (RRuntime.isNA(s)) {
+        if (RRuntime.isNA(s) || s.isEmpty()) { // Blank treated as NA too
             return true;
         }
         for (int i = 0; i < naStrings.getLength(); i++) {
@@ -227,7 +227,7 @@ public abstract class TypeConvert extends RExternalBuiltinNode.Arg5 {
                 }
             }
             RIntVector res = RDataFactory.createIntVector(data, complete);
-            setLevelsAttrNode.execute(res, RDataFactory.createStringVector(levels.keySet().toArray(new String[0]), RDataFactory.COMPLETE_VECTOR));
+            setLevelsAttrNode.setAttr(res, RDataFactory.createStringVector(levels.keySet().toArray(new String[0]), RDataFactory.COMPLETE_VECTOR));
             return RVector.setVectorClassAttr(res, RDataFactory.createStringVector("factor"));
         }
     }

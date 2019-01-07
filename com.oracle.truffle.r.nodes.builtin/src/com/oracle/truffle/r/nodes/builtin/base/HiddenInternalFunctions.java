@@ -28,14 +28,13 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.io.BufferedOutputStream;
-import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -83,6 +82,7 @@ import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import java.nio.file.StandardOpenOption;
 
 /**
  * Private, undocumented, {@code .Internal} and {@code .Primitive} functions transcribed from GnuR,
@@ -242,7 +242,7 @@ public class HiddenInternalFunctions {
                 LoopNode.reportLoopCount(this, -5);
             }
             String dbPath = datafile.getDataAt(0);
-            String packageName = new File(dbPath).getName();
+            String packageName = RContext.getInstance().getEnv().getTruffleFile(dbPath).getName();
             byte[] dbData = RContext.getInstance().stateLazyDBCache.getData(dbPath);
             int dotIndex;
             if ((dotIndex = packageName.lastIndexOf('.')) > 0) {
@@ -509,9 +509,9 @@ public class HiddenInternalFunctions {
          * @return offset in file of appended data
          */
         private int appendFile(String path, byte[] cdata, int ulen, RCompression.Type type) {
-            File file = new File(path);
-            try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file, true))) {
-                int result = (int) file.length();
+            TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(path);
+            try (BufferedOutputStream out = new BufferedOutputStream(file.newOutputStream(StandardOpenOption.APPEND))) {
+                int result = (int) file.size();
                 ByteBuffer dataLengthBuf = ByteBuffer.allocate(4);
                 dataLengthBuf.putInt(ulen);
                 dataLengthBuf.position(0);

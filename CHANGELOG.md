@@ -1,3 +1,35 @@
+# 1.0 RC 11
+
+* upgraded the R version to R-3.5.1
+  * base packages and other sources used directly from GNU-R upgraded to their R-3.5.1 versions
+  * fixed differences between R-3.4.0 and R-3.5.1
+
+* FastR does not print or log any details for internal errors unless it is run with `--jvm.DR:+PrintErrorStacktracesToFile`
+
+Added missing R builtins and C API
+
+* `Rf_duplicated`
+* `Rf_setVar`
+* `norm_rand`
+* `exp_rand`
+
+Bug fixes:
+
+* internal error in `mapply` with empty arguments list
+* `comment` and `comment<-` work with S4 objects
+* `iconvlist()` was failing on argument error #43
+* `range` works properly with lists
+* the reference count of `dimnames` of the result of `==` was not handled properly leading to incorrect results #40
+* `exists` did not work properly in all cases when used with the `mode` argument #44
+* 'charIndex out of range' when parsing an incomplete source #39
+* `no_proxy` environment variable was not parsed correctly
+* `read.csv` treats empty value as `NA` of the same type as the rest of the values in the column #42
+* `SET_NAMED` allows to decrease the reference count to support a pattern from `data.table`
+* exception when writing into the result returned from `split`
+* `switch` falls through only if the actual argument is empty constant: `switch('x',x=,y=42)` vs. `switch('x',x=quote(f(1,))[[3]],y=42)`
+* `oldClass<-` works with external pointers and other less common R types
+* C API function `Rf_setAttrib` coerces double vector to integer when setting "dim" attribute #46
+
 # 1.0 RC 10
 
 New features:

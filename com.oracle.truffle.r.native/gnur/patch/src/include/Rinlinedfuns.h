@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1995, 1996  Robert Gentleman and Ross Ihaka
- *  Copyright (C) 1999-2015  The R Core Team.
+ *  Copyright (C) 1999-2017  The R Core Team.
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -73,6 +73,387 @@
 #include <string.h> /* for strlen, strcmp */
 
 /* define inline-able functions */
+#ifdef TESTING_WRITE_BARRIER
+# define STRICT_TYPECHECK
+# define CATCH_ZERO_LENGTH_ACCESS
+#endif
+
+#ifdef STRICT_TYPECHECK
+INLINE_FUN void CHKVEC(SEXP x) {
+    switch (TYPEOF(x)) {
+    case CHARSXP:
+    case LGLSXP:
+    case INTSXP:
+    case REALSXP:
+    case CPLXSXP:
+    case STRSXP:
+    case VECSXP:
+    case EXPRSXP:
+    case RAWSXP:
+    case WEAKREFSXP:
+	break;
+    default:
+	error("cannot get data pointer of '%s' objects", type2char(TYPEOF(x)));
+    }
+}
+#else
+# define CHKVEC(x) do {} while(0)
+#endif
+
+INLINE_FUN void *DATAPTR(SEXP x) {
+    CHKVEC(x);
+    if (ALTREP(x))
+	return ALTVEC_DATAPTR(x);
+#ifdef CATCH_ZERO_LENGTH_ACCESS
+    /* Attempts to read or write elements of a zero length vector will
+       result in a segfault, rather than read and write random memory.
+       Returning NULL would be more natural, but Matrix seems to assume
+       that even zero-length vectors have non-NULL data pointers, so
+       return (void *) 1 instead. Zero-length CHARSXP objects still
+       have a trailing zero byte so they are not handled. */
+    else if (STDVEC_LENGTH(x) == 0 && TYPEOF(x) != CHARSXP)
+	return (void *) 1;
+#endif
+    else
+	return STDVEC_DATAPTR(x);
+}
+
+INLINE_FUN const void *DATAPTR_RO(SEXP x) {
+    CHKVEC(x);
+    if (ALTREP(x))
+	return ALTVEC_DATAPTR_RO(x);
+    else
+	return STDVEC_DATAPTR(x);
+}
+
+INLINE_FUN const void *DATAPTR_OR_NULL(SEXP x) {
+    CHKVEC(x);
+    if (ALTREP(x))
+	return ALTVEC_DATAPTR_OR_NULL(x);
+    else
+	return STDVEC_DATAPTR(x);
+}
+
+#ifdef STRICT_TYPECHECK
+# define CHECK_VECTOR_LGL(x) do {				\
+	if (TYPEOF(x) != LGLSXP) error("bad LGLSXP vector");	\
+    } while (0)
+# define CHECK_VECTOR_INT(x) do {				\
+	if (! (TYPEOF(x) == INTSXP || TYPEOF(x) == LGLSXP))	\
+	    error("bad INTSXP vector");				\
+    } while (0)
+# define CHECK_VECTOR_REAL(x) do {				\
+	if (TYPEOF(x) != REALSXP) error("bad REALSXP vector");	\
+    } while (0)
+# define CHECK_VECTOR_CPLX(x) do {				\
+	if (TYPEOF(x) != CPLXSXP) error("bad CPLXSXP vector");	\
+    } while (0)
+# define CHECK_VECTOR_RAW(x) do {				\
+	if (TYPEOF(x) != RAWSXP) error("bad RAWSXP vector");	\
+    } while (0)
+#else
+# define CHECK_VECTOR_LGL(x) do { } while(0)
+# define CHECK_VECTOR_INT(x) do { } while(0)
+# define CHECK_VECTOR_REAL(x) do { } while(0)
+# define CHECK_VECTOR_CPLX(x) do { } while(0)
+# define CHECK_VECTOR_RAW(x) do { } while(0)
+#endif
+
+INLINE_FUN const int *LOGICAL_OR_NULL(SEXP x) {
+    CHECK_VECTOR_LGL(x);
+    return ALTREP(x) ? ALTVEC_DATAPTR_OR_NULL(x) : STDVEC_DATAPTR(x);
+}
+
+INLINE_FUN const int *INTEGER_OR_NULL(SEXP x) {
+    CHECK_VECTOR_INT(x);
+    return ALTREP(x) ? ALTVEC_DATAPTR_OR_NULL(x) : STDVEC_DATAPTR(x);
+}
+
+INLINE_FUN const double *REAL_OR_NULL(SEXP x) {
+    CHECK_VECTOR_REAL(x);
+    return ALTREP(x) ? ALTVEC_DATAPTR_OR_NULL(x) : STDVEC_DATAPTR(x);
+}
+
+INLINE_FUN const double *COMPLEX_OR_NULL(SEXP x) {
+    CHECK_VECTOR_CPLX(x);
+    return ALTREP(x) ? ALTVEC_DATAPTR_OR_NULL(x) : STDVEC_DATAPTR(x);
+}
+
+INLINE_FUN const double *RAW_OR_NULL(SEXP x) {
+    CHECK_VECTOR_RAW(x);
+    return ALTREP(x) ? ALTVEC_DATAPTR_OR_NULL(x) : STDVEC_DATAPTR(x);
+}
+
+INLINE_FUN R_xlen_t XLENGTH_EX(SEXP x)
+{
+    return ALTREP(x) ? ALTREP_LENGTH(x) : STDVEC_LENGTH(x);
+}
+
+INLINE_FUN R_xlen_t XTRUELENGTH(SEXP x)
+{
+    return ALTREP(x) ? ALTREP_TRUELENGTH(x) : STDVEC_TRUELENGTH(x);
+}
+
+INLINE_FUN int LENGTH_EX(SEXP x, const char *file, int line)
+{
+    if (x == R_NilValue) return 0;
+    R_xlen_t len = XLENGTH(x);
+#ifdef LONG_VECTOR_SUPPORT
+    if (len > R_SHORT_LEN_MAX)
+	R_BadLongVector(x, file, line);
+#endif
+    return (int) len;
+}
+
+#ifdef STRICT_TYPECHECK
+# define CHECK_STDVEC_LGL(x) do {				\
+	CHECK_VECTOR_LGL(x);					\
+	if (ALTREP(x)) error("bad standard LGLSXP vector");	\
+    } while (0)
+# define CHECK_STDVEC_INT(x) do {				\
+	CHECK_VECTOR_INT(x);					\
+	if (ALTREP(x)) error("bad standard INTSXP vector");	\
+    } while (0)
+# define CHECK_STDVEC_REAL(x) do {				\
+	CHECK_VECTOR_REAL(x);					\
+	if (ALTREP(x)) error("bad standard REALSXP vector");	\
+    } while (0)
+# define CHECK_STDVEC_CPLX(x) do {				\
+	CHECK_VECTOR_CPLX(x);					\
+	if (ALTREP(x)) error("bad standard CPLXSXP vector");	\
+    } while (0)
+# define CHECK_STDVEC_RAW(x) do {				\
+	CHECK_VECTOR_RAW(x);					\
+	if (ALTREP(x)) error("bad standard RAWSXP vector");	\
+    } while (0)
+
+# define CHECK_SCALAR_LGL(x) do {				\
+	CHECK_STDVEC_LGL(x);					\
+	if (XLENGTH(x) != 1) error("bad LGLSXP scalar");	\
+    } while (0)
+# define CHECK_SCALAR_INT(x) do {				\
+	CHECK_STDVEC_INT(x);					\
+	if (XLENGTH(x) != 1) error("bad INTSXP scalar");	\
+    } while (0)
+# define CHECK_SCALAR_REAL(x) do {				\
+	CHECK_STDVEC_REAL(x);					\
+	if (XLENGTH(x) != 1) error("bad REALSXP scalar");	\
+    } while (0)
+# define CHECK_SCALAR_CPLX(x) do {				\
+	CHECK_STDVEC_CPLX(x);					\
+	if (XLENGTH(x) != 1) error("bad CPLXSXP scalar");	\
+    } while (0)
+# define CHECK_SCALAR_RAW(x) do {				\
+	CHECK_STDVEC_RAW(x);					\
+	if (XLENGTH(x) != 1) error("bad RAWSXP scalar");	\
+    } while (0)
+
+# define CHECK_BOUNDS_ELT(x, i) do {			\
+	if (i < 0 || i > XLENGTH(x))			\
+	    error("subscript out of bounds");		\
+    } while (0)
+
+# define CHECK_VECTOR_LGL_ELT(x, i) do {	\
+	SEXP ce__x__ = (x);			\
+	R_xlen_t ce__i__ = (i);			\
+	CHECK_VECTOR_LGL(ce__x__);		\
+	CHECK_BOUNDS_ELT(ce__x__, ce__i__);	\
+} while (0)
+# define CHECK_VECTOR_INT_ELT(x, i) do {	\
+	SEXP ce__x__ = (x);			\
+	R_xlen_t ce__i__ = (i);			\
+	CHECK_VECTOR_INT(ce__x__);		\
+	CHECK_BOUNDS_ELT(ce__x__, ce__i__);	\
+} while (0)
+# define CHECK_VECTOR_REAL_ELT(x, i) do {	\
+	SEXP ce__x__ = (x);			\
+	R_xlen_t ce__i__ = (i);			\
+	CHECK_VECTOR_REAL(ce__x__);		\
+	CHECK_BOUNDS_ELT(ce__x__, ce__i__);	\
+} while (0)
+# define CHECK_VECTOR_CPLX_ELT(x, i) do {	\
+	SEXP ce__x__ = (x);			\
+	R_xlen_t ce__i__ = (i);			\
+	CHECK_VECTOR_CPLX(ce__x__);		\
+	CHECK_BOUNDS_ELT(ce__x__, ce__i__);	\
+} while (0)
+# define CHECK_VECTOR_RAW_ELT(x, i) do {	\
+	SEXP ce__x__ = (x);			\
+	R_xlen_t ce__i__ = (i);			\
+	CHECK_VECTOR_RAW(ce__x__);		\
+	CHECK_BOUNDS_ELT(ce__x__, ce__i__);	\
+} while (0)
+#else
+# define CHECK_STDVEC_LGL(x) do { } while(0)
+# define CHECK_STDVEC_INT(x) do { } while(0)
+# define CHECK_STDVEC_REAL(x) do { } while(0)
+# define CHECK_STDVEC_CPLX(x) do { } while(0)
+# define CHECK_STDVEC_RAW(x) do { } while(0)
+
+# define CHECK_SCALAR_LGL(x) do { } while(0)
+# define CHECK_SCALAR_INT(x) do { } while(0)
+# define CHECK_SCALAR_REAL(x) do { } while(0)
+# define CHECK_SCALAR_CPLX(x) do { } while(0)
+# define CHECK_SCALAR_RAW(x) do { } while(0)
+
+# define CHECK_VECTOR_LGL_ELT(x, i) do { } while(0)
+# define CHECK_VECTOR_INT_ELT(x, i) do { } while(0)
+# define CHECK_VECTOR_REAL_ELT(x, i) do { } while(0)
+# define CHECK_VECTOR_CPLX_ELT(x, i) do { } while(0)
+# define CHECK_VECTOR_RAW_ELT(x, i) do { } while(0)
+#endif
+
+INLINE_FUN int *LOGICAL0(SEXP x) {
+    CHECK_STDVEC_LGL(x);
+    return (int *) STDVEC_DATAPTR(x);
+}
+INLINE_FUN Rboolean SCALAR_LVAL(SEXP x) {
+    CHECK_SCALAR_LGL(x);
+    return LOGICAL0(x)[0];
+}
+INLINE_FUN void SET_SCALAR_LVAL(SEXP x, Rboolean v) {
+    CHECK_SCALAR_LGL(x);
+    LOGICAL0(x)[0] = v;
+}
+
+INLINE_FUN int *INTEGER0(SEXP x) {
+    CHECK_STDVEC_INT(x);
+    return (int *) STDVEC_DATAPTR(x);
+}
+INLINE_FUN int SCALAR_IVAL(SEXP x) {
+    CHECK_SCALAR_INT(x);
+    return INTEGER0(x)[0];
+}
+INLINE_FUN void SET_SCALAR_IVAL(SEXP x, int v) {
+    CHECK_SCALAR_INT(x);
+    INTEGER0(x)[0] = v;
+}
+
+INLINE_FUN double *REAL0(SEXP x) {
+    CHECK_STDVEC_REAL(x);
+    return (double *) STDVEC_DATAPTR(x);
+}
+INLINE_FUN double SCALAR_DVAL(SEXP x) {
+    CHECK_SCALAR_REAL(x);
+    return REAL0(x)[0];
+}
+INLINE_FUN void SET_SCALAR_DVAL(SEXP x, double v) {
+    CHECK_SCALAR_REAL(x);
+    REAL0(x)[0] = v;
+}
+
+INLINE_FUN Rcomplex *COMPLEX0(SEXP x) {
+    CHECK_STDVEC_CPLX(x);
+    return (Rcomplex *) STDVEC_DATAPTR(x);
+}
+INLINE_FUN Rcomplex SCALAR_CVAL(SEXP x) {
+    CHECK_SCALAR_CPLX(x);
+    return COMPLEX0(x)[0];
+}
+INLINE_FUN void SET_SCALAR_CVAL(SEXP x, Rcomplex v) {
+    CHECK_SCALAR_CPLX(x);
+    COMPLEX0(x)[0] = v;
+}
+
+INLINE_FUN Rbyte *RAW0(SEXP x) {
+    CHECK_STDVEC_RAW(x);
+    return (Rbyte *) STDVEC_DATAPTR(x);
+}
+INLINE_FUN Rbyte SCALAR_BVAL(SEXP x) {
+    CHECK_SCALAR_RAW(x);
+    return RAW0(x)[0];
+}
+INLINE_FUN void SET_SCALAR_BVAL(SEXP x, Rbyte v) {
+    CHECK_SCALAR_RAW(x);
+    RAW0(x)[0] = v;
+}
+
+INLINE_FUN SEXP ALTREP_CLASS(SEXP x) { return TAG(x); }
+
+INLINE_FUN SEXP R_altrep_data1(SEXP x) { return CAR(x); }
+INLINE_FUN SEXP R_altrep_data2(SEXP x) { return CDR(x); }
+INLINE_FUN void R_set_altrep_data1(SEXP x, SEXP v) { SETCAR(x, v); }
+INLINE_FUN void R_set_altrep_data2(SEXP x, SEXP v) { SETCDR(x, v); }
+
+INLINE_FUN int INTEGER_ELT(SEXP x, R_xlen_t i)
+{
+    CHECK_VECTOR_INT_ELT(x, i);
+    return ALTREP(x) ? ALTINTEGER_ELT(x, i) : INTEGER0(x)[i];
+}
+
+INLINE_FUN void SET_INTEGER_ELT(SEXP x, R_xlen_t i, int v)
+{
+    CHECK_VECTOR_INT_ELT(x, i);
+    if (ALTREP(x)) ALTINTEGER_SET_ELT(x, i, v);
+    else INTEGER0(x)[i] = v;
+}
+
+INLINE_FUN int LOGICAL_ELT(SEXP x, R_xlen_t i)
+{
+    CHECK_VECTOR_LGL_ELT(x, i);
+    return ALTREP(x) ? ALTLOGICAL_ELT(x, i) : LOGICAL0(x)[i];
+}
+
+INLINE_FUN void SET_LOGICAL_ELT(SEXP x, R_xlen_t i, int v)
+{
+    CHECK_VECTOR_LGL_ELT(x, i);
+    if (ALTREP(x)) ALTLOGICAL_SET_ELT(x, i, v);
+    else LOGICAL0(x)[i] = v;
+}
+
+INLINE_FUN double REAL_ELT(SEXP x, R_xlen_t i)
+{
+    CHECK_VECTOR_REAL_ELT(x, i);
+    return ALTREP(x) ? ALTREAL_ELT(x, i) : REAL0(x)[i];
+}
+
+INLINE_FUN void SET_REAL_ELT(SEXP x, R_xlen_t i, double v)
+{
+    CHECK_VECTOR_REAL_ELT(x, i);
+    if (ALTREP(x)) ALTREAL_SET_ELT(x, i, v);
+    else REAL0(x)[i] = v;
+}
+
+INLINE_FUN Rcomplex COMPLEX_ELT(SEXP x, R_xlen_t i)
+{
+    CHECK_VECTOR_CPLX_ELT(x, i);
+    return ALTREP(x) ? ALTCOMPLEX_ELT(x, i) : COMPLEX0(x)[i];
+}
+
+INLINE_FUN void SET_COMPLEX_ELT(SEXP x, R_xlen_t i, Rcomplex v)
+{
+    CHECK_VECTOR_CPLX_ELT(x, i);
+    if (ALTREP(x)) ALTCOMPLEX_SET_ELT(x, i, v);
+    else COMPLEX0(x)[i] = v;
+}
+
+INLINE_FUN Rbyte RAW_ELT(SEXP x, R_xlen_t i)
+{
+    CHECK_VECTOR_RAW_ELT(x, i);
+    return ALTREP(x) ? ALTRAW_ELT(x, i) : RAW0(x)[i];
+}
+
+INLINE_FUN void SET_RAW_ELT(SEXP x, R_xlen_t i, int v)
+{
+    CHECK_VECTOR_LGL_ELT(x, i);
+    if (ALTREP(x)) ALTLOGICAL_SET_ELT(x, i, v);
+    else RAW0(x)[i] = (Rbyte) v;
+}
+
+#if !defined(COMPILING_R) && !defined(COMPILING_MEMORY_C) &&	\
+    !defined(TESTING_WRITE_BARRIER)
+/* if not inlining use version in memory.c with more error checking */
+INLINE_FUN SEXP STRING_ELT(SEXP x, R_xlen_t i) {
+    if (ALTREP(x))
+	return ALTSTRING_ELT(x, i);
+    else {
+	SEXP *ps = STDVEC_DATAPTR(x);
+	return ps[i];
+    }
+}
+#else
+SEXP STRING_ELT(SEXP x, R_xlen_t i);
+#endif
 
 #ifdef INLINE_PROTECT
 extern int R_PPStackSize;
@@ -501,6 +882,8 @@ INLINE_FUN Rboolean isFrame(SEXP s)
     return FALSE;
 }
 
+/* DIFFERENT than R's  is.language(.) in ../main/coerce.c [do_is(), case 301:]
+ *                                    which is   <=>  SYMSXP || LANGSXP || EXPRSXP */
 INLINE_FUN Rboolean isLanguage(SEXP s)
 {
     return (s == R_NilValue || TYPEOF(s) == LANGSXP);
@@ -598,23 +981,22 @@ INLINE_FUN SEXP ScalarLogical(int x)
 
 INLINE_FUN SEXP ScalarInteger(int x)
 {
-    SEXP ans = allocVector(INTSXP, (R_xlen_t)1);
-    INTEGER(ans)[0] = x;
+    SEXP ans = allocVector(INTSXP, 1);
+    SET_SCALAR_IVAL(ans, x);
     return ans;
 }
 
 INLINE_FUN SEXP ScalarReal(double x)
 {
-    SEXP ans = allocVector(REALSXP, (R_xlen_t)1);
-    REAL(ans)[0] = x;
+    SEXP ans = allocVector(REALSXP, 1);
+    SET_SCALAR_DVAL(ans, x);
     return ans;
 }
 
-
 INLINE_FUN SEXP ScalarComplex(Rcomplex x)
 {
-    SEXP ans = allocVector(CPLXSXP, (R_xlen_t)1);
-    COMPLEX(ans)[0] = x;
+    SEXP ans = allocVector(CPLXSXP, 1);
+    SET_SCALAR_CVAL(ans, x);
     return ans;
 }
 
@@ -630,8 +1012,8 @@ INLINE_FUN SEXP ScalarString(SEXP x)
 
 INLINE_FUN SEXP ScalarRaw(Rbyte x)
 {
-    SEXP ans = allocVector(RAWSXP, (R_xlen_t)1);
-    RAW(ans)[0] = x;
+    SEXP ans = allocVector(RAWSXP, 1);
+    SET_SCALAR_BVAL(ans, x);
     return ans;
 }
 
@@ -728,7 +1110,7 @@ INLINE_FUN SEXP R_FixupRHS(SEXP x, SEXP y)
 #endif
 	    y = duplicate(y);
 	}
-	else if (NAMED(y) < 2) SET_NAMED(y, 2);
+	else ENSURE_NAMEDMAX(y);
     }
     return y;
 }

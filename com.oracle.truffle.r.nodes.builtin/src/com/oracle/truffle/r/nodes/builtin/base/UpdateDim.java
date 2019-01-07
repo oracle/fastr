@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -87,7 +87,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
             attrs = RAttributesLayout.createDim(dimensionsMaterialized);
             result.initAttributes(attrs);
         } else {
-            putDimensions.execute(attrs, dimensionsMaterialized);
+            putDimensions.setAttr(attrs, dimensionsMaterialized);
         }
         return result;
     }

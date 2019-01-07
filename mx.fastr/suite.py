@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "4d3ea021801626309a82734dbf2153f7bf9942a8",
+               "version" : "ab426fd70e30026d6988d512d5afcd3cc29cd565",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -41,9 +41,9 @@ suite = {
   # properly handled by MX in all cases and causes integration problems.
   "libraries" : {
     "GNUR" : {
-        "path" : "libdownloads/R-3.4.0.tar.gz", # keep in sync with the GraalVM support distribution
-        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.4.0.tar.gz"],
-        "sha1" : "054c1d099006354c89b195df6783b933846ced60",
+        "path" : "libdownloads/R-3.5.1.tar.gz", # keep in sync with the GraalVM support distribution
+        "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.5.1.tar.gz"],
+        "sha1" : "9314d3d372b05546a33791fbc8dd579c92ebd16b",
         "resource" : "true"
     },
 

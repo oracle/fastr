@@ -22,14 +22,6 @@
  */
 package com.oracle.truffle.r.engine;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.net.URI;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.stream.Collectors;
-
 import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -63,6 +55,7 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.call.CallRFunctionNode;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
@@ -80,8 +73,8 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.ReturnException;
-import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.RootBodyNode;
+import com.oracle.truffle.r.runtime.RootWithBody;
 import com.oracle.truffle.r.runtime.ThreadTimings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.Utils.DebugExitException;
@@ -102,6 +95,14 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.net.URI;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * The engine for the FastR implementation. Handles parsing and evaluation. There is one instance of
@@ -171,7 +172,7 @@ final class REngine implements Engine, Engine.Timings {
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing system profile from %s", RProfile.systemProfile().getName());
             }
-            checkAndRunStartupShutdownFunction(".OptRequireMethods");
+            checkAndRunStartupShutdownFunction(".OptRequireMethods", ".OptRequireMethods()");
 
             suppressWarnings = false;
             Source siteProfile = context.stateRProfile.siteProfile();
@@ -192,37 +193,25 @@ final class REngine implements Engine, Engine.Timings {
             }
             if (context.getStartParams().restore()) {
                 // call sys.load.image(".RData", RCmdOption.QUIET
-                checkAndRunStartupShutdownFunction("sys.load.image", new String[]{"\".RData\"", context.getStartParams().isQuiet() ? "TRUE" : "FALSE"});
+                checkAndRunStartupShutdownFunction("sys.load.image", "sys.load.image('.RData'," + (context.getStartParams().isQuiet() ? "TRUE" : "FALSE") + ')');
             }
-            checkAndRunStartupShutdownFunction(".First");
-            checkAndRunStartupShutdownFunction(".First.sys");
+            checkAndRunStartupShutdownFunction(".First", ".First()");
+            checkAndRunStartupShutdownFunction(".First.sys", ".First.sys()");
 
             StartupTiming.timestamp("After Profiles Loaded");
         }
     }
 
     @Override
-    public void checkAndRunStartupShutdownFunction(String name, String... args) {
+    public void checkAndRunStartupShutdownFunction(String name, String code) {
+        // sanity check: code should be invocation of the function, so it should contain
+        // "{name}(some-args)"
+        assert code.contains("(") && code.contains(name);
         Object func = REnvironment.globalEnv().findFunction(name);
         if (func != null) {
-            String call = name;
-            if (args.length == 0) {
-                call += "()";
-            } else {
-                call += "(";
-                if (args.length > 0) {
-                    for (int i = 0; i < args.length; i++) {
-                        call += args[i];
-                        if (i != args.length - 1) {
-                            call += ", ";
-                        }
-                    }
-                }
-                call += ")";
-            }
             // Should this print the result?
             try {
-                parseAndEval(RSource.fromTextInternal(call, RSource.Internal.STARTUP_SHUTDOWN), globalFrame, false);
+                parseAndEval(RSource.fromTextInternal(code, RSource.Internal.STARTUP_SHUTDOWN), globalFrame, false);
             } catch (ParseException e) {
                 throw new RInternalError(e, "error while parsing startup function");
             }
@@ -292,7 +281,10 @@ final class REngine implements Engine, Engine.Timings {
     @Override
     public RExpression parse(Source source) throws ParseException {
         List<RSyntaxNode> list = parseSource(source);
-        Object[] data = list.stream().map(node -> RASTUtils.createLanguageElement(node)).toArray();
+        Object[] data = new Object[list.size()];
+        for (int i = 0; i < data.length; i++) {
+            data[i] = RASTUtils.createLanguageElement(list.get(i));
+        }
         return RDataFactory.createExpression(data);
     }
 
@@ -377,15 +369,18 @@ final class REngine implements Engine, Engine.Timings {
                 int lineIndex = 1;
                 int startLine = lineIndex;
                 StringBuilder sb = new StringBuilder();
+                String nextLineInput = br.readLine();
+                ParseException lastParseException = null;
                 while (true) {
-                    String input = br.readLine();
+                    String input = nextLineInput;
                     if (input == null) {
                         if (sb.length() != 0) {
                             // end of file, but not end of statement => error
-                            statements.add(new SyntaxErrorNode(null, fullSource.createSection(startLine, 1, sb.length())));
+                            statements.add(new SyntaxErrorNode(lastParseException, fullSource.createSection(startLine, 1, sb.length())));
                         }
                         break;
                     }
+                    nextLineInput = br.readLine();
                     sb.append(input);
                     Source src = Source.newBuilder(RRuntime.R_LANGUAGE_ID, sb.toString(), file + "#" + startLine + "-" + lineIndex).uri(uri).build();
                     lineIndex++;
@@ -394,7 +389,10 @@ final class REngine implements Engine, Engine.Timings {
                         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
                         currentStmts = parser.statements(src, fullSource, startLine, new RASTBuilder(), context.getLanguage());
                     } catch (IncompleteSourceException e) {
-                        sb.append('\n');
+                        lastParseException = e;
+                        if (nextLineInput != null) {
+                            sb.append('\n');
+                        }
                         continue;
                     } catch (ParseException e) {
                         statements.add(new SyntaxErrorNode(e, fullSource.createSection(startLine, 1, sb.length())));
@@ -647,8 +645,8 @@ final class REngine implements Engine, Engine.Timings {
 
     @TruffleBoundary
     private static boolean checkResult(Object result) {
-        if (FastROptions.CheckResultCompleteness.getBooleanValue() && result instanceof RAbstractVector) {
-            assert RAbstractVector.verify((RAbstractVector) result);
+        if (result instanceof RAbstractVector) {
+            return RAbstractVector.verify((RAbstractVector) result);
         }
         return true;
     }
@@ -678,7 +676,7 @@ final class REngine implements Engine, Engine.Timings {
                 RFunction function = (RFunction) evaluatePromise(printMethod);
                 CallRFunctionNode.executeSlowpath(function, RCaller.createInvalid(callingFrame), callingFrame, new Object[]{resultValue, RArgsValuesAndNames.EMPTY}, null);
             }
-            ShareObjectNode.unshare(resultValue);
+            UnShareObjectNode.unshare(resultValue);
         } else {
             // this supports printing of non-R values (via toString for now)
             String str;

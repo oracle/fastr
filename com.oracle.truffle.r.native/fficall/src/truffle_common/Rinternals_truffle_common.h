@@ -384,9 +384,10 @@ void Rf_defineVar(SEXP symbol, SEXP value, SEXP rho) {
     checkExitCall();
 }
 
-void Rf_setVar(SEXP x, SEXP y, SEXP z) {
-    TRACE0();
-    unimplemented("Rf_setVar");
+void Rf_setVar(SEXP symbol, SEXP value, SEXP rho) {
+    TRACE3(symbol, value, rho);
+    ((call_Rf_setVar) callbacks[Rf_setVar_x])(symbol, value, rho);
+    checkExitCall();
 }
 
 SEXP Rf_dimgets(SEXP x, SEXP y) {
@@ -460,6 +461,13 @@ SEXP Rf_shallow_duplicate(SEXP x) {
     return result;
 }
 
+SEXP Rf_duplicated(SEXP x, Rboolean from_last) {
+    TRACE0();
+    SEXP result = (R_xlen_t) ((call_Rf_duplicated) callbacks[Rf_duplicated_x])(x, from_last);
+    checkExitCall();
+    return result;
+}
+
 R_xlen_t Rf_any_duplicated(SEXP x, Rboolean from_last) {
     TRACE0();
     R_xlen_t result = (R_xlen_t) ((call_Rf_any_duplicated) callbacks[Rf_any_duplicated_x])(x, from_last);
@@ -472,12 +480,6 @@ R_xlen_t Rf_any_duplicated3(SEXP x, SEXP incomp, Rboolean from_last) {
     R_xlen_t result = (R_xlen_t) ((call_Rf_any_duplicated3) callbacks[Rf_any_duplicated3_x])(x, incomp, from_last);
     checkExitCall();
     return result;
-}
-
-SEXP Rf_duplicated(SEXP x, Rboolean y) {
-    TRACE0();
-    unimplemented("Rf_duplicated");
-    return NULL;
 }
 
 SEXP Rf_applyClosure(SEXP x, SEXP y, SEXP z, SEXP a, SEXP b) {
@@ -1017,17 +1019,17 @@ void SET_PRCODE(SEXP x, SEXP v) {
     unimplemented("SET_PRCODE");
 }
 
-int TRUELENGTH(SEXP x) {
+R_xlen_t TRUELENGTH(SEXP x) {
     TRACE(TARGp, x);
     return ((call_TRUELENGTH) callbacks[TRUELENGTH_x])(x);
 }
 
-void SETLENGTH(SEXP x, int v) {
+void SETLENGTH(SEXP x, R_xlen_t v) {
     TRACE0();
     ((call_SETLENGTH) callbacks[SETLENGTH_x])(x, v);
 }
 
-void SET_TRUELENGTH(SEXP x, int v) {
+void SET_TRUELENGTH(SEXP x, R_xlen_t v) {
     TRACE0();
     ((call_SET_TRUELENGTH) callbacks[SET_TRUELENGTH_x])(x, v);
 }
@@ -1101,6 +1103,10 @@ Rbyte *RAW(SEXP x) {
     Rbyte *result = ((call_RAW) callbacks[RAW_x])(x);
     checkExitCall();
     return result;
+}
+
+Rbyte *RAW0(SEXP x) {
+    return RAW(x);
 }
 
 const char * R_CHAR(SEXP x) {

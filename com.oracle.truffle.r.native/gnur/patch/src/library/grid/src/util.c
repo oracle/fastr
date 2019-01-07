@@ -24,7 +24,7 @@
 /* Get the list element named str, or return NULL.
  * Copied from the Writing R Extensions manual (which copied it from nls)
  */
-SEXP gridGetListElement(SEXP list, char *str)
+SEXP getListElement(SEXP list, char *str)
 {
   SEXP elmt = R_NilValue;
   SEXP names = getAttrib(list, R_NamesSymbol);

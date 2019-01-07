@@ -264,5 +264,14 @@ public class TestBuiltin_rep extends TestBase {
         assertEval("rep(numeric(), times=3)");
 
         assertEval("rep(NULL)");
+
+        // argument matching for primitives...
+        assertEval("rep(4, x=3)");
+    }
+
+    @Test
+    public void testSideEffect() {
+        assertEval(Ignored.ReferenceError, "{ x <- c(1,2,3); f <- function() { x[1] <<- 10; 2 }; rep(x, f()) }");
+
     }
 }

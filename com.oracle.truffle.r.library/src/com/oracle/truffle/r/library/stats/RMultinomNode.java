@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2012, The R Core Team
  * Copyright (c) 2003-2008, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -142,7 +142,7 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
                 Object probsNames = getNamesNode.execute(probs.getAttributes());
                 updateSharedAttributeNode.execute(probs, probsNames);
                 Object[] dimnamesData = new Object[]{probsNames, RNull.instance};
-                setDimNamesNode.execute(resultVec.getAttributes(), RDataFactory.createList(dimnamesData));
+                setDimNamesNode.setAttr(resultVec.getAttributes(), RDataFactory.createList(dimnamesData));
             }
             return resultVec;
         }

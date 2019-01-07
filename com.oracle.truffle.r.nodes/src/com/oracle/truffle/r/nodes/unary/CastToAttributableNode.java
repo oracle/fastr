@@ -25,13 +25,9 @@ package com.oracle.truffle.r.nodes.unary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.data.RAttributable;
-import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
-import com.oracle.truffle.r.runtime.data.RS4Object;
-import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.env.REnvironment;
 
 public abstract class CastToAttributableNode extends CastBaseNode {
 
@@ -60,28 +56,14 @@ public abstract class CastToAttributableNode extends CastBaseNode {
         return RMissing.instance;
     }
 
+    // This specialization causes boxing of primitive types to a container (via Truffle DSL)
     @Specialization
     protected RAttributable cast(RAbstractContainer container) {
         return container;
     }
 
-    @Specialization
-    protected RAttributable cast(REnvironment environment) {
-        return environment;
-    }
-
-    @Specialization
-    protected RAttributable cast(RFunction function) {
-        return function;
-    }
-
-    @Specialization
-    protected RAttributable cast(RSymbol symbol) {
-        return symbol;
-    }
-
-    @Specialization
-    protected RAttributable cast(RS4Object object) {
-        return object;
+    @Specialization(guards = "!isRAbstractContainer(x)")
+    protected RAttributable cast(RAttributable x) {
+        return x;
     }
 }

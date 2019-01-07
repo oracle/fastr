@@ -42,14 +42,22 @@ public final class QPois implements Function2_2 {
         if (lambda < 0) {
             return RMathError.defaultError();
         }
+
+        try {
+            DPQ.rqp01check(pIn, logP);
+        } catch (EarlyReturn e) {
+            return e.result;
+        }
+
         if (lambda == 0) {
             return 0;
         }
 
-        try {
-            DPQ.rqp01boundaries(pIn, 0, Double.POSITIVE_INFINITY, lowerTail, logP);
-        } catch (EarlyReturn e) {
-            return e.result;
+        if (pIn == DPQ.rdt0(lowerTail, logP)) {
+            return 0;
+        }
+        if (pIn == DPQ.rdt1(lowerTail, logP)) {
+            return Double.POSITIVE_INFINITY;
         }
 
         double sigma = Math.sqrt(lambda);

@@ -24,15 +24,16 @@ package com.oracle.truffle.r.nodes.access.vector;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
+import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.ExtractDimNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
-import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfile;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
@@ -87,13 +88,18 @@ final class CachedExtractVectorNode extends CachedVectorNode {
 
     @Child private ExtractDimNamesNode extractDimNames;
 
-    private final ConditionProfile resultHasDimensions = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private ConditionProfile resultHasDimensions;
+
+    private final ConditionProfile droppedDimensionProfile;
 
     /**
      * Profile if any metadata was applied at any point in time. This is useful extract primitive
      * values from the result in case no metadata was ever applied.
      */
-    private final AlwaysOnBranchProfile metadataApplied = AlwaysOnBranchProfile.create();
+    @CompilationFinal private AlwaysOnBranchProfile metadataApplied;
+
+    private final ConditionProfile extractedLengthGTZeroProfile;
+    private final ConditionProfile oneDimensionProfile;
 
     CachedExtractVectorNode(ElementAccessMode mode, RAbstractContainer vector, Object[] positions, RTypedValue exact, RTypedValue dropDimensions, boolean recursive) {
         super(mode, vector, positions, recursive);
@@ -107,7 +113,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         this.exact = logicalAsBoolean(exact, DEFAULT_EXACT);
         this.dropDimensions = logicalAsBoolean(dropDimensions, DEFAULT_DROP_DIMENSION);
         this.positionsCheckNode = new PositionsCheckNode(mode, vectorType, convertedPositions, this.exact, false, recursive);
-        this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, true, false, false);
+        this.writeVectorNode = WriteIndexedVectorNode.create(vectorType, convertedPositions.length, false, false);
+        this.droppedDimensionProfile = this.dropDimensions ? ConditionProfile.createBinaryProfile() : null;
+        this.extractedLengthGTZeroProfile = mode.isSubset() ? ConditionProfile.createBinaryProfile() : null;
+        this.oneDimensionProfile = mode.isSubset() ? ConditionProfile.createBinaryProfile() : null;
     }
 
     public boolean isSupported(Object target, Object[] positions, Object exactValue, Object dropDimensionsValue) {
@@ -118,9 +127,6 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
         return false;
     }
-
-    private final ConditionProfile extractedLengthGTZeroProfile = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile oneDimensionProfile = ConditionProfile.createBinaryProfile();
 
     public Object apply(RAbstractContainer originalVector, Object[] originalPositions, PositionProfile[] originalProfiles, Object originalExact, Object originalDropDimensions) {
         final Object[] positions = filterPositions(originalPositions);
@@ -139,8 +145,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
 
         if (isMissingSingleDimension()) {
-            // special case for x<-matrix(1:4, ncol=2); x[]
-            return originalVector;
+            // subset: special case for x<-matrix(1:4, ncol=2); x[]
+            // subscript: special case for l<-list(1,2,3); l[[]]
+            return mode.isSubset() ? originalVector : RNull.instance;
         }
 
         int extractedVectorLength = positionsCheckNode.getSelectedPositionsCount(positionProfiles);
@@ -168,7 +175,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 }
                 RStringVector originalNames = getNamesNode.getNames(vector);
                 if (originalNames != null) {
-                    metadataApplied.enter();
+                    getMetadataApplied().enter();
                     setNames(extractedVector, extractNames(originalNames, positions, positionProfiles, 0, originalExact, originalDropDimensions));
                 }
             } else {
@@ -202,7 +209,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     }
 
     private Object trySubsetPrimitive(RAbstractVector extractedVector) {
-        if (!metadataApplied.isVisited() && positionsCheckNode.getCachedSelectedPositionsCount() == 1 && vectorType != RType.List && vectorType != RType.Expression) {
+        if (!getMetadataApplied().isVisited() && positionsCheckNode.getCachedSelectedPositionsCount() == 1 && vectorType != RType.List && vectorType != RType.Expression) {
             /*
              * If the selected count was always 1 and no metadata was ever set we can just extract
              * the primitive value from the vector. This branch has to fold to a constant because we
@@ -297,8 +304,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             }
         }
 
+        if (resultHasDimensions == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            resultHasDimensions = ConditionProfile.createBinaryProfile();
+        }
         if (resultHasDimensions.profile(dimCount > 1)) {
-            metadataApplied.enter();
+            getMetadataApplied().enter();
 
             if (setDimNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -319,14 +330,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             if (foundNamesProfile.profile(foundNames != null)) {
                 foundNames = foundDimNamesProfile.profile(foundNames);
                 if (foundNames.getLength() > 0) {
-                    metadataApplied.enter();
+                    getMetadataApplied().enter();
                     setNames(extractedTarget, foundNames);
                 }
             }
         }
     }
-
-    private final ConditionProfile droppedDimensionProfile = ConditionProfile.createBinaryProfile();
 
     @ExplodeLoop
     private int countDimensions(PositionProfile[] boundsProfile) {
@@ -344,9 +353,9 @@ final class CachedExtractVectorNode extends CachedVectorNode {
         }
     }
 
-    private final ConditionProfile srcNamesProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile srcNamesValueProfile = ValueProfile.createClassProfile();
-    private final ConditionProfile newNamesProfile = ConditionProfile.createBinaryProfile();
+    @CompilationFinal private ConditionProfile srcNamesProfile;
+    @CompilationFinal private ValueProfile srcNamesValueProfile;
+    @CompilationFinal private ConditionProfile newNamesProfile;
 
     @ExplodeLoop
     private RAbstractStringVector translateDimNamesToNames(PositionProfile[] positionProfile, RList originalDimNames, int newVectorLength, Object[] positions) {
@@ -357,6 +366,15 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 continue;
             }
 
+            if (srcNamesProfile == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                srcNamesProfile = ConditionProfile.createBinaryProfile();
+            }
+            if (srcNamesValueProfile == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                srcNamesValueProfile = ValueProfile.createClassProfile();
+            }
+
             Object srcNames = srcNamesValueProfile.profile(originalDimNames.getDataAt(currentDimIndex));
             if (srcNamesProfile.profile(srcNames != RNull.instance)) {
                 Object position = positions[currentDimIndex];
@@ -364,6 +382,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 Object newNames = extractNames((RAbstractStringVector) RRuntime.asAbstractVector(srcNames), new Object[]{position}, new PositionProfile[]{profile}, currentDimIndex,
                                 RLogical.valueOf(true), RLogical.valueOf(dropDimensions));
                 if (newNames != RNull.instance) {
+                    if (newNamesProfile == null) {
+                        CompilerDirectives.transferToInterpreterAndInvalidate();
+                        newNamesProfile = ConditionProfile.createBinaryProfile();
+                    }
                     if (newNamesProfile.profile(newNames instanceof String)) {
                         newNames = RDataFactory.createStringVector((String) newNames);
                     }
@@ -489,5 +511,13 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             Object[] positions = new Object[]{position};
             return fallbackExtractNode.apply(vector, positions, RLogical.TRUE, RLogical.TRUE);
         }
+    }
+
+    public AlwaysOnBranchProfile getMetadataApplied() {
+        if (metadataApplied == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            metadataApplied = AlwaysOnBranchProfile.create();
+        }
+        return metadataApplied;
     }
 }

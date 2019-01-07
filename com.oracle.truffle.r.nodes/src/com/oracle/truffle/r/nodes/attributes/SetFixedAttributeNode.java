@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,18 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return SpecialAttributesFunctions.SetClassAttributeNode.create();
     }
 
-    public abstract void execute(Object attr, Object value);
+    public final void setAttr(Object attr, Object value) {
+        execute(attr, castValue(value));
+    }
+
+    protected abstract void execute(Object attr, Object value);
+
+    /**
+     * This method can be used by the special attributes implementations to coerce the value.
+     */
+    protected Object castValue(Object value) {
+        return value;
+    }
 
     @Specialization(limit = "CACHE_LIMIT", //
                     guards = {"shapeCheck(shape, attrs)", "location != null", "canSet(location, value)"}, //
@@ -144,7 +155,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
             recursive = insert(create(name));
         }
 
-        recursive.execute(attributes, value);
+        recursive.setAttr(attributes, value);
 
         updateRefCountNode.execute(value);
     }

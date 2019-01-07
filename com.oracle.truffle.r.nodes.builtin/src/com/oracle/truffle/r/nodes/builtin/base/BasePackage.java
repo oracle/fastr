@@ -126,6 +126,8 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInteropFactory.FastRInterop
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPaths;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRLibPathsNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastROptionBuiltin;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRPatchPackage;
+import com.oracle.truffle.r.nodes.builtin.fastr.FastRPatchPackageNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSource;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRPkgSourceNodeGen;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRRefCountInfo;
@@ -464,6 +466,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRRegisterFunctions.class, FastRRegisterFunctionsNodeGen::create);
         add(FastrDqrls.class, FastrDqrlsNodeGen::create);
         add(FastRDebug.class, FastRDebugNodeGen::create);
+        add(FastRPatchPackage.class, FastRPatchPackageNodeGen::create);
         add(FastRDispatchNativeHandlers.class, FastRDispatchNativeHandlers::new);
         add(FastRInitEventLoop.class, FastRInitEventLoopNodeGen::create);
         add(FastRSetBreakpoint.class, FastRSetBreakpointNodeGen::create);
@@ -618,6 +621,11 @@ public class BasePackage extends RBuiltinPackage {
         add(IsTypeFunctions.IsRecursive.class, IsTypeFunctionsFactory.IsRecursiveNodeGen::create);
         add(IsTypeFunctions.IsVector.class, IsTypeFunctionsFactory.IsVectorNodeGen::create);
         add(IsUnsorted.class, IsUnsortedNodeGen::create);
+        add(SortedFastPass.class, SortedFastPass::create);
+        add(WrapMeta.class, WrapMeta::create);
+        add(DotDotDotLength.class, DotDotDotLength::create);
+        add(DotDotDotElt.class, DotDotDotElt::create);
+        add(ValidUTF8.class, ValidUTF8NodeGen::create);
         add(LaFunctions.DetGeReal.class, LaFunctionsFactory.DetGeRealNodeGen::create);
         add(LaFunctions.LaChol.class, LaFunctionsFactory.LaCholNodeGen::create);
         add(LaFunctions.LaChol2Inv.class, LaFunctionsFactory.LaChol2InvNodeGen::create);

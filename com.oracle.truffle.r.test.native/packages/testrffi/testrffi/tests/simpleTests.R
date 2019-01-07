@@ -42,9 +42,7 @@ rffi.isRString(NULL)
 rffi.interactive()
 x <- 1; rffi.findvar("x", globalenv())
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
-	x <- "12345"; rffi.char_length(x)
-}
+# x <- "12345"; rffi.char_length(x)
 
 rffi.test_duplicate(quote(a[,3])[[3]], 1L) # try duplicating empty symbol
 
@@ -53,24 +51,20 @@ stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(strVec))
 rffi.LENGTH(strVec)
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
-	# this will call CHAR(x) on the NA string, which materializes it to native pointer...
-	rffi.char_length(strVec)
-}
+# this will call CHAR(x) on the NA string, which materializes it to native pointer...
+# rffi.char_length(strVec)
 strVec <- rffi.setStringElt(c('hello'), as.character(NA))
 stopifnot(anyNA(strVec))
 stopifnot(rffi.isNAString(as.character(NA)))
 
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
 	# Encoding tests
-	rffi.getBytes('\u1F602\n')
+	# rffi.getBytes('\u1F602\n')
 	# ignored: FastR does not support explicit encoding yet
 	# latinEncStr <- '\xFD\xDD\xD6\xF0\n'
 	# Encoding(latinEncStr) <- "latin1"
 	# rffi.getBytes(latinEncStr)
-	rffi.getBytes('hello ascii')
-}
+	#rffi.getBytes('hello ascii')
 
 x <- list(1)
 attr(x, 'myattr') <- 'hello';
@@ -257,9 +251,7 @@ api.ATTRIB(data.frame(1, 2, 3))
 
 invisible(rffi.testDATAPTR('hello', testSingleString = T));
 # See issue GR-9928
-if (Sys.info()[['sysname']] != "Darwin") {
-	rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
-}
+# rffi.testDATAPTR(c('hello', 'world'), testSingleString = F);
 
 # SET_OBJECT
 # FastR does not fully support the SET_OBJECT fully,
@@ -353,3 +345,32 @@ api.R_MakeActiveBinding(as.symbol("fred"), f, .GlobalEnv)
 bindingIsActive("fred", .GlobalEnv)
 fred
 fred <- 2
+
+# sharing elements in native data
+x <- c("abc")
+y <- c("xyz")
+# x[0] = y[0]
+rffi.shareStringElement(x, 1L, y, 1L) 
+
+l1 <- list(1:2, c("a", "b"))
+l2 <- list(3:4, c("c", "d"))
+rffi.shareListElement(l1, 1L, l2, 1L)
+rffi.shareListElement(l1, 1L, l2, 2L)
+
+i1 <- c(1L, 2L)
+i2 <- c(3L, 4L)
+rffi.shareIntElement(i1, 1L, i2, 2L)
+
+d1 <- c(1, 2)
+d2 <- c(3, 4)
+rffi.shareDoubleElement(d1, 1L, d2, 2L)
+
+# setVar
+e <- new.env()
+e$x <- 1
+rffi.test_setVar(as.symbol('x'), 42, e)
+stopifnot(identical(e$x, 42))
+rffi.test_setVar(as.symbol('y'), 42, e)
+stopifnot(identical(e$y, NULL))
+stopifnot(identical(globalenv()$y, 42))
+

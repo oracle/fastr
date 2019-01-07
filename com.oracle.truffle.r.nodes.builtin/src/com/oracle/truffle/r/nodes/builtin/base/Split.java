@@ -89,13 +89,15 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     // perform split
                     while (xAccess.next(xIter)) {
                         fAccess.nextWithWrap(fIter);
-                        int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                     // vector
-                        String[] collect = collectResults[resultIndex];
-                        if (collect.length == collectResultSize[resultIndex]) {
-                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        if (!fAccess.isNA(fIter)) {
+                            // a factor is a 1-based int vector
+                            int resultIndex = fAccess.getInt(fIter) - 1;
+                            String[] collect = collectResults[resultIndex];
+                            if (collect.length == collectResultSize[resultIndex]) {
+                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                            }
+                            collect[collectResultSize[resultIndex]++] = xAccess.getString(xIter);
                         }
-                        collect[collectResultSize[resultIndex]++] = xAccess.getString(xIter);
                     }
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
@@ -112,15 +114,17 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     // perform split
                     while (xAccess.next(xIter)) {
                         fAccess.nextWithWrap(fIter);
-                        int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                     // vector
-                        double[] collect = collectResults[resultIndex];
-                        if (collect.length == collectResultSize[resultIndex] * 2) {
-                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        if (!fAccess.isNA(fIter)) {
+                            // a factor is a 1-based int vector
+                            int resultIndex = fAccess.getInt(fIter) - 1;
+                            double[] collect = collectResults[resultIndex];
+                            if (collect.length == collectResultSize[resultIndex] * 2) {
+                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                            }
+                            collect[collectResultSize[resultIndex] * 2] = xAccess.getComplexR(xIter);
+                            collect[collectResultSize[resultIndex] * 2 + 1] = xAccess.getComplexI(xIter);
+                            collectResultSize[resultIndex]++;
                         }
-                        collect[collectResultSize[resultIndex] * 2] = xAccess.getComplexR(xIter);
-                        collect[collectResultSize[resultIndex] * 2 + 1] = xAccess.getComplexI(xIter);
-                        collectResultSize[resultIndex]++;
                     }
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
@@ -137,13 +141,15 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     // perform split
                     while (xAccess.next(xIter)) {
                         fAccess.nextWithWrap(fIter);
-                        int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                     // vector
-                        double[] collect = collectResults[resultIndex];
-                        if (collect.length == collectResultSize[resultIndex]) {
-                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        if (!fAccess.isNA(fIter)) {
+                            // a factor is a 1-based int vector
+                            int resultIndex = fAccess.getInt(fIter) - 1;
+                            double[] collect = collectResults[resultIndex];
+                            if (collect.length == collectResultSize[resultIndex]) {
+                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                            }
+                            collect[collectResultSize[resultIndex]++] = xAccess.getDouble(xIter);
                         }
-                        collect[collectResultSize[resultIndex]++] = xAccess.getDouble(xIter);
                     }
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
@@ -160,13 +166,15 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     // perform split
                     while (xAccess.next(xIter)) {
                         fAccess.nextWithWrap(fIter);
-                        int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                     // vector
-                        int[] collect = collectResults[resultIndex];
-                        if (collect.length == collectResultSize[resultIndex]) {
-                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        if (!fAccess.isNA(fIter)) {
+                            // a factor is a 1-based int vector
+                            int resultIndex = fAccess.getInt(fIter) - 1;
+                            int[] collect = collectResults[resultIndex];
+                            if (collect.length == collectResultSize[resultIndex]) {
+                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                            }
+                            collect[collectResultSize[resultIndex]++] = xAccess.getInt(xIter);
                         }
-                        collect[collectResultSize[resultIndex]++] = xAccess.getInt(xIter);
                     }
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
@@ -183,13 +191,15 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     // perform split
                     while (xAccess.next(xIter)) {
                         fAccess.nextWithWrap(fIter);
-                        int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                     // vector
-                        Object[] collect = collectResults[resultIndex];
-                        if (collect.length == collectResultSize[resultIndex]) {
-                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        if (!fAccess.isNA(fIter)) {
+                            // a factor is a 1-based int vector
+                            int resultIndex = fAccess.getInt(fIter) - 1;
+                            Object[] collect = collectResults[resultIndex];
+                            if (collect.length == collectResultSize[resultIndex]) {
+                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                            }
+                            collect[collectResultSize[resultIndex]++] = xAccess.getListElement(xIter);
                         }
-                        collect[collectResultSize[resultIndex]++] = xAccess.getListElement(xIter);
                     }
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
@@ -206,13 +216,15 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     // perform split
                     while (xAccess.next(xIter)) {
                         fAccess.nextWithWrap(fIter);
-                        int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                     // vector
-                        byte[] collect = collectResults[resultIndex];
-                        if (collect.length == collectResultSize[resultIndex]) {
-                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        if (!fAccess.isNA(fIter)) {
+                            // a factor is a 1-based int vector
+                            int resultIndex = fAccess.getInt(fIter) - 1;
+                            byte[] collect = collectResults[resultIndex];
+                            if (collect.length == collectResultSize[resultIndex]) {
+                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                            }
+                            collect[collectResultSize[resultIndex]++] = xAccess.getLogical(xIter);
                         }
-                        collect[collectResultSize[resultIndex]++] = xAccess.getLogical(xIter);
                     }
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);
@@ -229,13 +241,15 @@ public abstract class Split extends RBuiltinNode.Arg2 {
                     // perform split
                     while (xAccess.next(xIter)) {
                         fAccess.nextWithWrap(fIter);
-                        int resultIndex = fAccess.getInt(fIter) - 1; // a factor is a 1-based int
-                                                                     // vector
-                        byte[] collect = collectResults[resultIndex];
-                        if (collect.length == collectResultSize[resultIndex]) {
-                            collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                        if (!fAccess.isNA(fIter)) {
+                            // a factor is a 1-based int vector
+                            int resultIndex = fAccess.getInt(fIter) - 1;
+                            byte[] collect = collectResults[resultIndex];
+                            if (collect.length == collectResultSize[resultIndex]) {
+                                collectResults[resultIndex] = collect = Arrays.copyOf(collect, collect.length * SCALE_FACTOR);
+                            }
+                            collect[collectResultSize[resultIndex]++] = xAccess.getRaw(xIter);
                         }
-                        collect[collectResultSize[resultIndex]++] = xAccess.getRaw(xIter);
                     }
 
                     RStringVector[] resultNames = getSplitNames.getNames(x, fAccess, fIter, nLevels, collectResultSize);

@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.access.vector;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -49,40 +51,37 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
+/**
+ * Delegates to {@link WriteIndexedVectorAccessNode} and only takes care of caching the
+ * {@link VectorAccess} for the vectors and fallback to slow path {@link VectorAccess} if necessary.
+ *
+ * @see WriteIndexedVectorNode
+ */
 abstract class WriteIndexedVectorNode extends Node {
 
-    private final RType vectorType;
-    private final int totalDimensions;
+    private final WriteIndexedVectorParameters params;
     private final int dimensionIndex;
-    private final boolean positionAppliesToRight;
-    private final boolean skipNA;
-    private final boolean isReplace;
 
-    private final ConditionProfile completeVectorProfile = ConditionProfile.createBinaryProfile();
-
-    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean isReplace) {
-        this.vectorType = vectorType;
-        this.totalDimensions = totalDimensions;
+    protected WriteIndexedVectorNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean skipNA, boolean isReplace) {
+        this.params = new WriteIndexedVectorParameters(vectorType, totalDimensions, skipNA, isReplace);
         this.dimensionIndex = dimensionIndex;
-        this.positionAppliesToRight = positionAppliesToRight;
-        this.skipNA = skipNA;
-        this.isReplace = isReplace;
     }
 
-    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean positionAppliesToValue, boolean skipNA, boolean isReplace) {
-        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, positionAppliesToValue, skipNA, isReplace);
+    public static WriteIndexedVectorNode create(RType vectorType, int totalDimensions, boolean skipNA, boolean isReplace) {
+        return WriteIndexedVectorNodeGen.create(vectorType, totalDimensions, totalDimensions - 1, skipNA, isReplace);
     }
 
     protected abstract void execute(RAbstractVector left, Object[] positions, RAbstractContainer right, int[] positionTargetDimensions);
 
     protected WriteIndexedVectorAccessNode createWrite() {
-        return WriteIndexedVectorAccessNodeGen.create(vectorType, totalDimensions, dimensionIndex, positionAppliesToRight, skipNA, isReplace);
+        return WriteIndexedVectorAccessNodeGen.create(params, dimensionIndex);
     }
 
     @Specialization(guards = {"leftAccess.supports(left)", "rightAccess.supports(right)"})
     protected void write(RAbstractVector left, Object[] positions, RAbstractContainer right, int[] positionTargetDimensions,
                     @Cached("left.access()") VectorAccess leftAccess,
                     @Cached("right.access()") VectorAccess rightAccess,
+                    @Cached("createBinaryProfile()") ConditionProfile completeVectorProfile,
                     @Cached("createWrite()") WriteIndexedVectorAccessNode write) {
         try (RandomIterator leftIter = leftAccess.randomAccess(left); RandomIterator rightIter = rightAccess.randomAccess(right)) {
             write.apply(leftIter, leftAccess, positions, rightIter, rightAccess, right, positionTargetDimensions);
@@ -107,55 +106,68 @@ abstract class WriteIndexedVectorNode extends Node {
     }
 }
 
+final class WriteIndexedVectorParameters {
+    final RType vectorType;
+    final int totalDimensions;
+    final boolean skipNA;
+    final boolean isReplace;
+
+    /**
+     * @param vectorType Type of the "left" vector passed to the {@code apply} method.
+     * @param totalDimensions Total number of dimensions, i.e. the size of the array passed to the
+     *            {@code apply} method.
+     * @param skipNA if true then no action should be invoked for NA values and its indexed
+     *            subdimensions (i.e. no write to the "left" argument of {@code apply}). Applies to
+     *            integer indexes only.
+     * @param isReplace the "left" argument of {@code apply} is target of a read from the "right",
+     *            target of a replace.
+     */
+    WriteIndexedVectorParameters(RType vectorType, int totalDimensions, boolean skipNA, boolean isReplace) {
+        this.vectorType = vectorType;
+        this.totalDimensions = totalDimensions;
+        this.skipNA = skipNA;
+        this.isReplace = isReplace;
+    }
+}
+
 /**
- * Primitive indexed N-dimensional vector write node. It can be used for vector replaces and
- * extracts. The only difference is that replace indexes the left vector and extract indexes the
- * right vector. The index direction is indicated with the boolean flag
- * {@link #positionsApplyToRight}.
+ * Primitive indexed N-dimensional vector write node. This node can be used for vector replaces and
+ * extracts (in which case the write target is a vector preallocated to hold the extraction result).
+ * The entry point is the {@code apply} method.
  */
 abstract class WriteIndexedVectorAccessNode extends Node {
 
+    private final WriteIndexedVectorParameters params;
     private final int dimensionIndex;
-    private final int totalDimensions;
 
-    /**
-     * Indicates if the position vectors index into the left or the right vector. This enables us to
-     * share the same node for vector replaces and vector extracts.
-     */
-    private final boolean positionsApplyToRight;
-    /**
-     * If skipNA is true then no action should be invoked for NA values and its indexed
-     * subdimensions.
-     */
-    private final boolean skipNA;
+    @CompilationFinal private VectorLengthProfile positionOffsetProfile;
+    @CompilationFinal private NACheck positionNACheck;
+    @CompilationFinal private VectorLengthProfile dimensionValueProfile;
+    @CompilationFinal private ConditionProfile resetIndexProfile;
 
     private final VectorLengthProfile positionLengthProfile = VectorLengthProfile.create();
-    private final VectorLengthProfile positionOffsetProfile = VectorLengthProfile.create();
-    private final VectorLengthProfile dimensionValueProfile = VectorLengthProfile.create();
     private final ValueProfile positionClassProfile = ValueProfile.createClassProfile();
-    private final NACheck positionNACheck = NACheck.create();
-    private final ConditionProfile resetIndexProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile positionMatchesTargetDimensionsProfile = ConditionProfile.createBinaryProfile();
 
     @Child private WriteIndexedVectorAccessNode innerVectorNode;
 
     @Child private UpdateShareableChildValueNode updateStateOfListElement;
     @Child private ShareObjectNode shareObjectNode;
 
-    private final boolean isReplace;
-    private final RType vectorType;
-
-    protected WriteIndexedVectorAccessNode(RType vectorType, int totalDimensions, int dimensionIndex, boolean positionAppliesToRight, boolean skipNA, boolean isReplace) {
-        this.vectorType = vectorType;
+    /**
+     * @param dimensionIndex The index within the {@code positions} array passed to the
+     *            {@code apply} method that this instance should handle. If not the last index, then
+     *            this node will delegate to another instance to handle the next index.
+     * @param params See the documentation of {@link WriteIndexedVectorParameters}.
+     */
+    protected WriteIndexedVectorAccessNode(WriteIndexedVectorParameters params, int dimensionIndex) {
+        this.params = params;
         this.dimensionIndex = dimensionIndex;
-        this.totalDimensions = totalDimensions;
-        this.positionsApplyToRight = positionAppliesToRight;
-        this.skipNA = skipNA;
-        this.isReplace = isReplace;
         if (dimensionIndex > 0) {
-            innerVectorNode = WriteIndexedVectorAccessNodeGen.create(vectorType, totalDimensions, dimensionIndex - 1, positionAppliesToRight, skipNA, isReplace);
+            innerVectorNode = WriteIndexedVectorAccessNodeGen.create(params, dimensionIndex - 1);
         }
-        if (vectorType == RType.List || vectorType == RType.Expression) {
-            if (!isReplace) {
+        if (params.vectorType == RType.List || params.vectorType == RType.Expression) {
+            if (!params.isReplace) {
                 updateStateOfListElement = UpdateShareableChildValueNode.create();
             } else {
                 shareObjectNode = ShareObjectNode.create();
@@ -163,34 +175,41 @@ abstract class WriteIndexedVectorAccessNode extends Node {
         }
     }
 
+    /**
+     * Positions is an array of instances of {@link RMissing} (What is that doing?), or
+     * {@link RAbstractIntVector}, or {@link RAbstractLogicalVector} (select only elements under
+     * {@code TRUE} indexes). Each dimension must have one entry in this array.
+     * 
+     * The left vector is either the result of read (newly created vector to hold the result) or the
+     * target of write operation. The boolean flag {@link WriteIndexedVectorParameters#isReplace}
+     * passed to constructor distinguishes those two cases.
+     */
     public void apply(RandomIterator leftIter, VectorAccess leftAccess, Object[] positions, RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right,
                     int[] positionTargetDimensions) {
-        assert totalDimensions == positions.length : "totalDimensions must be constant per vector write node";
+        assert params.totalDimensions == positions.length : "totalDimensions must be constant per vector write node";
 
         int leftLength = leftAccess.getLength(leftIter);
         int rightLength = rightAccess.getLength(rightIter);
 
         int initialPositionOffset;
-        if (positionsApplyToRight) {
+        if (!params.isReplace) {
             initialPositionOffset = rightLength;
         } else {
             initialPositionOffset = leftLength;
         }
 
         int firstTargetDimension;
-        if (totalDimensions == 0 || positionTargetDimensions == null) {
+        if (params.totalDimensions == 0 || positionTargetDimensions == null) {
             // no dimensions
             firstTargetDimension = initialPositionOffset;
         } else {
-            firstTargetDimension = dimensionValueProfile.profile(positionTargetDimensions[dimensionIndex]);
+            firstTargetDimension = getDimensionValueProfile().profile(positionTargetDimensions[dimensionIndex]);
         }
 
         applyImpl(leftIter, leftAccess, 0, leftLength, positionTargetDimensions, firstTargetDimension,
                         positions, initialPositionOffset,
                         rightIter, rightAccess, right, 0, rightLength, false);
     }
-
-    private final ConditionProfile positionMatchesTargetDimensionsProfile = ConditionProfile.createBinaryProfile();
 
     private int applyImpl(//
                     RandomIterator leftIter, VectorAccess leftAccess, int leftBase, int leftLength, Object targetDimensions, int targetDimension,
@@ -204,7 +223,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
         if (positionMatchesTargetDimensionsProfile.profile(positionOffset == targetDimension)) {
             newPositionOffset = 1;
         } else {
-            newPositionOffset = positionOffsetProfile.profile(positionOffset / targetDimension);
+            newPositionOffset = getPositionOffsetProfile().profile(positionOffset / targetDimension);
         }
         return execute(leftIter, leftAccess, leftBase, leftLength, targetDimensions, targetDimension,
                         positions, position, newPositionOffset, positionLength,
@@ -247,7 +266,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                     @Cached("create()") AlwaysOnBranchProfile outOfBounds,
                     @Cached("createCountingProfile()") LoopConditionProfile profile,
                     @Cached("createBinaryProfile()") ConditionProfile incModProfile) {
-        positionNACheck.enable(!skipNA && !position.isComplete());
+        getPositionNACheck().enable(!params.skipNA && !position.isComplete());
 
         int length = targetDimension;
         if (positionLength > targetDimension) {
@@ -262,7 +281,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
             profile.profileCounted(length);
             for (int i = 0; profile.inject(i < length); i++) {
                 byte positionValue = position.getDataAt(positionIndex);
-                boolean isNA = positionNACheck.check(positionValue);
+                boolean isNA = getPositionNACheck().check(positionValue);
                 if (isNA || positionValue == RRuntime.LOGICAL_TRUE) {
                     wasTrue.enter();
                     if (outOfBounds.isVisited() && i >= targetDimension) {
@@ -323,15 +342,15 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                     Object[] positions, RAbstractIntVector position, int positionOffset, int positionLength,
                     RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int rightBase, int rightLength, boolean parentNA,
                     @Cached("createCountingProfile()") LoopConditionProfile lengthProfile) {
-        positionNACheck.enable(position);
+        getPositionNACheck().enable(position);
         int rightIndex = rightBase;
 
         lengthProfile.profileCounted(positionLength);
         for (int i = 0; lengthProfile.inject(i < positionLength); i++) {
             int positionValue = position.getDataAt(i);
-            boolean isNA = positionNACheck.check(positionValue);
+            boolean isNA = getPositionNACheck().check(positionValue);
             if (isNA) {
-                if (skipNA) {
+                if (params.skipNA) {
                     continue;
                 }
             }
@@ -354,7 +373,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
             // if position indexes value we just need to switch indices
             int actionLeftIndex;
             int actionRightIndex;
-            if (positionsApplyToRight) {
+            if (!params.isReplace) {
                 actionLeftIndex = actionIndex;
                 actionRightIndex = newTargetIndex;
             } else {
@@ -366,7 +385,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                 leftAccess.setNA(leftIter, actionLeftIndex);
                 leftAccess.na.seenNA();
             } else {
-                if (vectorType == RType.List || vectorType == RType.Expression) {
+                if (params.vectorType == RType.List || params.vectorType == RType.Expression) {
                     setListElement(leftIter, leftAccess, rightIter, rightAccess, right, actionLeftIndex, actionRightIndex);
                 } else {
                     leftAccess.setFromSameType(leftIter, actionLeftIndex, rightAccess, rightIter, actionRightIndex);
@@ -374,13 +393,13 @@ abstract class WriteIndexedVectorAccessNode extends Node {
                 rightAccess.isNA(rightIter, actionRightIndex);
             }
 
-            if (resetIndexProfile.profile((actionIndex + 1) == (positionsApplyToRight ? leftLength : rightLength))) {
+            if (getResetIndexProfile().profile((actionIndex + 1) == (!params.isReplace ? leftLength : rightLength))) {
                 return 0;
             }
             return actionIndex + 1;
         } else {
             // generate another for-loop for other dimensions
-            int nextTargetDimension = innerVectorNode.dimensionValueProfile.profile(((int[]) targetDimensions)[innerVectorNode.dimensionIndex]);
+            int nextTargetDimension = innerVectorNode.getDimensionValueProfile().profile(((int[]) targetDimensions)[innerVectorNode.dimensionIndex]);
             return innerVectorNode.applyImpl(//
                             leftIter, leftAccess, newTargetIndex, leftLength, targetDimensions, nextTargetDimension,
                             positions, positionOffset,
@@ -390,7 +409,7 @@ abstract class WriteIndexedVectorAccessNode extends Node {
 
     private void setListElement(RandomIterator leftIter, VectorAccess leftAccess, RandomIterator rightIter, VectorAccess rightAccess, RAbstractContainer right, int leftIndex, int rightIndex) {
         Object rightValue = rightAccess.getListElement(rightIter, rightIndex);
-        if (isReplace) {
+        if (params.isReplace) {
             // we are replacing within the same list
             if (leftAccess.getListElement(leftIter, leftIndex) != rightValue) {
                 shareObjectNode.execute(rightValue);
@@ -401,5 +420,37 @@ abstract class WriteIndexedVectorAccessNode extends Node {
         }
 
         leftAccess.setListElement(leftIter, leftIndex, rightValue);
+    }
+
+    private VectorLengthProfile getPositionOffsetProfile() {
+        if (positionOffsetProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            positionOffsetProfile = VectorLengthProfile.create();
+        }
+        return positionOffsetProfile;
+    }
+
+    private NACheck getPositionNACheck() {
+        if (positionNACheck == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            positionNACheck = NACheck.create();
+        }
+        return positionNACheck;
+    }
+
+    private VectorLengthProfile getDimensionValueProfile() {
+        if (dimensionValueProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            dimensionValueProfile = VectorLengthProfile.create();
+        }
+        return dimensionValueProfile;
+    }
+
+    private ConditionProfile getResetIndexProfile() {
+        if (resetIndexProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            resetIndexProfile = ConditionProfile.createBinaryProfile();
+        }
+        return resetIndexProfile;
     }
 }

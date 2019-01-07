@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.engine;
 
 import java.io.ByteArrayOutputStream;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -55,7 +54,6 @@ import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.RCallNode;
-import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.LoopTag;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -354,20 +352,20 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     }
 
     @Override
-    public Object rcommandMain(String[] args, String[] env, boolean intern) {
+    public Object rcommandMain(String[] args, String[] env, boolean intern, int timeoutSecs) {
         IORedirect redirect = handleIORedirect(args, intern);
         assert env == null : "re-enable env arguments";
-        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err);
+        int result = RMain.runR(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
         return redirect.getInternResult(result);
     }
 
     @Override
-    public Object rscriptMain(String[] args, String[] env, boolean intern) {
+    public Object rscriptMain(String[] args, String[] env, boolean intern, int timeoutSecs) {
         IORedirect redirect = handleIORedirect(args, intern);
         // TODO argument parsing can fail with ExitException, which needs to be handled correctly in
         // nested context
         assert env == null : "re-enable env arguments";
-        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err);
+        int result = RMain.runRscript(redirect.args, redirect.in, redirect.out, redirect.err, timeoutSecs);
         return redirect.getInternResult(result);
     }
 
@@ -433,7 +431,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "redirect missing");
                 }
                 try {
-                    in = new FileInputStream(file);
+                    in = RContext.getInstance().getEnv().getTruffleFile(file).newInputStream();
                 } catch (IOException ex) {
                     throw RError.error(RError.NO_CALLER, RError.Message.NO_SUCH_FILE, file);
                 }
@@ -488,11 +486,6 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     @Override
     public String encodeComplex(RComplex x, int digits) {
         return ComplexVectorPrinter.encodeComplex(x, digits);
-    }
-
-    @Override
-    public void checkDebugRequest(RFunction func) {
-        RInstrumentation.checkDebugRequested(func);
     }
 
     @Override

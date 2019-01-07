@@ -44,10 +44,20 @@ public class TestBuiltin_asexpression extends TestBase {
         assertEval("{ as.expression(list(\"x\" = 1, \"y\" = 2)) }");
         assertEval(Output.IgnoreErrorContext, "{ as.expression(sum) }");
         assertEval(Output.IgnoreErrorContext, "{ as.expression(function() {}) }");
+
+        assertEval("{ as.expression(as.raw(1)) }");
+        assertEval(Output.IgnoreWhitespace, "{ as.expression(as.raw(c(0, 1, 2, 127, 128, 255))) }");
     }
 
     @Test
     public void noCopyCheck() {
         assertEvalFastR("{ x <- as.expression(quote(x+2)); .fastr.identity(x) == .fastr.identity(as.expression(x)); }", "[1] TRUE");
     }
+
+    @Test
+    public void fromLanguage() {
+        assertEval("{ as.expression(parse(text='a+b')[[1]]) }");
+        assertEval("{ as.expression(parse(text='a+b+c')[[1]]) }");
+    }
+
 }

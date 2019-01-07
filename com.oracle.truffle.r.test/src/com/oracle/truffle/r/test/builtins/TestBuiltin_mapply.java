@@ -41,5 +41,6 @@ public class TestBuiltin_mapply extends TestBase {
         assertEval("{ mapply(rep.int, 42, MoreArgs = list(4)) }");
         assertEval("{ mapply(rep, times = 1:4, x = 4:1) }");
         assertEval("{ mapply(rep, times = 1:4, MoreArgs = list(x = 42)) }");
+        assertEval("mapply(function(...) 42)");
     }
 }

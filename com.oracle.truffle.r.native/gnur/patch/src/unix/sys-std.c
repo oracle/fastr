@@ -66,38 +66,38 @@
   immediately.
  */
 
- static SIGJMP_BUF seljmpbuf;
- 
- static RETSIGTYPE (*oldSigintHandler)(int) = SIG_DFL;
- 
- typedef void (*sel_intr_handler_t)(void);
- 
- static RETSIGTYPE NORET handleSelectInterrupt(int dummy)
- {
-     signal(SIGINT, oldSigintHandler);
-     SIGLONGJMP(seljmpbuf, 1);
- }
- 
- int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
- 	       fd_set *exceptfds, struct timeval *timeout,
- 	       void (*intr)(void))
- {
+static SIGJMP_BUF seljmpbuf;
+
+static RETSIGTYPE (*oldSigintHandler)(int) = SIG_DFL;
+
+typedef void (*sel_intr_handler_t)(void);
+
+static RETSIGTYPE NORET handleSelectInterrupt(int dummy)
+{
+    signal(SIGINT, oldSigintHandler);
+    SIGLONGJMP(seljmpbuf, 1);
+}
+
+int R_SelectEx(int  n,  fd_set  *readfds,  fd_set  *writefds,
+	       fd_set *exceptfds, struct timeval *timeout,
+	       void (*intr)(void))
+{
     if (timeout != NULL && timeout->tv_sec == 0 && timeout->tv_usec == 0)
- 	/* Is it right for select calls with a timeout to be
- 	   non-interruptable? LT */
- 	return select(n, readfds, writefds, exceptfds, timeout);
-     else {
- 	volatile sel_intr_handler_t myintr = intr != NULL ?
- 	    intr : onintrNoResume;
- 	volatile int old_interrupts_suspended = R_interrupts_suspended;
- 	if (SIGSETJMP(seljmpbuf, 1)) {
- 	    myintr();
- 	    R_interrupts_suspended = old_interrupts_suspended;
- 	    error(_("interrupt handler must not return"));
- 	    return 0; /* not reached */
- 	}
- 	else {
- 	    int val;
+	/* Is it right for select calls with a timeout to be
+	   non-interruptable? LT */
+	return select(n, readfds, writefds, exceptfds, timeout);
+    else {
+	volatile sel_intr_handler_t myintr = intr != NULL ?
+	    intr : onintrNoResume;
+	volatile int old_interrupts_suspended = R_interrupts_suspended;
+	if (SIGSETJMP(seljmpbuf, 1)) {
+	    myintr();
+	    R_interrupts_suspended = old_interrupts_suspended;
+	    error(_("interrupt handler must not return"));
+	    return 0; /* not reached */
+	}
+	else {
+	    int val;
 
 	    /* make sure interrupts are enabled -- this will be
 	       restored if there is a LONGJMP from myintr() to another
@@ -122,17 +122,45 @@
 	    return val;
 	}
     }
- }
+}
+
+
+/*
+   This object is used for the standard input and its file descriptor
+   value is reset by setSelectwblplotMask() each time to ensure that it points
+   to the correct value of stdin.
+ */
+static InputHandler BasicInputHandler = {StdinActivity, -1, NULL};
 
 /*
    This can be reset by the initialization routines which
    can ignore stdin, etc..
 */
-InputHandler *R_InputHandlers = NULL;
+InputHandler *R_InputHandlers = &BasicInputHandler;
+
+// FastR NOTE: we do not call this function and therefore do not use the BasicInputHandler
+// and all if (... == BasicInputHandler) will not be taken ever. This code is left here
+// in case we need to actually enable this special handling.
+/*
+  Initialize the input source handlers used to check for input on the
+  different file descriptors.
+ */
+InputHandler * initStdinHandler(void)
+{
+    InputHandler *inputs;
+
+    inputs = addInputHandler(R_InputHandlers, fileno(stdin), NULL,
+			     StdinActivity);
+    /* Defer the X11 registration until it is loaded and actually used. */
+
+    return(inputs);
+}
 
 /*
   Creates and registers a new InputHandler with the linked list `handlers'.
   This sets the global variable InputHandlers if it is not already set.
+  In the standard interactive case, this will have been set to be the
+  BasicInputHandler object.
 
   Returns the newly created handler which can be used in a call to
   removeInputHandler.
@@ -297,6 +325,10 @@ setSelectMask(InputHandler *handlers, fd_set *readMask)
     InputHandler *tmp = handlers;
     FD_ZERO(readMask);
 
+    /* If we are dealing with BasicInputHandler always put stdin */
+    if(handlers == &BasicInputHandler)
+	handlers->fileDescriptor = fileno(stdin);
+
     while(tmp) {
 	FD_SET(tmp->fileDescriptor, readMask);
 	maxfd = maxfd < tmp->fileDescriptor ? tmp->fileDescriptor : maxfd;
@@ -311,18 +343,17 @@ void R_runHandlers(InputHandler *handlers, fd_set *readMask)
     InputHandler *tmp = handlers, *next;
 
     if (readMask == NULL) {
-		Rg_PolledEvents();
-		R_PolledEvents();
-    } else {
-		while(tmp) {
-	    	/* Do this way as the handler function might call
-		       removeInputHandlers */
-		    next = tmp->next;
-		    if(FD_ISSET(tmp->fileDescriptor, readMask)
-		       && tmp->handler != NULL)
-			tmp->handler((void*) tmp->userData);
-		    tmp = next;
-		}
+	Rg_PolledEvents();
+	R_PolledEvents();
+    } else
+	while(tmp) {
+	    /* Do this way as the handler function might call
+	       removeInputHandlers */
+	    next = tmp->next;
+	    if(FD_ISSET(tmp->fileDescriptor, readMask)
+	       && tmp->handler != NULL)
+		tmp->handler((void*) tmp->userData);
+	    tmp = next;
 	}
 }
 
@@ -333,6 +364,13 @@ InputHandler *
 getSelectedHandler(InputHandler *handlers, fd_set *readMask)
 {
     InputHandler *tmp = handlers;
+
+    /*
+      Temporarily skip the first one if a) there is another one, and
+      b) this is the BasicInputHandler.
+    */
+    if(handlers == &BasicInputHandler && handlers->next)
+	tmp = handlers->next;
 
     while(tmp) {
 	if(FD_ISSET(tmp->fileDescriptor, readMask))
@@ -347,6 +385,7 @@ getSelectedHandler(InputHandler *handlers, fd_set *readMask)
 }
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <sys/stat.h>
@@ -358,6 +397,15 @@ static void
 handleInterrupt(void)
 {
     onintrNoResume();
+}
+
+FILE *fpLog;
+
+static void eventLoopLog(const char* msg) {
+	if (fpLog) {
+		fprintf(fpLog, "DEBUG[%d]: traceEventLoopNative: %s\n", 0, msg);
+		fflush(fpLog);
+	}
 }
 
 char hint1 = 64;
@@ -399,20 +447,26 @@ static int notifyExecutorAndWait() {
 }
 
 int dispatchHandlers() {
+	eventLoopLog("before R_runHandlers in dispatchHandlers");
 	R_runHandlers(R_InputHandlers, what);
 	
+	eventLoopLog("before open in dispatchHandlers");
 	int fd = open(fifoOutPath, O_WRONLY);
 	if (fd < 0) {
 	    return errno;
     }
+	eventLoopLog("before write in dispatchHandlers");
 	int res = write(fd, &hint2, 1);
 	if (res < 0) {
 	    return errno;
     }
+	eventLoopLog("before close in dispatchHandlers");
 	res = close(fd);
 	if (res < 0) {
 	    return errno;
     }
+
+	eventLoopLog("before exit in dispatchHandlers");
 
 	return 0;
 }
@@ -424,7 +478,7 @@ static void *eventLoop(void *params) {
 	for (;;) {
 		fflush(stdout);
 		
-		what = R_checkActivityEx(wt, 0, handleInterrupt);
+		what = R_checkActivityEx(wt, 1, handleInterrupt);
 		if (what != NULL) {
 			int res = notifyExecutorAndWait();
 			if (res != 0) {
@@ -437,6 +491,11 @@ static void *eventLoop(void *params) {
 }
 
 int initEventLoop(char* fifoInPathParam, char* fifoOutPathParam) {
+	const char* trace = getenv("TRACE_EVENT_LOOP");
+	if (trace && strcmp(trace, "true") == 0) {
+		fpLog = fopen("traceEventLoop.log", "a+");
+	}
+
 	fifoInPath = malloc(strlen(fifoInPathParam) * (sizeof(char) + 1));
 	strcpy(fifoInPath, fifoInPathParam);
 

@@ -155,6 +155,8 @@ ignore.suggests <- list(
 	rstudioapi = '*', # rstudioapi executes almost no real tests, it is mostly just test of install & load
 	glmnet = 'knitr',  # probably used for vignettes only
 	PerformanceAnalytics = ignore.all.but('testthat'), # not gated yet. We can run almost all tests except for few examples that use some suggests including data.table
+	shinyjs = 'V8',  # it fails when being installed, but it does not affect the tests result
+	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 	mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
 	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 	sqldf = 'tcltk|RPostgreSQL|RJDBC|rJava|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
@@ -913,13 +915,12 @@ system.test <- function(pkgname, pkgEnv) {
 	# we want to stop tests that hang, but some packages have many tests
 	# each of which spawns a sub-process (over which we have no control)
 	# so we time out the entire set after 20 minutes.
-    genEnv <- c("FASTR_PROCESS_TIMEOUT=20",
-             paste0("R_LIBS_USER=", shQuote(lib.install)),
+    genEnv <- c(paste0("R_LIBS_USER=", shQuote(lib.install)),
              "R_LIBS=",
              paste0("MX_R_GLOBAL_ARGS=", fastr.test.jvm.args())
             )
 	env <- c(pkgEnv, genEnv)
-	rc <- system2(rscript, args, env=env)
+	rc <- system2(rscript, args, env=env, timeout=1200)
 	rc
 }
 

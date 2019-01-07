@@ -148,7 +148,7 @@ public final class RASTUtils {
         assert element != null;
         if (element instanceof RSyntaxConstant) {
             Object value = ((RSyntaxConstant) element).getValue();
-            if (value == RMissing.instance || value == REmpty.instance) {
+            if (value == RMissing.instance || value == REmpty.instance || value == RSymbol.MISSING) {
                 // special case which GnuR handles as an unnamed symbol
                 return RSymbol.MISSING;
             }

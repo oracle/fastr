@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -91,7 +92,12 @@ public abstract class CastExpressionNode extends CastBaseNode {
         return value;
     }
 
-    @Specialization(guards = "uAccess.supports(obj)", limit = "getGenericVectorAccessCacheSize()")
+    @Specialization(guards = "isLanguage(value)")
+    protected RExpression doLanguage(RPairList value) {
+        return factory().createExpression(new Object[]{value});
+    }
+
+    @Specialization(guards = {"!isLanguage(obj)", "uAccess.supports(obj)"}, limit = "getGenericVectorAccessCacheSize()")
     protected RExpression doAbstractContainer(RAbstractContainer obj,
                     @Cached("create()") GetNamesAttributeNode getNamesNode,
                     @Cached("obj.access()") VectorAccess uAccess) {
@@ -111,7 +117,7 @@ public abstract class CastExpressionNode extends CastBaseNode {
         }
     }
 
-    @Specialization(replaces = "doAbstractContainer")
+    @Specialization(replaces = "doAbstractContainer", guards = "!isLanguage(obj)")
     protected RExpression doAbstractContainerGeneric(RAbstractContainer obj,
                     @Cached("create()") GetNamesAttributeNode getNamesNode) {
         return doAbstractContainer(obj, getNamesNode, obj.slowPathAccess());
@@ -119,6 +125,10 @@ public abstract class CastExpressionNode extends CastBaseNode {
 
     private RExpression create(Object obj) {
         return factory().createExpression(new Object[]{obj});
+    }
+
+    protected static boolean isLanguage(RAbstractContainer value) {
+        return value instanceof RPairList && ((RPairList) value).isLanguage();
     }
 
     /**

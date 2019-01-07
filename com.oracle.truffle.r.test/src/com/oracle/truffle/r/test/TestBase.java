@@ -37,7 +37,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.EnumSet;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.SortedMap;
 import java.util.TreeMap;
 import java.util.TreeSet;
@@ -61,6 +63,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
+import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
 
 /**
@@ -94,6 +97,11 @@ public class TestBase {
      * (normally just statistical info would be shown).
      */
     public static final boolean ShowFailedTestsResults = Boolean.getBoolean("ShowFailedTestsResults");
+    /**
+     * Adds {@link Ignored#NewRVersionMigration} to failed test. This attempts to modify the Java
+     * source code of the tests.
+     */
+    public static final boolean AddIgnoreForFailedTests = Boolean.getBoolean("AddIgnoreForFailedTests");
 
     /**
      * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
@@ -132,6 +140,7 @@ public class TestBase {
         ReferenceError("tests that fail because of faulty behavior in the reference implementation that we don't want to emulate"),
         SideEffects("tests that are ignored because they would interfere with other tests"),
         MissingBuiltin("tests that fail because of missing builtins"),
+        NewRVersionMigration("temporarily ignored while migrating to new GNU-R version"),
         Unimplemented("tests that fail because of missing functionality");
 
         private final String description;
@@ -152,8 +161,7 @@ public class TestBase {
 
     public enum Context implements TestTrait {
         NonShared, // Test requires a new non-shared {@link RContext}.
-        NoJavaInterop, // Test requires a {@link RContext} with disabled host access.
-        LongTimeout; // Test requires a long timeout
+        NoJavaInterop; // Test requires a {@link RContext} with disabled host access.
 
         @Override
         public String getName() {
@@ -475,27 +483,35 @@ public class TestBase {
      * respect.
      */
     protected void assertEval(String... input) {
-        evalAndCompare(input);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT);
+    }
+
+    protected void assertEval(long timeout, String... input) {
+        evalAndCompare(input, timeout);
     }
 
     protected void assertEval(TestTrait trait1, String... input) {
-        evalAndCompare(input, trait1);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1);
+    }
+
+    protected void assertEval(long timeout, TestTrait trait1, String... input) {
+        evalAndCompare(input, timeout, trait1);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, String... input) {
-        evalAndCompare(input, trait1, trait2);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, String... input) {
-        evalAndCompare(input, trait1, trait2, trait3);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2, trait3);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, TestTrait trait4, String... input) {
-        evalAndCompare(input, trait1, trait2, trait3, trait4);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2, trait3, trait4);
     }
 
     protected void assertEval(TestTrait trait1, TestTrait trait2, TestTrait trait3, TestTrait trait4, TestTrait trait5, String... input) {
-        evalAndCompare(input, trait1, trait2, trait3, trait4, trait5);
+        evalAndCompare(input, USE_DEFAULT_TIMEOUT, trait1, trait2, trait3, trait4, trait5);
     }
 
     protected void afterMicroTest() {
@@ -504,19 +520,19 @@ public class TestBase {
 
     // support testing of FastR-only functionality (equivalent GNU R output provided separately)
     protected boolean assertEvalFastR(TestTrait trait1, String input, String gnuROutput) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1);
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), USE_DEFAULT_TIMEOUT, trait1);
     }
 
     protected boolean assertEvalFastR(TestTrait trait1, TestTrait trait2, String input, String gnuROutput) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), trait1, trait2);
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), USE_DEFAULT_TIMEOUT, trait1, trait2);
     }
 
     protected boolean assertEvalFastR(String input, String gnuROutput) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input));
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), USE_DEFAULT_TIMEOUT);
     }
 
     protected boolean assertEvalFastR(String input, String gnuROutput, boolean useREPL) {
-        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL);
+        return evalAndCompare(getAssertEvalFastR(gnuROutput, input), useREPL, USE_DEFAULT_TIMEOUT);
     }
 
     private static String[] getAssertEvalFastR(String gnuROutput, String input) {
@@ -586,25 +602,30 @@ public class TestBase {
         if (explicitTestContext != null) {
             return explicitTestContext;
         }
-        // We want the stack trace as if the JUnit test failed.
-        RuntimeException ex = new RuntimeException();
-        // The first method not in TestBase is the culprit
-        StackTraceElement culprit = null;
         try {
-            // N.B. This may not always be available (AOT).
-            StackTraceElement[] stackTrace = ex.getStackTrace();
-            for (int i = 0; i < stackTrace.length; i++) {
-                StackTraceElement se = stackTrace[i];
-                if (!se.getClassName().endsWith("TestBase")) {
-                    culprit = se;
-                    break;
-                }
-            }
+            StackTraceElement culprit = getTestStackFrame();
             String context = String.format("%s:%d (%s)", culprit.getClassName(), culprit.getLineNumber(), culprit.getMethodName());
             return context;
         } catch (NullPointerException npe) {
             return "no test context available";
         }
+    }
+
+    private static StackTraceElement getTestStackFrame() {
+        // We want the stack trace as if the JUnit test failed.
+        RuntimeException ex = new RuntimeException();
+        // The first method not in TestBase is the culprit
+        StackTraceElement culprit = null;
+        // N.B. This may not always be available (AOT).
+        StackTraceElement[] stackTrace = ex.getStackTrace();
+        for (int i = 0; i < stackTrace.length; i++) {
+            StackTraceElement se = stackTrace[i];
+            if (!se.getClassName().endsWith("TestBase")) {
+                culprit = se;
+                break;
+            }
+        }
+        return culprit;
     }
 
     /**
@@ -654,11 +675,11 @@ public class TestBase {
         }
     }
 
-    private boolean evalAndCompare(String[] inputs, TestTrait... traitsList) {
-        return evalAndCompare(inputs, false, traitsList);
+    private boolean evalAndCompare(String[] inputs, long timeout, TestTrait... traitsList) {
+        return evalAndCompare(inputs, false, timeout, traitsList);
     }
 
-    private boolean evalAndCompare(String[] inputs, boolean useREPL, TestTrait... traitsList) {
+    private boolean evalAndCompare(String[] inputs, boolean useREPL, long timeout, TestTrait... traitsList) {
         WhiteList[] whiteLists = TestTrait.collect(traitsList, WhiteList.class);
         TestTraitsSet traits = new TestTraitsSet(traitsList);
         ContextKind contextKind = traits.context.contains(Context.NonShared) ? ContextKind.SHARE_NOTHING : ContextKind.SHARE_PARENT_RW;
@@ -670,7 +691,7 @@ public class TestBase {
             if (skipFastREval) {
                 ignoredInputCount++;
             } else {
-                String result = fastREval(input, contextKind, traits.context.contains(Context.LongTimeout), !traits.context.contains(Context.NoJavaInterop), useREPL);
+                String result = fastREval(input, contextKind, timeout, !traits.context.contains(Context.NoJavaInterop), useREPL);
                 CheckResult checkResult = checkResult(whiteLists, input, traits.preprocessOutput(expected), traits.preprocessOutput(result), traits);
 
                 result = checkResult.result;
@@ -695,6 +716,14 @@ public class TestBase {
                 } else {
                     failedInputCount++;
                     microTestFailed();
+                    if (AddIgnoreForFailedTests) {
+                        try {
+                            addIgnoreForFailedTest();
+                        } catch (Exception ex) {
+                            System.err.println("Cannot add ignore for test. Message: " + ex.getMessage());
+                            ex.printStackTrace();
+                        }
+                    }
                     if (!ProcessFailedTests || ShowFailedTestsResults) {
                         // Show hint where first diff occurs - use preprocessed text
                         int expectedLen = checkResult.expected.length();
@@ -770,6 +799,32 @@ public class TestBase {
             failedTestCount++;
         }
         return !skipFastREval;
+    }
+
+    private static void addIgnoreForFailedTest() throws IOException {
+        StackTraceElement frame = getTestStackFrame();
+        String fileName = frame.getFileName();
+        Path testsPath = Paths.get("./com.oracle.truffle.r.test/src/com/oracle/truffle/r/test");
+        Optional<Path> pathOptional = Files.walk(testsPath).filter(Files::isRegularFile).filter(f -> f.endsWith(fileName)).findFirst();
+        if (!pathOptional.isPresent()) {
+            System.out.println("WARNING: cannot add ignore to test (file not found) " + frame.getClassName() + ":" + frame.getLineNumber());
+            return;
+        }
+        Path path = pathOptional.get();
+        List<String> lines = Files.readAllLines(path);
+        String line = lines.get(frame.getLineNumber() - 1);
+        if (line.contains("Ignored.NewRVersionMigration")) {
+            // already there, can happen for templated tests
+            return;
+        }
+        if (!line.contains("assertEval(")) {
+            System.out.println("WARNING: cannot add ignore to test " + frame.getClassName() + ":" + frame.getLineNumber());
+            return;
+        }
+        line = line.replaceAll("(:?Output\\.[a-zA-Z0-9]*[ ]*,)[ ]*", "/*$1*/");
+        line = line.replace("assertEval(", "assertEval(Ignored.NewRVersionMigration, ");
+        lines.set(frame.getLineNumber() - 1, line);
+        Files.write(path, lines);
     }
 
     private static class CheckResult {
@@ -1010,24 +1065,20 @@ public class TestBase {
      * Evaluate {@code input} in FastR, returning all (virtual) console output that was produced. If
      * {@code nonShared} then this must evaluate in a new, non-shared, {@link RContext}.
      */
-    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout) {
-        return fastREval(input, contextKind, longTimeout, true);
+    protected String fastREval(String input, ContextKind contextKind) {
+        return fastREval(input, contextKind, USE_DEFAULT_TIMEOUT, true, false);
     }
 
-    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
-        return fastREval(input, contextKind, longTimeout, allowHostAccess, false);
-    }
-
-    protected String fastREval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess, boolean useREPL) {
+    protected String fastREval(String input, ContextKind contextKind, long timeout, boolean allowHostAccess, boolean useREPL) {
         assert contextKind != null;
         microTestInfo.expression = input;
         String result;
         try {
             beforeEval();
             if (useREPL) {
-                result = fastROutputManager.fastRSession.evalInREPL(this, input, contextKind, longTimeout, allowHostAccess);
+                result = fastROutputManager.fastRSession.evalInREPL(this, input, contextKind, timeout, allowHostAccess);
             } else {
-                result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout, allowHostAccess);
+                result = fastROutputManager.fastRSession.eval(this, input, contextKind, timeout, allowHostAccess);
 
             }
         } catch (Throwable e) {
@@ -1051,13 +1102,13 @@ public class TestBase {
         return TestOutputManager.prepareResult(result, keepTrailingWhiteSpace);
     }
 
-    protected String fastRREPLEval(String input, ContextKind contextKind, boolean longTimeout, boolean allowHostAccess) {
+    protected String fastRREPLEval(String input, ContextKind contextKind, long timeout, boolean allowHostAccess) {
         assert contextKind != null;
         microTestInfo.expression = input;
         String result;
         try {
             beforeEval();
-            result = fastROutputManager.fastRSession.eval(this, input, contextKind, longTimeout, allowHostAccess);
+            result = fastROutputManager.fastRSession.eval(this, input, contextKind, timeout, allowHostAccess);
         } catch (Throwable e) {
             String clazz;
             if (e instanceof RInternalError && e.getCause() != null) {
@@ -1085,19 +1136,6 @@ public class TestBase {
 
     protected static boolean checkOnly() {
         return expectedOutputManager.checkOnly;
-    }
-
-    /**
-     * Used only for package installation to avoid explicitly using {@link ProcessBuilder}. Instead
-     * we go via the {@code system2} R function (which may call {@link ProcessBuilder} internally).
-     *
-     */
-    protected static String evalInstallPackage(String system2Command) throws Throwable {
-        if (generatingExpected()) {
-            return expectedOutputManager.getRSession().eval(null, system2Command, null, true);
-        } else {
-            return fastROutputManager.fastRSession.eval(null, system2Command, ContextKind.SHARE_PARENT_RW, true);
-        }
     }
 
     /**
