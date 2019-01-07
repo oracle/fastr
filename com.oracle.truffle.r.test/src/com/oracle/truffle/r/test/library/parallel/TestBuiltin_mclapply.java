@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,5 +43,11 @@ public class TestBuiltin_mclapply extends TestBase {
         // we are checking for functions env being properly unserialized in the second run
         // so yes, the test executes function f() twice
         assertEval("f <- function() { res <- parallel:::mclapply(1:3, function(i) i)}; f() ; f()");
+    }
+
+    @Test
+    public void testMCLapplyNested() {
+        assertEval("parallel:::mclapply(1:3, function(i) { Sys.sleep(.2); parallel:::mclapply(1:3, function(ii) {ii}) })");
+        assertEval("parallel:::mclapply(1:3, function(i) { Sys.sleep(.1); parallel:::mclapply(1:3, function(i) { Sys.sleep(.1); parallel:::mclapply(1:3, function(i) {i}) }) })");
     }
 }

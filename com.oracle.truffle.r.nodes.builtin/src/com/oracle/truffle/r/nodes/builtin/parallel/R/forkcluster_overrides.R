@@ -62,42 +62,28 @@ newSHAREDnodes <- function(nnodes, debug, options = defaultClusterOptions) {
 	channels <- vector("integer", nnodes)
 	outfile <- getClusterOption("outfile", options)
 	
-	# get initial port number
-	port <- as.integer(parallel:::getClusterOption("port", options))
-	
-	# find first unused port number
-	continue <- TRUE
-	firstUnused <- 0
-	while(continue) {
-		tryCatch({
-			.fastr.channel.get(port + (firstUnused + 1) * 1000)
-			firstUnused <- firstUnused + 1 
-		}, error = function(e) { continue <<- FALSE })
-	}
-
 	for (i in 1:nnodes) {
-		# generate unique values for channel keys (addition factor is chosen based on how snow generates port numbers)
-		port <- as.integer(parallel:::getClusterOption("port", options) + (i + firstUnused) * 1000)
-		
-		startup <- substitute(local({
-            makeSHAREDmaster <- function(key) {
-                channel <- .fastr.channel.get(as.integer(key))
-                structure(list(channel=channel), class = "SHAREDnode")
-            }
-            parallel:::sinkWorkerOutput(OUTFILE)
-            parallel:::slaveLoop(makeSHAREDmaster(PORT))
-        }), list(OUTFILE=outfile, PORT=port))
-		
-        context_code[[i]] <- paste0(deparse(startup), collapse="\n")
-        if (isTRUE(debug)) cat(sprintf("Starting context: %d with code %s\n", i, context_code[[i]]))
+            channel <- .fastr.channel.createForkChannel(parallel:::getClusterOption("port", options))
 
-		## Need to return a list here, in the same form as the
-		## "cluster" data structure.
-    	channels[[i]] <- .fastr.channel.create(port)
-		if (isTRUE(debug)) cat(sprintf("Context %d started!\n", i))
+            startup <- substitute(local({
+                makeSHAREDmaster <- function(key) {
+                    channel <- .fastr.channel.get(as.integer(key))
+                    structure(list(channel=channel), class = "SHAREDnode")
+                }
+                parallel:::sinkWorkerOutput(OUTFILE)
+                parallel:::slaveLoop(makeSHAREDmaster(PORT))
+            }), list(OUTFILE=outfile, PORT=channel$port))
+		
+            context_code[[i]] <- paste0(deparse(startup), collapse="\n")
+            if (isTRUE(debug)) cat(sprintf("Starting context: %d with code %s\n", i, context_code[[i]]))
+
+            ## Need to return a list here, in the same form as the
+            ## "cluster" data structure.
+            channels[[i]] <- channel$channelId
+            if (isTRUE(debug)) cat(sprintf("Context %d started!\n", i))
 	}
-    contexts <- .fastr.context.spawn(context_code)
-    cl <- vector("list", nnodes)
+        contexts <- .fastr.context.spawn(context_code)
+        cl <- vector("list", nnodes)
 	for (i in 1:nnodes) {
 		cl[[i]] <- structure(list(channel = channels[[i]], context=contexts[[i]], rank = i), class = "SHAREDnode")
 	}

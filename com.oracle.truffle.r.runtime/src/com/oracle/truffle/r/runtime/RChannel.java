@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -85,33 +85,7 @@ public class RChannel {
         }
         try {
             create.acquire();
-            while (true) {
-                int freeSlot = -1;
-                // start from one as we need slots that have distinguishable positive and negative
-                // value
-                for (int i = 1; i < keys.length; i++) {
-                    if (keys[i] == key) {
-                        throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel with specified key already exists");
-                    }
-                    if (keys[i] == 0 && freeSlot == -1) {
-                        freeSlot = i;
-                    }
-                }
-                if (freeSlot != -1) {
-                    keys[freeSlot] = key;
-                    channels[freeSlot] = new RChannel();
-                    return freeSlot;
-                } else {
-                    int[] keysTmp = new int[keys.length * CHANNEL_NUM_GROW_FACTOR];
-                    RChannel[] channelsTmp = new RChannel[channels.length * CHANNEL_NUM_GROW_FACTOR];
-                    for (int i = 1; i < keys.length; i++) {
-                        keysTmp[i] = keys[i];
-                        channelsTmp[i] = channels[i];
-                    }
-                    keys = keysTmp;
-                    channels = channelsTmp;
-                }
-            }
+            return createChannelInternal(key)[0];
         } catch (InterruptedException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating a channel");
         } finally {
@@ -119,13 +93,66 @@ public class RChannel {
         }
     }
 
+    public static int[] createForkChannel(int portBaseNumber) {
+        try {
+            create.acquire();
+
+            int firstUnused = 0;
+            int port = -1;
+            while (true) {
+                // generate unique values for channel keys
+                // (addition factor is chosen based on how snow generates port numbers)
+                port = portBaseNumber + (firstUnused + 1) * 1000;
+                firstUnused = firstUnused + 1;
+                if (getChannelInternal(port) == null) {
+                    break;
+                }
+            }
+            assert port > 0;
+            return createChannelInternal(port);
+        } catch (InterruptedException x) {
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error creating a channel");
+        } finally {
+            create.release();
+        }
+    }
+
+    private static int[] createChannelInternal(int key) throws RError {
+        while (true) {
+            int freeSlot = -1;
+            // start from one as we need slots that have distinguishable positive and negative
+            // value
+            for (int i = 1; i < keys.length; i++) {
+                if (keys[i] == key) {
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel with specified key already exists");
+                }
+                if (keys[i] == 0 && freeSlot == -1) {
+                    freeSlot = i;
+                }
+            }
+            if (freeSlot != -1) {
+                keys[freeSlot] = key;
+                channels[freeSlot] = new RChannel();
+                return new int[]{freeSlot, key};
+            } else {
+                int[] keysTmp = new int[keys.length * CHANNEL_NUM_GROW_FACTOR];
+                RChannel[] channelsTmp = new RChannel[channels.length * CHANNEL_NUM_GROW_FACTOR];
+                for (int i = 1; i < keys.length; i++) {
+                    keysTmp[i] = keys[i];
+                    channelsTmp[i] = channels[i];
+                }
+                keys = keysTmp;
+                channels = channelsTmp;
+            }
+        }
+    }
+
     public static int getChannel(int key) {
         try {
             create.acquire();
-            for (int i = 1; i < keys.length; i++) {
-                if (keys[i] == key) {
-                    return -i;
-                }
+            Integer res = getChannelInternal(key);
+            if (res != null) {
+                return res;
             }
         } catch (InterruptedException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error accessing channel");
@@ -133,6 +160,15 @@ public class RChannel {
             create.release();
         }
         throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "channel does not exist");
+    }
+
+    private static Integer getChannelInternal(int key) {
+        for (int i = 1; i < keys.length; i++) {
+            if (keys[i] == key) {
+                return -i;
+            }
+        }
+        return null;
     }
 
     public static void closeChannel(int id) {
