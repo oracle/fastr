@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -53,6 +53,8 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -555,18 +557,6 @@ public class DatePOSIXFunctions {
                         // Equivalent to %Y-%m-%d (the ISO 8601 date format).
                         builder.append(createFormatter("%Y-%m-%d", forInput).toFormatter());
                         break;
-                    case 'g':
-                        /*
-                         * The last two digits of the week-based year (see %V). (Accepted but
-                         * ignored on input.)
-                         */
-                        throw RInternalError.unimplemented();
-                    case 'G':
-                        /*
-                         * The week-based year (see %V) as a decimal number. (Accepted but ignored
-                         * on input.)
-                         */
-                        throw RInternalError.unimplemented();
                     case 'H':
                         /*
                          * Hours as decimal number (00–23). As a special exception strings such as
@@ -649,32 +639,6 @@ public class DatePOSIXFunctions {
                         // Weekday as a decimal number (1–7, Monday is 1).
                         builder.appendValue(ChronoField.DAY_OF_WEEK);
                         break;
-                    case 'U':
-                        /*
-                         * Week of the year as decimal number (00–53) using Sunday as the first day
-                         * 1 of the week (and typically with the first Sunday of the year as day 1
-                         * of week 1). The US convention.
-                         */
-                        throw RInternalError.unimplemented();
-                    case 'V':
-                        /*
-                         * Week of the year as decimal number (01–53) as defined in ISO 8601. If the
-                         * week (starting on Monday) containing 1 January has four or more days in
-                         * the new year, then it is considered week 1. Otherwise, it is the last
-                         * week of the previous year, and the next week is week 1. (Accepted but
-                         * ignored on input.)
-                         */
-                        throw RInternalError.unimplemented();
-                    case 'w':
-                        // Weekday as decimal number (0–6, Sunday is 0).
-                        throw RInternalError.unimplemented();
-                    case 'W':
-                        /*
-                         * Week of the year as decimal number (00–53) using Monday as the first day
-                         * of week (and typically with the first Monday of the year as day 1 of week
-                         * 1). The UK convention.
-                         */
-                        throw RInternalError.unimplemented();
                     case 'x':
                         // Date. Locale-specific on output, "%y/%m/%d" on input.
                         assert forInput;
@@ -706,20 +670,52 @@ public class DatePOSIXFunctions {
                          */
                         builder.appendValue(ChronoField.YEAR, 4);
                         break;
+                    // Following formatters are not implemented and fall through to error
+                    case 'g':
+                        /*
+                         * The last two digits of the week-based year (see %V). (Accepted but
+                         * ignored on input.)
+                         */
+                    case 'G':
+                        /*
+                         * The week-based year (see %V) as a decimal number. (Accepted but ignored
+                         * on input.)
+                         */
+                    case 'U':
+                        /*
+                         * Week of the year as decimal number (00–53) using Sunday as the first day
+                         * 1 of the week (and typically with the first Sunday of the year as day 1
+                         * of week 1). The US convention.
+                         */
+                    case 'V':
+                        /*
+                         * Week of the year as decimal number (01–53) as defined in ISO 8601. If the
+                         * week (starting on Monday) containing 1 January has four or more days in
+                         * the new year, then it is considered week 1. Otherwise, it is the last
+                         * week of the previous year, and the next week is week 1. (Accepted but
+                         * ignored on input.)
+                         */
+                    case 'w':
+                        // Weekday as decimal number (0–6, Sunday is 0).
+                    case 'W':
+                        /*
+                         * Week of the year as decimal number (00–53) using Monday as the first day
+                         * of week (and typically with the first Monday of the year as day 1 of week
+                         * 1). The UK convention.
+                         */
                     case 'z':
                         /*
                          * Signed offset in hours and minutes from UTC, so -0800 is 8 hours behind
                          * UTC. Values up to +1400 are accepted as from R 3.1.1: previous versions
                          * only accepted up to +1200. (Standard only for output.)
                          */
-                        throw RInternalError.unimplemented();
                     case 'Z':
                         /*
                          * (Output only.) Time zone abbreviation as a character string (empty if not
                          * available). This may not be reliable when a time zone has changed
                          * abbreviations over the years.
                          */
-                        throw RInternalError.unimplemented();
+                        throw RError.error(RError.NO_CALLER, Message.DATE_TIME_CONVERSION_SPEC_NOT_IMPLEMENTED, c);
                     default:
                         builder.appendLiteral(c);
                         break;
