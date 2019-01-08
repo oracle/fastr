@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,5 +40,11 @@ public class TestBuiltin_syscalls extends TestBase {
         assertEval("{ f <- function(x) x; g <- function() f(sys.calls()); length(try(g())) }");
         // f is not on the stack because z=u() is being evaluated eagerly and not inside f
         assertEval(Ignored.ImplementationError, "{ v <- function() sys.calls() ; u<- function() v(); f <- function(x) x ; g <- function(y) f(y) ; h <- function(z=u()) g(z) ; h() }");
+    }
+
+    @Test
+    public void testSysCallsWithEval() {
+        assertEval("{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()'), envir=new.env()); bar(); }");
+        assertEval("{ foo <- function() sys.calls(); bar <- function() eval(parse(text='foo()')); bar(); }");
     }
 }

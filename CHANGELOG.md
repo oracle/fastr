@@ -1,3 +1,9 @@
+# 1.0 RC 12
+
+Bug fixes:
+
+* `sys.calls` gives wrong result when `eval` with `envir` argument is on the call stack
+
 # 1.0 RC 11
 
 * upgraded the R version to R-3.5.1
