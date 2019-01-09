@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -40,6 +40,23 @@ public class TestBuiltin_commentassign extends TestBase {
     @Test
     public void testcommentassign3() {
         assertEval("argv <- list(logical(0), NULL); .Internal(`comment<-`(argv[[1]], argv[[2]]))");
+    }
+
+    @Test
+    public void testcommentassign4() {
+        assertEval(Output.IgnoreErrorContext, "x<-42; comment(x) <- 1");
+        assertEval(Output.IgnoreErrorContext, "x<-42; comment(x) <- c(1, 2)");
+        assertEval("x<-42; comment(x) <- 'a'");
+        assertEval("x<-42; comment(x) <- c('a', 'b')");
+        assertEval("x<-42; comment(x) <- c('a', NA)");
+        assertEval("x<-42; comment(x) <- c(NA, 'a', NA)");
+        assertEval(Output.IgnoreErrorContext, "x<-42; comment(x) <- c(NA)");
+        assertEval(Output.IgnoreErrorContext, "x<-42; comment(x) <- c(NA, NA)");
+        assertEval("x<-42; comment(x) <- NULL");
+        assertEval(Output.IgnoreErrorContext, "x<-42; comment(x) <- NA");
+        assertEval(Output.IgnoreErrorContext, "x<-c(); comment(x) <- 'a'");
+        assertEval(Output.IgnoreErrorContext, "x<-NULL; comment(x) <- 'a'");
+        assertEval("x<-NA; comment(x) <- 'a'");
     }
 
     @Test

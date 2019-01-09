@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,11 +35,13 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetRowNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.unary.CastDoubleNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
@@ -58,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
@@ -68,11 +71,14 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
     @Child private UpdateNames updateNames;
     @Child private UpdateDimNames updateDimNames;
     @Child private CastIntegerNode castInteger;
+    @Child private CastDoubleNode castDouble;
     @Child private CastToVectorNode castVector;
     @Child private SetAttributeNode setAttrNode;
     @Child private SetClassAttributeNode setClassNode;
     @Child private SetDimAttributeNode setDimNode;
     @Child private SetRowNamesAttributeNode setRowNamesNode;
+    @Child private SpecialAttributesFunctions.SetTspAttributeNode setTspAttrNode;
+    @Child private SpecialAttributesFunctions.SetCommentAttributeNode setCommentAttrNode;
     @Child private RemoveAttributeNode removeAttrNode;
 
     static {
@@ -108,6 +114,14 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
             castInteger = insert(CastIntegerNodeGen.create(true, false, false));
         }
         return (RAbstractIntVector) castInteger.doCast(vector);
+    }
+
+    private RAbstractDoubleVector castDouble(RAbstractVector vector) {
+        if (castDouble == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            castDouble = insert(CastDoubleNode.createNonPreserving());
+        }
+        return (RAbstractDoubleVector) castDouble.doCast(vector);
     }
 
     private RAbstractVector castVector(Object value) {
@@ -227,6 +241,24 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                     setRowNamesNode = insert(SetRowNamesAttributeNode.create());
                 }
                 setRowNamesNode.setRowNames(res, castVector(value));
+            } else if (attrName.equals(RRuntime.TSP_ATTR_KEY)) {
+                RAbstractDoubleVector tsp;
+                if (value != RNull.instance) {
+                    tsp = castDouble(castVector(value));
+                } else {
+                    tsp = null;
+                }
+                if (setTspAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setTspAttrNode = insert(SpecialAttributesFunctions.SetTspAttributeNode.create());
+                }
+                setTspAttrNode.setTsp(result, tsp);
+            } else if (attrName.equals(RRuntime.COMMENT_ATTR_KEY)) {
+                if (setCommentAttrNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setCommentAttrNode = insert(SpecialAttributesFunctions.SetCommentAttributeNode.create());
+                }
+                setCommentAttrNode.setComment(result, value);
             } else {
                 if (value == RNull.instance) {
                     if (removeAttrNode == null) {
@@ -272,9 +304,12 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                 if (RRuntime.CLASS_ATTR_KEY.equals(attrName)) {
                     Object attrValue = list.getDataAt(i);
                     if (attrValue == null) {
-                        throw error(RError.Message.SET_INVALID_CLASS_ATTR);
+                        throw error(RError.Message.SET_INVALID_ATTR, "class");
                     }
                     obj.setClassAttr(UpdateAttr.convertClassAttrFromObject(attrValue));
+                } else if (RRuntime.TSP_ATTR_KEY.equals(attrName) && o instanceof RAbstractContainer && ((RAbstractContainer) o).getLength() == 0) {
+                    // Can't assign tsp to zero-length vector
+                    throw error(RError.Message.CANNOT_ASSIGN_EMPTY_VECTOR, "tsp");
                 } else {
                     obj.setAttr(Utils.intern(attrName), list.getDataAt(i));
                 }

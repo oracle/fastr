@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -65,5 +65,34 @@ public class TestBuiltin_attributesassign extends TestBase {
         assertEval("x <- 42;  attributes(x) <- 44");
         assertEval("x <- 42;  attributes(x) <- NULL");
         assertEval("x <- 42;  attributes(x) <- list()");
+    }
+
+    @Test
+    public void testattributesassignTsp() {
+        assertEval("structure(42, tsp=1)");
+        assertEval("structure(42, tsp=c(1, 2))");
+        assertEval("structure(42, tsp=c(1, 1, 1))");
+        assertEval("structure(42, tsp=NULL)");
+        assertEval("structure(42, tsp=NA)");
+        assertEval("structure(c(), tsp=c(1, 1, 1))");
+        assertEval("structure(NULL, tsp=c(1, 1, 1))");
+        assertEval("structure(NA, tsp=c(1, 1, 1))");
+    }
+
+    @Test
+    public void testattributesassignComment() {
+        assertEval("structure(42, comment=1)");
+        assertEval("structure(42, comment=c(1, 2))");
+        assertEval("structure(42, comment='a')");
+        assertEval("structure(42, comment=c('a', 'b'))");
+        assertEval("structure(42, comment=c('a', NA))");
+        assertEval("structure(42, comment=c(NA, 'a', NA))");
+        assertEval("structure(42, comment=c(NA))");
+        assertEval("structure(42, comment=c(NA, NA))");
+        assertEval("structure(42, comment=NULL)");
+        assertEval("structure(42, comment=NA)");
+        assertEval("structure(c(), comment='a')");
+        assertEval("structure(NULL, comment='a')");
+        assertEval("structure(NA, comment='a')");
     }
 }

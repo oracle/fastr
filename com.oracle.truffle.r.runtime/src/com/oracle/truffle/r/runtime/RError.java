@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -622,7 +622,7 @@ public final class RError extends RuntimeException implements TruffleException {
         REPEATED_FORMAL("repeated formal argument '%s'"),
         NOT_A_MATRIX_UPDATE_CLASS("invalid to set the class to matrix unless the dimension attribute is of length 2 (was %d)"),
         NOT_ARRAY_UPDATE_CLASS("cannot set class to \"array\" unless the dimension attribute has length > 0"),
-        SET_INVALID_CLASS_ATTR("attempt to set invalid 'class' attribute"),
+        SET_INVALID_ATTR("attempt to set invalid '%s' attribute"),
         NOT_LEN_ONE_LOGICAL_VECTOR("'%s' must be a length 1 logical vector"),
         TOO_LONG_CLASS_NAME("class name too long in '%s'"),
         NON_STRING_GENERIC("'generic' argument must be a character string"),
@@ -980,7 +980,10 @@ public final class RError extends RuntimeException implements TruffleException {
         CANNOT_SET_LENGTH("cannot set length of non-(vector or list)"),
         LONG_VECTOR_NOT_SUPPORTED("long vector '%s' is not supported"),
         CANNOT_SET_ATTR_ON("cannot set attribute on a %s"),
-        CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb");
+        CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb"),
+        TSP_NUMERIC_LENGTH3("'tsp' attribute must be numeric of length three"),
+        INVALID_TSP("invalid time series parameters specified"),
+        CANNOT_ASSIGN_EMPTY_VECTOR("cannot assign '%s' to zero-length vector");
 
         public final String message;
         final boolean hasArgs;

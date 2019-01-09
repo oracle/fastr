@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,7 +51,7 @@ public abstract class UpdateOldClass extends RBuiltinNode.Arg2 {
     static {
         Casts casts = new Casts(UpdateOldClass.class);
         casts.arg("x").asAttributable(true, true, true);
-        casts.arg("value").allowNull().mustBe(stringValue(), Message.SET_INVALID_CLASS_ATTR).asStringVector();
+        casts.arg("value").allowNull().mustBe(stringValue(), Message.SET_INVALID_ATTR, "class").asStringVector();
     }
 
     @Specialization

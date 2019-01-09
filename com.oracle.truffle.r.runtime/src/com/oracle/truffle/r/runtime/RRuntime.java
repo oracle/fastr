@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -198,6 +198,7 @@ public class RRuntime {
     public static final String R_DOT_METHODS = ".Methods";
     public static final String R_SOURCE = "source";
     public static final String COMMENT_ATTR_KEY = "comment";
+    public static final String TSP_ATTR_KEY = "tsp";
     public static final String R_SRCREF = "srcref";
     public static final String R_WHOLE_SRCREF = "wholeSrcref";
     public static final String R_SRCFILE = "srcfile";
