@@ -70,7 +70,7 @@ class InvalidFilterException(Exception):
     pass
 
 
-def _parse_filter_file(file_path):
+def load_filter_file(file_path):
     from os.path import isfile
     filters = []
     if isfile(file_path):
@@ -128,3 +128,7 @@ def _parse_filter(line):
     else:
         raise InvalidFilterException("invalid action '" + action_str + "'")
     return ContentFilter(pkg_pattern, action, args, remove_before, remove_after)
+
+
+def select_filters_for_package(filter_file, pkg):
+    return _select_filters(load_filter_file(filter_file), pkg)

@@ -38,9 +38,15 @@ import shutil, os, re
 import subprocess
 import hashlib
 import logging
+from threading import Thread
+import time
+import signal
+import errno
+
+import output_filter
 
 quiet = False
-verbose = False
+verbose = 0
 dump_preprocessed = False
 graalvm = None
 __fastr_home = None
@@ -192,15 +198,16 @@ def installpkgs(args, **kwargs):
         env = os.environ.copy()
         kwargs['env'] = env
 
+    out = kwargs.get('out', None)
+    err = kwargs.get('err', None)
+
     if "FASTR_WORKING_DIR" in os.environ:
         env["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
 
-    script = _installpkgs_script()
-    logging.debug("Using FastR binary: " + _fastr_rscript())
     _ensure_R_on_PATH(env, os.path.dirname(_fastr_rscript()))
-    process = subprocess.Popen([_fastr_rscript(), script] + args, env=env)
-    process.wait()
-    return process.returncode
+    cmd_line = [_fastr_rscript(), _installpkgs_script()] + args
+    logging.debug("Running FastR with cmd line: " + str(cmd_line))
+    return pkgtest_run(cmd_line, out=out, err=err, env=env)
 
 
 def prepare_r_install_arguments(args):
@@ -273,7 +280,7 @@ def pkgtest(args):
         # in order to compare the test output with GnuR we have to install/test the same
         # set of packages with GnuR
         ok_pkgs = [k for k, v in out.install_status.iteritems() if v]
-        gnur_args = _args_to_forward_to_gnur(args)
+        gnur_args = _args_to_forward_to_gnur(install_args)
 
         # If '--cache-pkgs' is set, then also set the native API version value
         _set_pkg_cache_api_version(gnur_args, _gnur_include_path())
@@ -323,7 +330,7 @@ class OutputCapture:
         self.test_info = dict()
 
     def __call__(self, data):
-        print (data)
+        print(data)
         if data == "BEGIN package installation\n":
             self.mode = "install"
             return
@@ -457,9 +464,10 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args += ['--testdir', 'test.gnur']
     _log_step('BEGIN', 'install/test', 'GnuR')
 
-    logging.debug("Using GnuR binary: " + _gnur_rscript())
     _ensure_R_on_PATH(env, os.path.dirname(_gnur_rscript()))
-    subprocess.Popen([_gnur_rscript()] + args, env=env)
+    cmd_line = [_gnur_rscript()] + args
+    logging.debug("Running GnuR with cmd line: " + str(cmd_line))
+    pkgtest_run(cmd_line, env=env)
 
     _log_step('END', 'install/test', 'GnuR')
 
@@ -522,8 +530,7 @@ def _set_test_status(fastr_test_info):
                 fastr_content = f.readlines()
 
             # parse custom filters from file
-            filters = _select_filters(
-                _parse_filter_file(os.path.join(_packages_test_project_dir(), "test.output.filter")), pkg)
+            filters = output_filter.select_filters_for_package(os.path.join(_packages_test_project_dir(), "test.output.filter"), pkg)
 
             # first, parse file and see if a known test framework has been used
             detected, ok, skipped, failed = handle_output_file(fastr_testfile_status.abspath, fastr_content)
@@ -800,13 +807,20 @@ def parse_arguments(argv):
                         help='Do verbose logging.')
     known_args, r_args = parser.parse_known_args(args=argv)
 
-    global verbose, quiet, dump_preprocessed, __fastr_home, __gnur_home, graalvm
+    global quiet, dump_preprocessed, __fastr_home, __gnur_home, graalvm
     __fastr_home = known_args.fastr_home
     __gnur_home = known_args.gnur_home
     graalvm = known_args.graalvm_home
 
     verbose = known_args.verbose
     quiet = known_args.quiet
+
+    if verbose == 1:
+        logging.basicConfig(level=logging.INFO)
+        logging.error("verbosity: INFO")
+    elif verbose == 2:
+        logging.basicConfig(level=logging.DEBUG)
+        logging.error("verbosity: DEBUG")
 
     logging.debug("known_args: %s" % known_args)
 
@@ -819,6 +833,201 @@ def parse_arguments(argv):
 
     return r_args
 
+
+def get_os():
+    """
+    Get a canonical form of sys.platform.
+    """
+    if sys.platform.startswith('darwin'):
+        return 'darwin'
+    elif sys.platform.startswith('linux'):
+        return 'linux'
+    elif sys.platform.startswith('openbsd'):
+        return 'openbsd'
+    elif sys.platform.startswith('sunos'):
+        return 'solaris'
+    elif sys.platform.startswith('win32'):
+        return 'windows'
+    elif sys.platform.startswith('cygwin'):
+        return 'cygwin'
+    else:
+        abort(1, 'Unknown operating system ' + sys.platform)
+
+
+_currentSubprocesses = []
+
+def _addSubprocess(p, args):
+    entry = (p, args)
+    logging.debug('[{}: started subprocess {}: {}]'.format(os.getpid(), p.pid, args))
+    _currentSubprocesses.append(entry)
+    return entry
+
+def _removeSubprocess(entry):
+    if entry and entry in _currentSubprocesses:
+        try:
+            _currentSubprocesses.remove(entry)
+        except:
+            pass
+
+
+def waitOn(p):
+    if get_os() == 'windows':
+        # on windows use a poll loop, otherwise signal does not get handled
+        retcode = None
+        while retcode == None:
+            retcode = p.poll()
+            time.sleep(0.05)
+    else:
+        retcode = p.wait()
+    return retcode
+
+
+def _kill_process(pid, sig):
+    """
+    Sends the signal `sig` to the process identified by `pid`. If `pid` is a process group
+    leader, then signal is sent to the process group id.
+    """
+    pgid = os.getpgid(pid)
+    try:
+        logging.debug('[{} sending {} to {}]'.format(os.getpid(), sig, pid))
+        if pgid == pid:
+            os.killpg(pgid, sig)
+        else:
+            os.kill(pid, sig)
+        return True
+    except:
+        logging.error('Error killing subprocess ' + str(pid) + ': ' + str(sys.exc_info()[1]))
+        return False
+
+
+ERROR_TIMEOUT = 0x700000000 # not 32 bits
+
+
+def _waitWithTimeout(process, args, timeout, nonZeroIsFatal=True):
+    def _waitpid(pid):
+        while True:
+            try:
+                return os.waitpid(pid, os.WNOHANG)
+            except OSError, e:
+                if e.errno == errno.EINTR:
+                    continue
+                raise
+
+    def _returncode(status):
+        if os.WIFSIGNALED(status):
+            return -os.WTERMSIG(status)
+        elif os.WIFEXITED(status):
+            return os.WEXITSTATUS(status)
+        else:
+            # Should never happen
+            raise RuntimeError("Unknown child exit status!")
+
+    end = time.time() + timeout
+    delay = 0.0005
+    while True:
+        (pid, status) = _waitpid(process.pid)
+        if pid == process.pid:
+            return _returncode(status)
+        remaining = end - time.time()
+        if remaining <= 0:
+            msg = 'Process timed out after {0} seconds: {1}'.format(timeout, ' '.join(args))
+            if nonZeroIsFatal:
+                abort(1, msg)
+            else:
+                logging.error(msg)
+                _kill_process(process.pid, signal.SIGKILL)
+                return ERROR_TIMEOUT
+        delay = min(delay * 2, remaining, .05)
+        time.sleep(delay)
+
+
+def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None, env=None, **kwargs):
+    """
+    Imported from MX.
+    Run a command in a subprocess, wait for it to complete and return the exit status of the process.
+    If the command times out, it kills the subprocess and returns `ERROR_TIMEOUT` if `nonZeroIsFatal`
+    is false, otherwise it kills all subprocesses and raises a SystemExit exception.
+    If the exit status of the command is non-zero, mx is exited with the same exit status if
+    `nonZeroIsFatal` is true, otherwise the exit status is returned.
+    Each line of the standard output and error streams of the subprocess are redirected to
+    out and err if they are callable objects.
+    """
+
+    assert isinstance(args, (list, tuple)), "'args' must be a list or tuple: " + str(args)
+    for arg in args:
+        assert isinstance(arg, (str, bytes)), 'argument is not a string: ' + str(arg)
+
+    if env is None:
+        env = os.environ.copy()
+
+    msg = 'Environment variables:\n'
+    msg += '\n'.join(['    ' + key + '=' + env[key] for key in env.keys()])
+    logging.debug(msg)
+
+    sub = None
+
+    try:
+        if timeout or get_os() == 'windows':
+            # TODO windows
+            #preexec_fn, creationflags = _get_new_progress_group_args()
+            pass
+        else:
+            preexec_fn, creationflags = (None, 0)
+
+        def redirect(stream, f):
+            for line in iter(stream.readline, ''):
+                f(line)
+            stream.close()
+        stdout = out if not callable(out) else subprocess.PIPE
+        stderr = err if not callable(err) else subprocess.PIPE
+        p = subprocess.Popen(args, cwd=cwd, stdout=stdout, stderr=stderr, preexec_fn=preexec_fn, creationflags=creationflags, env=env, **kwargs)
+        sub = _addSubprocess(p, args)
+        joiners = []
+        if callable(out):
+            t = Thread(target=redirect, args=(p.stdout, out))
+            # Don't make the reader thread a daemon otherwise output can be droppped
+            t.start()
+            joiners.append(t)
+        if callable(err):
+            t = Thread(target=redirect, args=(p.stderr, err))
+            # Don't make the reader thread a daemon otherwise output can be droppped
+            t.start()
+            joiners.append(t)
+        while any([t.is_alive() for t in joiners]):
+            # Need to use timeout otherwise all signals (including CTRL-C) are blocked
+            # see: http://bugs.python.org/issue1167930
+            for t in joiners:
+                t.join(10)
+        if timeout is None or timeout == 0:
+            while True:
+                try:
+                    retcode = waitOn(p)
+                    break
+                except KeyboardInterrupt:
+                    if get_os() == 'windows':
+                        p.terminate()
+                    else:
+                        # Propagate SIGINT to subprocess. If the subprocess does not
+                        # handle the signal, it will terminate and this loop exits.
+                        _kill_process(p.pid, signal.SIGINT)
+        else:
+            if get_os() == 'windows':
+                abort('Use of timeout not (yet) supported on Windows')
+            retcode = _waitWithTimeout(p, args, timeout, nonZeroIsFatal)
+    except OSError as e:
+        if not nonZeroIsFatal:
+            raise e
+        abort('Error executing \'' + ' '.join(args) + '\': ' + str(e))
+    except KeyboardInterrupt:
+        abort(1, killsig=signal.SIGINT)
+    finally:
+        _removeSubprocess(sub)
+
+    if retcode and nonZeroIsFatal:
+        logging.debug(subprocess.CalledProcessError(retcode, ' '.join(args)))
+        abort(retcode, '[exit code: ' + str(retcode) + ']')
+
+    return retcode
 
 if __name__ == "__main__":
     # run install/test
