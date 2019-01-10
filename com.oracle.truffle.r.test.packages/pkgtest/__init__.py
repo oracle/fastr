@@ -24,103 +24,21 @@
 '''
 The pkgtest command operates in two modes:
 1. In development mode it uses the FastR 'Rscript' command and the internal GNU R for test comparison
-2. In production mode it uses the GraalVM 'Rscript' command and a GNU R loaded as a sibling suite. This is indicated
-by the environment variable 'FASTR_GRAALVM' being set. (GRAALVM_FASTR is also accepted for backwards cmpatibility)
+2. In production mode it uses the _opts.graalvm 'Rscript' command and a GNU R loaded as a sibling suite. This is indicated
+by the environment variable 'FASTR__opts.graalvm' being set. (_opts.graalvm_FASTR is also accepted for backwards cmpatibility)
 
 Evidently in case 2, there is the potential for a version mismatch between FastR and GNU R, and this is checked.
 
 In either case all the output is placed in the fastr suite dir. Separate directories are used for FastR and GNU R package installs
 and tests, namely 'lib.install.packages.{fastr,gnur}' and 'test.{fastr,gnur}' (sh syntax).
 '''
-from os.path import join, relpath
-from datetime import datetime
+from os.path import relpath
 import shutil, os, re
-import subprocess
-import hashlib
-import logging
-from threading import Thread
-import time
-import signal
-import errno
 
-import output_filter
-
-quiet = False
-verbose = 0
-dump_preprocessed = False
-graalvm = None
-__fastr_home = None
-__gnur_home = None
-
-
-def abort(status, *args):
-    if args:
-        logging.error(*args)
-    quit(status)
-
-
-def _fastr_suite_dir():
-    return __fastr_home
-
-
-def get_gnur_home():
-    '''
-    Returns path to GnuR home dir, e.g., gnur/gnur/R-3.4.0/.
-    '''
-    return __gnur_home
-
-
-def _gnur_rscript():
-    '''
-    returns path to Rscript in sibling gnur directory
-    '''
-    # return _mx_gnur().extensions._gnur_rscript_path()
-    return join(get_gnur_home(), "bin", "Rscript")
-
-
-def _gnur_include_path():
-    # if _graalvm():
-    #     return join(_mx_gnur().dir, 'gnur', _mx_gnur().extensions.r_version(), 'include')
-    # return join(mx_fastr._gnur_path(), "include")
-    return join(get_gnur_home(), 'include')
-
-
-def _fastr_include_path():
-    if _graalvm():
-        return join(graalvm, "jre", "languages", "R", "include")
-    return join(_fastr_suite_dir(), 'include')
-
-
-def _graalvm_rscript():
-    assert graalvm is not None
-    return join(graalvm, 'bin', 'Rscript')
-
-
-def _fastr_rscript():
-    graalvm_dir = _graalvm()
-    if graalvm_dir is not None:
-        return join(graalvm_dir, "bin", "Rscript")
-    return join(_fastr_suite_dir(), 'bin', 'Rscript')
-
-
-def _get_r_version(rscript_binary):
-    args = ["--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], '\\n', sep='')"]
-    return subprocess.check_output([rscript_binary] + args, stderr=subprocess.STDOUT).rstrip()
-
-
-def _graalvm():
-    return graalvm
-
-
-def _check_r_versions():
-    '''
-    Checks that FastR and GnuR have the same version.
-    '''
-    gnur_version = _get_r_version(_gnur_rscript())
-    fastr_version = _get_r_version(_fastr_rscript())
-    logging.info("Using FastR version = %s ; GnuR version = %s: " % (fastr_version, gnur_version))
-    if gnur_version != fastr_version:
-        abort(1, 'graalvm R version does not match gnur suite: %s (GnuR) vs. %s (FastR)' % (gnur_version, fastr_version))
+from subproc import pkgtest_run
+from output_filter import select_filters_for_package
+from fuzzy_compare import fuzzy_compare
+from util import *
 
 
 def _create_libinstall(rvm, test_installed):
@@ -128,12 +46,12 @@ def _create_libinstall(rvm, test_installed):
     Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
     If use_installed_pkgs is True, assume lib.install exists and is populated (development)
     '''
-    libinstall = join(_fastr_suite_dir(), "lib.install.packages." + rvm)
+    libinstall = join(get_fastr_home(), "lib.install.packages." + rvm)
     if not test_installed:
         # make sure its empty
         shutil.rmtree(libinstall, ignore_errors=True)
         os.mkdir(libinstall)
-    install_tmp = join(_fastr_suite_dir(), "install.tmp." + rvm)
+    install_tmp = join(get_fastr_home(), "install.tmp." + rvm)
     #    install_tmp = join(_fastr_suite_dir(), "install.tmp")
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.mkdir(install_tmp)
@@ -142,15 +60,13 @@ def _create_libinstall(rvm, test_installed):
 
 
 def _create_testdot(rvm):
-    testdir = join(_fastr_suite_dir(), "test." + rvm)
+    testdir = join(get_fastr_home(), "test." + rvm)
     shutil.rmtree(testdir, ignore_errors=True)
     os.mkdir(testdir)
     return testdir
 
 
-def _log_timestamp():
-    if not quiet:
-        print ("timestamp: {0}".format(str(datetime.now())))
+
 
 
 def _find_subdir(root, name, fatalIfMissing=True):
@@ -162,10 +78,7 @@ def _find_subdir(root, name, fatalIfMissing=True):
         raise Exception(name)
 
 
-def _log_step(state, step, rvariant):
-    if not quiet:
-        print ("{0} {1} with {2}".format(state, step, rvariant))
-        _log_timestamp()
+
 
 
 def _packages_test_project():
@@ -173,7 +86,7 @@ def _packages_test_project():
 
 
 def _packages_test_project_dir():
-    return _find_subdir(_fastr_suite_dir(), _packages_test_project())
+    return _find_subdir(get_fastr_home(), _packages_test_project())
 
 
 def _ensure_R_on_PATH(env, bindir):
@@ -204,8 +117,8 @@ def installpkgs(args, **kwargs):
     if "FASTR_WORKING_DIR" in os.environ:
         env["TMPDIR"] = os.environ["FASTR_WORKING_DIR"]
 
-    _ensure_R_on_PATH(env, os.path.dirname(_fastr_rscript()))
-    cmd_line = [_fastr_rscript(), _installpkgs_script()] + args
+    _ensure_R_on_PATH(env, os.path.dirname(get_fastr_rscript()))
+    cmd_line = [get_fastr_rscript(), _installpkgs_script()] + args
     logging.debug("Running FastR with cmd line: " + str(cmd_line))
     return pkgtest_run(cmd_line, out=out, err=err, env=env)
 
@@ -258,9 +171,9 @@ def pkgtest(args):
     env['FASTR_OPTION_PrintErrorStacktraces'] = 'true'
 
     # If '--cache-pkgs' is set, then also set the native API version value
-    _set_pkg_cache_api_version(install_args, _fastr_include_path())
+    _set_pkg_cache_api_version(install_args, get_fastr_include_path())
 
-    _log_step('BEGIN', 'install/test', 'FastR')
+    log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.packages.R)
     out = OutputCapture()
     rc = installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
@@ -272,7 +185,7 @@ def pkgtest(args):
     for status in out.install_status.itervalues():
         if not status:
             rc = 1
-    _log_step('END', 'install/test', 'FastR')
+    log_step('END', 'install/test', 'FastR')
 
     single_pkg = len(out.install_status) == 1
     install_failure = single_pkg and rc == 1
@@ -283,7 +196,7 @@ def pkgtest(args):
         gnur_args = _args_to_forward_to_gnur(install_args)
 
         # If '--cache-pkgs' is set, then also set the native API version value
-        _set_pkg_cache_api_version(gnur_args, _gnur_include_path())
+        _set_pkg_cache_api_version(gnur_args, get_gnur_include_path())
 
         _gnur_install_test(gnur_args, ok_pkgs, gnur_libinstall, gnur_install_tmp)
         _set_test_status(out.test_info)
@@ -397,7 +310,7 @@ class TestStatus:
 
 
 def _pkg_testdir(rvm, pkg_name):
-    return join(_fastr_suite_dir(), 'test.' + rvm, pkg_name)
+    return join(get_fastr_home(), 'test.' + rvm, pkg_name)
 
 
 def _get_test_outputs(rvm, pkg_name, test_info):
@@ -445,7 +358,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     N.B. That means that regardless of how the packages were specified to pkgtest
     we always use a --pkg-filelist' arg to GNU R
     '''
-    gnur_packages = join(_fastr_suite_dir(), 'gnur.packages')
+    gnur_packages = join(get_fastr_home(), 'gnur.packages')
     with open(gnur_packages, 'w') as f:
         for pkg in pkgs:
             f.write(pkg)
@@ -462,14 +375,14 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args += ['--run-tests']
     args += ['--ignore-blacklist']
     args += ['--testdir', 'test.gnur']
-    _log_step('BEGIN', 'install/test', 'GnuR')
+    log_step('BEGIN', 'install/test', 'GnuR')
 
-    _ensure_R_on_PATH(env, os.path.dirname(_gnur_rscript()))
-    cmd_line = [_gnur_rscript()] + args
+    _ensure_R_on_PATH(env, os.path.dirname(get_gnur_rscript()))
+    cmd_line = [get_gnur_rscript()] + args
     logging.debug("Running GnuR with cmd line: " + str(cmd_line))
     pkgtest_run(cmd_line, env=env)
 
-    _log_step('END', 'install/test', 'GnuR')
+    log_step('END', 'install/test', 'GnuR')
 
 
 def _set_test_status(fastr_test_info):
@@ -530,7 +443,7 @@ def _set_test_status(fastr_test_info):
                 fastr_content = f.readlines()
 
             # parse custom filters from file
-            filters = output_filter.select_filters_for_package(os.path.join(_packages_test_project_dir(), "test.output.filter"), pkg)
+            filters = select_filters_for_package(os.path.join(_packages_test_project_dir(), "test.output.filter"), pkg)
 
             # first, parse file and see if a known test framework has been used
             detected, ok, skipped, failed = handle_output_file(fastr_testfile_status.abspath, fastr_content)
@@ -564,11 +477,11 @@ def _set_test_status(fastr_test_info):
                     fastr_testfile_status.status = "OK"
                     fastr_testfile_status.report = ok, skipped, failed
             else:
-                from fuzzy_compare import fuzzy_compare
                 result, n_tests_passed, n_tests_failed = fuzzy_compare(gnur_content, fastr_content,
                                                                         gnur_testfile_status.abspath,
                                                                         fastr_testfile_status.abspath,
-                                                                        custom_filters=filters)
+                                                                        custom_filters=filters,
+                                                                        dump_preprocessed=_opts.dump_preprocessed)
                 if result == -1:
                     logging.info("{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath))
                     fastr_test_status.status = "INDETERMINATE"
@@ -730,7 +643,7 @@ def find_top100():
 
 def find_top(args):
     n = args[-1]
-    libinstall = join(_fastr_suite_dir(), "top%s.tmp" % n)
+    libinstall = join(get_fastr_home(), "top%s.tmp" % n)
     if not os.path.exists(libinstall):
         os.mkdir(libinstall)
     os.environ['R_LIBS_USER'] = libinstall
@@ -748,288 +661,5 @@ def remove_dup_pkgs(args):
     return result
 
 
-def computeApiChecksum(includeDir):
-    """
-    Computes a checksum of the header files found in the provided directory (recursively).
-    The result is a SHA256 checksum (as string with hex digits) of all header files.
-    """
-    m = hashlib.sha256()
-    rootDir = includeDir
-    fileList = list()
-    for root, _, files in os.walk(rootDir):
-        logging.debug("Visiting directory %s" % root)
-        for f in files:
-            fileName = join(root, f)
-            if fileName.endswith('.h'):
-                logging.debug("Including file %s" % fileName)
-                fileList.append(fileName)
-
-    # sorting makes the checksum independent of the FS traversal order
-    fileList.sort()
-    for fileName in fileList:
-        try:
-            with open(fileName) as f:
-                m.update(f.read())
-        except IOError as e:
-            # Ignore errors on broken symlinks
-            if not os.path.islink(fileName) or os.path.exists(fileName):
-                raise e
-
-    hxdigest = m.hexdigest()
-    logging.debug("Computed API version checksum {0}".format(hxdigest))
-    return hxdigest
-
-
 class TestFrameworkResultException(BaseException):
     pass
-
-
-def parse_arguments(argv):
-    """
-    Parses the given argument vector and stores the values of the arguments known by this script to appropriate globals.
-    The unknown arguments are returned for further processing.
-    """
-    import argparse
-    parser = argparse.ArgumentParser(description='FastR package testing.')
-    parser.add_argument('--fastr-home', metavar='FASTR_HOME', dest="fastr_home", type=str, default=None,
-                        required=True, help='The FastR standalone repo home directory.')
-    parser.add_argument('--gnur-home', metavar="GNUR_HOME", dest="gnur_home", default=None, required=True,
-                        help='The GnuR home directory.')
-    parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
-                        help='The GraalVM root directory.')
-    parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
-                        help='Do verbose logging.')
-    parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
-                        help='Do verbose logging.')
-    parser.add_argument('--dump-preprocessed', dest="dump-preprocessed", action="store_true",
-                        help='Dump processed output files where replacement filters have been applied.')
-    parser.add_argument('-q', '--quiet', dest="quiet", type=bool, default=False,
-                        help='Do verbose logging.')
-    known_args, r_args = parser.parse_known_args(args=argv)
-
-    global quiet, dump_preprocessed, __fastr_home, __gnur_home, graalvm
-    __fastr_home = known_args.fastr_home
-    __gnur_home = known_args.gnur_home
-    graalvm = known_args.graalvm_home
-
-    verbose = known_args.verbose
-    quiet = known_args.quiet
-
-    if verbose == 1:
-        logging.basicConfig(level=logging.INFO)
-        logging.error("verbosity: INFO")
-    elif verbose == 2:
-        logging.basicConfig(level=logging.DEBUG)
-        logging.error("verbosity: DEBUG")
-
-    logging.debug("known_args: %s" % known_args)
-
-    # print info if GraalVM is used
-    if _graalvm():
-        logging.info("Using GraalVM at %r" % _graalvm())
-
-    # ensure that FastR and GnuR have the same version
-    _check_r_versions()
-
-    return r_args
-
-
-def get_os():
-    """
-    Get a canonical form of sys.platform.
-    """
-    if sys.platform.startswith('darwin'):
-        return 'darwin'
-    elif sys.platform.startswith('linux'):
-        return 'linux'
-    elif sys.platform.startswith('openbsd'):
-        return 'openbsd'
-    elif sys.platform.startswith('sunos'):
-        return 'solaris'
-    elif sys.platform.startswith('win32'):
-        return 'windows'
-    elif sys.platform.startswith('cygwin'):
-        return 'cygwin'
-    else:
-        abort(1, 'Unknown operating system ' + sys.platform)
-
-
-_currentSubprocesses = []
-
-def _addSubprocess(p, args):
-    entry = (p, args)
-    logging.debug('[{}: started subprocess {}: {}]'.format(os.getpid(), p.pid, args))
-    _currentSubprocesses.append(entry)
-    return entry
-
-def _removeSubprocess(entry):
-    if entry and entry in _currentSubprocesses:
-        try:
-            _currentSubprocesses.remove(entry)
-        except:
-            pass
-
-
-def waitOn(p):
-    if get_os() == 'windows':
-        # on windows use a poll loop, otherwise signal does not get handled
-        retcode = None
-        while retcode == None:
-            retcode = p.poll()
-            time.sleep(0.05)
-    else:
-        retcode = p.wait()
-    return retcode
-
-
-def _kill_process(pid, sig):
-    """
-    Sends the signal `sig` to the process identified by `pid`. If `pid` is a process group
-    leader, then signal is sent to the process group id.
-    """
-    pgid = os.getpgid(pid)
-    try:
-        logging.debug('[{} sending {} to {}]'.format(os.getpid(), sig, pid))
-        if pgid == pid:
-            os.killpg(pgid, sig)
-        else:
-            os.kill(pid, sig)
-        return True
-    except:
-        logging.error('Error killing subprocess ' + str(pid) + ': ' + str(sys.exc_info()[1]))
-        return False
-
-
-ERROR_TIMEOUT = 0x700000000 # not 32 bits
-
-
-def _waitWithTimeout(process, args, timeout, nonZeroIsFatal=True):
-    def _waitpid(pid):
-        while True:
-            try:
-                return os.waitpid(pid, os.WNOHANG)
-            except OSError, e:
-                if e.errno == errno.EINTR:
-                    continue
-                raise
-
-    def _returncode(status):
-        if os.WIFSIGNALED(status):
-            return -os.WTERMSIG(status)
-        elif os.WIFEXITED(status):
-            return os.WEXITSTATUS(status)
-        else:
-            # Should never happen
-            raise RuntimeError("Unknown child exit status!")
-
-    end = time.time() + timeout
-    delay = 0.0005
-    while True:
-        (pid, status) = _waitpid(process.pid)
-        if pid == process.pid:
-            return _returncode(status)
-        remaining = end - time.time()
-        if remaining <= 0:
-            msg = 'Process timed out after {0} seconds: {1}'.format(timeout, ' '.join(args))
-            if nonZeroIsFatal:
-                abort(1, msg)
-            else:
-                logging.error(msg)
-                _kill_process(process.pid, signal.SIGKILL)
-                return ERROR_TIMEOUT
-        delay = min(delay * 2, remaining, .05)
-        time.sleep(delay)
-
-
-def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None, env=None, **kwargs):
-    """
-    Imported from MX.
-    Run a command in a subprocess, wait for it to complete and return the exit status of the process.
-    If the command times out, it kills the subprocess and returns `ERROR_TIMEOUT` if `nonZeroIsFatal`
-    is false, otherwise it kills all subprocesses and raises a SystemExit exception.
-    If the exit status of the command is non-zero, mx is exited with the same exit status if
-    `nonZeroIsFatal` is true, otherwise the exit status is returned.
-    Each line of the standard output and error streams of the subprocess are redirected to
-    out and err if they are callable objects.
-    """
-
-    assert isinstance(args, (list, tuple)), "'args' must be a list or tuple: " + str(args)
-    for arg in args:
-        assert isinstance(arg, (str, bytes)), 'argument is not a string: ' + str(arg)
-
-    if env is None:
-        env = os.environ.copy()
-
-    msg = 'Environment variables:\n'
-    msg += '\n'.join(['    ' + key + '=' + env[key] for key in env.keys()])
-    logging.debug(msg)
-
-    sub = None
-
-    try:
-        if timeout or get_os() == 'windows':
-            # TODO windows
-            #preexec_fn, creationflags = _get_new_progress_group_args()
-            pass
-        else:
-            preexec_fn, creationflags = (None, 0)
-
-        def redirect(stream, f):
-            for line in iter(stream.readline, ''):
-                f(line)
-            stream.close()
-        stdout = out if not callable(out) else subprocess.PIPE
-        stderr = err if not callable(err) else subprocess.PIPE
-        p = subprocess.Popen(args, cwd=cwd, stdout=stdout, stderr=stderr, preexec_fn=preexec_fn, creationflags=creationflags, env=env, **kwargs)
-        sub = _addSubprocess(p, args)
-        joiners = []
-        if callable(out):
-            t = Thread(target=redirect, args=(p.stdout, out))
-            # Don't make the reader thread a daemon otherwise output can be droppped
-            t.start()
-            joiners.append(t)
-        if callable(err):
-            t = Thread(target=redirect, args=(p.stderr, err))
-            # Don't make the reader thread a daemon otherwise output can be droppped
-            t.start()
-            joiners.append(t)
-        while any([t.is_alive() for t in joiners]):
-            # Need to use timeout otherwise all signals (including CTRL-C) are blocked
-            # see: http://bugs.python.org/issue1167930
-            for t in joiners:
-                t.join(10)
-        if timeout is None or timeout == 0:
-            while True:
-                try:
-                    retcode = waitOn(p)
-                    break
-                except KeyboardInterrupt:
-                    if get_os() == 'windows':
-                        p.terminate()
-                    else:
-                        # Propagate SIGINT to subprocess. If the subprocess does not
-                        # handle the signal, it will terminate and this loop exits.
-                        _kill_process(p.pid, signal.SIGINT)
-        else:
-            if get_os() == 'windows':
-                abort('Use of timeout not (yet) supported on Windows')
-            retcode = _waitWithTimeout(p, args, timeout, nonZeroIsFatal)
-    except OSError as e:
-        if not nonZeroIsFatal:
-            raise e
-        abort('Error executing \'' + ' '.join(args) + '\': ' + str(e))
-    except KeyboardInterrupt:
-        abort(1, killsig=signal.SIGINT)
-    finally:
-        _removeSubprocess(sub)
-
-    if retcode and nonZeroIsFatal:
-        logging.debug(subprocess.CalledProcessError(retcode, ' '.join(args)))
-        abort(retcode, '[exit code: ' + str(retcode) + ']')
-
-    return retcode
-
-if __name__ == "__main__":
-    # run install/test
-    import sys
-    pkgtest(sys.argv)
