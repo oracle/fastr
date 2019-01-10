@@ -239,9 +239,30 @@
     }
 
     if(substr(returnSig, 1, 1) %in% c("L", "[")) {        
+
+        # >>>>>> char conversion HACK >>>>>>
+        # TODO not sure if this is necessary at the current state of things in rJava
+        # - .jsimplify doesnt work for Characer S4 jrefobj and there is no other way 
+        #   how to get the primitive out of it
+        # - might be it would be better to patch .jsimplify to call .charToInt(res) 
+        #   instead of calling .intValue() on a Character (pointer)
+        # if(returnSig == "Ljava/lang/Character;") {
+        #     # char -> integer
+        #     res <- .charToInt(res)
+        #     ep <- .fromJ(res, toExtPointer=TRUE)
+        #     attr(ep, "external.classname") <- 'java.lang.Character;'
+        #     return(ep)
+        #  }
+        # <<<<<< char conversion HACK <<<<<<
+
         .fromJ(res, toExtPointer=TRUE)
     } else {
-        .fromJ(res, toExtPointer=FALSE)    
+        # <<<<<< char conversion HACK <<<<<<
+        if(returnSig == "C") {
+            res <- .charToInt(res)
+        }
+        # >>>>>> char conversion HACK >>>>>>
+        .fromJ(res, toExtPointer=FALSE)
     }
 }
 
@@ -310,6 +331,12 @@
             }
             if(!startsWith(clsname, "java.lang")) {
                 # not polyglot object and not java.lang - must be primitive                
+
+                if(clsname == "char") {
+                    # char conversion HACK
+                    res <- .charToInt(res)
+                }
+
                 return(res)
             }
             clsname <- gsub(".", "/", clsname, fixed=T)
@@ -323,6 +350,12 @@
             }
             if(!startsWith(sig, "L") && !startsWith(sig, "java.lang")) {
                 # not polyglot object and not java.lang - must be primitive
+
+                if(sig == "char") {
+                    # char conversion HACK
+                    res <- .charToInt(res)
+                }
+
                 return(res)
             }
             clsname <- gsub(".", "/", .signatureToClassName(sig), fixed=T)
@@ -425,8 +458,10 @@
 .RgetCharArrayCont <- function(obj) {
     obj # force args
 
-    # TODO as.integer might cause trouble?
-    .getArrayCont(obj, as.integer)
+    # char conversion HACK
+    # the regular as.integer would not work at this place, 
+    # so use internal builtin to cast char to int
+    .getArrayCont(obj, .fastr.interop.asVector, charToInt=TRUE)
 }
 
 .RgetShortArrayCont <- function(obj) {
@@ -475,7 +510,7 @@
     lapply(obj, function(e) {.fromJ(e, toExtPointer=TRUE)})
 }
 
-.getArrayCont <- function(obj, toVectorFun) {
+.getArrayCont <- function(obj, toVectorFun, ...) {
     obj; toVectorFun # force args
 
     if(is.null(obj)) {
@@ -491,7 +526,7 @@
     if(missing(toVectorFun)) {
         res <- as.vector(obj)
     } else {
-       res <- toVectorFun(obj)    
+       res <- toVectorFun(obj, ...)    
     }
     res
 }
@@ -724,6 +759,14 @@
     } else {
         sig
     }
+}
+
+# could be replaced with internal builtin with a simple java cast:
+# charToInt(String s) { return (int) s.charAt(0); }
+.charToInt <- function(s) {
+    s # force args
+
+    as.integer(.fastr.interop.asJavaTruffleObject(s)$getBytes('US-ASCII')[1])
 }
 
 .IS_JOBJREF <- function(obj) {
