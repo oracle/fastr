@@ -7,6 +7,7 @@ Added missing R builtins and C API
 Bug fixes:
 
 * `sys.calls` gives wrong result when `eval` with `envir` argument is on the call stack
+* `is.na` was not correctly handling lists, for example: `is.na(list(function() 42))`
 
 # 1.0 RC 11
 
