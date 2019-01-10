@@ -200,11 +200,11 @@ def pkgtest(args):
 
         _gnur_install_test(gnur_args, ok_pkgs, gnur_libinstall, gnur_install_tmp)
         _set_test_status(out.test_info)
-        print ('Test Status')
+        logging.info('Test Status')
         for pkg, test_status in out.test_info.iteritems():
             if test_status.status != "OK":
                 rc = rc | 2
-            print ('{0}: {1}'.format(pkg, test_status.status))
+            logging.info('{0}: {1}'.format(pkg, test_status.status))
 
         diffdir = _create_testdot('diffs')
         for pkg, _ in out.test_info.iteritems():
@@ -243,7 +243,8 @@ class OutputCapture:
         self.test_info = dict()
 
     def __call__(self, data):
-        print(data)
+        # The logger is always appending a newline at the end but we want to avoid double newlines.
+        logging.info(data[:-1] if data.endswith('\n') else data)
         if data == "BEGIN package installation\n":
             self.mode = "install"
             return
@@ -481,7 +482,7 @@ def _set_test_status(fastr_test_info):
                                                                         gnur_testfile_status.abspath,
                                                                         fastr_testfile_status.abspath,
                                                                         custom_filters=filters,
-                                                                        dump_preprocessed=_opts.dump_preprocessed)
+                                                                        dump_preprocessed=get_opts().dump_preprocessed)
                 if result == -1:
                     logging.info("{0}: content malformed: {1}".format(pkg, gnur_test_output_relpath))
                     fastr_test_status.status = "INDETERMINATE"

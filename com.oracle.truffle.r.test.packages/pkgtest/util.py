@@ -10,6 +10,10 @@ from datetime import datetime
 _opts = argparse.Namespace()
 
 
+def get_opts():
+    return _opts
+
+
 def get_fastr_home():
     return _opts.fastr_home
 
@@ -38,19 +42,19 @@ def get_gnur_include_path():
 
 def get_fastr_include_path():
     if get_graalvm_home():
-        return join(_opts.graalvm, "jre", "languages", "R", "include")
+        return join(get_graalvm_home(), "jre", "languages", "R", "include")
     return join(get_fastr_home(), 'include')
 
 
 def graalvm_rscript():
-    assert _opts.graalvm is not None
-    return join(_opts.graalvm, 'bin', 'Rscript')
+    assert get_graalvm_home() is not None
+    return join(get_graalvm_home(), 'bin', 'Rscript')
 
 
 def get_fastr_rscript():
-    _opts.graalvm_dir = get_graalvm_home()
-    if _opts.graalvm_dir is not None:
-        return join(_opts.graalvm_dir, "bin", "Rscript")
+    graalvm_dir = get_graalvm_home()
+    if graalvm_dir is not None:
+        return join(graalvm_dir, "bin", "Rscript")
     return join(get_fastr_home(), 'bin', 'Rscript')
 
 
@@ -70,13 +74,13 @@ def abort(status, *args):
 
 def log_step(state, step, rvariant):
     if not _opts.quiet:
-        print ("{0} {1} with {2}".format(state, step, rvariant))
+        logging.info("{0} {1} with {2}".format(state, step, rvariant))
         log_timestamp()
 
 
 def log_timestamp():
     if not _opts.quiet:
-        print ("timestamp: {0}".format(str(datetime.now())))
+        logging.info("timestamp: {0}".format(str(datetime.now())))
 
 
 def check_r_versions():
@@ -87,7 +91,7 @@ def check_r_versions():
     fastr_version = get_r_version(get_fastr_rscript())
     logging.info("Using FastR version = %s ; GnuR version = %s: " % (fastr_version, gnur_version))
     if gnur_version != fastr_version:
-        abort(1, '_opts.graalvm R version does not match gnur suite: %s (GnuR) vs. %s (FastR)' % (gnur_version, fastr_version))
+        abort(1, 'GraalVM R version does not match GnuR version: %s (FastR) vs. %s (GnuR)' % (fastr_version, gnur_version))
 
 
 def parse_arguments(argv):
@@ -100,8 +104,8 @@ def parse_arguments(argv):
                         required=True, help='The FastR standalone repo home directory.')
     parser.add_argument('--gnur-home', metavar="GNUR_HOME", dest="gnur_home", default=None, required=True,
                         help='The GnuR home directory.')
-    parser.add_argument('--_opts.graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
-                        help='The _opts.graalvm root directory.')
+    parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
+                        help='The GraalVM root directory.')
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
                         help='Do verbose logging.')
     parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
@@ -115,21 +119,25 @@ def parse_arguments(argv):
     global _opts
     _opts, r_args = parser.parse_known_args(args=argv)
 
-
+    log_format = '%(message)s'
     if _opts.verbose == 1:
         log_level = logging.INFO
     elif _opts.verbose == 2:
         log_level = logging.DEBUG
-    logging.basicConfig(filename=_opts.log_file, level=log_level)
+    logging.basicConfig(filename=_opts.log_file, level=log_level, format=log_format)
 
     # also log to console
-    logging.getLogger("").addHandler(logging.StreamHandler(stream=sys.stdout))
+    console_handler = logging.StreamHandler(stream=sys.stdout)
+    console_handler.setLevel(log_level)
+
+    console_handler.setFormatter(logging.Formatter(log_format))
+    logging.getLogger("").addHandler(console_handler)
 
     logging.debug("known_args: %s" % _opts)
 
     # print info if _opts.graalvm is used
     if get_graalvm_home():
-        logging.info("Using _opts.graalvm at %r" % get_graalvm_home())
+        logging.info("Using GraalVM at %r" % get_graalvm_home())
 
     # ensure that FastR and GnuR have the same version
     check_r_versions()
