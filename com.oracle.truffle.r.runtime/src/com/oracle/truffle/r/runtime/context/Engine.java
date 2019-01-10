@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ public interface Engine {
      */
     void activate(REnvironment.ContextStateImpl stateREnvironment);
 
-    public interface Timings {
+    interface Timings {
         /**
          * Elapsed time of runtime.
          *
@@ -161,6 +161,53 @@ public interface Engine {
     }
 
     /**
+     * Wrapper for GNU-R compatible metadata about the parse tree of R code.
+     *
+     * @see com.oracle.truffle.r.runtime.nodes.RCodeBuilder
+     */
+    final class ParserMetadata {
+        private final int[] data;
+        private final String[] tokens;
+        private final String[] text;
+
+        public ParserMetadata(int[] data, String[] tokens, String[] text) {
+            this.data = data;
+            this.tokens = tokens;
+            this.text = text;
+        }
+
+        public int[] getData() {
+            return data;
+        }
+
+        public String[] getTokens() {
+            return tokens;
+        }
+
+        public String[] getText() {
+            return text;
+        }
+    }
+
+    final class ParsedExpression {
+        private final RExpression expr;
+        private final ParserMetadata parseData;
+
+        public ParsedExpression(RExpression expr, ParserMetadata parseData) {
+            this.expr = expr;
+            this.parseData = parseData;
+        }
+
+        public RExpression getExpression() {
+            return expr;
+        }
+
+        public ParserMetadata getParseData() {
+            return parseData;
+        }
+    }
+
+    /**
      * Return the timing information for this engine.
      */
     Timings getTimings();
@@ -169,7 +216,7 @@ public interface Engine {
      * Parse an R expression and return an {@link RExpression} object representing the Truffle ASTs
      * for the components.
      */
-    RExpression parse(Source source) throws ParseException;
+    ParsedExpression parse(Source source) throws ParseException;
 
     /**
      * This is the external interface from

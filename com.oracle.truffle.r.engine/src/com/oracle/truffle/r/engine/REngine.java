@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -275,17 +275,17 @@ final class REngine implements Engine, Engine.Timings {
 
     private List<RSyntaxNode> parseSource(Source source) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
-        return parser.script(source, new RASTBuilder(), context.getLanguage());
+        return parser.script(source, new RASTBuilder(true), context.getLanguage());
     }
 
     @Override
-    public RExpression parse(Source source) throws ParseException {
-        List<RSyntaxNode> list = parseSource(source);
-        Object[] data = new Object[list.size()];
-        for (int i = 0; i < data.length; i++) {
-            data[i] = RASTUtils.createLanguageElement(list.get(i));
-        }
-        return RDataFactory.createExpression(data);
+    public ParsedExpression parse(Source source) throws ParseException {
+        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+        RASTBuilder builder = new RASTBuilder(true);
+        List<RSyntaxNode> script = parser.script(source, builder, context.getLanguage());
+        // TODO: remove the usage of stream API
+        Object[] data = script.stream().map(RASTUtils::createLanguageElement).toArray();
+        return new ParsedExpression(RDataFactory.createExpression(data), builder.getParseData());
     }
 
     @Override
@@ -387,7 +387,7 @@ final class REngine implements Engine, Engine.Timings {
                     List<RSyntaxNode> currentStmts = null;
                     try {
                         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
-                        currentStmts = parser.statements(src, fullSource, startLine, new RASTBuilder(), context.getLanguage());
+                        currentStmts = parser.statements(src, fullSource, startLine, new RASTBuilder(true), context.getLanguage());
                     } catch (IncompleteSourceException e) {
                         lastParseException = e;
                         if (nextLineInput != null) {

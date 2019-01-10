@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.context.Engine.ParserMetadata;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -82,6 +83,33 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     private CodeBuilderContext context = CodeBuilderContext.DEFAULT;
+    private ParseDataBuilder parseDataBuilder;
+
+    public RASTBuilder(boolean keepSource) {
+        this.parseDataBuilder = keepSource ? new ParseDataBuilder() : null;
+    }
+
+    public ParserMetadata getParseData() {
+        assert parseDataBuilder != null : "cannot invoke getParseData on RASTBuilder creates with keepSource == false";
+        return parseDataBuilder.getParseData();
+    }
+
+    @Override
+    public void modifyLastToken(RCodeToken newToken) {
+        parseDataBuilder.modifyLastToken(newToken);
+    }
+
+    @Override
+    public void modifyLastTokenIf(RCodeToken oldToken, RCodeToken newToken) {
+        parseDataBuilder.modifyLastTokenIf(oldToken, newToken);
+    }
+
+    @Override
+    public void token(SourceSection source, RCodeToken token, String tokenTextIn) {
+        if (parseDataBuilder != null) {
+            parseDataBuilder.token(source, token, tokenTextIn);
+        }
+    }
 
     @Override
     public RSyntaxNode call(SourceSection source, RSyntaxNode lhs, List<Argument<RSyntaxNode>> args, DynamicObject attributes) {
@@ -94,6 +122,10 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         if (lhs instanceof RSyntaxLookup) {
             RSyntaxLookup lhsLookup = (RSyntaxLookup) lhs;
             String symbol = lhsLookup.getIdentifier();
+
+            if (parseDataBuilder != null) {
+                parseDataBuilder.lookupCall(source, symbol);
+            }
             if (args.size() == 0) {
                 switch (symbol) {
                     case "break":
@@ -164,6 +196,8 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
                 case ".Internal":
                     return InternalNode.create(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
             }
+        } else {
+            recordExpr(source);
         }
 
         return RCallSpecialNode.createCall(source, lhs.asRNode(), createSignature(args), createArguments(args));
@@ -261,7 +295,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         saveArguments = new SaveArgumentsNode(init);
-        if (!params.isEmpty() && true && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
+        if (!params.isEmpty() && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
             argPostProcess = PostProcessArgumentsNode.create(params.size());
         } else {
             argPostProcess = null;
@@ -296,6 +330,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
 
     @Override
     public RSyntaxNode constant(SourceSection source, Object value) {
+        recordExpr(source);
         if (value instanceof String && !RRuntime.isNA((String) value)) {
             return ConstantNode.create(source, Utils.intern((String) value));
         }
@@ -309,7 +344,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
     }
 
     @Override
-    public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
+    public RSyntaxNode specialLookup(SourceSection source, String symbol, boolean functionLookup) {
         assert source != null;
         if (!functionLookup) {
             int index = RSyntaxLookup.getVariadicComponentIndex(symbol);
@@ -318,5 +353,18 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             }
         }
         return ReadVariableNode.wrap(source, functionLookup ? ReadVariableNode.createForcedFunctionLookup(symbol) : ReadVariableNode.create(symbol));
+    }
+
+    @Override
+    public RSyntaxNode lookup(SourceSection source, String symbol, boolean functionLookup) {
+        assert source != null;
+        recordExpr(source);
+        return specialLookup(source, symbol, functionLookup);
+    }
+
+    private void recordExpr(SourceSection source) {
+        if (parseDataBuilder != null) {
+            parseDataBuilder.expr(source);
+        }
     }
 }

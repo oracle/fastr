@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -177,6 +177,10 @@ public final class ArgumentsSignature implements Iterable<String> {
             return null;
         }
         return names[index] == UNMATCHED ? null : names[index];
+    }
+
+    public boolean hasName(int index) {
+        return names != null && names[index] != UNMATCHED && names[index] != null;
     }
 
     /**

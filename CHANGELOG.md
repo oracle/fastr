@@ -1,5 +1,9 @@
 # 1.0 RC 12
 
+Added missing R builtins and C API
+
+* FastR provides GNU-R compatible `parseData` for expressions parsed via `parse(...,keep.source=T)`
+
 Bug fixes:
 
 * `sys.calls` gives wrong result when `eval` with `envir` argument is on the call stack
