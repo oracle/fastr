@@ -188,13 +188,13 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             }
             switch (symbol) {
                 case "{":
-                    return new BlockNode(source, lhsLookup, args.stream().map(n -> n.value.asRNode()).toArray(RNode[]::new));
+                    return new BlockNode(source, lhsLookup, toRNodeArray(args));
                 case "missing":
-                    return new MissingNode(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
+                    return new MissingNode(source, lhsLookup, createSignature(args), toSyntaxElementArray(args));
                 case "quote":
-                    return new QuoteNode(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxElement[]::new));
+                    return new QuoteNode(source, lhsLookup, createSignature(args), toSyntaxElementArray(args));
                 case ".Internal":
-                    return InternalNode.create(source, lhsLookup, createSignature(args), args.stream().map(a -> a.value).toArray(RSyntaxNode[]::new));
+                    return InternalNode.create(source, lhsLookup, createSignature(args), toSyntaxNodeArray(args));
             }
         } else {
             recordExpr(source);
@@ -203,10 +203,36 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         return RCallSpecialNode.createCall(source, lhs.asRNode(), createSignature(args), createArguments(args));
     }
 
+    private static RSyntaxElement[] toSyntaxElementArray(List<Argument<RSyntaxNode>> args) {
+        RSyntaxElement[] result = new RSyntaxElement[args.size()];
+        for (int i = 0; i < args.size(); i++) {
+            result[i] = args.get(i).value;
+        }
+        return result;
+    }
+
+    private static RSyntaxNode[] toSyntaxNodeArray(List<Argument<RSyntaxNode>> args) {
+        RSyntaxNode[] result = new RSyntaxNode[args.size()];
+        for (int i = 0; i < args.size(); i++) {
+            result[i] = args.get(i).value;
+        }
+        return result;
+    }
+
+    private static RNode[] toRNodeArray(List<Argument<RSyntaxNode>> args) {
+        RNode[] result = new RNode[args.size()];
+        for (int i = 0; i < args.size(); i++) {
+            result[i] = args.get(i).value.asRNode();
+        }
+        return result;
+    }
+
     private static ArgumentsSignature createSignature(List<Argument<RSyntaxNode>> args) {
-        String[] argumentNames = args.stream().map(arg -> arg.name).toArray(String[]::new);
-        ArgumentsSignature signature = ArgumentsSignature.get(argumentNames);
-        return signature;
+        String[] argumentNames = new String[args.size()];
+        for (int i = 0; i < args.size(); i++) {
+            argumentNames[i] = args.get(i).name;
+        }
+        return ArgumentsSignature.get(argumentNames);
     }
 
     private static RSyntaxNode[] createArguments(List<Argument<RSyntaxNode>> args) {

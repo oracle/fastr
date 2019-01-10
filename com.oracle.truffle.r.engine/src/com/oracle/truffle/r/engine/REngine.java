@@ -283,8 +283,10 @@ final class REngine implements Engine, Engine.Timings {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
         RASTBuilder builder = new RASTBuilder(true);
         List<RSyntaxNode> script = parser.script(source, builder, context.getLanguage());
-        // TODO: remove the usage of stream API
-        Object[] data = script.stream().map(RASTUtils::createLanguageElement).toArray();
+        Object[] data = new Object[script.size()];
+        for (int i = 0; i < script.size(); i++) {
+            data[i] = RASTUtils.createLanguageElement(script.get(i));
+        }
         return new ParsedExpression(RDataFactory.createExpression(data), builder.getParseData());
     }
 
