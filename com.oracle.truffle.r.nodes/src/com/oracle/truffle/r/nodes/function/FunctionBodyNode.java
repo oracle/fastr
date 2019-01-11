@@ -42,11 +42,11 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 public final class FunctionBodyNode extends Node implements RootBodyNode {
 
     @Child private RNode body;
-    @Child private RNode saveArguments;
+    @Child private SaveArgumentsNode saveArguments;
     @Child private SetupS3ArgsNode setupS3Args;
     @Child private SetupS4ArgsNode setupS4Args;
 
-    public FunctionBodyNode(RNode saveArguments, RNode body) {
+    public FunctionBodyNode(SaveArgumentsNode saveArguments, RNode body) {
         this.body = body;
         this.saveArguments = saveArguments;
     }

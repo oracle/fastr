@@ -149,6 +149,8 @@ public class TestS4 extends TestRBase {
         assertEval(Output.IgnoreErrorContext, "{ standardGeneric(\"foo\", 42) }");
         assertEval(Output.IgnoreErrorContext, "{ x<-42; class(x)<-character(); standardGeneric(\"foo\", x) }");
         assertEval("{ setClass('A4', representation(a = 'numeric')); setMethod('[[', 'A4', function(x, i, j, ...) NULL); obj <- new('A4'); obj[[1]] }");
+
+        assertEval("{ testStdGenericBar <- function(x = {cat('eval y\\n');y}) { cat('enter bar\\n'); y <- 41; cat('read y\\n'); x+1 }; setGeneric('testStdGenericBar'); testStdGenericBar() }");
     }
 
     @Test
