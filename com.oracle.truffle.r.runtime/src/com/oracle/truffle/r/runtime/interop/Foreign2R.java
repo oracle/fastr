@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,6 +88,26 @@ public abstract class Foreign2R extends RBaseNode {
     @Specialization
     public Object doInteropNA(RInteropNA interopNA) {
         return interopNA.getValue();
+    }
+
+    @Specialization(guards = "isNA(d)")
+    public double doDoubleNA(@SuppressWarnings("unused") double d) {
+        return Double.NaN;
+    }
+
+    @Specialization(guards = "!isNA(d)")
+    public double doDouble(double d) {
+        return d;
+    }
+
+    @Specialization(guards = "isNA(i)")
+    public double doIntNA(int i) {
+        return i;
+    }
+
+    @Specialization(guards = "!isNA(i)")
+    public int doInt(int i) {
+        return i;
     }
 
     @Specialization(guards = "isNull(obj)")
