@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -260,7 +260,7 @@ public abstract class ConnectionFunctions {
             try {
                 return new FileRConnection(description, path, open, blocking, encoding, raw, true).asVector();
             } catch (IOException ex) {
-                warning(RError.Message.CANNOT_OPEN_FILE, description, ex.getMessage());
+                warning(RError.Message.NO_SUCH_FILE, description);
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);
             } catch (IllegalCharsetNameException ex) {
                 throw error(RError.Message.UNSUPPORTED_ENCODING_CONVERSION, encoding, "");

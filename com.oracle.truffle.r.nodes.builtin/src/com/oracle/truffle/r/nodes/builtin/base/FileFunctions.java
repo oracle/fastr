@@ -988,7 +988,17 @@ public class FileFunctions {
                             if (recursive) {
                                 assert toDir != null;
                                 // to is just one dir (checked above)
-                                status[i] = RRuntime.asLogical(copyDir(fromPath, toPath, copyOptions));
+                                boolean copyDirResult;
+                                if (!overwrite) {
+                                    try {
+                                        copyDirResult = copyDir(fromPath, toPath, copyOptions);
+                                    } catch (FileAlreadyExistsException ex) { // Ignore
+                                        copyDirResult = false;
+                                    }
+                                } else {
+                                    copyDirResult = copyDir(fromPath, toPath, copyOptions);
+                                }
+                                status[i] = RRuntime.asLogical(copyDirResult);
                             }
                         } else {
                             // copy to existing files is skipped unless overWrite
@@ -1027,6 +1037,7 @@ public class FileFunctions {
                 try {
                     dir.copy(newDir, copyOptions);
                 } catch (FileAlreadyExistsException x) {
+                    error = true;
                     // ok
                 } catch (DirectoryNotEmptyException x) {
                     // ok
@@ -1040,7 +1051,12 @@ public class FileFunctions {
             @Override
             public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) throws IOException {
                 TruffleFile newFile = toDir.resolve(fromDir.relativize(file).getPath());
-                file.copy(newFile, copyOptions);
+                try {
+                    file.copy(newFile, copyOptions);
+                } catch (FileAlreadyExistsException x) {
+                    error = true;
+                    // ok
+                }
                 return FileVisitResult.CONTINUE;
             }
 
