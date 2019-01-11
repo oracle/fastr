@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -181,7 +181,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     @Specialization(guards = "expr.isLanguage()")
     protected Object doEval(VirtualFrame frame, RPairList expr, Object envir, Object enclos) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
-        RCaller rCaller = getCaller(frame, environment, () -> expr.createNode());
+        RCaller rCaller = getCaller(frame, environment, () -> RArguments.getCall(frame).getSyntaxNode());
         try {
             RFunction evalFun = getFunctionArgument();
             return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
@@ -295,13 +295,13 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         return expr;
     }
 
-    private RCaller getCaller(VirtualFrame frame, REnvironment environment, Supplier<RSyntaxElement> call) {
+    private static RCaller getCaller(VirtualFrame frame, REnvironment environment, Supplier<RSyntaxElement> call) {
         if (environment instanceof REnvironment.Function) {
             RCaller current = RArguments.getCall(frame);
             // TODO: payload should be the expression eval'ed probably
             return RCaller.create(current.getDepth() + 1, current, call);
         } else {
-            return RCaller.create(frame, getOriginalCall());
+            return RCaller.create(frame, call);
         }
     }
 }

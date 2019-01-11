@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,5 +103,6 @@ public class ParserGeneration {
         "create lookups for field accesses where appropriate",
         "allow unicode escape literals with {...}",
         "allow 'function(...=NULL)', which has no effect, but also causes not error in GNU-R",
+        "report tokens and other metadata to the code builder",
     };
 }

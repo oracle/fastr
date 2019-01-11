@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.vector.PositionsCheckNode.PositionProfi
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.ExtractDimNamesNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.CachedExtractVectorNodeFactory.SetNamesNodeGen;
 import com.oracle.truffle.r.nodes.attributes.GetFixedAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimAttributeNode;
@@ -85,6 +86,10 @@ final class CachedExtractVectorNode extends CachedVectorNode {
     @Child private BoxPrimitiveNode boxNewDimName;
     @Children private final CachedExtractVectorNode[] extractNames;
     @Children private final CachedExtractVectorNode[] extractNamesAlternative;
+
+    @Child private GetFixedAttributeNode getSrcrefNode;
+    @Child private CachedExtractVectorNode extractSrcrefNode;
+    @Child private SetFixedAttributeNode setSrcrefNode;
 
     @Child private ExtractDimNamesNode extractDimNames;
 
@@ -168,7 +173,7 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 RBaseNode.reportWork(this, extractedVectorLength);
             }
             if (oneDimensionProfile.profile(numberOfDimensions == 1)) {
-                // names only need to be considered for single dimensional accesses
+                // names and srcref only need to be considered for single dimensional accesses
                 if (getNamesNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     getNamesNode = insert(GetNamesAttributeNode.create());
@@ -177,6 +182,12 @@ final class CachedExtractVectorNode extends CachedVectorNode {
                 if (originalNames != null) {
                     getMetadataApplied().enter();
                     setNames(extractedVector, extractNames(originalNames, positions, positionProfiles, 0, originalExact, originalDropDimensions));
+                }
+
+                Object srcref = getSrcref(vector);
+                if (srcref instanceof RList) {
+                    getMetadataApplied().enter();
+                    setSrcref(extractedVector, extractSrcref(((RList) srcref), positions, positionProfiles, originalExact, originalDropDimensions));
                 }
             } else {
                 assert numberOfDimensions > 1;
@@ -511,6 +522,30 @@ final class CachedExtractVectorNode extends CachedVectorNode {
             Object[] positions = new Object[]{position};
             return fallbackExtractNode.apply(vector, positions, RLogical.TRUE, RLogical.TRUE);
         }
+    }
+
+    private RList extractSrcref(RList originalSrcref, Object[] positions, PositionProfile[] profiles, Object originalExact, Object originalDropDimensions) {
+        if (extractSrcrefNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            extractSrcrefNode = insert(new CachedExtractVectorNode(mode, originalSrcref, positions, (RTypedValue) originalExact, (RTypedValue) originalDropDimensions, recursive));
+        }
+        return (RList) extractSrcrefNode.apply(originalSrcref, positions, profiles, originalExact, originalDropDimensions);
+    }
+
+    private void setSrcref(RAbstractContainer vector, RList newSrcref) {
+        if (setSrcrefNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            setSrcrefNode = insert(SetFixedAttributeNode.create(RRuntime.R_SRCREF));
+        }
+        setSrcrefNode.setAttr(vector, newSrcref);
+    }
+
+    public Object getSrcref(RAbstractContainer vector) {
+        if (getSrcrefNode == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            getSrcrefNode = insert(GetFixedAttributeNode.create(RRuntime.R_SRCREF));
+        }
+        return getSrcrefNode.execute(vector);
     }
 
     public AlwaysOnBranchProfile getMetadataApplied() {

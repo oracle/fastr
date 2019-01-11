@@ -1,3 +1,16 @@
+# 1.0 RC 12
+
+Added missing R builtins and C API
+
+* FastR provides GNU-R compatible `parseData` for expressions parsed via `parse(...,keep.source=T)`
+* `format.POSIXlt` supports following formats: %z, %Z, %x, %X.
+
+Bug fixes:
+
+* `sys.calls` gives wrong result when `eval` with `envir` argument is on the call stack
+* `is.na` was not correctly handling lists, for example: `is.na(list(function() 42))`
+* transfer `srcref` attribute to the result of `.subset` and `[`
+
 # 1.0 RC 11
 
 * upgraded the R version to R-3.5.1

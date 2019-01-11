@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -210,5 +210,14 @@ public class TestBuiltin_subset extends TestBase {
 
         assertEval("{z <- 1 ; f <- function(d) { b <- matrix(1:4,nrow=2,ncol=2) ; invisible(b[[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]]) }; f(0) ; z; f(1L) ; z}");
         assertEval(Output.IgnoreWarningContext, "{z <- 1 ; f <- function(d) { b <- data.frame(x='a', y='b') ; invisible(b[[{z<<-z+1;1},{z<<-z*2;2},drop=z<<-z*10]]) }; f(0) ; z; f(1L) ; z}");
+    }
+
+    @Test
+    public void testSubsetTransfersSrcrefAttr() {
+        assertEval("attributes(structure(1:3, srcref=list('a', 'b', 'c'))[1])");
+        assertEval("attributes(parse(text='1+1;bar()', keep.source=T)[1])");
+        assertEval("attributes(structure(1:4, dim=c(2,2), srcref=list('a', 'b', 'c', 'd'))[c(1,2)])");
+        // multidimensional subset does not transfer the srcref attr
+        assertEval("attributes(structure(1:4, dim=c(2,2), srcref=list('a', 'b', 'c', 'd'))[1,1])");
     }
 }

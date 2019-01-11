@@ -980,10 +980,11 @@ public final class RError extends RuntimeException implements TruffleException {
         CANNOT_SET_LENGTH("cannot set length of non-(vector or list)"),
         LONG_VECTOR_NOT_SUPPORTED("long vector '%s' is not supported"),
         CANNOT_SET_ATTR_ON("cannot set attribute on a %s"),
-        CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb"),
         TSP_NUMERIC_LENGTH3("'tsp' attribute must be numeric of length three"),
         INVALID_TSP("invalid time series parameters specified"),
-        CANNOT_ASSIGN_EMPTY_VECTOR("cannot assign '%s' to zero-length vector");
+        CANNOT_ASSIGN_EMPTY_VECTOR("cannot assign '%s' to zero-length vector"),
+        DATE_TIME_CONVERSION_SPEC_NOT_IMPLEMENTED("Date time conversion format '%s' is not implemented in FastR yet. Please submit an issue at https://github.com/oracle/fastr."),
+        CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb");
 
         public final String message;
         final boolean hasArgs;

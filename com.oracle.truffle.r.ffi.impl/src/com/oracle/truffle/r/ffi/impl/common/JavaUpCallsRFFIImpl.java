@@ -1116,7 +1116,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         Object[] resultData = new Object[2];
         try {
             Source source = RSource.fromTextInternal(textString, RSource.Internal.R_PARSEVECTOR);
-            RExpression exprs = RContext.getEngine().parse(source);
+            RExpression exprs = RContext.getEngine().parse(source).getExpression();
             resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_OK.ordinal());
             resultData[1] = exprs;
         } catch (IncompleteSourceException ex) {

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -265,5 +265,11 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("v <- c(a=1,b=1234,c='ff',d='gg'); dim(v) <- c(foo=2,bar=2); dimnames(v) <- list(a=c('foo', 'bar'), n=c('f','g')); is.na(v)");
         assertEval("{ is.na.cls <- function(x) 42; is.na(structure(c(1,2), class='cls')); }");
 
+        assertEval("is.na(list(list(NA)))");
+        assertEval("is.na(list(list(1)))");
+        assertEval("is.na(list(NULL))");
+        assertEval("is.na(list(c(NA,NA)))");
+        assertEval("is.na(list(function() 42, NA)))");
+        assertEval("is.na(list(quote(a+3), NA)))");
     }
 }
