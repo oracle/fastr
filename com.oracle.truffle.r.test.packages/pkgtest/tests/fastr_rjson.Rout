@@ -1,0 +1,212 @@
+R version 3.4.0 (FastR)
+Copyright (c) 2013-17, Oracle and/or its affiliates
+Copyright (c) 1995-2017, The R Core Team
+Copyright (c) 2017 The R Foundation for Statistical Computing
+Copyright (c) 2012-4 Purdue University
+Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura
+All rights reserved.
+
+FastR is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information.
+
+Type 'q()' to quit R.
+> pkgname <- "rjson"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('rjson')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("fromJSON")
+> ### * fromJSON
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: fromJSON
+> ### Title: Convert JSON To R
+> ### Aliases: fromJSON
+> ### Keywords: interface
+> 
+> ### ** Examples
+> 
+> 
+> #watch out for R turning null into FALSE
+> fromJSON( "[true, false, null]" )
+[[1]]
+[1] TRUE
+
+[[2]]
+[1] FALSE
+
+[[3]]
+NULL
+
+> ##[1]  TRUE FALSE __FALSE__
+> 
+> #but if you use a hash, this will be avoided
+> fromJSON( '{"a":true, "b":false, "c":null}' )
+$a
+[1] TRUE
+
+$b
+[1] FALSE
+
+$c
+NULL
+
+> 
+> 
+> #R vs C
+> x <- toJSON( iris )
+> system.time( y <- fromJSON(x) )
+   user  system elapsed 
+  0.150  -0.003   0.269 
+> system.time( y2 <- fromJSON(x,method = "R") )
+   user  system elapsed 
+  0.750   0.004   1.212 
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("newJSONParser")
+> ### * newJSONParser
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: newJSONParser
+> ### Title: Convert buffered JSON objects To R
+> ### Aliases: newJSONParser
+> ### Keywords: interface
+> 
+> ### ** Examples
+> 
+> 
+> sample_json <- '
++ 	{
++ 		"breakfast" : [ "milk", "fruit loops", "juice" ],
++ 		"lunch" : [ "left over sushi" ]
++ 	}
++ '
+> 
+> parser <- newJSONParser()
+> 
+> parser$addData( sample_json )
+> food <- parser$getObject()
+> print( food )
+$breakfast
+[1] "milk"        "fruit loops" "juice"      
+
+$lunch
+[1] "left over sushi"
+
+> 
+> #This is equivalent to using FromJSON( sample_json )
+> #However, sample_json can be split into several parts:
+> 
+> ### EXAMPLE 2:
+> 
+> part_1 <- '{ "breakfast" : [ "milk", "fruit loops", "juice" ], '
+> part_2 <- '"lunch" : [ "left over sushi" ]'
+> # close off the first object, and create a 2nd JSON object, which is simply an 
+> # array
+> part_3 <- '} [1,2,3,4,5]' 
+> 
+> parser <- newJSONParser()
+> parser$addData( part_1 )
+> parser$getObject() #returns NULL - since part_1 isn't complete
+NULL
+> parser$addData( part_2 )
+> parser$getObject() #returns NULL - since part_2 still isn't complete
+NULL
+> parser$addData( part_3 )
+> parser$getObject() #returns the first food object
+$breakfast
+[1] "milk"        "fruit loops" "juice"      
+
+$lunch
+[1] "left over sushi"
+
+> parser$getObject() #returns the second array
+[1] 1 2 3 4 5
+> 
+> 
+> 
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("toJSON")
+> ### * toJSON
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: toJSON
+> ### Title: Convert R To JSON
+> ### Aliases: toJSON
+> ### Keywords: interface
+> 
+> ### ** Examples
+> 
+> x <- list( alpha = 1:5, beta = "Bravo", 
++            gamma = list(a=1:3, b=NULL), 
++            delta = c(TRUE, FALSE) )
+> json <- toJSON( x )
+> fromJSON( json )
+$alpha
+[1] 1 2 3 4 5
+
+$beta
+[1] "Bravo"
+
+$gamma
+$gamma$a
+[1] 1 2 3
+
+$gamma$b
+NULL
+
+
+$delta
+[1]  TRUE FALSE
+
+> 
+> 
+> #named vectors are treated as JSON objects (lists)
+> toJSON(islands[1:4])
+[1] "{\"Africa\":11506,\"Antarctica\":5500,\"Asia\":16988,\"Australia\":2968}"
+> 
+> 
+> #data.frames must be converted into a list before converting into JSON
+> plot(cars, pch=2)
+> json_cars <- toJSON(as.list(cars))
+> points( data.frame( fromJSON( json_cars ) ), col="red", pch=3 )
+Warning in points.default(data.frame(fromJSON(json_cars)), col = "red",  :
+  points.default not supported. Note: FastR does not support graphics package and most of its functions. Please use grid package or grid based packages like lattice instead.
+NULL
+> 
+> #special R types are encoded as strings
+> testString <- c(1,2,3,4,NA,NaN,Inf,8,9);
+> toJSON(testString);
+[1] "[1,2,3,4,\"NA\",\"NaN\",\"Inf\",8,9]"
+> 
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  1.98 0.00499999999999999 3.03 0 0 
+> #grDevices::dev.off()
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

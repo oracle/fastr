@@ -1,0 +1,124 @@
+R version 3.4.0 (FastR)
+Copyright (c) 2013-17, Oracle and/or its affiliates
+Copyright (c) 1995-2017, The R Core Team
+Copyright (c) 2017 The R Foundation for Statistical Computing
+Copyright (c) 2012-4 Purdue University
+Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura
+All rights reserved.
+
+FastR is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information.
+
+Type 'q()' to quit R.
+> pkgname <- "cprr"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('cprr')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("age")
+> ### * age
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: age
+> ### Title: Age
+> ### Aliases: age
+> 
+> ### ** Examples
+> 
+>   age(c('1508631111', '1310762222'))
+[1] 54.32717 41.16359
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("dob")
+> ### * dob
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: dob
+> ### Title: Date of birth
+> ### Aliases: dob
+> 
+> ### ** Examples
+> 
+>   dob(c('1508631111', '1310762222'))
+[1] "1963-08-15" "1976-10-13"
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("gender")
+> ### * gender
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: gender
+> ### Title: Gender
+> ### Aliases: gender
+> 
+> ### ** Examples
+> 
+>   gender(c('1508631111', '1310762222'))
+[1] 1 0
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("mod11")
+> ### * mod11
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: mod11
+> ### Title: Modulo 11 check
+> ### Aliases: mod11
+> 
+> ### ** Examples
+> 
+>   mod11(c('1508631111', '1310762222', '2110625629'))
+[1] FALSE FALSE  TRUE
+> 
+> 
+> 
+> 
+> cleanEx()
+> nameEx("scramble")
+> ### * scramble
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: scramble
+> ### Title: Scramble
+> ### Aliases: scramble
+> 
+> ### ** Examples
+> 
+>   scramble(c('1508631111', '1310762222', '1508631111'))
+[1] 1 2 1
+> 
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  0.26 0.003 0.304 0 0 
+> #grDevices::dev.off()
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')
