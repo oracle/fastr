@@ -3,6 +3,7 @@
 Added missing R builtins and C API
 
 * FastR provides GNU-R compatible `parseData` for expressions parsed via `parse(...,keep.source=T)`
+* `format.POSIXlt` supports following formats: %z, %Z, %x, %X.
 
 Bug fixes:
 

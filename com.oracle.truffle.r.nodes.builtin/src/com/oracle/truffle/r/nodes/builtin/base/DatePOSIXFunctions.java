@@ -40,6 +40,7 @@ import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
+import java.time.format.FormatStyle;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
@@ -641,13 +642,19 @@ public class DatePOSIXFunctions {
                         break;
                     case 'x':
                         // Date. Locale-specific on output, "%y/%m/%d" on input.
-                        assert forInput;
-                        builder.append(createFormatter("%y/%m/%d", forInput).toFormatter());
+                        if (forInput) {
+                            builder.append(createFormatter("%y/%m/%d", forInput).toFormatter());
+                        } else {
+                            builder.appendLocalized(FormatStyle.SHORT, null);
+                        }
                         break;
                     case 'X':
                         // Time. Locale-specific on output, "%H:%M:%S" on input.
-                        assert forInput;
-                        builder.append(createFormatter("%H:%M:%S", forInput).toFormatter());
+                        if (forInput) {
+                            builder.append(createFormatter("%H:%M:%S", forInput).toFormatter());
+                        } else {
+                            builder.appendLocalized(null, FormatStyle.SHORT);
+                        }
                         break;
                     case 'y':
                         /*
@@ -669,6 +676,22 @@ public class DatePOSIXFunctions {
                          * accepted.
                          */
                         builder.appendValue(ChronoField.YEAR, 4);
+                        break;
+                    case 'Z':
+                        /*
+                         * (Output only.) Time zone abbreviation as a character string (empty if not
+                         * available). This may not be reliable when a time zone has changed
+                         * abbreviations over the years.
+                         */
+                        builder.appendZoneText(TextStyle.SHORT);
+                        break;
+                    case 'z':
+                        /*
+                         * Signed offset in hours and minutes from UTC, so -0800 is 8 hours behind
+                         * UTC. Values up to +1400 are accepted as from R 3.1.1: previous versions
+                         * only accepted up to +1200. (Standard only for output.)
+                         */
+                        builder.appendPattern("Z");
                         break;
                     // Following formatters are not implemented and fall through to error
                     case 'g':
@@ -702,18 +725,6 @@ public class DatePOSIXFunctions {
                          * Week of the year as decimal number (00–53) using Monday as the first day
                          * of week (and typically with the first Monday of the year as day 1 of week
                          * 1). The UK convention.
-                         */
-                    case 'z':
-                        /*
-                         * Signed offset in hours and minutes from UTC, so -0800 is 8 hours behind
-                         * UTC. Values up to +1400 are accepted as from R 3.1.1: previous versions
-                         * only accepted up to +1200. (Standard only for output.)
-                         */
-                    case 'Z':
-                        /*
-                         * (Output only.) Time zone abbreviation as a character string (empty if not
-                         * available). This may not be reliable when a time zone has changed
-                         * abbreviations over the years.
                          */
                         throw RError.error(RError.NO_CALLER, Message.DATE_TIME_CONVERSION_SPEC_NOT_IMPLEMENTED, c);
                     default:

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,5 +70,23 @@ public class TestBuiltin_formatPOSIXlt extends TestBase {
     @Test
     public void testformatPOSIXlt9() {
         assertEval("argv <- list(structure(list(sec = numeric(0), min = integer(0), hour = integer(0), mday = integer(0), mon = integer(0), year = integer(0), wday = integer(0), yday = integer(0), isdst = integer(0)), .Names = c('sec', 'min', 'hour', 'mday', 'mon', 'year', 'wday', 'yday', 'isdst'), class = c('POSIXlt', 'POSIXt'), tzone = 'UTC'), '%Y-%m-%d', TRUE); .Internal(format.POSIXlt(argv[[1]], argv[[2]], argv[[3]]))");
+    }
+
+    private static final String[] FORMAT_STRINGS = new String[]{
+                    "%Y-%m-%d %H:%M:%S %Z",
+                    "%Y-%m-%d %H:%M:%S %z",
+    };
+
+    // These formats seems to be locale specific and Java is somewhat incompatible to the lib that
+    // GNU-R uses, so we only test that some output is produced
+    private static final String[] FORMAT_STRINGS_NO_CRASH = new String[]{
+                    "%x",
+                    "%X",
+    };
+
+    @Test
+    public void testFormatPOSIXlt() {
+        assertEval(template("strftime(as.POSIXct(1547211595, origin='1970-01-01', tz='GMT'), '%0')", FORMAT_STRINGS));
+        assertEval(template("nchar(strftime(as.POSIXct(1547211595, origin='1970-01-01', tz='GMT'), '%0')) > 2", FORMAT_STRINGS_NO_CRASH));
     }
 }
