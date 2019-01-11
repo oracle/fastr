@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RList;
-import com.oracle.truffle.r.runtime.data.RListBase;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.InternalRSyntaxNodeChildren;
@@ -159,7 +159,7 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
         }
 
         @Specialization(guards = "isReplace(how)")
-        protected RListBase cachedLapplyReplace(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how,
+        protected RAbstractListBaseVector cachedLapplyReplace(VirtualFrame frame, RAbstractListVector object, RFunction f, String classes, Object deflt, String how,
                         @Cached("createIndexSlot(frame)") FrameSlot indexSlot,
                         @Cached("createVectorSlot(frame)") FrameSlot vectorSlot,
                         @Cached("create()") RLengthNode lengthNode,
@@ -167,24 +167,25 @@ public abstract class Rapply extends RBuiltinNode.Arg5 {
                         @Cached("createCallNode(vectorSlot, indexSlot)") RCallBaseNode callNode) {
 
             int length = lengthNode.executeInteger(object);
-            RListBase result = (RListBase) object.copy();
+            RAbstractListBaseVector result = (RAbstractListBaseVector) object.copy();
             FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
 
             if (length > 0) {
                 reportWork(this, length);
                 loop.profileCounted(length);
+                Object resultStore = result.getInternalStore();
                 for (int i = 0; loop.inject(i < length); i++) {
                     frame.setInt(indexSlot, i + 1);
                     Object element = object.getDataAt(i);
                     if (element instanceof RAbstractListVector) {
-                        result.setDataAt(i, getRapply().execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
+                        result.setDataAt(resultStore, i, getRapply().execute(frame, (RAbstractListVector) element, f, classes, deflt, how));
                         FrameSlotChangeMonitor.setObject(frame, vectorSlot, object);
                     } else if (isRNull(element)) {
-                        result.setDataAt(i, element);
+                        result.setDataAt(resultStore, i, element);
                     } else if (classes.equals("ANY") || inheritsNode.execute(element, RDataFactory.createStringVector(classes), false).equals(RRuntime.LOGICAL_TRUE)) {
-                        result.setDataAt(i, callNode.execute(frame, f));
+                        result.setDataAt(resultStore, i, callNode.execute(frame, f));
                     } else {
-                        result.setDataAt(i, element);
+                        result.setDataAt(resultStore, i, element);
                     }
                 }
             }

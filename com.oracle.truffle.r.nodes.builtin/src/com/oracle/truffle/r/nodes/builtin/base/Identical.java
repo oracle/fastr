@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,12 +48,12 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
-import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RS4Object;
 import com.oracle.truffle.r.runtime.data.RSymbol;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.IdenticalVisitor;
@@ -303,7 +303,8 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     }
 
     @Specialization
-    protected byte doInternalIdenticalGeneric(RListBase x, RListBase y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode, boolean ignoreEnvironment, boolean ignoreSrcref) {
+    protected byte doInternalIdenticalGeneric(RAbstractListBaseVector x, RAbstractListBaseVector y, boolean numEq, boolean singleNA, boolean attribAsSet, boolean ignoreBytecode,
+                    boolean ignoreEnvironment, boolean ignoreSrcref) {
         if (x.getLength() != y.getLength()) {
             return RRuntime.LOGICAL_FALSE;
         }
@@ -430,7 +431,7 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
     }
 
     protected boolean vectorsLists(RAbstractVector x, RAbstractVector y) {
-        return x instanceof RListBase && y instanceof RListBase;
+        return x instanceof RAbstractListBaseVector && y instanceof RAbstractListBaseVector;
     }
 
     public static Identical create() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,8 +26,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
-import com.oracle.truffle.r.runtime.data.RListBase;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListBaseVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 
 /**
@@ -43,7 +43,8 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
  * true reference count matters for some other reason, then its reference count must be put into a
  * consistent state, which is done by {@link UpdateShareableChildValueNode}. This node is a
  * convenient wrapper that performs the extraction as well as invocation of
- * {@link UpdateShareableChildValueNode}. See also the documentation of {@link RListBase}.
+ * {@link UpdateShareableChildValueNode}. See also the documentation of
+ * {@link RAbstractListBaseVector}.
  */
 public abstract class ExtractListElement extends Node {
 
@@ -54,7 +55,7 @@ public abstract class ExtractListElement extends Node {
     }
 
     @Specialization
-    protected Object doList(RListBase list, int index,
+    protected Object doList(RAbstractListBaseVector list, int index,
                     @Cached("create()") UpdateShareableChildValueNode updateStateNode) {
         Object element = list.getDataAt(index);
         return updateStateNode.updateState(list, element);

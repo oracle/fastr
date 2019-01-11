@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ public enum RVersionInfo {
     public static final int SERIALIZE_VERSION = (2 << 16) + (3 << 8) + 0;
 
     @CompilationFinal(dimensions = 1) private static final RVersionInfo[] VALUES = RVersionInfo.values();
-    @CompilationFinal(dimensions = 1) private static String[] ListValues;
+    @CompilationFinal(dimensions = 1) private static Object[] ListValues;
     @CompilationFinal(dimensions = 1) private static String[] ListNames;
 
     private final String listName;
@@ -82,7 +82,7 @@ public enum RVersionInfo {
     private static synchronized void initialize() {
         if (ListValues == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            ListValues = new String[VALUES.length];
+            ListValues = new Object[VALUES.length];
             ListNames = new String[VALUES.length];
             UtsName utsname = (UtsName) BaseRFFI.UnameRootNode.create().getCallTarget().call();
             String osName = toFirstLower(utsname.sysname());
@@ -131,7 +131,7 @@ public enum RVersionInfo {
         return ListNames;
     }
 
-    public static String[] listValues() {
+    public static Object[] listValues() {
         initialize();
         return ListValues;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,26 +26,212 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromListAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
+import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 /**
  * A note on the RList complete flag {@link RAbstractVector#isComplete() } - it is always
- * initialized with <code>false</code> in {@link RListBase#RListBase(java.lang.Object[])} and never
- * expected to change.
+ * initialized with {@code false} and never expected to change.
  */
-public final class RList extends RListBase implements RAbstractListVector {
+public final class RList extends RVector<Object[]> implements RAbstractListVector {
+
+    /**
+     * After nativized, the data array degenerates to a reference holder.
+     */
+    private Object[] data;
 
     RList(Object[] data) {
-        super(data);
+        super(false);
+        assert data.getClass().isAssignableFrom(Object[].class) : data;
+        this.data = data;
+        assert RAbstractVector.verify(this);
     }
 
     RList(Object[] data, int[] dims, RStringVector names, RList dimNames) {
-        super(data, dims, names, dimNames);
+        this(data);
+        initDimsNamesDimNames(dims, names, dimNames);
+    }
+
+    boolean isNativized() {
+        return NativeDataAccess.isAllocated(this);
+    }
+
+    @Override
+    public RType getRType() {
+        return RType.List;
+    }
+
+    @Override
+    public int getLength() {
+        return NativeDataAccess.getDataLength(this, getInternalStore());
+    }
+
+    @Override
+    public void setLength(int l) {
+        if (!isNativized()) {
+            if (l != data.length) {
+                try {
+                    Object[] newData = new Object[l];
+                    System.arraycopy(data, 0, newData, 0, l < data.length ? l : data.length);
+                    for (int i = data.length; i < l; i++) {
+                        newData[i] = RNull.instance;
+                    }
+                    NativeDataAccess.setDataLength(this, data, l);
+                } finally {
+                    assert NativeDataAccess.isAllocated(this);
+                    complete = false;
+                }
+            }
+        } else {
+            NativeDataAccess.setDataLength(this, null, l);
+        }
+    }
+
+    @Override
+    public int getTrueLength() {
+        return NativeDataAccess.getTrueDataLength(this);
+    }
+
+    @Override
+    public void setTrueLength(int truelength) {
+        NativeDataAccess.setTrueDataLength(this, truelength);
+    }
+
+    @Override
+    public Object[] getInternalStore() {
+        return isNativized() ? null : data;
+    }
+
+    /**
+     * Note: elements inside lists may be in inconsistent state reference counting wise. You may
+     * need to put them into consistent state depending on what you use them for, consult the
+     * documentation of {@code ExtractListElement}.
+     */
+    @Override
+    public Object getDataAtAsObject(Object store, int index) {
+        assert store == data;
+        return ((Object[]) store)[index];
+    }
+
+    public void setDataAt(int index, Object value) {
+        setDataAt(data, index, value);
+    }
+
+    @Override
+    public void setDataAt(Object store, int index, Object value) {
+        assert value != null : "lists must not contain nulls";
+        assert isNativized() || store == getInternalStore();
+        NativeDataAccess.setData(this, ((Object[]) store), index, value);
+    }
+
+    @Override
+    public Object[] getInternalManagedData() {
+        return getInternalStore();
+    }
+
+    @Override
+    public Object[] getReadonlyData() {
+        if (!isNativized()) {
+            return data;
+        } else {
+            return NativeDataAccess.copyListNativeData(getNativeMirror());
+        }
+    }
+
+    public Object[] getDataWithoutCopying() {
+        return getReadonlyData();
+    }
+
+    @Override
+    public Object[] getDataCopy() {
+        if (!isNativized()) {
+            Object[] copy = new Object[data.length];
+            System.arraycopy(data, 0, copy, 0, data.length);
+            return copy;
+        } else {
+            return NativeDataAccess.copyListNativeData(getNativeMirror());
+        }
+    }
+
+    /**
+     * Note: elements inside lists may be in inconsistent state reference counting wise. You may
+     * need to put them into consistent state depending on what you use them for, consult the
+     * documentation of {@code ExtractListElement}.
+     */
+    @Override
+    public Object getDataAt(int i) {
+        return NativeDataAccess.getData(this, getInternalStore(), i);
+    }
+
+    public RList updateDataAt(int i, Object right, @SuppressWarnings("unused") NACheck rightNACheck) {
+        assert !this.isShared() : "data in shared list must not be updated, make a copy";
+        assert right != null : "lists must not contain nulls";
+        NativeDataAccess.setData(this, data, i, right);
+        return this;
+    }
+
+    @Override
+    public RList updateDataAtAsObject(int i, Object o, NACheck naCheck) {
+        return updateDataAt(i, o, naCheck);
+
+    }
+
+    @Override
+    public void transferElementSameType(int toIndex, RAbstractVector fromVector, int fromIndex) {
+        RAbstractListVector other = (RAbstractListVector) fromVector;
+        setDataAt(toIndex, other.getDataAt(fromIndex));
+    }
+
+    /**
+     * Note: elements inside lists may be in inconsistent state reference counting wise. You may
+     * need to put them into consistent state depending on what you use them for, consult the
+     * documentation of {@code ExtractListElement}.
+     */
+    @Override
+    public Object getDataAtAsObject(int index) {
+        return this.getDataAt(index);
+    }
+
+    private Object[] copyResizedData(int size, boolean fillNA) {
+        Object[] localData = getReadonlyData();
+        Object[] newData = Arrays.copyOf(localData, size);
+        return resizeData(newData, localData, this.getLength(), fillNA);
+    }
+
+    private static Object[] resizeData(Object[] newData, Object[] oldData, int oldDataLength, boolean fillNA) {
+        if (newData.length > oldDataLength) {
+            if (fillNA) {
+                for (int i = oldDataLength; i < newData.length; i++) {
+                    newData[i] = RNull.instance;
+                }
+            } else {
+                assert oldDataLength > 0 : "cannot call resize on empty vector if fillNA == false";
+                for (int i = oldData.length, j = 0; i < newData.length; ++i, j = Utils.incMod(j, oldData.length)) {
+                    newData[i] = oldData[j];
+                }
+            }
+        }
+        return newData;
+    }
+
+    @Override
+    public void setElement(int i, Object value) {
+        setDataAt(i, value);
+    }
+
+    public long allocateNativeContents() {
+        try {
+            return NativeDataAccess.allocateNativeContents(this, getInternalStore(), data.length);
+        } finally {
+            assert NativeDataAccess.isAllocated(this);
+            complete = false;
+        }
     }
 
     @Override
