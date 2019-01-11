@@ -8,6 +8,7 @@ Bug fixes:
 
 * `sys.calls` gives wrong result when `eval` with `envir` argument is on the call stack
 * `is.na` was not correctly handling lists, for example: `is.na(list(function() 42))`
+* transfer `srcref` attribute to the result of `.subset` and `[`
 
 # 1.0 RC 11
 
