@@ -66,7 +66,7 @@
 # explicitly sets R_LIBS to the empty string before testing the main test file (but paradoxically not when
 # testing the "examples"), which is why we use R_LIBS_USER.
 
-# A single package install can be handled in three ways, based on the run-mode argument (default system):
+# A single package install can be handled in three ways, based on the run-mode argument (default 'internal'):
 #   system: use a subprocess via the system2 command
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
@@ -1262,7 +1262,7 @@ create.blacklist.file <- F
 ignore.blacklist <- F
 random.count <- NA
 count.daily <- NA
-run.mode <- "system"
+run.mode <- "internal"
 run.tests <- FALSE
 gnur <- FALSE
 list.versions <- FALSE
