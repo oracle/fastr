@@ -216,7 +216,7 @@ public interface Engine {
      * Parse an R expression and return an {@link RExpression} object representing the Truffle ASTs
      * for the components.
      */
-    ParsedExpression parse(Source source) throws ParseException;
+    ParsedExpression parse(Source source, boolean keepSource) throws ParseException;
 
     /**
      * This is the external interface from

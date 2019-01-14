@@ -279,7 +279,7 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     @Override
-    public ParsedExpression parse(Source source) throws ParseException {
+    public ParsedExpression parse(Source source, boolean keepSource) throws ParseException {
         RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
         RASTBuilder builder = new RASTBuilder(true);
         List<RSyntaxNode> script = parser.script(source, builder, context.getLanguage());

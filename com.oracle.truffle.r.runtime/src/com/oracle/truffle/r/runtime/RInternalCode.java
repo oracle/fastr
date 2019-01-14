@@ -59,7 +59,7 @@ public final class RInternalCode {
 
     private synchronized REnvironment evaluate() {
         try {
-            RExpression parsedCode = context.getThisEngine().parse(source).getExpression();
+            RExpression parsedCode = context.getThisEngine().parse(source, false).getExpression();
             REnvironment statsPackage = REnvironment.getRegisteredNamespace(context, basePackage);
             evaluatedEnvironment = RDataFactory.createNewEnv(null, true, 10);
             evaluatedEnvironment.setParent(statsPackage);

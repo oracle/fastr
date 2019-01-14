@@ -290,8 +290,8 @@ public class SpecialCallTest extends TestBase {
         Source setupSource = Source.newBuilder(RRuntime.R_LANGUAGE_ID, "{" + setup + "}", "test").build();
         Source testSource = Source.newBuilder(RRuntime.R_LANGUAGE_ID, test, "test").build();
 
-        RExpression setupExpression = testVMContext.getThisEngine().parse(setupSource).getExpression();
-        RExpression testExpression = testVMContext.getThisEngine().parse(testSource).getExpression();
+        RExpression setupExpression = testVMContext.getThisEngine().parse(setupSource, false).getExpression();
+        RExpression testExpression = testVMContext.getThisEngine().parse(testSource, false).getExpression();
         assert setupExpression.getLength() == 1;
         assert testExpression.getLength() == 1;
         RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();
