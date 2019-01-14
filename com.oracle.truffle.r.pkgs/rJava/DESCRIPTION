@@ -5,4 +5,4 @@ Author: Tomas Stupka, Simon Urbanek <simon.urbanek@r-project.org>
 Maintainer: Tomas Stupka <tomas.stupka@oracle.com>
 Depends: R (>= 2.5.0), methods
 Description: Provides rJava R interface backed by FastR interoperability builtins.
-License: LGPL-2
+License: GPL-3
