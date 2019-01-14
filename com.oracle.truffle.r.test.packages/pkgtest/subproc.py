@@ -29,6 +29,7 @@ from util import abort
 ERROR_TIMEOUT = 0x700000000 # not 32 bits
 _currentSubprocesses = []
 
+
 def get_os():
     """
     Get a canonical form of sys.platform.
@@ -48,11 +49,13 @@ def get_os():
     else:
         abort(1, 'Unknown operating system ' + sys.platform)
 
+
 def _addSubprocess(p, args):
     entry = (p, args)
     logging.debug('[{}: started subprocess {}: {}]'.format(os.getpid(), p.pid, args))
     _currentSubprocesses.append(entry)
     return entry
+
 
 def _removeSubprocess(entry):
     if entry and entry in _currentSubprocesses:
@@ -92,9 +95,6 @@ def _kill_process(pid, sig):
         return False
 
 
-
-
-
 def _waitWithTimeout(process, args, timeout, nonZeroIsFatal=True):
     def _waitpid(pid):
         while True:
@@ -131,8 +131,6 @@ def _waitWithTimeout(process, args, timeout, nonZeroIsFatal=True):
                 return ERROR_TIMEOUT
         delay = min(delay * 2, remaining, .05)
         time.sleep(delay)
-
-
 
 
 def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout=None, env=None, **kwargs):

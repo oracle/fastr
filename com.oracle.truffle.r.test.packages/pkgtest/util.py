@@ -116,36 +116,40 @@ def check_r_versions():
         abort(1, 'GraalVM R version does not match GnuR version: %s (FastR) vs. %s (GnuR)' % (fastr_version, gnur_version))
 
 
+VERY_VERBOSE = logging.DEBUG - 5
+
 def parse_arguments(argv):
     """
     Parses the given argument vector and stores the values of the arguments known by this script to appropriate globals.
     The unknown arguments are returned for further processing.
     """
-    parser = argparse.ArgumentParser(description='FastR package testing.')
+    parser = argparse.ArgumentParser(prog="pkgtest", description='FastR package testing.')
     parser.add_argument('--fastr-home', metavar='FASTR_HOME', dest="fastr_home", type=str, default=None,
-                        required=True, help='The FastR standalone repo home directory.')
+                        required=True, help='The FastR standalone repo home directory (required).')
     parser.add_argument('--gnur-home', metavar="GNUR_HOME", dest="gnur_home", default=None, required=True,
-                        help='The GnuR home directory.')
+                        help='The GnuR home directory (required).')
     parser.add_argument('--graalvm-home', metavar="GRAALVM_HOME", dest="graalvm_home", default=None,
-                        help='The GraalVM root directory.')
+                        help='The GraalVM root directory (optional).')
     parser.add_argument('-v', '--verbose', dest="verbose", action="store_const", const=1, default=0,
                         help='Do verbose logging.')
     parser.add_argument('-V', '--very-verbose', dest="verbose", action="store_const", const=2,
                         help='Do verbose logging.')
     parser.add_argument('--dump-preprocessed', dest="dump_preprocessed", action="store_true",
                         help='Dump processed output files where replacement filters have been applied.')
-    parser.add_argument('-q', '--quiet', dest="quiet", type=bool, default=False,
+    parser.add_argument('-q', '--quiet', dest="quiet", action="store_true",
                         help='Do verbose logging.')
     parser.add_argument('-l', '--log-file', dest="log_file", default="pkgtest.log",
-                        help='Log file name.')
+                        help='Log file name (default: "pkgtest.log").')
     global _opts
     _opts, r_args = parser.parse_known_args(args=argv)
 
     log_format = '%(message)s'
     if _opts.verbose == 1:
-        log_level = logging.INFO
-    elif _opts.verbose == 2:
         log_level = logging.DEBUG
+    elif _opts.verbose == 2:
+        log_level = VERY_VERBOSE
+    else:
+        log_level = logging.INFO
     logging.basicConfig(filename=_opts.log_file, level=log_level, format=log_format)
 
     # also log to console
@@ -155,7 +159,7 @@ def parse_arguments(argv):
     console_handler.setFormatter(logging.Formatter(log_format))
     logging.getLogger("").addHandler(console_handler)
 
-    logging.debug("known_args: %s" % _opts)
+    logging.log(VERY_VERBOSE, "known_args: %s" % _opts)
 
     # print info if _opts.graalvm is used
     if get_graalvm_home():
@@ -176,11 +180,11 @@ def computeApiChecksum(includeDir):
     rootDir = includeDir
     fileList = list()
     for root, _, files in os.walk(rootDir):
-        logging.debug("Visiting directory %s" % root)
+        logging.log(VERY_VERBOSE, "Visiting directory %s" % root)
         for f in files:
             fileName = join(root, f)
             if fileName.endswith('.h'):
-                logging.debug("Including file %s" % fileName)
+                logging.log(VERY_VERBOSE, "Including file %s" % fileName)
                 fileList.append(fileName)
 
     # sorting makes the checksum independent of the FS traversal order

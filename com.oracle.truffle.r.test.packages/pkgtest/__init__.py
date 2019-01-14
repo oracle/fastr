@@ -651,16 +651,5 @@ def find_top(args):
     installpkgs(['--use-installed-pkgs', '--find-top', n])
 
 
-def remove_dup_pkgs(args):
-    pkgs = args[0].split(",")
-    x = dict()
-    for p in pkgs:
-        x[p] = 1
-    result = []
-    for p in x.iterkeys():
-        result += p
-    return result
-
-
 class TestFrameworkResultException(BaseException):
     pass
