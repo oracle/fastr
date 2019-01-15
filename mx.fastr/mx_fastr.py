@@ -592,21 +592,10 @@ def mx_post_parse_cmd_line(opts):
         rec.buildDependencies += [mx.distribution('SULONG')]
 
 
-_pta_project = 'com.oracle.truffle.r.test.packages.analyzer'
-_pta_main_class = _pta_project + '.PTAMain'
-
-
-def r_pkgtest_analyze(args, **kwargs):
-    '''
-    Run analysis for package installation/testing results.
-    '''
-    vmArgs = mx.get_runtime_jvm_args(_pta_project)
-    vmArgs += [_pta_main_class]
-    mx.run_java(vmArgs + args)
-
-
-# import R package test module
+# R package testing
 _pkgtest_project = 'com.oracle.truffle.r.test.packages'
+_pkgtest_analyzer_project = 'com.oracle.truffle.r.test.packages.analyzer'
+_pkgtest_analyzer_main_class = _pkgtest_analyzer_project + '.PTAMain'
 _pkgtest_module = None
 
 
@@ -663,6 +652,15 @@ def find_top100(*args, **kwargs):
 
 def find_top(*args, **kwargs):
     pkgtest_load().find_top(args)
+
+
+def r_pkgtest_analyze(args, **kwargs):
+    '''
+    Run analysis for package installation/testing results.
+    '''
+    vmArgs = mx.get_runtime_jvm_args(_pkgtest_analyzer_project)
+    vmArgs += [_pkgtest_analyzer_main_class]
+    mx.run_java(vmArgs + args)
 
 
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
