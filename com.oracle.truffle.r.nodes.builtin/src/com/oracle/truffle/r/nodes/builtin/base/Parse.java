@@ -138,7 +138,8 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
         }
         try {
             Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn, coalescedLines);
-            ParsedExpression parseRes = RContext.getEngine().parse(source);
+            boolean keepSource = srcFile instanceof REnvironment;
+            ParsedExpression parseRes = RContext.getEngine().parse(source, keepSource);
             RExpression exprs = parseRes.getExpression();
             if (n > 0 && n < exprs.getLength()) {
                 Object[] subListData = new Object[n];
@@ -148,7 +149,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                 exprs = RDataFactory.createExpression(subListData);
             }
             // Handle the required R attributes
-            if (srcFile instanceof REnvironment) {
+            if (keepSource) {
                 addAttributes(parseRes, exprs, source, (REnvironment) srcFile);
             }
             return exprs;

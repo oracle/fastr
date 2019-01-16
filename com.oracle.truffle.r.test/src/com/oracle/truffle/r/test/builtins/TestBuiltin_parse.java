@@ -88,6 +88,7 @@ public class TestBuiltin_parse extends TestBase {
                     "x     = 1",
                     "x <- x + 1",
                     "attr(x,\"mya\") <- bar()",
+                    "foo() %myop% {}",
                     "foo[[bar=xyz %myop% 42]]"};
 
     @Test
