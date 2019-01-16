@@ -53,6 +53,7 @@ import static com.oracle.truffle.r.runtime.env.frame.REnvTruffleFrameAccess.getS
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 /**
  * Implementation of a channel abstraction used for communication between parallel contexts in
@@ -221,9 +222,21 @@ public class RChannel {
     public static Object receive(int id) {
         RChannel channel = getChannelFromId(id);
         try {
-            Object msg = (id < 0 ? channel.masterToClient : channel.clientToMaster).take();
-            Input in = new Input();
-            return in.processedReceivedMessage(msg);
+            ArrayBlockingQueue<Object> queue = id < 0 ? channel.masterToClient : channel.clientToMaster;
+            int timeout = FastROptions.ChannelReceiveTimeout.getNonNegativeIntValue();
+            Object msg;
+            if (timeout > 0) {
+                // timeout for testing
+                // if no msg is send due to an error .take() will block forever
+                msg = queue.poll(timeout, TimeUnit.SECONDS);
+            } else {
+                msg = queue.take();
+            }
+            if (msg != null) {
+                Input in = new Input();
+                return in.processedReceivedMessage(msg);
+            }
+            throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "timeout while receiving from the channel");
         } catch (InterruptedException x) {
             throw RError.error(RError.SHOW_CALLER2, RError.Message.GENERIC, "error receiving from the channel");
         }
