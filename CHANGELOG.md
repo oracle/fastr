@@ -4,12 +4,14 @@ Added missing R builtins and C API
 
 * FastR provides GNU-R compatible `parseData` for expressions parsed via `parse(...,keep.source=T)`
 * `format.POSIXlt` supports following formats: %z, %Z, %x, %X.
+* dummy implementation of the ALTREP framework to avoid linking problems. Most of the functions fail at runtime. #48
 
 Bug fixes:
 
 * `sys.calls` gives wrong result when `eval` with `envir` argument is on the call stack
 * `is.na` was not correctly handling lists, for example: `is.na(list(function() 42))`
 * transfer `srcref` attribute to the result of `.subset` and `[`
+* `matrix(1,nrow=NULL,ncol=NULL)` caused internal FastR error instead of R user level error
 
 # 1.0 RC 11
 
