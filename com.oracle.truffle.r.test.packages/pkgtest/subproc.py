@@ -162,6 +162,7 @@ def pkgtest_run(args, nonZeroIsFatal=True, out=None, err=None, cwd=None, timeout
         if timeout or get_os() == 'windows':
             # TODO windows
             #preexec_fn, creationflags = _get_new_progress_group_args()
+            preexec_fn, creationflags = (None, 0)
             pass
         else:
             preexec_fn, creationflags = (None, 0)
