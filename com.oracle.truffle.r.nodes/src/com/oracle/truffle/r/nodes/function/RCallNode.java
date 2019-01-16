@@ -36,6 +36,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -117,6 +118,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = RNode.class)
+@ReportPolymorphism
 public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions

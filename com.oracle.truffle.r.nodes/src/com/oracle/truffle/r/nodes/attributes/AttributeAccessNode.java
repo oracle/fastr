@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Property;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * The base class for the nodes that get/set/remove attributes. It encapsulates the common methods
  * used in guards and for caching.
  */
+@ReportPolymorphism
 public abstract class AttributeAccessNode extends RBaseNode {
 
     protected AttributeAccessNode() {

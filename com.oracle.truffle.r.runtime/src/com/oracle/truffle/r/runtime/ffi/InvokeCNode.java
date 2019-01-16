@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNode.CRFFIWrapVectorsNode
 import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNodeGen.CRFFIWrapVectorsNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@ReportPolymorphism
 public abstract class InvokeCNode extends RBaseNode {
 
     @Child private CRFFIWrapVectorsNode argsWrapperNode = CRFFIWrapVectorsNodeGen.create();
