@@ -103,6 +103,8 @@ lpSolveAPI => s/[0-9].[0-9]+e-3[0-9][0-9] [0-9].[0-9]+e-3[0-9][0-9] [0-9].[0-9]+
 # clpAPI: this output is produces probably directly by C code and so it appears in the
 # output on different positions depending on when the buffer is flushed
 # Note: this package is not gated yet as we need the required SW to be installed there
+# Note2: there is probably some bug in the filtering algorithm as these filters cause that
+# in the GNU-R output we also remove line 'solveInitialCLP(lp)', but not in FastR output
 clpAPI => D/Coin0506I Presolve 2 (-3) rows, 3 (-5) columns and 6 (-8) elements
 clpAPI => D/Clp0006I 0  Obj 3.5 Dual inf 2.9473674 (1)
 clpAPI => D/Clp0006I 1  Obj 3.2368421

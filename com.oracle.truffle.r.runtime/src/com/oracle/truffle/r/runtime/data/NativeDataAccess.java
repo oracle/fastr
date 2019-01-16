@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -878,7 +878,7 @@ public final class NativeDataAccess {
         ((NativeMirror) charsxp.getNativeMirror()).truelength = truelength;
     }
 
-    static Object getData(RListBase list, Object[] data, int index) {
+    static Object getData(RList list, Object[] data, int index) {
         if (noListNative.isValid() || data != null) {
             return data[index];
         } else {
@@ -886,7 +886,7 @@ public final class NativeDataAccess {
         }
     }
 
-    static void setData(RListBase list, Object[] data, int index, Object value) {
+    static void setData(RList list, Object[] data, int index, Object value) {
         assert data != null;
         data[index] = value;
         if (!noListNative.isValid() && list.isNativized()) {
@@ -894,7 +894,7 @@ public final class NativeDataAccess {
         }
     }
 
-    static int getDataLength(RListBase vector, Object[] data) {
+    static int getDataLength(RList vector, Object[] data) {
         if (noListNative.isValid() || data != null) {
             return data.length;
         } else {
@@ -902,7 +902,7 @@ public final class NativeDataAccess {
         }
     }
 
-    static void setDataLength(RListBase list, Object[] data, int length) {
+    static void setDataLength(RList list, Object[] data, int length) {
         if (noListNative.isValid() || data != null) {
             allocateNativeContents(list, data, length);
         } else {
@@ -910,11 +910,11 @@ public final class NativeDataAccess {
         }
     }
 
-    static int getTrueDataLength(RListBase list) {
+    static int getTrueDataLength(RList list) {
         return (int) ((NativeMirror) list.getNativeMirror()).truelength;
     }
 
-    static void setTrueDataLength(RListBase list, int truelength) {
+    static void setTrueDataLength(RList list, int truelength) {
         ((NativeMirror) list.getNativeMirror()).truelength = truelength;
     }
 
@@ -1024,7 +1024,7 @@ public final class NativeDataAccess {
         return false;
     }
 
-    static boolean isAllocated(RListBase obj) {
+    static boolean isAllocated(RList obj) {
         if (!noListNative.isValid()) {
             NativeMirror mirror = (NativeMirror) obj.getNativeMirror();
             return mirror != null && mirror.dataAddress != 0;
@@ -1121,7 +1121,7 @@ public final class NativeDataAccess {
         return mirror.dataAddress;
     }
 
-    static long allocateNativeContents(RListBase list, Object[] elements, int length) {
+    static long allocateNativeContents(RList list, Object[] elements, int length) {
         NativeMirror mirror = (NativeMirror) list.getNativeMirror();
         assert mirror != null;
         if (mirror.dataAddress == 0) {
