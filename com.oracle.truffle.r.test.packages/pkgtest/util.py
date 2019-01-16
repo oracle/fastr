@@ -81,8 +81,11 @@ def get_fastr_rscript():
 
 
 def get_r_version(rscript_binary):
-    args = ["--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], '\\n', sep='')"]
-    return subprocess.check_output([rscript_binary] + args, stderr=subprocess.STDOUT).rstrip()
+    args = [rscript_binary, "--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], '\\n', sep='')"]
+    if not os.path.exists(rscript_binary):
+        abort(1, "Rscript binary '%s' does not exist.", rscript_binary)
+    logging.debug("Running command: %s", args)
+    return subprocess.check_output(args, stderr=subprocess.STDOUT).rstrip()
 
 
 def get_graalvm_home():
@@ -90,7 +93,7 @@ def get_graalvm_home():
 
 def abort(status, *args):
     if args:
-        logging.error(*args)
+        logging.fatal(*args)
     quit(status)
 
 
