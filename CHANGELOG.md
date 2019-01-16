@@ -12,6 +12,7 @@ Bug fixes:
 * `is.na` was not correctly handling lists, for example: `is.na(list(function() 42))`
 * transfer `srcref` attribute to the result of `.subset` and `[`
 * `matrix(1,nrow=NULL,ncol=NULL)` caused internal FastR error instead of R user level error
+* option `--polyglot` works with the native image of FastR
 
 # 1.0 RC 11
 

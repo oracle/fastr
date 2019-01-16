@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -72,7 +72,7 @@ public class REmbedded {
     private static void initializeR(String[] args, boolean initMainLoop) {
         assert context == null;
         RContext.setEmbedded();
-        RCmdOptions options = RCmdOptions.parseArguments(RCmdOptions.Client.R, args, false);
+        RCmdOptions options = RCmdOptions.parseArguments(args, false);
 
         EmbeddedConsoleHandler embeddedConsoleHandler = new EmbeddedConsoleHandler();
 
