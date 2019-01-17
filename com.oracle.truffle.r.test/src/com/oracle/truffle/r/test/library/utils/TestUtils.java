@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,7 +41,7 @@ public class TestUtils extends TestBase {
 
     @Test
     public void testMethods() {
-        assertEval(Ignored.NewRVersionMigration, "methods(plot)");
+        assertEval("testUtilsTestMethod<-function(x) UseMethod('testUtilsTestMethod'); testUtilsTestMethod.default<-function(x) x+1; testUtilsTestMethod.dog<-function(x) x+2; testUtilsTestMethod.bar<-function(x) x+3; methods(testUtilsTestMethod)");
     }
 
     private static final String[] TEST_OCTSIZE_PARAMS = {"1L", "1.0", Integer.toString(Integer.MAX_VALUE), "NA", "NULL"};
