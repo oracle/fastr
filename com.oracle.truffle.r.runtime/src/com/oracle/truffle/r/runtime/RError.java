@@ -162,12 +162,25 @@ public final class RError extends RuntimeException implements TruffleException {
     public static final ErrorContext ROOTNODE = new ErrorContextImpl();
 
     /**
-     * TODO the string is not really needed as all output is performed prior to the throw.
+     * If the message is set (non-null), then it was not printed yet and it is left to the
+     * embedder/REPL to deal with the exception and eventual printing. The message should not
+     * contain the last new line that would otherwise be printed.
      */
     RError(String msg, Node location) {
         super(msg);
         this.location = location;
         this.verboseStackTrace = RInternalError.createVerboseStackTrace();
+    }
+
+    RError(String msg, Throwable cause) {
+        super(msg, cause);
+        this.location = null;
+        this.verboseStackTrace = RInternalError.createVerboseStackTrace();
+    }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return null;
     }
 
     @Override

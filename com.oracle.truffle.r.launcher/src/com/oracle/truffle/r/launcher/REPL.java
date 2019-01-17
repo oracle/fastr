@@ -29,9 +29,6 @@ import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.ListIterator;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
@@ -153,7 +150,7 @@ public class REPL {
                             } else if (e.isHostException() || e.isGuestException()) {
                                 // the 'Error in 'caller' : part of the message was already printed
                                 // in ErrorHandling.handleInteropException
-                                printPolyglotStackTrace(e, errStream);
+                                ErrorHandler.handleError(e, errStream);
                                 // drop through to continue REPL and remember last eval was an error
                                 lastStatus = 1;
                             }
@@ -294,48 +291,6 @@ public class REPL {
                 });
             }
         }
-    }
-
-    public static void printPolyglotStackTrace(PolyglotException e, OutputStream output) throws IOException {
-        List<PolyglotException.StackFrame> stackTrace = new ArrayList<>();
-        for (PolyglotException.StackFrame s : e.getPolyglotStackTrace()) {
-            stackTrace.add(s);
-        }
-
-        // remove trailing host frames
-        for (ListIterator<PolyglotException.StackFrame> iterator = stackTrace.listIterator(stackTrace.size()); iterator.hasPrevious();) {
-            PolyglotException.StackFrame s = iterator.previous();
-            if (s.isHostFrame()) {
-                iterator.remove();
-            } else {
-                break;
-            }
-        }
-
-        // remove trailing <R> frames
-        for (ListIterator<PolyglotException.StackFrame> iterator = stackTrace.listIterator(stackTrace.size()); iterator.hasPrevious();) {
-            PolyglotException.StackFrame s = iterator.previous();
-            if (s.getLanguage().getId().equals("R")) {
-                iterator.remove();
-            } else {
-                break;
-            }
-        }
-
-        if (stackTrace.isEmpty()) {
-            return;
-        }
-
-        StringBuilder sb = new StringBuilder();
-        sb.append(e.isHostException() ? e.asHostException().toString() : e.getMessage());
-        sb.append('\n');
-        for (PolyglotException.StackFrame s : stackTrace) {
-            sb.append("\tat ");
-            sb.append(s);
-            sb.append('\n');
-        }
-        output.write(sb.toString().getBytes());
-        output.flush();
     }
 
     /**
