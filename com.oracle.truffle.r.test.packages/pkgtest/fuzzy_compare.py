@@ -20,6 +20,7 @@
 # or visit www.oracle.com if you need additional information or have any
 # questions.
 #
+
 import logging
 
 def fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, custom_filters=None, dump_preprocessed=False):
