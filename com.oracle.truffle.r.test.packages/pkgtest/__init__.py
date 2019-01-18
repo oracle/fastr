@@ -66,9 +66,6 @@ def _create_testdot(rvm):
     return testdir
 
 
-
-
-
 def _find_subdir(root, name, fatalIfMissing=True):
     for dirpath, dnames, _ in os.walk(root):
         for f in dnames:
@@ -76,9 +73,6 @@ def _find_subdir(root, name, fatalIfMissing=True):
                 return os.path.join(dirpath, f)
     if fatalIfMissing:
         raise Exception(name)
-
-
-
 
 
 def _packages_test_project():
@@ -127,7 +121,7 @@ def prepare_r_install_arguments(args):
     # install and test the packages, unless just listing versions
     if not '--list-versions' in args:
         args += ['--run-tests']
-        args += ['--testdir', 'test.fastr']
+        args += ['--testdir', get_opts().fastr_testdir]
         if not '--print-install-status' in args:
             args += ['--print-install-status']
     return args
@@ -375,7 +369,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     args += ['--pkg-filelist', gnur_packages]
     args += ['--run-tests']
     args += ['--ignore-blacklist']
-    args += ['--testdir', 'test.gnur']
+    args += ['--testdir', get_opts().gnur_testdir]
     log_step('BEGIN', 'install/test', 'GnuR')
 
     _ensure_R_on_PATH(env, os.path.dirname(get_gnur_rscript()))

@@ -30,6 +30,9 @@ import os
 from os.path import join
 from datetime import datetime
 
+fastr_default_testdir = 'test.fastr'
+gnur_default_testdir = 'test.gnur'
+
 _opts = argparse.Namespace()
 
 
@@ -142,8 +145,13 @@ def parse_arguments(argv):
                         help='Dump processed output files where replacement filters have been applied.')
     parser.add_argument('-q', '--quiet', dest="quiet", action="store_true",
                         help='Do verbose logging.')
+    parser.add_argument('--fastr-testdir', metavar="FASTR_TESTDIR", dest="fastr_testdir", default=fastr_default_testdir,
+                        help='FastR test result directory (default: "test.fastr").')
+    parser.add_argument('--gnur-testdir', metavar="GNUR_TESTDIR", dest="gnur_testdir", default=gnur_default_testdir,
+                        help='GnuR test result directory (default: "test.gnur").')
     parser.add_argument('-l', '--log-file', dest="log_file", default="pkgtest.log",
-                        help='Log file name (default: "pkgtest.log").')
+                        help='Log file name (default: "FASTR_TESTDIR/pkgtest.log").')
+
     global _opts
     _opts, r_args = parser.parse_known_args(args=argv)
 
@@ -154,7 +162,7 @@ def parse_arguments(argv):
         log_level = VERY_VERBOSE
     else:
         log_level = logging.INFO
-    logging.basicConfig(filename=_opts.log_file, level=log_level, format=log_format)
+    logging.basicConfig(filename=_opts.log_file, filemode="w", level=log_level, format=log_format)
 
     # also log to console
     console_handler = logging.StreamHandler(stream=sys.stdout)
