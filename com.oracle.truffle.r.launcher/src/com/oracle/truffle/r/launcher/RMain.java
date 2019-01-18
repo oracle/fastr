@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -117,24 +117,23 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
     @Override
     protected List<String> preprocessArguments(List<String> arguments, Map<String, String> polyglotOptions) {
-        String clientName = arguments.size() > 0 ? arguments.get(0).trim() : null;
-        if ("R".equals(clientName)) {
-            client = Client.R;
-        } else if ("Rscript".equals(clientName)) {
-            client = Client.RSCRIPT;
-        } else {
-            System.err.printf("RMain: the first argument must be either 'R' or 'Rscript'. Given was '%s'.\n", clientName);
+        boolean[] recognizedArgsIndices = new boolean[arguments.size()];
+        options = RCmdOptions.parseArguments(arguments.toArray(new String[arguments.size()]), true, recognizedArgsIndices);
+        client = options.getClient();
+
+        if (options.getClient() == null) {
+            System.err.printf("RMain: the first argument must be either 'R' or 'Rscript'. Given arguments: %s\n.", String.join(",", arguments.toArray(new String[0])));
             System.err.println("If you did not run RMain class explicitly, then this is a bug in launcher script, please report it at http://github.com/oracle/fastr.");
             if (launcherMode) {
                 System.exit(1);
             }
             return arguments;
         }
-        boolean[] recognizedArgsIndices = new boolean[arguments.size()];
-        options = RCmdOptions.parseArguments(client, arguments.toArray(new String[arguments.size()]), true, recognizedArgsIndices);
+
         if (System.console() != null && client == Client.R) {
             options.addInteractive();
         }
+
         List<String> unrecognizedArgs = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
             if (!ignoreJvmArguments && "--jvm.help".equals(arguments.get(i))) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -66,7 +66,6 @@ import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
-import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
@@ -407,7 +406,7 @@ public final class RContext {
              * This implies that FastR is being invoked initially from another Truffle language or
              * via RCommand/RscriptCommand. TODO How to decide if session state is to be restored
              */
-            this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
+            this.cmdOptions = RCmdOptions.parseArguments(args, true);
             this.startParameters = new RStartParams(cmdOptions, false);
             this.contextKind = ContextKind.SHARE_NOTHING;
             this.parentContext = null;
@@ -419,7 +418,7 @@ public final class RContext {
         } else {
             // child spawned explicitly by R
             ChildContextInfo info = (ChildContextInfo) initialInfo;
-            this.cmdOptions = RCmdOptions.parseArguments(Client.R, args, true);
+            this.cmdOptions = RCmdOptions.parseArguments(args, true);
             this.startParameters = info.getStartParams();
             this.contextKind = info.getKind();
             this.parentContext = info.getParent();

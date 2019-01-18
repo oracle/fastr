@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,12 +38,22 @@ public final class RCmdOptions {
                 return "\nUsage: R [options] [< infile] [> outfile]\n" + "   or: R CMD command [arguments]\n\n" + "Start R, a system for statistical computation and graphics, with the\n" +
                                 "specified options, or invoke an R tool via the 'R CMD' interface.\n";
             }
+
+            @Override
+            public String argumentName() {
+                return "R";
+            }
         },
 
         RSCRIPT {
             @Override
             public String usage() {
                 return "\nUsage: [--options] [-e expr [-e expr2 ...] | file] [args]\n";
+            }
+
+            @Override
+            public String argumentName() {
+                return "Rscript";
             }
         },
 
@@ -52,9 +62,16 @@ public final class RCmdOptions {
             public String usage() {
                 throw RMain.fatal("can't call usage() on Client.EITHER");
             }
+
+            @Override
+            public String argumentName() {
+                return "either";
+            }
         };
 
         public abstract String usage();
+
+        public abstract String argumentName();
     }
 
     private enum RCmdOptionType {
@@ -159,6 +176,7 @@ public final class RCmdOptions {
         }
     }
 
+    private final Client client;
     private final EnumMap<RCmdOption, Object> optionValues;
     /**
      * The original {@code args} array, with element zero set to "FastR".
@@ -169,7 +187,8 @@ public final class RCmdOptions {
      */
     private final int firstNonOptionArgIndex;
 
-    private RCmdOptions(EnumMap<RCmdOption, Object> optionValues, String[] args, int firstNonOptionArgIndex) {
+    private RCmdOptions(Client client, EnumMap<RCmdOption, Object> optionValues, String[] args, int firstNonOptionArgIndex) {
+        this.client = client;
         this.optionValues = optionValues;
         this.arguments = args;
         this.firstNonOptionArgIndex = firstNonOptionArgIndex;
@@ -236,6 +255,10 @@ public final class RCmdOptions {
         return value == null ? (List<String>) option.defaultValue : (List<String>) value;
     }
 
+    public Client getClient() {
+        return client;
+    }
+
     private static final class MatchResult {
         private final RCmdOption option;
         private final boolean matchedShort;
@@ -281,20 +304,43 @@ public final class RCmdOptions {
      * reasons) so we use "FastR". However, embedded mode does pass the executable in
      * {@code args[0]} and we do not want to parse that!
      */
-    public static RCmdOptions parseArguments(Client client, String[] args, boolean reparse) {
-        return parseArguments(client, args, reparse, null);
+    public static RCmdOptions parseArguments(String[] args, boolean reparse) {
+        return parseArguments(args, reparse, null);
     }
 
-    public static RCmdOptions parseArguments(Client client, String[] args, boolean reparse, boolean[] recognizedArgsIndices) {
+    public static RCmdOptions parseArguments(String[] args, boolean reparse, boolean[] recognizedArgsIndices) {
         assert recognizedArgsIndices == null || recognizedArgsIndices.length == args.length;
 
         EnumMap<RCmdOption, Object> options = new EnumMap<>(RCmdOption.class);
-        if (recognizedArgsIndices != null) {
-            recognizedArgsIndices[0] = true;
+
+        Client client = null;
+        int clientIdx = -1;
+        for (int i = 0; i < args.length; i++) {
+            final String arg = args[i];
+            if (!arg.startsWith("-") && !arg.startsWith("--")) {
+                switch (arg) {
+                    case "R":
+                        client = Client.R;
+                        break;
+                    case "Rscript":
+                        client = Client.RSCRIPT;
+                        break;
+                }
+                clientIdx = i;
+                if (recognizedArgsIndices != null) {
+                    recognizedArgsIndices[i] = true;
+                }
+                break;
+            }
         }
-        int i = 1; // skip the first argument (the command)
+
         int firstNonOptionArgIndex = args.length;
+        int i = 0;
         while (i < args.length) {
+            if (i == clientIdx) {
+                i++;
+                continue;
+            }
             final String arg = args[i];
             MatchResult result = matchOption(arg);
             if (result == null) {
@@ -363,7 +409,7 @@ public final class RCmdOptions {
         }
 
         // adjust for inserted executable name
-        return new RCmdOptions(options, args, firstNonOptionArgIndex);
+        return new RCmdOptions(client, options, args, firstNonOptionArgIndex);
 
     }
 
