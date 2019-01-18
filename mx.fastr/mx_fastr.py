@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,7 +25,6 @@ from os.path import join, sep
 from argparse import ArgumentParser
 import mx
 import mx_gate
-import mx_fastr_pkgs
 import mx_fastr_dists
 from mx_fastr_dists import FastRReleaseProject #pylint: disable=unused-import
 import mx_copylib
@@ -50,6 +49,8 @@ _command_class_dict = {'r': ["com.oracle.truffle.r.launcher.RMain", "R"],
                         'rrepl': ["com.oracle.truffle.tools.debug.shell.client.SimpleREPLClient"],
                         'rembed': ["com.oracle.truffle.r.engine.shell.REmbedded"],
                     }
+
+
 # benchmarking support
 def r_path():
     return join(_fastr_suite.dir, 'bin', 'R')
@@ -467,15 +468,16 @@ def rbdiag(args):
     vmArgs += ['com.oracle.truffle.r.nodes.test.RBuiltinDiagnostics']
     mx.run_java(vmArgs + args)
 
+
 def _gnur_path():
     gnurHome = os.environ.get('GNUR_HOME_BINARY', join(_fastr_suite.dir, 'libdownloads'))
-    return join(gnurHome, r_version(), 'bin')
+    return join(gnurHome, r_version())
 
 def gnu_r(args):
     '''
     run the internally built GNU R executable'
     '''
-    cmd = [join(_gnur_path(), 'R')] + args
+    cmd = [join(_gnur_path(), 'bin', 'R')] + args
     return mx.run(cmd, nonZeroIsFatal=False)
 
 def gnu_rscript(args, env=None):
@@ -483,7 +485,7 @@ def gnu_rscript(args, env=None):
     run the internally built GNU Rscript executable
     env arg is used by pkgtest
     '''
-    cmd = [join(_gnur_path(), 'Rscript')] + args
+    cmd = [join(_gnur_path(), 'bin', 'Rscript')] + args
     return mx.run(cmd, nonZeroIsFatal=False, env=env)
 
 def gnu_rtests(args, env=None):
@@ -516,7 +518,7 @@ def gnu_rtests(args, env=None):
                         outff = outf + '.fastr'
                         os.rename(outf, outff)
                         print 'Running {} explicitly by GnuR CMD BATCH ...'.format(f)
-                        mx.run([join(_gnur_path(), 'R'), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
+                        mx.run([join(_gnur_path(), 'bin', 'R'), '--vanilla', 'CMD', 'BATCH', join(srcd, f)] + args, nonZeroIsFatal=False, env=env, timeout=90)
                         if os.path.isfile(outf):
                             outfg = outf + '.gnur'
                             os.rename(outf, outfg)
@@ -590,6 +592,77 @@ def mx_post_parse_cmd_line(opts):
         rec.buildDependencies += [mx.distribution('SULONG')]
 
 
+# R package testing
+_pkgtest_project = 'com.oracle.truffle.r.test.packages'
+_pkgtest_analyzer_project = 'com.oracle.truffle.r.test.packages.analyzer'
+_pkgtest_analyzer_main_class = _pkgtest_analyzer_project + '.PTAMain'
+_pkgtest_module = None
+
+
+def pkgtest_load():
+    if not _pkgtest_module:
+        global _pkgtest_module
+        _pkgtest_module = None
+        sys.path.append(_pkgtest_project)
+        import pkgtest as _pkgtest_module
+    return _pkgtest_module
+
+
+def _pkgtest_args(args):
+    graalvm_home = None
+    if os.environ.has_key('FASTR_GRAALVM'):
+        graalvm_home = os.environ['FASTR_GRAALVM']
+    elif os.environ.has_key('GRAALVM_FASTR'):
+        graalvm_home = os.environ['GRAALVM_FASTR']
+
+    pkgtest_args = []
+    pkgtest_args += ["--fastr-home"]
+    pkgtest_args += [_fastr_suite.dir]
+    if graalvm_home:
+        # In GRAALVM mode, we assume FastR is not built so we need to
+        _gnur_suite = mx.suite('gnur')
+        pkgtest_args += ["--gnur-home"]
+        pkgtest_args += [join(_gnur_suite.dir, 'gnur', _gnur_suite.extensions.r_version())]
+        pkgtest_args += ["--graalvm-home"]
+        pkgtest_args += [graalvm_home]
+    else:
+        pkgtest_args += ["--gnur-home"]
+        pkgtest_args += [_gnur_path()]
+    mx.log(args)
+    full_args = pkgtest_args + list(args)
+    mx.logv(full_args)
+    return full_args
+
+
+def pkgtest(args, **kwargs):
+    full_args = _pkgtest_args(args)
+    mx.logv(["pkgtest"] + full_args)
+    pkgtest_load().pkgtest(full_args)
+
+
+def installpkgs(args, **kwargs):
+    full_args = _pkgtest_args(args)
+    mx.logv(["installpkgs"] + full_args)
+    pkgtest_load().installpkgs(full_args)
+
+
+def find_top100(*args, **kwargs):
+    pkgtest_load().find_top(["100"])
+
+
+def find_top(*args, **kwargs):
+    pkgtest_load().find_top(args)
+
+
+def r_pkgtest_analyze(args, **kwargs):
+    '''
+    Run analysis for package installation/testing results.
+    '''
+    vmArgs = mx.get_runtime_jvm_args(_pkgtest_analyzer_project)
+    vmArgs += [_pkgtest_analyzer_main_class]
+    mx.run_java(vmArgs + args)
+
+
 mx_register_dynamic_suite_constituents = mx_fastr_dists.mx_register_dynamic_suite_constituents  # pylint: disable=C0103
 
 
@@ -614,13 +687,11 @@ _commands = {
     'rembed' : [rembed, '[options]'],
     'rembedtest' : [rembedtest, '[options]'],
     'r-cp' : [r_classpath, '[options]'],
-    'pkgtest' : [mx_fastr_pkgs.pkgtest, ['options']],
-    'pkgtest-cmp' : [mx_fastr_pkgs.pkgtest_cmp, ['gnur_path fastr_path']],
-    'r-pkgtest-analyze' : [mx_fastr_pkgs.pta, ['options']],
-    'r-findtop100' : [mx_fastr_pkgs.find_top100, ['options']],
-    'r-findtop' : [mx_fastr_pkgs.find_top, ['options']],
-    'r-duppkgs' : [mx_fastr_pkgs.remove_dup_pkgs, ['options']],
-    'installpkgs' : [mx_fastr_pkgs.installpkgs, '[options]'],
+    'pkgtest' : [pkgtest, ['options']],
+    'r-pkgtest-analyze' : [r_pkgtest_analyze, ['options']],
+    'r-findtop100' : [find_top100, ['options']],
+    'r-findtop' : [find_top, ['options']],
+    'installpkgs' : [installpkgs, '[options]'],
     'rcopylib' : [mx_copylib.copylib, '[]'],
     'rupdatelib' : [mx_copylib.updatelib, '[]'],
     'edinclude' : [mx_fastr_edinclude.edinclude, '[]'],
