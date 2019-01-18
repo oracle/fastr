@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,9 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.Source;
+import org.graalvm.polyglot.Value;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -56,9 +59,6 @@ import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.tck.DebuggerTester;
-import org.graalvm.polyglot.Context;
-import org.graalvm.polyglot.Source;
-import org.graalvm.polyglot.Value;
 
 public class FastRDebugTest {
     private Debugger debugger;
@@ -155,7 +155,7 @@ public class FastRDebugTest {
         assertExecutedOK();
 
         assertLocation(9, "nMinusOne = n - 1",
-                        "n", "2");
+                        "n", 2);
         continueExecution();
 
         final Source evalSrc = sourceFromText("main()\n", "test.r");
@@ -188,7 +188,7 @@ public class FastRDebugTest {
         context.eval(source);
         assertExecutedOK();
 
-        assertLocation(3, "res <- res + i", "i", "5");
+        assertLocation(3, "res <- res + i", "i", 5);
         continueExecution();
 
         final Source evalSrc = sourceFromText("main()\n", "test2.r");
@@ -265,7 +265,7 @@ public class FastRDebugTest {
 
         stepInto(1);
         stepOver(3);
-        assertLocation(5, "i <- i + 1L", "i", "3L", "n", "15", "str", "\"hello\"");
+        assertLocation(5, "i <- i + 1L", "i", 3, "n", 15, "str", "[1] \"hello\"");
         assertMetaObjectsOrStringValues(source, true, "i", "integer", "n", "double", "str", "character");
         stepOut();
         performWork();
@@ -299,21 +299,21 @@ public class FastRDebugTest {
             debuggerSession.suspendNextExecution();
         });
 
-        assertLocation(1, "main()", "x", "10L", "ab", "10L", "main", srcFunMain.getCharacters());
+        assertLocation(1, "main()", "x", 10, "ab", 10, "main", srcFunMain.getCharacters());
         stepInto(1);
         assertLocation(4, "i = 3L");
         stepOver(1);
-        assertLocation(5, "n = 15L", "i", "3L");
+        assertLocation(5, "n = 15L", "i", 3);
         stepOver(1);
-        assertLocation(6, "str = \"hello\"", "i", "3L", "n", "15L");
+        assertLocation(6, "str = \"hello\"", "i", 3, "n", 15);
         stepOver(1);
-        assertLocation(7, "i <- i + 1L", "i", "3L", "n", "15L", "str", "\"hello\"");
+        assertLocation(7, "i <- i + 1L", "i", 3, "n", 15, "str", "[1] \"hello\"");
         stepOver(1);
-        assertLocation(8, "ab <<- i", "i", "4L", "n", "15L", "str", "\"hello\"");
+        assertLocation(8, "ab <<- i", "i", 4, "n", 15, "str", "[1] \"hello\"");
         stepOver(1);
-        assertScope(9, "i", true, false, "ab", "4L", "x", "4L");
+        assertScope(9, "i", true, false, "ab", 4, "x", 4);
         stepOut();
-        assertLocation(1, "main()", "x", "4L", "ab", "4L", "main", srcFunMain.getCharacters());
+        assertLocation(1, "main()", "x", 4, "ab", 4, "main", srcFunMain.getCharacters());
         performWork();
 
         final Source evalSource = sourceFromText("main()\n", "evaltest.r");
@@ -347,12 +347,12 @@ public class FastRDebugTest {
         stepOver(1);
         stepInto(1);
         stepOver(1);
-        assertScope(3, "e()", false, false, "x", "10L");
+        assertScope(3, "e()", false, false, "x", 10);
         stepInto(1);
         assertLocation(7, "x <<- 123L");
-        assertScope(7, "x <<- 123L", true, false, "x", "0L");
+        assertScope(7, "x <<- 123L", true, false, "x", 0);
         stepOver(1);
-        assertScope(8, "x", true, false, "x", "123L");
+        assertScope(8, "x", true, false, "x", 123);
         continueExecution();
         performWork();
 
@@ -385,7 +385,7 @@ public class FastRDebugTest {
         assertArguments(1, "main(1, 2, 3, 4)");
 
         stepInto(1);
-        assertArguments(2, "x <- 10L", "a", "1", "b", "2", "c", "3", "d", "4");
+        assertArguments(2, "x <- 10L", "a", 1, "b", 2, "c", 3, "d", 4);
         continueExecution();
         performWork();
 
@@ -420,16 +420,16 @@ public class FastRDebugTest {
         stepOver(1);
         stepInto(1);
         stepOver(2);
-        assertScope(4, "e()", false, false, "x", "10L");
+        assertScope(4, "e()", false, false, "x", 10);
         stepInto(1);
         assertLocation(8, "x <<- 123L");
-        assertScope(8, "x <<- 123L", true, false, "x", "10L");
+        assertScope(8, "x <<- 123L", true, false, "x", 10);
         stepOver(1);
         stepOut();
-        assertScope(9, "x", false, false, "x", "123L");
+        assertScope(9, "x", false, false, "x", 123);
         assertIdentifiers(false, "x", "e");
         stepOut();
-        assertScope(9, "x", false, false, "x", "0L");
+        assertScope(9, "x", false, false, "x", 0);
         continueExecution();
         performWork();
 
@@ -518,17 +518,17 @@ public class FastRDebugTest {
             debuggerSession.install(Breakpoint.newBuilder(DebuggerTester.getSourceImpl(source)).lineIs(6).build());
         });
 
-        assertArguments(6, "x <- n + m", "n", "<unevaluated>", "m", "20");
-        assertScope(6, "x <- n + m", false, true, "n", "<unevaluated>", "m", "20");
+        assertArguments(6, "x <- n + m", "n", "<unevaluated>", "m", 20);
+        assertScope(6, "x <- n + m", false, true, "n", "<unevaluated>", "m", 20);
         stepOver(4);
-        assertArguments(10, "x", "n", "9", "m", "10");
-        assertScope(10, "x", false, true, "n", "9", "m", "10", "x", "121");
+        assertArguments(10, "x", "n", 9, "m", 10);
+        assertScope(10, "x", false, true, "n", 9, "m", 10, "x", 121);
         run.addLast(() -> suspendedEvent.prepareUnwindFrame(suspendedEvent.getTopStackFrame()));
         assertArguments(3, "return fnc(i <- i + 1, 20)");
-        assertScope(3, "return fnc(i <- i + 1, 20)", false, true, "i", "11");
+        assertScope(3, "return fnc(i <- i + 1, 20)", false, true, "i", 11);
         continueExecution();
-        assertArguments(6, "x <- n + m", "n", "11", "m", "20");
-        assertScope(6, "x <- n + m", false, true, "n", "11", "m", "20");
+        assertArguments(6, "x <- n + m", "n", 11, "m", 20);
+        assertScope(6, "x <- n + m", false, true, "n", 11, "m", 20);
         continueExecution();
 
         performWork();
@@ -561,9 +561,9 @@ public class FastRDebugTest {
             }
         });
         stepInto(1);
-        assertLocation(1, 40, SuspendAnchor.BEFORE, "if (missing(x)) { 42; } else { cat(\"setting \", x, \"\\n\"); }", false, true, "x", "");
+        assertLocation(1, 40, SuspendAnchor.BEFORE, "if (missing(x)) { 42; } else { cat(\"setting \", x, \"\\n\"); }", false, true, "x", "missing");
         stepOver(1);
-        assertLocation(1, 58, SuspendAnchor.BEFORE, "42", false, true, "x", "");
+        assertLocation(1, 58, SuspendAnchor.BEFORE, "42", false, true, "x", "missing");
         stepOver(1);
         // Bug: Location is 1, 1, ""; the node is com.oracle.truffle.r.nodes.function.RCallNodeGen
         // The node has CallTag and SourceSection(source=internal, index=0, length=0, characters=)
@@ -714,7 +714,7 @@ public class FastRDebugTest {
         });
     }
 
-    private void assertArguments(final int line, final String code, final String... expectedArgs) {
+    private void assertArguments(final int line, final String code, final Object... expectedArgs) {
         run.addLast(() -> {
             try {
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
@@ -733,7 +733,9 @@ public class FastRDebugTest {
                 for (int i = 0; i < n; i++) {
                     int i2 = i << 1;
                     assertEquals(expectedArgs[i2], actualValues.get(i).getName());
-                    assertEquals(expectedArgs[i2 + 1], actualValues.get(i).as(String.class));
+                    Object expectedVal = expectedArgs[i2 + 1];
+                    expectedVal = expectedToString(expectedVal);
+                    assertEquals(expectedVal, actualValues.get(i).as(String.class));
                 }
 
                 if (!run.isEmpty()) {
@@ -749,6 +751,13 @@ public class FastRDebugTest {
                 throw e;
             }
         });
+    }
+
+    private static Object expectedToString(Object val) {
+        if (val instanceof Integer || val instanceof Double) {
+            return "[1] " + val;
+        }
+        return val;
     }
 
     private void compareScope(final int line, final String code, boolean includeAncestors, boolean completeMatch, final Object[] expectedFrame) {
@@ -771,6 +780,7 @@ public class FastRDebugTest {
         for (int i = 0; i < expectedFrame.length; i = i + 2) {
             String expectedIdentifier = (String) expectedFrame[i];
             Object expectedValue = expectedFrame[i + 1];
+            expectedValue = expectedToString(expectedValue);
             String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
             DebugScope scope = frame.getScope();
             DebugValue value = null;
@@ -839,6 +849,7 @@ public class FastRDebugTest {
                             if (metaObjects) {
                                 DebugValue moDV = value.getMetaObject();
                                 if (moDV != null || expectedValue != null) {
+                                    expectedValue = "[1] \"" + expectedValue + "\"";
                                     String mo = moDV.as(String.class);
                                     Assert.assertEquals("MetaObjects of '" + name + "' differ:", expectedValue, mo);
                                 }

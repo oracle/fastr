@@ -1,5 +1,10 @@
 # 1.0 RC 12
 
+New Features:
+
+* the implementation of the `TruffleLanguage#toString` method uses R function `print`
+  * for example: the console in Chrome DevTools will print data.frames formatted like R would
+
 Added missing R builtins and C API
 
 * FastR provides GNU-R compatible `parseData` for expressions parsed via `parse(...,keep.source=T)`
