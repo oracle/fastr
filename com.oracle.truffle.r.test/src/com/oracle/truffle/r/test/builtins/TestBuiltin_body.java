@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -56,5 +56,12 @@ public class TestBuiltin_body extends TestBase {
     @Test
     public void testbody6() {
         assertEval(Output.IgnoreWarningMessage, "argv <- list(structure(numeric(0), .Dim = c(0L, 0L))); .Internal(body(argv[[1]]))");
+
+        assertEval("{ body <- structure('OK', class='testOK'); f <- function() 42; body(f) <- body; f; f() }");
+        assertEval("{ body <- c('a','b','c'); f <- function() 42; body(f) <- body; f; f() }");
+        assertEval("{ body <- c(1,3,42); f <- function() 42; body(f) <- body; f; f() }");
+        assertEval("{ body <- 1:10; f <- function() 42; body(f) <- body; f; f() }");
+        assertEval("{ body <- expression(1+3); f <- function() 42; body(f) <- body; f; f() }");
+        assertEval("{ body <- print(1); f <- function() 42; body(f) <- body; f; f() }");
     }
 }

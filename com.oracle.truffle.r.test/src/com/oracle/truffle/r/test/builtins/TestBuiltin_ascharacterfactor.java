@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,5 +31,6 @@ public class TestBuiltin_ascharacterfactor extends TestBase {
     @Test
     public void testascharacterfactor1() {
         assertEval("argv <- structure(list(x = structure(c(1L, 2L, NA), .Label = c('AB',     'CD'), class = 'factor')), .Names = 'x');do.call('as.character.factor', argv)");
+        assertEval("f <- structure(c(3L, 1L, 2L, 3L), 'levels' = c('a', NA_character_, 'c'), class = 'factor'); print(f)");
     }
 }

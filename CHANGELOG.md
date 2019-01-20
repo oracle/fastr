@@ -16,6 +16,10 @@ Bug fixes:
 * added native functions optim() and optimness()
 * fixed various race conditions in parallel package
 * `strsplit(...,perl=T)` does not end up in an infinite loop if the pattern is not found by `pcre_exec`
+* `as.character.factor` error for levels containing NAs
+* `env2list` error for environments containing pairlists
+* `body<-` error for non-scalar values
+* `unlink` error for paths containing wildcard(s) but no path separator
 
 # 1.0 RC 11
 
