@@ -1,6 +1,5 @@
 # 1.0 RC 12
 
-
 Added missing R builtins and C API
 
 * FastR provides GNU-R compatible `parseData` for expressions parsed via `parse(...,keep.source=T)`
@@ -16,6 +15,7 @@ Bug fixes:
 * option `--polyglot` works with the native image of FastR
 * added native functions optim() and optimness()
 * fixed various race conditions in parallel package
+* `strsplit(...,perl=T)` does not end up in an infinite loop if the pattern is not found by `pcre_exec`
 
 # 1.0 RC 11
 

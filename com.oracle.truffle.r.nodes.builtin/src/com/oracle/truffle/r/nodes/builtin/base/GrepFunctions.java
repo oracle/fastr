@@ -1595,8 +1595,17 @@ public class GrepFunctions {
             while (execNode.execute(pcre.result, 0, data, lastEndOffset, 0, ovector) >= 0) {
                 // offset == byte position
                 // index == character position
-                int startOffset = ovector[0];
-                int endOffset = ovector[1];
+                int startOffset;
+                int endOffset;
+                if (ovector[1] > 0) {
+                    startOffset = ovector[0];
+                    endOffset = ovector[1];
+                } else {
+                    // if there is no match -- PCRE did not progress, we progress by one character,
+                    // this is what GNU-R does
+                    startOffset = ovector[0] + 1;
+                    endOffset = ovector[0] + 1;
+                }
                 int startIndex = (fromByteMapping != null) ? fromByteMapping[startOffset] : startOffset;
                 int endIndex = (fromByteMapping != null) ? fromByteMapping[endOffset] : endOffset;
                 String match = data.substring(lastEndIndex, startIndex);

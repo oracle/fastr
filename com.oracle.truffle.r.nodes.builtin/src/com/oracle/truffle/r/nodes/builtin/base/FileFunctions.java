@@ -750,7 +750,9 @@ public class FileFunctions {
                 if (pattern == null) {
                     return true;
                 }
-                Matcher m = pattern.matcher(f.getName());
+                // Note: getName on "/" causes NPE
+                String name = f.getPath().equals("/") ? "" : f.getName();
+                Matcher m = pattern.matcher(name);
                 boolean result = m.find();
                 return result;
             }
