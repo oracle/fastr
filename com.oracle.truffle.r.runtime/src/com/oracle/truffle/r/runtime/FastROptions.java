@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,7 +57,7 @@ public enum FastROptions {
     SharedContexts("Whether all child contexts are to be shared contexts", true),
     SearchPathForcePromises("Whether all promises for frames on shared path are forced in presence of shared contexts", false),
     LoadPackagesNativeCode("Load native code of packages, including builtin packages.", !FastRConfig.ManagedMode),
-    SynchronizeNativeCode("allow only one thread to enter packages' native code", false),
+    SynchronizeNativeCode("allow only one thread to enter packages' native code", true),
 
     // Promises optimizations
     EagerEval("If enabled, overrides all other EagerEval switches (see EagerEvalHelper)", false),
@@ -73,7 +73,8 @@ public enum FastROptions {
 
     IgnoreGraphicsCalls("Silently ignore unimplemented functions from graphics package", false),
     AdditionalOptions("List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. " +
-                    "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true);
+                    "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true),
+    ChannelReceiveTimeout("Enables timeout (in seconds) when receiving messages from a channel", "0", true);
 
     /**
      * Setting this environment variable activates the tracing of the bitcode of selected LLVM

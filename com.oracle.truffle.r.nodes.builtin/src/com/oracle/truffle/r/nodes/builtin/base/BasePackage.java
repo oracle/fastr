@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -453,6 +453,7 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRContext.Rscript.class, FastRContextFactory.RscriptNodeGen::create);
         add(FastRContext.CloseChannel.class, FastRContextFactory.CloseChannelNodeGen::create);
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
+        add(FastRContext.CreateForkChannel.class, FastRContextFactory.CreateForkChannelNodeGen::create);
         add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);
         add(FastRContext.Get.class, FastRContextFactory.GetNodeGen::create);
         add(FastRContext.GetChannel.class, FastRContextFactory.GetChannelNodeGen::create);

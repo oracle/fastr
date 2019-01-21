@@ -941,6 +941,7 @@ com.oracle.truffle.r.native/gnur/patch/src/library/tools/src/tools.h,no.copyrigh
 com.oracle.truffle.r.native/gnur/patch/src/library/utils/src/init.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/utils/src/utils.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/nls.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/optim.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/port.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/stats.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/ts.c,no.copyright

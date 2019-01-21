@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -968,7 +968,7 @@ public final class FrameSlotChangeMonitor {
     /*
      * This method should be called for frames of all environments on the search path.
      */
-    public static void handleAllMultiSlots(Frame frame, int[] indices, boolean replicate) {
+    public static synchronized void handleAllMultiSlots(Frame frame, int[] indices, boolean replicate) {
         // make a copy avoid potential updates to the array iterated over
         FrameSlot[] slots = new FrameSlot[frame.getFrameDescriptor().getSlots().size()];
         slots = frame.getFrameDescriptor().getSlots().toArray(slots);
@@ -1029,7 +1029,7 @@ public final class FrameSlotChangeMonitor {
      * Nullifies a set of slots in a {@link MultiSlotData} to avoid memory leaks. When providing
      * {@code null} as indices, all subslots except the first one are nullified.
      */
-    public static void cleanMultiSlots(Frame frame, int[] indices) {
+    public static synchronized void cleanMultiSlots(Frame frame, int[] indices) {
         CompilerAsserts.neverPartOfCompilation();
         // make a copy avoid potential updates to the array iterated over
         FrameSlot[] slots = frame.getFrameDescriptor().getSlots().toArray(new FrameSlot[0]);
