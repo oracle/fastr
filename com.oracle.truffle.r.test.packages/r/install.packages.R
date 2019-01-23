@@ -161,6 +161,7 @@ ignore.suggests <- list(
 	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 	mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
 	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+	forcats = ignore.all.but('testthat'), # other suggested: ggplot2 and covcor not used in tests
 	sqldf = 'tcltk|RPostgreSQL|RJDBC|rJava|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
 )
 
