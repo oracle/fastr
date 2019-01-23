@@ -95,7 +95,7 @@ def _installpkgs_script():
     return join(packages_test, 'r', 'install.packages.R')
 
 
-def installpkgs(args, **kwargs):
+def _installpkgs(args, **kwargs):
     '''
     Runs the R script that does package/installation and testing.
     '''
@@ -170,7 +170,7 @@ def pkgtest(args):
     log_step('BEGIN', 'install/test', 'FastR')
     # Currently installpkgs does not set a return code (in install.packages.R)
     out = OutputCapture()
-    rc = installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
+    rc = _installpkgs(install_args, nonZeroIsFatal=False, env=env, out=out, err=out)
     if rc == 100:
         # fatal error connecting to package repo
         abort(status=rc)
@@ -623,6 +623,11 @@ def _parse_runit_result(lines):
             "Could not parse testthat summary: Line 'RUNIT TEST PROTOCOL' not contained.")
 
 
+def installpkgs(args, **kwargs):
+    rargs = util.parse_arguments(args)
+    return _installpkgs(rargs)
+
+
 def pkgtest_cmp(args):
     with open(args[0]) as f:
         gnur_content = f.readlines()
@@ -632,17 +637,18 @@ def pkgtest_cmp(args):
     return fuzzy_compare(gnur_content, fastr_content, args[0], args[1])
 
 
-def find_top100():
-    find_top(["100"])
+def find_top100(args):
+    find_top(args + ["100"])
 
 
 def find_top(args):
+    rargs = util.parse_arguments(['--use-installed-pkgs', '--find-top'] + args)
     n = args[-1]
     libinstall = join(get_fastr_home(), "top%s.tmp" % n)
     if not os.path.exists(libinstall):
         os.mkdir(libinstall)
     os.environ['R_LIBS_USER'] = libinstall
-    installpkgs(['--use-installed-pkgs', '--find-top', n])
+    _installpkgs(rargs)
 
 
 class TestFrameworkResultException(BaseException):
