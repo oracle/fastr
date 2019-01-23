@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
@@ -64,7 +65,6 @@ import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorSet
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.NumberToIntNodeGen;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public final class VectorRFFIWrapper implements TruffleObject {
 
@@ -382,15 +382,14 @@ public final class VectorRFFIWrapper implements TruffleObject {
     }
 
     public abstract static class AtomicVectorSetterNode extends Node {
-
-        private final NACheck naCheck = NACheck.create();
+        @Child private Node writeMsgNode;
 
         public abstract Object execute(Object vector, int index, Object value);
 
         @Specialization
-        protected Object doIntVector(RIntVector vector, int index, int value) {
-            naCheck.enable(true);
-            if (naCheck.check(value)) {
+        protected Object doIntVector(RIntVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
                 vector.setComplete(false);
             }
             vector.setDataAt(vector.getInternalStore(), index, value);
@@ -398,9 +397,9 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doDoubleVector(RDoubleVector vector, int index, double value) {
-            naCheck.enable(true);
-            if (naCheck.check(value)) {
+        protected Object doDoubleVector(RDoubleVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
                 vector.setComplete(false);
             }
             vector.setDataAt(vector.getInternalStore(), index, value);
@@ -415,9 +414,10 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Specialization
         protected Object doLogicalVector(RLogicalVector vector, int index, int value,
-                        @Cached("createBinaryProfile()") ConditionProfile booleanProfile) {
-            naCheck.enable(true);
-            if (naCheck.check(value)) {
+                        @Cached("createBinaryProfile()") ConditionProfile booleanProfile,
+                        @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
                 vector.setComplete(false);
                 vector.setDataAt(vector.getInternalStore(), index, RRuntime.LOGICAL_NA);
                 return vector;
@@ -438,12 +438,12 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doStringVector(RStringVector vector, int index, long value) {
+        protected Object doStringVector(RStringVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
             Object usedValue = value;
             usedValue = NativeDataAccess.lookup(value);
             assert usedValue instanceof CharSXPWrapper;
-            naCheck.enable(true);
-            if (naCheck.check(((CharSXPWrapper) usedValue).getContents())) {
+            if (RRuntime.isNA(((CharSXPWrapper) usedValue).getContents())) {
+                naProfile.enter();
                 vector.setComplete(false);
             }
             vector.setWrappedDataAt(index, (CharSXPWrapper) usedValue);
@@ -451,9 +451,9 @@ public final class VectorRFFIWrapper implements TruffleObject {
         }
 
         @Specialization
-        protected Object doStringVector(RStringVector vector, int index, CharSXPWrapper value) {
-            naCheck.enable(true);
-            if (naCheck.check(value.getContents())) {
+        protected Object doStringVector(RStringVector vector, int index, CharSXPWrapper value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value.getContents())) {
+                naProfile.enter();
                 vector.setComplete(false);
             }
             vector.setWrappedDataAt(index, value);
@@ -468,7 +468,11 @@ public final class VectorRFFIWrapper implements TruffleObject {
         protected Object doOther(Object target, int index, Object value) {
             assert target instanceof TruffleObject;
             try {
-                return ForeignAccess.sendWrite(Message.WRITE.createNode(), (TruffleObject) target, index, value);
+                if (writeMsgNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    writeMsgNode = insert(Message.WRITE.createNode());
+                }
+                return ForeignAccess.sendWrite(writeMsgNode, (TruffleObject) target, index, value);
             } catch (InteropException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -854,7 +854,7 @@ SEXP test_forceAndCall(SEXP e, SEXP n, SEXP rho) {
 }
 
 SEXP test_constant_types() {
-    SEXP res = PROTECT(allocVector(INTSXP, 43));
+    SEXP res = PROTECT(allocVector(INTSXP, 44));
     int* data = INTEGER(res);
     int i = 0;
     data[i++] = TYPEOF(R_GlobalEnv);

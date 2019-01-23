@@ -98,7 +98,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -614,22 +613,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object VECTOR_ELT(Object x, long i) {
-        Object vec = x;
-        if (vec instanceof RExpression) {
-            return ((RExpression) vec).getDataAt((int) i);
-        }
-        RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
-        if (list.getLength() == i) {
-            // Some packages abuse that there seems to be no bounds checking and the
-            // one-after-the-last element returns NULL, which they use to find out if they reached
-            // the end of the list...
-            return RNull.instance;
-        }
-        Object elem = list.getDataAt((int) i);
-        if (elem instanceof RSharingAttributeStorage) {
-            ((RSharingAttributeStorage) elem).makeSharedPermanent();
-        }
-        return elem;
+        throw implementedAsNode();
     }
 
     @Override
