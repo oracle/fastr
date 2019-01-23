@@ -95,7 +95,7 @@ public final class NACheck {
 
     /**
      * The {@link NACheck} can be in 3 states. {@link #NO_CHECK} means that no incomplete
-     * vector/value was ever passed to noe of the {@code enable} functions and so {@code check}
+     * vector/value was ever passed to none of the {@code enable} functions and so {@code check}
      * functions will be no-ops in the compiled code.
      */
     private static final int NO_CHECK = 0;

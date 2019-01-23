@@ -625,7 +625,11 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             // the end of the list...
             return RNull.instance;
         }
-        return list.getDataAt((int) i);
+        Object elem = list.getDataAt((int) i);
+        if (elem instanceof RSharingAttributeStorage) {
+            ((RSharingAttributeStorage) elem).makeSharedPermanent();
+        }
+        return elem;
     }
 
     @Override
