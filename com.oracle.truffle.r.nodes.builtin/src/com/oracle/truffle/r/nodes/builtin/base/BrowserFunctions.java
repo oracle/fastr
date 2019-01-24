@@ -32,15 +32,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.debug.DebuggerTags;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.GenerateWrapper;
-import com.oracle.truffle.api.instrumentation.InstrumentableNode;
-import com.oracle.truffle.api.instrumentation.ProbeNode;
-import com.oracle.truffle.api.instrumentation.Tag;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -64,12 +58,15 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class BrowserFunctions {
 
-    @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, nonEvalArgs = 2, parameterNames = {"text", "condition", "expr", "skipCalls", "externalDebugger"}, behavior = COMPLEX)
-    public abstract static class BrowserNode extends RBuiltinNode.Arg5 {
+    @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, nonEvalArgs = 2, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
+    public abstract static class BrowserNode extends RBuiltinNode.Arg4 {
+
+        // Note: this node could be used to trigger external debugger via the
+        // DebuggerTags.AlwaysHalt tag, but for that to work, we would need to make this node
+        // instrumentable and also all its parents all the way to RCallNode
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
         @Child private GetCallerFrameNode getCallerFrame;
-        @Child private ExternalDebuggerBreakpointNode externalDebuggerBreakpointNode;
         @Child private CastNode castExprNode = newCastBuilder().asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean()).buildCastNode();
 
         @Override
@@ -80,12 +77,10 @@ public class BrowserFunctions {
         static {
             Casts casts = new Casts(BrowserNode.class);
             casts.arg("skipCalls").asIntegerVector().findFirst(0);
-            casts.arg("externalDebugger").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RNull browser(VirtualFrame frame, Object text, Object condition, RPromise expr, int skipCalls, byte externalDebugger) {
+        protected RNull browser(VirtualFrame frame, Object text, Object condition, RPromise expr, @SuppressWarnings("unused") int skipCalls) {
             RBaseNode exprExpr = expr.getClosure().getExpr();
             Object doBreak;
             if (exprExpr instanceof ConstantNode) {
@@ -96,15 +91,6 @@ public class BrowserFunctions {
             if ((boolean) castExprNode.doCast(doBreak)) {
                 RContext curContext = RContext.getInstance();
                 if (!curContext.isInitial() && curContext.getKind() == ContextKind.SHARE_ALL && curContext.getParent().getKind() == ContextKind.SHARE_NOTHING) {
-                    return RNull.instance;
-                }
-
-                if (externalDebugger == RRuntime.LOGICAL_TRUE) {
-                    if (externalDebuggerBreakpointNode == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        externalDebuggerBreakpointNode = insert(new ExternalDebuggerBreakpointNode());
-                    }
-                    externalDebuggerBreakpointNode.execute(frame);
                     return RNull.instance;
                 }
 
@@ -146,29 +132,6 @@ public class BrowserFunctions {
                 callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
             }
             RContext.getInstance().getConsole().printf("Called from: %s%n", callerString);
-
-        }
-
-        @GenerateWrapper
-        public static class ExternalDebuggerBreakpointNode extends Node implements InstrumentableNode {
-            public void execute(@SuppressWarnings("unused") VirtualFrame frame) {
-                // nop
-            }
-
-            @Override
-            public boolean isInstrumentable() {
-                return true;
-            }
-
-            @Override
-            public WrapperNode createWrapper(ProbeNode probe) {
-                return new ExternalDebuggerBreakpointNodeWrapper(this, probe);
-            }
-
-            @Override
-            public boolean hasTag(Class<? extends Tag> tag) {
-                return tag == DebuggerTags.AlwaysHalt.class;
-            }
         }
     }
 
