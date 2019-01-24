@@ -134,6 +134,9 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
                         // and the single element of that vector is regarded as NA
                         isNA = isNARecursive(access.getListElement(iter));
                         break;
+                    case Expression:
+                        isNA = false;
+                        break;
                     default:
                         throw RInternalError.shouldNotReachHere();
 

@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -46,4 +46,10 @@ public class TestBuiltin_unlink extends TestBase {
     public void testunlink5() {
         assertEval(Ignored.SideEffects, "argv <- structure(list(x = '/tmp/RtmpHjOdmd/file7ac7792619bc'),     .Names = 'x');do.call('unlink', argv)");
     }
+
+    @Test
+    public void testunlink() {
+        assertEval("{ unlink('abcnonexistentxyz*') }");
+    }
+
 }

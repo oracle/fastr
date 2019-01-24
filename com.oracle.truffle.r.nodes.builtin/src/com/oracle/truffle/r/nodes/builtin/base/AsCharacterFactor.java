@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -71,12 +71,14 @@ public abstract class AsCharacterFactor extends RBuiltinNode.Arg1 {
         RAbstractStringVector levsString = (RAbstractStringVector) levs;
         int nl = levsString.getLength();
         naCheck.enable(xVec);
+        naCheck.enable(levsString);
         for (int i = 0; i < n; i++) {
             int xi = xVec.getDataAt(i);
             if (naCheck.check(xi)) {
                 data[i] = RRuntime.STRING_NA;
             } else if (xi >= 1 && xi <= nl) {
                 data[i] = levsString.getDataAt(xi - 1);
+                naCheck.check(data[i]);
             } else {
                 throw error(RError.Message.MALFORMED_FACTOR);
             }

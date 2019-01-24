@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -57,5 +57,6 @@ public class TestBuiltin_environment extends TestBase {
         assertEval("environment(function(x) 1)");
         assertEval("environment(NULL)");
         assertEval("{ f <- y~z; class(f) <- c('myclass', class(f)); environment(f) }");
+        assertEval("{ x <- as.pairlist(c(1,2,3)); e <- as.environment(list(x=x)); print(x); print(e$x) }");
     }
 }

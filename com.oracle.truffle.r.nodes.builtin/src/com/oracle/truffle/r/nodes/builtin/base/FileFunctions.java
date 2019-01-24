@@ -1196,7 +1196,7 @@ public class FileFunctions {
         private int removeGlob(String pathPattern, boolean recursive, int firstGlobCharIdx, int result) {
             // we take as much as we can from the pathPatter as the search root
             int lastSeparator = pathPattern.substring(0, firstGlobCharIdx).lastIndexOf(File.separatorChar);
-            String searchRoot = pathPattern.substring(0, lastSeparator);
+            String searchRoot = (lastSeparator != -1) ? pathPattern.substring(0, lastSeparator) : "";
             try {
                 int[] tmpResult = new int[]{result};
                 final Pattern globRegex = Pattern.compile(FileSystemUtils.toUnixRegexPattern(pathPattern));

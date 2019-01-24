@@ -271,5 +271,8 @@ public class TestBuiltin_isna extends TestBase {
         assertEval("is.na(list(c(NA,NA)))");
         assertEval("is.na(list(function() 42, NA)))");
         assertEval("is.na(list(quote(a+3), NA)))");
+
+        assertEval("{ is.na(list(expression(1+3))) }");
+        assertEval("{ is.na(list(expression(NA))) }");
     }
 }

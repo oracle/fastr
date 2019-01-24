@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.nodes.access.AccessArgumentNode;
 import com.oracle.truffle.r.nodes.access.WriteVariableNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -51,6 +52,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
@@ -133,7 +135,8 @@ public abstract class AsFunction extends RBuiltinNode.Arg2 {
         } else if (bodyObject instanceof RSymbol) {
             body = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) bodyObject).getName(), false).asRNode();
         } else {
-            assert bodyObject == RNull.instance || bodyObject instanceof Integer || bodyObject instanceof Double || bodyObject instanceof Byte || bodyObject instanceof String;
+            assert bodyObject instanceof Integer || bodyObject instanceof Double || bodyObject instanceof Byte || bodyObject instanceof String ||
+                            (bodyObject instanceof TruffleObject && !(bodyObject instanceof RPromise));
             body = RContext.getASTBuilder().constant(RSyntaxNode.LAZY_DEPARSE, bodyObject).asRNode();
         }
         if (!RBaseNode.isRSyntaxNode(body)) {

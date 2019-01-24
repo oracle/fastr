@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,8 @@ public class TestBuiltin_env2list extends TestBase {
         assertEval("{ e2 <- new.env(); e2$vec <- c(1,2,4); e <- new.env(); e$a <- e2; l <- .Internal(env2list(e,TRUE,TRUE)); l$a$vec[[1]] <- 42; list(e$a$vec, e2$vec, l$a$vec) }");
         // explicit promise
         assertEval("{ vec <- c(1,2,4); e <- new.env(); delayedAssign('a', {cat('[evaluating a]'); vec}, assign.env=e); l <- .Internal(env2list(e,TRUE,TRUE)); cat('[result created]'); l$a[[1]] <- 42; list(l$a, vec) }");
+        // pairlist
+        assertEval("{ e<-new.env(); e$x=pairlist(1:3); l<-.Internal(env2list(e, TRUE, TRUE)); print(l$x); typeof(l$x) }");
     }
 
     @Test
