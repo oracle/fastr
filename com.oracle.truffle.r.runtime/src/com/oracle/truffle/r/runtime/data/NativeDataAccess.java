@@ -40,6 +40,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
@@ -48,13 +49,15 @@ import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import java.util.logging.Level;
 
 import sun.misc.Unsafe;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
 
 abstract class InteropRootNode extends RootNode {
     InteropRootNode() {
@@ -107,6 +110,14 @@ public final class NativeDataAccess {
     public interface Releasable {
         void release();
     }
+
+    /**
+     * WARNING: stdout is problematic for embedded mode when using this logger. Always specify a log
+     * file e.g. mx r --log.R.com.oracle.truffle.r.traceNativeCalls.level=FINE
+     * --log.file=&lt;yourfile&gt;
+     * 
+     */
+    private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_RFFI);
 
     private static final boolean TRACE_MIRROR_ALLOCATION_SITES = false;
 
@@ -298,12 +309,12 @@ public final class NativeDataAccess {
                 nativeMirrors.remove(id, this);
             }
             // System.out.println(String.format("gc'ing %16x", id));
-            // RFFILog.printf("gc'ing %16x (dataAddress=%16x)", id, dataAddress);
+            // RFFILog.log("gc'ing %16x (dataAddress=%16x)", id, dataAddress);
             if (dataAddress == getEmptyDataAddress()) {
-                // RFFILog.printf("1. freeing data at %16x (id=%16x)", dataAddress, id);
+                // RFFILog.log("1. freeing data at %16x (id=%16x)", dataAddress, id);
                 assert (setDataAddress(0xbadbad)) != 0;
             } else if (dataAddress != 0 && !external) {
-                // RFFILog.printf("2. freeing data at %16x (id=%16x)", dataAddress, id);
+                // RFFILog.log("2. freeing data at %16x (id=%16x)", dataAddress, id);
                 freeNativeMemory(dataAddress);
                 if (dataAddressToNativeMirrors != null) {
                     dataAddressToNativeMirrors.remove(dataAddress);
@@ -377,8 +388,8 @@ public final class NativeDataAccess {
         if (TRACE_MIRROR_ALLOCATION_SITES) {
             registerAllocationSite(arg, newMirror);
         }
-        if (RFFILog.traceEnabled()) {
-            RFFILog.printf("NativeMirror: %s->%s (%s)", Long.toHexString(newMirror.id), obj.getClass().getSimpleName(), Utils.getDebugInfo(obj));
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE, "NativeMirror: {0}->{1} ({2})", new Object[]{Long.toHexString(newMirror.id), obj.getClass().getSimpleName(), Utils.getDebugInfo(obj)});
         }
         return newMirror;
     }

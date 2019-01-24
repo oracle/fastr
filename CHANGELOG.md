@@ -1,3 +1,9 @@
+# 1.0 RC 13
+
+ New features:
+
+ * new JUL-like logging infrastructure backed by Truffle
+
 # 1.0 RC 12
 
 Added missing R builtins and C API

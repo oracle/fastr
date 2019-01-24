@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,122 +22,13 @@
  */
 package com.oracle.truffle.r.ffi.impl.common;
 
-import java.util.List;
-
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RInternalError;
-import com.oracle.truffle.r.runtime.Utils;
-import com.oracle.truffle.r.runtime.context.RContext;
-import com.oracle.truffle.r.runtime.data.RObject;
-import com.oracle.truffle.r.runtime.data.RPairList;
-import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
 
 /**
- * Mostly support for tracing R FFI up/down calls. Currently tracing of the arguments to calls is
- * limited. The type of the argument is printed as is the value for types with simple (short)
- * values. Potentially complex types, e.g, {@link RPairList} do not have their values printed.
- *
- * Embedded mode requires special treatment. Experimentally the primary embedding app, RStudio, sets
- * a very constrained environment (i.e. does not propagate environment variables set in the shell
- * that launches RStudio.) and sets the cwd to "/", which is not writeable.
  */
 public class RFFIUtils {
-
-    private static Node isPointerNode;
-    private static Node asPointerNode;
-
-    private enum CallMode {
-        UP("U", true),
-        UP_RETURN("UR", false),
-        DOWN("D", false),
-        DOWN_RETURN("DR", true);
-
-        private final String printName;
-        private final boolean logNativeMirror;
-
-        CallMode(String printName, boolean logNativeMirror) {
-            this.printName = printName;
-            this.logNativeMirror = logNativeMirror;
-        }
-    }
-
-    @TruffleBoundary
-    public static void traceUpCall(String name, List<Object> args) {
-        traceCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
-    }
-
-    @TruffleBoundary
-    public static void traceUpCallReturn(String name, Object result) {
-        traceCall(CallMode.UP_RETURN, name, getContext().getCallDepth(), result);
-    }
-
-    @TruffleBoundary
-    public static void traceDownCall(String name, Object... args) {
-        traceCall(CallMode.DOWN, name, getContext().getCallDepth(), args);
-    }
-
-    @TruffleBoundary
-    public static void traceDownCallReturn(String name, Object result) {
-        traceCall(CallMode.DOWN_RETURN, name, getContext().getCallDepth(), result);
-    }
-
-    public static boolean traceEnabled() {
-        return RFFILog.traceEnabled();
-    }
-
-    private static void traceCall(CallMode mode, String name, int depthValue, Object... args) {
-        if (traceEnabled()) {
-            StringBuilder sb = new StringBuilder();
-            sb.append("CallRFFI[");
-            sb.append(mode.printName);
-            sb.append(':');
-            sb.append(depthValue);
-            sb.append(']');
-            sb.append(name);
-            sb.append('(');
-            printArgs(mode, sb, args);
-            sb.append(')');
-            RFFILog.write(sb.toString());
-        }
-    }
-
-    private static void printArgs(CallMode mode, StringBuilder sb, Object[] args) {
-        boolean first = true;
-        for (Object arg : args) {
-            if (first) {
-                first = false;
-            } else {
-                sb.append(", ");
-            }
-            if (arg == null) {
-                sb.append("null");
-                continue;
-            }
-            sb.append(arg.getClass().getSimpleName()).append('(').append(arg.hashCode()).append(';');
-            if (arg instanceof TruffleObject && ForeignAccess.sendIsPointer(getIsPointerNode(), (TruffleObject) arg)) {
-                try {
-                    sb.append("ptr:").append(Long.toHexString(ForeignAccess.sendAsPointer(getAsPointerNode(), (TruffleObject) arg)));
-                } catch (UnsupportedMessageException e) {
-                    throw RInternalError.shouldNotReachHere();
-                }
-            } else {
-                Utils.printDebugInfo(sb, arg);
-            }
-            // Note: it makes sense to include native mirrors only once they have been create
-            // already
-            if (mode.logNativeMirror && arg instanceof RObject) {
-                sb.append(((RObject) arg).getNativeMirror());
-            }
-            sb.append(')');
-        }
-    }
 
     // Error handling
     static RuntimeException unimplemented() {
@@ -147,9 +38,9 @@ public class RFFIUtils {
 
     static RuntimeException unimplemented(String message) {
         CompilerDirectives.transferToInterpreter();
-        if (traceEnabled()) {
-            RFFILog.printf("Error: unimplemented %s", message);
-            RFFILog.printStackTrace();
+        if (RFFILog.logEnabled()) {
+            RFFILog.log("Error: unimplemented {0}", message);
+            RFFILog.logStackTrace();
         }
         throw RInternalError.unimplemented(message);
     }
@@ -168,44 +59,20 @@ public class RFFIUtils {
     public static <T> T guaranteeInstanceOf(Object x, Class<T> clazz) {
         if (x == null) {
             CompilerDirectives.transferToInterpreter();
-            if (traceEnabled()) {
-                RFFILog.printf("Error: unexpected type: null instead of " + clazz.getSimpleName());
-                RFFILog.printStackTrace();
+            if (RFFILog.logEnabled()) {
+                RFFILog.log("Error: unexpected type: null instead of " + clazz.getSimpleName());
+                RFFILog.logStackTrace();
             }
             unimplemented("unexpected type: null instead of " + clazz.getSimpleName());
         } else if (!clazz.isInstance(x)) {
             CompilerDirectives.transferToInterpreter();
-            if (traceEnabled()) {
-                RFFILog.printf("Error: unexpected type: %s is %s instead of %s", x, x.getClass().getSimpleName(), clazz.getSimpleName());
-                RFFILog.printStackTrace();
+            if (RFFILog.logEnabled()) {
+                RFFILog.log("Error: unexpected type: {0} is {1} instead of {2}", x, x.getClass().getSimpleName(), clazz.getSimpleName());
+                RFFILog.logStackTrace();
             }
             unimplemented("unexpected type: " + x + " is " + x.getClass().getSimpleName() + " instead of " + clazz.getSimpleName());
         }
         return clazz.cast(x);
     }
 
-    public static void logException(Throwable ex) {
-        if (traceEnabled()) {
-            RFFILog.printf("Error: %s, Message: %s", ex.getClass().getSimpleName(), ex.getMessage());
-            RFFILog.printStackTrace();
-        }
-    }
-
-    private static RFFIContext getContext() {
-        return RContext.getInstance().getRFFI();
-    }
-
-    private static Node getIsPointerNode() {
-        if (isPointerNode == null) {
-            isPointerNode = Message.IS_POINTER.createNode();
-        }
-        return isPointerNode;
-    }
-
-    private static Node getAsPointerNode() {
-        if (asPointerNode == null) {
-            asPointerNode = Message.AS_POINTER.createNode();
-        }
-        return asPointerNode;
-    }
 }

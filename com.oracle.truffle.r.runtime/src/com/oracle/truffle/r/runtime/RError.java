@@ -25,15 +25,18 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleException;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_PERFORMANCE_WARNING;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import java.util.logging.Level;
 
 /**
  * A facade for handling errors. This class extends {@link RuntimeException} so that it can be
@@ -298,17 +301,36 @@ public final class RError extends RuntimeException implements TruffleException {
         return RErrorHandling.errorcallDflt(showCall, node, msg, arg);
     }
 
-    @TruffleBoundary
     public static void performanceWarning(String string) {
-        if (FastROptions.PerformanceWarnings.getBooleanValue()) {
-            System.out.println("Performance warning: " + string);
-            StackTraceElement[] trace = new RuntimeException().getStackTrace();
-            for (int i = 1; i < trace.length && i < 8; i++) {
-                StackTraceElement element = trace[i];
-                System.out.println("  at " + element.getClassName() + "." + element.getMethodName() + "(" + element.getFileName() + ":" + element.getLineNumber() + ")");
-            }
+        checkObsoleteOption();
+        TruffleLogger logger = RLogger.getLogger(LOGGER_PERFORMANCE_WARNING);
+        if (logger.isLoggable(Level.FINE)) {
+            StringBuilder sb = new StringBuilder();
+            sb.append("Performance warning: ").append(string).append("\n");
+            sb.append(createStackTrace(false));
+            logger.fine(sb.toString());
             // warning(RError.SHOW_CALLER2, Message.PERFORMANCE, string);
         }
+    }
+
+    @TruffleBoundary
+    private static void checkObsoleteOption() {
+        if (FastROptions.PerformanceWarnings.getBooleanValue()) {
+            System.out.println("WARNING: The PerformanceWarnings option was discontinued.\n" +
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.performanceWarning.level=FINE");
+        }
+    }
+
+    private static String createStackTrace(boolean full) {
+        StackTraceElement[] trace = new RuntimeException().getStackTrace();
+        StringBuilder sb = new StringBuilder();
+        int length = full ? trace.length : (trace.length < 8 ? trace.length : 8);
+        for (int i = 1; i < length; i++) {
+            StackTraceElement element = trace[i];
+            sb.append("  at ").append(element.getClassName()).append(".").append(element.getMethodName()).append("(").append(element.getFileName()).append(":").append(
+                            element.getLineNumber()).append(")\n");
+        }
+        return sb.toString();
     }
 
     public enum Message {

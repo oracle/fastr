@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,8 +22,10 @@
  */
 package com.oracle.truffle.r.runtime.nodes;
 
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RLogger;
 
 public abstract class RSyntaxUtils {
 
@@ -95,14 +97,14 @@ public abstract class RSyntaxUtils {
                 return str.toString();
             }
         };
-        System.out.println("================= " + desc);
-        System.out.println("==== arguments");
+        TruffleLogger logger = RLogger.getLogger(RSyntaxUtils.class.getName());
+        logger.info("================= " + desc);
+        logger.info("==== arguments");
         for (int i = 0; i < formals.length; i++) {
             RSyntaxNode node = formals[i];
-            System.out.print(signature.getName(i) + "=");
-            System.out.println(node == null ? "" : visitor.accept(node));
+            logger.info(signature.getName(i) + "=" + (node == null ? "" : visitor.accept(node)));
         }
-        System.out.println("==== body");
-        System.out.println(visitor.accept(body));
+        logger.info("==== body");
+        logger.info(visitor.accept(body));
     }
 }

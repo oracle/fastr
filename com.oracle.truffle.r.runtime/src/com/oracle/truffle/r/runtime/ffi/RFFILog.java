@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,85 +22,187 @@
  */
 package com.oracle.truffle.r.runtime.ffi;
 
-import java.io.IOException;
-import java.io.PrintWriter;
-import java.nio.file.Path;
-
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.r.runtime.FastROptions;
-import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
+import com.oracle.truffle.api.interop.ForeignAccess;
+import com.oracle.truffle.api.interop.Message;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.context.RContext;
+import java.util.logging.Level;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.data.RObject;
+import java.util.List;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_RFFI;
+import com.oracle.truffle.r.runtime.data.RPairList;
 
+/**
+ * Support for logging R FFI.
+ * 
+ * <p>
+ * Currently logging of the arguments to calls is limited. The type of the argument is printed as is
+ * the value for types with simple (short) values. Potentially complex types, e.g, {@link RPairList}
+ * do not have their values printed.
+ * </p>
+ *
+ * <p>
+ * Embedded mode requires special treatment. Experimentally the primary embedding app, RStudio, sets
+ * a very constrained environment (i.e. does not propagate environment variables set in the shell
+ * that launches RStudio.) and sets the cwd to "/", which is not writeable.
+ * </p>
+ */
 public class RFFILog {
-    /**
-     * Set this to {@code true} when it is not possible to set {@link FastROptions}.
-     */
-    private static boolean alwaysTrace;
-    /**
-     * Is set by initialization and caches whether we are tracing.
-     */
-    @CompilationFinal public static boolean traceEnabled;
-
-    public static boolean traceInitialized;
 
     /**
-     * Always trace to a file because stdout is problematic for embedded mode.
+     * WARNING: stdout is problematic for embedded mode when using this logger. Always specify a log
+     * file e.g. mx r --log.R.com.oracle.truffle.r.traceNativeCalls.level=FINE
+     * --log.file=&lt;yourfile&gt;
+     * 
      */
-    private static final String TRACEFILE = "fastr_trace_nativecalls";
-    private static PrintWriter traceStream;
+    private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_RFFI);
 
-    /**
-     * Handles the initialization of the RFFI downcalls/upcall tracing implementation.
-     */
-    public static synchronized void initializeTracing() {
-        if (!traceInitialized) {
-            traceInitialized = true;
-            traceEnabled = alwaysTrace || FastROptions.TraceNativeCalls.getBooleanValue();
-            if (traceEnabled) {
-                if (traceStream == null) {
-                    initTraceStream();
+    private enum CallMode {
+        UP("U", true),
+        UP_RETURN("UR", false),
+        DOWN("D", false),
+        DOWN_RETURN("DR", true);
+
+        private final String printName;
+        private final boolean logNativeMirror;
+
+        CallMode(String printName, boolean logNativeMirror) {
+            this.printName = printName;
+            this.logNativeMirror = logNativeMirror;
+        }
+    }
+
+    private static Node isPointerNode;
+    private static Node asPointerNode;
+
+    public static void logUpCall(String name, List<Object> args) {
+        logCall(CallMode.UP, name, getContext().getCallDepth(), args.toArray());
+    }
+
+    public static void logUpCallReturn(String name, Object result) {
+        logCall(CallMode.UP_RETURN, name, getContext().getCallDepth(), result);
+    }
+
+    public static void logDownCall(String name, Object... args) {
+        logCall(CallMode.DOWN, name, getContext().getCallDepth(), args);
+    }
+
+    public static void logDownCallReturn(String name, Object result) {
+        logCall(CallMode.DOWN_RETURN, name, getContext().getCallDepth(), result);
+    }
+
+    public static boolean logEnabled() {
+        return LOGGER.isLoggable(Level.FINE);
+    }
+
+    private static void logCall(CallMode mode, String name, int depthValue, Object... args) {
+        if (logEnabled()) {
+            log(callToString(mode, depthValue, name, args));
+        }
+    }
+
+    @TruffleBoundary
+    private static String callToString(CallMode mode, int depthValue, String name, Object[] args) {
+        StringBuilder sb = new StringBuilder();
+        sb.append("CallRFFI[");
+        sb.append(mode.printName);
+        sb.append(':');
+        sb.append(depthValue);
+        sb.append(']');
+        sb.append(name);
+        sb.append('(');
+        argsToString(mode, sb, args);
+        sb.append(')');
+        return sb.toString();
+    }
+
+    @TruffleBoundary
+    private static void argsToString(CallMode mode, StringBuilder sb, Object[] args) {
+        boolean first = true;
+        for (Object arg : args) {
+            if (first) {
+                first = false;
+            } else {
+                sb.append(", ");
+            }
+            if (arg == null) {
+                sb.append("null");
+                continue;
+            }
+            sb.append(arg.getClass().getSimpleName()).append('(').append(arg.hashCode()).append(';');
+            if (arg instanceof TruffleObject && ForeignAccess.sendIsPointer(getIsPointerNode(), (TruffleObject) arg)) {
+                try {
+                    sb.append("ptr:").append(Long.toHexString(ForeignAccess.sendAsPointer(getAsPointerNode(), (TruffleObject) arg)));
+                } catch (UnsupportedMessageException e) {
+                    throw RInternalError.shouldNotReachHere();
                 }
+            } else {
+                Utils.printDebugInfo(sb, arg);
             }
+            // Note: it makes sense to include native mirrors only once they have been create
+            // already
+            if (mode.logNativeMirror && arg instanceof RObject) {
+                sb.append(((RObject) arg).getNativeMirror());
+            }
+            sb.append(')');
         }
     }
 
-    public static boolean traceEnabled() {
-        return traceEnabled;
-    }
-
-    public static synchronized void write(String value) {
-        assert traceEnabled : "check traceEnabled() before calling RFFILog.write";
-        traceStream.write(value);
-        traceStream.append(" [ctx:").append("" + System.identityHashCode(RContext.getInstance()));
-        traceStream.append(",thread:").append("" + Thread.currentThread().getId()).append(']');
-        traceStream.write('\n');
-        traceStream.flush();
-    }
-
-    public static synchronized void printf(String fmt, Object... args) {
-        assert traceEnabled : "check traceEnabled() before calling RFFILog.printf";
-        traceStream.printf(fmt, args);
-        traceStream.write('\n');
-        traceStream.flush();
-    }
-
-    public static synchronized void printStackTrace() {
-        assert traceEnabled : "check traceEnabled() before calling RFFILog.printStackTrace";
-        new RuntimeException().printStackTrace(traceStream);
-    }
-
-    private static void initTraceStream() {
-        Path tracePath = Utils.getLogPath(TRACEFILE);
-        if (tracePath != null) {
-            try {
-                traceStream = new PrintWriter(tracePath.toString());
-            } catch (IOException ex) {
-                System.err.println(ex.getMessage());
-                System.exit(1);
-            }
-        } else {
-            System.err.println("Cannot write trace log file (tried current working directory, user home directory, FastR home directory).");
-            System.exit(1);
+    public static void logException(Throwable ex) {
+        if (logEnabled()) {
+            log("Error: {0}, Message: {1}", ex.getClass().getSimpleName(), ex.getMessage());
+            logStackTrace();
         }
     }
+
+    private static RFFIContext getContext() {
+        return RContext.getInstance().getRFFI();
+    }
+
+    public static void log(String value) {
+        assert LOGGER.isLoggable(Level.FINE) : "check traceEnabled() before calling RFFILog.log";
+        LOGGER.fine(appendCtxAndThreadInfo(value));
+    }
+
+    @TruffleBoundary
+    private static String appendCtxAndThreadInfo(String value) {
+        StringBuilder sb = new StringBuilder();
+        sb.append(value);
+        sb.append(" [ctx:").append(System.identityHashCode(RContext.getInstance()));
+        sb.append(",thread:").append(Thread.currentThread().getId()).append(']');
+        return sb.toString();
+    }
+
+    public static void logStackTrace() {
+        assert LOGGER.isLoggable(Level.FINE) : "check traceEnabled() before calling RFFILog.logStackTrace";
+        LOGGER.log(Level.FINE, null, new RuntimeException());
+    }
+
+    public static void log(String message, Object... parameters) {
+        assert LOGGER.isLoggable(Level.FINE) : "check traceEnabled() before calling RFFILog.log";
+        // TODO log also ctx and thread?
+        LOGGER.log(Level.FINE, message, parameters);
+    }
+
+    private static Node getIsPointerNode() {
+        if (isPointerNode == null) {
+            isPointerNode = Message.IS_POINTER.createNode();
+        }
+        return isPointerNode;
+    }
+
+    private static Node getAsPointerNode() {
+        if (asPointerNode == null) {
+            asPointerNode = Message.AS_POINTER.createNode();
+        }
+        return asPointerNode;
+    }
+
 }
