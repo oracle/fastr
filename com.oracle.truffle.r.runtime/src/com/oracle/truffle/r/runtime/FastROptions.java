@@ -74,7 +74,8 @@ public enum FastROptions {
     IgnoreGraphicsCalls("Silently ignore unimplemented functions from graphics package", false),
     AdditionalOptions("List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. " +
                     "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true),
-    ChannelReceiveTimeout("Enables timeout (in seconds) when receiving messages from a channel", "0", true);
+    ChannelReceiveTimeout("Enables timeout (in seconds) when receiving messages from a channel", "0", true),
+    RestrictForceSplitting("Restrict force splitting of call targets", false);
 
     /**
      * Setting this environment variable activates the tracing of the bitcode of selected LLVM

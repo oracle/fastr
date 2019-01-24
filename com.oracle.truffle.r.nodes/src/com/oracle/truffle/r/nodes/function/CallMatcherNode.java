@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -43,6 +43,7 @@ import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -185,7 +186,9 @@ public abstract class CallMatcherNode extends RBaseNode {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, new CallMatcherUninitializedNode(argsAreEvaluated, depth + 1)));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
-                    cachedNode.call.getCallNode().cloneCallTarget();
+                    if (!FastROptions.RestrictForceSplitting.getBooleanValue()) {
+                        cachedNode.call.getCallNode().cloneCallTarget();
+                    }
                 }
                 return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
@@ -77,6 +78,7 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -117,6 +119,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = RNode.class)
+@ReportPolymorphism
 public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
@@ -1168,7 +1171,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 call = insert(CallRFunctionNode.create(cachedTarget));
                 if (needsSplitting(cachedTarget)) {
-                    call.getCallNode().cloneCallTarget();
+                    if (!FastROptions.RestrictForceSplitting.getBooleanValue()) {
+                        call.getCallNode().cloneCallTarget();
+                    }
                 }
                 if (containsDispatch) {
                     call.setNeedsCallerFrame();

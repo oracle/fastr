@@ -28,6 +28,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
@@ -364,6 +365,7 @@ public final class PromiseHelperNode extends RBaseNode {
         return isFrameForEnvProfile.profile(frame == promise.getFrame());
     }
 
+    @ReportPolymorphism
     protected abstract static class GenerateValueNonDefaultOptimizedNode extends Node {
 
         public abstract Object execute(VirtualFrame frame, int state, EagerPromise promise);

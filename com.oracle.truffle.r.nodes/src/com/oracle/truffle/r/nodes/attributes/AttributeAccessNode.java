@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerAsserts;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Location;
 import com.oracle.truffle.api.object.Property;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * The base class for the nodes that get/set/remove attributes. It encapsulates the common methods
  * used in guards and for caching.
  */
+@ReportPolymorphism
 public abstract class AttributeAccessNode extends RBaseNode {
 
     protected AttributeAccessNode() {
