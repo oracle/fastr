@@ -909,3 +909,12 @@ SEXP test_Rf_setVar(SEXP symbol, SEXP value, SEXP env) {
     Rf_setVar(symbol, value, env);
     return R_NilValue;
 }
+
+SEXP test_Rf_setAttribDimDoubleVec(SEXP vec, SEXP dimDoubleVec) {
+    Rf_setAttrib(vec, PROTECT(install("someNonSpecialAttrName")), PROTECT(allocVector(INTSXP, 42))); // Choose SetAttributeNode's non-special attr specialization
+    Rf_setAttrib(vec, PROTECT(install("dim")), dimDoubleVec); // and remain on it (no guard was on it)
+    UNPROTECT(3);
+    return R_NilValue;
+}
+
+
