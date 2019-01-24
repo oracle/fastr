@@ -47,6 +47,7 @@ import javax.lang.model.type.TypeMirror;
 import javax.lang.model.util.Types;
 import javax.tools.Diagnostic;
 import javax.tools.Diagnostic.Kind;
+
 import javax.tools.JavaFileObject;
 
 public final class FFIProcessor extends AbstractProcessor {
@@ -240,7 +241,6 @@ public final class FFIProcessor extends AbstractProcessor {
         if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
-        w.append("import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
@@ -261,14 +261,23 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("    private final UpCallsRFFI upCallsImpl;\n");
             w.append('\n');
         }
+        w.append("    private final ForeignAccess access;\n");
         w.append("    " + callName + "(UpCallsRFFI upCallsImpl) {\n");
         w.append("        assert upCallsImpl != null;\n");
         if (nodeClass == null) {
             w.append("        this.upCallsImpl = upCallsImpl;\n");
         }
+        w.append("        this.access = ForeignAccess.createAccess(new " + callName + "Factory(upCallsImpl), null);\n");
         w.append("    }\n");
         w.append('\n');
         w.append("    private static final class " + callName + "Factory extends AbstractDowncallForeign {\n");
+        w.append("\n");
+        w.append("        private final UpCallsRFFI upCallsImpl;\n");
+        w.append("\n");
+        w.append("        " + callName + "Factory(UpCallsRFFI upCallsImpl) {\n");
+        w.append("            this.upCallsImpl = upCallsImpl;\n");
+        w.append("        }\n");
+        w.append("\n");
         w.append("        @Override\n");
         w.append("        public boolean canHandle(TruffleObject obj) {\n");
         w.append("            return obj instanceof " + callName + ";\n");
@@ -318,7 +327,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
         }
         // TODO: turn this field into "@Child private", initialize lazily
-        w.append("                HandleUpCallExceptionNode handleExceptionNode = HandleUpCallExceptionNode.create();");
+        w.append("                com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode handleExceptionNode = upCallsImpl.createHandleUpCallExceptionNode();");
         w.append("\n");
         w.append("                @Override\n");
         w.append("                public Object execute(VirtualFrame frame) {\n");
@@ -332,7 +341,7 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("                    Object resultRObj0;\n");
             w.append("                    Object resultRObj;\n");
         }
-        w.append("                    ctx.beforeUpcall(" + canRunGc + ");\n");
+        w.append("                    ctx.beforeUpcall(" + canRunGc + ", upCallsImpl.getRFFIType());\n");
         w.append(unwrappedArgs);
         if (resultOwnerRHS != null) {
             StringBuilder resultOwner = new StringBuilder("                    Object resultOwner = ").append(resultOwnerRHS).append(";\n");
@@ -386,7 +395,7 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("                        resultRObj = RDataFactory.createIntVectorFromScalar(-1);\n");
         }
         w.append("                    }\n");
-        w.append("                    ctx.afterUpcall(" + canRunGc + ");\n");
+        w.append("                    ctx.afterUpcall(" + canRunGc + ", upCallsImpl.getRFFIType());\n");
         if (returnKind == TypeKind.VOID) {
             w.append("                    if (RFFIUtils.traceEnabled()) {\n");
             w.append("                        RFFIUtils.traceUpCallReturn(\"" + name + "\", null);\n");
@@ -406,11 +415,9 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("        }\n");
         w.append("    }\n");
         w.append("\n");
-        w.append("    private static final ForeignAccess ACCESS = ForeignAccess.createAccess(new " + callName + "Factory(), null);\n");
-        w.append("\n");
         w.append("    @Override\n");
         w.append("    public ForeignAccess getForeignAccess() {\n");
-        w.append("        return ACCESS;\n");
+        w.append("        return access;\n");
         w.append("    }\n");
         w.append("}\n");
         w.close();

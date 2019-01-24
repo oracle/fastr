@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -105,12 +105,7 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
 
     @Override
     public void setTrueLength(int l) {
-        try {
-            NativeDataAccess.setTrueDataLength(this, data, l);
-        } finally {
-            data = null;
-            complete = false;
-        }
+        NativeDataAccess.setTrueDataLength(this, l);
     }
 
     @Override
@@ -256,8 +251,8 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
                 ((double[]) store)[index * 2] = real;
                 ((double[]) store)[index * 2 + 1] = imaginary;
             } else {
-                NativeDataAccess.setNativeMirrorDoubleData(store, index * 2, real);
-                NativeDataAccess.setNativeMirrorDoubleData(store, index * 2 + 1, imaginary);
+                NativeDataAccess.setNativeMirrorComplexRealPartData(store, index, real);
+                NativeDataAccess.setNativeMirrorComplexImaginaryPartData(store, index, imaginary);
             }
         }
     }

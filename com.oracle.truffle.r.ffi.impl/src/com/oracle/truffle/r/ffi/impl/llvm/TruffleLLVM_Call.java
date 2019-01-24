@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,9 +56,9 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
-final class TruffleLLVM_Call implements CallRFFI {
+public final class TruffleLLVM_Call implements CallRFFI {
 
-    TruffleLLVM_Call() {
+    public TruffleLLVM_Call() {
         RFFILog.initializeTracing();
     }
 
@@ -287,7 +287,7 @@ final class TruffleLLVM_Call implements CallRFFI {
         }
     }
 
-    private static class TruffleLLVM_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
+    private static final class TruffleLLVM_InvokeVoidCallNode extends Node implements InvokeVoidCallNode {
         @Child private TruffleLLVM_InvokeCallNode invokeCallNode = TruffleLLVM_InvokeCallNodeGen.create(true);
 
         @Override
@@ -314,11 +314,6 @@ final class TruffleLLVM_Call implements CallRFFI {
     @Override
     public InvokeVoidCallNode createInvokeVoidCallNode() {
         return new TruffleLLVM_InvokeVoidCallNode();
-    }
-
-    @Override
-    public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
-        return new HandleLLVMUpCallExceptionNode();
     }
 
     public static final class PushCallbacksNode extends Node {

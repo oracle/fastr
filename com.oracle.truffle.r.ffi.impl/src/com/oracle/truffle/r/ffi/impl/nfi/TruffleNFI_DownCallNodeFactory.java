@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DownCallNodeFactory;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeArray;
 import com.oracle.truffle.r.runtime.ffi.interop.NativeUInt8Array;
 
@@ -73,7 +74,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                 }
 
                 if (fn.hasComplexInteraction()) {
-                    return ((TruffleNFI_Context) RContext.getInstance().getRFFI()).beforeDowncall();
+                    return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(RFFIFactory.Type.NFI);
                 }
                 return 0;
             }
@@ -90,7 +91,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
             @ExplodeLoop
             protected void afterCall(long before, NativeFunction fn, TruffleObject target, Object[] args) {
                 if (fn.hasComplexInteraction()) {
-                    ((TruffleNFI_Context) RContext.getInstance().getRFFI()).afterDowncall(before);
+                    (RContext.getInstance().getRFFI(TruffleNFI_Context.class)).afterDowncall(before, RFFIFactory.Type.NFI);
                 }
 
                 for (Object obj : args) {

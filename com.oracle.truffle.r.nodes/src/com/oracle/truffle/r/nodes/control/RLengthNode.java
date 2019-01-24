@@ -170,4 +170,5 @@ public abstract class RLengthNode extends RBaseNode {
             throw RError.interopError(this, e, object);
         }
     }
+
 }

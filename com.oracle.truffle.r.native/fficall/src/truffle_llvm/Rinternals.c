@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,14 +40,6 @@ typedef char* (*call_charSXPToNativeCharArray)(SEXP e);
 typedef char* (*call_R_Home)();
 
 __thread void **callbacks = NULL;
-
-void Rinternals_addCallback(void** theCallbacks, int index, void *callback) {
-	if (callbacks == NULL) {
-		callbacks = truffle_managed_malloc(INTERNAL_UPCALLS_TABLE_SIZE * sizeof(void*));
-	}
-//	printf("setting callback %d\n", index);
-	callbacks[index] = callback;
-}
 
 void Rinternals_setCallbacksAddress(void** theCallbacks) {
 	callbacks = theCallbacks;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,13 +25,11 @@ package com.oracle.truffle.r.ffi.impl.managed;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.LapackRFFI;
@@ -54,12 +52,12 @@ public final class Managed_RFFIFactory extends RFFIFactory {
     private static final class ManagedRFFIContext extends RFFIContext {
 
         private ManagedRFFIContext() {
-            super(new CRFFI() {
+            super(new RFFIContextState(), new CRFFI() {
                 @Override
                 public InvokeCNode createInvokeCNode() {
                     throw unsupported("invoke");
                 }
-            }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE), new CallRFFI() {
+            }, new BaseRFFI(Managed_DownCallNodeFactory.INSTANCE, Managed_DownCallNodeFactory.INSTANCE), new CallRFFI() {
                 @Override
                 public InvokeCallNode createInvokeCallNode() {
                     throw unsupported("native code invocation");
@@ -68,11 +66,6 @@ public final class Managed_RFFIFactory extends RFFIFactory {
                 @Override
                 public InvokeVoidCallNode createInvokeVoidCallNode() {
                     throw unsupported("native code invocation");
-                }
-
-                @Override
-                public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
-                    return new IgnoreUpCallExceptionNode();
                 }
             }, new DLLRFFI() {
                 @Override
@@ -112,19 +105,21 @@ public final class Managed_RFFIFactory extends RFFIFactory {
             }, new ZipRFFI(Managed_DownCallNodeFactory.INSTANCE), new PCRERFFI(Managed_DownCallNodeFactory.INSTANCE), new LapackRFFI(Managed_DownCallNodeFactory.INSTANCE),
                             new StatsRFFI(Managed_DownCallNodeFactory.INSTANCE), new ToolsRFFI(), new REmbedRFFI(Managed_DownCallNodeFactory.INSTANCE),
                             new MiscRFFI(Managed_DownCallNodeFactory.INSTANCE));
-        }
 
-        private static class IgnoreUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
-            @Override
-            public void execute(Throwable ex) {
-                // nop
-            }
         }
 
         @Override
         public TruffleObject lookupNativeFunction(NativeFunction function) {
             throw unsupported("calling native functions");
         }
+
+        @SuppressWarnings("unchecked")
+        @Override
+        public <C extends RFFIContext> C as(Class<C> rffiCtxClass) {
+            assert rffiCtxClass == ManagedRFFIContext.class;
+            return (C) this;
+        }
+
     }
 
     @Override
@@ -137,4 +132,5 @@ public final class Managed_RFFIFactory extends RFFIFactory {
         CompilerDirectives.transferToInterpreter();
         throw RError.error(RError.NO_CALLER, Message.GENERIC, String.format("Feature '%s' is not supported by managed FFI, i.e. it requires running native code.", name));
     }
+
 }

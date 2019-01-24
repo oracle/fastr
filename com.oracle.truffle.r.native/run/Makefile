@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -110,6 +110,7 @@ endif
 	cp edMakeconf.etc $(FASTR_ETC_DIR)
 	cp edMakeconf.etc.llvm $(FASTR_ETC_DIR)
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf.in $(FASTR_ETC_DIR)
+	cp native-packages $(FASTR_ETC_DIR)
 	cp $(GNUR_HOME_BINARY)/VERSION $(FASTR_ETC_DIR)
 	cp -R $(GNUR_HOME_BINARY)/m4 $(FASTR_ETC_DIR)
 	cp -R $(GNUR_HOME_BINARY)/tools $(FASTR_ETC_DIR)

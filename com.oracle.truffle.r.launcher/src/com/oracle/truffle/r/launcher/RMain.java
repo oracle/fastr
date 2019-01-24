@@ -27,7 +27,6 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -186,10 +185,9 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
 
         Context context;
-        String tracedLibs = System.getenv("TRACE_LLVM_LIBS");
-        if (tracedLibs != null && !tracedLibs.isEmpty()) {
-            String llvmTraceFilePath = Paths.get("").toAbsolutePath().resolve("llvmTrace.log").toUri().toString();
-            context = preparedContext = contextBuilderAllowAll.option("TraceLLVM", llvmTraceFilePath).option("llvm.llDebug", "true").arguments("R", rArguments).in(
+        String tracedLibs = System.getenv("DEBUG_LLVM_LIBS");
+        if (tracedLibs != null) {
+            context = preparedContext = contextBuilderAllowAll.option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
                             consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         } else {
             context = preparedContext = contextBuilderAllowAll.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();

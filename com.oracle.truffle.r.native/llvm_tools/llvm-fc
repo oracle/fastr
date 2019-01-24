@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,15 +25,10 @@
 ORIG_CMD=$1
 shift
 
-if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
-	${ORIG_CMD} "$@"
-fi
-if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
-    exit 0
-fi
-
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+. $DIR/llvm-helper
 
 F2C=""
 F2C_H_INCLUDE="${DIR}/../include/"
@@ -48,9 +43,9 @@ fi
 
 . $DIR/llvm-helper
 
-errorOccurred || {
-try
-(
+#errorOccurred || {
+#try
+#(
 
   find_source_and_target "$@"
 
@@ -74,6 +69,7 @@ try
   replace_arg_from="${source_file}"
   replace_arg_to="${target_file}"
   fortran=1
+
   analyze_args "$@"
 
   llvm_tool=clang
@@ -93,7 +89,8 @@ try
     fi
   fi
 
-) || catch || {
-	recordError
-}
-}
+#) || catch || {
+#	recordError
+#	exit $ex_code
+#}
+#}

@@ -85,7 +85,7 @@ def get_fastr_rscript():
 
 
 def get_r_version(rscript_binary):
-    args = [rscript_binary, "--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], '\\n', sep='')"]
+    args = [rscript_binary, "--silent", "-e", "cat(R.Version()[['major']], '.', R.Version()[['minor']], sep='')"]
     if not os.path.exists(rscript_binary):
         abort(1, "Rscript binary '%s' does not exist.", rscript_binary)
     logging.debug("Running command: %s", args)

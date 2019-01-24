@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,20 +20,30 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.ffi.impl.llvm;
+package com.oracle.truffle.r.ffi.impl.nodes;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
+import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 
-public class HandleLLVMUpCallExceptionNode extends Node implements UpCallsRFFI.HandleUpCallExceptionNode {
-    @Override
-    @TruffleBoundary
-    public void execute(Throwable ex) {
-        if (ex instanceof RuntimeException) {
-            throw (RuntimeException) ex;
-        } else {
-            throw new RuntimeException(ex);
-        }
+public abstract class RSetExternalPtrNode extends FFIUpCallNode.Arg2 {
+
+    @Specialization
+    public Object handleAddress(RExternalPtr addrObj, long addr) {
+        addrObj.setAddr(new SymbolHandle(addr));
+        return RNull.instance;
     }
+
+    @Specialization
+    public Object handlePointerObject(RExternalPtr addrObj, TruffleObject pointerObj) {
+        addrObj.setAddr(new SymbolHandle(pointerObj));
+        return RNull.instance;
+    }
+
+    public static RSetExternalPtrNode create() {
+        return RSetExternalPtrNodeGen.create();
+    }
+
 }

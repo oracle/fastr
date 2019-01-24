@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm.upcalls;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.nodes.Node;
@@ -33,7 +34,12 @@ public class BytesToNativeCharArrayCallMR {
     public abstract static class BytesToNativeCharArrayCallExecute extends Node {
         protected java.lang.Object access(BytesToNativeCharArrayCall receiver, Object[] arguments) {
             String strArg = (String) arguments[0];
-            return receiver.upCallsImpl.bytesToNativeCharArray(strArg.getBytes());
+            return receiver.upCallsImpl.bytesToNativeCharArray(getBytes(strArg));
+        }
+
+        @TruffleBoundary
+        private static byte[] getBytes(String strArg) {
+            return strArg.getBytes();
         }
     }
 

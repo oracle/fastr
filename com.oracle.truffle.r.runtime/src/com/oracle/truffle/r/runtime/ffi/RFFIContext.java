@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,25 +41,40 @@ import com.oracle.truffle.r.runtime.data.RObject;
  */
 public abstract class RFFIContext extends RFFI {
 
-    protected RFFIContext(CRFFI cRFFI, BaseRFFI baseRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI, LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
+    public final RFFIContextState rffiContextState;
+
+    protected RFFIContext(RFFIContextState rffiContextState, CRFFI cRFFI, BaseRFFI baseRFFI, CallRFFI callRFFI, DLLRFFI dllRFFI, UserRngRFFI userRngRFFI, ZipRFFI zipRFFI, PCRERFFI pcreRFFI,
+                    LapackRFFI lapackRFFI, StatsRFFI statsRFFI,
                     ToolsRFFI toolsRFFI, REmbedRFFI rEmbedRFFI, MiscRFFI miscRFFI) {
         super(cRFFI, baseRFFI, callRFFI, dllRFFI, userRngRFFI, zipRFFI, pcreRFFI, lapackRFFI, statsRFFI, toolsRFFI, rEmbedRFFI, miscRFFI);
+        this.rffiContextState = rffiContextState;
         // forward constructor
     }
 
-    private int callDepth = 0;
+    public static final class RFFIContextState {
 
-    /**
-     * @see #registerReferenceUsedInNative(Object)
-     */
-    private final ArrayList<Object> protectedNativeReferences = new ArrayList<>();
+        private int callDepth = 0;
 
-    /**
-     * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on this
-     * stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but once popped
-     * off, they must be put into that list.
-     */
-    public final ArrayList<RObject> protectStack = new ArrayList<>();
+        /**
+         * @see #registerReferenceUsedInNative(Object)
+         */
+        private final ArrayList<Object> protectedNativeReferences = new ArrayList<>();
+
+        /**
+         * FastR equivalent of GNUR's special dedicated global list that is GC root and so any
+         * vectors added to it will be guaranteed to be preserved.
+         */
+        public final IdentityHashMap<RObject, AtomicInteger> preserveList = new IdentityHashMap<>();
+
+        private final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
+        /**
+         * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on
+         * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
+         * once popped off, they must be put into that list.
+         */
+        public final ArrayList<RObject> protectStack = new ArrayList<>();
+
+    }
 
     /**
      * The GC in GNUR is cooperative, which means that unless native code calls back to the R engine
@@ -74,24 +89,22 @@ public abstract class RFFIContext extends RFFI {
      * they became unreachable.
      */
     public final void registerReferenceUsedInNative(Object obj) {
-        protectedNativeReferences.add(obj);
+        rffiContextState.protectedNativeReferences.add(obj);
     }
 
-    /**
-     * FastR equivalent of GNUR's special dedicated global list that is GC root and so any vectors
-     * added to it will be guaranteed to be preserved.
-     */
-    public final IdentityHashMap<RObject, AtomicInteger> preserveList = new IdentityHashMap<>();
-
-    private final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
-
     public abstract TruffleObject lookupNativeFunction(NativeFunction function);
+
+    protected void loadLibR(RContext context, String librffiPath) {
+        DLL.loadLibR(context, librffiPath);
+    }
+
+    public abstract <C extends RFFIContext> C as(Class<C> rffiCtxClass);
 
     /**
      * @param canRunGc {@code true} if this upcall can cause a gc on GNU R, and therefore can clear
      *            the list of preserved objects.
      */
-    public void beforeUpcall(boolean canRunGc) {
+    public void beforeUpcall(boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         // empty by default
     }
 
@@ -100,7 +113,7 @@ public abstract class RFFIContext extends RFFI {
      *            Java GC can collect the objects. See
      *            {@link RFFIContext#registerReferenceUsedInNative(Object)}.
      */
-    public void afterUpcall(boolean canRunGc) {
+    public void afterUpcall(boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         if (canRunGc) {
             cooperativeGc();
         }
@@ -124,29 +137,30 @@ public abstract class RFFIContext extends RFFI {
         throw RInternalError.unimplemented("R Embedding not supported with " + this.getClass().getSimpleName() + " RFFI backend.");
     }
 
-    public long beforeDowncall() {
-        callDepth++;
+    public long beforeDowncall(@SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+        rffiContextState.callDepth++;
         return 0;
     }
 
     /**
-     * @param before the value returned by the corresponding call to {@link #beforeDowncall()}.
+     * @param before the value returned by the corresponding call to
+     *            {@link #beforeDowncall(com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}.
      */
-    public void afterDowncall(long before) {
-        callDepth--;
-        if (callDepth == 0) {
+    public void afterDowncall(long before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+        rffiContextState.callDepth--;
+        if (rffiContextState.callDepth == 0) {
             cooperativeGc();
         }
     }
 
     public final int getCallDepth() {
-        return callDepth;
+        return rffiContextState.callDepth;
     }
 
     // this emulates GNUR's cooperative GC
     @TruffleBoundary
     private void cooperativeGc() {
-        protectedNativeReferences.clear();
+        rffiContextState.protectedNativeReferences.clear();
     }
 
     /**
@@ -162,10 +176,10 @@ public abstract class RFFIContext extends RFFI {
      *
      */
     public final Object protectChild(Object parent, Object child) {
-        Set<Object> children = protectedChildren.get(parent);
+        Set<Object> children = rffiContextState.protectedChildren.get(parent);
         if (children == null) {
             children = new HashSet<>();
-            protectedChildren.put(parent, children);
+            rffiContextState.protectedChildren.put(parent, children);
         }
         children.add(child);
         return child;
@@ -173,7 +187,7 @@ public abstract class RFFIContext extends RFFI {
 
     private RFFI instance;
 
-    public RFFI getRFFI() {
+    public final RFFI getRFFI() {
         if (instance == null) {
             instance = RFFIFactory.create();
         }

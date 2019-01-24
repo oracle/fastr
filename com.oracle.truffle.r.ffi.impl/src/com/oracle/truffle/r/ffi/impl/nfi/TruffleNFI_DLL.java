@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,15 +32,18 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 
 public class TruffleNFI_DLL implements DLLRFFI {
 
-    static class NFIHandle {
+    public static final class NFIHandle implements LibHandle {
         @SuppressWarnings("unused") private final String libName;
         final TruffleObject libHandle;
 
@@ -48,17 +51,33 @@ public class TruffleNFI_DLL implements DLLRFFI {
             this.libName = libName;
             this.libHandle = libHandle;
         }
+
+        @Override
+        public Type getRFFIType() {
+            return RFFIFactory.Type.NFI;
+        }
     }
 
-    private static class TruffleNFI_DLOpenNode extends Node implements DLLRFFI.DLOpenNode {
+    private static final class TruffleNFI_DLOpenNode extends Node implements DLLRFFI.DLOpenNode {
 
         @Override
         @TruffleBoundary
-        public Object execute(String path, boolean local, boolean now) {
-            String libName = DLL.libName(path);
-            Env env = RContext.getInstance().getEnv();
-            TruffleObject libHandle = (TruffleObject) env.parse(Source.newBuilder("native", prepareLibraryOpen(path, local, now), path).build()).call();
-            return new NFIHandle(libName, libHandle);
+        public LibHandle execute(String path, boolean local, boolean now) {
+            String librffiPath = LibPaths.getBuiltinLibPath("R");
+            // Do not call before/afterDowncall when loading libR to prevent the pushing/popping of
+            // the callback array, which requires that the libR have already been loaded
+            boolean notifyStateRFFI = !librffiPath.equals(path);
+            long before = notifyStateRFFI ? RContext.getInstance().getStateRFFI().beforeDowncall(RFFIFactory.Type.NFI) : 0;
+            try {
+                String libName = DLL.libName(path);
+                Env env = RContext.getInstance().getEnv();
+                TruffleObject libHandle = (TruffleObject) env.parse(Source.newBuilder("native", prepareLibraryOpen(path, local, now), path).build()).call();
+                return new NFIHandle(libName, libHandle);
+            } finally {
+                if (notifyStateRFFI) {
+                    RContext.getInstance().getStateRFFI().afterDowncall(before, RFFIFactory.Type.NFI);
+                }
+            }
         }
     }
 

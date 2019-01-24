@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,9 +37,11 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextState;
  */
 public abstract class RFFIFactory {
     public enum Type {
-        LLVM("com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_RFFIFactory"),
+        LLVM("com.oracle.truffle.r.ffi.impl.mixed.TruffleMixed_RFFIFactory"),
         MANAGED("com.oracle.truffle.r.ffi.impl.managed.Managed_RFFIFactory"),
-        NFI("com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_RFFIFactory");
+        NFI("com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_RFFIFactory"),
+        // used internally in installation scripts only ("nfi-only")
+        NFI_ONLY("com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_RFFIFactory");
 
         private final String klassName;
 
@@ -81,7 +83,7 @@ public abstract class RFFIFactory {
 
     private static Type checkFactoryName(String prop) {
         try {
-            return Type.valueOf(prop.toUpperCase());
+            return Type.valueOf(prop.toUpperCase().replace('-', '_'));
         } catch (IllegalArgumentException ex) {
             throw RSuicide.rSuicide("No RFFI factory: " + prop);
         }

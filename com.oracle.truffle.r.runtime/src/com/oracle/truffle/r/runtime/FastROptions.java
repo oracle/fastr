@@ -27,6 +27,7 @@ import java.util.Map.Entry;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeDataInspector;
 
 /**
  * Options to control the behavior of the FastR system, that relate to the implementation, i.e., are
@@ -78,11 +79,19 @@ public enum FastROptions {
     RestrictForceSplitting("Restrict force splitting of call targets", false);
 
     /**
-     * Setting this environment variable activates the tracing of the bitcode of selected LLVM
-     * libraries. The libraries are specified as a comma-separated list of library names. For
-     * instance: <code>TRACE_LLVM_LIBS=dplyr,Rcpp</code>
+     * Setting this environment variable activates the LLVM debugging of shared libraries. The value
+     * contains a comma-separated list of libraries that are to be debugged on the LLVM bitcode
+     * level. All other LLVM libraries will be debugged using their (C/C++) debug information.
+     * Example: <code>DEBUG_LLVM_LIBS=dplyr,Rcpp</code>
+     * <p>
+     * Moreover, the presence of the <code>DEBUG_LLVM_LIBS</code> variable in the environment
+     * activates the native data inspector JMX bean {@link NativeDataInspector} that can be used
+     * (e.g. via VisualVM) to inspect native data mirrors.
+     * <p>
+     * NB: To debug a library using its debug information, it must be installed from its unpacked
+     * sources tarball, i.e. using <code>bin/R INSTALL [path-to-pkg-dir]</code>
      */
-    public static final String TRACE_LLVM_LIBS = "TRACE_LLVM_LIBS";
+    public static final String DEBUG_LLVM_LIBS = "DEBUG_LLVM_LIBS";
 
     private final String help;
     private final boolean isBoolean;
