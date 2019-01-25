@@ -647,10 +647,14 @@ def installpkgs(args, **kwargs):
 
 
 def find_top100(*args, **kwargs):
-    pkgtest_load().find_top(["100"])
+    full_args = _pkgtest_args(args) + ["100"]
+    mx.logv(["find_top"] + full_args)
+    pkgtest_load().find_top(full_args)
 
 
 def find_top(*args, **kwargs):
+    full_args = _pkgtest_args(args)
+    mx.logv(["find_top"] + full_args)
     pkgtest_load().find_top(args)
 
 
