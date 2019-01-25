@@ -289,3 +289,7 @@ rffi.test_setVar <- function(symbol, value, env) {
 rffi.test_setAttribDimDoubleVec <- function(vec, dimDoubleVec) {
     .Call('test_Rf_setAttribDimDoubleVec', vec, dimDoubleVec)
 }
+
+rffi.test_sort_complex <- function(complexVec) {
+    .Call('test_sort_complex', complexVec)
+}

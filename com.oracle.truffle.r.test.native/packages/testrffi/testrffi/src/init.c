@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -99,6 +99,7 @@ static const R_CallMethodDef CallEntries[] = {
         CALLDEF(test_R_nchar, 1),
         CALLDEF(test_forceAndCall, 3),
         CALLDEF(test_constant_types, 0),
+        CALLDEF(test_sort_complex, 1),
         #include "init_api.h"
         {NULL, NULL, 0}
 };
