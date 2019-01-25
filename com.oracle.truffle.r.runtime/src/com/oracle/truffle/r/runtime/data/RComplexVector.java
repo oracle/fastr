@@ -129,8 +129,19 @@ public final class RComplexVector extends RVector<double[]> implements RAbstract
     }
 
     @Override
+    public void setDataAt(Object store, int index, double value) {
+        assert data == store;
+        NativeDataAccess.setData(this, (double[]) store, index, value);
+    }
+
+    @Override
     public RComplex getDataAt(int index) {
         return NativeDataAccess.getData(this, data, index);
+    }
+
+    @Override
+    public double getComplexPartAt(int index) {
+        return NativeDataAccess.getComplexPart(this, data, index);
     }
 
     @Override

@@ -917,4 +917,8 @@ SEXP test_Rf_setAttribDimDoubleVec(SEXP vec, SEXP dimDoubleVec) {
     return R_NilValue;
 }
 
-
+SEXP test_sort_complex(SEXP complexVec) {
+	Rcomplex *cpl = COMPLEX(complexVec);
+    R_csort(cpl, LENGTH(complexVec));
+    return complexVec;
+}

@@ -854,6 +854,14 @@ public final class NativeDataAccess {
         }
     }
 
+    static double getComplexPart(RComplexVector vector, double[] data, int index) {
+        if (noComplexNative.isValid() || data != null) {
+            return data[index];
+        } else {
+            return getDoubleNativeMirrorData(vector.getNativeMirror(), index);
+        }
+    }
+
     static int getDataLength(RComplexVector vector, double[] data) {
         if (noComplexNative.isValid() || data != null) {
             return data.length >> 1;
@@ -892,6 +900,16 @@ public final class NativeDataAccess {
             assert address != 0;
             UnsafeAdapter.UNSAFE.putDouble(address + index * 2 * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, re);
             UnsafeAdapter.UNSAFE.putDouble(address + (index * 2 + 1) * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, im);
+        }
+    }
+
+    static void setData(RComplexVector vector, double[] data, int index, double value) {
+        if (noComplexNative.isValid() || data != null) {
+            data[index] = value;
+        } else {
+            long address = ((NativeMirror) vector.getNativeMirror()).dataAddress;
+            assert address != 0;
+            UnsafeAdapter.UNSAFE.putDouble(address + index * Unsafe.ARRAY_DOUBLE_INDEX_SCALE, value);
         }
     }
 

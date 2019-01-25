@@ -59,8 +59,7 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
-import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorGetterNodeGen;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorSetterNodeGen;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.NumberToIntNodeGen;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
@@ -283,35 +282,11 @@ public final class VectorRFFIWrapper implements TruffleObject {
         abstract static class VectorWrapperReadNode extends Node {
             @Child private Node readMsg = Message.READ.createNode();
             @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
-            private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
-            private final ConditionProfile isLogicalVectorProfile = ConditionProfile.createBinaryProfile();
-            private final ConditionProfile isContainerProfile = ConditionProfile.createBinaryProfile();
-            private final BranchProfile isNAProfile = BranchProfile.create();
+            @Child private AtomicVectorGetterNode getElemNode = AtomicVectorGetterNodeGen.create();
 
             public Object access(VectorRFFIWrapper receiver, Object index) {
                 int i = getIndexNode.executeInteger(index);
-                if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
-                    ((RStringVector) receiver.vector).wrapStrings();
-                    // TODO: for now character vector shouldn't return plain java.lang.String,
-                    // otherwise we'd need to make sure that all the places that expect CharSXP
-                    // can also deal with java.lang.String
-                    return ((RStringVector) receiver.vector).getWrappedDataAt(i);
-                } else if (isLogicalVectorProfile.profile(receiver.vector instanceof RAbstractLogicalVector)) {
-                    byte ret = ((RAbstractLogicalVector) receiver.vector).getDataAt(i);
-                    if (ret == RRuntime.LOGICAL_NA) {
-                        isNAProfile.enter();
-                        return RRuntime.INT_NA;
-                    }
-                    return ret;
-                } else if (isContainerProfile.profile(receiver.vector instanceof RAbstractContainer)) {
-                    return ((RAbstractContainer) receiver.vector).getDataAtAsObject(i);
-                } else {
-                    try {
-                        return ForeignAccess.sendRead(readMsg, receiver.vector, index);
-                    } catch (InteropException e) {
-                        throw RInternalError.shouldNotReachHere(e);
-                    }
-                }
+                return getElemNode.execute(receiver.vector, i);
             }
         }
 
@@ -379,6 +354,72 @@ public final class VectorRFFIWrapper implements TruffleObject {
         protected int doDouble(double x) {
             return (int) x;
         }
+    }
+
+    public abstract static class AtomicVectorGetterNode extends Node {
+        @Child private Node readMsgNode;
+
+        public abstract Object execute(Object vector, int index);
+
+        @Specialization
+        protected Object doStringVector(RStringVector vector, int index) {
+            vector.wrapStrings();
+            // TODO: for now character vector shouldn't return plain java.lang.String,
+            // otherwise we'd need to make sure that all the places that expect CharSXP
+            // can also deal with java.lang.String
+            return vector.getWrappedDataAt(index);
+        }
+
+        @Specialization
+        protected Object doIntVector(RIntVector vector, int index) {
+            return vector.getDataAt(index);
+        }
+
+        @Specialization
+        protected Object doDoubleVector(RDoubleVector vector, int index) {
+            return vector.getDataAt(index);
+        }
+
+        @Specialization
+        protected Object doComplexVector(RComplexVector vector, int index) {
+            return vector.getComplexPartAt(index);
+        }
+
+        @Specialization
+        protected Object doRawVector(RRawVector vector, int index) {
+            return vector.getRawDataAt(index);
+        }
+
+        @Specialization
+        protected Object doLogicalVector(RLogicalVector vector, int index,
+                        @Cached("create()") BranchProfile naProfile) {
+            byte ret = vector.getDataAt(index);
+            if (ret == RRuntime.LOGICAL_NA) {
+                naProfile.enter();
+                return RRuntime.INT_NA;
+            }
+            return ret;
+        }
+
+        @Specialization
+        protected Object doList(RList vector, int index) {
+            return vector.getDataAt(index);
+        }
+
+        @Fallback
+        protected Object doOther(Object target, int index) {
+            assert target instanceof TruffleObject;
+            try {
+                if (readMsgNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    readMsgNode = insert(Message.READ.createNode());
+                }
+                return ForeignAccess.sendRead(readMsgNode, (TruffleObject) target, index);
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+
     }
 
     public abstract static class AtomicVectorSetterNode extends Node {
@@ -460,8 +501,14 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return vector;
         }
 
-        Node createWriteMessageNode() {
-            return Message.WRITE.createNode();
+        @Specialization
+        protected Object doComplexVector(RComplexVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
         }
 
         @Fallback

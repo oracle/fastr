@@ -379,3 +379,6 @@ d <- c(2.0, 3.0)
 rffi.test_setAttribDimDoubleVec(v, d)
 print(dim(v))
 
+# Complex vectors
+x <- c(4+3i,2+1i)
+rffi.test_sort_complex(x)
