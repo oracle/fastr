@@ -285,3 +285,7 @@ rffi.shareListElement <- function(x, xi, y, yi) {
 rffi.test_setVar <- function(symbol, value, env) {
     .Call('test_Rf_setVar', symbol, value, env)
 }
+
+rffi.test_setAttribDimDoubleVec <- function(vec, dimDoubleVec) {
+    .Call('test_Rf_setAttribDimDoubleVec', vec, dimDoubleVec)
+}

@@ -374,3 +374,8 @@ rffi.test_setVar(as.symbol('y'), 42, e)
 stopifnot(identical(e$y, NULL))
 stopifnot(identical(globalenv()$y, 42))
 
+v <- c(1:6)
+d <- c(2.0, 3.0)
+rffi.test_setAttribDimDoubleVec(v, d)
+print(dim(v))
+

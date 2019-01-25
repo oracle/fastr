@@ -25,6 +25,7 @@ Bug fixes:
 * `env2list` error for environments containing pairlists
 * `body<-` error for non-scalar values
 * `unlink` error for paths containing wildcard(s) but no path separator
+*  dims attribute errorneously set to RDoubleVector; exception when retrieving the dims #49
 
 # 1.0 RC 11
 
