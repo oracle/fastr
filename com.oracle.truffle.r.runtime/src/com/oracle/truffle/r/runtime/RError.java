@@ -1006,7 +1006,9 @@ public final class RError extends RuntimeException implements TruffleException {
         INVALID_TSP("invalid time series parameters specified"),
         CANNOT_ASSIGN_EMPTY_VECTOR("cannot assign '%s' to zero-length vector"),
         DATE_TIME_CONVERSION_SPEC_NOT_IMPLEMENTED("Date time conversion format '%s' is not implemented in FastR yet. Please submit an issue at https://github.com/oracle/fastr."),
-        CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb");
+        CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb"),
+        INVALID_POLYNOMIAL_COEFFICIENT("invalid polynomial coefficient"),
+        ROOT_FINDING_FAILED("root finding code failed");
 
         public final String message;
         final boolean hasArgs;

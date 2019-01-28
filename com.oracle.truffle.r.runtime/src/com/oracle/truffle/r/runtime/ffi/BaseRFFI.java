@@ -313,6 +313,21 @@ public final class BaseRFFI {
         }
     }
 
+    public static final class CPolyrootNode extends NativeCallNode {
+
+        private CPolyrootNode(DownCallNodeFactory parent) {
+            super(parent.createDownCallNode(NativeFunction.cpolyroot));
+        }
+
+        public int cpolyroot(double[] zr, double[] zi, int degree, double[] rr, double[] ri) {
+            return (int) call(zr, zi, degree, rr, ri);
+        }
+
+        public static CPolyrootNode create() {
+            return RFFIFactory.getBaseRFFI().createCPolyrootNode();
+        }
+    }
+
     public InitEventLoopNode createInitEventLoopNode() {
         return new InitEventLoopNode(eventLoopDownCallNodeFactory);
     }
@@ -359,6 +374,10 @@ public final class BaseRFFI {
 
     public UmaskNode createUmaskNode() {
         return new UmaskNode(downCallNodeFactory);
+    }
+
+    public CPolyrootNode createCPolyrootNode() {
+        return new CPolyrootNode(downCallNodeFactory);
     }
 
     /*
