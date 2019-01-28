@@ -26,6 +26,7 @@ Bug fixes:
 * `body<-` error for non-scalar values
 * `unlink` error for paths containing wildcard(s) but no path separator
 *  dims attribute errorneously set to RDoubleVector; exception when retrieving the dims #49
+* issues with the dplyr's `mutate` and `transmute`: #50 and #51
 
 # 1.0 RC 11
 
