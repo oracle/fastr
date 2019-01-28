@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -854,7 +854,7 @@ SEXP test_forceAndCall(SEXP e, SEXP n, SEXP rho) {
 }
 
 SEXP test_constant_types() {
-    SEXP res = PROTECT(allocVector(INTSXP, 43));
+    SEXP res = PROTECT(allocVector(INTSXP, 44));
     int* data = INTEGER(res);
     int i = 0;
     data[i++] = TYPEOF(R_GlobalEnv);
@@ -908,4 +908,17 @@ SEXP test_constant_types() {
 SEXP test_Rf_setVar(SEXP symbol, SEXP value, SEXP env) {
     Rf_setVar(symbol, value, env);
     return R_NilValue;
+}
+
+SEXP test_Rf_setAttribDimDoubleVec(SEXP vec, SEXP dimDoubleVec) {
+    Rf_setAttrib(vec, PROTECT(install("someNonSpecialAttrName")), PROTECT(allocVector(INTSXP, 42))); // Choose SetAttributeNode's non-special attr specialization
+    Rf_setAttrib(vec, PROTECT(install("dim")), dimDoubleVec); // and remain on it (no guard was on it)
+    UNPROTECT(3);
+    return R_NilValue;
+}
+
+SEXP test_sort_complex(SEXP complexVec) {
+	Rcomplex *cpl = COMPLEX(complexVec);
+    R_csort(cpl, LENGTH(complexVec));
+    return complexVec;
 }

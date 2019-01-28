@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,6 +59,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
@@ -397,6 +398,22 @@ public class FastRContext {
         @TruffleBoundary
         protected int createChannel(int key) {
             return RChannel.createChannel(key);
+        }
+    }
+
+    @RBuiltin(name = ".fastr.channel.createForkChannel", kind = PRIMITIVE, parameterNames = {"portBaseNumber"}, behavior = COMPLEX)
+    public abstract static class CreateForkChannel extends RBuiltinNode.Arg1 {
+
+        static {
+            Casts casts = new Casts(CreateForkChannel.class);
+            casts.arg("portBaseNumber").asIntegerVector().mustBe(notEmpty()).findFirst();
+        }
+
+        @Specialization
+        @TruffleBoundary
+        protected RAbstractListVector createForkChannel(int portBaseNumber) {
+            int[] res = RChannel.createForkChannel(portBaseNumber);
+            return RDataFactory.createList(new Object[]{res[0], res[1]}, RDataFactory.createStringVector(new String[]{"channelId", "port"}, true));
         }
     }
 

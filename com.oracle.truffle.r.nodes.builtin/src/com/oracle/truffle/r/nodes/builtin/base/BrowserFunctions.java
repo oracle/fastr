@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,8 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.gt;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.nullValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.toBoolean;
+import static com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder.newCastBuilder;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -35,14 +35,15 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNode;
 import com.oracle.truffle.r.nodes.builtin.helpers.BrowserInteractNodeGen;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
+import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -50,16 +51,23 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState;
 import com.oracle.truffle.r.runtime.instrument.InstrumentationState.BrowserState.HelperState;
+import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public class BrowserFunctions {
 
-    @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
+    @RBuiltin(name = "browser", visibility = OFF, kind = PRIMITIVE, nonEvalArgs = 2, parameterNames = {"text", "condition", "expr", "skipCalls"}, behavior = COMPLEX)
     public abstract static class BrowserNode extends RBuiltinNode.Arg4 {
+
+        // Note: this node could be used to trigger external debugger via the
+        // DebuggerTags.AlwaysHalt tag, but for that to work, we would need to make this node
+        // instrumentable and also all its parents all the way to RCallNode
 
         @Child private BrowserInteractNode browserInteractNode = BrowserInteractNodeGen.create();
         @Child private GetCallerFrameNode getCallerFrame;
+        @Child private CastNode castExprNode = newCastBuilder().asLogicalVector().findFirst(RRuntime.LOGICAL_TRUE).map(toBoolean()).buildCastNode();
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -68,16 +76,19 @@ public class BrowserFunctions {
 
         static {
             Casts casts = new Casts(BrowserNode.class);
-            // TODO: add support for conditions conditions
-            casts.arg("condition").mustBe(nullValue(), RError.Message.GENERIC, "Only NULL conditions currently supported in browser");
-            casts.arg("expr").asLogicalVector().findFirst(RRuntime.LOGICAL_FALSE).map(toBoolean());
             casts.arg("skipCalls").asIntegerVector().findFirst(0);
         }
 
-        @SuppressWarnings("unused")
         @Specialization
-        protected RNull browser(VirtualFrame frame, Object text, RNull condition, boolean expr, int skipCalls) {
-            if (expr) {
+        protected RNull browser(VirtualFrame frame, Object text, Object condition, RPromise expr, @SuppressWarnings("unused") int skipCalls) {
+            RBaseNode exprExpr = expr.getClosure().getExpr();
+            Object doBreak;
+            if (exprExpr instanceof ConstantNode) {
+                doBreak = ((ConstantNode) exprExpr).getValue();
+            } else {
+                doBreak = evalClosure(frame.materialize(), expr);
+            }
+            if ((boolean) castExprNode.doCast(doBreak)) {
                 RContext curContext = RContext.getInstance();
                 if (!curContext.isInitial() && curContext.getKind() == ContextKind.SHARE_ALL && curContext.getParent().getKind() == ContextKind.SHARE_NOTHING) {
                     return RNull.instance;
@@ -108,6 +119,11 @@ public class BrowserFunctions {
         }
 
         @TruffleBoundary
+        private static Object evalClosure(MaterializedFrame frame, RPromise expr) {
+            return expr.getClosure().eval(frame);
+        }
+
+        @TruffleBoundary
         private static void doPrint(RCaller caller) {
             String callerString;
             if (caller == null || (!caller.isValidCaller() && caller.getDepth() == 0 && caller.getParent() == null)) {
@@ -116,7 +132,6 @@ public class BrowserFunctions {
                 callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);
             }
             RContext.getInstance().getConsole().printf("Called from: %s%n", callerString);
-
         }
     }
 

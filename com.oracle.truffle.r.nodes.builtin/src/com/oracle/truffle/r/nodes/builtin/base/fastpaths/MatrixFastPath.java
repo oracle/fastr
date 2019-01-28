@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -49,7 +49,7 @@ public abstract class MatrixFastPath extends RFastPathNode {
         return MatrixNodeGen.create();
     }
 
-    @Specialization
+    @Specialization(guards = {"!isRNull(nrow)", "!isRNull(ncol)"})
     protected Object matrix(RAbstractVector data, Object nrow, Object ncol, @SuppressWarnings("unused") RMissing byrow, Object dimnames,
                     @Cached("create()") CastIntegerNode castRow,
                     @Cached("create()") CastIntegerNode castCol,
@@ -62,6 +62,8 @@ public abstract class MatrixFastPath extends RFastPathNode {
                     @Cached("createClassProfile()") ValueProfile classProfile) {
         boolean rowMissing = rowMissingProfile.profile(nrow == RMissing.instance || nrow == REmpty.instance);
         boolean colMissing = colMissingProfile.profile(ncol == RMissing.instance || ncol == REmpty.instance);
+        // TODO: the cast here may produce warnings, but if the cast cannot be done, we should just
+        // silently bailout (return null)
         int row = rowMissing ? 1 : firstRow.executeInt(castRow.doCast(nrow));
         int col = colMissing ? 1 : firstCol.executeInt(castCol.doCast(ncol));
         Object dim = dimMissingProfile.profile(dimnames == RMissing.instance) ? RNull.instance : dimnames;

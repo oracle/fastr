@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -43,9 +43,11 @@ import com.oracle.truffle.r.runtime.ffi.interop.NativeCharArray;
 public final class BaseRFFI {
 
     private final DownCallNodeFactory downCallNodeFactory;
+    private final DownCallNodeFactory eventLoopDownCallNodeFactory;
 
-    public BaseRFFI(DownCallNodeFactory downCallNodeFactory) {
+    public BaseRFFI(DownCallNodeFactory downCallNodeFactory, DownCallNodeFactory eventLoopDownCallNodeFactory) {
         this.downCallNodeFactory = downCallNodeFactory;
+        this.eventLoopDownCallNodeFactory = eventLoopDownCallNodeFactory;
     }
 
     public static final class InitEventLoopNode extends NativeCallNode {
@@ -312,11 +314,11 @@ public final class BaseRFFI {
     }
 
     public InitEventLoopNode createInitEventLoopNode() {
-        return new InitEventLoopNode(downCallNodeFactory);
+        return new InitEventLoopNode(eventLoopDownCallNodeFactory);
     }
 
     public DispatchHandlersNode createDispatchHandlersNode() {
-        return new DispatchHandlersNode(downCallNodeFactory);
+        return new DispatchHandlersNode(eventLoopDownCallNodeFactory);
     }
 
     public GetpidNode createGetpidNode() {

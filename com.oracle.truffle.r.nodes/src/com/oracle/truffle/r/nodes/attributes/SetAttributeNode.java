@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -144,11 +144,13 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
         genericSpecialAttrNode.execute(x, name, value);
     }
 
-    @Specialization
+    @Specialization(guards = "!isSpecialAttributeNode.execute(name)")
+    @SuppressWarnings("unused")
     protected void setAttrInAttributable(RAttributable x, String name, Object value,
                     @Cached("create()") BranchProfile attrNullProfile,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile,
+                    @Cached("create()") SpecialAttributesFunctions.IsSpecialAttributeNode isSpecialAttributeNode,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         DynamicObject attributes;
         if (attrStorageProfile.profile(x instanceof RAttributeStorage)) {

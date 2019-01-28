@@ -64,16 +64,19 @@ import com.oracle.truffle.r.ffi.impl.nodes.MatchNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MathFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.LENGTHNode;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SET_TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.SetObjectNode;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodes.TRUELENGTHNode;
 import com.oracle.truffle.r.ffi.impl.nodes.NewCustomConnectionNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RForceAndCallNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RMakeExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RNCharNode;
+import com.oracle.truffle.r.ffi.impl.nodes.RSetExternalPtrNode;
 import com.oracle.truffle.r.ffi.impl.nodes.RandFunctionsNodes;
 import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNode;
 import com.oracle.truffle.r.ffi.impl.nodes.Str2TypeNode;
 import com.oracle.truffle.r.ffi.impl.nodes.TryRfEvalNode;
+import com.oracle.truffle.r.ffi.impl.nodes.VectorElementGetterNode;
 import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 import com.oracle.truffle.r.ffi.processor.RFFICstring;
 import com.oracle.truffle.r.ffi.processor.RFFIResultOwner;
@@ -268,6 +271,7 @@ public interface StdUpCallsRFFI {
 
     void SETLENGTH(Object x, int l);
 
+    @RFFIUpCallNode(SET_TRUELENGTHNode.class)
     void SET_TRUELENGTH(Object x, int l);
 
     @RFFIUpCallNode(TRUELENGTHNode.class)
@@ -299,6 +303,7 @@ public interface StdUpCallsRFFI {
 
     Object STRING_ELT(@RFFIResultOwner Object x, long i);
 
+    @RFFIUpCallNode(VectorElementGetterNode.class)
     Object VECTOR_ELT(@RFFIResultOwner Object x, long i);
 
     int NAMED(Object x);
@@ -485,7 +490,8 @@ public interface StdUpCallsRFFI {
 
     Object R_ExternalPtrProtected(Object x);
 
-    void R_SetExternalPtrAddr(Object x, long addr);
+    @RFFIUpCallNode(RSetExternalPtrNode.class)
+    void R_SetExternalPtrAddr(Object x, @RFFICpointer Object addr);
 
     void R_SetExternalPtrTag(Object x, Object tag);
 
@@ -951,4 +957,5 @@ public interface StdUpCallsRFFI {
 
     @RFFIUpCallNode(MakeActiveBindingNode.class)
     void R_MakeActiveBinding(Object sym, Object fun, Object env);
+
 }

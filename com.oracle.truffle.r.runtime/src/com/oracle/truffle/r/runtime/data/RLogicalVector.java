@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -149,12 +149,7 @@ public final class RLogicalVector extends RVector<byte[]> implements RAbstractLo
 
     @Override
     public void setTrueLength(int l) {
-        try {
-            NativeDataAccess.setTrueDataLength(this, data, l);
-        } finally {
-            data = null;
-            complete = false;
-        }
+        NativeDataAccess.setTrueDataLength(this, l);
     }
 
     @Override

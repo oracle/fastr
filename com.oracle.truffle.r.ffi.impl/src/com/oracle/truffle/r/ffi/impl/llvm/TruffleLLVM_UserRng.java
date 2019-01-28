@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UserRngRFFI;
 
 public class TruffleLLVM_UserRng implements UserRngRFFI {
@@ -72,13 +73,13 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         public void execute(int seed) {
             init(NativeFunction.unif_init, null);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
+            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
             try {
                 ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget, seed);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
             }
         }
     }
@@ -89,14 +90,14 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         public double execute() {
             init(NativeFunction.unif_rand, NativeFunction.read_pointer_double);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
+            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 return (double) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
             }
         }
     }
@@ -107,14 +108,14 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         public int execute() {
             init(NativeFunction.unif_nseed, NativeFunction.read_pointer_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
+            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 return (int) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
             }
         }
     }
@@ -125,7 +126,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
         public void execute(int[] n) {
             init(NativeFunction.unif_seedloc, NativeFunction.read_array_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
+            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 for (int i = 0; i < n.length; i++) {
@@ -134,7 +135,7 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
             } catch (InteropException ex) {
                 throw RInternalError.shouldNotReachHere(ex);
             } finally {
-                stateRFFI.afterDowncall(before);
+                stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
             }
         }
     }

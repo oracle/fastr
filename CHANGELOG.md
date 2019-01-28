@@ -1,3 +1,33 @@
+# 1.0 RC 12
+
+New Features:
+
+* the implementation of the `TruffleLanguage#toString` method uses R function `print`
+  * for example: the console in Chrome DevTools will print data.frames formatted like R would
+
+Added missing R builtins and C API
+
+* FastR provides GNU-R compatible `parseData` for expressions parsed via `parse(...,keep.source=T)`
+* `format.POSIXlt` supports following formats: %z, %Z, %x, %X.
+* dummy implementation of the ALTREP framework to avoid linking problems. Most of the functions fail at runtime. #48
+
+Bug fixes:
+
+* `sys.calls` gives wrong result when `eval` with `envir` argument is on the call stack
+* `is.na` was not correctly handling lists, for example: `is.na(list(function() 42))`
+* transfer `srcref` attribute to the result of `.subset` and `[`
+* `matrix(1,nrow=NULL,ncol=NULL)` caused internal FastR error instead of R user level error
+* option `--polyglot` works with the native image of FastR
+* added native functions optim() and optimness()
+* fixed various race conditions in parallel package
+* `strsplit(...,perl=T)` does not end up in an infinite loop if the pattern is not found by `pcre_exec`
+* `as.character.factor` error for levels containing NAs
+* `env2list` error for environments containing pairlists
+* `body<-` error for non-scalar values
+* `unlink` error for paths containing wildcard(s) but no path separator
+*  dims attribute errorneously set to RDoubleVector; exception when retrieving the dims #49
+* issues with the dplyr's `mutate` and `transmute`: #50 and #51
+
 # 1.0 RC 11
 
 * upgraded the R version to R-3.5.1

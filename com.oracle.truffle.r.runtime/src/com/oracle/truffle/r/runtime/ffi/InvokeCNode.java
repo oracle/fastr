@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -43,6 +44,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNode.CRFFIWrapVectorsNode
 import com.oracle.truffle.r.runtime.ffi.CRFFIWrapVectorNodeGen.CRFFIWrapVectorsNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@ReportPolymorphism
 public abstract class InvokeCNode extends RBaseNode {
 
     @Child private CRFFIWrapVectorsNode argsWrapperNode = CRFFIWrapVectorsNodeGen.create();
@@ -68,17 +70,17 @@ public abstract class InvokeCNode extends RBaseNode {
         Object[] preparedArgs = argsWrapperNode.execute(args.getArguments());
 
         RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-        long before = stateRFFI.beforeDowncall();
+        long before = stateRFFI.beforeDowncall(nativeCallInfo.dllInfo.handle.getRFFIType());
         try {
             execute(nativeCallInfo, preparedArgs);
             return RDataFactory.createList(argsUnwrapperNode.execute(preparedArgs), validateArgNames(preparedArgs.length, args.getSignature()));
         } finally {
-            stateRFFI.afterDowncall(before);
+            stateRFFI.afterDowncall(before, nativeCallInfo.dllInfo.handle.getRFFIType());
         }
     }
 
-    protected final TruffleObject getFunction(TruffleObject address, int arity) {
-        return functionGetterNode.execute(address, arity);
+    protected final TruffleObject getFunction(TruffleObject address, int arity, NativeCallInfo nativeCallInfo) {
+        return functionGetterNode.execute(address, arity, nativeCallInfo);
     }
 
     public static Node createExecute() {
@@ -90,7 +92,7 @@ public abstract class InvokeCNode extends RBaseNode {
                     @SuppressWarnings("unused") @Cached("args.length") int cachedArgsLength,
                     @Cached("createExecute()") Node executeNode,
                     @SuppressWarnings("unused") @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
-                    @Cached("getFunction(cachedAddress, cachedArgsLength)") TruffleObject cachedFunction) {
+                    @Cached("getFunction(cachedAddress, cachedArgsLength, nativeCallInfo)") TruffleObject cachedFunction) {
         try {
             ForeignAccess.sendExecute(executeNode, cachedFunction, args);
         } catch (InteropException ex) {
@@ -103,7 +105,7 @@ public abstract class InvokeCNode extends RBaseNode {
                     @Cached("args.length") int cachedArgsLength,
                     @Cached("createExecute()") Node executeNode) {
         try {
-            ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength), args);
+            ForeignAccess.sendExecute(executeNode, getFunction(nativeCallInfo.address.asTruffleObject(), cachedArgsLength, nativeCallInfo), args);
         } catch (InteropException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -123,7 +125,7 @@ public abstract class InvokeCNode extends RBaseNode {
 
     public abstract static class FunctionObjectGetter extends Node {
 
-        public abstract TruffleObject execute(TruffleObject address, int arity);
+        public abstract TruffleObject execute(TruffleObject address, int arity, NativeCallInfo nativeCallInfo);
 
     }
 

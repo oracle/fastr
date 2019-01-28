@@ -1,3 +1,10 @@
+## This file is part of the rJava package - low-level R/Java interface
+## (C)2006 Simon Urbanek <simon.urbanek@r-project.org>
+## (C)2018, Oracle and/or its affiliates.
+## For license terms see DESCRIPTION and/or LICENSE
+##
+## $Id$
+
 ### reflection functions - convenience function relying on the low-level
 ### functions .jcall/.jnew and friends
 

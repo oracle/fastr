@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,6 +37,7 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.library.fastr.TestJavaInterop.TestClass.TestPOJO;
@@ -1467,6 +1468,42 @@ public class TestJavaInterop extends TestBase {
     private static final String CREATE_EXCEPTIONS_TO = "to <- new('" + TestExceptionsClass.class.getName() + "');";
 
     @Test
+    public void testIntegerNA() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$fieldIntegerMin", Integer.MIN_VALUE + "");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.na(to$fieldIntegerMin)", "FALSE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.double(to$fieldIntegerMin)", "TRUE");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$fieldDoubleIntegerMin", Integer.MIN_VALUE + "");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.na(to$fieldDoubleIntegerMin)", "FALSE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.double(to$fieldDoubleIntegerMin)", "TRUE");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$fieldIntegerMinObject", Integer.MIN_VALUE + "");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.nan(to$fieldIntegerMinObject)", "FALSE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.double(to$fieldIntegerMinObject)", "TRUE");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$fieldDoubleIntegerMinObject", Integer.MIN_VALUE + "");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.na(to$fieldDoubleIntegerMinObject)", "FALSE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.double(to$fieldDoubleIntegerMinObject)", "TRUE");
+
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$integerMinArray)", "[1] 1 2 " + Integer.MIN_VALUE);
+        assertEvalFastR(CREATE_TEST_ARRAYS + "typeof(as.vector(ta$integerMinArray))", "'double'");
+        assertEvalFastR(CREATE_TEST_ARRAYS + "as.vector(ta$integerMinObjectArray)", "[1] 1 2 " + Integer.MIN_VALUE);
+        assertEvalFastR(CREATE_TEST_ARRAYS + "typeof(as.vector(ta$integerMinObjectArray))", "'double'");
+    }
+
+    @Test
+    public void testDoubleNA() {
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$fieldDoubleNaN", "NaN");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.na(to$fieldDoubleNaN)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.nan(to$fieldDoubleNaN)", "TRUE");
+
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "to$fieldDoubleNALongbits", "NaN");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.na(to$fieldDoubleNALongbits)", "TRUE");
+        assertEvalFastR(CREATE_TRUFFLE_OBJECT + "is.nan(to$fieldDoubleNALongbits)", "TRUE");
+
+    }
+
+    @Test
     public void testException() {
         assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException')",
                         errorIn(".fastr.interop.new(Class, ...)",
@@ -1960,8 +1997,12 @@ public class TestJavaInterop extends TestBase {
         public char fieldChar;
         public short fieldShort;
         public int fieldInteger;
+        public final int fieldIntegerMin = Integer.MIN_VALUE;
         public long fieldLong;
         public double fieldDouble;
+        public final double fieldDoubleNaN = Double.NaN;
+        public final double fieldDoubleNALongbits = RRuntime.DOUBLE_NA;
+        public final double fieldDoubleIntegerMin = Integer.MIN_VALUE;
         public float fieldFloat;
 
         public Boolean fieldBooleanObject;
@@ -1969,8 +2010,10 @@ public class TestJavaInterop extends TestBase {
         public Character fieldCharObject;
         public Short fieldShortObject;
         public Integer fieldIntegerObject;
+        public final Integer fieldIntegerMinObject = Integer.MIN_VALUE;
         public Long fieldLongObject;
         public Double fieldDoubleObject;
+        public final Double fieldDoubleIntegerMinObject = (double) Integer.MIN_VALUE;
         public Float fieldFloatObject;
         public String fieldStringObject;
 
@@ -2414,6 +2457,7 @@ public class TestJavaInterop extends TestBase {
         public float[][][] floatArray3NotSquare = new float[][][]{{{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f, 1.4f}}, {{1.1f, 1.2f, 1.3f}, {1.1f, 1.2f, 1.3f, 1.4f}}};
 
         public int[] integerArray = {1, 2, 3};
+        public int[] integerMinArray = {1, 2, Integer.MIN_VALUE};
         public int[][] integerArray2 = {{1, 2, 3}, {1, 2, 3}};
         public int[][] integerArray3x4 = {{1, 2, 3, 4}, {5, 6, 7, 8}, {9, 10, 11, 12}};
         public int[][][] integerArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
@@ -2460,6 +2504,7 @@ public class TestJavaInterop extends TestBase {
         public Float[] floatObjectArrayWithNull = {1.1f, null, 1.3f};
 
         public Integer[] integerObjectArray = {1, 2, 3};
+        public Integer[] integerMinObjectArray = {1, 2, Integer.MIN_VALUE};
         public Integer[][] integerObjectArray2 = {{1, 2, 3}, {1, 2, 3}};
         public Integer[][][] integerObjectArray3 = {{{1, 2, 3}, {1, 2, 3}}, {{1, 2, 3}, {1, 2, 3}}};
         public Integer[] integerObjectArrayWithNull = {1, null, 3};

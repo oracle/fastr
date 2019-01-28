@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ def _copylib(lib, libpath, plain_libpath_base, target):
     Unfortunately getting that info is OS specific.
     '''
     if platform.system() == 'Darwin':
-        real_libpath = _darwin_extract_realpath(lib, libpath)
+        real_libpath = _darwin_extract_realpath('lib' + lib, libpath)
     else:
         try:
             if platform.system() == 'Linux':
@@ -60,7 +60,7 @@ def _copylib(lib, libpath, plain_libpath_base, target):
             lines = output.split('\n')
             for line in lines:
                 if 'SONAME' in line:
-                    ix = line.find('lib' + lib)
+                    ix = line.find('lib' + lib + '.')
                     real_libpath = os.path.join(os.path.dirname(libpath), line[ix:])
         except subprocess.CalledProcessError:
             mx.abort('copylib: otool failed')
@@ -71,7 +71,7 @@ def _copylib(lib, libpath, plain_libpath_base, target):
     else:
         source_libpath = real_libpath
     shutil.copyfile(source_libpath, os.path.join(target, os.path.basename(source_libpath)))
-    mx.log('copied ' + lib + ' library from ' + source_libpath + ' to ' + target)
+    mx.log('copied ' + lib + ' library from ' + source_libpath + ' to ' + target + ', real_libpath=' + real_libpath)
     os.chdir(target)
     mx.log('plain_libpath_base: ' + plain_libpath_base + ' libpath: ' + libpath + ' source_libpath: ' + source_libpath)
     if not has_rpath:
@@ -109,8 +109,8 @@ def copylib(args):
     '''
     if os.environ.has_key('PKG_LDFLAGS_OVERRIDE'):
         parts = os.environ['PKG_LDFLAGS_OVERRIDE'].split(' ')
-        ext = '.dylib' if platform.system() == 'Darwin' else '.so'
-        lib_prefix = 'lib' + args[0]
+        ext = 'dylib' if platform.system() == 'Darwin' else 'so'
+        lib_prefix = 'lib' + args[0] + '.'
         plain_libpath_base = lib_prefix + ext
         for part in parts:
             path = part.strip('"').lstrip('-L')
@@ -124,7 +124,8 @@ def copylib(args):
                         if not os.path.exists(os.path.join(target_dir, f)):
                             if os.path.islink(target):
                                 link_target = os.path.join(path, os.readlink(target))
-                                if link_target == '/usr/lib/libSystem.B.dylib':
+                                mx.log('link target: ' + link_target)
+                                if link_target == '/usr/lib/libSystem.B.dylib' or link_target == '/usr/lib/libSystem.dylib':
                                     # simply copy over the link to the system library
                                     os.symlink(link_target, os.path.join(target_dir, plain_libpath_base))
                                     return 0

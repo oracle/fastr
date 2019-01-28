@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,9 +57,22 @@ public class StdConnections {
         private StderrConnection stderr;
         private final Diversion[] diversions = new Diversion[20];
         private int top = -1;
+        private StringBuilder outputBuffer;
 
         public static ContextStateImpl newContextState() {
             return new ContextStateImpl();
+        }
+
+        /**
+         * Allows temporarily redirecting the top level output to the given buffer. Use
+         * {@link #resetBuffer()} to revert.
+         */
+        public void setBuffer(StringBuilder buffer) {
+            this.outputBuffer = buffer;
+        }
+
+        public void resetBuffer() {
+            this.outputBuffer = null;
         }
 
         @Override
@@ -294,10 +307,17 @@ public class StdConnections {
         public void writeString(String s, boolean nl) throws IOException {
             ContextStateImpl state = getContextState();
             if (state.top < 0) {
-                if (nl) {
-                    console.println(s);
+                if (state.outputBuffer != null) {
+                    state.outputBuffer.append(s);
+                    if (nl) {
+                        state.outputBuffer.append('\n');
+                    }
                 } else {
-                    console.print(s);
+                    if (nl) {
+                        console.println(s);
+                    } else {
+                        console.print(s);
+                    }
                 }
             } else {
                 getContextState().diversions[state.top].conn.writeString(s, nl);

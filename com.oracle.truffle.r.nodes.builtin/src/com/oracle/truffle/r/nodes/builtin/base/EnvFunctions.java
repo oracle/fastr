@@ -727,7 +727,7 @@ public class EnvFunctions {
             return v.copy();
         }
 
-        @Specialization(guards = "l.isLanguage()")
+        @Specialization
         RPairList copy(RPairList l) {
             return l.copy();
         }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -290,8 +290,8 @@ public class SpecialCallTest extends TestBase {
         Source setupSource = Source.newBuilder(RRuntime.R_LANGUAGE_ID, "{" + setup + "}", "test").build();
         Source testSource = Source.newBuilder(RRuntime.R_LANGUAGE_ID, test, "test").build();
 
-        RExpression setupExpression = testVMContext.getThisEngine().parse(setupSource);
-        RExpression testExpression = testVMContext.getThisEngine().parse(testSource);
+        RExpression setupExpression = testVMContext.getThisEngine().parse(setupSource, false).getExpression();
+        RExpression testExpression = testVMContext.getThisEngine().parse(testSource, false).getExpression();
         assert setupExpression.getLength() == 1;
         assert testExpression.getLength() == 1;
         RCodeBuilder<RSyntaxNode> builder = RContext.getASTBuilder();

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ public class BaseVariables {
 
     public static void initialize(REnvironment baseEnv) {
         // .Platform TODO be more accurate
-        String[] platformData = new String[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
+        Object[] platformData = new Object[]{"unix", File.separator, ".so", "unknown", "little", "source", File.pathSeparator, ""};
         Object value = RDataFactory.createList(platformData, RDataFactory.createStringVector(PLATFORM_NAMES, RDataFactory.COMPLETE_VECTOR));
         baseEnv.safePut(".Platform", value);
         REnvironment baseNamespaceEnv = REnvironment.baseNamespaceEnv();

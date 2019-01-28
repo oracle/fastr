@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,10 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import com.oracle.truffle.api.CallTarget;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -32,18 +34,20 @@ import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
+import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.RootNode;
+import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
@@ -55,6 +59,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorGetterNodeGen;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.AtomicVectorSetterNodeGen;
+import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.NumberToIntNodeGen;
 import com.oracle.truffle.r.runtime.ffi.VectorRFFIWrapperFactory.VectorRFFIWrapperNativePointerFactory.DispatchAllocateNodeGen;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -274,61 +281,24 @@ public final class VectorRFFIWrapper implements TruffleObject {
         @Resolve(message = "READ")
         abstract static class VectorWrapperReadNode extends Node {
             @Child private Node readMsg = Message.READ.createNode();
-            private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
-            private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
+            @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
+            @Child private AtomicVectorGetterNode getElemNode = AtomicVectorGetterNodeGen.create();
 
             public Object access(VectorRFFIWrapper receiver, Object index) {
-                try {
-                    if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
-                        ((RStringVector) receiver.vector).wrapStrings();
-                        // TODO: for now character vector shouldn't return plain java.lang.String,
-                        // otherwise we'd need to make sure that all the places that expect CharSXP
-                        // can also deal with java.lang.String
-                        return ((RStringVector) receiver.vector).getWrappedDataAt(((Number) index).intValue());
-                    } else if (isListProfile.profile(receiver.vector instanceof RList)) {
-                        return ((RList) receiver.vector).getDataAt(((Number) index).intValue());
-                    } else {
-                        return ForeignAccess.sendRead(readMsg, receiver.vector, index);
-                    }
-                } catch (UnsupportedMessageException | UnknownIdentifierException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
+                int i = getIndexNode.executeInteger(index);
+                return getElemNode.execute(receiver.vector, i);
             }
         }
 
         @Resolve(message = "WRITE")
         abstract static class VectorWrapperWriteNode extends Node {
             @Child private Node writeMsg = Message.WRITE.createNode();
-            private final ConditionProfile isStringVectorProfile = ConditionProfile.createBinaryProfile();
-            private final ConditionProfile isListProfile = ConditionProfile.createBinaryProfile();
+            @Child private NumberToInt getIndexNode = NumberToIntNodeGen.create();
+            @Child private AtomicVectorSetterNode setElemNode = AtomicVectorSetterNodeGen.create();
 
             public Object access(VectorRFFIWrapper receiver, Object index, Object value) {
-                Object usedValue = value;
-                try {
-                    int ind = ((Number) index).intValue();
-                    if (isStringVectorProfile.profile(receiver.vector instanceof RStringVector)) {
-                        RStringVector sv = (RStringVector) receiver.vector;
-                        if (value instanceof Long) {
-                            usedValue = NativeDataAccess.lookup((long) value);
-                            assert usedValue instanceof CharSXPWrapper;
-                            sv.setWrappedDataAt(ind, (CharSXPWrapper) usedValue);
-                        } else if (value instanceof CharSXPWrapper) {
-                            sv.setWrappedDataAt(ind, (CharSXPWrapper) value);
-                        } else {
-                            throw RInternalError.shouldNotReachHere("" + value.getClass());
-                        }
-                        return receiver.vector;
-                    } else if (isListProfile.profile(receiver.vector instanceof RList)) {
-                        if (value instanceof Long) {
-                            usedValue = NativeDataAccess.lookup((long) value);
-                        }
-                        ((RList) receiver.vector).setDataAt(ind, usedValue);
-                        return receiver.vector;
-                    }
-                    return ForeignAccess.sendWrite(writeMsg, receiver.vector, index, usedValue);
-                } catch (UnsupportedMessageException | UnknownIdentifierException | UnsupportedTypeException e) {
-                    throw RInternalError.shouldNotReachHere(e);
-                }
+                int ind = getIndexNode.executeInteger(index);
+                return setElemNode.execute(receiver.vector, ind, value);
             }
         }
 
@@ -362,6 +332,196 @@ public final class VectorRFFIWrapper implements TruffleObject {
         public abstract static class VectorWrapperCheck extends Node {
             protected static boolean test(TruffleObject receiver) {
                 return receiver instanceof VectorRFFIWrapper;
+            }
+        }
+    }
+
+    public abstract static class NumberToInt extends Node {
+
+        public abstract int executeInteger(Object value);
+
+        @Specialization
+        protected int doInt(int x) {
+            return x;
+        }
+
+        @Specialization
+        protected int doLong(long x) {
+            return (int) x;
+        }
+
+        @Specialization
+        protected int doDouble(double x) {
+            return (int) x;
+        }
+    }
+
+    public abstract static class AtomicVectorGetterNode extends Node {
+        @Child private Node readMsgNode;
+
+        public abstract Object execute(Object vector, int index);
+
+        @Specialization
+        protected Object doStringVector(RStringVector vector, int index) {
+            vector.wrapStrings();
+            // TODO: for now character vector shouldn't return plain java.lang.String,
+            // otherwise we'd need to make sure that all the places that expect CharSXP
+            // can also deal with java.lang.String
+            return vector.getWrappedDataAt(index);
+        }
+
+        @Specialization
+        protected Object doIntVector(RIntVector vector, int index) {
+            return vector.getDataAt(index);
+        }
+
+        @Specialization
+        protected Object doDoubleVector(RDoubleVector vector, int index) {
+            return vector.getDataAt(index);
+        }
+
+        @Specialization
+        protected Object doComplexVector(RComplexVector vector, int index) {
+            return vector.getComplexPartAt(index);
+        }
+
+        @Specialization
+        protected Object doRawVector(RRawVector vector, int index) {
+            return vector.getRawDataAt(index);
+        }
+
+        @Specialization
+        protected Object doLogicalVector(RLogicalVector vector, int index,
+                        @Cached("create()") BranchProfile naProfile) {
+            byte ret = vector.getDataAt(index);
+            if (ret == RRuntime.LOGICAL_NA) {
+                naProfile.enter();
+                return RRuntime.INT_NA;
+            }
+            return ret;
+        }
+
+        @Specialization
+        protected Object doList(RList vector, int index) {
+            return vector.getDataAt(index);
+        }
+
+        @Fallback
+        protected Object doOther(Object target, int index) {
+            assert target instanceof TruffleObject;
+            try {
+                if (readMsgNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    readMsgNode = insert(Message.READ.createNode());
+                }
+                return ForeignAccess.sendRead(readMsgNode, (TruffleObject) target, index);
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
+            }
+        }
+
+    }
+
+    public abstract static class AtomicVectorSetterNode extends Node {
+        @Child private Node writeMsgNode;
+
+        public abstract Object execute(Object vector, int index, Object value);
+
+        @Specialization
+        protected Object doIntVector(RIntVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doDoubleVector(RDoubleVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doRawVector(RRawVector vector, int index, byte value) {
+            vector.setRawDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doLogicalVector(RLogicalVector vector, int index, int value,
+                        @Cached("createBinaryProfile()") ConditionProfile booleanProfile,
+                        @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+                vector.setDataAt(vector.getInternalStore(), index, RRuntime.LOGICAL_NA);
+                return vector;
+            }
+            vector.setDataAt(vector.getInternalStore(), index, booleanProfile.profile(value == 0) ? RRuntime.LOGICAL_FALSE : RRuntime.LOGICAL_TRUE);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doList(RList vector, int index, Object value,
+                        @Cached("createBinaryProfile()") ConditionProfile lookupProfile) {
+            Object usedValue = value;
+            if (lookupProfile.profile(value instanceof Long)) {
+                usedValue = NativeDataAccess.lookup((long) value);
+            }
+            vector.setDataAt(index, usedValue);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doStringVector(RStringVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
+            Object usedValue = value;
+            usedValue = NativeDataAccess.lookup(value);
+            assert usedValue instanceof CharSXPWrapper;
+            if (RRuntime.isNA(((CharSXPWrapper) usedValue).getContents())) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setWrappedDataAt(index, (CharSXPWrapper) usedValue);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doStringVector(RStringVector vector, int index, CharSXPWrapper value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value.getContents())) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setWrappedDataAt(index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doComplexVector(RComplexVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Fallback
+        protected Object doOther(Object target, int index, Object value) {
+            assert target instanceof TruffleObject;
+            try {
+                if (writeMsgNode == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    writeMsgNode = insert(Message.WRITE.createNode());
+                }
+                return ForeignAccess.sendWrite(writeMsgNode, (TruffleObject) target, index, value);
+            } catch (InteropException e) {
+                throw RInternalError.shouldNotReachHere(e);
             }
         }
     }

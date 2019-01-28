@@ -1,0 +1,329 @@
+
+R version 3.4.0 (2017-04-21) -- "You Stupid Darkness"
+Copyright (C) 2017 The R Foundation for Statistical Computing
+Platform: x86_64-pc-linux-gnu (64-bit)
+
+R is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+  Natural language support but running in an English locale
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information and
+'citation()' on how to cite R or R packages in publications.
+
+Type 'demo()' for some demos, 'help()' for on-line help, or
+'help.start()' for an HTML browser interface to help.
+Type 'q()' to quit R.
+
+> pkgname <- "iterators"
+> source(file.path(R.home("share"), "R", "examples-header.R"))
+> options(warn = 1)
+> library('iterators')
+> 
+> base::assign(".oldSearch", base::search(), pos = 'CheckExEnv')
+> cleanEx()
+> nameEx("iapply")
+> ### * iapply
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: iapply
+> ### Title: Array/Apply Iterator
+> ### Aliases: iapply
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+> a <- array(1:8, c(2, 2, 2))
+> 
+> # iterate over all the matrices
+> it <- iapply(a, 3)
+> as.list(it)
+[[1]]
+     [,1] [,2]
+[1,]    1    3
+[2,]    2    4
+
+[[2]]
+     [,1] [,2]
+[1,]    5    7
+[2,]    6    8
+
+> 
+> # iterate over all the columns of all the matrices
+> it <- iapply(a, c(2, 3))
+> as.list(it)
+[[1]]
+[1] 1 2
+
+[[2]]
+[1] 3 4
+
+[[3]]
+[1] 5 6
+
+[[4]]
+[1] 7 8
+
+> 
+> # iterate over all the rows of all the matrices
+> it <- iapply(a, c(1, 3))
+> as.list(it)
+[[1]]
+[1] 1 3
+
+[[2]]
+[1] 2 4
+
+[[3]]
+[1] 5 7
+
+[[4]]
+[1] 6 8
+
+> 
+> 
+> 
+> cleanEx()
+> nameEx("icount")
+> ### * icount
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: icount
+> ### Title: Counting Iterators
+> ### Aliases: icount icountn
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+>   # create an iterator that counts from 1 to 3.
+>   it <- icount(3)
+>   nextElem(it)
+[1] 1
+>   nextElem(it)
+[1] 2
+>   nextElem(it)
+[1] 3
+>   try(nextElem(it))  # expect a StopIteration exception
+Error : StopIteration
+> 
+> 
+> 
+> cleanEx()
+> nameEx("idiv")
+> ### * idiv
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: idiv
+> ### Title: Dividing Iterator
+> ### Aliases: idiv
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+>   # divide the value 10 into 3 pieces
+>   it <- idiv(10, chunks=3)
+>   nextElem(it)
+[1] 4
+>   nextElem(it)
+[1] 3
+>   nextElem(it)
+[1] 3
+>   try(nextElem(it))  # expect a StopIteration exception
+Error : StopIteration
+> 
+>   # divide the value 10 into pieces no larger than 3
+>   it <- idiv(10, chunkSize=3)
+>   nextElem(it)
+[1] 3
+>   nextElem(it)
+[1] 3
+>   nextElem(it)
+[1] 2
+>   nextElem(it)
+[1] 2
+>   try(nextElem(it))  # expect a StopIteration exception
+Error : StopIteration
+> 
+> 
+> 
+> cleanEx()
+> nameEx("ireadLines")
+> ### * ireadLines
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: ireadLines
+> ### Title: Iterator over Lines of Text from a Connection
+> ### Aliases: ireadLines
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+>   # create an iterator over the lines of COPYING
+>   it <- ireadLines(file.path(R.home(), 'COPYING'))
+>   nextElem(it)
+[1] "\t\t    GNU GENERAL PUBLIC LICENSE"
+>   nextElem(it)
+[1] "\t\t       Version 2, June 1991"
+>   nextElem(it)
+[1] ""
+> 
+> 
+> 
+> cleanEx()
+> nameEx("irnorm")
+> ### * irnorm
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: irnorm
+> ### Title: Random Number Iterators
+> ### Aliases: irnorm irunif irbinom irnbinom irpois
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+>   # create an iterator that returns three random numbers
+>   it <- irnorm(1, count=3)
+>   nextElem(it)
+[1] -0.6264538
+>   nextElem(it)
+[1] 0.1836433
+>   nextElem(it)
+[1] -0.8356286
+>   try(nextElem(it))  # expect a StopIteration exception
+Error : StopIteration
+> 
+> 
+> 
+> cleanEx()
+> nameEx("isplit")
+> ### * isplit
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: isplit
+> ### Title: Split Iterator
+> ### Aliases: isplit
+> ### Keywords: utilities
+> 
+> ### ** Examples
+> 
+> x <- rnorm(200)
+> f <- factor(sample(1:10, length(x), replace=TRUE))
+> 
+> it <- isplit(x, f)
+> expected <- split(x, f)
+> 
+> for (i in expected) {
++   actual <- nextElem(it)
++   stopifnot(actual$value == i)
++ }
+Warning in nsName(findHomeNS(name, frame, cntxt)) :
+  closing unused connection 3 (/home/fa/work/repos/fastr/libdownloads/R-3.4.0/COPYING)
+> 
+> 
+> 
+> cleanEx()
+> nameEx("iter")
+> ### * iter
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: iter
+> ### Title: Iterator Factory Functions
+> ### Aliases: iter iter.default iter.iter iter.matrix iter.data.frame
+> ###   iter.function
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+>   # a vector iterator
+>   i1 <- iter(1:3)
+>   nextElem(i1)
+[1] 1
+>   nextElem(i1)
+[1] 2
+>   nextElem(i1)
+[1] 3
+> 
+>   # a vector iterator with a checkFunc
+>   i1 <- iter(1:3, checkFunc=function(i) i %% 2 == 0)
+>   nextElem(i1)
+[1] 2
+> 
+>   # a data frame iterator by column
+>   i2 <- iter(data.frame(x=1:3, y=10, z=c('a', 'b', 'c')))
+>   nextElem(i2)
+[1] 1 2 3
+>   nextElem(i2)
+[1] 10 10 10
+>   nextElem(i2)
+[1] a b c
+Levels: a b c
+> 
+>   # a data frame iterator by row
+>   i3 <- iter(data.frame(x=1:3, y=10), by='row')
+>   nextElem(i3)
+  x  y
+1 1 10
+>   nextElem(i3)
+  x  y
+2 2 10
+>   nextElem(i3)
+  x  y
+3 3 10
+> 
+>   # a function iterator
+>   i4 <- iter(function() rnorm(1))
+>   nextElem(i4)
+[1] -0.6264538
+>   nextElem(i4)
+[1] 0.1836433
+>   nextElem(i4)
+[1] -0.8356286
+> 
+> 
+> 
+> cleanEx()
+> nameEx("nextElem")
+> ### * nextElem
+> 
+> flush(stderr()); flush(stdout())
+> 
+> ### Name: nextElem
+> ### Title: Get Next Element of Iterator
+> ### Aliases: nextElem nextElem.containeriter nextElem.funiter
+> ### Keywords: methods
+> 
+> ### ** Examples
+> 
+>   it <- iter(c('a', 'b', 'c'))
+>   print(nextElem(it))
+[1] "a"
+>   print(nextElem(it))
+[1] "b"
+>   print(nextElem(it))
+[1] "c"
+> 
+> 
+> 
+> ### * <FOOTER>
+> ###
+> options(digits = 7L)
+> base::cat("Time elapsed: ", proc.time() - base::get("ptime", pos = 'CheckExEnv'),"\n")
+Time elapsed:  0.144 0.012 0.159 0 0 
+> grDevices::dev.off()
+null device 
+          1 
+> ###
+> ### Local variables: ***
+> ### mode: outline-minor ***
+> ### outline-regexp: "\\(> \\)?### [*]+" ***
+> ### End: ***
+> quit('no')

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,15 +27,20 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ReportPolymorphism;
+import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueNonDefaultOptimizedNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -116,13 +121,8 @@ public final class PromiseHelperNode extends RBaseNode {
 
     @Child private InlineCacheNode promiseClosureCache;
 
-    @Child private PromiseHelperNode nextNode = null;
-
-    @Children private final WrapArgumentNode[] wrapNodes = new WrapArgumentNode[ArgumentStatePush.MAX_COUNTED_ARGS];
-    private final ConditionProfile shouldWrap = ConditionProfile.createBinaryProfile();
-
     @CompilationFinal private PrimitiveValueProfile optStateProfile = PrimitiveValueProfile.createEqualityProfile();
-    private final ValueProfile isValidAssumptionProfile = ValueProfile.createIdentityProfile();
+    @Child private GenerateValueNonDefaultOptimizedNode generateValueNonDefaultOptimizedNode = GenerateValueNonDefaultOptimizedNodeGen.create();
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
     /**
@@ -180,25 +180,13 @@ public final class PromiseHelperNode extends RBaseNode {
     private Object generateValueNonDefault(VirtualFrame frame, int state, EagerPromise promise) {
         assert !PromiseState.isDefaultOpt(state);
         if (!isDeoptimized(promise)) {
-            Assumption eagerAssumption = isValidAssumptionProfile.profile(promise.getIsValidAssumption());
-            if (eagerAssumption.isValid()) {
-                Object value;
-                if (PromiseState.isEager(state)) {
-                    assert PromiseState.isEager(state);
-                    value = getEagerValue(frame, promise);
-                } else {
-                    RPromise nextPromise = (RPromise) promise.getEagerValue();
-                    value = checkNextNode().evaluate(frame, nextPromise);
-                }
-                assert promise.getRawValue() == null;
-                assert value != null;
-                promise.setValue(value);
-                return value;
+            Object result = generateValueNonDefaultOptimizedNode.execute(frame, state, promise);
+            if (result != null) {
+                return result;
             } else {
+                // Fallback: eager evaluation failed, now take the slow path
                 CompilerDirectives.transferToInterpreter();
                 promise.notifyFailure();
-
-                // Fallback: eager evaluation failed, now take the slow path
                 promise.materialize();
             }
         }
@@ -310,14 +298,6 @@ public final class PromiseHelperNode extends RBaseNode {
         // otherwise: already the generic and slow RPromise
     }
 
-    private PromiseHelperNode checkNextNode() {
-        if (nextNode == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            nextNode = insert(new PromiseHelperNode());
-        }
-        return nextNode;
-    }
-
     private boolean isNullFrame(RPromise promise) {
         return isNullFrameProfile.profile(promise.isNullFrame());
     }
@@ -350,7 +330,6 @@ public final class PromiseHelperNode extends RBaseNode {
     private final ConditionProfile isExplicitProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDefaultOptProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
-    private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
 
     public PromiseHelperNode() {
     }
@@ -371,56 +350,6 @@ public final class PromiseHelperNode extends RBaseNode {
         promise.setValue(valueProfile.profile(newValue));
     }
 
-    private static final int UNINITIALIZED = -1;
-    private static final int GENERIC = -2;
-    @CompilationFinal private int cachedWrapIndex = UNINITIALIZED;
-
-    @Child private SetVisibilityNode visibility;
-
-    /**
-     * Returns {@link EagerPromise#getEagerValue()} profiled.
-     */
-    @ExplodeLoop
-    private Object getEagerValue(VirtualFrame frame, EagerPromise promise) {
-        Object o = promise.getEagerValue();
-        int wrapIndex = promise.wrapIndex();
-        if (shouldWrap.profile(wrapIndex != ArgumentStatePush.INVALID_INDEX)) {
-            if (cachedWrapIndex == UNINITIALIZED) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedWrapIndex = wrapIndex;
-            }
-            if (cachedWrapIndex != GENERIC && wrapIndex != cachedWrapIndex) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                cachedWrapIndex = GENERIC;
-            }
-            if (cachedWrapIndex != GENERIC) {
-                if (cachedWrapIndex < ArgumentStatePush.MAX_COUNTED_ARGS) {
-                    if (wrapNodes[cachedWrapIndex] == null) {
-                        CompilerDirectives.transferToInterpreterAndInvalidate();
-                        wrapNodes[cachedWrapIndex] = insert(WrapArgumentNode.create(cachedWrapIndex));
-                    }
-                    wrapNodes[cachedWrapIndex].execute(frame, o);
-                }
-            } else {
-                for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
-                    if (wrapIndex == i) {
-                        if (wrapNodes[i] == null) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            wrapNodes[i] = insert(WrapArgumentNode.create(i));
-                        }
-                        wrapNodes[i].execute(frame, o);
-                    }
-                }
-            }
-        }
-        if (visibility == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            visibility = insert(SetVisibilityNode.create());
-        }
-        visibility.execute(frame, true);
-        return eagerValueProfile.profile(o);
-    }
-
     /**
      * @param frame
      * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
@@ -434,5 +363,96 @@ public final class PromiseHelperNode extends RBaseNode {
             return false;
         }
         return isFrameForEnvProfile.profile(frame == promise.getFrame());
+    }
+
+    @ReportPolymorphism
+    protected abstract static class GenerateValueNonDefaultOptimizedNode extends Node {
+
+        public abstract Object execute(VirtualFrame frame, int state, EagerPromise promise);
+
+        @Specialization(guards = {"promise.getIsValidAssumption() == eagerAssumption", "eagerAssumption.isValid()"})
+        protected Object doCached(VirtualFrame frame, int state, EagerPromise promise,
+                        @SuppressWarnings("unused") @Cached("promise.getIsValidAssumption()") Assumption eagerAssumption) {
+            Object value;
+            if (PromiseState.isEager(state)) {
+                assert PromiseState.isEager(state);
+                value = getEagerValue(frame, promise);
+            } else {
+                RPromise nextPromise = (RPromise) promise.getEagerValue();
+                value = checkNextNode().evaluate(frame, nextPromise);
+            }
+            assert promise.getRawValue() == null;
+            assert value != null;
+            promise.setValue(value);
+            return value;
+        }
+
+        @Specialization(replaces = "doCached")
+        @TruffleBoundary
+        protected Object switchToSlowPath(@SuppressWarnings("unused") int state, @SuppressWarnings("unused") EagerPromise promise) {
+            return null;
+        }
+
+        @Child private PromiseHelperNode nextNode = null;
+
+        private PromiseHelperNode checkNextNode() {
+            if (nextNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                nextNode = insert(new PromiseHelperNode());
+            }
+            return nextNode;
+        }
+
+        @Children private final WrapArgumentNode[] wrapNodes = new WrapArgumentNode[ArgumentStatePush.MAX_COUNTED_ARGS];
+        private final ConditionProfile shouldWrap = ConditionProfile.createBinaryProfile();
+        private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
+        private static final int UNINITIALIZED = -1;
+        private static final int GENERIC = -2;
+        @CompilationFinal private int cachedWrapIndex = UNINITIALIZED;
+        @Child private SetVisibilityNode visibility;
+
+        /**
+         * Returns {@link EagerPromise#getEagerValue()} profiled.
+         */
+        @ExplodeLoop
+        private Object getEagerValue(VirtualFrame frame, EagerPromise promise) {
+            Object o = promise.getEagerValue();
+            int wrapIndex = promise.wrapIndex();
+            if (shouldWrap.profile(wrapIndex != ArgumentStatePush.INVALID_INDEX)) {
+                if (cachedWrapIndex == UNINITIALIZED) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    cachedWrapIndex = wrapIndex;
+                }
+                if (cachedWrapIndex != GENERIC && wrapIndex != cachedWrapIndex) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    cachedWrapIndex = GENERIC;
+                }
+                if (cachedWrapIndex != GENERIC) {
+                    if (cachedWrapIndex < ArgumentStatePush.MAX_COUNTED_ARGS) {
+                        if (wrapNodes[cachedWrapIndex] == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            wrapNodes[cachedWrapIndex] = insert(WrapArgumentNode.create(cachedWrapIndex));
+                        }
+                        wrapNodes[cachedWrapIndex].execute(frame, o);
+                    }
+                } else {
+                    for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
+                        if (wrapIndex == i) {
+                            if (wrapNodes[i] == null) {
+                                CompilerDirectives.transferToInterpreterAndInvalidate();
+                                wrapNodes[i] = insert(WrapArgumentNode.create(i));
+                            }
+                            wrapNodes[i].execute(frame, o);
+                        }
+                    }
+                }
+            }
+            if (visibility == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                visibility = insert(SetVisibilityNode.create());
+            }
+            visibility.execute(frame, true);
+            return eagerValueProfile.profile(o);
+        }
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,11 +32,13 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
+import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.ExtractNamesAttributeNode;
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.builtin.base.IsNANodeGen.IsListElementNANodeGen;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -48,6 +50,7 @@ import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
@@ -56,21 +59,16 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 @RBuiltin(name = "is.na", kind = PRIMITIVE, parameterNames = {"x"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class IsNA extends RBuiltinNode.Arg1 {
 
-    @Child private IsNA recursiveIsNA;
-
-    @Child private VectorFactory factory = VectorFactory.create();
-    @Child private GetDimAttributeNode getDimsNode = GetDimAttributeNode.create();
-    @Child private ExtractNamesAttributeNode extractNamesNode = ExtractNamesAttributeNode.create();
-    @Child private ExtractDimNamesAttributeNode extractDimNamesNode = ExtractDimNamesAttributeNode.create();
+    @Child private IsListElementNA recursiveIsNA;
 
     static {
         Casts.noCasts(IsNA.class);
     }
 
-    private Object isNARecursive(Object o) {
+    private boolean isNARecursive(Object o) {
         if (recursiveIsNA == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursiveIsNA = insert(IsNANodeGen.create());
+            recursiveIsNA = insert(IsListElementNANodeGen.create());
         }
         return recursiveIsNA.execute(o);
     }
@@ -107,7 +105,13 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
         return RRuntime.LOGICAL_FALSE;
     }
 
-    private RLogicalVector isNAVector(RAbstractVector vector, VectorAccess access) {
+    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
+    protected RLogicalVector isNACached(RAbstractVector vector,
+                    @Cached("vector.access()") VectorAccess access,
+                    @Cached("create()") VectorFactory factory,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode) {
         try (SequentialIterator iter = access.access(vector)) {
             byte[] data = new byte[access.getLength(iter)];
             while (access.next(iter)) {
@@ -126,17 +130,12 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
                         isNA = false;
                         break;
                     case List:
-                        Object result = isNARecursive(access.getListElement(iter));
-                        if (result instanceof Byte) {
-                            isNA = ((byte) result) == RRuntime.LOGICAL_TRUE;
-                        } else if (result instanceof RLogicalVector) {
-                            RLogicalVector recVector = (RLogicalVector) result;
-                            // result is false unless that element is a length-one atomic vector
-                            // and the single element of that vector is regarded as NA
-                            isNA = (recVector.getLength() == 1) ? recVector.getDataAt(0) == RRuntime.LOGICAL_TRUE : false;
-                        } else {
-                            throw RInternalError.shouldNotReachHere("unhandled return type in isNA(list)");
-                        }
+                        // result is false unless that element is a length-one vector (incl. lists)
+                        // and the single element of that vector is regarded as NA
+                        isNA = isNARecursive(access.getListElement(iter));
+                        break;
+                    case Expression:
+                        isNA = false;
                         break;
                     default:
                         throw RInternalError.shouldNotReachHere();
@@ -148,20 +147,18 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
         }
     }
 
-    @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
-    protected RLogicalVector isNACached(RAbstractVector vector,
-                    @Cached("vector.access()") VectorAccess access) {
-        return isNAVector(vector, access);
-    }
-
     @Specialization(replaces = "isNACached")
-    protected RLogicalVector isNAGeneric(RAbstractVector vector) {
-        return isNAVector(vector, vector.slowPathAccess());
+    protected RLogicalVector isNAGeneric(RAbstractVector vector,
+                    @Cached("create()") VectorFactory factory,
+                    @Cached("create()") GetDimAttributeNode getDimsNode,
+                    @Cached("create()") ExtractNamesAttributeNode extractNamesNode,
+                    @Cached("create()") ExtractDimNamesAttributeNode extractDimNamesNode) {
+        return isNACached(vector, vector.slowPathAccess(), factory, getDimsNode, extractNamesNode, extractDimNamesNode);
     }
 
     @Specialization
     protected RLogicalVector isNA(@SuppressWarnings("unused") RNull value) {
-        return factory.createEmptyLogicalVector();
+        return RDataFactory.createEmptyLogicalVector();
     }
 
     @Specialization(guards = "isForeignObject(obj)")
@@ -173,5 +170,80 @@ public abstract class IsNA extends RBuiltinNode.Arg1 {
     protected byte isNA(Object value) {
         warning(RError.Message.IS_NA_TO_NON_VECTOR, Predef.getTypeName(value));
         return RRuntime.LOGICAL_FALSE;
+    }
+
+    @ImportStatic(DSLConfig.class)
+    public abstract static class IsListElementNA extends Node {
+
+        public abstract boolean execute(Object o);
+
+        @Specialization
+        protected boolean isNA(int value) {
+            return RRuntime.isNA(value);
+        }
+
+        @Specialization
+        protected boolean isNA(double value) {
+            return RRuntime.isNAorNaN(value);
+        }
+
+        @Specialization
+        protected boolean isNA(String value) {
+            return RRuntime.isNA(value);
+        }
+
+        @Specialization
+        protected boolean isNA(byte value) {
+            return RRuntime.isNA(value);
+        }
+
+        @Specialization
+        protected boolean isNA(RComplex value) {
+            return RRuntime.isNA(value);
+        }
+
+        @Specialization
+        protected boolean isNA(@SuppressWarnings("unused") RRaw value) {
+            return false;
+        }
+
+        @Specialization(guards = "access.supports(vector)", limit = "getVectorAccessCacheSize()")
+        protected boolean isNACached(RAbstractAtomicVector vector,
+                        @Cached("vector.access()") VectorAccess access) {
+            return isNAVector(vector, access);
+        }
+
+        @Specialization(replaces = "isNACached")
+        protected boolean isNAGeneric(RAbstractAtomicVector vector) {
+            return isNAVector(vector, vector.slowPathAccess());
+        }
+
+        @Fallback
+        protected boolean doOthers(@SuppressWarnings("unused") Object obj) {
+            return false;
+        }
+
+        private static boolean isNAVector(RAbstractAtomicVector vector, VectorAccess access) {
+            try (SequentialIterator iter = access.access(vector)) {
+                if (access.getLength(iter) != 1) {
+                    return false;
+                }
+                access.next(iter);
+                switch (access.getType()) {
+                    case Double:
+                        return access.na.checkNAorNaN(access.getDouble(iter));
+                    case Character:
+                    case Complex:
+                    case Integer:
+                    case Logical:
+                        return access.isNA(iter);
+                    case Raw:
+                        return false;
+                    default:
+                        CompilerDirectives.transferToInterpreter();
+                        throw RInternalError.shouldNotReachHere("Unexpected atomic vector type " + access.getType());
+                }
+            }
+        }
     }
 }

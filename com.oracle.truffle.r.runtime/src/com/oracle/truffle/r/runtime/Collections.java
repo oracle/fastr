@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -446,6 +446,50 @@ public final class Collections {
                     }
                 }
             }
+        }
+    }
+
+    public static final class ArrayListInt {
+        private int[] data;
+        private int size;
+
+        public ArrayListInt(int capacity) {
+            this.data = new int[capacity];
+        }
+
+        public ArrayListInt() {
+            this(8);
+        }
+
+        public void add(int value) {
+            if (size == data.length) {
+                data = Arrays.copyOf(data, size * 2);
+            }
+            data[size++] = value;
+        }
+
+        public void set(int index, int value) {
+            data[index] = value;
+        }
+
+        public int get(int index) {
+            return data[index];
+        }
+
+        /**
+         * Removes the last element.
+         */
+        public void pop() {
+            assert size > 0 : "cannot pop from empty list";
+            size--;
+        }
+
+        public int size() {
+            return size;
+        }
+
+        public int[] toArray() {
+            return Arrays.copyOf(data, size);
         }
     }
 }

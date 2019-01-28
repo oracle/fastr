@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,9 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.NodeInterface;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI.LibHandle;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 
 /**
  * Support for the {.Call} and {.External} calls.
@@ -36,11 +39,14 @@ public interface CallRFFI {
 
         default Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
+            DLLInfo dllInfo = nativeCallInfo.dllInfo;
+            LibHandle handle = dllInfo == null ? null : dllInfo.handle;
+            Type rffiType = handle == null ? null : handle.getRFFIType();
+            long before = stateRFFI.beforeDowncall(rffiType);
             try {
                 return execute(nativeCallInfo, args);
             } finally {
-                stateRFFI.afterDowncall(before);
+                stateRFFI.afterDowncall(before, rffiType);
             }
         }
 
@@ -55,11 +61,11 @@ public interface CallRFFI {
     interface InvokeVoidCallNode extends NodeInterface {
         default void dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
+            long before = stateRFFI.beforeDowncall(nativeCallInfo.dllInfo.handle.getRFFIType());
             try {
                 execute(nativeCallInfo, args);
             } finally {
-                stateRFFI.afterDowncall(before);
+                stateRFFI.afterDowncall(before, nativeCallInfo.dllInfo.handle.getRFFIType());
             }
         }
 
@@ -69,19 +75,9 @@ public interface CallRFFI {
         void execute(NativeCallInfo nativeCallInfo, Object[] args);
     }
 
-    interface HandleUpCallExceptionNode extends NodeInterface {
-        void execute(Throwable ex);
-
-        static HandleUpCallExceptionNode create() {
-            return RFFIFactory.getCallRFFI().createHandleUpCallExceptionNode();
-        }
-    }
-
     InvokeCallNode createInvokeCallNode();
 
     InvokeVoidCallNode createInvokeVoidCallNode();
-
-    HandleUpCallExceptionNode createHandleUpCallExceptionNode();
 
     final class InvokeCallRootNode extends RFFIRootNode<InvokeCallNode> {
         protected InvokeCallRootNode(InvokeCallNode baseRFFINode) {

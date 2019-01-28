@@ -34,15 +34,16 @@ import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionEnvironme
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.GetFunctionFormalsNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.LENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.OctSizeNodeGen;
-import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.TRUELENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoNewObjectNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotAssignNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RDoSlotNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.RHasSlotNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SET_TRUELENGTHNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionBodyNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionEnvironmentNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetFunctionFormalsNodeGen;
 import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.SetObjectNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.MiscNodesFactory.TRUELENGTHNodeGen;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.access.AccessSlotNode;
 import com.oracle.truffle.r.nodes.access.AccessSlotNodeGen;
@@ -54,6 +55,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetNames
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.SetNamesAttributeNodeGen;
 import com.oracle.truffle.r.nodes.builtin.EnvironmentNodes.GetFunctionEnvironmentNode;
 import com.oracle.truffle.r.nodes.builtin.casts.fluent.CastNodeBuilder;
+import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.objects.NewObject;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
@@ -64,7 +66,12 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RComplexVector;
+import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RIntVector;
+import com.oracle.truffle.r.runtime.data.RList;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -112,9 +119,8 @@ public final class MiscNodes {
         }
 
         @Specialization
-        protected int length(RAbstractContainer obj) {
-            // Should this use RLengthNode?
-            return obj.getLength();
+        protected int length(RAbstractContainer obj, @Cached("create()") RLengthNode lengthNode) {
+            return lengthNode.executeInteger(obj);
         }
 
         @Specialization
@@ -154,7 +160,37 @@ public final class MiscNodes {
         }
 
         @Specialization
-        protected int truelength(RAbstractContainer obj) {
+        protected int truelength(RStringVector obj) {
+            return obj.getTrueLength();
+        }
+
+        @Specialization
+        protected int truelength(RIntVector obj) {
+            return obj.getTrueLength();
+        }
+
+        @Specialization
+        protected int truelength(RDoubleVector obj) {
+            return obj.getTrueLength();
+        }
+
+        @Specialization
+        protected int truelength(RLogicalVector obj) {
+            return obj.getTrueLength();
+        }
+
+        @Specialization
+        protected int truelength(RComplexVector obj) {
+            return obj.getTrueLength();
+        }
+
+        @Specialization
+        protected int truelength(RRawVector obj) {
+            return obj.getTrueLength();
+        }
+
+        @Specialization
+        protected int truelength(RList obj) {
             return obj.getTrueLength();
         }
 
@@ -166,6 +202,62 @@ public final class MiscNodes {
 
         public static TRUELENGTHNode create() {
             return TRUELENGTHNodeGen.create();
+        }
+    }
+
+    @TypeSystemReference(RTypes.class)
+    public abstract static class SET_TRUELENGTHNode extends FFIUpCallNode.Arg2 {
+
+        @Specialization
+        protected RNull truelength(CharSXPWrapper obj, int trueLength) {
+            obj.setTruelength(trueLength);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull truelength(RStringVector obj, int trueLength) {
+            obj.setTrueLength(trueLength);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull truelength(RIntVector obj, int trueLength) {
+            obj.setTrueLength(trueLength);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull truelength(RDoubleVector obj, int trueLength) {
+            obj.setTrueLength(trueLength);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull truelength(RLogicalVector obj, int trueLength) {
+            obj.setTrueLength(trueLength);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull truelength(RComplexVector obj, int trueLength) {
+            obj.setTrueLength(trueLength);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull truelength(RRawVector obj, int trueLength) {
+            obj.setTrueLength(trueLength);
+            return RNull.instance;
+        }
+
+        @Specialization
+        protected RNull truelength(RList obj, int trueLength) {
+            obj.setTrueLength(trueLength);
+            return RNull.instance;
+        }
+
+        public static SET_TRUELENGTHNode create() {
+            return SET_TRUELENGTHNodeGen.create();
         }
     }
 

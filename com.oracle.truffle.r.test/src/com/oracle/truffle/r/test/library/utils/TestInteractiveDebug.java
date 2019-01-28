@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -118,6 +118,8 @@ public class TestInteractiveDebug extends TestBase {
                                         "baz <- function(vbaz) bar(vbaz);" +
                                         "start <- function(vstart) baz(vstart);" +
                                         "start(42); }\nls()\nc");
+        assertEval("{ foo <- function(x) browser(\"hello\", condition=4+x, expr=x>3); foo(1); }");
+        assertEval("{ foo <- function(x) browser(\"hello\", condition=4+x, expr=x>3); foo(5); }\nbrowserText()\nbrowserCondition()\nc");
     }
 
     @Test

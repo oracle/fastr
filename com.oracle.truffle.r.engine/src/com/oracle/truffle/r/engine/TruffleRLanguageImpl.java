@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,11 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.Scope;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
 import com.oracle.truffle.api.instrumentation.ProvidedTags;
 import com.oracle.truffle.api.instrumentation.StandardTags;
+import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.ExecutableNode;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
@@ -39,14 +41,21 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.engine.interop.RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinPackages;
+import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RMissingHelper;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
+import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSuicide;
+import com.oracle.truffle.r.runtime.conn.StdConnections.ContextStateImpl;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -54,6 +63,7 @@ import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
+import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
@@ -113,10 +123,9 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     protected RContext createContext(Env env) {
         boolean initialContext = !systemInitialized;
         if (initialContext) {
-            RContext.initializeGlobalState(new RASTBuilder(), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
+            RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         }
-        RContext result = RContext.create(this, env, env.lookup(Instrumenter.class), initialContext);
-        return result;
+        return RContext.create(this, env, env.lookup(Instrumenter.class), initialContext);
     }
 
     @Override
@@ -128,19 +137,44 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     protected String toString(RContext context, Object value) {
         // the debugger also passes result of TruffleRLanguage.findMetaObject() to this method
         Object unwrapped = value;
+        // print promises by other means than the "print" function to avoid evaluating them
         if (unwrapped instanceof RPromise) {
             RPromise promise = (RPromise) unwrapped;
-            if (promise.isEvaluated()) {
-                unwrapped = RRuntime.asAbstractVector(promise.getValue());
+            if (promise.isEvaluated() || promise.isOptimized()) {
+                unwrapped = promise.getValue();
+            } else {
+                return RDeparse.deparse(unwrapped, RDeparse.MAX_CUTOFF, true, RDeparse.KEEPINTEGER, -1, 1024 * 1024);
             }
         }
-        if (unwrapped instanceof String) {
-            return (String) unwrapped;
+        // print missing explicitly, because "print" would report missing argument
+        if (RMissingHelper.isMissing(unwrapped)) {
+            return "missing";
         }
-        if (unwrapped instanceof RTypedValue) {
-            return RDeparse.deparse(unwrapped, RDeparse.MAX_CUTOFF, true, RDeparse.KEEPINTEGER, -1, 1024 * 1024);
+        Object asVector = RRuntime.asAbstractVector(unwrapped);
+        if (!(asVector instanceof TruffleObject)) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, String.format("Printing value of type '%s' is not supported by the R language.", unwrapped.getClass().getSimpleName()));
         }
-        return RRuntime.toString(unwrapped);
+        Object printObj = REnvironment.baseEnv(context).get("print");
+        if (printObj instanceof RPromise) {
+            printObj = PromiseHelperNode.evaluateSlowPath((RPromise) printObj);
+        }
+        if (!(printObj instanceof RFunction)) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "Cannot retrieve the 'print' function from the base package.");
+        }
+        MaterializedFrame callingFrame = REnvironment.globalEnv(context).getFrame();
+        ContextStateImpl stateStdConnections = context.stateStdConnections;
+        try {
+            StringBuilder buffer = new StringBuilder();
+            stateStdConnections.setBuffer(buffer);
+            RContext.getEngine().evalFunction((RFunction) printObj, callingFrame, RCaller.topLevel, false, ArgumentsSignature.empty(1), asVector);
+            // remove the last "\n", which is useful for REPL, but not here
+            if (buffer.charAt(buffer.length() - 1) == '\n') {
+                buffer.setLength(buffer.length() - 1);
+            }
+            return buffer.toString();
+        } finally {
+            stateStdConnections.resetBuffer();
+        }
     }
 
     @Override

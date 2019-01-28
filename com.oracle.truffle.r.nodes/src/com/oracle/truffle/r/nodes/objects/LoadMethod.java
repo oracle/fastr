@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,6 +130,7 @@ abstract class LoadMethod extends RBaseNode {
                 loadMethodFind = insert(ReadVariableNode.createFunctionLookup(RRuntime.R_LOAD_METHOD_NAME));
                 currentFunction = (RFunction) loadMethodFind.execute(frame, methodsEnv.getFrame());
                 loadMethodFunction = currentFunction;
+                CompilerDirectives.transferToInterpreterAndInvalidate();
                 loadMethodCall = insert(CallRFunctionNode.create(loadMethodFunction.getTarget()));
                 RError.performanceWarning("loadMethod executing slow path");
             } else {

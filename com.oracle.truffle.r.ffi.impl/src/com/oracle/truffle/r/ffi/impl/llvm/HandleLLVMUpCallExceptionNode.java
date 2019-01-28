@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,9 +24,9 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.r.runtime.ffi.CallRFFI.HandleUpCallExceptionNode;
+import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;
 
-public class HandleLLVMUpCallExceptionNode extends Node implements HandleUpCallExceptionNode {
+public class HandleLLVMUpCallExceptionNode extends Node implements UpCallsRFFI.HandleUpCallExceptionNode {
     @Override
     @TruffleBoundary
     public void execute(Throwable ex) {

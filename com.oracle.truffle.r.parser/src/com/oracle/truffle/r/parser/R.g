@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -62,6 +62,8 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.Argument;
+import com.oracle.truffle.r.runtime.nodes.RCodeBuilder.RCodeToken;
+import com.oracle.truffle.r.parser.TokensMap;
 }
 
 @lexer::header {
@@ -107,6 +109,41 @@ import com.oracle.truffle.r.runtime.RError;
     private <T extends Throwable> boolean rethrow(T e) throws T {
     	throw e;
     }
+
+    /**
+     * Helper function that reports the last token to the AST builder. If keep.source=T,
+     * then the AST builder should create parse metadata even for individual tokens.
+     *
+     * There are two things that complicate the matter: ANTLR is backtracking the tokens stream,
+     * so if we simply hook into that, we would have to handle this to not report tokens twice.
+     * Moreover, FastR maintains internal state w.r.t. the '#line' directives (see checkFileDelim),
+     * so when getting the correct source sections for tokens, we would have to synchronize
+     * that state w.r.t. to the backtracking. For this reasons, manually reporting all tokens
+     * in every semantic action seems as way simpler solution.
+     */
+    private void tok() {
+        Token t = last();
+        builder.token(src(t), TokensMap.MAP[t.getType()], t.getText());
+    }
+
+    private void tok(RCodeToken tok) {
+        Token t = last();
+        builder.token(src(t), tok, t.getText());
+    }
+
+    private void modifyTok(RCodeToken tok) {
+        Token t = last();
+        builder.modifyLastToken(tok);
+    }
+
+    private void modifyTokIf(RCodeToken oldTok, RCodeToken newTok) {
+        Token t = last();
+        builder.modifyLastTokenIf(oldTok, newTok);
+    }
+
+    static <T> Argument<T> argument(SourceSection source, String name, T expression) {
+        return RCodeBuilder.argument(source, name, expression);
+    }
     
     /**
      * Helper function that returns the last parsed token, usually used for building source sections.
@@ -116,9 +153,17 @@ import com.oracle.truffle.r.runtime.RError;
     } 
     
     /**
-     * Helper function to create a function lookup for the symbol in a given token.
+     * Helper function to create a special function lookup for the symbol in a given token.
+     * Special function lookup should be used to functions like infix '+'.
      */
     private T operator(Token op) {
+        return builder.specialLookup(src(op), argName(op.getText()), true);
+    }
+
+    /**
+     * Helper function to create a function lookup for the symbol in a given token.
+     */
+    private T functionLookup(Token op) {
         return builder.lookup(src(op), argName(op.getText()), true);
     }
     
@@ -271,9 +316,8 @@ import com.oracle.truffle.r.runtime.RError;
 }
 
 /****************************************************
-** Known errors :
+** Known errors (possibly outdated) :
 ** - foo * if(...) ... because of priority
-** - No help support '?' & '??'
 ** - %OP% not very robust, maybe allow everything
 ** - More than 3x '.' are handled like ...
 ** - '.' is a valid id
@@ -305,7 +349,7 @@ root_function [String name] returns [RootCallTarget v]
         	throw RInternalError.shouldNotReachHere("not at EOF after parsing deserialized function"); 
         }
     }
-    : n_ op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.rootFunction(language, src($op, last()), params, $body.v, name); }
+    : n_ op=FUNCTION{tok();} n_ LPAR{tok();}  n_ (par_decl[params] (n_ COMMA{tok();} n_ par_decl[params])* n_)? RPAR{tok();} n_ body=expr_or_assign { $v = builder.rootFunction(language, src($op, last()), params, $body.v, name); }
     ;
 
 statement returns [T v]
@@ -326,28 +370,28 @@ expr_wo_assign returns [T v]
     | r=repeat_expr                                     { $v = $r.v; }
     | fun=function[null]                                { $v = $fun.v; }
     // break/next can be accompanied by arguments, but those are simply ignored
-    | op=(NEXT|BREAK) ((LPAR)=>LPAR args[null] RPAR | ) { $v = builder.call(src($op), operator($op)); }
+    | op=(NEXT|BREAK){tok();} ((LPAR)=>LPAR{tok();} args[null] RPAR{tok();} | ) { $v = builder.call(src($op), operator($op)); }
     ;
 
 sequence returns [T v]
     @init  { ArrayList<Argument<T>> stmts = new ArrayList<>(); }
-    : op=LBRACE n_multi?
+    : op=LBRACE{tok();} n_multi?
       (
         e=expr_or_assign           { stmts.add(RCodeBuilder.argument($e.v)); }
         ( n_multi e=expr_or_assign { stmts.add(RCodeBuilder.argument($e.v)); } )*
         n_multi?
       )?
-      RBRACE
+      RBRACE{tok();}
       { $v = builder.call(src($op, last()), operator($op), stmts); }
     ;
     
 expr returns [T v]
     @init { Token start = input.LT(1); T rhs = null; }
     : l=tilde_expr
-      ( op=(ARROW | SUPER_ARROW) n_ ( (FUNCTION) => r=function[$l.v] { rhs = $r.v; } | r=expr { rhs = $r.v; } )
+      ( op=(ARROW | SUPER_ARROW){tok();} n_ ( (FUNCTION) => r=function[$l.v] { rhs = $r.v; } | r=expr { rhs = $r.v; } )
                                            { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
-      | op=RIGHT_ARROW n_ r=expr           { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
-      | op=SUPER_RIGHT_ARROW n_ r=expr     { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
+      | op=RIGHT_ARROW{tok();} n_ r=expr           { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
+      | op=SUPER_RIGHT_ARROW{tok();} n_ r=expr     { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
       | { $v = $l.v; }
       )
     ;
@@ -355,60 +399,60 @@ expr returns [T v]
 expr_or_assign returns [T v]
     @init { Token start = input.LT(1); T rhs = null; }
     : l=tilde_expr
-      ( (ARROW|SUPER_ARROW|ASSIGN) => op=(ARROW | SUPER_ARROW | ASSIGN) n_  ( (FUNCTION) => r=function[$l.v] { rhs = $r.v; } | r=expr_or_assign { rhs = $r.v; } )
+      ( (ARROW|SUPER_ARROW|ASSIGN) => op=(ARROW | SUPER_ARROW | ASSIGN){tok();} n_  ( (FUNCTION) => r=function[$l.v] { rhs = $r.v; } | r=expr_or_assign { rhs = $r.v; } )
                                                                       { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
-      | (RIGHT_ARROW)=>op=RIGHT_ARROW n_ r=expr_or_assign             { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
-      | (SUPER_RIGHT_ARROW)=>op=SUPER_RIGHT_ARROW n_ r=expr_or_assign { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
+      | (RIGHT_ARROW)=>op=RIGHT_ARROW{tok();} n_ r=expr_or_assign             { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r.v, $l.v); }
+      | (SUPER_RIGHT_ARROW)=>op=SUPER_RIGHT_ARROW{tok();} n_ r=expr_or_assign { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r.v, $l.v); }
       | { $v = $l.v; }
       )
     ;
 
 if_expr returns [T v]
-    : op=IF n_ LPAR n_ cond=expr_or_assign n_ RPAR n_ t=expr_or_assign
+    : op=IF{tok();} n_ LPAR{tok();} n_ cond=expr_or_assign n_ RPAR{tok();} n_ t=expr_or_assign
       (
-        (n_ ELSE)=>(options { greedy=false; backtrack = true; }: n_ ELSE n_ f=expr_or_assign
+        (n_ ELSE)=>(options { greedy=false; backtrack = true; }: n_ ELSE{tok();} n_ f=expr_or_assign
               { $v = builder.call(src($op, last()), operator($op), $cond.v, $t.v, $f.v); })
       |       { $v = builder.call(src($op, last()), operator($op), $cond.v, $t.v); }
       )
     ;
 
 while_expr returns [T v]
-    : op=WHILE n_ LPAR n_ c=expr_or_assign n_ RPAR n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $c.v, $body.v); }
+    : op=WHILE{tok();} n_ LPAR{tok();} n_ c=expr_or_assign n_ RPAR{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $c.v, $body.v); }
     ;
 
 for_expr returns [T v]
-    : op=FOR n_ LPAR n_ i=ID n_ IN n_ in=expr_or_assign n_ RPAR n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), builder.lookup(src($i), $i.text, false), $in.v, $body.v); }
+    : op=FOR{tok();} n_ LPAR{tok();} n_ i=ID n_ IN{tok();} n_ in=expr_or_assign n_ RPAR{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), builder.lookup(src($i), $i.text, false), $in.v, $body.v); }
     ;
 
 repeat_expr returns [T v]
-    : op=REPEAT n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $body.v); } 
+    : op=REPEAT{tok();} n_ body=expr_or_assign { $v = builder.call(src($op, last()), operator($op), $body.v); }
     ;
 
 function [T assignedTo] returns [T v]
     @init { List<Argument<T>> params = new ArrayList<>(); }
-    : op=FUNCTION n_ LPAR  n_ (par_decl[params] (n_ COMMA n_ par_decl[params])* n_)? RPAR n_ body=expr_or_assign { $v = builder.function(language, src($op, last()), params, $body.v, assignedTo); }
+    : op=FUNCTION{tok();} n_ LPAR{tok();} n_ (par_decl[params] (n_ COMMA{tok();} n_ par_decl[params])* n_)? RPAR{tok();} n_ body=expr_or_assign { $v = builder.function(language, src($op, last()), params, $body.v, assignedTo); }
     ;
 
 par_decl [List<Argument<T>> l]
-    : i=ID                     { $l.add(RCodeBuilder.argument(src($i), $i.text, null)); }
-    | i=ID n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($i, last()), $i.text, $e.v)); }
-    | v=VARIADIC               { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
+    : i=ID{tok();}                                                      { $l.add(argument(src($i), $i.text, null)); }
+    | i=ID{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr   { $l.add(argument(src($i, last()), $i.text, $e.v)); }
+    | v=VARIADIC{tok();}                                                { $l.add(argument(src($v), $v.text, null)); }
     // The 3 following cases (e.g. "...=42") are weirdness of the reference implementation,
     // the formal argument must be actually created, because they play their role in positional argument matching,
     // but the expression for the default value (if any) is never executed and the value of the paremter
     // cannot be accessed (at least it seems so).
-    | v=VARIADIC n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
-    | v=DD                           { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
-    | v=DD n_ ASSIGN n_ expr         { $l.add(RCodeBuilder.argument(src($v), $v.text, null)); }
+    | v=VARIADIC{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ e=expr { $l.add(argument(src($v), $v.text,  null)); }
+    | v=DD{tok();}                                                          { $l.add(argument(src($v), $v.text, null)); }
+    | v=DD{tok();} n_ a=ASSIGN{tok(RCodeToken.EQ_FORMALS);} n_ expr         { $l.add(argument(src($v), $v.text, null)); }
     ;
 
 tilde_expr returns [T v]
     : l=utilde_expr { $v = $l.v; }
-      ( ((TILDE) => op=TILDE n_ r=utilde_expr { $v = builder.call(src($op, last()), operator($op), $v, $r.v); }) )*
+      ( ((TILDE) => op=TILDE{tok();} n_ r=utilde_expr { $v = builder.call(src($op, last()), operator($op), $v, $r.v); }) )*
     ;
 
 utilde_expr returns [T v]
-    : op=TILDE n_ l=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    : op=TILDE{tok();} n_ l=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | l=or_expr             { $v = $l.v; }
     ;
 
@@ -425,7 +469,7 @@ and_expr returns [T v]
     ;
 
 not_expr returns [T v]
-    : {true}? op=NOT n_ l=not_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    : {true}? op=NOT{tok();} n_ l=not_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | b=comp_expr         { $v = $b.v; }
     ;
 
@@ -450,18 +494,18 @@ mult_expr returns [T v]
 operator_expr returns [T v]
     @init { Token start = input.LT(1); }
     : l=colon_expr { $v = $l.v; }
-      ( (OP)=>op=OP n_ r=colon_expr { $v = builder.call(src(start, last()), operator($op), $v, $r.v); } )*
+      ( (OP)=>op=OP{tok();} n_ r=colon_expr { $v = builder.call(src(start, last()), operator($op), $v, $r.v); } )*
     ;
 
 colon_expr returns [T v]
     @init { Token start = input.LT(1); }
     : l=unary_expression { $v = $l.v; }
-      ( ((COLON)=>op=COLON n_ r=unary_expression { $v = builder.call(src(start, last()), operator($op), $v, $r.v); }) )*
+      ( ((COLON)=>op=COLON{tok();} n_ r=unary_expression { $v = builder.call(src(start, last()), operator($op), $v, $r.v); }) )*
     ;
 
 unary_expression returns [T v]
-    : op=(PLUS | MINUS | NOT | QM) n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
-	| op=(TILDE) n_ l=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
+    : op=(PLUS | MINUS | NOT | QM){tok();} n_ l=unary_expression { $v = builder.call(src($op, last()), operator($op), $l.v); }
+	| op=(TILDE){tok();} n_ l=utilde_expr { $v = builder.call(src($op, last()), operator($op), $l.v); }
     | b=power_expr                                  { $v = $b.v; }
     ;
 
@@ -479,29 +523,29 @@ basic_expr returns [T v]
     :
     (
       // special case for simple function call to generate "function" mode lookups
-      ((ID|DD|VARIADIC|STRING) LPAR) => (lhsToken=(ID | DD | VARIADIC | STRING) op=LPAR a=args[null] y=RPAR
-                      { $v = builder.call(src(start, $y), operator($lhsToken), $a.v); } )
+      ((ID|DD|VARIADIC|STRING) LPAR) => (lhsToken=(ID | DD | VARIADIC | STRING){tok(RCodeToken.SYMBOL_FUNCTION_CALL);} op=LPAR{tok();} a=args[null] y=RPAR{tok();}
+                      { $v = builder.call(src(start, $y), functionLookup($lhsToken), $a.v); } )
     |
       lhs=simple_expr { $v = $lhs.v; }
     )
     (
       ((FIELD|AT|LBRAKET|LBB|LPAR) => (
-          (op=(FIELD|AT) n_ name=id                    { $v = builder.call(src(start, last()), operator($op), $v, builder.lookup(src($name.v), $name.v.getText(), false)); })
-        | (op=(FIELD|AT) n_ sname=conststring          { $v = builder.call(src(start, last()), operator($op), $v, $sname.v); })
-        | (op=LBRAKET subset=args[$v] y=RBRAKET        {
+          (op=(FIELD|AT){tok();} n_ name=id                    { modifyTok(RCodeToken.SLOT); $v = builder.call(src(start, last()), operator($op), $v, builder.lookup(src($name.v), $name.v.getText(), false)); })
+        | (op=(FIELD|AT){tok();} n_ sname=conststring          { $v = builder.call(src(start, last()), operator($op), $v, $sname.v); })
+        | (op=LBRAKET{tok();} subset=args[$v] y=RBRAKET        { tok();
                                                            if ($subset.v.size() == 1) {
                                                                $subset.v.add(RCodeBuilder.argumentEmpty());
                                                            }
-                                                           $v = builder.call(src(start, $y), operator($op), $subset.v); 
+                                                           $v = builder.call(src(start, $y), operator($op), $subset.v);
                                                        })
         // must use RBRAKET twice instead of RBB because this is possible: a[b[1]]
-        | (op=LBB subscript=args[$v] RBRAKET y=RBRAKET {
+        | (op=LBB{tok();} subscript=args[$v] RBRAKET{tok();} y=RBRAKET { tok();
                                                            if ($subscript.v.size() == 1) {
                                                                $subscript.v.add(RCodeBuilder.argumentEmpty());
                                                            }
                                                            $v = builder.call(src(start, $y), operator($op), $subscript.v);
                                                        })
-        | (op=LPAR a=args[null] y=RPAR                 { $v = builder.call(src(start, $y), $v, $a.v); })
+        | (op=LPAR{tok();} a=args[null] y=RPAR{tok();}                 { $v = builder.call(src(start, $y), $v, $a.v); })
         )
       )+
     | (n_)=>
@@ -512,38 +556,38 @@ simple_expr returns [T v]
     @init { Token start = input.LT(1); List<Argument<T>> args = new ArrayList<>(); Token compToken = null; }
     : i=id                                      { $v = builder.lookup(src($i.v), $i.text, false); }
     | b=bool                                    { $v = builder.constant(src(start, last()), $b.v); }
-    | d=DD                                      { $v = builder.lookup(src($d), $d.text, false); }
-    | t=NULL                                    { $v = builder.constant(src($t), RNull.instance); }
-    | t=INF                                     { $v = builder.constant(src($t), Double.POSITIVE_INFINITY); }
-    | t=NAN                                     { $v = builder.constant(src($t), Double.NaN); }
-    | t=NAINT                                   { $v = builder.constant(src($t), RRuntime.INT_NA); }
-    | t=NAREAL                                  { $v = builder.constant(src($t), RRuntime.DOUBLE_NA); }
-    | t=NACHAR                                  { $v = builder.constant(src($t), RRuntime.STRING_NA); }
-    | t=NACOMPL                                 { $v = builder.constant(src($t), RComplex.createNA()); }
+    | d=DD                                      { tok(); $v = builder.lookup(src($d), $d.text, false); }
+    | t=NULL                                    { tok(); $v = builder.constant(src($t), RNull.instance); }
+    | t=INF                                     { tok(); $v = builder.constant(src($t), Double.POSITIVE_INFINITY); }
+    | t=NAN                                     { tok(); $v = builder.constant(src($t), Double.NaN); }
+    | t=NAINT                                   { tok(); $v = builder.constant(src($t), RRuntime.INT_NA); }
+    | t=NAREAL                                  { tok(); $v = builder.constant(src($t), RRuntime.DOUBLE_NA); }
+    | t=NACHAR                                  { tok(); $v = builder.constant(src($t), RRuntime.STRING_NA); }
+    | t=NACOMPL                                 { tok(); $v = builder.constant(src($t), RComplex.createNA()); }
     | num=number                                { $v = $num.v; }
     | cstr=conststring                          { $v = $cstr.v; }
-    | pkg=id op=(NS_GET|NS_GET_INT) n_          {
+    | pkg=id{modifyTok(RCodeToken.SYMBOL_PACKAGE);} op=(NS_GET|NS_GET_INT){tok();} n_          {
         SourceSection pkgSource = src($pkg.v);
-        args.add(RCodeBuilder.argument(pkgSource, (String) null, builder.lookup(pkgSource, $pkg.text, false)));
+        args.add(argument(pkgSource, (String) null, builder.lookup(pkgSource, $pkg.text, false)));
         }
       ( compId=id                               {
         SourceSection compSource = src($compId.v);
         compToken = $compId.v;
-        args.add(RCodeBuilder.argument(compSource, (String) null, builder.lookup(compSource, $compId.text, false)));
+        args.add(argument(compSource, (String) null, builder.lookup(compSource, $compId.text, false)));
         }
-      | compString=STRING                       { 
+      | compString=STRING{tok();}                       {
         SourceSection compSource = src($compString);
         compToken = $compString;
-        args.add(RCodeBuilder.argument(compSource, (String) null, builder.constant(compSource, $compString.text)));
+        args.add(argument(compSource, (String) null, builder.constant(compSource, $compString.text)));
         }
         )                                       { $v = builder.call(src($pkg.v, compToken), operator($op), args); }
-    | op=LPAR n_ ea=expr_or_assign n_ y=RPAR    { $v = builder.call(src($op, $y), operator($op), $ea.v); }
+    | op=LPAR{tok();} n_ ea=expr_or_assign n_ y=RPAR    { tok(); $v = builder.call(src($op, $y), operator($op), $ea.v); }
     | s=sequence                                { $v = $s.v; }
     | e=expr_wo_assign                          { $v = $e.v; }
     ;
 
 number returns [T v]
-    : i=INTEGER {
+    : i=INTEGER { tok();
         double value = RRuntime.string2doubleNoCheck($i.text);
         if (value == (int) value) {
             if ($i.text.indexOf('.') != -1) {
@@ -561,47 +605,47 @@ number returns [T v]
             $v = builder.constant(src($i), value);
         }
       }
-    | d=DOUBLE  { $v = builder.constant(src($d), RRuntime.string2doubleNoCheck($d.text)); }
-    | c=COMPLEX { $v = builder.constant(src($c), RComplex.valueOf(0, RRuntime.string2doubleNoCheck($c.text))); }
+    | d=DOUBLE  { tok(); $v = builder.constant(src($d), RRuntime.string2doubleNoCheck($d.text)); }
+    | c=COMPLEX { tok(); $v = builder.constant(src($c), RComplex.valueOf(0, RRuntime.string2doubleNoCheck($c.text))); }
     ;
 
 conststring returns [T v]
-    : s=STRING { $v = builder.constant(src($s), $s.text); }
+    : s=STRING { tok(); $v = builder.constant(src($s), $s.text); }
     ;
 
 id returns [Token v]
-    : ident=ID     { $v = $ident; }
-    | var=VARIADIC { $v = $var; }
+    : ident=ID     { tok(); $v = $ident; }
+    | var=VARIADIC { tok(); $v = $var; }
     ;
 
 bool returns [byte v]
-    : t=TRUE  { $v = RRuntime.LOGICAL_TRUE; }
-    | t=FALSE { $v = RRuntime.LOGICAL_FALSE; }
-    | t=NA    { $v = RRuntime.LOGICAL_NA; }
+    : t=TRUE  { tok(); $v = RRuntime.LOGICAL_TRUE; }
+    | t=FALSE { tok(); $v = RRuntime.LOGICAL_FALSE; }
+    | t=NA    { tok(); $v = RRuntime.LOGICAL_NA; }
     ;
 
 or_operator returns [Token v]
-    : op=(OR | ELEMENTWISEOR) { $v = $op; }
+    : op=(OR | ELEMENTWISEOR) { tok(); $v = $op; }
     ;
 
 and_operator returns [Token v]
-    : op=(AND | ELEMENTWISEAND) { $v = $op; }
+    : op=(AND | ELEMENTWISEAND) { tok(); $v = $op; }
     ;
 
 comp_operator returns [Token v]
-    : op=(GT | GE | LT | LE | EQ | NE) { $v = $op; }
+    : op=(GT | GE | LT | LE | EQ | NE) { tok(); $v = $op; }
     ;
 
 add_operator returns [Token v]
-    : op=(PLUS | MINUS) { $v = $op; }
+    : op=(PLUS | MINUS) { tok(); $v = $op; }
     ;
 
 mult_operator returns [Token v]
-    : op=(MULT | DIV) { $v = $op; }
+    : op=(MULT | DIV) { tok(); $v = $op; }
     ;
 
 power_operator returns [Token v]
-    : op=CARET { $v = $op; }
+    : op=CARET { tok(); $v = $op; }
     ;
 
 args [T firstArg] returns [List<Argument<T>> v]
@@ -611,15 +655,15 @@ args [T firstArg] returns [List<Argument<T>> v]
                   $v.add(RCodeBuilder.argument(firstArg));
               }
           }
-    : n_ (arg_expr[v] n_ (COMMA ({ $v.add(RCodeBuilder.argumentEmpty()); } | n_ arg_expr[v]) n_)* )?
-    | n_ { $v.add(RCodeBuilder.argumentEmpty()); } (COMMA ({ $v.add(RCodeBuilder.argumentEmpty()); } | n_ arg_expr[v]) n_)+
+    : n_ (arg_expr[v] n_ (COMMA{tok();} ({ $v.add(RCodeBuilder.argumentEmpty()); } | n_ arg_expr[v]) n_)* )?
+    | n_ { $v.add(RCodeBuilder.argumentEmpty()); } (COMMA{tok();} ({ $v.add(RCodeBuilder.argumentEmpty()); } | n_ arg_expr[v]) n_)+
     ;
 
 arg_expr [List<Argument<T>> l]
     @init { Token start = input.LT(1); }
-    : e=expr                                                   { $l.add(RCodeBuilder.argument(src(start, last()), (String) null, $e.v)); }
-    | name=(ID | VARIADIC | NULL | STRING) n_ ASSIGN n_ e=expr { $l.add(RCodeBuilder.argument(src($name, last()), argName($name.text), $e.v)); }
-    | name=(ID | VARIADIC | NULL | STRING) n_ a=ASSIGN         { $l.add(RCodeBuilder.argument(src($name, $a), argName($name.text), null)); }
+    : e=expr                                                   { $l.add(argument(src(start, last()), (String) null, $e.v)); }
+    | name=(ID{tok(RCodeToken.SYMBOL_SUB);} | (VARIADIC | NULL | STRING){tok();}) n_ a=ASSIGN{tok(RCodeToken.EQ_SUB);} n_ e=expr { $l.add(argument(src($name, last()), argName($name.text), $e.v)); }
+    | name=(ID{tok(RCodeToken.SYMBOL_SUB);} | (VARIADIC | NULL | STRING){tok();}) n_ a=ASSIGN{tok(RCodeToken.EQ_SUB);}           { $l.add(argument(src($name, $a), argName($name.text), null)); }
     ;
 
 ///
@@ -630,7 +674,7 @@ COMMENT : '#' ~('\n'|'\r'|'\f')* (LINE_BREAK | EOF) { if(incompleteNesting > 0) 
 
 ARROW             : '<-' | ':=' ;
 SUPER_ARROW       : '<<-' ;
-RIGHT_ARROW       : '->' ;
+RIGHT_ARROW       : '->';
 SUPER_RIGHT_ARROW : '->>' ;
 VARIADIC          : '...' ;
 

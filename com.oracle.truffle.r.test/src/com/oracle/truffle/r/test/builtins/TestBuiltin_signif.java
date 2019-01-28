@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -58,5 +58,12 @@ public class TestBuiltin_signif extends TestBase {
         assertEval("{ x<-42.1234; attr(x, \"foo\")<-\"foo\"; signif(x, 2) }");
         assertEval("{ x<-FALSE; attr(x, \"foo\")<-\"foo\"; signif(x, 2) }");
         assertEval("{ signif(42.1234, matrix(1:2, nrow=1)) }");
+
+        assertEval("{ signif(c(1.234, 2.345, 3.456, 4.567), c(1, NA)); }");
+        assertEval("{ signif(c(1.234, NA, 3.456, 4.567), c(1, NA)); }");
+
+        assertEval("{ signif(1.234+2.345i, 2) }");
+        assertEval("{ signif(Inf+2.345i, 2) }");
+        assertEval("{ signif(complex(re=1.234, im=2.345), 2) }");
     }
 }

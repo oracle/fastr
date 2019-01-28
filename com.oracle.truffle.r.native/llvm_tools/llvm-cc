@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -25,34 +25,26 @@
 ORIG_CMD=$1
 shift
 
-if [[ "$FASTR_RFFI" != 'llvm-only' ]]; then
-	${ORIG_CMD} "$@"
-fi
-if [[ "$FASTR_RFFI" == 'nfi-only' ]]; then
-    exit 0
-fi
-
 SOURCE="$0"
 DIR="$( cd -P "$( dirname "$SOURCE" )" && pwd )"
+
+. $DIR/llvm-helper
 
 SULONG_DIR=""
 if [ -f "${DIR}/../../sulong" ]
 then
 	# For a package build
-	SULONG_DIR="${DIR}/../../sulong"
+	SULONG_DIR="${DIR}/../../graal/sulong"
 else
 	# For the FastR build
-	SULONG_DIR="${DIR}/../../../sulong"
+	SULONG_DIR="${DIR}/../../../graal/sulong"
 fi
 
-. $DIR/llvm-helper
-
-errorOccurred || {
-try
-(
+#errorOccurred || {
+#try
+#(
 
 fortran=0
-analyze_args "$@"
 
 if [ $is_link -eq 1 ]
 then
@@ -85,7 +77,8 @@ else
   fi
 fi
 
-) || catch || {
-	recordError
-}
-}
+#) || catch || {
+#	recordError
+#    exit $ex_code
+#}
+#}

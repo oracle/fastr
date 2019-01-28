@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -125,7 +125,7 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                     }
                 }
             }
-            if (symbol.equals("<-")) {
+            if (symbol.equals("<-") && arguments.length > 1) {
                 Info info = Info.createNew();
                 RSyntaxElement current = arguments[0];
                 if (arguments[0] instanceof RSyntaxLookup) {
@@ -133,7 +133,11 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                 } else {
                     info.addBefore(accept(arguments[0]));
                     while (current instanceof RSyntaxCall) {
-                        current = ((RSyntaxCall) current).getSyntaxArguments()[0];
+                        RSyntaxElement[] currArgs = ((RSyntaxCall) current).getSyntaxArguments();
+                        if (currArgs.length == 0) {
+                            return Info.ANY;
+                        }
+                        current = currArgs[0];
                     }
                     if (current instanceof RSyntaxLookup) {
                         info.evaluatedNames.add(((RSyntaxLookup) current).getIdentifier());
@@ -150,7 +154,9 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                 switch (symbol) {
                     case "||":
                     case "&&":
-                        assert arguments.length == 2;
+                        if (arguments.length != 2) {
+                            return Info.ANY;
+                        }
                         if (arguments[1] != null) {
                             info.addBefore(Info.alternative(accept(arguments[1]), Info.EMPTY));
                         }
@@ -159,24 +165,31 @@ public final class EvaluatedArgumentsVisitor extends RSyntaxVisitor<Info> {
                         }
                         return info;
                     case "repeat":
-                        assert arguments.length == 1;
+                        if (arguments.length != 1) {
+                            return Info.ANY;
+                        }
                         return accept(arguments[0]);
                     case "while":
-                        assert arguments.length == 2;
+                        if (arguments.length != 2) {
+                            return Info.ANY;
+                        }
                         info.addBefore(Info.alternative(accept(arguments[1]), Info.EMPTY));
                         info.addBefore(accept(arguments[0]));
                         return info;
                     case "for":
-                        assert arguments.length == 3;
+                        if (arguments.length != 3) {
+                            return Info.ANY;
+                        }
                         info.addBefore(Info.alternative(accept(arguments[2]), Info.EMPTY));
                         info.addBefore(accept(arguments[1]));
                         return info;
                     case "if":
-                        assert arguments.length == 2 || arguments.length == 3;
                         if (arguments.length == 2) {
                             info = Info.alternative(accept(arguments[1]), Info.EMPTY);
-                        } else {
+                        } else if (arguments.length == 3) {
                             info = Info.alternative(accept(arguments[1]), accept(arguments[2]));
+                        } else {
+                            return Info.ANY;
                         }
                         info.addBefore(accept(arguments[0]));
                         return info;

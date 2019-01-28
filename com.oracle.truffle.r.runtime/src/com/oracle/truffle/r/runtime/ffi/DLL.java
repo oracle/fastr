@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -64,6 +64,8 @@ import com.oracle.truffle.r.runtime.data.RTruffleObject;
 import com.oracle.truffle.r.runtime.data.StringArrayWrapper;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI.InvokeVoidCallNode;
 import com.oracle.truffle.r.runtime.ffi.DLLRFFI.DLCloseRootNode;
+import com.oracle.truffle.r.runtime.ffi.DLLRFFI.LibHandle;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.user.UserRNG;
 
@@ -218,7 +220,7 @@ public class DLL {
         public final CharSXPWrapper nameSXP;
         public final CharSXPWrapper pathSXP;
 
-        public final Object handle;
+        public final LibHandle handle;
         private boolean dynamicLookup;
         private boolean forceSymbols;
         private final DotSymbol[][] nativeSymbols = new DotSymbol[NativeSymbolType.values().length][];
@@ -230,7 +232,7 @@ public class DLL {
          */
         private final boolean syntheticHandle;
 
-        private DLLInfo(String name, String path, boolean dynamicLookup, Object handle, boolean syntheticHandle) {
+        private DLLInfo(String name, String path, boolean dynamicLookup, LibHandle handle, boolean syntheticHandle) {
             this.id = ID.getAndIncrement();
             this.name = name;
             this.nameSXP = CharSXPWrapper.create(name);
@@ -241,17 +243,21 @@ public class DLL {
             this.syntheticHandle = syntheticHandle;
         }
 
-        private static DLLInfo create(String name, String path, boolean dynamicLookup, Object handle, boolean addToList) {
+        private static DLLInfo create(String name, String path, boolean dynamicLookup, LibHandle handle, boolean addToList) {
             return create(name, path, dynamicLookup, handle, addToList, false);
         }
 
-        private static DLLInfo create(String name, String path, boolean dynamicLookup, Object handle, boolean addToList, boolean syntheticHandle) {
+        private static DLLInfo create(String name, String path, boolean dynamicLookup, LibHandle handle, boolean addToList, boolean syntheticHandle) {
             DLLInfo result = new DLLInfo(name, path, dynamicLookup, handle, syntheticHandle);
             if (addToList) {
                 ContextStateImpl contextState = getContextState();
                 contextState.list.add(result);
             }
             return result;
+        }
+
+        public DLLInfo replaceHandle(LibHandle newHandle) {
+            return new DLLInfo(name, path, dynamicLookup, newHandle, syntheticHandle);
         }
 
         /**
@@ -507,9 +513,9 @@ public class DLL {
      * Loads a the {@code libR} library. This is an implementation specific library.
      */
     public static void loadLibR(RContext context, String path) {
-        Object handle = null;
+        LibHandle handle = null;
         try {
-            handle = DLLRFFI.DLOpenRootNode.create(context).call(path, false, false);
+            handle = (LibHandle) DLLRFFI.DLOpenRootNode.create(context).call(path, false, false);
         } catch (UnsatisfiedLinkError ex) {
             throw RSuicide.rSuicide(context, "error loading libR from: " + path + ".\n" +
                             "If running on the NFI backend, did you provide the location of libtrufflenfi.so as the value of the system " +
@@ -526,8 +532,17 @@ public class DLL {
         dllContext.addLibR(DLLInfo.create(libName(path), path, true, handle, false));
     }
 
+    private static final class SynthLibHandle implements LibHandle {
+
+        @Override
+        public Type getRFFIType() {
+            return null;
+        }
+
+    }
+
     public static DLLInfo createSyntheticLib(RContext context, String library) {
-        DLLInfo dllInfo = DLLInfo.create(library, library, true, new Object(), false, true);
+        DLLInfo dllInfo = DLLInfo.create(library, library, true, new SynthLibHandle(), false, true);
         context.stateDLL.list.add(dllInfo);
         return dllInfo;
     }
@@ -600,10 +615,8 @@ public class DLL {
          * so that errors loading (user) packages added to R_DEFAULT_PACKAGES do throw RErrors.
          */
         private synchronized DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall();
             try {
-                Object handle = dlOpenNode.execute(absPath, local, now);
+                LibHandle handle = dlOpenNode.execute(absPath, local, now);
                 DLLInfo dllInfo = DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
                 return dllInfo;
             } catch (UnsatisfiedLinkError ex) {
@@ -613,8 +626,6 @@ public class DLL {
                 } else {
                     throw RSuicide.rSuicide(RContext.getInstance(), ex, "error loading default package: " + absPath + "\n" + dlError);
                 }
-            } finally {
-                stateRFFI.afterDowncall(before);
             }
         }
     }

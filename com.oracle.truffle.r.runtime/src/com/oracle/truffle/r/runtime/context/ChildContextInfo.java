@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -133,7 +133,7 @@ public final class ChildContextInfo {
      * @param parent if non-null {@code null}, the parent creating the context
      */
     public static ChildContextInfo createNoRestore(Client client, Map<String, String> env, ContextKind kind, RContext parent, InputStream stdin, OutputStream stdout, OutputStream stderr) {
-        RStartParams params = new RStartParams(RCmdOptions.parseArguments(client, new String[]{"R", "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
+        RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{client.argumentName(), "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         return create(params, env, kind, parent, stdin, stdout, stderr);
     }
 

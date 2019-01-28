@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,23 @@ import com.oracle.truffle.r.runtime.data.RNull;
  * Implementers of this interface can be used to generate a representation of an R closure.
  */
 public interface RCodeBuilder<T> {
+
+    /**
+     * Overrides the last token reported by {@link #token(SourceSection, RCodeToken, String)}.
+     */
+    void modifyLastToken(RCodeToken newToken);
+
+    /**
+     * Overrides the last token reported by {@link #token(SourceSection, RCodeToken, String)}, but
+     * only if that token was equal to {@code oldToken}.
+     */
+    void modifyLastTokenIf(RCodeToken oldToken, RCodeToken newToken);
+
+    /**
+     * Reports a new token to the parse metadata builder. Note: this is only used from the R parser
+     * in the context of parse builtin invoked with {@code keep.source=T}.
+     */
+    void token(SourceSection source, RCodeToken token, String text);
 
     final class Argument<T> {
         public final SourceSection source;
@@ -109,6 +126,8 @@ public interface RCodeBuilder<T> {
      * double, RComplex, String, RNull).
      */
     T constant(SourceSection source, Object value);
+
+    T specialLookup(SourceSection source, String symbol, boolean functionLookup);
 
     /**
      * Creates a symbol lookup, either of mode "function" if {@code functionLookup} is true, and
@@ -235,5 +254,90 @@ public interface RCodeBuilder<T> {
      */
     default T call(SourceSection source, T lhs, T argument1, T argument2, T argument3, T argument4) {
         return call(source, lhs, Arrays.asList(argument(argument1), argument(argument2), argument(argument3), argument(argument4)));
+    }
+
+    enum RCodeToken {
+        UNKNOWN(-1),
+        AND2(286),
+        LEFT_ASSIGN(266),
+        EQ_ASSIGN(267),
+        AT(64, "'@'"),
+        SYMBOL(263),
+        BREAK(276),
+        CARET(94, "'^'"),
+        COLON(58, "':'"),
+        COMMA(43, "','"),
+        COMMENT(290),
+        NUM_CONST(261),
+        DIV(47, "'/'"),
+        AND(284),
+        OR(285),
+        ELSE(273),
+        EQ(294),
+        EXPONENT(94, "'^'"),
+        FIELD(36, "'$'"),
+        FOR(270),
+        FUNCTION(264),
+        GE(279),
+        GT(278),
+        IF(272),
+        IN(271),
+        LBB(269),
+        LBRACE(123, "'{'"),
+        LBRAKET(91, "'['"),
+        LE(281),
+        LPAR(40, "'('"),
+        LT(280),
+        MINUS(45, "'-'"),
+        MULT(42, "'*'"),
+        NE(283),
+        NEXT(275),
+        NOT(33, "'!'"),
+        NS_GET(288),
+        NS_GET_INT(289),
+        NULL_CONST(262),
+        SPECIAL(304),
+        OR2(287),
+        PLUS(43, "'+'"),
+        QM(63, "'?'"),
+        RBRACE(125, "'}'"),
+        RBRAKET(93, "']'"),
+        REPEAT(277),
+        RIGHT_ASSIGN(268),
+        RPAR(41, "')'"),
+        SEMICOLON(59, "';'"),
+        STR_CONST(260),
+        TILDE(126, "'~'"),
+        WHILE(274),
+        // Note: the following tokens are context sensitive and so cannot be recognized only by the
+        // lexer
+        SYMBOL_SUB(295),            // x[[symbol_sub = 42]]
+        EQ_SUB(294),                // ______________^
+        SLOT(299),                  // foo@slot
+        SYMBOL_FORMALS(293),        // function(bar = 42)
+        EQ_FORMALS(293),            // _____________^
+        SYMBOL_PACKAGE(297),        // symbol_package::foo OR symbol_package:::foo
+        SYMBOL_FUNCTION_CALL(296);  // symbol_function_call(1,2,3)
+
+        private final int code;
+        private final String tokenName;
+
+        RCodeToken(int code) {
+            this.code = code;
+            this.tokenName = name();
+        }
+
+        RCodeToken(int code, String tokenName) {
+            this.code = code;
+            this.tokenName = tokenName;
+        }
+
+        public int getCode() {
+            return code;
+        }
+
+        public String getTokenName() {
+            return tokenName;
+        }
     }
 }

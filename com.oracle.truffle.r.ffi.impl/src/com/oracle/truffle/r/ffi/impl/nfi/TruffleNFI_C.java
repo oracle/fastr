@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,6 +34,7 @@ import com.oracle.truffle.r.runtime.ffi.CRFFI;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNode.FunctionObjectGetter;
 import com.oracle.truffle.r.runtime.ffi.InvokeCNodeGen;
+import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 
 public class TruffleNFI_C implements CRFFI {
 
@@ -57,13 +58,13 @@ public class TruffleNFI_C implements CRFFI {
         }
     }
 
-    static final class NFIFunctionObjectGetter extends FunctionObjectGetter {
+    public static final class NFIFunctionObjectGetter extends FunctionObjectGetter {
 
         @Child private Node bindNode = Message.INVOKE.createNode();
 
         @Override
         @TruffleBoundary
-        public TruffleObject execute(TruffleObject address, int arity) {
+        public TruffleObject execute(TruffleObject address, int arity, NativeCallInfo nativeCallInfo) {
             // cache signatures
             try {
                 return (TruffleObject) ForeignAccess.sendInvoke(bindNode, address, "bind",

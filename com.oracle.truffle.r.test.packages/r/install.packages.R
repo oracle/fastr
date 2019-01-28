@@ -66,7 +66,7 @@
 # explicitly sets R_LIBS to the empty string before testing the main test file (but paradoxically not when
 # testing the "examples"), which is why we use R_LIBS_USER.
 
-# A single package install can be handled in three ways, based on the run-mode argument (default system):
+# A single package install can be handled in three ways, based on the run-mode argument (default 'internal'):
 #   system: use a subprocess via the system2 command
 #   internal: direct call to tools::install.packages
 #   context: run in separate FastR context
@@ -119,6 +119,8 @@ usage <- function() {
 					  "[--random count]",
 					  "[--install-dependents-first]",
 					  "[--run-mode mode]",
+					  "[--test-mode mode]",
+					  "[--install-mode mode]",
 					  "[--pkg-filelist file]",
 					  "[--find-top100]",
 					  "[--find-top n]",
@@ -159,6 +161,7 @@ ignore.suggests <- list(
 	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 	mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
 	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
+	forcats = ignore.all.but('testthat'), # other suggested: ggplot2 and covcor not used in tests
 	sqldf = 'tcltk|RPostgreSQL|RJDBC|rJava|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
 )
 
@@ -880,11 +883,13 @@ test.package <- function(pkgname) {
     res <- 0L
 	error_log_size <- fastr.errors.log.sizes()
 	pkgEnv <- getPkgEnv(pkgname)
-	if (run.mode == "system") {
+	if (test.mode == "system") {
 		res <- system.test(pkgname, pkgEnv)
-	} else if (run.mode == "internal") {
-		res <- tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
-	} else if (run.mode == "context") {
+	} else if (test.mode == "internal") {
+        res <- tryCatch({
+		    tools::testInstalledPackage(pkgname, outDir=file.path(testdir.path, pkgname), lib.loc=lib.install)
+        }, error = function(e) 1L)
+	} else if (test.mode == "context") {
 		stop("context run-mode not implemented\n")
 	}
     # be paranoid
@@ -985,11 +990,24 @@ parse.args <- function() {
 			}
 		} else if ( a == "--ok-only") {
 			pkg.filelistfile <<- file.path(this.package, "ok.packages")
-		} else if (a == "--run-mode") {
-			run.mode <<- get.argvalue()
-			if (!(run.mode %in% c("system", "internal", "context"))) {
+		} else if (a == "--test-mode") {
+			test.mode <<- get.argvalue()
+			if (!(test.mode %in% c("system", "internal", "context"))) {
 				usage()
 			}
+		} else if (a == "--install-mode") {
+			install.mode <<- get.argvalue()
+			if (!(install.mode %in% c("system", "internal", "context"))) {
+				usage()
+			}
+		} else if (a == "--run-mode") {
+            # just for compatibility
+			run.mode <- get.argvalue()
+			if (!(run.mode %in% c("system", "internal", "context"))) {
+				usage()
+			} 
+		    test.mode <<- run.mode
+		    install.mode <<- run.mode
 		} else if (a == "--pkg-filelist") {
 			pkg.filelistfile <<- get.argvalue()
 		} else if (a == "--pkg-pattern") {
@@ -1060,7 +1078,8 @@ cat.args <- function() {
 		cat("pkg.pattern:", pkg.pattern, "\n")
 		cat("random.count:", random.count, "\n")
 		cat("count.daily:", count.daily, "\n")
-		cat("run.mode:", run.mode, "\n")
+		cat("test.mode:", test.mode, "\n")
+		cat("install.mode:", install.mode, "\n")
 		cat("run.tests:", run.tests, "\n")
 		cat("print.install.status:", print.install.status, "\n")
 		cat("use.installed.pkgs:", use.installed.pkgs, "\n")
@@ -1262,7 +1281,8 @@ create.blacklist.file <- F
 ignore.blacklist <- F
 random.count <- NA
 count.daily <- NA
-run.mode <- "system"
+install.mode <- "internal"
+test.mode <- "system"
 run.tests <- FALSE
 gnur <- FALSE
 list.versions <- FALSE

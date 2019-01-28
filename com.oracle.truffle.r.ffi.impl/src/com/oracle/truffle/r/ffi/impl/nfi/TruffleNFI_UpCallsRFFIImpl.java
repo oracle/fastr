@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,11 +39,17 @@ import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
 import com.oracle.truffle.r.runtime.ffi.DLL.DotSymbol;
 import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.NativeFunction;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     private final Node asPointer = Message.AS_POINTER.createNode();
+
+    @Override
+    public RFFIFactory.Type getRFFIType() {
+        return RFFIFactory.Type.NFI;
+    }
 
     @Override
     @TruffleBoundary
@@ -88,8 +94,13 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
         }
     }
 
+    @Override
+    public HandleUpCallExceptionNode createHandleUpCallExceptionNode() {
+        return new HandleNFIUpCallExceptionNode();
+    }
+
     private static TruffleNFI_Context getContext() {
-        return (TruffleNFI_Context) RContext.getInstance().getStateRFFI();
+        return RContext.getInstance().getStateRFFI(TruffleNFI_Context.class);
     }
 
 }

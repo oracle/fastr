@@ -1,0 +1,29 @@
+R version 3.4.0 (FastR)
+Copyright (c) 2013-17, Oracle and/or its affiliates
+Copyright (c) 1995-2017, The R Core Team
+Copyright (c) 2017 The R Foundation for Statistical Computing
+Copyright (c) 2012-4 Purdue University
+Copyright (c) 1997-2002, Makoto Matsumoto and Takuji Nishimura
+All rights reserved.
+
+FastR is free software and comes with ABSOLUTELY NO WARRANTY.
+You are welcome to redistribute it under certain conditions.
+Type 'license()' or 'licence()' for distribution details.
+
+R is a collaborative project with many contributors.
+Type 'contributors()' for more information.
+
+Type 'q()' to quit R.
+> pkgname <- "clhs"
+blub
+anotherline0
+anotherline1
+anotherline2
+anotherline3
+anotherline4
+anotherline5
+anotherline6
+anotherline7
+anotherline8
+> print("hello")
+[1] "hello"

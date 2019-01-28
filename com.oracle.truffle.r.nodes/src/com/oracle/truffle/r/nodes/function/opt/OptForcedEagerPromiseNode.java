@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,6 +51,10 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
     private final ConditionProfile promiseCallerProfile = ConditionProfile.createBinaryProfile();
     private final BranchProfile nonPromiseProfile = BranchProfile.create();
     private final RPromiseFactory factory;
+
+    /**
+     * Index of the argument for which the promise is to be created.
+     */
     private final int wrapIndex;
 
     private static final Assumption alwaysValidAssumption = Truffle.getRuntime().createAssumption("always valid (forced eager promise)");

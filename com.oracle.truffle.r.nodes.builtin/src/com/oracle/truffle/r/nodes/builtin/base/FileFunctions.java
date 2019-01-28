@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
+import java.nio.file.DirectoryNotEmptyException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.FileAlreadyExistsException;
 import java.nio.file.FileVisitResult;
@@ -749,7 +750,9 @@ public class FileFunctions {
                 if (pattern == null) {
                     return true;
                 }
-                Matcher m = pattern.matcher(f.getName());
+                // Note: getName on "/" causes NPE
+                String name = f.getPath().equals("/") ? "" : f.getName();
+                Matcher m = pattern.matcher(name);
                 boolean result = m.find();
                 return result;
             }
@@ -1025,6 +1028,8 @@ public class FileFunctions {
                     dir.copy(newDir, copyOptions);
                 } catch (FileAlreadyExistsException x) {
                     // ok
+                } catch (DirectoryNotEmptyException x) {
+                    // ok
                 } catch (IOException ex) {
                     error = true;
                     return FileVisitResult.SKIP_SUBTREE;
@@ -1191,7 +1196,7 @@ public class FileFunctions {
         private int removeGlob(String pathPattern, boolean recursive, int firstGlobCharIdx, int result) {
             // we take as much as we can from the pathPatter as the search root
             int lastSeparator = pathPattern.substring(0, firstGlobCharIdx).lastIndexOf(File.separatorChar);
-            String searchRoot = pathPattern.substring(0, lastSeparator);
+            String searchRoot = (lastSeparator != -1) ? pathPattern.substring(0, lastSeparator) : "";
             try {
                 int[] tmpResult = new int[]{result};
                 final Pattern globRegex = Pattern.compile(FileSystemUtils.toUnixRegexPattern(pathPattern));

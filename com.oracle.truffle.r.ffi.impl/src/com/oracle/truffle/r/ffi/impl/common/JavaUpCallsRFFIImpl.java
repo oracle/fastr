@@ -98,7 +98,6 @@ import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -552,12 +551,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public void SET_TRUELENGTH(Object x, int l) {
-        if (x instanceof CharSXPWrapper) {
-            ((CharSXPWrapper) x).setTruelength(l);
-            return;
-        }
-        RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
-        vec.setTrueLength(l);
+        throw implementedAsNode();
     }
 
     @Override
@@ -619,18 +613,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
 
     @Override
     public Object VECTOR_ELT(Object x, long i) {
-        Object vec = x;
-        if (vec instanceof RExpression) {
-            return ((RExpression) vec).getDataAt((int) i);
-        }
-        RAbstractListVector list = guaranteeInstanceOf(RRuntime.asAbstractVector(vec), RAbstractListVector.class);
-        if (list.getLength() == i) {
-            // Some packages abuse that there seems to be no bounds checking and the
-            // one-after-the-last element returns NULL, which they use to find out if they reached
-            // the end of the list...
-            return RNull.instance;
-        }
-        return list.getDataAt((int) i);
+        throw implementedAsNode();
     }
 
     @Override
@@ -1116,7 +1099,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         Object[] resultData = new Object[2];
         try {
             Source source = RSource.fromTextInternal(textString, RSource.Internal.R_PARSEVECTOR);
-            RExpression exprs = RContext.getEngine().parse(source);
+            RExpression exprs = RContext.getEngine().parse(source, false).getExpression();
             resultData[0] = RDataFactory.createIntVectorFromScalar(ParseStatus.PARSE_OK.ordinal());
             resultData[1] = exprs;
         } catch (IncompleteSourceException ex) {
@@ -1404,9 +1387,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     }
 
     @Override
-    public void R_SetExternalPtrAddr(Object x, long addr) {
-        RExternalPtr p = guaranteeInstanceOf(x, RExternalPtr.class);
-        p.setAddr(new SymbolHandle(addr));
+    public void R_SetExternalPtrAddr(Object x, Object addr) {
+        throw implementedAsNode();
     }
 
     @Override
@@ -1558,7 +1540,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public void R_PreserveObject(Object obj) {
         guaranteeInstanceOf(obj, RObject.class);
-        IdentityHashMap<RObject, AtomicInteger> preserveList = getContext().preserveList;
+        IdentityHashMap<RObject, AtomicInteger> preserveList = getContext().rffiContextState.preserveList;
         AtomicInteger prevCnt = preserveList.putIfAbsent((RObject) obj, new AtomicInteger(1));
         if (prevCnt != null) {
             prevCnt.incrementAndGet();
@@ -1570,7 +1552,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public void R_ReleaseObject(Object obj) {
         guaranteeInstanceOf(obj, RObject.class);
         RFFIContext context = getContext();
-        IdentityHashMap<RObject, AtomicInteger> preserveList = context.preserveList;
+        IdentityHashMap<RObject, AtomicInteger> preserveList = context.rffiContextState.preserveList;
         AtomicInteger atomicInteger = preserveList.get(obj);
         if (atomicInteger != null) {
             int decrementAndGet = atomicInteger.decrementAndGet();
@@ -1587,7 +1569,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_protect(Object x) {
-        getContext().protectStack.add(guaranteeInstanceOf(x, RObject.class));
+        getContext().rffiContextState.protectStack.add(guaranteeInstanceOf(x, RObject.class));
         return x;
     }
 
@@ -1595,7 +1577,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public void Rf_unprotect(int x) {
         RFFIContext context = getContext();
-        ArrayList<RObject> stack = context.protectStack;
+        ArrayList<RObject> stack = context.rffiContextState.protectStack;
         for (int i = 0; i < x; i++) {
             context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
         }
@@ -1604,7 +1586,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public int R_ProtectWithIndex(Object x) {
-        ArrayList<RObject> stack = getContext().protectStack;
+        ArrayList<RObject> stack = getContext().rffiContextState.protectStack;
         stack.add(guaranteeInstanceOf(x, RObject.class));
         return stack.size() - 1;
     }
@@ -1612,7 +1594,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public void R_Reprotect(Object x, int y) {
-        ArrayList<RObject> stack = getContext().protectStack;
+        ArrayList<RObject> stack = getContext().rffiContextState.protectStack;
         stack.set(y, guaranteeInstanceOf(x, RObject.class));
     }
 
@@ -1620,7 +1602,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public void Rf_unprotect_ptr(Object x) {
         RFFIContext context = getContext();
-        ArrayList<RObject> stack = context.protectStack;
+        ArrayList<RObject> stack = context.rffiContextState.protectStack;
         for (int i = stack.size() - 1; i >= 0; i--) {
             if (stack.get(i) == x) {
                 context.registerReferenceUsedInNative(stack.remove(i));
