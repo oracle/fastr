@@ -1,7 +1,7 @@
 # java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
-java8 : {name : labsjdk, version : "8u192-jvmci-0.52", platformspecific: true}
+java8 : {name : labsjdk, version : "8-jvmci-latest", platformspecific: true}
 java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
 
 java8Downloads : {
