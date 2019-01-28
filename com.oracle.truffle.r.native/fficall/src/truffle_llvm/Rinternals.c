@@ -25,7 +25,6 @@
 #include <Rinterface.h>
 #include <rffiutils.h>
 #include <Rinternals_common.h>
-#include <truffle.h>
 #include <polyglot.h>
 #include "../common/rffi_upcalls.h"
 
@@ -53,7 +52,7 @@ SEXP Rinternals_invoke(int index) {
 }
 
 static char *ensure_truffle_chararray_n(const char *x, long n) {
-	if (truffle_is_truffle_object(x)) {
+	if (polyglot_is_value(x)) {
 		return x;
 	} else {
 		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(polyglot_from_string_n(x, n, "ascii"));
@@ -61,25 +60,25 @@ static char *ensure_truffle_chararray_n(const char *x, long n) {
 }
 
 char *ensure_truffle_chararray(const char *x) {
-	if (truffle_is_truffle_object(x)) {
+	if (polyglot_is_value(x)) {
 		return (char *)x;
 	} else {
-		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(polyglot_from_string_n(x, strlen(x), "ascii"));
+		return ((call_bytesToNativeCharArray) callbacks[bytesToNativeCharArray_x])(polyglot_from_string(x, "ascii"));
   }
 }
 
 void *ensure_string(const char *x) {
-	if (truffle_is_truffle_object(x)) {
+	if (polyglot_can_execute(x)) {
 		// The input argument may also be a NativeCharArray object. The wrapped String is
 		// extracted by sending the EXECUTE message.
 		return ((void*(*)())x)();
 	} else {
-		return x == NULL ? NULL : truffle_read_string(x);
+		return x == NULL ? NULL : polyglot_from_string(x, "ascii");
 	}
 }
 
 void *ensure_function(void *fptr) {
-	return truffle_address_to_function(fptr);
+	return fptr;
 }
 
 char *FASTR_R_Home() {
