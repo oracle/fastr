@@ -242,7 +242,7 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("import com.oracle.truffle.r.runtime.data.RDataFactory;\n");
         }
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
-        w.append("import com.oracle.truffle.r.ffi.impl.common.RFFIUtils;\n");
+        w.append("import com.oracle.truffle.r.runtime.ffi.RFFILog;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
 
@@ -333,8 +333,8 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                public Object execute(VirtualFrame frame) {\n");
         w.append("                    List<Object> arguments = ForeignAccess.getArguments(frame);\n");
         w.append("                    assert arguments.size() == " + params.size() + " : \"wrong number of arguments passed to " + name + "\";\n");
-        w.append("                    if (RFFIUtils.traceEnabled()) {\n");
-        w.append("                        RFFIUtils.traceUpCall(\"" + name + "\", arguments);\n");
+        w.append("                    if (RFFILog.logEnabled()) {\n");
+        w.append("                        RFFILog.logUpCall(\"" + name + "\", arguments);\n");
         w.append("                    }\n");
         w.append("                    RFFIContext ctx = RContext.getInstance().getStateRFFI();\n");
         if (returnKind != TypeKind.VOID) {
@@ -387,7 +387,7 @@ public final class FFIProcessor extends AbstractProcessor {
         }
         w.append("                    } catch (Throwable ex) {\n");
         w.append("                        CompilerDirectives.transferToInterpreter();\n");
-        w.append("                        RFFIUtils.logException(ex);\n");
+        w.append("                        RFFILog.logException(ex);\n");
         w.append("                        handleExceptionNode.execute(ex);\n");
         if (returnKind.isPrimitive()) {
             w.append("                        resultRObj = Integer.valueOf(-1);\n");
@@ -397,16 +397,16 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    }\n");
         w.append("                    ctx.afterUpcall(" + canRunGc + ", upCallsImpl.getRFFIType());\n");
         if (returnKind == TypeKind.VOID) {
-            w.append("                    if (RFFIUtils.traceEnabled()) {\n");
-            w.append("                        RFFIUtils.traceUpCallReturn(\"" + name + "\", null);\n");
+            w.append("                    if (RFFILog.logEnabled()) {\n");
+            w.append("                        RFFILog.logUpCallReturn(\"" + name + "\", null);\n");
             w.append("                    }\n");
             w.append("                    return 0; // void return type\n");
         } else {
             if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
                 w.append("                    ctx.registerReferenceUsedInNative(resultRObj); \n");
             }
-            w.append("                    if (RFFIUtils.traceEnabled()) {\n");
-            w.append("                        RFFIUtils.traceUpCallReturn(\"" + name + "\", resultRObj);\n");
+            w.append("                    if (RFFILog.logEnabled()) {\n");
+            w.append("                        RFFILog.logUpCallReturn(\"" + name + "\", resultRObj);\n");
             w.append("                    }\n");
             w.append("                    return resultRObj;\n");
         }

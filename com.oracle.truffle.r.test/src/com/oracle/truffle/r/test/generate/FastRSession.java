@@ -41,7 +41,6 @@ import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.Callable;
 import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Engine;
@@ -63,6 +62,7 @@ import com.oracle.truffle.r.runtime.ExitException;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
@@ -404,7 +404,7 @@ public final class FastRSession implements RSession {
                         }
                     }
                 }
-                Logger.getLogger(VectorMRTest.class.getName()).log(Level.SEVERE, null, ex);
+                RLogger.getLogger(VectorMRTest.class.getName()).log(Level.SEVERE, null, ex);
                 fail();
             }
             return null;

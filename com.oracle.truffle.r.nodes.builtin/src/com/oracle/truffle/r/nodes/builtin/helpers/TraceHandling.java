@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.builtin.helpers;
 
-import java.io.IOException;
-
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.instrumentation.EventBinding;
@@ -39,18 +38,22 @@ import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RSuicide;
+import com.oracle.truffle.r.runtime.RLogger;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_FUNCTION_CALLS;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RMissing;
-import java.io.Writer;
+import java.io.IOException;
+import java.util.logging.Level;
 
 /**
  * Handles everything related to the R {@code .PrimTrace and .fastr.trace} functionality.
  */
 public class TraceHandling {
+
+    private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_FUNCTION_CALLS);
 
     public static void enableTrace(RFunction func) {
         @SuppressWarnings("unchecked")
@@ -86,6 +89,15 @@ public class TraceHandling {
 
     public static void traceAllFunctions() {
         if (FastROptions.TraceCalls.getBooleanValue()) {
+            System.out.println("WARNING: The TraceCalls option was discontinued.\n" +
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.functionCalls.level=FINE");
+
+            if (FastROptions.TraceCallsToFile.getBooleanValue()) {
+                System.out.println("WARNING: The TraceCallsToFile option was discontinued.\n" +
+                                "You can rerun FastR with --log.R.com.oracle.truffle.r.functionCalls.level=FINE --log.file=<yourfile>");
+            }
+        }
+        if (LOGGER.isLoggable(Level.FINE)) {
             PrimitiveFunctionEntryEventListener fser = new PrimitiveFunctionEntryEventListener();
             SourceSectionFilter.Builder builder = SourceSectionFilter.newBuilder();
             builder.tagIs(FunctionBodyBlockTag.class);
@@ -171,16 +183,7 @@ public class TraceHandling {
         @Override
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!disabled()) {
-                int depth = RArguments.getDepth(frame);
-                try {
-                    for (int i = 0; i < depth - 1; i++) {
-                        outputHandler.writeString(" ", false);
-                    }
-                    String callString = getCallSource(frame);
-                    outputHandler.writeString("trace: " + callString, true);
-                } catch (IOException ex) {
-                    throw RError.ioError(RError.SHOW_CALLER2, ex);
-                }
+                outputHandler.traceFunction(getCallSource(frame), RArguments.getDepth(frame));
             }
         }
 
@@ -224,12 +227,7 @@ public class TraceHandling {
 
         @TruffleBoundary
         private void printEnter(MaterializedFrame frame) {
-            try {
-                String callString = getCallSource(frame);
-                outputHandler.writeString("Tracing " + callString + " on entry", true);
-            } catch (IOException ex) {
-                throw RError.ioError(RError.SHOW_CALLER2, ex);
-            }
+            outputHandler.traceFunctionEntry(getCallSource(frame));
         }
 
         @Override
@@ -238,72 +236,74 @@ public class TraceHandling {
 
         @Override
         public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-        }
-    }
-
-    @SuppressWarnings("unused")
-    private static class TraceStatementEventReceiver extends TraceEventListener {
-
-        @Override
-        public void onEnter(EventContext context, VirtualFrame frame) {
-            if (!disabled()) {
-                //
-            }
-        }
-
-        @Override
-        public void onReturnValue(EventContext context, VirtualFrame frame, Object result) {
-            if (!disabled()) {
-                //
-            }
-        }
-
-        @Override
-        public void onReturnExceptional(EventContext context, VirtualFrame frame, Throwable exception) {
-            if (!disabled()) {
-                //
-            }
         }
     }
 
     private abstract static class OutputHandler {
-        abstract void writeString(String s, boolean nl) throws IOException;
+
+        @TruffleBoundary
+        void traceFunction(String callString, int depth) {
+            write(getTraceFunctionString(callString, depth));
+        }
+
+        @TruffleBoundary
+        void traceFunctionEntry(String callString) {
+            write(getTraceOnFunctionEntryString(callString));
+        }
+
+        protected abstract void write(String s);
+
+        protected abstract String getTraceFunctionString(String callString, int depth);
+
+        protected static String getTraceOnFunctionEntryString(String callString) {
+            return new StringBuilder().append("Tracing ").append(callString).append(" on entry").toString();
+        }
+
+        protected StringBuilder getIntend(int depth) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < depth - 1; i++) {
+                sb.append(" ");
+            }
+            return sb;
+        }
+
     }
 
-    private static class StdoutOutputHandler extends OutputHandler {
+    private static class TraceOutputHandler extends OutputHandler {
+        @Override
+        @TruffleBoundary
+        protected String getTraceFunctionString(String callString, int depth) {
+            return getIntend(depth).append("trace: ").append(callString).toString();
+        }
 
         @Override
         @TruffleBoundary
-        void writeString(String s, boolean nl) throws IOException {
-            StdConnections.getStdout().writeString(s, nl);
-        }
-    }
-
-    private static class FileOutputHandler extends OutputHandler {
-        private Writer fileWriter;
-
-        FileOutputHandler() {
+        protected void write(String s) {
             try {
-                fileWriter = RContext.getInstance().getEnv().getTruffleFile("fastr_tracecalls.log").newBufferedWriter();
-            } catch (IOException e) {
-                RSuicide.rSuicide("failed to open 'fastr_tracecalls.log'" + e.getMessage());
+                StdConnections.getStdout().writeString(s, true);
+            } catch (IOException ex) {
+                throw RError.ioError(RError.SHOW_CALLER2, ex);
             }
+        }
+    }
+
+    private static class LogOutputHandler extends OutputHandler {
+        @Override
+        @TruffleBoundary
+        protected String getTraceFunctionString(String callString, int depth) {
+            return getIntend(depth).append(callString).toString();
         }
 
         @Override
         @TruffleBoundary
-        void writeString(String s, boolean nl) throws IOException {
-            fileWriter.append(s);
-            if (nl) {
-                fileWriter.append('\n');
-            }
-            fileWriter.flush();
+        protected void write(String s) {
+            LOGGER.fine(s);
         }
     }
 
     private static void setOutputHandler() {
         if (outputHandler == null) {
-            outputHandler = FastROptions.TraceCallsToFile.getBooleanValue() ? new FileOutputHandler() : new StdoutOutputHandler();
+            outputHandler = LOGGER.isLoggable(Level.FINE) ? new LogOutputHandler() : new TraceOutputHandler();
         }
     }
 

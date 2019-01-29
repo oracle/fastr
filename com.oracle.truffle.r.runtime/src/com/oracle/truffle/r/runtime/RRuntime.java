@@ -1101,5 +1101,4 @@ public class RRuntime {
         CompilerAsserts.neverPartOfCompilation();
         return isForeignObject(arg) ? "polyglot.value" : ((RTypedValue) convertScalarVectors(arg)).getRType().getName();
     }
-
 }

@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
@@ -33,6 +34,7 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
@@ -40,6 +42,8 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.logging.Level;
 
 /**
  * Copies attributes from two source nodes into one result node.
@@ -77,36 +81,38 @@ public abstract class CopyAttributesNode extends RBaseNode {
     private static int countLarger;
     private static int copyAll;
 
-    private static final boolean LOG = false;
-
-    static {
-        if (LOG) {
-            Runtime.getRuntime().addShutdownHook(new Thread() {
-                @Override
-                public void run() {
-                    System.out.println("no: " + countNo);
-                    System.out.println("==: " + countEquals);
-                    System.out.println("<: " + countSmaller);
-                    System.out.println(">: " + countLarger);
-                    System.out.println("all: " + copyAll);
-                }
-            });
-        }
-    }
+    private static final TruffleLogger LOGGER = RLogger.getLogger(CopyAttributesNode.class.getName());
+    private static final AtomicBoolean jvmShutdownRegistered = new AtomicBoolean(false);
 
     @SuppressWarnings("unused")
     @TruffleBoundary
     private void log(String format, Object... args) {
+        assert LOGGER.isLoggable(Level.FINE);
+
         if (copyAllAttributes) {
             copyAll++;
         }
-        // System.out.println(String.format(format, args));
+        if (jvmShutdownRegistered.compareAndSet(false, true)) {
+            Runtime.getRuntime().addShutdownHook(new Thread() {
+                @Override
+                public void run() {
+                    StringBuilder sb = new StringBuilder();
+                    sb.append("no: ").append(countNo);
+                    sb.append("==: ").append(countEquals);
+                    sb.append("<: ").append(countSmaller);
+                    sb.append(">: ").append(countLarger);
+                    sb.append("all: ").append(copyAll);
+                    LOGGER.fine(sb.toString());
+                }
+            });
+        }
+        LOGGER.finer(String.format(format, args));
     }
 
     @SuppressWarnings("unused")
     @Specialization(guards = {"!containsMetadata(left)", "!containsMetadata(right)"})
     protected RAbstractVector copyNoMetadata(RAbstractVector target, RAbstractVector left, int leftLength, RAbstractVector right, int rightLength) {
-        if (LOG) {
+        if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: no");
             countNo++;
         }
@@ -134,7 +140,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
-        if (LOG) {
+        if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: ==");
             countEquals++;
         }
@@ -215,7 +221,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
-        if (LOG) {
+        if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: <");
             countSmaller++;
         }
@@ -271,7 +277,7 @@ public abstract class CopyAttributesNode extends RBaseNode {
                     @Cached("create()") GetDimAttributeNode getLeftDimsNode,
                     @Cached("create()") GetDimAttributeNode getRightDimsNode,
                     @Cached("create()") SetDimNamesAttributeNode setDimNamesNode) {
-        if (LOG) {
+        if (LOGGER.isLoggable(Level.FINE)) {
             log("copyAttributes: >");
             countLarger++;
         }

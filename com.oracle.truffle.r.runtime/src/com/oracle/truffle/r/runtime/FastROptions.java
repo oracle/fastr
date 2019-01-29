@@ -40,15 +40,8 @@ import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeDataInspector;
 public enum FastROptions {
     PrintErrorStacktraces("Prints Java and R stack traces for all errors", false),
     PrintErrorStacktracesToFile("Dumps Java and R stack traces to 'fastr_errors.log' for all errors", false),
-    // TODO: this should be logging category
     Debug("Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.", null, true),
-    TraceCalls("Trace all R function calls", false),
-    TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
-    TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false),
-    Rdebug("Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)", null, true),
-    PerformanceWarnings("Print FastR performance warning", false),
     LoadProfiles("Load the system, site and user profile scripts.", !FastRConfig.ManagedMode),
-    PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
     FullPrecisionSum("Use 128 bit arithmetic in sum builtin", false),
     InvisibleArgs("Argument writes do not trigger state transitions", true),
     RefCountIncrementOnly("Disable reference count decrements", false),
@@ -76,7 +69,16 @@ public enum FastROptions {
     AdditionalOptions("List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. " +
                     "Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string", "", true),
     ChannelReceiveTimeout("Enables timeout (in seconds) when receiving messages from a channel", "0", true),
-    RestrictForceSplitting("Restrict force splitting of call targets", false);
+    RestrictForceSplitting("Restrict force splitting of call targets", false),
+
+    // Dicontinued since rc12
+    // only a warning is printed to use the default logger mechaninsm
+    // TODO remove at some later point
+    PerformanceWarnings("Print FastR performance warning", false),
+    PrintComplexLookups("Print a message for each non-trivial variable lookup", false),
+    TraceCalls("Trace all R function calls", false),
+    TraceCallsToFile("TraceCalls output is sent to 'fastr_tracecalls.log'", false),
+    TraceNativeCalls("Trace all native function calls (performed via .Call, .External, etc.)", false);
 
     /**
      * Setting this environment variable activates the LLVM debugging of shared libraries. The value

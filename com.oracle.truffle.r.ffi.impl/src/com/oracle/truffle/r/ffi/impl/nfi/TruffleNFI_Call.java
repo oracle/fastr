@@ -22,9 +22,9 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCall;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -169,8 +169,8 @@ public class TruffleNFI_Call implements CallRFFI {
     @ExplodeLoop
     private static boolean prepareCall(String name, Object[] args, FFIWrapNode[] ffiWrapNodes) {
         CompilerAsserts.compilationConstant(ffiWrapNodes.length);
-        if (traceEnabled()) {
-            traceDownCall(name, args);
+        if (logEnabled()) {
+            logDownCall(name, args);
         }
         for (int i = 0; i < ffiWrapNodes.length; i++) {
             args[i] = ffiWrapNodes[i].execute(args[i]);
@@ -181,8 +181,8 @@ public class TruffleNFI_Call implements CallRFFI {
 
     private static void prepareReturn(String name, Object result, boolean isNullSetting) {
         RContext.getRForeignAccessFactory().setIsNull(isNullSetting);
-        if (traceEnabled()) {
-            traceDownCallReturn(name, result);
+        if (logEnabled()) {
+            logDownCallReturn(name, result);
         }
     }
 

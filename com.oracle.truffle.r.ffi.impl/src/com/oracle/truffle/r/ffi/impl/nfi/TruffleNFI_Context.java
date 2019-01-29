@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCall;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
-
 import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -62,13 +58,15 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 import sun.misc.Unsafe;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 class UnsafeAdapter {
     public static final Unsafe UNSAFE = initUnsafe();
@@ -306,10 +304,14 @@ public class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public ContextState initialize(RContext context) {
-        RFFILog.initializeTracing();
+        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
+            System.out.println("WARNING: The TraceNativeCalls option was discontinued!\n" +
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.nativeCalls.level=FINE --log.file=<yourfile>.\n" +
+                            "NOTE that stdout is problematic for embedded mode, when using this logger, also always specify a log file");
+        }
         initializeLock();
-        if (traceEnabled()) {
-            traceDownCall("initialize");
+        if (logEnabled()) {
+            logDownCall("initialize");
         }
         if (hasAccessLock) {
             acquireLock();
@@ -339,8 +341,8 @@ public class TruffleNFI_Context extends RFFIContext {
             }
             return this;
         } finally {
-            if (traceEnabled()) {
-                traceDownCallReturn("initialize", null);
+            if (logEnabled()) {
+                logDownCallReturn("initialize", null);
             }
             if (hasAccessLock) {
                 releaseLock();

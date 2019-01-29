@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,7 +24,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
@@ -46,6 +45,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -105,6 +105,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import java.util.logging.Level;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -1252,6 +1253,8 @@ public class RSerialize {
     private static final class TracingInput extends Input {
         private int nesting;
 
+        private static final TruffleLogger LOGGER = RLogger.getLogger(RSerialize.class.getName());
+
         private TracingInput(RConnection conn) throws IOException {
             this(conn.getInputStream(), null, null, null);
         }
@@ -1262,23 +1265,24 @@ public class RSerialize {
 
         @Override
         protected Object readItem() throws IOException {
-            // CheckStyle: stop system..print check
             int flags = stream.readInt();
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < nesting; i++) {
-                System.out.print("  ");
+                sb.append("  ");
             }
-            System.out.printf("%d %s", nesting, type);
-            if (type != SEXPTYPE.CHARSXP) {
-                System.out.println();
-            }
+            sb.append(nesting);
+            sb.append(" ");
+            sb.append(type);
             nesting++;
             Object result = super.readItem(flags);
             if (type == SEXPTYPE.CHARSXP) {
-                System.out.printf(" \"%s\"%n", result);
+                sb.append(" \"");
+                sb.append(result);
+                sb.append("\"");
             }
             nesting--;
-
+            LOGGER.log(Level.INFO, sb.toString());
             return result;
         }
     }
@@ -2246,12 +2250,11 @@ public class RSerialize {
     }
 
     private static class Debug {
+        private static final TruffleLogger LOGGER = RLogger.getLogger(RSerialize.class.getName());
         private static int indent;
-        private static PrintStream out;
 
         private static void printClosure(RPairList pl) {
             indent = 0;
-            out = System.out;
             printObject(pl);
         }
 
@@ -2266,6 +2269,7 @@ public class RSerialize {
 
         private static void printObject(Object obj) {
             printObject(obj, true);
+
         }
 
         private static void printObject(Object obj, boolean printType) {
@@ -2304,11 +2308,12 @@ public class RSerialize {
         }
 
         private static void print(String format, Object... objects) {
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < indent * 2; i++) {
-                out.write(' ');
+                sb.append(' ');
             }
-            out.printf(format, objects);
-            out.write('\n');
+            sb.append(String.format(format, objects));
+            LOGGER.info(sb.toString());
         }
     }
 
