@@ -1,9 +1,13 @@
 # 1.0 RC 13
 
- New features:
+New features:
 
- * new JUL-like logging infrastructure backed by Truffle
- * FastR options backed by Truffle now. New command-line format - i.e. bin/r --R.PerformanceWarning="true". Also configurable via org.graal.polyglot.Context.Builder.
+* new JUL-like logging infrastructure backed by Truffle
+* FastR options backed by Truffle now. New command-line format - i.e. bin/r --R.PerformanceWarning="true". Also configurable via org.graal.polyglot.Context.Builder.
+
+Bug fixes:
+
+* when using GNU-R graphics (-UseInternalGridGraphics) FastR would still override the graphics package R functions
 
 # 1.0 RC 12
 
