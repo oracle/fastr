@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.attributes;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
@@ -30,10 +31,11 @@ import com.oracle.truffle.api.nodes.NodeInfo;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RType;
 
+@ImportStatic(DSLConfig.class)
 @NodeInfo(cost = NodeCost.NONE)
 public abstract class TypeFromModeNode extends Node {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(2);
+    protected static final int CACHE_LIMIT = 2;
 
     public static TypeFromModeNode create() {
         return TypeFromModeNodeGen.create();
@@ -41,7 +43,7 @@ public abstract class TypeFromModeNode extends Node {
 
     public abstract RType execute(Object mode);
 
-    @Specialization(limit = "CACHE_LIMIT", guards = "mode == cachedMode")
+    @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = "mode == cachedMode")
     protected RType getTypeCAched(@SuppressWarnings("unused") String mode,
                     @Cached("mode") @SuppressWarnings("unused") String cachedMode,
                     @Cached("fromMode(mode)") RType type) {

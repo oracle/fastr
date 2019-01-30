@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNode;
 import com.oracle.truffle.r.nodes.attributes.TypeFromModeNodeGen;
@@ -39,10 +40,11 @@ import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 
+@ImportStatic(DSLConfig.class)
 @RBuiltin(name = "vector", kind = INTERNAL, parameterNames = {"mode", "length"}, behavior = PURE)
 public abstract class Vector extends RBuiltinNode.Arg2 {
 
-    protected static final int CACHED_MODES_LIMIT = DSLConfig.getCacheSize(3);
+    protected static final int CACHED_MODES_LIMIT = 3;
 
     @Child private TypeFromModeNode typeFromMode = TypeFromModeNodeGen.create();
 
@@ -60,7 +62,7 @@ public abstract class Vector extends RBuiltinNode.Arg2 {
         return type;
     }
 
-    @Specialization(guards = {"mode == cachedMode"}, limit = "CACHED_MODES_LIMIT")
+    @Specialization(guards = {"mode == cachedMode"}, limit = "getCacheSize(CACHED_MODES_LIMIT)")
     Object vectorCached(@SuppressWarnings("unused") String mode, int length,
                     @SuppressWarnings("unused") @Cached("mode") String cachedMode,
                     @Cached("modeToType(mode)") RType type) {

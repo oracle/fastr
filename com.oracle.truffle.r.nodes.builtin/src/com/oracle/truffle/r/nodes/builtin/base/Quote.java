@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
@@ -43,9 +44,8 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
  * This builtin is just a fallback - this normally uses {@link QuoteNode} directly.
  */
 @RBuiltin(name = "quote", nonEvalArgs = 0, kind = PRIMITIVE, parameterNames = {"expr"}, behavior = PURE)
+@ImportStatic(DSLConfig.class)
 public abstract class Quote extends RBuiltinNode.Arg1 {
-
-    protected static final int LIMIT = DSLConfig.getCacheSize(3);
 
     static {
         Casts.noCasts(Quote.class);
@@ -72,7 +72,7 @@ public abstract class Quote extends RBuiltinNode.Arg1 {
     }
 
     @SuppressWarnings("unused")
-    @Specialization(limit = "LIMIT", guards = "cachedClosure == expr.getClosure()")
+    @Specialization(limit = "getCacheSize(3)", guards = "cachedClosure == expr.getClosure()")
     protected Object quoteCached(RPromise expr,
                     @Cached("expr.getClosure()") Closure cachedClosure,
                     @Cached("cachedCreateLanguage(cachedClosure)") Object language) {

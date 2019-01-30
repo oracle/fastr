@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSCRIPT;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
@@ -51,12 +52,13 @@ import com.oracle.truffle.r.runtime.data.RTypes;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
+@ImportStatic(DSLConfig.class)
 @RBuiltin(name = "[[", kind = PRIMITIVE, parameterNames = {"x", "...", "exact",
                 "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSCRIPT, allowMissingInVarArgs = true)
 @TypeSystemReference(RTypes.class)
 public abstract class Subscript extends RBuiltinNode.Arg4 {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+    protected static final int CACHE_LIMIT = 3;
 
     @RBuiltin(name = ".subset2", kind = PRIMITIVE, parameterNames = {"x", "...", "exact", "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, behavior = PURE_SUBSCRIPT)
     public abstract class DefaultBuiltin {
@@ -103,7 +105,7 @@ public abstract class Subscript extends RBuiltinNode.Arg4 {
         throw error(RError.Message.NO_INDEX);
     }
 
-    @Specialization(guards = {"!indexes.isEmpty()", "argsLen == indexes.getLength()"}, limit = "CACHE_LIMIT")
+    @Specialization(guards = {"!indexes.isEmpty()", "argsLen == indexes.getLength()"}, limit = "getCacheSize(CACHE_LIMIT)")
     @ExplodeLoop
     protected Object getIndexes(Object x, RArgsValuesAndNames indexes, RAbstractLogicalVector exact, @SuppressWarnings("unused") Object drop,
                     @Cached("indexes.getLength()") int argsLen) {

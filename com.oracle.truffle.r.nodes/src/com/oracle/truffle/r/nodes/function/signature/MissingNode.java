@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function.signature;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -54,9 +55,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 public final class MissingNode extends OperatorNode {
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class MissingCheckCache extends Node {
-
-        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
         private final int level;
 
@@ -74,7 +74,7 @@ public final class MissingNode extends OperatorNode {
             return new MissingCheckLevel(symbol, level);
         }
 
-        @Specialization(limit = "CACHE_LIMIT", guards = "cachedSymbol == symbol")
+        @Specialization(limit = "getCacheSize(3)", guards = "cachedSymbol == symbol")
         public static boolean checkCached(Frame frame, @SuppressWarnings("unused") String symbol,
                         @SuppressWarnings("unused") @Cached("symbol") String cachedSymbol,
                         @Cached("createNodeForRep(symbol)") MissingCheckLevel node) {

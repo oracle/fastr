@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,7 +30,9 @@ import com.oracle.truffle.r.runtime.Utils;
  */
 public abstract class FixedAttributeAccessNode extends AttributeAccessNode {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+    protected int getCacheLimit() {
+        return DSLConfig.getCacheSize(3);
+    }
 
     protected final String name;
 

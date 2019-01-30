@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
@@ -55,9 +56,10 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
  * operation is implemented by factory object given as a constructor parameter, e.g.
  * {@link com.oracle.truffle.r.runtime.ops.BinaryArithmetic.Add}
  */
+@ImportStatic(DSLConfig.class)
 public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(5);
+    protected static final int CACHE_LIMIT = 5;
 
     protected final BinaryArithmeticFactory binary;
     private final UnaryArithmeticFactory unary;
@@ -87,7 +89,7 @@ public abstract class BinaryArithmeticNode extends RBuiltinNode.Arg2 {
         return BinaryArithmeticNodeGen.create(binary, unary);
     }
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(left, right)"})
+    @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = {"cached != null", "cached.isSupported(left, right)"})
     protected Object doNumericVectorCached(RAbstractVector left, RAbstractVector right,
                     @Cached("createFastCached(left, right)") BinaryMapNode cached) {
         return cached.apply(left, right);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -163,9 +164,8 @@ public abstract class Match extends RBuiltinNode.Arg4 {
         throw error(MATCH_VECTOR_ARGS);
     }
 
+    @ImportStatic(DSLConfig.class)
     protected abstract static class ProfiledMatchInternalNode extends Node {
-
-        protected static final int PROFILE_LIMIT = DSLConfig.getCacheSize(2);
 
         protected abstract Object execute(RAbstractVector x, RAbstractVector table, int noMatch);
 
@@ -173,7 +173,7 @@ public abstract class Match extends RBuiltinNode.Arg4 {
             return MatchInternalNodeGen.create();
         }
 
-        @Specialization(limit = "PROFILE_LIMIT", guards = {"x.getClass() == xClass", "table.getClass() == tableClass"})
+        @Specialization(limit = "getCacheSize(2)", guards = {"x.getClass() == xClass", "table.getClass() == tableClass"})
         protected static Object matchProfiled(RAbstractVector x, RAbstractVector table, int noMatch,
                         @Cached("x.getClass()") Class<? extends RAbstractVector> xClass,
                         @Cached("table.getClass()") Class<? extends RAbstractVector> tableClass,

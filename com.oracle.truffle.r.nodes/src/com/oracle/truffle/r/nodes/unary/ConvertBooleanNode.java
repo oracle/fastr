@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,10 +47,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.ops.na.NAProfile;
 
 @NodeChild("operand")
-@ImportStatic(RRuntime.class)
+@ImportStatic({RRuntime.class, DSLConfig.class})
 public abstract class ConvertBooleanNode extends RNode {
 
-    protected static final int ATOMIC_VECTOR_LIMIT = DSLConfig.getCacheSize(8);
+    protected static final int ATOMIC_VECTOR_LIMIT = 8;
 
     private final NAProfile naProfile = NAProfile.create();
     private final BranchProfile invalidElementCountBranch = BranchProfile.create();
@@ -136,7 +136,7 @@ public abstract class ConvertBooleanNode extends RNode {
         }
     }
 
-    @Specialization(guards = "access.supports(value)", limit = "ATOMIC_VECTOR_LIMIT")
+    @Specialization(guards = "access.supports(value)", limit = "getCacheSize(ATOMIC_VECTOR_LIMIT)")
     protected byte doVector(RAbstractVector value,
                     @Cached("value.access()") VectorAccess access) {
         SequentialIterator it = access.access(value);

@@ -59,7 +59,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 public abstract class S3FunctionLookupNode extends RBaseNode {
-    protected static final int MAX_CACHE_DEPTH = DSLConfig.getCacheSize(3);
+    private static final int MAX_CACHE_DEPTH = 3;
 
     protected final boolean throwsError;
     protected final boolean nextMethod;
@@ -295,7 +295,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         @Override
         public Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (depth > MAX_CACHE_DEPTH) {
+            if (depth > DSLConfig.getCacheSize(MAX_CACHE_DEPTH)) {
                 return replace(new UseMethodFunctionLookupGenericNode(throwsError, nextMethod, defaultMethod)).execute(frame, genericName, type, group, callerFrame, genericDefFrame);
             } else {
                 UseMethodFunctionLookupCachedNode cachedNode = replace(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.unary;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.DSLConfig;
@@ -33,9 +34,10 @@ import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 
+@ImportStatic(DSLConfig.class)
 public abstract class TypeofNode extends UnaryNode {
 
-    protected static final int NUMBER_OF_CACHED_CLASSES = DSLConfig.getCacheSize(5);
+    protected static final int NUMBER_OF_CACHED_CLASSES = 5;
 
     public abstract RType execute(Object x);
 
@@ -74,7 +76,7 @@ public abstract class TypeofNode extends UnaryNode {
         return RType.TruffleObject;
     }
 
-    @Specialization(guards = {"operand.getClass() == cachedClass"}, limit = "NUMBER_OF_CACHED_CLASSES")
+    @Specialization(guards = {"operand.getClass() == cachedClass"}, limit = "getCacheSize(NUMBER_OF_CACHED_CLASSES)")
     protected static RType doCachedTyped(Object operand,
                     @Cached("getTypedValueClass(operand)") Class<? extends RTypedValue> cachedClass) {
         return cachedClass.cast(operand).getRType();

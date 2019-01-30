@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1998  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2015,  The R Core Team
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -194,7 +194,7 @@ public final class SeqFunctions {
     @ImportStatic(SeqFunctions.class)
     public abstract static class SeqFastPath extends FastPathAdapter {
 
-        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "lengthSpecials(args)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "lengthSpecials(args)", "getLimit1Guard()"}, limit = "1")
         protected Object seqNoClassFromAndLength(RArgsValuesAndNames args, //
                         @Cached("new()") SeqNoClassFromAndLengthNode cache) {
             if (cache.isNumericProfile.profile(cache.fromCheck.execute(args.getArgument(0)))) {
@@ -226,7 +226,7 @@ public final class SeqFunctions {
 
         }
 
-        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "getLimit1Guard()"}, limit = "1")
         protected Object seqNoClassAndNumeric(RArgsValuesAndNames args,
                         @Cached("new()") SeqNoClassAndNumericNode cache) {
             Object[] rargs = reorderedArguments(args, cache.seqIntFunction);
@@ -327,7 +327,7 @@ public final class SeqFunctions {
      */
     @TypeSystemReference(RTypes.class)
     public abstract static class SeqDefaultFastPath extends FastPathAdapter {
-        @Specialization(guards = {"cache.fromCheck.execute(fromObj)", "cache.toCheck.execute(toObj)", "cache.byCheck.execute(byObj)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"cache.fromCheck.execute(fromObj)", "cache.toCheck.execute(toObj)", "cache.byCheck.execute(byObj)", "getLimit1Guard()"}, limit = "1")
         protected Object seqDefaultNumeric(Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith,
                         @Cached("new()") SeqDefaultNumericNode cache) {
             return cache.seqInt.execute(fromObj, toObj, byObj, lengthOut, alongWith, RMissing.instance);
@@ -829,7 +829,7 @@ public final class SeqFunctions {
         }
 
         // common idiom
-        @Specialization(guards = {"cached.fromCheck.execute(fromObj)", "cached.lengthCheck.execute(lengthOut)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"cached.fromCheck.execute(fromObj)", "cached.lengthCheck.execute(lengthOut)", "getLimit1Guard()"}, limit = "1")
         protected RAbstractVector seqWithFromLengthIntegralNumeric(Object fromObj, RMissing toObj, RMissing byObj, Object lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile loutEq0Profile,
                         @Cached("new()") SeqWithFromLengthIntegralNumericNode cached) {

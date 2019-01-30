@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.builtin.base.infix.special;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.NodeChild;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -36,11 +37,12 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public class ProfiledSpecialsUtils {
 
+    @ImportStatic(DSLConfig.class)
     @NodeChild(value = "vector", type = RNode.class)
     @NodeChild(value = "index", type = ConvertIndex.class)
     protected abstract static class ProfiledSubscriptSpecialBase extends RNode {
 
-        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+        protected static final int CACHE_LIMIT = 3;
         protected final boolean inReplacement;
 
         @Child protected AccessSpecial defaultAccessNode;
@@ -53,7 +55,7 @@ public class ProfiledSpecialsUtils {
             throw RInternalError.shouldNotReachHere();
         }
 
-        @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
+        @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = "vector.getClass() == clazz")
         public Object access(RAbstractVector vector, Object index,
                         @Cached(value = "vector.getClass()") Class<?> clazz,
                         @Cached("createAccessNode()") AccessSpecial accessNodeCached) {
@@ -94,12 +96,12 @@ public class ProfiledSpecialsUtils {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     @NodeChild(value = "vector", type = RNode.class)
     @NodeChild(value = "index1", type = ConvertIndex.class)
     @NodeChild(value = "index2", type = ConvertIndex.class)
     public abstract static class ProfiledSubscriptSpecial2Base extends RNode {
 
-        protected static final int CACHE_LIMIT = DSLConfig.getVectorAccessCacheSize();
         protected final boolean inReplacement;
 
         @Child protected AccessSpecial2 defaultAccessNode;
@@ -112,7 +114,7 @@ public class ProfiledSpecialsUtils {
             throw RInternalError.shouldNotReachHere();
         }
 
-        @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
+        @Specialization(limit = "getVectorAccessCacheSize()", guards = "vector.getClass() == clazz")
         public Object access(RAbstractVector vector, Object index1, Object index2,
                         @Cached("vector.getClass()") Class<?> clazz,
                         @Cached("createAccessNode()") AccessSpecial2 accessNodeCached) {
@@ -153,12 +155,13 @@ public class ProfiledSpecialsUtils {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     @NodeChild(value = "vector", type = RNode.class)
     @NodeChild(value = "index", type = ConvertIndex.class)
     @NodeChild(value = "value", type = ConvertValue.class)
     public abstract static class ProfiledUpdateSubscriptSpecialBase extends RNode {
 
-        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+        protected static final int CACHE_LIMIT = 3;
         protected final boolean inReplacement;
 
         public abstract Object execute(VirtualFrame frame, Object vector, Object index, Object value);
@@ -173,7 +176,7 @@ public class ProfiledSpecialsUtils {
             return UpdateSubscriptSpecialNodeGen.create(inReplacement);
         }
 
-        @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
+        @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = "vector.getClass() == clazz")
         public Object access(VirtualFrame frame, Object vector, Object index, Object value,
                         @Cached("vector.getClass()") Class<?> clazz,
                         @Cached("createAccessNode()") UpdateSubscriptSpecial accessNodeCached) {
@@ -190,13 +193,14 @@ public class ProfiledSpecialsUtils {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     @NodeChild(value = "vector", type = RNode.class)
     @NodeChild(value = "index1", type = ConvertIndex.class)
     @NodeChild(value = "index2", type = ConvertIndex.class)
     @NodeChild(value = "value", type = ConvertValue.class)
     public abstract static class ProfiledUpdateSubscriptSpecial2 extends RNode {
 
-        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+        protected static final int CACHE_LIMIT = 3;
         protected final boolean inReplacement;
 
         public abstract Object execute(VirtualFrame frame, Object vector, Object index1, Object index2, Object value);
@@ -211,7 +215,7 @@ public class ProfiledSpecialsUtils {
             return UpdateSubscriptSpecial2NodeGen.create(inReplacement);
         }
 
-        @Specialization(limit = "CACHE_LIMIT", guards = "vector.getClass() == clazz")
+        @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = "vector.getClass() == clazz")
         public Object access(VirtualFrame frame, Object vector, Object index1, Object index2, Object value,
                         @Cached("vector.getClass()") Class<?> clazz,
                         @Cached("createAccessNode()") UpdateSubscriptSpecial2 accessNodeCached) {

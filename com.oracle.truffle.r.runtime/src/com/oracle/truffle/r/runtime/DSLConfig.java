@@ -29,14 +29,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * Class that should eventually contain all DSL (and AST rewriting) related constants.
  */
 public final class DSLConfig {
-    private static final double DSL_CACHE_SIZE_FACTOR = RContext.getInstance().getNonNegativeDoubleOption(DSLCacheSizeFactor);
-
-    /**
-     * Some DSL {@code limit}s must be set to either constant {@code 1} or constant {@code 0},
-     * otherwise the DSL compiler will fail. To allow these to be still configured, we set the limit
-     * to {@code 1} and use this final field as a guard.
-     */
-    public static final boolean LIMIT_1_GUARD = RContext.getInstance().getNonNegativeDoubleOption(DSLCacheSizeFactor) != 0;
 
     private DSLConfig() {
         // only static methods
@@ -66,6 +58,15 @@ public final class DSLConfig {
      * generic specialization available.
      */
     public static int getCacheSize(int suggestedSize) {
-        return (int) (suggestedSize * DSL_CACHE_SIZE_FACTOR);
+        return (int) (suggestedSize * RContext.getInstance().getNonNegativeDoubleOption(DSLCacheSizeFactor));
+    }
+
+    /**
+     * Some DSL {@code limit}s must be set to either constant {@code 1} or constant {@code 0},
+     * otherwise the DSL compiler will fail. To allow these to be still configured, we set the limit
+     * to {@code 1} and use this final field as a guard.
+     */
+    public static boolean getLimit1Guard() {
+        return RContext.getInstance().getNonNegativeDoubleOption(DSLCacheSizeFactor) != 0;
     }
 }

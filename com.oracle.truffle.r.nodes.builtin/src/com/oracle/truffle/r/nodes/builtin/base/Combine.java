@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -86,7 +86,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
-@ImportStatic(RRuntime.class)
+@ImportStatic({RRuntime.class, DSLConfig.class})
 @RBuiltin(name = "c", kind = PRIMITIVE, parameterNames = {"...", "recursive"}, dispatch = INTERNAL_GENERIC, behavior = PURE)
 public abstract class Combine extends RBuiltinNode.Arg2 {
 
@@ -96,8 +96,8 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
 
     private static final ArgumentsSignature EMPTY_SIGNATURE = ArgumentsSignature.empty(1);
 
-    protected static final int COMBINE_CACHED_SIGNATURE_LIMIT = DSLConfig.getCacheSize(1);
-    protected static final int COMBINE_CACHED_PRECEDENCE_LIMIT = DSLConfig.getCacheSize(PrecedenceNode.NUMBER_OF_PRECEDENCES);
+    protected static final int COMBINE_CACHED_SIGNATURE_LIMIT = 1;
+    protected static final int COMBINE_CACHED_PRECEDENCE_LIMIT = PrecedenceNode.NUMBER_OF_PRECEDENCES;
 
     private static final int MAX_PROFILES = 8;
 
@@ -151,7 +151,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
         return cast;
     }
 
-    @Specialization(replaces = "combineSimple", limit = "COMBINE_CACHED_SIGNATURE_LIMIT", guards = {"!recursive", "args.getSignature() == cachedSignature",
+    @Specialization(replaces = "combineSimple", limit = "getCacheSize(COMBINE_CACHED_SIGNATURE_LIMIT)", guards = {"!recursive", "args.getSignature() == cachedSignature",
                     "cachedPrecedence == precedence(args, cachedSignature.getLength())"})
     protected Object combineCached(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("args.getSignature()") ArgumentsSignature cachedSignature,
@@ -186,7 +186,7 @@ public abstract class Combine extends RBuiltinNode.Arg2 {
     }
 
     @TruffleBoundary
-    @Specialization(limit = "COMBINE_CACHED_PRECEDENCE_LIMIT", replaces = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
+    @Specialization(limit = "getCacheSize(COMBINE_CACHED_PRECEDENCE_LIMIT)", replaces = "combineCached", guards = {"!recursive", "cachedPrecedence == precedence(args)"})
     protected Object combine(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean recursive,
                     @Cached("precedence(args, args.getLength())") int cachedPrecedence,
                     @Cached("createCast(cachedPrecedence)") CastNode cast,
