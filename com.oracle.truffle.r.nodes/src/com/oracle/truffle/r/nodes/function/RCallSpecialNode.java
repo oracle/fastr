@@ -36,7 +36,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseSpecials;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -97,8 +97,6 @@ abstract class ClassCheckNode extends RNode {
 
 @NodeInfo(cost = NodeCost.NONE)
 public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode, RSyntaxCall {
-
-    private static final boolean useSpecials = FastROptions.UseSpecials.getBooleanValue();
 
     // currently cannot be RSourceSectionNode because of TruffleDSL restrictions
     @CompilationFinal private SourceSection sourceSection;
@@ -187,7 +185,7 @@ public final class RCallSpecialNode extends RCallBaseNode implements RSyntaxNode
 
     private static RSyntaxNode createCall(SourceSection sourceSection, RNode functionNode, ArgumentsSignature signature, RSyntaxNode[] arguments, boolean inReplace, int... ignoredArguments) {
         RCallSpecialNode special = null;
-        if (useSpecials) {
+        if (RContext.getInstance().getOption(UseSpecials)) {
             special = tryCreate(sourceSection, functionNode, signature, arguments, inReplace, ignoredArguments);
         }
         if (special != null) {

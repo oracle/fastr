@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,10 +38,11 @@ import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNode.ReduceSemantics;
 import com.oracle.truffle.r.nodes.unary.UnaryArithmeticReduceNodeGen;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.FullPrecisionSum;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.GetReadonlyData;
@@ -54,8 +55,6 @@ import com.oracle.truffle.r.runtime.ops.na.NACheck;
  */
 @RBuiltin(name = "sum", kind = PRIMITIVE, parameterNames = {"...", "na.rm"}, dispatch = SUMMARY_GROUP_GENERIC, behavior = PURE_SUMMARY)
 public abstract class Sum extends RBuiltinNode.Arg2 {
-
-    protected static final boolean FULL_PRECISION = FastROptions.FullPrecisionSum.getBooleanValue();
 
     private static final ReduceSemantics semantics = new ReduceSemantics(0, 0.0, true, null, null, Message.INTEGER_OVERFLOW_USE_SUM_NUMERIC, true, false, false);
 
@@ -75,9 +74,13 @@ public abstract class Sum extends RBuiltinNode.Arg2 {
         return value instanceof RDoubleVector;
     }
 
+    protected boolean fullPrecision() {
+        return RContext.getInstance().getOption(FullPrecisionSum);
+    }
+
     @Child private MiscRFFI.ExactSumNode exactSumNode;
 
-    @Specialization(guards = {"FULL_PRECISION", "args.getLength() == 1", "isRDoubleVector(args.getArgument(0))", "naRm == cachedNaRm"})
+    @Specialization(guards = {"fullPrecision()", "args.getLength() == 1", "isRDoubleVector(args.getArgument(0))", "naRm == cachedNaRm"})
     protected double sumLengthOneRDoubleVector(RArgsValuesAndNames args, @SuppressWarnings("unused") boolean naRm,
                     @Cached("create()") GetReadonlyData.Double vectorToArrayNode,
                     @Cached("naRm") boolean cachedNaRm,

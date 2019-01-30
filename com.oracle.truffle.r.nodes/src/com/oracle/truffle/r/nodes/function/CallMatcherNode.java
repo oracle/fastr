@@ -43,7 +43,7 @@ import com.oracle.truffle.r.nodes.function.signature.VarArgsHelper;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.RestrictForceSplitting;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -74,7 +75,7 @@ public abstract class CallMatcherNode extends RBaseNode {
         this.argsAreEvaluated = argsAreEvaluated;
     }
 
-    private static final int MAX_CACHE_DEPTH = DSLConfig.getCacheSize(4);
+    private static final int MAX_CACHE_DEPTH = 4;
 
     public static CallMatcherNode create(boolean argsAreEvaluated) {
         return new CallMatcherUninitializedNode(argsAreEvaluated, 0);
@@ -180,13 +181,13 @@ public abstract class CallMatcherNode extends RBaseNode {
         @Override
         public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            if (depth >= MAX_CACHE_DEPTH) {
+            if (depth >= DSLConfig.getCacheSize(MAX_CACHE_DEPTH)) {
                 return replace(new CallMatcherGenericNode(argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             } else {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, new CallMatcherUninitializedNode(argsAreEvaluated, depth + 1)));
                 // for splitting if necessary
                 if (cachedNode.call != null && RCallNode.needsSplitting(function.getTarget())) {
-                    if (!FastROptions.RestrictForceSplitting.getBooleanValue()) {
+                    if (!RContext.getInstance().getOption(RestrictForceSplitting)) {
                         cachedNode.call.getCallNode().cloneCallTarget();
                     }
                 }

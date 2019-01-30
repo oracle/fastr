@@ -45,7 +45,8 @@ import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.SearchPathForcePromises;
+import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.StableValue;
@@ -655,7 +656,7 @@ public final class FrameSlotChangeMonitor {
                             }
                         }
                     } else {
-                        if (FastROptions.SearchPathForcePromises.getBooleanValue()) {
+                        if (RContext.getInstance().getOption(SearchPathForcePromises)) {
                             prevValue = RContext.getRRuntimeASTAccess().forcePromise("searchPathPromiseForce", prevValue);
                         }
                         data = new MultiSlotData();
@@ -674,7 +675,7 @@ public final class FrameSlotChangeMonitor {
                     frame.setObject(slot, data);
                     break;
                 } else {
-                    if (!FastROptions.SearchPathForcePromises.getBooleanValue() || !evalAndSetPromise(frame, slot, info)) {
+                    if (!RContext.getInstance().getOption(SearchPathForcePromises) || !evalAndSetPromise(frame, slot, info)) {
                         break;
                     }
                     // otherwise stable value may get nullified and slot turned into multi slot
@@ -792,7 +793,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setBooleanAndInvalidate(Frame frame, FrameSlot frameSlot, boolean newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setBoolean(frameSlot, newValue);
@@ -804,7 +805,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setBoolean(Frame frame, FrameSlot frameSlot, boolean newValue) {
-        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
@@ -816,7 +817,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setByteAndInvalidate(Frame frame, FrameSlot frameSlot, byte newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setByte(frameSlot, newValue);
@@ -828,7 +829,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setByte(Frame frame, FrameSlot frameSlot, byte newValue) {
-        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
@@ -840,7 +841,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setIntAndInvalidate(Frame frame, FrameSlot frameSlot, int newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setInt(frameSlot, newValue);
@@ -852,7 +853,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setInt(Frame frame, FrameSlot frameSlot, int newValue) {
-        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
@@ -864,7 +865,7 @@ public final class FrameSlotChangeMonitor {
 
     public static void setDoubleAndInvalidate(Frame frame, FrameSlot frameSlot, double newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setDouble(frameSlot, newValue);
@@ -876,7 +877,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setDouble(Frame frame, FrameSlot frameSlot, double newValue) {
-        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
@@ -893,7 +894,7 @@ public final class FrameSlotChangeMonitor {
 
     private static void setAndInvalidate(Frame frame, FrameSlot frameSlot, Object newValue, boolean isNonLocal, BranchProfile invalidateProfile) {
         FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
-        if (FastROptions.SharedContexts.getBooleanValue() && isMultislot(info) && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && isMultislot(info) && !RContext.isSingle()) {
             info.setMultiSlot(frame, frameSlot, newValue);
         } else {
             frame.setObject(frameSlot, newValue);
@@ -905,7 +906,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static void setObject(Frame frame, FrameSlot frameSlot, Object newValue) {
-        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(frameSlot);
             if (isMultislot(info)) {
                 info.setMultiSlot(frame, frameSlot, newValue);
@@ -978,7 +979,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static Object getObject(FrameSlot slot, Frame frame) throws FrameSlotTypeException {
-        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(slot);
             if (info.noMultiSlot.isValid()) {
                 return frame.getObject(slot);
@@ -1003,7 +1004,7 @@ public final class FrameSlotChangeMonitor {
     }
 
     public static Object getValue(FrameSlot slot, Frame frame) {
-        if (FastROptions.SharedContexts.getBooleanValue() && !RContext.isSingle()) {
+        if (RContext.getInstance().getOption(SharedContexts) && !RContext.isSingle()) {
             FrameSlotInfoImpl info = getFrameSlotInfo(slot);
             if (info.noMultiSlot.isValid()) {
                 return frame.getValue(slot);

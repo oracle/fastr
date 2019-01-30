@@ -68,6 +68,8 @@ import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
@@ -130,7 +132,15 @@ public final class FastRSession implements RSession {
         ChildContextInfo ctx = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
         RContext.childInfo = ctx;
 
-        return Context.newBuilder("R", "llvm").allowAllAccess(true).allowHostAccess(allowHostAccess).engine(mainEngine).build();
+        return getContextBuilder("R", "llvm").allowHostAccess(allowHostAccess).engine(mainEngine).build();
+    }
+
+    public static Context.Builder getContextBuilder(String... languages) {
+        Context.Builder builder = Context.newBuilder(languages);
+        builder.allowAllAccess(true);
+        // no point in printing errors to file when running tests (that contain errors on purpose)
+        builder.option(FastROptions.getName(PrintErrorStacktracesToFile), "false");
+        return builder;
     }
 
     private FastRSession() {
@@ -149,7 +159,7 @@ public final class FastRSession implements RSession {
             ChildContextInfo info = ChildContextInfo.create(params, null, ContextKind.SHARE_NOTHING, null, input, output, output);
             RContext.childInfo = info;
             mainEngine = Engine.newBuilder().in(input).out(output).err(output).build();
-            mainContext = Context.newBuilder("R", "llvm").allowAllAccess(true).engine(mainEngine).build();
+            mainContext = getContextBuilder("R", "llvm").engine(mainEngine).build();
             mainRContext = mainContext.eval(GET_CONTEXT).asHostObject();
         } finally {
             try {

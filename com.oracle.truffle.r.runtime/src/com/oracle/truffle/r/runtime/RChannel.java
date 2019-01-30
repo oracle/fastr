@@ -31,6 +31,8 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
+import static com.oracle.truffle.r.runtime.context.FastROptions.ChannelReceiveTimeout;
+import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -223,7 +225,7 @@ public class RChannel {
         RChannel channel = getChannelFromId(id);
         try {
             ArrayBlockingQueue<Object> queue = id < 0 ? channel.masterToClient : channel.clientToMaster;
-            int timeout = FastROptions.ChannelReceiveTimeout.getNonNegativeIntValue();
+            int timeout = RContext.getInstance().getNonNegativeIntOption(ChannelReceiveTimeout);
             Object msg;
             if (timeout > 0) {
                 // timeout for testing
@@ -728,7 +730,7 @@ public class RChannel {
             REnvironment env = (REnvironment) unserializeObject(f.getEnv());
             MaterializedFrame enclosingFrame = env.getFrame();
             RFunction fn;
-            if (FastROptions.SharedContexts.getBooleanValue()) {
+            if (RContext.getInstance().getOption(SharedContexts)) {
                 fn = RDataFactory.createFunction(f.getName(), f.getPackageName(), f.getTarget(), f.getRBuiltin(), enclosingFrame);
             } else {
                 HasSignature root = (HasSignature) f.getTarget().getRootNode();

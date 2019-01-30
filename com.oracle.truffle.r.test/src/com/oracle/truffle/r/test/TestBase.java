@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,7 +55,6 @@ import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
@@ -393,7 +392,6 @@ public class TestBase {
             setRSessionName("FastR");
             // no point in printing errors to file when running tests (that contain errors on
             // purpose)
-            FastROptions.setValue("PrintErrorStacktracesToFile", false);
             fastRSession = FastRSession.create();
         }
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,9 +25,9 @@ package com.oracle.truffle.r.runtime.nodes;
 import java.util.Arrays;
 
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 final class EvaluatedArgumentsFastPath implements FastPathFactory {
 
@@ -54,7 +54,7 @@ final class EvaluatedArgumentsFastPath implements FastPathFactory {
 
     @Override
     public boolean forcedEagerPromise(int index) {
-        return FastROptions.noEagerEval() ? false : forcedArguments[index];
+        return RContext.getInstance().noEagerEvalOption() ? false : forcedArguments[index];
     }
 
     public String toString(ArgumentsSignature signature) {

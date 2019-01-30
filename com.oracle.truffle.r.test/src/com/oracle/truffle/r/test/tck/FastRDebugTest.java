@@ -58,6 +58,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
+import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.tck.DebuggerTester;
 
 public class FastRDebugTest {
@@ -74,7 +75,7 @@ public class FastRDebugTest {
     public void before() {
         suspendedEvent = null;
 
-        context = Context.newBuilder("R").allowAllAccess(true).in(System.in).out(out).err(err).build();
+        context = FastRSession.getContextBuilder("R").in(System.in).out(out).err(err).build();
         debugger = context.getEngine().getInstruments().get("debugger").lookup(Debugger.class);
         debuggerSession = debugger.startSession(event -> {
             suspendedEvent = event;

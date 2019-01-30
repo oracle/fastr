@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,7 @@ import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
 import com.oracle.truffle.r.nodes.builtin.base.BaseVariables;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.LoadPackagesNativeCode;
 import com.oracle.truffle.r.runtime.RDeparse;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -103,7 +103,7 @@ public final class RBuiltinPackages implements RBuiltinLookup {
             throw RSuicide.rSuicide(String.format("unable to open the base package %s", basePathbase));
         }
         // Load the (stub) DLL for base
-        if (FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
+        if (RContext.getInstance().getOption(LoadPackagesNativeCode)) {
             String path = baseDirPath.resolve("libs").resolve("base.so").toString();
             Source loadSource = RSource.fromTextInternal(".Internal(dyn.load(" + RRuntime.escapeString(path, false, true) + ", TRUE, TRUE, \"\"))", RSource.Internal.R_IMPL);
             RContext.getEngine().parseAndEval(loadSource, baseFrame, false);

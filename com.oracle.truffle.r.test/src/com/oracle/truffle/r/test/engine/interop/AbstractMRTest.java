@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,6 +48,7 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
+import com.oracle.truffle.r.test.generate.FastRSession;
 
 public abstract class AbstractMRTest {
 
@@ -55,7 +56,7 @@ public abstract class AbstractMRTest {
 
     @BeforeClass
     public static void before() {
-        context = Context.newBuilder("R", "llvm").allowAllAccess(true).build();
+        context = FastRSession.getContextBuilder("R", "llvm").build();
         context.eval("R", "1"); // initialize context
         context.enter();
     }

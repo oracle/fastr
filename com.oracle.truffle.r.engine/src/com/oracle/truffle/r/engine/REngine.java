@@ -61,7 +61,7 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.LoadProfiles;
 import com.oracle.truffle.r.runtime.JumpToTopLevelException;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -161,7 +161,7 @@ final class REngine implements Engine, Engine.Timings {
         context.getStateRFFI().initializeVariables(context);
         RBuiltinPackages.loadBase(context.getLanguage(), baseFrame);
         RGraphics.initialize(context);
-        if (FastROptions.LoadProfiles.getBooleanValue()) {
+        if (context.getOption(LoadProfiles)) {
             StartupTiming.timestamp("Before Profiles Loaded");
             /*
              * eval the system/site/user profiles. Experimentally GnuR does not report warnings

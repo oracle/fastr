@@ -78,7 +78,7 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.RestrictForceSplitting;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -844,6 +844,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class FunctionDispatch extends Node {
 
         /**
@@ -854,7 +855,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
          */
         public abstract Object execute(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments);
 
-        protected static final int CACHE_SIZE = DSLConfig.getCacheSize(4);
+        protected static final int CACHE_SIZE = 4;
 
         private final RCallNode originalCall;
         private final AlteredArguments alteredArguments;
@@ -899,7 +900,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return createArguments(cachedTarget, false);
         }
 
-        @Specialization(limit = "CACHE_SIZE", guards = "function.getTarget() == cachedTarget")
+        @Specialization(limit = "getCacheSize(CACHE_SIZE)", guards = "function.getTarget() == cachedTarget")
         protected Object dispatch(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments,
                         @Cached("function.getTarget()") @SuppressWarnings("unused") RootCallTarget cachedTarget,
                         @Cached("createCacheNode(cachedTarget)") LeafCallFunctionNode leafCall,
@@ -1171,7 +1172,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 call = insert(CallRFunctionNode.create(cachedTarget));
                 if (needsSplitting(cachedTarget)) {
-                    if (!FastROptions.RestrictForceSplitting.getBooleanValue()) {
+                    if (!RContext.getInstance().getOption(RestrictForceSplitting)) {
                         call.getCallNode().cloneCallTarget();
                     }
                 }

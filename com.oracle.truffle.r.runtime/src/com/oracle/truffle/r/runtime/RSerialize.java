@@ -19,6 +19,7 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -302,7 +303,7 @@ public class RSerialize {
      * lazily loaded.
      */
     private static boolean trace() {
-        return FastROptions.debugMatches("unserialize");
+        return RContext.getInstance().matchesOption(FastROptions.Debug, "unserialize");
     }
 
     private static ContextStateImpl getContextState() {
@@ -600,7 +601,7 @@ public class RSerialize {
                              * level or not (and they are not always at the top in the default
                              * packages)
                              */
-                            if (FastROptions.debugMatches("printUclosure")) {
+                            if (RContext.getInstance().matchesOption(FastROptions.Debug, "printUclosure")) {
                                 RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
                                 if (attrItem != RNull.instance) {
                                     setAttributes(pairList, attrItem);
@@ -1683,7 +1684,7 @@ public class RSerialize {
                                         RFunction fun = (RFunction) obj;
                                         RPairList pl = (RPairList) serializeLanguageObject(state, fun);
                                         assert pl != null;
-                                        if (FastROptions.debugMatches("printWclosure")) {
+                                        if (RContext.getInstance().matchesOption(FastROptions.Debug, "printWclosure")) {
                                             Debug.printClosure(pl);
                                         }
                                         writeItem(pl.getTag());
