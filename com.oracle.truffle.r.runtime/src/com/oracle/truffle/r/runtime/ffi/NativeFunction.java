@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@ public enum NativeFunction {
     glob("((string): void, string): void", "call_base_"),
     eSoftVersion("((string, string): void): void", "call_base_"),
     umask("(sint32): sint32", "call_base_"),
+    cpolyroot("([double], [double], sint32, [double], [double]): sint32", "call_base_", baseLibrary(), true),
     // PCRE
     maketables("(): sint64", "call_pcre_"),
     compile("((uint64, string, sint32): void, string, sint32, uint64): void", "call_pcre_"),
