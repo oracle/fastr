@@ -671,7 +671,7 @@ public final class RContext {
 
     /**
      * Convenience function for matching against an option whose value is expected to be a comma
-     * separated list. If the option is set as an empty steing, i.e. {@code--R.Option=""}, all
+     * separated list. If the option is set as an empty steing, i.e. {@code --R.Option=""}, all
      * elements are deemed to match. Matching is done with {@link String#startsWith} to allow
      * additional data to be tagged onto the element.
      *

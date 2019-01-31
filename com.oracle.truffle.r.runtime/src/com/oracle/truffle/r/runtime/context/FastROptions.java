@@ -192,6 +192,9 @@ public class FastROptions {
 
     @TruffleBoundary
     private static void checkObsoleteJVMArgs() {
+        // The jvm arg syntax was dicontinued in rc13
+        // For the time being a warning is printed
+        // TODO remove at some later point
         for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
             String prop = (String) entry.getKey();
             if (prop.startsWith("R:")) {
