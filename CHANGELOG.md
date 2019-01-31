@@ -3,6 +3,7 @@
  New features:
 
  * new JUL-like logging infrastructure backed by Truffle
+ * FastR options backed by Truffle now. New command-line format - i.e. bin/r --R.PerformanceWarning="true". Also configurable via org.graal.polyglot.Context.Builder.
 
 # 1.0 RC 12
 

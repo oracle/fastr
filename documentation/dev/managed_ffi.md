@@ -18,9 +18,9 @@ some R code that ends up trying to call native code, which is again going to fai
 * Set `FastRConfig#InternalGridAwtSupport` to `false` before building FastR. This should remove usages of AWT from FastR's
 bytecode and thus reduce the amount of native code that can be invoked by running arbitrary R code in FastR.
 
-Note that boolean FastR options are passed using syntax R:+/-OptionName. Command line to run FastR with all the
+Note that boolean FastR options are prefixed with the language id "R" and passed after the executable. Command line to run FastR with all the
 aforementioned options:
 
 ```
-mx --J @'-DR:-LoadPackagesNativeCode -DR:-LoadProfiles -Dfastr.rffi.factory.type=managed' r
+mx --J @'-Dfastr.rffi.factory.type=managed' r --R.LoadPackagesNativeCode=true --R.LoadProfiles=true
 ```
