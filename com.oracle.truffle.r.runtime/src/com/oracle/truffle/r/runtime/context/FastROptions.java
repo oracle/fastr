@@ -43,7 +43,7 @@ import org.graalvm.options.OptionValues;
  * Can be set:
  * <ul>
  * <li>either via command-line - i.e. {@code bin/r --R.PerformanceWarnings=true}</li>
- * <li>or via {@code org.graal.polygltoContext.Builder}
+ * <li>or via {@code org.graal.polyglot.Context.Builder}
  * </ul>
  * N.B. The options must be initialized/processed at runtime for an AOT VM.
  */
@@ -185,7 +185,26 @@ public class FastROptions {
             values.put(key, value);
         }
 
+        checkObsoleteJVMArgs();
+
         initialized = true;
+    }
+
+    @TruffleBoundary
+    private static void checkObsoleteJVMArgs() {
+        for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+            String prop = (String) entry.getKey();
+            if (prop.startsWith("R:")) {
+                String name;
+                if (prop.startsWith("R:+") || prop.startsWith("R:-")) {
+                    name = prop.substring(3);
+                } else {
+                    name = prop.substring(2);
+                }
+                System.out.println("WARNING: The " + prop + " option was discontinued.\n" +
+                                "You can rerun FastR with --R." + name + "[=...]");
+            }
+        }
     }
 
     public static OptionDescriptors getDescriptors() {

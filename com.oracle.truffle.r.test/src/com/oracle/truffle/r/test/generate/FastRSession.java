@@ -137,10 +137,24 @@ public final class FastRSession implements RSession {
 
     public static Context.Builder getContextBuilder(String... languages) {
         Context.Builder builder = Context.newBuilder(languages);
+        setCLIOptions(builder);
         builder.allowAllAccess(true);
         // no point in printing errors to file when running tests (that contain errors on purpose)
         builder.option(FastROptions.getName(PrintErrorStacktracesToFile), "false");
         return builder;
+    }
+
+    private static boolean cliOptionSet = false;
+
+    private static void setCLIOptions(Context.Builder builder) {
+        if (cliOptionSet) {
+            return;
+        }
+        cliOptionSet = true;
+        for (Map.Entry<String, String> entry : TestBase.options.entrySet()) {
+            builder.option(entry.getKey(), entry.getValue());
+            System.out.println("Setting option " + entry.getKey() + "=" + entry.getValue());
+        }
     }
 
     private FastRSession() {
