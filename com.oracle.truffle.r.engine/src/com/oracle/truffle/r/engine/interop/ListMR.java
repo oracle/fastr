@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,18 +29,18 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.CanResolve;
 import com.oracle.truffle.api.interop.KeyInfo;
+import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.api.interop.Resolve;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
+import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.ListMRFactory.ListReadImplNodeGen;
-import com.oracle.truffle.r.engine.interop.ListMRFactory.ListWriteImplNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
@@ -52,8 +52,6 @@ import com.oracle.truffle.r.runtime.data.RLogical;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringVector;
-import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 
 public class ListMR {
@@ -88,10 +86,9 @@ public class ListMR {
 
         @Resolve(message = "WRITE")
         public abstract static class RListWriteNode extends Node {
-            @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
-
+            @SuppressWarnings("unused")
             protected Object access(RList receiver, Object identifier, Object valueObj) {
-                return writeNode.execute(receiver, identifier, valueObj);
+                throw UnsupportedMessageException.raise(Message.WRITE);
             }
         }
 
@@ -186,10 +183,9 @@ public class ListMR {
 
         @Resolve(message = "WRITE")
         public abstract static class RExpressionWriteNode extends Node {
-            @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
-
+            @SuppressWarnings("unused")
             protected Object access(RExpression receiver, Object identifier, Object valueObj) {
-                return writeNode.execute(receiver, identifier, valueObj);
+                throw UnsupportedMessageException.raise(Message.WRITE);
             }
         }
 
@@ -228,7 +224,7 @@ public class ListMR {
         @Resolve(message = "TO_NATIVE")
         public abstract static class ToNativeNode extends Node {
             protected Object access(@SuppressWarnings("unused") Object receiver) {
-                return this;
+                return receiver;
             }
         }
 
@@ -278,10 +274,9 @@ public class ListMR {
 
         @Resolve(message = "WRITE")
         public abstract static class RPairListWriteNode extends Node {
-            @Child private ListWriteImplNode writeNode = ListWriteImplNodeGen.create();
-
+            @SuppressWarnings("unused")
             protected Object access(RPairList receiver, Object identifier, Object valueObj) {
-                return writeNode.execute(receiver, identifier, valueObj);
+                throw UnsupportedMessageException.raise(Message.WRITE);
             }
         }
 
@@ -406,48 +401,6 @@ public class ListMR {
         }
     }
 
-    abstract static class ListWriteImplNode extends Node {
-        @Child private ReplaceVectorNode replace;
-        @Child private Foreign2R foreign2R;
-
-        protected abstract Object execute(TruffleObject receiver, Object identifier, Object valueObj);
-
-        @Specialization
-        protected Object write(TruffleObject receiver, int idx, Object valueObj) {
-            // idx + 1 R is indexing from 1
-            return write(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        @Specialization
-        protected Object write(TruffleObject receiver, long idx, Object valueObj) {
-            // idx + 1 R is indexing from 1
-            return write(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        @Specialization
-        protected Object write(TruffleObject receiver, String field, Object valueObj) {
-            return write(receiver, new Object[]{field}, valueObj);
-        }
-
-        private Object write(TruffleObject receiver, Object[] positions, Object valueObj) {
-            if (foreign2R == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                foreign2R = insert(Foreign2RNodeGen.create());
-            }
-            Object value = foreign2R.execute(valueObj);
-            if (replace == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace = insert(ReplaceVectorNode.create(ElementAccessMode.SUBSCRIPT, true));
-            }
-            return replace.apply(receiver, positions, value);
-        }
-
-        @Fallback
-        protected Object write(@SuppressWarnings("unused") TruffleObject receiver, Object field, @SuppressWarnings("unused") Object object) {
-            throw UnknownIdentifierException.raise("" + field);
-        }
-    }
-
     abstract static class ListKeyInfoImplNode extends Node {
         @Child private ExtractVectorNode extractNode;
 
@@ -505,7 +458,7 @@ public class ListMR {
         }
 
         private static int buildKeys(Object value) {
-            int result = KeyInfo.READABLE | KeyInfo.MODIFIABLE;
+            int result = KeyInfo.READABLE;
             if (value instanceof RFunction) {
                 result |= KeyInfo.INVOCABLE;
             }

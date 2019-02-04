@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,11 @@ import com.oracle.truffle.r.test.generate.FastRSession;
 
 public class RLanguageMRTest extends AbstractMRTest {
 
+    @Override
+    protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
+    }
+
     @Test
     public void testKeysInfo() throws Exception {
         RPairList rl = (RPairList) createTruffleObjects()[0];
@@ -56,27 +61,27 @@ public class RLanguageMRTest extends AbstractMRTest {
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, 0);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
+        assertFalse(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, 1);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
+        assertFalse(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, 2);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
+        assertFalse(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
     }
 
     @Test
-    public void testReadWrite() throws Exception {
+    public void testRead() throws Exception {
         RPairList rl = (RPairList) createTruffleObjects()[0];
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, "nnnoooonnne"), UnknownIdentifierException.class);
@@ -86,10 +91,6 @@ public class RLanguageMRTest extends AbstractMRTest {
 
         // TODO add some meaningful read tests
         Assert.assertNotNull(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0));
-
-        // shouldn't fail:
-        ForeignAccess.sendWrite(Message.WRITE.createNode(), rl, "aaa", "abc");
-        ForeignAccess.sendWrite(Message.WRITE.createNode(), rl, 0, "abc");
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RASTUtils;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -61,7 +62,8 @@ public abstract class Expression extends RBuiltinNode.Arg1 {
         if (hasNonNull) {
             String[] names = new String[signature.getLength()];
             for (int i = 0; i < names.length; i++) {
-                names[i] = signature.getName(i);
+                String name = signature.getName(i);
+                names[i] = (name == null ? RRuntime.NAMES_ATTR_EMPTY_VALUE : name);
             }
             return RDataFactory.createExpression(data, RDataFactory.createStringVector(names, RDataFactory.COMPLETE_VECTOR));
         } else {
