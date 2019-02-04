@@ -83,6 +83,14 @@ public class JavaEmbeddingTest {
         assertEquals("John", context.eval("R", "list(name = 'John')").getMember("name").asString());
     }
 
+    @Test(expected = UnsupportedOperationException.class)
+    public void testNotWriteable() {
+        context.eval("R", "c(1L, 2L, 4L)").setArrayElement(0, 123);
+        context.eval("R", "list(1L, 2L, 4L)").setArrayElement(0, 123);
+        context.eval("R", "pairlist(1L, 2L, 4L)").setArrayElement(0, 123);
+        context.eval("R", "expression(a=1L, b=2L, c=4L)").setArrayElement(0, 123);
+    }
+
     @Test
     public void testAccessingNAAsPolyglotValue() {
         assertTrue(context.eval("R", "NA").getArrayElement(0).isNull());
