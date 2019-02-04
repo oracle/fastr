@@ -25,7 +25,7 @@ eval(expression({
 
 	fastrRepoPath <- NULL
 
-	install.fastr.packages <- function(pkgs) {
+	install.fastr.packages <- function(pkgs, lib, INSTALL_opts=character(0)) {
 		if (is.null(fastrRepoPath) || !file.exists(fastrRepoPath)) {
 			workDir <- tempdir()
 			download.file('https://api.github.com/repos/oracle/fastr/tarball/master', file.path(workDir, 'fastr-repo.tar.gz'))
@@ -37,7 +37,11 @@ eval(expression({
 		for (pkg in pkgs) {
 			pkgPath <- file.path(fastrRepoPath, 'com.oracle.truffle.r.pkgs', pkg)
 			if (file.exists(pkgPath)) {
-				install.packages(pkgPath, repos=NULL)
+                if (missing(lib)) {
+				    install.packages(pkgPath, repos=NULL, INSTALL_opts=INSTALL_opts)
+                } else {
+				    install.packages(pkgPath, lib=lib, repos=NULL, INSTALL_opts=INSTALL_opts)
+                }
 			} else {
 				stop(paste0("FastR doesn't provide patched version of package ", pkg, ". Use install.packages to install it."));
 			}
