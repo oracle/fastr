@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,8 @@ public class TestStackBuiltins extends TestBase {
     @Test
     public void testTry() {
         assertEval(Output.IgnoreWhitespace, template("n <- 100; f <- function() { n <- 101; %0 }; ident <- function(x) { n <- 102; x }; ident(try(f()))", FRAME_FUNCTIONS));
+        assertEval("tryCatch(cat('Hello\\n'))");
+        assertEval("tryCatch(print.default('Hello'))");
     }
 
     @Test
