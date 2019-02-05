@@ -140,11 +140,8 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     @Override
     public RPairList getSyntaxCaller(RCaller rl) {
-        RCaller call = rl;
-        while (call.isPromise()) {
-            call = call.getParent();
-        }
-        if (call.isValidCaller()) {
+        RCaller call = RCaller.unwrapPromiseCaller(rl);
+        if (call != null && call.isValidCaller()) {
             RSyntaxElement syntaxNode = call.getSyntaxNode();
             return RDataFactory.createLanguage(getOrCreateLanguageClosure(((RSyntaxNode) syntaxNode).asRNode()));
         } else {
@@ -239,19 +236,9 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
 
     private Object findCallerFromFrame(Frame frame) {
         if (frame != null && RArguments.isRFrame(frame)) {
-            RCaller caller = RArguments.getCall(frame);
-            while (caller.isPromise()) {
-                if (!caller.hasSysParent()) {
-                    // frame created to evaluate promise via CallTarget (i.e. the PIC cache was
-                    // filled and the promise could not be evaluated while in the context of the
-                    // frame that cased its evaluation)
-                    caller = caller.getPromiseCaller();
-                } else {
-                    // NOTE: maybe we should just use the caller as is otherwise...
-                    caller = caller.getParent();
-                }
-            }
-            if (caller.isValidCaller()) {
+            // This finds the next non-artificial frame on the R call stack
+            RCaller caller = RCaller.unwrapParent(RArguments.getCall(frame));
+            if (RCaller.isValidCaller(caller)) {
                 // This is where we need to ensure that we have an RLanguage object with a rep that
                 // is an RSyntaxNode.
                 return getSyntaxCaller(caller);

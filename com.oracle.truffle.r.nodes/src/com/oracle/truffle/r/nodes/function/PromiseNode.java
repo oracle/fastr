@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -61,13 +61,20 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
 import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
 
+import java.util.ArrayList;
+import java.util.Collections;
+
 /**
- * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.<br/>
- * All these classes are created during/after argument matching and get cached afterwards, so they
- * get (and need to get) called every repeated call to a function with the same arguments.
- *
- * TODO Certain subclasses used to override {@code deparse}. Since a {@link PromiseNode} is not a
- * {@link RSyntaxNode} this is no longer possible. So we probably need wrappers.
+ * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.
+ * 
+ * All these classes are created during/after argument matching first time we execute a function
+ * call and they get cached for that given function call. Their purpose is to produce instances of
+ * {@link RPromise} -- the values of the arguments passed to the called function.
+ * 
+ * Basic promise remembers its execution frame and the expression and when asked for its value it
+ * evaluates the expression in the exec frame. Optimized promises are trying to avoid having to
+ * carry along their execution frame (which has to be materialized for that purpose) and having to
+ * evaluate the expression lazily, which is doesn't play well with the compilation.
  */
 public abstract class PromiseNode extends RNode {
     /**

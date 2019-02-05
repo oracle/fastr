@@ -97,13 +97,8 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
         } else {
             nonPromiseProfile.enter();
         }
-        RCaller call = RArguments.getCall(frame);
-        if (firstPromise.profile(call.isPromise())) {
-            call = call.getParent();
-            while (promiseCallerProfile.profile(call.isPromise())) {
-                call = call.getParent();
-            }
-        }
+        // TODO: profiling
+        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame));
         if (CompilerDirectives.inInterpreter()) {
             return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex, frame.materialize());
         }

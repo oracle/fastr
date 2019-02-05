@@ -300,12 +300,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
 
     private RCaller getCaller(VirtualFrame frame, REnvironment environment,
                     Supplier<RSyntaxElement> call) {
-        if (environment instanceof REnvironment.Function) {
-            RCaller current = RArguments.getCall(frame);
-            // TODO: payload should be the expression eval'ed probably
-            return call != null ? RCaller.create(current.getDepth() + 1, current, call) : RCaller.createForFrame(frame, current);
-        } else {
-            return call != null ? RCaller.create(frame, call) : RCaller.create(frame, getOriginalCall());
-        }
+        // TODO: use RCaller#createForPromise?
+        return call != null ? RCaller.create(frame, call) : RCaller.create(frame, getOriginalCall());
     }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,6 +64,10 @@ final class ReturnSpecial extends RNode {
  * {@link RArguments#getCall(com.oracle.truffle.api.frame.Frame) call}. The return value will be
  * delivered via a {@link ReturnException}, which is subsequently caught in the
  * {@link FunctionDefinitionNode}.
+ * 
+ * If the current {@link RCaller} denotes promise evaluation, we unwrap it to get to the
+ * {@link RCaller} stored in the arguments array of the frame that should be logically evaluating
+ * the promise that contains this "return" call.
  */
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX, nonEvalArgs = {0})
 public abstract class Return extends RBuiltinNode.Arg1 {
@@ -82,11 +86,7 @@ public abstract class Return extends RBuiltinNode.Arg1 {
     }
 
     static ReturnException doReturn(VirtualFrame frame, Object value, BranchProfile isPromiseEvalProfile) {
-        RCaller call = RArguments.getCall(frame);
-        while (call.isPromise()) {
-            isPromiseEvalProfile.enter();
-            call = call.getParent();
-        }
+        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame));
         throw new ReturnException(value, call);
     }
 

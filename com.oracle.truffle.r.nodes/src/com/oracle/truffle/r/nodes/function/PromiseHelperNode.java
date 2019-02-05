@@ -274,7 +274,7 @@ public final class PromiseHelperNode extends RBaseNode {
 
     private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, MaterializedFrame promiseFrame) {
         assert promiseFrame != null;
-        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), RCaller.createForPromise(RArguments.getCall(promiseFrame), frame));
+        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame)));
     }
 
     private static Object generateValueEagerSlowPath(VirtualFrame frame, int state, EagerPromise promise) {
