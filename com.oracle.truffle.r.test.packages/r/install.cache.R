@@ -712,12 +712,6 @@ transitive.dependencies <- function(pkg, lib, pl = as.data.frame(available.packa
 
 pkg.cache.in.overrides <- function(pkgname) pkgname %in% (if(is.fastr()) overrides$fastr else overrides$gnur)
 
-
-# TODO: currently just a workaround for GnuR; we should use same code as in FastR
-if (!exists("install.fastr.packages")) {
-    install.fastr.packages <<- install.packages
-}
-
 # Fetches the package from the cache or installs it. This is also done for all transitive dependencies.
 pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.install) {
     tryCatch({
@@ -778,3 +772,4 @@ pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.i
         return (1L)
     })
 }
+

@@ -1258,6 +1258,15 @@ run <- function() {
 curScriptDir <- getCurrentScriptDir()
 if (!is.null(curScriptDir)) {
     source(file.path(curScriptDir, "install.cache.R"))
+    if (!is.fastr()) {
+        fastr.functions.path <- file.path(curScriptDir, "fastr.functions.rdx")
+        if (file.exists(fastr.functions.path)) {
+            loaded.names <- load(fastr.functions.path)
+            log.message("Loaded names: ", loaded.names)
+        } else {
+            log.message("Warning: Running with GnuR but could not find file '", fastr.functions.path, "'")
+        }
+    }
 } else {
     log.message("Cannot use package cache since script directory cannot be determined")
 
