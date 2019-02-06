@@ -86,6 +86,9 @@ packagesDarwin : {
 
 common : ${java8Downloads} ${packagesLinux}  {
   logs: ${logfiles}
+  catch_files : [
+    "Graal diagnostic output saved in (?P<filename>.+\.zip)"
+  ]
   timelimit : "1:00:00"
   environment : {
 	PKG_TEST_ENV_miniUI : "LC_ALL=C"
