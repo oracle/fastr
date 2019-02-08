@@ -42,6 +42,7 @@ import org.junit.Test;
 import com.oracle.truffle.api.interop.ArityException;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
+import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
@@ -49,6 +50,7 @@ import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import static org.junit.Assert.assertFalse;
 
 public abstract class AbstractMRTest {
 
@@ -106,6 +108,14 @@ public abstract class AbstractMRTest {
 
     protected boolean testToNative(@SuppressWarnings("unused") TruffleObject obj) {
         return true;
+    }
+
+    protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
+        return false;
+    }
+
+    protected boolean canWrite(@SuppressWarnings("unused") TruffleObject obj) {
+        return false;
     }
 
     protected int getSize(@SuppressWarnings("unused") TruffleObject obj) {
@@ -218,6 +228,46 @@ public abstract class AbstractMRTest {
         } catch (UnsupportedMessageException e) {
             assertEquals(obj.getClass().getSimpleName() + " " + obj + " IS_BOXED", false, ForeignAccess.sendIsBoxed(Message.IS_BOXED.createNode(), obj));
         }
+    }
+
+    @Test
+    public void testCannotRead() throws Exception {
+        for (TruffleObject obj : createTruffleObjects()) {
+            if (!canRead(obj)) {
+                testCannotRead(obj);
+            }
+        }
+    }
+
+    private void testCannotRead(TruffleObject obj) throws Exception {
+        if (ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj)) {
+            int size = (int) ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj);
+            for (int i = 0; i < size; i++) {
+                assertFalse(KeyInfo.isReadable(ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, i)));
+            }
+        }
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, 0), UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), obj, "doesnotexist"), UnsupportedMessageException.class);
+    }
+
+    @Test
+    public void testCannotWrite() throws Exception {
+        for (TruffleObject obj : createTruffleObjects()) {
+            if (!canWrite(obj)) {
+                testCannotWrite(obj);
+            }
+        }
+    }
+
+    private void testCannotWrite(TruffleObject obj) throws Exception {
+        if (ForeignAccess.sendHasSize(Message.HAS_SIZE.createNode(), obj)) {
+            int size = (int) ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), obj);
+            for (int i = 0; i < size; i++) {
+                assertFalse(KeyInfo.isWritable(ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), obj, i)));
+            }
+        }
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, 0, 1), UnsupportedMessageException.class);
+        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), obj, "doesnotexist", 1), UnsupportedMessageException.class);
     }
 
     @Test

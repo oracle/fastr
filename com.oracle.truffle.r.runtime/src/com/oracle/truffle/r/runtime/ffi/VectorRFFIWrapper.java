@@ -423,7 +423,6 @@ public final class VectorRFFIWrapper implements TruffleObject {
     }
 
     public abstract static class AtomicVectorSetterNode extends Node {
-        @Child private Node writeMsgNode;
 
         public abstract Object execute(Object vector, int index, Object value);
 
@@ -439,6 +438,26 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Specialization
         protected Object doDoubleVector(RDoubleVector vector, int index, double value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doDoubleVector(RDoubleVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doDoubleVector(RDoubleVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
             if (RRuntime.isNA(value)) {
                 naProfile.enter();
                 vector.setComplete(false);
@@ -511,18 +530,31 @@ public final class VectorRFFIWrapper implements TruffleObject {
             return vector;
         }
 
-        @Fallback
-        protected Object doOther(Object target, int index, Object value) {
-            assert target instanceof TruffleObject;
-            try {
-                if (writeMsgNode == null) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    writeMsgNode = insert(Message.WRITE.createNode());
-                }
-                return ForeignAccess.sendWrite(writeMsgNode, (TruffleObject) target, index, value);
-            } catch (InteropException e) {
-                throw RInternalError.shouldNotReachHere(e);
+        @Specialization
+        protected Object doComplexVector(RComplexVector vector, int index, long value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
             }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Specialization
+        protected Object doComplexVector(RComplexVector vector, int index, int value, @Cached("create()") BranchProfile naProfile) {
+            if (RRuntime.isNA(value)) {
+                naProfile.enter();
+                vector.setComplete(false);
+            }
+            vector.setDataAt(vector.getInternalStore(), index, value);
+            return vector;
+        }
+
+        @Fallback
+        @TruffleBoundary
+        @SuppressWarnings("unused")
+        protected Object doOther(Object target, int index, Object value) {
+            throw RInternalError.shouldNotReachHere("target=" + target + ", index=" + index + "value=" + value);
         }
     }
 

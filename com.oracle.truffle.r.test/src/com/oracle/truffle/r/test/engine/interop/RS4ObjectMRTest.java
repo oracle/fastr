@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -79,6 +79,16 @@ public class RS4ObjectMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
+    }
+
+    @Override
+    protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
+    }
+
+    @Override
+    protected boolean canWrite(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
     }
 
     @Test
