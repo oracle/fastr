@@ -155,6 +155,10 @@ def parse_arguments(argv):
     global _opts
     _opts, r_args = parser.parse_known_args(args=argv)
 
+    # ensure that first arg is neither the name of this package nor a py file
+    if r_args and (r_args[0] == __package__ or r_args[0].endswith(".py")):
+        r_args = r_args[1:]
+
     log_format = '%(message)s'
     if _opts.verbose == 1:
         log_level = logging.DEBUG

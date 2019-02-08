@@ -360,8 +360,6 @@ set.package.blacklist <- function() {
 	}
 }
 
-this.package <- "com.oracle.truffle.r.test.packages"
-
 set.initial.package.blacklist <- function() {
 	if (is.na(initial.blacklist.file)) {
 		# not set on command line
@@ -1253,6 +1251,8 @@ if (!is.null(curScriptDir)) {
     pkg.cache.get <<- function(...) FALSE
     pkg.cache.insert <<- function(...) FALSE
 }
+
+this.package <- dirname(curScriptDir)
 
 quiet <- F
 repo.list <- c("CRAN")
