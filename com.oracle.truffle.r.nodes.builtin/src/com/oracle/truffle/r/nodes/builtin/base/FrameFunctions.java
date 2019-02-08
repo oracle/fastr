@@ -782,8 +782,9 @@ public class FrameFunctions {
                 nullCallerProfile.enter();
                 return REnvironment.globalEnv();
             }
-            if (call.hasSysParent()) {
-                return call.getSysParent();
+            REnvironment sysParent = RCaller.unwrapSysParent(call);
+            if (sysParent != null) {
+                return sysParent;
             }
             call = RCaller.unwrapPromiseCaller(call);
             if (useGetCallerFrameNode.profile(originalCall.getDepth() == call.getDepth() + 1)) {

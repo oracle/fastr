@@ -230,6 +230,19 @@ public final class RCaller {
         return caller;
     }
 
+    // TODO: document and use in sys.parent too, find some simple test case?
+    public static REnvironment unwrapSysParent(RCaller callerIn) {
+        RCaller caller = callerIn;
+        while (RCaller.isValidCaller(caller) && caller.isPromise()) {
+            if (caller.payload instanceof SysParent) {
+                return ((SysParent) caller.payload).env;
+            } else {
+                caller = (RCaller) caller.payload;
+            }
+        }
+        return null;
+    }
+
     /**
      * If the given {@link RCaller} is stored in an artificial promise evaluation frame, then this
      * follows the {@link #payload} until it reaches the {@link RCaller} of the real frame where the
@@ -237,7 +250,7 @@ public final class RCaller {
      */
     public static RCaller unwrapPromiseCaller(RCaller callerIn) {
         RCaller caller = callerIn;
-        while (caller != null && caller.isPromise()) {
+        while (RCaller.isValidCaller(caller) && caller.isPromise()) {
             if (caller.payload instanceof SysParent) {
                 caller = ((SysParent) caller.payload).payload;
             } else {
