@@ -34,7 +34,8 @@ import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.utilities.CyclicAssumption;
 import com.oracle.truffle.r.nodes.instrumentation.RInstrumentation;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceCalls;
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceCallsToFile;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -88,11 +89,11 @@ public class TraceHandling {
     }
 
     public static void traceAllFunctions() {
-        if (FastROptions.TraceCalls.getBooleanValue()) {
+        if (RContext.getInstance().getOption(TraceCalls)) {
             System.out.println("WARNING: The TraceCalls option was discontinued.\n" +
                             "You can rerun FastR with --log.R.com.oracle.truffle.r.functionCalls.level=FINE");
 
-            if (FastROptions.TraceCallsToFile.getBooleanValue()) {
+            if (RContext.getInstance().getOption(TraceCallsToFile)) {
                 System.out.println("WARNING: The TraceCallsToFile option was discontinued.\n" +
                                 "You can rerun FastR with --log.R.com.oracle.truffle.r.functionCalls.level=FINE --log.file=<yourfile>");
             }

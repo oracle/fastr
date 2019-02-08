@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetClassAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetClassAttributeNode;
@@ -52,10 +53,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 
+@ImportStatic(DSLConfig.class)
 @RBuiltin(name = "class<-", kind = PRIMITIVE, parameterNames = {"x", "value"}, behavior = PURE)
 public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(2);
+    protected static final int CACHE_LIMIT = 2;
 
     @Child private CastTypeNode castTypeNode;
     @Child private TypeofNode typeof;
@@ -83,7 +85,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
         return RNull.instance;
     }
 
-    @Specialization(limit = "CACHE_LIMIT", guards = "cachedClassName == className")
+    @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = "cachedClassName == className")
     protected Object setClassCached(RAbstractContainer arg, @SuppressWarnings("unused") String className,
                     @Cached("className") String cachedClassName,
                     @Cached("fromMode(className)") RType cachedMode,

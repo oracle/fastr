@@ -193,12 +193,12 @@ fastr.test.jvm.args <- function() {
     mx.args.file <- "com.oracle.truffle.r.test.packages/test.mx.args"
     tryCatch({
         if (file.exists(mx.args.file)) {
-            opts <- paste0('"', paste0("--Ja @", readLines(mx.args.file), collapse=" "), '"')
-            log.message(paste0("MX_R_GLOBAL_ARGS=", opts), level=1)
+            opts <- paste0('"', paste0(readLines(mx.args.file), collapse=" "), '"')
+            log.message(paste0("FASTR_INTERNAL_ARGS=", opts), level=1)
             return (opts)
 	    }
     })
-    return ("'--Ja @-DR:+IgnoreGraphicsCalls'")
+    return ("'--R.IgnoreGraphicsCalls=true'") 
 }
 
 # returns a vector of package names that are the direct dependents of pkg
@@ -922,7 +922,8 @@ system.test <- function(pkgname, pkgEnv) {
 	# so we time out the entire set after 20 minutes.
     genEnv <- c(paste0("R_LIBS_USER=", shQuote(lib.install)),
              "R_LIBS=",
-             paste0("MX_R_GLOBAL_ARGS=", fastr.test.jvm.args())
+             # assuming there isn't already something else in FASTR_INTERNAL_ARGS
+             paste0("FASTR_INTERNAL_ARGS=", fastr.test.jvm.args())
             )
 	env <- c(pkgEnv, genEnv)
 	rc <- system2(rscript, args, env=env, timeout=1200)

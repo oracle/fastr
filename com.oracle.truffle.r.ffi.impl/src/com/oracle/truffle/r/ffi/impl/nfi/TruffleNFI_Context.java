@@ -41,8 +41,9 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -88,7 +89,7 @@ class UnsafeAdapter {
 
 public class TruffleNFI_Context extends RFFIContext {
 
-    @CompilationFinal private static boolean hasAccessLock;
+    @CompilationFinal private boolean hasAccessLock;
     private static ReentrantLock accessLock;
 
     public TruffleNFI_Context() {
@@ -304,7 +305,7 @@ public class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public ContextState initialize(RContext context) {
-        if (FastROptions.TraceNativeCalls.getBooleanValue()) {
+        if (RContext.getInstance().getOption(TraceNativeCalls)) {
             System.out.println("WARNING: The TraceNativeCalls option was discontinued!\n" +
                             "You can rerun FastR with --log.R.com.oracle.truffle.r.nativeCalls.level=FINE --log.file=<yourfile>.\n" +
                             "NOTE that stdout is problematic for embedded mode, when using this logger, also always specify a log file");
@@ -350,8 +351,8 @@ public class TruffleNFI_Context extends RFFIContext {
         }
     }
 
-    private static synchronized void initializeLock() {
-        hasAccessLock = FastROptions.SynchronizeNativeCode.getBooleanValue();
+    private synchronized void initializeLock() {
+        hasAccessLock = RContext.getInstance().getOption(FastROptions.SynchronizeNativeCode);
         if (hasAccessLock && accessLock == null) {
             accessLock = new ReentrantLock();
         }

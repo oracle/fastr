@@ -286,7 +286,7 @@ def _fastr_gate_runner(args, tasks):
 
     with mx_gate.Task('UnitTests: no specials', tasks) as t:
         if t:
-            mx_unittest.unittest(['-DR:-UseSpecials'] + _gate_noapps_unit_tests())
+            mx_unittest.unittest(['-Dfastr.test.options.R.UseSpecials=false'] + _gate_noapps_unit_tests())
 
     with mx_gate.Task('UnitTests: with specials', tasks) as t:
         if t:

@@ -47,7 +47,7 @@ import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
-import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDeparse;
@@ -67,6 +67,7 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.RScope;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
+import org.graalvm.options.OptionDescriptors;
 
 @TruffleLanguage.Registration(name = "R", id = "R", version = "3.5.1", mimeType = {RRuntime.R_APP_MIME, RRuntime.R_TEXT_MIME}, interactive = true)
 @ProvidedTags({StandardTags.CallTag.class, StandardTags.StatementTag.class, StandardTags.RootTag.class, RSyntaxTags.LoopTag.class, FunctionBodyBlockTag.class})
@@ -112,7 +113,6 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
     @Override
     protected void initializeContext(RContext context) throws Exception {
         if (!systemInitialized) {
-            FastROptions.initialize();
             initialize();
             systemInitialized = true;
         }
@@ -126,6 +126,11 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
             RContext.initializeGlobalState(new RASTBuilder(false), new RRuntimeASTAccessImpl(), RBuiltinPackages.getInstance(), new RForeignAccessFactoryImpl());
         }
         return RContext.create(this, env, env.lookup(Instrumenter.class), initialContext);
+    }
+
+    @Override
+    protected OptionDescriptors getOptionDescriptors() {
+        return FastROptions.getDescriptors();
     }
 
     @Override

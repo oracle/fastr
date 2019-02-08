@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -51,13 +51,13 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.ops.na.NACheck;
 
 public abstract class Quantifier extends RBuiltinNode.Arg2 {
-    protected static final int MAX_CACHED_LENGTH = DSLConfig.getCacheSize(10);
+    protected static final int MAX_CACHED_LENGTH = 10;
 
     private final NACheck naCheck = NACheck.create();
     private final BranchProfile trueBranch = BranchProfile.create();
     private final BranchProfile falseBranch = BranchProfile.create();
 
-    @Children private final CastNode[] argCastNodes = new CastNode[Math.max(1, MAX_CACHED_LENGTH)];
+    @Children private final CastNode[] argCastNodes = new CastNode[Math.max(1, DSLConfig.getCacheSize(MAX_CACHED_LENGTH))];
 
     private static final class ProfileCastNode extends CastNode {
 
@@ -104,7 +104,7 @@ public abstract class Quantifier extends RBuiltinNode.Arg2 {
         return RRuntime.asLogical(emptyVectorResult());
     }
 
-    @Specialization(limit = "getCacheSize(1)", guards = {"cachedLength == args.getLength()", "cachedLength < MAX_CACHED_LENGTH"})
+    @Specialization(limit = "getCacheSize(1)", guards = {"cachedLength == args.getLength()", "cachedLength < getCacheSize(10)"})
     @ExplodeLoop
     protected byte opCachedLength(RArgsValuesAndNames args, boolean naRm,
                     @Cached("args.getLength()") int cachedLength) {

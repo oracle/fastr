@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,6 +28,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -45,9 +46,9 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 
 @RBuiltin(name = "list", kind = PRIMITIVE, parameterNames = {"..."}, behavior = PURE)
+@ImportStatic(DSLConfig.class)
 public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(2);
     protected static final int MAX_SHARE_OBJECT_NODES = 16;
 
     @Child private VectorFactory factory = VectorFactory.create();
@@ -89,7 +90,7 @@ public abstract class ListBuiltin extends RBuiltinNode.Arg1 {
      * This specialization unrolls the loop that shares the list elements, uses a different
      * {@link ShareObjectNode} for each element, and keeps a cached version of the name vector.
      */
-    @Specialization(limit = "CACHE_LIMIT", guards = {"!args.isEmpty()",
+    @Specialization(limit = "getCacheSize(2)", guards = {"!args.isEmpty()",
                     "args.getLength() <= MAX_SHARE_OBJECT_NODES",
                     "cachedLength == args.getLength()",
                     "cachedSignature == args.getSignature()"})

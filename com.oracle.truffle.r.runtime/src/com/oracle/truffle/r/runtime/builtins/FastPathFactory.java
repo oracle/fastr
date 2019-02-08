@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,8 +24,8 @@ package com.oracle.truffle.r.runtime.builtins;
 
 import java.util.function.Supplier;
 
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
 
 /**
@@ -82,7 +82,7 @@ public interface FastPathFactory {
 
         @Override
         public boolean forcedEagerPromise(int index) {
-            return FastROptions.noEagerEval() ? false : true;
+            return !RContext.getInstance().noEagerEvalOption();
         }
     };
 

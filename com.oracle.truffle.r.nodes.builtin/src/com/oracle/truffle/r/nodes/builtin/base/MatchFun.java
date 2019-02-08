@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
 import com.oracle.truffle.api.frame.FrameDescriptor;
@@ -84,10 +85,11 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         return MatchFunInternalNodeGen.create(this);
     }
 
+    @ImportStatic(DSLConfig.class)
     @TypeSystemReference(RTypes.class)
     abstract static class MatchFunInternal extends RBaseNode {
 
-        protected static final int LIMIT = DSLConfig.getCacheSize(3);
+        protected static final int LIMIT = 3;
         private final MatchFun outer;
 
         private final BranchProfile needsMaterialize = BranchProfile.create();
@@ -122,7 +124,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "LIMIT", guards = {"funValue.getLength() == 1", "funValue.getDataAt(0) == cachedName", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
+        @Specialization(limit = "getCacheSize(LIMIT)", guards = {"funValue.getLength() == 1", "funValue.getDataAt(0) == cachedName", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
         protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RAbstractStringVector funValue, boolean descend,
                         @Cached("firstString(funValue)") String cachedName,
                         @Cached("getCallerFrameDescriptor(frame)") FrameDescriptor cachedCallerFrameDescriptor,
@@ -136,7 +138,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         }
 
         @SuppressWarnings("unused")
-        @Specialization(limit = "LIMIT", guards = {"funValue == cachedFunValue", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
+        @Specialization(limit = "getCacheSize(LIMIT)", guards = {"funValue == cachedFunValue", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
         protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend,
                         @Cached("funValue") RSymbol cachedFunValue,
                         @Cached("getCallerFrameDescriptor(frame)") FrameDescriptor cachedCallerFrameDescriptor,

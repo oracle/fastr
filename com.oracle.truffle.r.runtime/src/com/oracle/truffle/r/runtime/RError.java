@@ -30,13 +30,15 @@ import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.SourceSection;
-import static com.oracle.truffle.r.runtime.RLogger.LOGGER_PERFORMANCE_WARNING;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PerformanceWarnings;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.env.REnvironment.PutException;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import java.util.logging.Level;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_PERFORMANCE_WARNINGS;
 
 /**
  * A facade for handling errors. This class extends {@link RuntimeException} so that it can be
@@ -303,7 +305,7 @@ public final class RError extends RuntimeException implements TruffleException {
 
     public static void performanceWarning(String string) {
         checkObsoleteOption();
-        TruffleLogger logger = RLogger.getLogger(LOGGER_PERFORMANCE_WARNING);
+        TruffleLogger logger = RLogger.getLogger(LOGGER_PERFORMANCE_WARNINGS);
         if (logger.isLoggable(Level.FINE)) {
             StringBuilder sb = new StringBuilder();
             sb.append("Performance warning: ").append(string).append("\n");
@@ -315,9 +317,9 @@ public final class RError extends RuntimeException implements TruffleException {
 
     @TruffleBoundary
     private static void checkObsoleteOption() {
-        if (FastROptions.PerformanceWarnings.getBooleanValue()) {
+        if (RContext.getInstance().getOption(PerformanceWarnings)) {
             System.out.println("WARNING: The PerformanceWarnings option was discontinued.\n" +
-                            "You can rerun FastR with --log.R.com.oracle.truffle.r.performanceWarning.level=FINE");
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.performanceWarnings.level=FINE");
         }
     }
 

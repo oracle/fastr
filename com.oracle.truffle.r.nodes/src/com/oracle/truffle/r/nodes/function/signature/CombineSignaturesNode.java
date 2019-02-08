@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.util.Arrays;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -44,9 +45,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  *
  * @see com.oracle.truffle.r.nodes.function.ArgumentMatcher
  */
+@ImportStatic(DSLConfig.class)
 public abstract class CombineSignaturesNode extends RBaseNode {
-
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
     public abstract RArgsValuesAndNames execute(ArgumentsSignature left, Object[] leftValue, ArgumentsSignature right, Object[] rightValues);
 
@@ -62,7 +62,7 @@ public abstract class CombineSignaturesNode extends RBaseNode {
         return new RArgsValuesAndNames(leftValues, left);
     }
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"left == leftCached", "right == rightCached", "!right.isEmpty()", "!left.isEmpty()"})
+    @Specialization(limit = "getCacheSize(3)", guards = {"left == leftCached", "right == rightCached", "!right.isEmpty()", "!left.isEmpty()"})
     protected RArgsValuesAndNames combineCached(ArgumentsSignature left, Object[] leftValues, @SuppressWarnings("unused") ArgumentsSignature right, Object[] rightValues,
                     @Cached("left") @SuppressWarnings("unused") ArgumentsSignature leftCached,
                     @Cached("right") @SuppressWarnings("unused") ArgumentsSignature rightCached,

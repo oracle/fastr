@@ -44,11 +44,12 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValu
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PromiseCacheSize;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
@@ -163,7 +164,7 @@ public final class PromiseHelperNode extends RBaseNode {
         try {
             if (promiseClosureCache == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(FastROptions.PromiseCacheSize.getNonNegativeIntValue())));
+                promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(RContext.getInstance().getNonNegativeIntOption(PromiseCacheSize))));
             }
             promise.setUnderEvaluation();
             Frame execFrame = isInOriginFrame(frame, promise) ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));

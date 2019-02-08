@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.function.call;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
@@ -58,8 +59,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
  */
 public abstract class PrepareArguments extends Node {
 
-    protected static final int CACHE_SIZE = DSLConfig.getCacheSize(8);
-
+    @ImportStatic(DSLConfig.class)
     abstract static class PrepareArgumentsDefault extends PrepareArguments {
 
         protected final RRootNode target;
@@ -116,7 +116,7 @@ public abstract class PrepareArguments extends Node {
             return new RArgsValuesAndNames(result, suppliedSignature);
         }
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"cachedVarArgSignature == null || cachedVarArgSignature == varArgs.getSignature()", "cachedS3DefaultArguments == s3DefaultArguments"})
+        @Specialization(limit = "getCacheSize(8)", guards = {"cachedVarArgSignature == null || cachedVarArgSignature == varArgs.getSignature()", "cachedS3DefaultArguments == s3DefaultArguments"})
         public RArgsValuesAndNames prepare(VirtualFrame frame, RArgsValuesAndNames varArgs, @SuppressWarnings("unused") S3DefaultArguments s3DefaultArguments,
                         @SuppressWarnings("unused") RBaseNode call,
                         @Cached("getSignatureOrNull(varArgs)") ArgumentsSignature cachedVarArgSignature,
@@ -186,6 +186,7 @@ public abstract class PrepareArguments extends Node {
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     abstract static class PrepareArgumentsExplicit extends PrepareArguments {
 
         protected final RRootNode target;
@@ -200,7 +201,7 @@ public abstract class PrepareArguments extends Node {
             return ArgumentMatcher.matchArguments(explicitArgSignature, formals.getSignature(), call, target.getBuiltin());
         }
 
-        @Specialization(limit = "CACHE_SIZE", guards = {"cachedExplicitArgSignature == explicitArgs.getSignature()"})
+        @Specialization(limit = "getCacheSize(8)", guards = {"cachedExplicitArgSignature == explicitArgs.getSignature()"})
         public RArgsValuesAndNames prepare(RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments, @SuppressWarnings("unused") RBaseNode call,
                         @SuppressWarnings("unused") @Cached("explicitArgs.getSignature()") ArgumentsSignature cachedExplicitArgSignature,
                         @Cached("createArguments(call, cachedExplicitArgSignature)") MatchPermutation permutation) {

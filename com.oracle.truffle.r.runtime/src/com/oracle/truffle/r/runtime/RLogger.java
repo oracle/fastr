@@ -86,7 +86,7 @@ public class RLogger {
     /**
      * Log performance warnings.
      */
-    public static final String LOGGER_PERFORMANCE_WARNING = "com.oracle.truffle.r.performanceWarning";
+    public static final String LOGGER_PERFORMANCE_WARNINGS = "com.oracle.truffle.r.performanceWarnings";
 
     public static TruffleLogger getLogger(String name) {
         return TruffleLogger.getLogger(R_LANGUAGE_ID, name);

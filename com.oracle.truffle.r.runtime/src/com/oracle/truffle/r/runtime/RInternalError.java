@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,7 +38,11 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktraces;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import com.oracle.truffle.r.runtime.context.RContext;
+import org.graalvm.options.OptionKey;
 
 /**
  * This class is intended to be used for internal errors that do not correspond to R errors.
@@ -134,7 +138,8 @@ public final class RInternalError extends Error implements TruffleException {
     }
 
     static String createVerboseStackTrace() {
-        if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue() || FastROptions.PrintErrorStacktraces.getBooleanValue()) {
+        RContext ctx = RContext.getInstance();
+        if (ctx.getOption(PrintErrorStacktracesToFile) || ctx.getOption(PrintErrorStacktraces)) {
             if (!initializing) {
                 initializing = true;
                 try {
@@ -166,7 +171,8 @@ public final class RInternalError extends Error implements TruffleException {
 
     @TruffleBoundary
     private static void reportErrorDefault(Throwable t, int contextId) {
-        boolean detailedMessage = FastROptions.PrintErrorStacktraces.getBooleanValue() || FastROptions.PrintErrorStacktracesToFile.getBooleanValue();
+        RContext ctx = RContext.getInstance();
+        boolean detailedMessage = ctx.getOption(PrintErrorStacktraces) || ctx.getOption(PrintErrorStacktracesToFile);
         String errMsg = ".";
         if (detailedMessage) {
             errMsg = ": \"";
@@ -192,13 +198,18 @@ public final class RInternalError extends Error implements TruffleException {
             } else {
                 verboseStackTrace = "";
             }
-            if (FastROptions.PrintErrorStacktraces.getBooleanValue()) {
+
+            boolean printErrorStacktraces = getOption(PrintErrorStacktraces);
+            boolean printErrorStacktracesToFile = getOption(PrintErrorStacktracesToFile);
+            if (printErrorStacktraces) {
                 System.err.println(out.toString());
                 System.err.println(verboseStackTrace);
             }
 
             String message = "An internal error occurred" + errMsg + "\nPlease report an issue at https://github.com/oracle/fastr including the commands";
-            if (FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
+            // if ctx == null and we can't determine if stactrace should be logged, or not,
+            // then at least print to file
+            if (printErrorStacktracesToFile) {
                 Path logfile = Utils.getLogPath(getLogFileName(contextId));
                 if (logfile != null) {
                     message += " and the error log file '" + logfile + "'.";
@@ -218,10 +229,10 @@ public final class RInternalError extends Error implements TruffleException {
                     RSuicide.rSuicide("FastR internal error");
                 }
             } else {
-                message += ". You can rerun FastR with --jvm.DR:+" + FastROptions.PrintErrorStacktracesToFile.name() +
+                message += ". You can rerun FastR with --R.PrintErrorStacktracesToFile=true" +
                                 " to turn on internal errors logging. Please attach the log file to the issue if possible.";
             }
-            if (!FastROptions.PrintErrorStacktraces.getBooleanValue() && !FastROptions.PrintErrorStacktracesToFile.getBooleanValue()) {
+            if (!printErrorStacktraces && !printErrorStacktracesToFile) {
                 System.err.println(message);
             }
         } catch (ExitException | ThreadDeath t) {
@@ -229,6 +240,15 @@ public final class RInternalError extends Error implements TruffleException {
         } catch (Throwable t) {
             System.err.println("error while reporting internal error:");
             t.printStackTrace();
+        }
+    }
+
+    private static boolean getOption(OptionKey<Boolean> key) {
+        RContext ctx = RContext.getInstance();
+        if (ctx != null) {
+            return ctx.getOption(key);
+        } else {
+            return (boolean) FastROptions.getEnvValue(FastROptions.getName(key), false);
         }
     }
 

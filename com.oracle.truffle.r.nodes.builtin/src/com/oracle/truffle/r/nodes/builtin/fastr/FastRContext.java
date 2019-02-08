@@ -42,7 +42,7 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
 import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -119,7 +119,7 @@ public class FastRContext {
     public abstract static class Spawn extends RBuiltinNode.Arg2 {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, FastROptions.SharedContexts.getBooleanValue() ? "SHARE_ALL" : "SHARE_NOTHING"};
+            return new Object[]{RMissing.instance, RContext.getInstance().getOption(SharedContexts) ? "SHARE_ALL" : "SHARE_NOTHING"};
         }
 
         static {
@@ -132,7 +132,7 @@ public class FastRContext {
         @TruffleBoundary
         protected RIntVector spawn(RAbstractStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
-            if (FastROptions.SharedContexts.getBooleanValue() && contextKind != ContextKind.SHARE_ALL) {
+            if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
             }
             handleSharedContexts(contextKind);
@@ -250,7 +250,7 @@ public class FastRContext {
     public abstract static class Eval extends RBuiltinNode.Arg2 {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, FastROptions.SharedContexts.getBooleanValue() ? "SHARE_ALL" : "SHARE_NOTHING"};
+            return new Object[]{RMissing.instance, RContext.getInstance().getOption(SharedContexts) ? "SHARE_ALL" : "SHARE_NOTHING"};
         }
 
         static {
@@ -263,7 +263,7 @@ public class FastRContext {
         @TruffleBoundary
         protected Object eval(RAbstractStringVector exprs, String kind) {
             RContext.ContextKind contextKind = RContext.ContextKind.valueOf(kind);
-            if (FastROptions.SharedContexts.getBooleanValue() && contextKind != ContextKind.SHARE_ALL) {
+            if (RContext.getInstance().getOption(SharedContexts) && contextKind != ContextKind.SHARE_ALL) {
                 throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "Only shared contexts are allowed");
             }
             handleSharedContexts(contextKind);

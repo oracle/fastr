@@ -46,9 +46,11 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 @ReportPolymorphism
 public abstract class AttributeIterativeAccessNode extends RBaseNode {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(RAttributesLayout.LAYOUTS.length);
-
     private final ConditionProfile[] loopProfiles;
+
+    protected int getCacheLimit() {
+        return DSLConfig.getCacheSize(RAttributesLayout.LAYOUTS.length);
+    }
 
     protected AttributeIterativeAccessNode() {
         this.loopProfiles = new ConditionProfile[RAttributesLayout.LAYOUTS.length];

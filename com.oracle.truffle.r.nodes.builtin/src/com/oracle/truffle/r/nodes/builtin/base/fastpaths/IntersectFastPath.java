@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -139,7 +139,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
     }
 
     @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0",
-                    "length(y, cached.yClass) > 0", "LIMIT_1_GUARD"}, rewriteOn = IllegalArgumentException.class)
+                    "length(y, cached.yClass) > 0", "getLimit1Guard()"}, rewriteOn = IllegalArgumentException.class)
     protected RAbstractIntVector intersectMaybeSorted(RAbstractIntVector x, RAbstractIntVector y,
                     @Cached("new(x.getClass(), y.getClass())") IntersectMaybeSortedNode cached) {
         // apply the type profiles:
@@ -170,7 +170,7 @@ public abstract class IntersectFastPath extends RFastPathNode {
         return new IntersectSortedNode(true);
     }
 
-    @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0", "length(y, cached.yClass) > 0", "LIMIT_1_GUARD"})
+    @Specialization(limit = "1", guards = {"x.getClass() == cached.xClass", "y.getClass() == cached.yClass", "length(x, cached.xClass) > 0", "length(y, cached.yClass) > 0", "getLimit1Guard()"})
     protected RAbstractIntVector intersect(RAbstractIntVector x, RAbstractIntVector y,
                     @Cached("new(x.getClass(), y.getClass())") IntersectNode cached) {
         // apply the type profiles:
