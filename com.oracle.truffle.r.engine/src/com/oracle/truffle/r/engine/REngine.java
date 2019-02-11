@@ -313,7 +313,7 @@ final class REngine implements Engine, Engine.Timings {
             });
         } else {
             List<RSyntaxNode> statements = parseSource(source);
-            EngineRootNode rootNode = EngineRootNode.createEngineRoot(this, context, statements, createSourceSection(source, statements), executionFrame);
+            EngineRootNode rootNode = EngineRootNode.createEngineRoot(this, context, statements, createSourceSection(source, statements), executionFrame, false);
             return Truffle.getRuntime().createCallTarget(rootNode);
         }
     }
@@ -410,7 +410,7 @@ final class REngine implements Engine, Engine.Timings {
         } catch (IOException ex) {
             throw new RuntimeException(ex);
         }
-        return EngineRootNode.createEngineRoot(this, context, statements, createSourceSection(fullSource, statements), frame);
+        return EngineRootNode.createEngineRoot(this, context, statements, createSourceSection(fullSource, statements), frame, true);
     }
 
     @Override

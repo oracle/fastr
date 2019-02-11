@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -68,8 +68,9 @@ class EngineRootNode extends RootNode {
         this.contextReference = context.getLanguage().getContextReference();
     }
 
-    public static EngineRootNode createEngineRoot(REngine engine, RContext context, List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame) {
-        return new EngineRootNode(new EngineBodyNode(engine, statements, getPrintResult(sourceSection)), context, sourceSection, executionFrame);
+    public static EngineRootNode createEngineRoot(REngine engine, RContext context, List<RSyntaxNode> statements, SourceSection sourceSection, MaterializedFrame executionFrame,
+                    boolean forcePrintResult) {
+        return new EngineRootNode(new EngineBodyNode(engine, statements, forcePrintResult || getPrintResult(sourceSection)), context, sourceSection, executionFrame);
     }
 
     /**
