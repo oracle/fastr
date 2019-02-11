@@ -65,7 +65,7 @@ public final class ToolsRFFI {
                         assert symbolHandle != DLL.SYMBOL_NOT_FOUND;
                         nativeCallInfo = new NativeCallInfo(C_PARSE_RD, symbolHandle, toolsDLLInfo);
                     }
-                    return callRFFINode.dispatch(nativeCallInfo,
+                    return callRFFINode.dispatch(null, nativeCallInfo,
                                     new Object[]{con, srcfile, verbose, fragment, basename, warningCalls, macros, warndups});
                 } catch (Throwable ex) {
                     throw RInternalError.shouldNotReachHere(ex, "error during Rd parsing" + ex.getMessage());

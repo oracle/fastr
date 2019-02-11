@@ -111,7 +111,22 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.car = RNull.instance;
         this.cdr = RNull.instance;
         this.tag = RNull.instance;
+        // patternState = PatternState.none;
     }
+
+// public enum PatternState {
+// fun,
+// funParent,
+// evalq,
+// evalqParent,
+// tryCatch,
+// none
+// }
+
+    // public final PatternState patternState;
+
+    private static final String tryCatch = "tryCatch";
+    private static final String evalq = "evalq";
 
     /**
      * Normal pairlist with values for car, cdr, tag and type.
@@ -124,6 +139,29 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.cdr = cdr;
         this.tag = tag;
         this.type = type;
+// if (car instanceof RFunction) {
+// patternState = PatternState.fun;
+// } else if (car instanceof RPairList) {
+// switch (((RPairList) car).patternState) {
+// case fun:
+// patternState = PatternState.funParent;
+// break;
+// case evalq:
+// patternState = PatternState.evalqParent;
+// break;
+// default:
+// patternState = PatternState.none;
+// break;
+// }
+// } else if (car instanceof RSymbol && evalq == ((RSymbol) car).getName() && cdr instanceof
+// RPairList && ((RPairList) cdr).patternState == PatternState.funParent) {
+// patternState = PatternState.evalq;
+// } else if (car instanceof RSymbol && tryCatch == ((RSymbol) car).getName() && cdr instanceof
+// RPairList && ((RPairList) cdr).patternState == PatternState.evalqParent) {
+// patternState = PatternState.tryCatch;
+// } else {
+// patternState = PatternState.none;
+// }
     }
 
     /**
@@ -136,6 +174,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.type = SEXPTYPE.LANGSXP;
         this.mayBeClosure = true;
         copyAttributesFromClosure();
+        // patternState = PatternState.none;
     }
 
     @TruffleBoundary

@@ -30,7 +30,10 @@ import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.MaterializedFrame;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RObject;
@@ -74,6 +77,7 @@ public abstract class RFFIContext extends RFFI {
          */
         public final ArrayList<RObject> protectStack = new ArrayList<>();
 
+        public final ArrayList<Integer> downcallFrameDepthStack = new ArrayList<>();
     }
 
     /**
@@ -137,16 +141,23 @@ public abstract class RFFIContext extends RFFI {
         throw RInternalError.unimplemented("R Embedding not supported with " + this.getClass().getSimpleName() + " RFFI backend.");
     }
 
-    public long beforeDowncall(@SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+    /**
+     * @param frame the last FastR frame before the downcall or null if the this call is beyond the
+     *            truffle boundary
+     * @param rffiType the type of the RFFI backend
+     */
+    public long beforeDowncall(VirtualFrame frame, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         rffiContextState.callDepth++;
+        rffiContextState.downcallFrameDepthStack.add(frame == null ? null : RArguments.getDepth(frame));
         return 0;
     }
 
     /**
      * @param before the value returned by the corresponding call to
-     *            {@link #beforeDowncall(com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}.
+     *            {@link #beforeDowncall(VirtualFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}.
      */
     public void afterDowncall(long before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
+        rffiContextState.downcallFrameDepthStack.remove(rffiContextState.downcallFrameDepthStack.size() - 1);
         rffiContextState.callDepth--;
         if (rffiContextState.callDepth == 0) {
             cooperativeGc();

@@ -30,6 +30,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -143,7 +144,7 @@ public class TruffleNFI_Call implements CallRFFI {
         @Children private final FFIWrapNode[] ffiWrapNodes1 = FFIWrapNode.create(1);
 
         @Override
-        public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
+        public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             boolean isNullSetting = true;
             try {
                 switch (args.length) {

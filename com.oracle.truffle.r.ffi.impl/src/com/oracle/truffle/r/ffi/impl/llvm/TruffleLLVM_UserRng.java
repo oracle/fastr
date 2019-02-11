@@ -24,6 +24,7 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -70,10 +71,10 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
     private static final class TruffleLLVMInitNode extends RNGNode implements InitNode {
 
         @Override
-        public void execute(int seed) {
+        public void execute(VirtualFrame frame, int seed) {
             init(NativeFunction.unif_init, null);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
+            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
                 ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget, seed);
             } catch (InteropException ex) {
@@ -87,10 +88,10 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
     private static final class TruffleLLVM_RandNode extends RNGNode implements RandNode {
 
         @Override
-        public double execute() {
+        public double execute(VirtualFrame frame) {
             init(NativeFunction.unif_rand, NativeFunction.read_pointer_double);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
+            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 return (double) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
@@ -105,10 +106,10 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
     private static final class TruffleLLVM_NSeedNode extends RNGNode implements NSeedNode {
 
         @Override
-        public int execute() {
+        public int execute(VirtualFrame frame) {
             init(NativeFunction.unif_nseed, NativeFunction.read_pointer_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
+            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 return (int) ForeignAccess.sendExecute(readPointerNode, readPointerTarget, address);
@@ -123,10 +124,10 @@ public class TruffleLLVM_UserRng implements UserRngRFFI {
     private static final class TruffleLLVM_SeedsNode extends RNGNode implements SeedsNode {
 
         @Override
-        public void execute(int[] n) {
+        public void execute(VirtualFrame frame, int[] n) {
             init(NativeFunction.unif_seedloc, NativeFunction.read_array_int);
             RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
-            long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
+            long before = stateRFFI.beforeDowncall(frame, RFFIFactory.Type.LLVM);
             try {
                 Object address = ForeignAccess.sendExecute(userFunctionNode, userFunctionTarget);
                 for (int i = 0; i < n.length; i++) {

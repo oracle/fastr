@@ -27,6 +27,7 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -228,11 +229,11 @@ public final class TruffleLLVM_Call implements CallRFFI {
         }
 
         @Override
-        public Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
+        public Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
             TruffleLLVM_Context rffiCtx = TruffleLLVM_Context.getContextState();
             pushCallbacks.execute(rffiCtx.callState.setCallbacksAddress, rffiCtx.callState.callbacks);
             try {
-                return InvokeCallNode.super.dispatch(nativeCallInfo, args);
+                return InvokeCallNode.super.dispatch(frame, nativeCallInfo, args);
             } finally {
                 popCallbacks.execute();
             }
@@ -295,8 +296,8 @@ public final class TruffleLLVM_Call implements CallRFFI {
         @Child private TruffleLLVM_InvokeCallNode invokeCallNode = TruffleLLVM_InvokeCallNodeGen.create(true);
 
         @Override
-        public void execute(NativeCallInfo nativeCallInfo, Object[] args) {
-            invokeCallNode.dispatch(nativeCallInfo, args);
+        public void execute(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
+            invokeCallNode.dispatch(frame, nativeCallInfo, args);
         }
     }
 

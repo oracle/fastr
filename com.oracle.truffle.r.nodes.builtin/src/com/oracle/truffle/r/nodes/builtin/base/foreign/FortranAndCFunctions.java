@@ -120,7 +120,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
             }
         }
 
@@ -143,7 +143,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
             }
         }
 
@@ -223,7 +223,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(nativeCallInfo, naok, dup, args);
+                return invokeCNode.dispatch(frame, nativeCallInfo, naok, dup, args);
             }
         }
 
@@ -253,7 +253,7 @@ public class FortranAndCFunctions {
                 Object result = explicitCall.call(frame, function, args);
                 return RDataFactory.createList(new Object[]{result});
             } else {
-                return invokeCNode.dispatch(new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
+                return invokeCNode.dispatch(frame, new NativeCallInfo(symbol.getDataAt(0), func, rns.getDllInfo()), naok, dup, args);
             }
         }
 

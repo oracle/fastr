@@ -74,7 +74,7 @@ public final class TruffleNFI_DownCallNodeFactory extends DownCallNodeFactory {
                 }
 
                 if (fn.hasComplexInteraction()) {
-                    return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(RFFIFactory.Type.NFI);
+                    return RContext.getInstance().getRFFI(TruffleNFI_Context.class).beforeDowncall(null, RFFIFactory.Type.NFI);
                 }
                 return 0;
             }

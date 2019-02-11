@@ -32,6 +32,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
@@ -375,8 +376,8 @@ public class TruffleNFI_Context extends RFFIContext {
     }
 
     @Override
-    public long beforeDowncall(RFFIFactory.Type rffiType) {
-        super.beforeDowncall(RFFIFactory.Type.NFI);
+    public long beforeDowncall(VirtualFrame frame, RFFIFactory.Type rffiType) {
+        super.beforeDowncall(frame, RFFIFactory.Type.NFI);
         transientAllocations.push(new ArrayList<>());
         if (hasAccessLock) {
             acquireLock();

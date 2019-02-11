@@ -665,7 +665,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
                 return explicitCall(frame, nativeCallInfo, args);
             } else {
-                return dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
+                return dispatch(frame, nativeCallInfo, materializeArgs(args.getArguments()));
             }
         }
 
@@ -685,7 +685,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(nativeCallInfo))) {
                 return explicitCall(frame, nativeCallInfo, args);
             } else {
-                return dispatch(nativeCallInfo, materializeArgs(args.getArguments()));
+                return dispatch(frame, nativeCallInfo, materializeArgs(args.getArguments()));
             }
         }
 
@@ -716,7 +716,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(func))) {
                 return explicitCall(frame, func, args);
             } else {
-                return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(args.getArguments()));
+                return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), materializeArgs(args.getArguments()));
             }
         }
 
@@ -726,7 +726,7 @@ public class CallAndExternalFunctions {
             if (registeredProfile.profile(isRegisteredRFunction(symbol))) {
                 return explicitCall(frame, symbol, args);
             } else {
-                return dispatch(new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(args.getArguments()));
+                return dispatch(frame, new NativeCallInfo("", symbol.getAddr(), null), materializeArgs(args.getArguments()));
             }
         }
 
@@ -817,7 +817,7 @@ public class CallAndExternalFunctions {
                 return explicitCall(frame, cached.nativeCallInfo, args);
             } else {
                 Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
-                return dispatch(cached.nativeCallInfo, new Object[]{list});
+                return dispatch(frame, cached.nativeCallInfo, new Object[]{list});
             }
         }
 
@@ -853,7 +853,7 @@ public class CallAndExternalFunctions {
                 return explicitCall(frame, func, args);
             } else {
                 Object list = encodeArgumentPairList(args, symbol);
-                return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
+                return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{list});
             }
         }
 
@@ -936,7 +936,7 @@ public class CallAndExternalFunctions {
                         @Cached("new(symbol)") CallNamedFunctionNode cached) {
             Object list = encodeArgumentPairList(args, cached.nativeCallInfo.name);
             REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
-            return dispatch(cached.nativeCallInfo, new Object[]{CALL, getOp(), list, rho});
+            return dispatch(frame, cached.nativeCallInfo, new Object[]{CALL, getOp(), list, rho});
         }
 
         @Specialization
@@ -956,7 +956,7 @@ public class CallAndExternalFunctions {
             }
             Object list = encodeArgumentPairList(args, symbol);
             REnvironment rho = REnvironment.frameToEnvironment(frame.materialize());
-            return dispatch(new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, rho});
+            return dispatch(frame, new NativeCallInfo(symbol, func, rns.getDllInfo()), new Object[]{CALL, getOp(), list, rho});
         }
 
         @Fallback
@@ -969,8 +969,8 @@ public class CallAndExternalFunctions {
         @Child private InvokeCallNode callRFFINode = RFFIFactory.getCallRFFI().createInvokeCallNode();
         @Child private RExplicitCallNode explicitCall;
 
-        protected Object dispatch(NativeCallInfo nativeCallInfo, Object[] args) {
-            return callRFFINode.dispatch(nativeCallInfo, args);
+        protected Object dispatch(VirtualFrame frame, NativeCallInfo nativeCallInfo, Object[] args) {
+            return callRFFINode.dispatch(frame, nativeCallInfo, args);
         }
 
         protected Object explicitCall(VirtualFrame frame, NativeCallInfo nativeCallInfo, RArgsValuesAndNames args) {
@@ -1028,21 +1028,21 @@ public class CallAndExternalFunctions {
         }
 
         @Specialization
-        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
             Object list = encodeArgumentPairList(args, nativeCallInfo.name);
-            return callRFFINode.dispatch(nativeCallInfo, new Object[]{list});
+            return callRFFINode.dispatch(frame, nativeCallInfo, new Object[]{list});
         }
 
         @Specialization
-        protected Object callNamedFunction(String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
+        protected Object callNamedFunction(VirtualFrame frame, String name, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
-            return callNamedFunctionWithPackage(name, args, null, findSymbolNode);
+            return callNamedFunctionWithPackage(frame, name, args, null, findSymbolNode);
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(String name, RArgsValuesAndNames args, String packageName,
+        protected Object callNamedFunctionWithPackage(VirtualFrame frame, String name, RArgsValuesAndNames args, String packageName,
                         @Cached("create()") DLL.RFindSymbolNode findSymbolNode) {
             DLL.RegisteredNativeSymbol rns = new DLL.RegisteredNativeSymbol(DLL.NativeSymbolType.External, null, null);
             DLL.SymbolHandle func = findSymbolNode.execute(name, packageName, rns);
@@ -1050,7 +1050,7 @@ public class CallAndExternalFunctions {
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
             Object list = encodeArgumentPairList(args, name);
-            return callRFFINode.dispatch(new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
+            return callRFFINode.dispatch(frame, new NativeCallInfo(name, func, rns.getDllInfo()), new Object[]{list});
         }
 
         @Fallback
@@ -1092,10 +1092,10 @@ public class CallAndExternalFunctions {
         }
 
         @Specialization
-        protected Object callNamedFunction(RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo) {
             NativeCallInfo nativeCallInfo = extractSymbolInfo.execute(symbol);
-            return callRFFINode.dispatch(nativeCallInfo, args.getArguments());
+            return callRFFINode.dispatch(frame, nativeCallInfo, args.getArguments());
         }
 
         @Specialization
@@ -1113,7 +1113,7 @@ public class CallAndExternalFunctions {
             if (func == DLL.SYMBOL_NOT_FOUND) {
                 throw error(RError.Message.C_SYMBOL_NOT_IN_TABLE, name);
             }
-            return callRFFINode.dispatch(new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
+            return callRFFINode.dispatch(null, new NativeCallInfo(name, func, rns.getDllInfo()), args.getArguments());
         }
 
         @Fallback

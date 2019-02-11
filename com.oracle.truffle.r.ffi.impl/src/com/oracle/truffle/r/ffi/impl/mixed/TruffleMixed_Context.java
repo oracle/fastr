@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.ffi.impl.mixed;
 
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_Context;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DownCallNodeFactory;
@@ -123,15 +124,15 @@ public class TruffleMixed_Context extends RFFIContext {
     }
 
     @Override
-    public long beforeDowncall(Type rffiType) {
+    public long beforeDowncall(VirtualFrame frame, Type rffiType) {
         Type actualRffiType = rffiType == null ? Type.LLVM : rffiType;
         assert rffiType != null;
         switch (rffiType) {
             case LLVM:
-                return llvmContext.beforeDowncall(actualRffiType);
+                return llvmContext.beforeDowncall(frame, actualRffiType);
 
             case NFI:
-                return nfiContext.beforeDowncall(actualRffiType);
+                return nfiContext.beforeDowncall(frame, actualRffiType);
 
             default:
                 throw RInternalError.shouldNotReachHere();
