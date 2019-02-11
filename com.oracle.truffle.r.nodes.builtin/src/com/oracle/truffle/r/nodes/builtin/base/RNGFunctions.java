@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import static com.oracle.truffle.r.runtime.RError.Message.INVALID_ARGUMENT;
 import static com.oracle.truffle.r.runtime.RError.Message.INVALID_NORMAL_TYPE_IN_RGNKIND;
 import static com.oracle.truffle.r.runtime.RError.Message.SEED_NOT_VALID_INT;
 import static com.oracle.truffle.r.runtime.RError.Message.UNIMPLEMENTED_TYPE_IN_FUNCTION;
+import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.MODIFIES_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -37,8 +38,10 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -105,22 +108,23 @@ public class RNGFunctions {
         }
     }
 
-    @RBuiltin(name = ".fastr.set.seed", visibility = OFF, kind = PRIMITIVE, parameterNames = {"data"}, behavior = MODIFIES_STATE)
+    @RBuiltin(name = ".fastr.set.seed", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"data"}, behavior = MODIFIES_STATE)
     public abstract static class FastRSetSeed extends RBuiltinNode.Arg1 {
 
         static {
             Casts.noCasts(FastRSetSeed.class);
         }
 
+        @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
+
         @Specialization
-        @TruffleBoundary
-        protected RNull setSeed(RAbstractIntVector data) {
+        protected RNull setSeed(VirtualFrame frame, RAbstractIntVector data) {
             int[] arr = new int[data.getLength()];
             for (int i = 0; i < arr.length; i++) {
                 arr[i] = data.getDataAt(i);
             }
-
-            RContext.getInstance().stateRNG.setCurrentSeeds(arr);
+            setCurrentSeeds(arr);
+            visibility.execute(frame, false);
             return RNull.instance;
         }
 
@@ -129,21 +133,26 @@ public class RNGFunctions {
         }
 
         @Specialization(guards = {"isSetOperation(data)"})
-        @TruffleBoundary
-        protected RNull setSeed(Object data) {
-            RContext.getInstance().stateRNG.setCurrentSeeds(data);
+        protected RNull setSeed(VirtualFrame frame, Object data) {
+            setCurrentSeeds(data);
+            visibility.execute(frame, false);
             return RNull.instance;
         }
 
-        @Specialization
         @TruffleBoundary
-        protected Object getSeed(@SuppressWarnings("unused") RMissing data) {
+        private static void setCurrentSeeds(Object data) {
+            RContext.getInstance().stateRNG.setCurrentSeeds(data);
+        }
+
+        @Specialization
+        protected Object getSeed(VirtualFrame frame, @SuppressWarnings("unused") RMissing data) {
             Object seeds = RContext.getInstance().stateRNG.getCurrentSeeds();
             assert seeds != RMissing.instance;
             if (seeds instanceof int[]) {
                 int[] seedsArr = (int[]) seeds;
                 return RDataFactory.createIntVector(seedsArr, RDataFactory.INCOMPLETE_VECTOR);
             }
+            visibility.execute(frame, true);
             if (seeds == null) {
                 return RNull.instance;
             }

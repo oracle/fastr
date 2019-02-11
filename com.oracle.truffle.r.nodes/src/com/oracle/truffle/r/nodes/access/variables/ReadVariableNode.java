@@ -114,11 +114,8 @@ final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSynta
             CompilerDirectives.transferToInterpreterAndInvalidate();
             visibility = insert(SetVisibilityNode.create());
         }
-        try {
-            return read.executeInternal(frame, frame);
-        } finally {
-            visibility.execute(frame, true);
-        }
+        visibility.execute(frame, true);
+        return read.executeInternal(frame, frame);
     }
 
     @Override
