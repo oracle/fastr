@@ -23,17 +23,13 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotKind;
-import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.nodes.control.BlockNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.DispatchArgs;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
@@ -45,14 +41,10 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 
 public final class FunctionBodyNode extends Node implements RootBodyNode {
 
-    private static final int LARGE_BODY_LINES_COUNT = 200;
-    private static final int LARGE_BODY_STMTS_COUNT = 50;
-
     @Child private RNode body;
     @Child private SaveArgumentsNode saveArguments;
     @Child private SetupS3ArgsNode setupS3Args;
     @Child private SetupS4ArgsNode setupS4Args;
-    @CompilationFinal private Boolean hasLargeBody;
 
     public FunctionBodyNode(SaveArgumentsNode saveArguments, RNode body) {
         this.body = body;
@@ -63,15 +55,6 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
     public Object visibleExecute(VirtualFrame frame) {
         setupDispatchSlots(frame);
         saveArguments.execute(frame);
-        if (hasLargeBody()) {
-            return executeLargeBody(frame.materialize());
-        } else {
-            return body.visibleExecute(frame);
-        }
-    }
-
-    @TruffleBoundary
-    private Object executeLargeBody(MaterializedFrame frame) {
         return body.visibleExecute(frame);
     }
 
@@ -83,23 +66,6 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
     @Override
     public SourceSection getSourceSection() {
         return body.getSourceSection();
-    }
-
-    private boolean hasLargeBody() {
-        if (hasLargeBody == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            SourceSection sourceSection = body.getSourceSection();
-            // Very basic heuristic for "large" body
-            if (sourceSection != null) {
-                hasLargeBody = sourceSection.getEndLine() - sourceSection.getStartLine() >= LARGE_BODY_LINES_COUNT;
-            } else if (body instanceof BlockNode) {
-                BlockNode block = (BlockNode) body;
-                hasLargeBody = block.getSequence().length >= LARGE_BODY_STMTS_COUNT;
-            } else {
-                hasLargeBody = false;
-            }
-        }
-        return hasLargeBody;
     }
 
     private void setupDispatchSlots(VirtualFrame frame) {
