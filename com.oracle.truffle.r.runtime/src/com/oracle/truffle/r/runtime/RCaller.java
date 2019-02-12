@@ -34,14 +34,24 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Represents the caller of a function and is stored in {@link RArguments}. A value of this type
- * never appears in a Truffle execution. Caller remembers its parent caller and frame number as
- * described in {@code sys.parent} R function documentation: frames are numbered from 0 (global
- * environment). Sys parent does not have to have the frame with number one less, e.g. with
- * do.call(fun, args, envir) when fun asks for sys parent, it should get 'envir', moreover, when
- * evaluating promises parent frame and frame with number one less are typically also not the same
- * frames. See also builtins in {@code FrameFunctions} for more details.
+ * Represents the caller of a function and other information related an R stack frame evaluation
+ * context. It is stored in {@link RArguments}. {@link RCaller} instances for all R stack frames
+ * form a linked list.
  *
+ * A value of this type never appears in a Truffle execution. The closest concept in GNU-R is
+ * RCNTXT, see {@code main/context.c}.
+ *
+ * On the high level {@link RCaller} instance holds:
+ * <ul>
+ * <li>link to the {@link RCaller} associated with the previous R stack frame (in {@link #parent})
+ * </li>
+ * <li>frame number as described in {@code sys.parent} R function documentation: frames are numbered
+ * from 0 (global environment).</li>
+ * <li>the AST of the call that invoked this context and link to the "sys parent" -- logical parent
+ * in the sense of R's {@code parent.frame} semantics. These are crammed in the {@link #payload}
+ * field (because often {@link #parent} is the same as the logical parent).</li>
+ * </ul>
+ * 
  * NOTE: It is important to create new caller instances for each stack frame, so that
  * {@link ReturnException#getTarget()} can uniquely identify the target frame.
  *
@@ -78,9 +88,12 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * function AST (foo in this case), but passes the 'internal frame' to the execute method instead of
  * the current {@code VirtualFrame} (so that the injected AST thinks that it is executed inside bar
  * and not foo). If the cache is full, then the {@code InlineCacheNode} creates a new
- * {@link com.oracle.truffle.api.CallTarget} and calls it with 'internal frame', in which case the
- * 'internal frame' appears in Truffle frames iteration.
+ * {@link com.oracle.truffle.api.CallTarget} and calls it with 'internal frame', in which case there
+ * will be additional frame when iterating frames with Truffle, but that frame will hold the
+ * 'internal frame' inside its arguments array.
  *
+ * See {@code FrameFunctions}.
+ * 
  * @see RArguments
  */
 public final class RCaller {
@@ -94,7 +107,7 @@ public final class RCaller {
      * When one follows the {@link RCaller#parent} chain, then the depth should be decreasing by one
      * or stay the same. The reason for it staying the same are artificial frames used for promise
      * evaluation. When iterating {@link RCaller} instances chain via {@link #parent} one should
-     * skip such artifical {@link RCaller}s.
+     * skip such artificial {@link RCaller}s.
      *
      * Note: this is depth of the frame where this {@link RCaller} is stored (in the arguments
      * array), not the depth of the parent.
@@ -124,22 +137,17 @@ public final class RCaller {
      * <li>{@link RSyntaxNode}</li>
      * <li>{@link Supplier} of the {@link RSyntaxNode}</li>
      * <li>{@link RCaller} (which marks promise evaluation frames, see {@link #isPromise()})</li>
-     * <li>{@link SysParent} (which marks promise evaluation frame with explicit "sys parent", see
-     * {@link #hasSysParent()})</li>
+     * <li>{@link SysParent} (allows to store more than one item from this list, see also
+     * {@link #isNonFunctionSysParent()})</li>
      * </ul>
      *
      * If the function was invoked via regular call node, then the syntax can be that call node
      * (RSyntaxNode case), if the function was invoked by other means and we do not have the actual
      * syntax for the invocation, we only provide it lazily via Supplier, so that we do not have to
-     * always construct the AST nodes. {@link RCaller} with other types of {@link #payload} are used
-     * for promise frames or other artificial situations.
-     *
-     * Note on promise evaluation frame with explicit "sys parent": the "sys parent" frame does not
-     * have to be explicit if the environment has valid {@link RCaller} in its arguments array,
-     * which is the case if the environment represents a frame of a function that is on the call
-     * stack. If the environment does not come from currently evaluated function (e.g. manually
-     * constructed), then we cannot use {@link RCaller} to identify it, since there's no
-     * {@link #depth} that would point to the corresponding frame.
+     * always construct the AST nodes.
+     * 
+     * If this {@link RCaller} represents an artificial context for promise evaluation, the payload
+     * points to the {@link RCaller} of the context where the promise should be logically evaluated.
      */
     private final Object payload;
 
@@ -170,9 +178,17 @@ public final class RCaller {
         return parent;
     }
 
+    // TODO: rename parent to prev; this to getSysParent; explain when SysParent is used to traverse
+    // parents and when it is used as the parent
+    public RCaller getParent2() {
+        return payload instanceof SysParent && ((SysParent) payload).sysParent instanceof RCaller ? (RCaller) ((SysParent) payload).sysParent : parent;
+    }
+
     public RSyntaxElement getSyntaxNode() {
-        assert payload != null && !(payload instanceof RCaller) : payload == null ? "null RCaller" : "promise RCaller";
-        return payload instanceof RSyntaxElement ? (RSyntaxElement) payload : (RSyntaxElement) ((Supplier<?>) payload).get();
+        assert payload != null;
+        assert !isPromise();
+        Object res = payload instanceof SysParent ? ((SysParent) payload).payload : payload;
+        return res instanceof RSyntaxElement ? (RSyntaxElement) res : (RSyntaxElement) ((Supplier<?>) res).get();
     }
 
     public static boolean isValidCaller(RCaller caller) {
@@ -209,7 +225,7 @@ public final class RCaller {
      * parent from there.
      */
     public boolean isPromise() {
-        return (payload instanceof RCaller) || (payload instanceof SysParent);
+        return (payload instanceof RCaller) || (payload instanceof SysParent && ((SysParent) payload).isPromise());
     }
 
     public static void iterateCallers(RCaller start, Consumer<RCaller> consumer) {
@@ -230,19 +246,6 @@ public final class RCaller {
         return caller;
     }
 
-    // TODO: document and use in sys.parent too, find some simple test case?
-    public static REnvironment unwrapSysParent(RCaller callerIn) {
-        RCaller caller = callerIn;
-        while (RCaller.isValidCaller(caller) && caller.isPromise()) {
-            if (caller.payload instanceof SysParent) {
-                return ((SysParent) caller.payload).env;
-            } else {
-                caller = (RCaller) caller.payload;
-            }
-        }
-        return null;
-    }
-
     /**
      * If the given {@link RCaller} is stored in an artificial promise evaluation frame, then this
      * follows the {@link #payload} until it reaches the {@link RCaller} of the real frame where the
@@ -252,7 +255,7 @@ public final class RCaller {
         RCaller caller = callerIn;
         while (RCaller.isValidCaller(caller) && caller.isPromise()) {
             if (caller.payload instanceof SysParent) {
-                caller = ((SysParent) caller.payload).payload;
+                caller = (RCaller) ((SysParent) caller.payload).payload;
             } else {
                 caller = (RCaller) caller.payload;
             }
@@ -261,39 +264,55 @@ public final class RCaller {
     }
 
     /**
+     * If this {@link RCaller} happens to be selected as a result of {@code parent.frame} or
+     * similar, then this value (if not {@code null}) should be used as the resulting environment.
+     */
+    public static REnvironment unwrapSysParent(RCaller callerIn) {
+        // TODO: unit-test (only found in the wild in futile.logger tests)
+        // TODO: use in sys.parent?
+        RCaller caller = callerIn;
+        while (RCaller.isValidCaller(caller) && caller.isPromise()) {
+            if (caller.payload instanceof SysParent) {
+                return (REnvironment) ((SysParent) caller.payload).sysParent;
+            } else {
+                caller = (RCaller) caller.payload;
+            }
+        }
+        return null;
+    }
+
+    /**
      * If the {@link RCaller} instance {@link #isPromise()}, then it may have explicitly set
      * "sys parent", which overrides {@code parent.frame} should return if the traversing of the
-     * call stack ends up selecting this {@link RCaller} as the result. I.e. the "sys parent" is not
-     * parent of this {@link RCaller}, it is an alternative result that should be uses instead of
-     * this {@link RCaller} if the next {@link RCaller} asks for a {@code parent.frame}.
+     * call stack ends up selecting this {@link RCaller} as the result. I.e. in such case, the
+     * "sys parent" is not parent of this {@link RCaller}, it is an alternative result that should
+     * be uses instead of this {@link RCaller} if the next {@link RCaller} asks for a
+     * {@code parent.frame}.
      * 
-     * See {@code ParentFrame} built in for details.
-     */
-    public boolean hasSysParent() {
-        return payload instanceof SysParent;
-    }
-
-    /**
-     * There is a difference between how the stack is traversed if the {@link #getSysParent()} is
-     * artificial environment (it doesn't really have its place on the call stack) or environment of
-     * a function that is on the call stack.
+     * There is a difference between how the stack is traversed if the {@link SysParent#sysParent}
+     * of {@link RCaller} for a promise frame is an artificial environment (it doesn't really have
+     * its place on the call stack) or environment of a function that is on the call stack. That is
+     * why we further distinguish this situation here.
      * 
-     * TODO: there may be an issue with an environment of a function that is no longer on the call
-     * stack. We may have to store in RCaller whether the function has terminated yet, i.e. is not
-     * on the call stack anymore.
-     *
-     * @see #hasSysParent()
+     * NOTE: there is one potential issue and one potential optimization:
+     * 
+     * The issue is with an environment of a function that is no longer on the call stack. Should we
+     * treat it as "function sys parent"? We may have to store in RCaller whether the function has
+     * terminated yet, i.e. is not on the call stack anymore? We can also optimize this and store
+     * the RCaller of such function instead of its materialized frame.
+     * 
+     * Opportunity: for sys parents representing environments of a function, we do not have to
+     * materialize the frame and store it here, we could just use it's {@link RCaller}, but what to
+     * do if the function is popped off the stack?
+     * 
+     * See {@code ParentFrame} built in for more details.
      */
-    public boolean hasNonFunctionSysParent() {
-        return payload instanceof SysParent && !(((SysParent) payload).env instanceof REnvironment.Function);
-    }
-
-    /**
-     * @see #hasSysParent()
-     */
-    public REnvironment getSysParent() {
-        assert payload instanceof SysParent;
-        return ((SysParent) payload).env;
+    public boolean isNonFunctionSysParent() {
+        if (payload instanceof SysParent) {
+            SysParent sysParent = (SysParent) payload;
+            return sysParent.isPromise() && !(sysParent.sysParent instanceof REnvironment.Function);
+        }
+        return false;
     }
 
     public static RCaller createInvalid(Frame callingFrame) {
@@ -363,6 +382,19 @@ public final class RCaller {
         return new RCaller(newDepth, currentCaller, new SysParent(sysParent, originalCaller));
     }
 
+    /**
+     * Creates {@link RCaller} for evaluation of the generic method. The logical parent of such
+     * method should be the caller of the "dispatch" function (the function that calls
+     * {@code UseMethod("xyz")}), but we still need to keep the actual parent.
+     * 
+     * @param dispatchingCaller The logical parent.
+     * @param call The syntax of the call, can be supplier of the result.
+     * @param currentCaller The current {@link RCaller}.
+     */
+    public static RCaller createForGenericFunctionCall(RCaller dispatchingCaller, Object call, RCaller currentCaller) {
+        return new RCaller(currentCaller.getDepth() + 1, currentCaller, new SysParent(dispatchingCaller, call));
+    }
+
     public boolean getVisibility() {
         return visibility;
     }
@@ -371,13 +403,39 @@ public final class RCaller {
         this.visibility = visibility;
     }
 
+    /**
+     * This wrapper serves two purposes depending on the context:
+     * 
+     * If {@link RCaller#isPromise()}, then this holds the environment that should replace the
+     * result of {@code parent.frame}, should this {@link RCaller} be selected as the result, in
+     * field {@link #sysParent}. Furthermore, {@link #payload} serves the same purpose as
+     * {@link RCaller#payload} for promises.
+     * 
+     * If {@link RCaller#isPromise()} is false, then {@link #sysParent} gives {@link RCaller} that
+     * is the logical parent and {@link #payload} holds the syntax of the call, like
+     * {@link RCaller#payload} for non-promise {@link RCaller}s.
+     */
     private static final class SysParent {
-        final REnvironment env;
-        final RCaller payload;
+        final Object sysParent;
+        /**
+         * Field that can hold the same data as {@link RCaller#payload}, but not another
+         * {@link SysParent} and not {@code null}.
+         */
+        final Object payload;
+
+        boolean isPromise() {
+            return payload instanceof RCaller;
+        }
 
         SysParent(REnvironment env, RCaller payload) {
-            this.env = env;
+            this.sysParent = env;
             this.payload = payload;
+        }
+
+        SysParent(RCaller sysParent, Object call) {
+            assert call == null || call instanceof Supplier<?> || call instanceof RSyntaxNode : call;
+            this.sysParent = sysParent;
+            this.payload = call;
         }
     }
 }

@@ -27,8 +27,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -83,7 +81,6 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.gnur.SEXPTYPE;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxCall;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -616,7 +613,7 @@ public class FrameFunctions {
             // IMPORTANT NOTE: when changing the logic in the loop below, review also SysParents and
             // ParentFrame
 
-            // The difference between sys.parent and sys.parents is that
+            // TODO: finish comment: The difference between sys.parent and sys.parents is that...
 
             int i = 0;
             RCaller prevCall = call;
@@ -625,7 +622,7 @@ public class FrameFunctions {
                     nullCallerProfile.enter();
                     return 0;
                 }
-                if (call.hasNonFunctionSysParent()) {
+                if (call.isNonFunctionSysParent()) {
                     // For environments that are not function frames, GNU-R uses the depth of the
                     // last function frame encountered.
                     return prevCall.getDepth();
@@ -637,7 +634,7 @@ public class FrameFunctions {
                 prevCall = call;
                 // Get the real parent frame
                 if (call != null) {
-                    call = call.getParent();
+                    call = call.getParent2();
                 }
                 i++;
             }
@@ -645,7 +642,7 @@ public class FrameFunctions {
                 nullCallerProfile.enter();
                 return 0;
             }
-            if (call.hasNonFunctionSysParent()) {
+            if (call.isNonFunctionSysParent()) {
                 // For environments that are not function frames, GNU-R uses the depth of the
                 // last function frame encountered.
                 return prevCall.getDepth();
@@ -701,8 +698,8 @@ public class FrameFunctions {
             int[] result = new int[call.getDepth() * 2];
             int resultIdx = 0;
             while (RCaller.isValidCaller(call)) {
-                RCaller parent = call.getParent();
-                if (parent.hasNonFunctionSysParent()) {
+                RCaller parent = call.getParent2();
+                if (parent.isNonFunctionSysParent()) {
                     // For environments that are not function frames, GNU-R uses the depth of the
                     // last function frame encountered.
                     result[resultIdx++] = call.getDepth();
@@ -774,7 +771,7 @@ public class FrameFunctions {
                 call = RCaller.unwrapPromiseCaller(call);
                 // Get the real parent frame
                 if (call != null) {
-                    call = call.getParent();
+                    call = call.getParent2();
                 }
                 i++;
             }
