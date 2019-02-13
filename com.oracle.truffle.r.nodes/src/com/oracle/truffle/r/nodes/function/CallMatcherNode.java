@@ -282,7 +282,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                         fastPath = null;
                     }
 
-                    RCaller parent = dispatchCaller != null ? dispatchCaller : RArguments.getCall(frame).getParent();
+                    RCaller parent = dispatchCaller != null ? dispatchCaller : RArguments.getCall(frame).getPrevious();
                     String genFunctionName = functionName == null ? function.getName() : functionName;
                     Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
                     RCaller caller;
@@ -370,7 +370,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             RArgsValuesAndNames reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature, this);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), ((RRootNode) function.getRootNode()).getFormalArguments().getSignature().getVarArgIndex());
 
-            RCaller parent = dispatchCaller != null ? dispatchCaller : RArguments.getCall(frame).getParent();
+            RCaller parent = dispatchCaller != null ? dispatchCaller : RArguments.getCall(frame).getPrevious();
             String genFunctionName = functionName == null ? function.getName() : functionName;
 
             RCaller caller;

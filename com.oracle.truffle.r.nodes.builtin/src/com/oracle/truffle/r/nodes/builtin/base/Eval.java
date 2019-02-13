@@ -183,7 +183,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     protected Object doEval(VirtualFrame frame, RPairList expr, Object envir, Object enclos) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         RCaller call = RArguments.getCall(frame);
-        RCaller rCaller = getCaller(frame, environment, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
+        RCaller rCaller = getCaller(frame, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
         try {
             RFunction evalFun = getFunctionArgument();
             return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
@@ -203,7 +203,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         // TODO: how the call should look like for an expression? Block statement?
         RCaller call = RArguments.getCall(frame);
-        RCaller rCaller = getCaller(frame, environment, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
+        RCaller rCaller = getCaller(frame, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
         try {
             RFunction evalFun = getFunctionArgument();
             return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
@@ -298,9 +298,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         return expr;
     }
 
-    private RCaller getCaller(VirtualFrame frame, REnvironment environment,
-                    Supplier<RSyntaxElement> call) {
-        // TODO: use RCaller#createForPromise?
+    private RCaller getCaller(VirtualFrame frame, Supplier<RSyntaxElement> call) {
         return call != null ? RCaller.create(frame, call) : RCaller.create(frame, getOriginalCall());
     }
 }

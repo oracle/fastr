@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -64,9 +64,7 @@ public final class GetCallerFrameNode extends RBaseNode {
             }
             CallerFrameClosure closure = (CallerFrameClosure) callerFrameObject;
             RCaller parent = RArguments.getCall(frame);
-            // TODO: notifyCallers may not return the same frame as the caller-frame, it returns
-            // parent frame, i.e. what RCaller.getParent gives, which is correct?
-            // Moreover, caller frame is explicitly set by S3 dispatch...
+            // TODO: caller frame is explicitly set by S3 dispatch, should we handle that here?
             MaterializedFrame slowPathFrame = notifyCallers(closure, parent);
             if (slowPathFrame != null) {
                 return slowPathFrame;

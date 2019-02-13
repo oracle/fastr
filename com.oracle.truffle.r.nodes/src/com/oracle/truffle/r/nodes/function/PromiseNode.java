@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
+import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
+
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -57,12 +60,6 @@ import com.oracle.truffle.r.runtime.nodes.RAttributableNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
-
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.getOptimizableConstant;
-import static com.oracle.truffle.r.nodes.function.opt.EagerEvalHelper.isOptimizableVariable;
-
-import java.util.ArrayList;
-import java.util.Collections;
 
 /**
  * These {@link RNode} implementations are used as a factory-nodes for {@link RPromise}s.

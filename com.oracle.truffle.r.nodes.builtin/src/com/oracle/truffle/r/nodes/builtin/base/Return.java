@@ -25,10 +25,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -47,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 final class ReturnSpecial extends RNode {
 
     @Child private RNode value;
-    private final BranchProfile isPromiseEvalProfile = BranchProfile.create();
+    @CompilationFinal private UnwrapPromiseCallerProfile unwrapCallerProfile;
 
     protected ReturnSpecial(RNode value) {
         this.value = value;
@@ -55,7 +57,11 @@ final class ReturnSpecial extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return Return.doReturn(frame, value.visibleExecute(frame), isPromiseEvalProfile);
+        if (unwrapCallerProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            unwrapCallerProfile = new UnwrapPromiseCallerProfile();
+        }
+        return Return.doReturn(frame, value.visibleExecute(frame), unwrapCallerProfile);
     }
 }
 
@@ -85,26 +91,26 @@ public abstract class Return extends RBuiltinNode.Arg1 {
         return new Object[]{RNull.instance};
     }
 
-    static ReturnException doReturn(VirtualFrame frame, Object value, BranchProfile isPromiseEvalProfile) {
-        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame));
+    static ReturnException doReturn(VirtualFrame frame, Object value, UnwrapPromiseCallerProfile unwrapProfile) {
+        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapProfile);
         throw new ReturnException(value, call);
     }
 
     @Specialization
     protected Object returnFunction(VirtualFrame frame, RPromise x,
                     @Cached("new()") PromiseHelperNode promiseHelper,
-                    @Cached("create()") BranchProfile isPromiseEvalProfile,
+                    @Cached("new()") UnwrapPromiseCallerProfile unwrapCallerProfile,
                     @Cached("create()") SetVisibilityNode visibility) {
         if (x.isEvaluated()) {
             visibility.execute(frame, true);
         }
         Object value = promiseHelper.evaluate(frame, x);
-        throw doReturn(frame, value, isPromiseEvalProfile);
+        throw doReturn(frame, value, unwrapCallerProfile);
     }
 
     @Specialization
     protected RList returnFunction(VirtualFrame frame, @SuppressWarnings("unused") RMissing x,
-                    @Cached("create()") BranchProfile isPromiseEvalProfile) {
-        throw doReturn(frame, RNull.instance, isPromiseEvalProfile);
+                    @Cached("new()") UnwrapPromiseCallerProfile unwrapCallerProfile) {
+        throw doReturn(frame, RNull.instance, unwrapCallerProfile);
     }
 }

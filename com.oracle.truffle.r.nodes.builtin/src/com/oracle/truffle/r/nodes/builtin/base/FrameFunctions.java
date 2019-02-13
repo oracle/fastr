@@ -60,6 +60,8 @@ import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapSysParentProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -73,8 +75,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -93,7 +95,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  * The main thing to note is distinction between {@code sys.parent} and {@code sys.frame}.
  * {@code sys.parent} gives you "logical" parent, but not necessarily the frame preceding the
- * current frame on the call stack. In FastR this is captured by {@link RCaller#getParent()}.
+ * current frame on the call stack. In FastR this is captured by {@link RCaller#getPrevious()}.
  * {@code sys.frame(n)} gives you frame with number {@code n} and traverses the stack without taking
  * the parent relation into account. In FastR the frame number is captured in
  * {@link RCaller#getDepth()}. See also builtins in {@code FrameFunctions} for more details.
@@ -109,6 +111,7 @@ public class FrameFunctions {
         private final ConditionProfile globalFrameProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile iterateProfile = BranchProfile.create();
         private final BranchProfile slowPathProfile = BranchProfile.create();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
@@ -165,9 +168,9 @@ public class FrameFunctions {
         private int decodeFrameNumber(RCaller currentCall, int n) {
             RCaller call = currentCall;
             if (!ignoreDotInternal) {
-                call = call.getParent();
+                call = call.getPrevious();
             }
-            call = RCaller.unwrapPromiseCaller(call);
+            call = RCaller.unwrapPromiseCaller(call, unwrapCallerProfile);
             int depth = call.getDepth();
             if (n > 0) {
                 if (n > depth) {
@@ -466,11 +469,13 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysNFrame extends RBuiltinNode.Arg0 {
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
 
         @Specialization
         protected int sysNFrame(VirtualFrame frame) {
-            RCaller currentCaller = RCaller.unwrapPromiseCaller(RArguments.getCall(frame));
-            RCaller call = RCaller.unwrapPromiseCaller(currentCaller.getParent());
+            RCaller currentCaller = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile1);
+            RCaller call = RCaller.unwrapPromiseCaller(currentCaller.getPrevious(), unwrapCallerProfile2);
             return call.getDepth();
         }
     }
@@ -565,10 +570,13 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.calls", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysCalls extends RBuiltinNode.Arg0 {
 
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
+
         @Specialization
         protected Object sysCalls(VirtualFrame frame) {
-            RCaller prevCall = RCaller.unwrapPromiseCaller(RArguments.getCall(frame));
-            RCaller call = RCaller.unwrapPromiseCaller(prevCall.getParent());
+            RCaller prevCall = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile1);
+            RCaller call = RCaller.unwrapPromiseCaller(prevCall.getPrevious(), unwrapCallerProfile2);
             int depth = call.getDepth();
             if (depth == 0) {
                 return RNull.instance;
@@ -590,8 +598,10 @@ public class FrameFunctions {
     public abstract static class SysParent extends RBuiltinNode.Arg1 {
 
         private final BranchProfile nullCallerProfile = BranchProfile.create();
-        private final BranchProfile promiseProfile = BranchProfile.create();
-        private final BranchProfile nonNullCallerProfile = BranchProfile.create();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile3 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapResultCallerProfile = new UnwrapPromiseCallerProfile();
 
         static {
             Casts casts = new Casts(SysParent.class);
@@ -603,7 +613,8 @@ public class FrameFunctions {
             RCaller originalCall = RArguments.getCall(frame);
             // Because this builtin is not Kind == SUBSTITUTE (unlike parent.frame) we have to get
             // the parent frame
-            RCaller call = RCaller.unwrapPromiseCaller(RCaller.unwrapPromiseCaller(originalCall).getParent());
+            RCaller unwrapped = RCaller.unwrapPromiseCaller(originalCall, unwrapCallerProfile1);
+            RCaller call = RCaller.unwrapPromiseCaller(unwrapped.getPrevious(), unwrapCallerProfile2);
             if (n <= 0) {
                 // Undocumented feature of GNU-R parent.frame(n) with n <= 0 returns the current
                 // frame number
@@ -630,11 +641,11 @@ public class FrameFunctions {
                 // If current RCaller is for artificial promise evaluation frame, then follow the
                 // RCaller#payload to get the RCaller for the real frame where the promise should be
                 // logically evaluated
-                call = RCaller.unwrapPromiseCaller(call);
+                call = RCaller.unwrapPromiseCaller(call, unwrapCallerProfile3);
                 prevCall = call;
                 // Get the real parent frame
                 if (call != null) {
-                    call = call.getParent2();
+                    call = call.getParent();
                 }
                 i++;
             }
@@ -647,7 +658,7 @@ public class FrameFunctions {
                 // last function frame encountered.
                 return prevCall.getDepth();
             }
-            call = RCaller.unwrapPromiseCaller(call);
+            call = RCaller.unwrapPromiseCaller(call, unwrapResultCallerProfile);
             return call.getDepth();
         }
     }
@@ -680,16 +691,21 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.parents", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysParents extends RBuiltinNode.Arg0 {
 
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile3 = new UnwrapPromiseCallerProfile();
+
         @Specialization
         protected RIntVector sysParents(VirtualFrame frame) {
             RCaller originalCall = RArguments.getCall(frame);
             // Because this builtin is not Kind == SUBSTITUTE, we're have to get the parent frame
-            RCaller call = RCaller.unwrapPromiseCaller(RCaller.unwrapPromiseCaller(originalCall).getParent());
+            RCaller unwrapped = RCaller.unwrapPromiseCaller(originalCall, unwrapCallerProfile1);
+            RCaller call = RCaller.unwrapPromiseCaller(unwrapped.getPrevious(), unwrapCallerProfile2);
             if (!RCaller.isValidCaller(call)) {
                 // sys.parents called at the top level
                 return RDataFactory.createEmptyIntVector();
             }
-            if (call.getParent() == null) {
+            if (call.getPrevious() == null) {
                 // sys.parents called from a top level function?
                 return RDataFactory.createIntVectorFromScalar(0);
             }
@@ -698,13 +714,13 @@ public class FrameFunctions {
             int[] result = new int[call.getDepth() * 2];
             int resultIdx = 0;
             while (RCaller.isValidCaller(call)) {
-                RCaller parent = call.getParent2();
+                RCaller parent = call.getParent();
                 if (parent.isNonFunctionSysParent()) {
                     // For environments that are not function frames, GNU-R uses the depth of the
                     // last function frame encountered.
                     result[resultIdx++] = call.getDepth();
                 } else {
-                    parent = RCaller.unwrapPromiseCaller(parent);
+                    parent = RCaller.unwrapPromiseCaller(parent, unwrapCallerProfile3);
                     if (parent == null) {
                         break;
                     }
@@ -712,7 +728,7 @@ public class FrameFunctions {
                 }
                 // Jump to the next real (i.e. not artificial promise evaluation) frame on the
                 // evaluation stack, not to the logical parent (is the sense of parent.frame)
-                call = RCaller.unwrapParent(call.getParent());
+                call = RCaller.unwrapPrevious(call.getPrevious());
             }
 
             int[] reversed = new int[resultIdx];
@@ -747,9 +763,10 @@ public class FrameFunctions {
         @Specialization
         protected REnvironment parentFrame(VirtualFrame frame, int nIn,
                         @Cached("create()") BranchProfile nullCallerProfile,
-                        @Cached("create()") BranchProfile promiseProfile,
-                        @Cached("create()") BranchProfile nonNullCallerProfile,
-                        @Cached("create()") BranchProfile explicitSysParent,
+                        @Cached("new()") UnwrapPromiseCallerProfile unwrapOriginalCallerProfile,
+                        @Cached("new()") UnwrapPromiseCallerProfile unwrapCallerProfile,
+                        @Cached("new()") UnwrapPromiseCallerProfile unwrapResultCallerProfile,
+                        @Cached("new()") UnwrapSysParentProfile unwrapSysParentProfile,
                         @Cached("createEqualityProfile()") ValueProfile nProfile,
                         @Cached("createBinaryProfile()") ConditionProfile useGetCallerFrameNode) {
             int n = nProfile.profile(nIn);
@@ -757,7 +774,7 @@ public class FrameFunctions {
                 throw error(RError.Message.INVALID_VALUE, "n");
             }
             RCaller originalCall = RArguments.getCall(frame);
-            RCaller call = RCaller.unwrapPromiseCaller(originalCall);
+            RCaller call = RCaller.unwrapPromiseCaller(originalCall, unwrapOriginalCallerProfile);
 
             int i = 0;
             while (i < n) {
@@ -768,10 +785,10 @@ public class FrameFunctions {
                 // If current RCaller is for artificial promise evaluation frame, then follow the
                 // RCaller#payload to get the RCaller for the real frame where the promise should be
                 // logically evaluated
-                call = RCaller.unwrapPromiseCaller(call);
+                call = RCaller.unwrapPromiseCaller(call, unwrapCallerProfile);
                 // Get the real parent frame
                 if (call != null) {
-                    call = call.getParent2();
+                    call = call.getParent();
                 }
                 i++;
             }
@@ -779,11 +796,11 @@ public class FrameFunctions {
                 nullCallerProfile.enter();
                 return REnvironment.globalEnv();
             }
-            REnvironment sysParent = RCaller.unwrapSysParent(call);
+            REnvironment sysParent = RCaller.unwrapSysParent(call, unwrapSysParentProfile);
             if (sysParent != null) {
                 return sysParent;
             }
-            call = RCaller.unwrapPromiseCaller(call);
+            call = RCaller.unwrapPromiseCaller(call, unwrapResultCallerProfile);
             if (useGetCallerFrameNode.profile(originalCall.getDepth() == call.getDepth() + 1)) {
                 // If the parent frame is the caller frame, we can use more efficient code:
                 return REnvironment.frameToEnvironment(getCallerFrameNode().execute(frame));

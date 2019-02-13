@@ -237,7 +237,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
     private Object findCallerFromFrame(Frame frame) {
         if (frame != null && RArguments.isRFrame(frame)) {
             // This finds the next non-artificial frame on the R call stack
-            RCaller caller = RCaller.unwrapParent(RArguments.getCall(frame));
+            RCaller caller = RCaller.unwrapPrevious(RArguments.getCall(frame));
             if (RCaller.isValidCaller(caller)) {
                 // This is where we need to ensure that we have an RLanguage object with a rep that
                 // is an RSyntaxNode.

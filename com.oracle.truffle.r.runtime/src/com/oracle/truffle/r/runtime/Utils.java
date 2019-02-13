@@ -519,7 +519,7 @@ public final class Utils {
      */
     public static Frame getCallerFrame(RCaller caller, FrameAccess fa) {
         RCaller parent = RCaller.unwrapPromiseCaller(caller);
-        parent = RCaller.unwrapPromiseCaller(parent.getParent());
+        parent = RCaller.unwrapPromiseCaller(parent.getPrevious());
         return parent == null ? null : getStackFrame(fa, parent);
     }
 

@@ -28,12 +28,12 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
@@ -66,7 +66,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * invalidated.
  */
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
-    private final BranchProfile promiseCallerProfile = BranchProfile.create();
+    private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
     private final RSyntaxLookup originalRvn;
     @Child private FrameSlotNode frameSlotNode;
     @Child private RNode fallback = null;
@@ -118,8 +118,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
 
         // Create EagerPromise with the eagerly evaluated value under the assumption that the
         // value won't be altered until 1. read
-        // TODO: add profiles
-        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame));
+        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile);
 
         MaterializedFrame execFrame = null;
         if (CompilerDirectives.inInterpreter()) {

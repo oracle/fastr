@@ -27,13 +27,13 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.function.ArgumentStatePush;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.WrapArgumentNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -47,8 +47,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
     @Child private RNode expr;
     @Child private PromiseHelperNode promiseHelper;
 
-    private final ConditionProfile firstPromise = ConditionProfile.createBinaryProfile();
-    private final ConditionProfile promiseCallerProfile = ConditionProfile.createBinaryProfile();
+    private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
     private final BranchProfile nonPromiseProfile = BranchProfile.create();
     private final RPromiseFactory factory;
 
@@ -97,8 +96,7 @@ public final class OptForcedEagerPromiseNode extends PromiseNode {
         } else {
             nonPromiseProfile.enter();
         }
-        // TODO: profiling
-        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame));
+        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile);
         if (CompilerDirectives.inInterpreter()) {
             return factory.createEagerSuppliedPromise(value, alwaysValidAssumption, call, null, wrapIndex, frame.materialize());
         }

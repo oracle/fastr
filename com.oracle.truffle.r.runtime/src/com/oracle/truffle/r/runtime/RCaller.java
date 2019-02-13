@@ -27,7 +27,7 @@ import java.util.function.Supplier;
 
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.profiles.BranchProfile;
-import com.oracle.truffle.r.runtime.data.RDataFactory;
+import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.RFrameSlot;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
@@ -35,24 +35,23 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Represents the caller of a function and other information related an R stack frame evaluation
- * context. It is stored in {@link RArguments}. {@link RCaller} instances for all R stack frames
- * form a linked list.
+ * context. It is created by the caller of the function and passed in the arguments array.
+ * {@link RCaller} instances for all R stack frames form a linked list.
  *
  * A value of this type never appears in a Truffle execution. The closest concept in GNU-R is
  * RCNTXT, see {@code main/context.c}.
  *
  * On the high level {@link RCaller} instance holds:
  * <ul>
- * <li>link to the {@link RCaller} associated with the previous R stack frame (in {@link #parent})
- * </li>
+ * <li>link to the {@link RCaller} associated with the previous R stack frame.</li>
  * <li>frame number as described in {@code sys.parent} R function documentation: frames are numbered
  * from 0 (global environment).</li>
  * <li>the AST of the call that invoked this context and link to the "sys parent" -- logical parent
  * in the sense of R's {@code parent.frame} semantics. These are crammed in the {@link #payload}
- * field (because often {@link #parent} is the same as the logical parent).</li>
+ * field (because often {@link #previous} is the same as the logical parent).</li>
  * </ul>
  * 
- * NOTE: It is important to create new caller instances for each stack frame, so that
+ * NOTE: It is important to create new unique caller instances for each stack frame, so that
  * {@link ReturnException#getTarget()} can uniquely identify the target frame.
  *
  * Example:
@@ -104,10 +103,10 @@ public final class RCaller {
      * Determines the actual position of the corresponding frame on the Truffle execution call
      * stack.
      *
-     * When one follows the {@link RCaller#parent} chain, then the depth should be decreasing by one
-     * or stay the same. The reason for it staying the same are artificial frames used for promise
-     * evaluation. When iterating {@link RCaller} instances chain via {@link #parent} one should
-     * skip such artificial {@link RCaller}s.
+     * When one follows the {@link RCaller#previous} chain, then the depth should be decreasing by
+     * one or stay the same. The reason for it staying the same are artificial frames used for
+     * promise evaluation. When iterating {@link RCaller} instances chain via {@link #previous} one
+     * should skip such artificial {@link RCaller}s.
      *
      * Note: this is depth of the frame where this {@link RCaller} is stored (in the arguments
      * array), not the depth of the parent.
@@ -120,15 +119,15 @@ public final class RCaller {
     private boolean visibility;
 
     /**
-     * Parent is the link to the {@link RCaller} stored in the arguments array of the previous
-     * Truffle stack frame. We need this link so that we do not have to walk the stack frames if we
-     * need to reach {@link RCaller} instances on the stack.
+     * Link to the {@link RCaller} stored in the arguments array of the previous R stack frame. We
+     * need this link so that we do not have to walk the stack frames if we need to reach
+     * {@link RCaller} instances on the stack.
      * 
      * If this {@link RCaller} is artificial {@link RCaller} used for promise evaluation, then this
      * is not the R level parent frame in the sense of {@code parent.frame()} R function. In such
      * case {@link #payload} gives the R level parent frame.
      */
-    private final RCaller parent;
+    private final RCaller previous;
 
     /**
      * The payload can be
@@ -137,8 +136,8 @@ public final class RCaller {
      * <li>{@link RSyntaxNode}</li>
      * <li>{@link Supplier} of the {@link RSyntaxNode}</li>
      * <li>{@link RCaller} (which marks promise evaluation frames, see {@link #isPromise()})</li>
-     * <li>{@link SysParent} (allows to store more than one item from this list, see also
-     * {@link #isNonFunctionSysParent()})</li>
+     * <li>{@link SysParent} (allows to store both the call syntax and sys parent
+     * environment/RCaller for promises, see also {@link #isNonFunctionSysParent()})</li>
      * </ul>
      *
      * If the function was invoked via regular call node, then the syntax can be that call node
@@ -155,10 +154,10 @@ public final class RCaller {
         this(depthFromFrame(callingFrame), parentFromFrame(callingFrame), payload);
     }
 
-    private RCaller(int depth, RCaller parent, Object payload) {
+    private RCaller(int depth, RCaller previous, Object payload) {
         assert payload == null || payload instanceof Supplier<?> || payload instanceof RCaller || payload instanceof SysParent || payload instanceof RSyntaxNode : payload;
         this.depth = depth;
-        this.parent = parent;
+        this.previous = previous;
         this.payload = payload;
     }
 
@@ -174,14 +173,18 @@ public final class RCaller {
         return depth;
     }
 
-    public RCaller getParent() {
-        return parent;
+    public RCaller getPrevious() {
+        return previous;
     }
 
-    // TODO: rename parent to prev; this to getSysParent; explain when SysParent is used to traverse
-    // parents and when it is used as the parent
-    public RCaller getParent2() {
-        return payload instanceof SysParent && ((SysParent) payload).sysParent instanceof RCaller ? (RCaller) ((SysParent) payload).sysParent : parent;
+    public RCaller getParent() {
+        if (payload instanceof SysParent) {
+            SysParent sysParent = (SysParent) payload;
+            if (sysParent.sysParent instanceof RCaller) {
+                return (RCaller) sysParent.sysParent;
+            }
+        }
+        return previous;
     }
 
     public RSyntaxElement getSyntaxNode() {
@@ -212,16 +215,16 @@ public final class RCaller {
      * actual evaluation frame in a way that locals are delegated to the actual evaluation frame,
      * but arguments array is altered. We cannot use the actual evaluation frame as is, because when
      * there is a function call inside the promise code, the new frame created for the invoked
-     * function will get its {@link #parent} set to {@link RCaller} and {@code depth+1} of its
+     * function will get its {@link #previous} set to {@link RCaller} and {@code depth+1} of its
      * caller frame. By using wrapped frame for which we set different {@link #depth} than the
      * actual evaluation frame, we can set the {@link #depth} to the correct value, which is the
      * {@link #depth} of the code that initiated the promise evaluation.
      *
      * Moreover, if the promise code invokes a function, this function should be tricked into
      * thinking that its caller is the actual evaluation frame. Since this {@link RCaller} will be
-     * used as {@link #parent} inside the frame created for the invoked function, we use
+     * used as {@link #previous} inside the frame created for the invoked function, we use
      * {@link #isPromise()} to find out this is artificial {@link RCaller} and we should follow the
-     * {@link #getParent()} chain until we reach the actual evaluation frame and take the real
+     * {@link #getPrevious()} chain until we reach the actual evaluation frame and take the real
      * parent from there.
      */
     public boolean isPromise() {
@@ -234,22 +237,20 @@ public final class RCaller {
             if (!call.isPromise()) {
                 consumer.accept(call);
             }
-            call = call.getParent();
+            call = call.getPrevious();
         }
     }
 
-    public static RCaller unwrapParent(RCaller callerIn) {
+    public static RCaller unwrapPrevious(RCaller callerIn) {
         RCaller caller = callerIn;
         while (caller != null && caller.isPromise()) {
-            caller = caller.getParent();
+            caller = caller.getPrevious();
         }
         return caller;
     }
 
     /**
-     * If the given {@link RCaller} is stored in an artificial promise evaluation frame, then this
-     * follows the {@link #payload} until it reaches the {@link RCaller} of the real frame where the
-     * promise should be evaluated logically.
+     * @see #unwrapPromiseCaller(RCaller, UnwrapPromiseCallerProfile)
      */
     public static RCaller unwrapPromiseCaller(RCaller callerIn) {
         RCaller caller = callerIn;
@@ -264,15 +265,38 @@ public final class RCaller {
     }
 
     /**
+     * If the given {@link RCaller} is stored in an artificial promise evaluation frame, then this
+     * follows the {@link #payload} until it reaches the {@link RCaller} of the real frame where the
+     * promise should be evaluated logically.
+     */
+    public static RCaller unwrapPromiseCaller(RCaller callerIn, UnwrapPromiseCallerProfile profile) {
+        RCaller caller = callerIn;
+        if (profile.firstPromiseProfile.profile(RCaller.isValidCaller(caller) && caller.isPromise())) {
+            if (caller.payload instanceof SysParent) {
+                profile.sysParentProfile.enter();
+                caller = (RCaller) ((SysParent) caller.payload).payload;
+            } else {
+                caller = (RCaller) caller.payload;
+            }
+        }
+        if (!RCaller.isValidCaller(caller) || !caller.isPromise()) {
+            return caller;
+        }
+        profile.morePromisesProfile.enter();
+        return unwrapPromiseCaller(caller);
+    }
+
+    /**
      * If this {@link RCaller} happens to be selected as a result of {@code parent.frame} or
      * similar, then this value (if not {@code null}) should be used as the resulting environment.
      */
-    public static REnvironment unwrapSysParent(RCaller callerIn) {
+    public static REnvironment unwrapSysParent(RCaller callerIn, UnwrapSysParentProfile profile) {
         // TODO: unit-test (only found in the wild in futile.logger tests)
         // TODO: use in sys.parent?
         RCaller caller = callerIn;
-        while (RCaller.isValidCaller(caller) && caller.isPromise()) {
+        while (profile.firstPromiseProfile.profile(RCaller.isValidCaller(caller) && caller.isPromise())) {
             if (caller.payload instanceof SysParent) {
+                profile.sysParentProfile.enter();
                 return (REnvironment) ((SysParent) caller.payload).sysParent;
             } else {
                 caller = (RCaller) caller.payload;
@@ -319,8 +343,8 @@ public final class RCaller {
         return new RCaller(callingFrame, null);
     }
 
-    public static RCaller createInvalid(Frame callingFrame, RCaller parent) {
-        return new RCaller(depthFromFrame(callingFrame), parent, null);
+    public static RCaller createInvalid(Frame callingFrame, RCaller previous) {
+        return new RCaller(depthFromFrame(callingFrame), previous, null);
     }
 
     public static RCaller create(Frame callingFrame, RSyntaxElement node) {
@@ -328,9 +352,9 @@ public final class RCaller {
         return new RCaller(callingFrame, node);
     }
 
-    public static RCaller create(Frame callingFrame, RCaller parent, RSyntaxElement node) {
+    public static RCaller create(Frame callingFrame, RCaller previous, RSyntaxElement node) {
         assert node != null;
-        return new RCaller(depthFromFrame(callingFrame), parent, node);
+        return new RCaller(depthFromFrame(callingFrame), previous, node);
     }
 
     public static RCaller create(Frame callingFrame, Supplier<RSyntaxElement> supplier) {
@@ -338,14 +362,14 @@ public final class RCaller {
         return new RCaller(callingFrame, supplier);
     }
 
-    public static RCaller create(int depth, RCaller parent, Object payload) {
+    public static RCaller create(int depth, RCaller previous, Object payload) {
         assert payload != null;
-        return new RCaller(depth, parent, payload);
+        return new RCaller(depth, previous, payload);
     }
 
-    public static RCaller create(Frame callingFrame, RCaller parent, Supplier<RSyntaxElement> supplier) {
+    public static RCaller create(Frame callingFrame, RCaller previous, Supplier<RSyntaxElement> supplier) {
         assert supplier != null;
-        return new RCaller(depthFromFrame(callingFrame), parent, supplier);
+        return new RCaller(depthFromFrame(callingFrame), previous, supplier);
     }
 
     /**
@@ -356,7 +380,7 @@ public final class RCaller {
      * @param originalCaller {@link RCaller} object inside the frame where the promise should be
      *            evaluated.
      * @param currentCaller the current {@link RCaller} instance where the promise is actually being
-     *            evaluated.
+     *            evaluated, will be used as the pointer to the previous {@link RCaller}.
      */
     public static RCaller createForPromise(RCaller originalCaller, RCaller currentCaller) {
         int newDepth = currentCaller == null ? 0 : currentCaller.getDepth();
@@ -375,7 +399,7 @@ public final class RCaller {
      *            promise itself, e.g. {@code eval(quote(parent.frame())}, that will still parent of
      *            the frame pointed at by the {@code originalCaller}.
      * @param currentCaller the current {@link RCaller} instance where the promise is actually being
-     *            evaluated.
+     *            evaluated, will be used as the pointer to the previous {@link RCaller}.
      */
     public static RCaller createForPromise(RCaller originalCaller, REnvironment sysParent, RCaller currentCaller) {
         int newDepth = currentCaller == null ? 0 : currentCaller.getDepth();
@@ -436,6 +460,28 @@ public final class RCaller {
             assert call == null || call instanceof Supplier<?> || call instanceof RSyntaxNode : call;
             this.sysParent = sysParent;
             this.payload = call;
+        }
+    }
+
+    public static final class UnwrapSysParentProfile {
+        private final ConditionProfile firstPromiseProfile;
+        private final BranchProfile sysParentProfile;
+
+        public UnwrapSysParentProfile() {
+            firstPromiseProfile = ConditionProfile.createBinaryProfile();
+            sysParentProfile = BranchProfile.create();
+        }
+    }
+
+    public static final class UnwrapPromiseCallerProfile {
+        private final ConditionProfile firstPromiseProfile;
+        private final BranchProfile sysParentProfile;
+        private final BranchProfile morePromisesProfile;
+
+        public UnwrapPromiseCallerProfile() {
+            firstPromiseProfile = ConditionProfile.createBinaryProfile();
+            morePromisesProfile = BranchProfile.create();
+            sysParentProfile = BranchProfile.create();
         }
     }
 }
