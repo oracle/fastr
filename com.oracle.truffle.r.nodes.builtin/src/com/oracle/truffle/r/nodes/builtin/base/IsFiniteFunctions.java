@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -163,14 +163,14 @@ public class IsFiniteFunctions {
             return doFunConstant(vec, RRuntime.LOGICAL_TRUE);
         }
 
-        @Specialization(replaces = "doComplete")
-        protected RLogicalVector doIsFinite(RAbstractIntVector vec) {
-            return doFunInt(vec, value -> !RRuntime.isNA(value));
-        }
-
         @Specialization(guards = "vec.isComplete()")
         protected RLogicalVector doComplete(RAbstractLogicalVector vec) {
             return doFunConstant(vec, RRuntime.LOGICAL_TRUE);
+        }
+
+        @Specialization(replaces = "doComplete")
+        protected RLogicalVector doIsFinite(RAbstractIntVector vec) {
+            return doFunInt(vec, value -> !RRuntime.isNA(value));
         }
 
         @Specialization(replaces = "doComplete")

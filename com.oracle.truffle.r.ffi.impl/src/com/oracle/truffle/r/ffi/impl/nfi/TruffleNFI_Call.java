@@ -29,7 +29,6 @@ import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
-import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
@@ -72,7 +71,6 @@ public class TruffleNFI_Call implements CallRFFI {
         }
     }
 
-    @ImportStatic(FFIWrapNode.class)
     public abstract static class TruffleNFI_InvokeCallNode extends NodeAdapter implements InvokeCallNode {
 
         @TruffleBoundary
@@ -83,7 +81,7 @@ public class TruffleNFI_Call implements CallRFFI {
         @Specialization(guards = {"args.length == cachedArgsLength", "nativeCallInfo.address.asTruffleObject() == cachedAddress"})
         protected Object invokeCallCached(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("args.length") int cachedArgsLength,
-                        @Cached("create(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
+                        @Cached("createWrappers(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
                         @Cached("createExecute()") Node executeNode,
                         @Cached("nativeCallInfo.address.asTruffleObject()") TruffleObject cachedAddress,
@@ -107,7 +105,7 @@ public class TruffleNFI_Call implements CallRFFI {
         @Specialization(limit = "99", guards = "args.length == cachedArgsLength")
         protected Object invokeCallCachedLength(NativeCallInfo nativeCallInfo, Object[] args,
                         @Cached("args.length") int cachedArgsLength,
-                        @Cached("create(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
+                        @Cached("createWrappers(cachedArgsLength)") FFIWrapNode[] ffiWrapNodes,
                         @Cached("create()") FFIUnwrapNode unwrap,
                         @Cached("createExecute()") Node executeNode) {
             Object result = null;
@@ -124,6 +122,10 @@ public class TruffleNFI_Call implements CallRFFI {
                 assert realArgs != null; // to keep the values alive
                 prepareReturn(nativeCallInfo.name, result, isNullSetting);
             }
+        }
+
+        protected static FFIWrapNode[] createWrappers(int count) {
+            return FFIWrapNode.create(count);
         }
 
         public static Node createExecute() {

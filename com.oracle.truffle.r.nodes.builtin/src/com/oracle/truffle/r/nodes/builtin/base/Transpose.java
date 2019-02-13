@@ -295,7 +295,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     }
 
     @Fallback
-    protected RVector<?> transpose(@SuppressWarnings("unused") Object x) {
+    protected RVector<?> transposeOthers(@SuppressWarnings("unused") Object x) {
         throw error(Message.ARGUMENT_NOT_MATRIX);
     }
 }

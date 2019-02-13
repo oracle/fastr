@@ -656,7 +656,7 @@ public class CallAndExternalFunctions {
          */
         @SuppressWarnings("unused")
         @Specialization(limit = "getCacheSize(2)", guards = {"cached == symbol", "builtin == null"})
-        protected Object callNamedFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
+        protected Object callSymbolInfoFunction(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, Object packageName,
                         @Cached("symbol") RList cached,
                         @Cached("lookupBuiltin(symbol)") RExternalBuiltinNode builtin,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
@@ -673,8 +673,8 @@ public class CallAndExternalFunctions {
          * For some reason, the list instance may change, although it carries the same info. For
          * such cases there is this generic version.
          */
-        @Specialization(replaces = {"callNamedFunction", "doExternal"})
-        protected Object callNamedFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
+        @Specialization(replaces = {"callSymbolInfoFunction", "doExternal"})
+        protected Object callSymbolInfoFunctionGeneric(VirtualFrame frame, RList symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") Object packageName,
                         @Cached("new()") ExtractNativeCallInfoNode extractSymbolInfo,
                         @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             RExternalBuiltinNode builtin = lookupBuiltin(symbol);
@@ -721,7 +721,7 @@ public class CallAndExternalFunctions {
         }
 
         @Specialization
-        protected Object callNamedFunctionWithPackage(VirtualFrame frame, RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
+        protected Object callExternalPtrFunction(VirtualFrame frame, RExternalPtr symbol, RArgsValuesAndNames args, @SuppressWarnings("unused") RMissing packageName,
                         @Cached("createBinaryProfile()") ConditionProfile registeredProfile) {
             if (registeredProfile.profile(isRegisteredRFunction(symbol))) {
                 return explicitCall(frame, symbol, args);

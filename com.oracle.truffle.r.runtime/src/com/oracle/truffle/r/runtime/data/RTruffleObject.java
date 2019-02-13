@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.context.RContext;
  * internally. The latter types should not leak to other languages.
  *
  * As a convenience the interface provides a default implementation of
- * {@link TruffleObject#getForeignAccess()} that indirects through
+ * {@code TruffleObject#getForeignAccess()} that indirects through
  * {@link RContext#getRForeignAccessFactory()}. This is entirely optional and can be overridden to
  * use an alternate implementation.
  *
