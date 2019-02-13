@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -171,9 +171,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
         }
 
         if (a instanceof RShareable) {
-            if (((RShareable) a).isTemporary()) {
-                return true;
-            }
+            return ((RShareable) a).isTemporary();
         }
         return false;
     }
@@ -249,7 +247,7 @@ public class BinaryBooleanNodeTest extends BinaryVectorTest {
 
             Object result = executeArithmetic(factory, a, b);
 
-            boolean resultComplete = isPrimitive(result) ? true : ((RAbstractVector) result).isComplete();
+            boolean resultComplete = isPrimitive(result) || ((RAbstractVector) result).isComplete();
 
             if (a.getLength() == 0 || b.getLength() == 0) {
                 Assert.assertTrue(resultComplete);

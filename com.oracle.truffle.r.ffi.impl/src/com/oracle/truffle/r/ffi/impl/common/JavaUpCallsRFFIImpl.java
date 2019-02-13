@@ -575,8 +575,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public int LEVELS(Object x) {
         if (x instanceof RTypedValue) {
-            int gpBits = ((RTypedValue) x).getGPBits();
-            return gpBits;
+            return ((RTypedValue) x).getGPBits();
         }
         throw RInternalError.shouldNotReachHere();
     }
@@ -870,8 +869,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object R_FindNamespace(Object name) {
-        Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
-        return result;
+        return RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
     }
 
     @Override
@@ -889,8 +887,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         // Works but not remotely efficient
         Source source = RSource.fromTextInternal("get(\"" + symbol.getName() + "\", mode=\"function\")", RSource.Internal.RF_FINDFUN);
         try {
-            Object result = RContext.getEngine().parseAndEval(source, env.getFrame(), false);
-            return result;
+            return RContext.getEngine().parseAndEval(source, env.getFrame(), false);
         } catch (ParseException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -900,8 +897,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object Rf_GetOption1(Object tag) {
         guaranteeInstanceOf(tag, RSymbol.class);
-        Object result = RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
-        return result;
+        return RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
     }
 
     @Override
@@ -1282,7 +1278,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (RArguments.getCall(frame) == rCaller) {
             return REnvironment.frameToEnvironment(frame.materialize());
         } else {
-            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
+            return Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
                 public Object apply(Frame f) {
@@ -1294,7 +1290,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     }
                 }
             });
-            return result;
         }
     }
 
@@ -1309,7 +1304,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (RArguments.getCall(frame) == rCaller) {
             return RArguments.getFunction(frame);
         } else {
-            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
+            return Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
                 public Object apply(Frame f) {
@@ -1321,7 +1316,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     }
                 }
             });
-            return result;
         }
     }
 

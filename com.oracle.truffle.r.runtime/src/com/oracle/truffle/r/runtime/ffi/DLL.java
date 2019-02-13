@@ -617,8 +617,7 @@ public class DLL {
         private synchronized DLLInfo doLoad(String absPath, boolean local, boolean now, boolean addToList) throws DLLException {
             try {
                 LibHandle handle = dlOpenNode.execute(absPath, local, now);
-                DLLInfo dllInfo = DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
-                return dllInfo;
+                return DLLInfo.create(libName(absPath), absPath, true, handle, addToList);
             } catch (UnsatisfiedLinkError ex) {
                 String dlError = ex.getMessage();
                 if (RContext.isInitialContextInitialized()) {
@@ -803,8 +802,7 @@ public class DLL {
                 if (dllInfo.unsuccessfulLookups.contains(mName)) {
                     return SYMBOL_NOT_FOUND;
                 }
-                SymbolHandle symValue = dlSymNode.execute(dllInfo.handle, mName);
-                return symValue;
+                return dlSymNode.execute(dllInfo.handle, mName);
             } catch (UnsatisfiedLinkError ex) {
                 dllInfo.unsuccessfulLookups.add(mName);
                 return SYMBOL_NOT_FOUND;
@@ -870,13 +868,13 @@ public class DLL {
 
     public static int useDynamicSymbols(DLLInfo dllInfo, int value) {
         int old = dllInfo.dynamicLookup ? 1 : 0;
-        dllInfo.dynamicLookup = value == 0 ? false : true;
+        dllInfo.dynamicLookup = value != 0;
         return old;
     }
 
     public static int forceSymbols(DLLInfo dllInfo, int value) {
         int old = dllInfo.forceSymbols ? 1 : 0;
-        dllInfo.forceSymbols = value == 0 ? false : true;
+        dllInfo.forceSymbols = value != 0;
         return old;
     }
 

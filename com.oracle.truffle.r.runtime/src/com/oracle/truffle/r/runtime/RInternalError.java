@@ -258,7 +258,7 @@ public final class RInternalError extends Error implements TruffleException {
     }
 
     private static String getLogFileName(int contextId) {
-        return contextId == 0 ? FASTR_ERRORS_LOG : FASTR_ERRORS_LOG + "-" + Integer.toString(contextId);
+        return contextId == 0 ? FASTR_ERRORS_LOG : FASTR_ERRORS_LOG + "-" + contextId;
     }
 
     @Override

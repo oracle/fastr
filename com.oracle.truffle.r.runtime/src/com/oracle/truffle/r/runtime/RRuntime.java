@@ -838,7 +838,7 @@ public class RRuntime {
                     if (codepoint < 32 || codepoint == 0x7f) {
                         str.append("\\").append(codepoint >>> 6).append((codepoint >>> 3) & 0x7).append(codepoint & 0x7);
                     } else if (encodeNonASCII && codepoint > 0x7f && codepoint <= 0xff) {
-                        str.append("\\x" + Integer.toHexString(codepoint));
+                        str.append("\\x").append(Integer.toHexString(codepoint));
                     } else if (codepoint > 64967) { // determined by experimentation
                         if (codepoint < 0x10000) {
                             str.append("\\u").append(String.format("%04x", codepoint));

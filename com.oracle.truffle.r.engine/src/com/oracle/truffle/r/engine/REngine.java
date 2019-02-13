@@ -685,7 +685,7 @@ final class REngine implements Engine, Engine.Timings {
             if (result == null) {
                 str = "[polyglot value (null)]";
             } else if (result instanceof CharSequence) {
-                str = "[1] \"" + String.valueOf(result) + "\"";
+                str = "[1] \"" + result + "\"";
             } else {
                 str = String.valueOf(result);
             }

@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2013, The R Core Team
  * Copyright (c) 2003-2015, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -133,6 +133,7 @@ public final class Arithmetic {
                 n = -n;
             }
             for (;;) {
+                // Note: the octal literal is intentional
                 if ((n & 01) != 0) {
                     xn *= x;
                 }
