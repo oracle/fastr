@@ -20,6 +20,7 @@ Bug fixes:
 * when using GNU-R graphics (--R.UseInternalGridGraphics=false) FastR would still override the graphics package R functions
 * cannot install RcppParallel #52
 * visibility propagation in `tryCatch`
+* `C_numeric_deriv` gives wrong results of gradient #54
 
 # 1.0 RC 12
 
