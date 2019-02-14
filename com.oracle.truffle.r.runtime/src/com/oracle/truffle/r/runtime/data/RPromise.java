@@ -293,7 +293,8 @@ public class RPromise extends RObject implements RTypedValue {
         private final EagerFeedback feedback;
 
         /**
-         * Index of the argument for which the promise was create.
+         * Index of the argument for which the promise was created for. {@code -1} for promises
+         * created for default argument values.
          */
         private final int wrapIndex;
 
