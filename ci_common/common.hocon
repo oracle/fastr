@@ -66,10 +66,11 @@ packagesLinux : ${pkgEnvironment} {
     "pip:pylint" : "==1.1.0"
     "pip:ninja_syntax" : "==1.7.2"
     make : ">=3.83"
-    gcc-build-essentials : "==4.9.1" # GCC 4.9.0 fails on cluster
-    readline : "==6.3"
+    gcc-build-essentials : "==4.9.1" # TODO: upgrade to 4.9.2
     pcre : ">=8.38"
-    zlib : ">=1.2.11"
+    zlib : "==1.2.11"
+    # these are needed to build GNU-R
+    readline : "==6.3"
     curl : ">=7.50.1"
   }
 }
@@ -86,8 +87,12 @@ packagesDarwin : {
 
 common : ${java8Downloads} ${packagesLinux}  {
   logs: ${logfiles}
+  catch_files : [
+    "Graal diagnostic output saved in (?P<filename>.+\.zip)"
+  ]
   timelimit : "1:00:00"
   environment : {
+	FASTR_TEST_trace_tests : "true"
 	PKG_TEST_ENV_miniUI : "LC_ALL=C"
 	PKG_TEST_ENV_compare : "LC_ALL=C"
 	FASTR_OPTION_PrintErrorStacktracesToFile: "true"
@@ -173,9 +178,6 @@ requireGCC: {
 }
 
 gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
-  setup: [
-    [export, "FASTR_TEST_trace_tests=true"]
-  ]
   downloads : {
     JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
     EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
