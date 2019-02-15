@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.PromiseCacheSize;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -45,7 +47,6 @@ import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PromiseCacheSize;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
@@ -407,12 +408,18 @@ public final class PromiseHelperNode extends RBaseNode {
         protected static final int CACHE_SIZE = ArgumentStatePush.MAX_COUNTED_ARGS * 2;
         protected static final int RECURSIVE_PROMISE_LIMIT = 3;
 
+        // If set to -1, then no further recursion should take place
+        // This avoids having to invoke DSLConfig.getCacheSize in PE'd code
         private final byte recursiveCounter;
         @Child private PromiseHelperNode nextNode = null;
         @Child private SetVisibilityNode visibility;
 
         protected GenerateValueNonDefaultOptimizedNode(byte recursiveCounter) {
-            this.recursiveCounter = recursiveCounter;
+            if (recursiveCounter > DSLConfig.getCacheSize(RECURSIVE_PROMISE_LIMIT)) {
+                this.recursiveCounter = -1;
+            } else {
+                this.recursiveCounter = recursiveCounter;
+            }
         }
 
         public abstract Object execute(VirtualFrame frame, int state, EagerPromise promise);
@@ -476,7 +483,7 @@ public final class PromiseHelperNode extends RBaseNode {
         // If promise evaluates to another promise, we create another RPromiseHelperNode to evaluate
         // that, but only up to certain recursion level
         private Object evaluateNextNode(VirtualFrame frame, RPromise nextPromise) {
-            if (recursiveCounter > DSLConfig.getCacheSize(RECURSIVE_PROMISE_LIMIT)) {
+            if (recursiveCounter == -1) {
                 evaluateNextNodeSlowPath(frame.materialize(), nextPromise);
             }
             if (nextNode == null) {
