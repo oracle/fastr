@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,23 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.runtime;
+package com.oracle.truffle.r.nodes.control;
 
-import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.source.SourceSection;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 
 /**
- * Creates a unique name for situations when an anonymous variable needs to be stored in a
- * {@link Frame}.
+ * Used for tagging purposes - denotes a block node.
  */
-public final class AnonymousFrameVariable {
-    private static final String BASE_NAME = "*anonymous-";
-    private static long id;
+public abstract class AbstractBlockNode extends OperatorNode {
 
-    public static String create(String name) {
-        return BASE_NAME + name + "-" + id++;
+    public AbstractBlockNode(SourceSection src, RSyntaxLookup operator) {
+        super(src, operator);
     }
 
-    public static boolean isAnonymous(String name) {
-        return name.startsWith(BASE_NAME);
-    }
 }
