@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -52,14 +52,6 @@ public class TestBuiltin_sysframe extends TestBase {
     @Test
     public void sysFrameViaEval() {
         assertEval(template("{ f <- function() { xx <- 'xv'; f1 <- function() get('xx', envir = %0);  xy <- new.env(); xy$xx <- 'aa'; eval(parse(text='f1()'), envir=xy)}; f() }", envirValues));
-
-        for (String envirValue : envirValues) {
-            String input = "{ f <- function() { xx <- 'xv'; f1 <- function() ls(sys.frame(" + envirValue + "));  eval(parse(text='f1()'), envir=environment())}; f() }";
-            if (Math.abs(Integer.parseInt(envirValue)) > 1) {
-                assertEval(Ignored.ImplementationError, input);
-            } else {
-                assertEval(input);
-            }
-        }
+        assertEval(template("{ f <- function() { xx <- 'xv'; f1 <- function() ls(sys.frame(%0));  eval(parse(text='f1()'), envir=environment())}; f() }", envirValues));
     }
 }
