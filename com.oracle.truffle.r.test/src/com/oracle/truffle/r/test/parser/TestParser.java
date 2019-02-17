@@ -184,7 +184,7 @@ public class TestParser extends TestBase {
             String name = file.getName();
             if (name.endsWith(".r") || name.endsWith(".R")) {
                 Source source = null;
-                RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+                RParserFactory.Parser parser = RParserFactory.getParser();
                 try {
                     source = RSource.fromFile(file);
                     parser.script(source, new RASTBuilder(true), null);

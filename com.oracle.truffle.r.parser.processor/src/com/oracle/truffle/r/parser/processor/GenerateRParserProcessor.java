@@ -30,7 +30,6 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.util.Arrays;
 import java.util.Set;
 
@@ -48,10 +47,36 @@ import javax.tools.Diagnostic.Kind;
 import javax.tools.JavaFileObject;
 import javax.tools.StandardLocation;
 
+import org.antlr.v4.Tool;
+import org.antlr.v4.tool.ANTLRMessage;
+import org.antlr.v4.tool.ANTLRToolListener;
+
 @SupportedSourceVersion(SourceVersion.RELEASE_8)
 @SupportedAnnotationTypes("com.oracle.truffle.r.parser.processor.GenerateRParser")
 public class GenerateRParserProcessor extends AbstractProcessor {
-    private static final String ANTLRC = "antlr-complete-3.5.1.jar";
+    private static final class Listener implements ANTLRToolListener {
+        public final Tool tool;
+        public final StringBuilder contents = new StringBuilder();
+
+        public Listener(Tool tool) {
+            this.tool = tool;
+        }
+
+        @Override
+        public void info(String msg) {
+            contents.append(msg).append('\n');
+        }
+
+        @Override
+        public void error(ANTLRMessage msg) {
+            contents.append(tool.errMgr.getMessageTemplate(msg).render()).append('\n');
+        }
+
+        @Override
+        public void warning(ANTLRMessage msg) {
+            error(msg);
+        }
+    }
 
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
@@ -69,30 +94,21 @@ public class GenerateRParserProcessor extends AbstractProcessor {
                 File suiteRoot = srcGenDir.getCanonicalFile().getParentFile().getParentFile().getParentFile();
                 // note("suiteRoot: " + suiteRoot.getAbsolutePath());
 
-                // path to ANTLR jar
-                File antlr = join(suiteRoot, "libdownloads", ANTLRC);
                 // Our src directory
                 File parserSrcDir = join(suiteRoot, pkg, "src", pkg.replace('.', File.separatorChar));
                 // note("parserSrcDir: " + parserSrcDir.getAbsolutePath());
                 antlrGenDir = mkTmpDir(null);
-                String[] command = new String[]{"java", "-jar", antlr.getAbsolutePath(), "-o", antlrGenDir.getAbsolutePath(), "R.g"};
+                String[] command = new String[]{"-no-listener", "-no-visitor", "-o", antlrGenDir.getAbsolutePath(), join(parserSrcDir, "R.g").getAbsolutePath()};
                 // noteCommand(command);
 
-                File tempFile = File.createTempFile("rparser", "out");
-                try {
-                    String javaHome = System.getenv("JAVA_HOME");
-                    if (javaHome != null && javaHome.trim().length() > 0) {
-                        command[0] = javaHome + File.separator + "bin" + File.separator + command[0];
-                    }
-                    int rc = new ProcessBuilder(command).directory(parserSrcDir).redirectError(tempFile).start().waitFor();
-                    if (rc != 0) {
-                        String out = new String(Files.readAllBytes(tempFile.toPath()));
-                        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-                                        String.format("Parser failed to execute command %s. Return code %s.%nOutput:%s", Arrays.toString(command), rc, out), element);
-                        return false;
-                    }
-                } finally {
-                    tempFile.delete();
+                Tool tool = new Tool(command);
+                Listener listener = new Listener(tool);
+                tool.addListener(listener);
+                tool.processGrammarsOnCommandLine();
+                if (tool.errMgr.getNumErrors() > 0) {
+                    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                                    String.format("Parser failed to execute command %s. Output:%s", Arrays.toString(command), listener.contents), element);
+                    return false;
                 }
                 // Now create the actual source files, copying the ANTLR output
                 createSourceFile(filer, pkg, "RParser", antlrGenDir);
@@ -152,7 +168,6 @@ public class GenerateRParserProcessor extends AbstractProcessor {
             os.write("// Checkstyle: stop\n".getBytes());
             String contentString = new String(content, StandardCharsets.UTF_8);
             // make the parser generic
-            contentString = contentString.replace("public class RParser extends Parser", "public class RParser<T> extends Parser");
             os.write(contentString.getBytes(StandardCharsets.UTF_8));
         }
     }

@@ -24,31 +24,84 @@ package com.oracle.truffle.r.parser;
 
 import java.util.List;
 
-import org.antlr.runtime.MismatchedTokenException;
-import org.antlr.runtime.NoViableAltException;
-import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.Token;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.CommonToken;
+import org.antlr.v4.runtime.InputMismatchException;
+import org.antlr.v4.runtime.LexerNoViableAltException;
+import org.antlr.v4.runtime.NoViableAltException;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.parser.RParser.ScriptContext;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class DefaultRParserFactory extends RParserFactory {
 
-    private static class DefaultParser<T> implements Parser<T> {
+    public static final class ThrowImmediatelyErrorListener extends BaseErrorListener {
+
+        public static final ThrowImmediatelyErrorListener INSTANCE = new ThrowImmediatelyErrorListener();
 
         @Override
-        public List<T> script(Source source, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
+        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+            throw new IllegalArgumentException(e);
+        }
+    }
+
+    private static class DefaultParser implements Parser {
+
+        @Override
+        public List<RSyntaxNode> script(Source source, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
+            try {
+                ScriptContext script;
+                try {
+                    RContext context = language.getContextReference().get();
+                    RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
+                    RParser parser = new RParser(source, lexer, builder, language, context.sourceCache);
+                    parser.removeErrorListeners();
+                    parser.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+                    lexer.removeErrorListeners();
+                    lexer.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+                    parser.setBuildParseTree(false);
+                    script = parser.script();
+                } catch (IllegalArgumentException e) {
+                    // the lexer will wrap exceptions in IllegalArgumentExceptions
+                    if (e.getCause() instanceof RecognitionException) {
+                        throw (RecognitionException) e.getCause();
+                    } else {
+                        throw e;
+                    }
+                } catch (Throwable t) {
+                    throw t;
+                }
+                return script.v;
+            } catch (RecognitionException e) {
+                throw handleRecognitionException(source, e);
+            }
+        }
+
+        @Override
+        public List<RSyntaxNode> statements(Source source, Source fullSource, int startLine, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
             try {
                 try {
                     RContext context = language.getContextReference().get();
-                    RParser<T> parser = new RParser<>(source, builder, language, context.sourceCache);
-                    return parser.script();
+                    RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
+                    RParser parser = new RParser(source, lexer, fullSource, startLine, builder, language, context.sourceCache);
+                    parser.removeErrorListeners();
+                    parser.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+                    lexer.removeErrorListeners();
+                    lexer.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+                    parser.setBuildParseTree(false);
+                    return parser.script().v;
                 } catch (IllegalArgumentException e) {
                     // the lexer will wrap exceptions in IllegalArgumentExceptions
                     if (e.getCause() instanceof RecognitionException) {
@@ -63,31 +116,17 @@ public class DefaultRParserFactory extends RParserFactory {
         }
 
         @Override
-        public List<T> statements(Source source, Source fullSource, int startLine, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
-            try {
-                try {
-                    RContext context = language.getContextReference().get();
-                    RParser<T> parser = new RParser<>(source, fullSource, startLine, builder, language, context.sourceCache);
-                    return parser.script();
-                } catch (IllegalArgumentException e) {
-                    // the lexer will wrap exceptions in IllegalArgumentExceptions
-                    if (e.getCause() instanceof RecognitionException) {
-                        throw (RecognitionException) e.getCause();
-                    } else {
-                        throw e;
-                    }
-                }
-            } catch (RecognitionException e) {
-                throw handleRecognitionException(source, e);
-            }
-        }
-
-        @Override
-        public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
+        public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
             RContext context = language.getContextReference().get();
-            RParser<T> parser = new RParser<>(source, builder, language, context.sourceCache);
+            RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
+            RParser parser = new RParser(source, lexer, builder, language, context.sourceCache);
+            parser.removeErrorListeners();
+            parser.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            parser.setBuildParseTree(false);
             try {
-                return parser.root_function(name);
+                return parser.root_function(name).v;
             } catch (RecognitionException e) {
                 throw handleRecognitionException(source, e);
             }
@@ -101,31 +140,48 @@ public class DefaultRParserFactory extends RParserFactory {
         @Override
         public int line(Throwable t) {
             assert isRecognitionException(t);
-            return ((RecognitionException) t).line;
+            return ((RecognitionException) t).getOffendingToken().getLine();
         }
 
         @Override
         public int charPositionInLine(Throwable t) {
             assert isRecognitionException(t);
-            return ((RecognitionException) t).charPositionInLine;
+            return ((RecognitionException) t).getOffendingToken().getCharPositionInLine();
         }
 
         private static ParseException handleRecognitionException(Source source, RecognitionException e) throws IncompleteSourceException, ParseException {
-            CharSequence line = e.line <= source.getLineCount() ? source.getCharacters(e.line) : "";
-            String substring = line.subSequence(0, Math.min(line.length(), e.charPositionInLine + 1)).toString();
-            String token = e.token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : e.token.getText();
-            int lineNr = e.line > source.getLineCount() ? source.getLineCount() : e.line;
-            if (e.getUnexpectedType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
-                // the parser got stuck at the eof, request another line
-                throw new IncompleteSourceException(e, source, token, substring, lineNr);
+            Token token = e.getOffendingToken();
+            if (token == null) {
+                int start = e.getInputStream().index();
+                int lineNumber = source.getLineNumber(start);
+                CharSequence line = lineNumber <= source.getLineCount() ? source.getCharacters(lineNumber) : "";
+                String substring = line.subSequence(0, Math.min(line.length(), start - source.getLineStartOffset(lineNumber) + 1)).toString();
+                String contents = token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : token.getText();
+                int lineNr = lineNumber > source.getLineCount() ? source.getLineCount() : lineNumber;
+                if (e.getInputStream().LA(1) == Token.EOF && (e instanceof LexerNoViableAltException || e instanceof NoViableAltException || e instanceof InputMismatchException)) {
+                    // the parser got stuck at the eof, request another line
+                    throw new IncompleteSourceException(e, source, contents, substring, lineNr);
+                } else {
+                    throw new ParseException(e, source, contents, substring, lineNr);
+                }
             } else {
-                throw new ParseException(e, source, token, substring, lineNr);
+                int lineNumber = token.getLine();
+                CharSequence line = lineNumber <= source.getLineCount() ? source.getCharacters(lineNumber) : "";
+                String substring = line.subSequence(0, Math.min(line.length(), token.getCharPositionInLine() + 1)).toString();
+                String contents = token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : token.getText();
+                int lineNr = lineNumber > source.getLineCount() ? source.getLineCount() : lineNumber;
+                if (token.getType() == Token.EOF && (e instanceof NoViableAltException || e instanceof InputMismatchException)) {
+                    // the parser got stuck at the eof, request another line
+                    throw new IncompleteSourceException(e, source, contents, substring, lineNr);
+                } else {
+                    throw new ParseException(e, source, contents, substring, lineNr);
+                }
             }
         }
     }
 
     @Override
-    protected <T> Parser<T> createParser() {
-        return new DefaultParser<>();
+    protected Parser createParser() {
+        return new DefaultParser();
     }
 }

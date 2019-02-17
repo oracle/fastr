@@ -68,7 +68,7 @@ public class TokensMap {
             MAP[RParser.AT] = RCodeToken.AT;
             MAP[RParser.FIELD] = RCodeToken.FIELD;
             MAP[RParser.CARET] = RCodeToken.CARET;
-            MAP[RParser.EXPONENT] = RCodeToken.EXPONENT;
+            // MAP[RParser.EXPONENT] = RCodeToken.EXPONENT;
             MAP[RParser.COLON] = RCodeToken.COLON;
             MAP[RParser.COMMA] = RCodeToken.COMMA;
             MAP[RParser.LPAR] = RCodeToken.LPAR;
@@ -96,7 +96,7 @@ public class TokensMap {
             MAP[RParser.INTEGER] = RCodeToken.NUM_CONST;
             MAP[RParser.FALSE] = RCodeToken.NUM_CONST;
             MAP[RParser.TRUE] = RCodeToken.NUM_CONST;
-            MAP[RParser.HEX_DIGIT] = RCodeToken.NUM_CONST;
+            // MAP[RParser.HEX_DIGIT] = RCodeToken.NUM_CONST;
             MAP[RParser.INF] = RCodeToken.NUM_CONST;
             MAP[RParser.STRING] = RCodeToken.STR_CONST;
             MAP[RParser.NULL] = RCodeToken.NULL_CONST;
@@ -109,10 +109,10 @@ public class TokensMap {
             MAP[RParser.NAREAL] = RCodeToken.NUM_CONST;
 
             MAP[RParser.ID] = RCodeToken.SYMBOL;
-            MAP[RParser.ID_NAME] = RCodeToken.SYMBOL;
+            // MAP[RParser.ID_NAME] = RCodeToken.SYMBOL;
             MAP[RParser.VARIADIC] = RCodeToken.SYMBOL;
             MAP[RParser.DD] = RCodeToken.SYMBOL;     // '..1'
-            MAP[RParser.BACKTICK_NAME] = RCodeToken.SYMBOL;
+            // MAP[RParser.BACKTICK_NAME] = RCodeToken.SYMBOL;
 
             // Fragments: should not appear
             // MAP[RParser.HEX_EXPONENT] = RCodeToken.UNKNOWN;
