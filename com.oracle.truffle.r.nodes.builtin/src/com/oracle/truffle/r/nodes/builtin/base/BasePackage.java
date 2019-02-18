@@ -687,6 +687,7 @@ public class BasePackage extends RBuiltinPackage {
         add(OnExit.class, OnExitNodeGen::create);
         add(OptionsFunctions.Options.class, OptionsFunctionsFactory.OptionsNodeGen::create);
         add(Order.class, OrderNodeGen::create);
+        add(PCREConfig.class, PCREConfigNodeGen::create);
         add(PMatch.class, PMatchNodeGen::create);
         add(PMinMax.PMax.class, PMinMaxNodeGen.PMaxNodeGen::create);
         add(PMinMax.PMin.class, PMinMaxNodeGen.PMinNodeGen::create);
