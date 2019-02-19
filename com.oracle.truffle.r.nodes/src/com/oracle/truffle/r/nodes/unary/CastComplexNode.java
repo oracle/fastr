@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -237,7 +237,7 @@ public abstract class CastComplexNode extends CastBaseNode {
     }
 
     protected boolean isAbstractAtomicVector(RAbstractAtomicVector value) {
-        return !(value instanceof RForeignWrapper) && !(value instanceof RAbstractComplexVector);
+        return !(value instanceof RForeignVectorWrapper) && !(value instanceof RAbstractComplexVector);
     }
 
     @Specialization

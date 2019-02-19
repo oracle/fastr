@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RStringSequence;
@@ -181,7 +181,7 @@ public abstract class CastStringNode extends CastStringBaseNode {
     }
 
     protected boolean isForeignWrapper(Object value) {
-        return value instanceof RForeignWrapper;
+        return value instanceof RForeignVectorWrapper;
     }
 
     protected boolean isIntSequence(RAbstractContainer c) {

@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.runtime.ffi;
 
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.IdentityHashMap;
 import java.util.Set;
 import java.util.WeakHashMap;
@@ -69,7 +68,7 @@ public abstract class RFFIContext extends RFFI {
          */
         public final IdentityHashMap<RObject, AtomicInteger> preserveList = new IdentityHashMap<>();
 
-        private final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
+        public final WeakHashMap<Object, Set<Object>> protectedChildren = new WeakHashMap<>();
         /**
          * Stack used by RFFI to implement the PROTECT/UNPROTECT functions. Objects registered on
          * this stack do necessarily not have to be {@linke #registerReferenceUsedInNative}, but
@@ -77,7 +76,7 @@ public abstract class RFFIContext extends RFFI {
          */
         public final ArrayList<RObject> protectStack = new ArrayList<>();
 
-        public final ArrayList<Integer> downcallFrameDepthStack = new ArrayList<>();
+        public final ArrayList<MaterializedFrame> downcallFrameStack = new ArrayList<>();
     }
 
     /**
@@ -118,7 +117,7 @@ public abstract class RFFIContext extends RFFI {
      *            {@link RFFIContext#registerReferenceUsedInNative(Object)}.
      */
     public void afterUpcall(boolean canRunGc, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
-        if (canRunGc) {
+        if (canRunGc && rffiType == RFFIFactory.Type.NFI) {
             cooperativeGc();
         }
     }
@@ -148,7 +147,7 @@ public abstract class RFFIContext extends RFFI {
      */
     public long beforeDowncall(VirtualFrame frame, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
         rffiContextState.callDepth++;
-        rffiContextState.downcallFrameDepthStack.add(frame == null ? null : RArguments.getDepth(frame));
+        rffiContextState.downcallFrameStack.add(frame == null || !RArguments.isRFrame(frame) ? null : frame.materialize());
         return 0;
     }
 
@@ -157,7 +156,7 @@ public abstract class RFFIContext extends RFFI {
      *            {@link #beforeDowncall(VirtualFrame, com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type)}.
      */
     public void afterDowncall(long before, @SuppressWarnings("unused") RFFIFactory.Type rffiType) {
-        rffiContextState.downcallFrameDepthStack.remove(rffiContextState.downcallFrameDepthStack.size() - 1);
+        rffiContextState.downcallFrameStack.remove(rffiContextState.downcallFrameStack.size() - 1);
         rffiContextState.callDepth--;
         if (rffiContextState.callDepth == 0) {
             cooperativeGc();
@@ -183,18 +182,11 @@ public abstract class RFFIContext extends RFFI {
      *
      * @param parent
      * @param child
+     * @param rffiType the type of the RFFI backend from which the child protection is requested
      * @return the child
      *
      */
-    public final Object protectChild(Object parent, Object child) {
-        Set<Object> children = rffiContextState.protectedChildren.get(parent);
-        if (children == null) {
-            children = new HashSet<>();
-            rffiContextState.protectedChildren.put(parent, children);
-        }
-        children.add(child);
-        return child;
-    }
+    public abstract Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType);
 
     private RFFI instance;
 

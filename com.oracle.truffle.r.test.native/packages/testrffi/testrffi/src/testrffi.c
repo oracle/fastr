@@ -614,6 +614,38 @@ SEXP test_ParseVector(SEXP src) {
     return result;
 }
 
+SEXP test_RfFindFunAndRfEval(SEXP x, SEXP y) {
+	SEXP fun = Rf_findFun(Rf_install("match"), R_BaseNamespace);
+    SEXP e, ptr;
+    PROTECT(e = ptr = Rf_allocVector(LANGSXP, 3));
+    SETCAR(e, fun);
+    ptr = CDR(ptr);
+    SETCAR(ptr, x);
+    ptr = CDR(ptr);
+    SETCAR(ptr, y);
+    SEXP result = Rf_eval(e, R_GlobalEnv);
+    UNPROTECT(1);
+    return result;
+}
+
+SEXP test_lapply(SEXP list, SEXP fn, SEXP rho) {
+    int n = length(list);
+    SEXP R_fcall, ans;
+
+//    if(!isNewList(list)) error("'list' must be a list");
+//    if(!isFunction(fn)) error("'fn' must be a function");
+//    if(!isEnvironment(rho)) error("'rho' should be an environment");
+    R_fcall = PROTECT(lang2(fn, R_NilValue));
+    ans = PROTECT(allocVector(VECSXP, n));
+    for(int i = 0; i < n; i++) {
+        SETCADR(R_fcall, VECTOR_ELT(list, i));
+        SET_VECTOR_ELT(ans, i, eval(R_fcall, rho));
+    }
+    setAttrib(ans, R_NamesSymbol, getAttrib(list, R_NamesSymbol));
+    UNPROTECT(2);
+    return ans;
+}
+
 SEXP test_RfEvalWithPromiseInPairList() {
     SEXP fun = Rf_findVarInFrame(R_FindNamespace(ScalarString(mkChar("stats"))), Rf_install("runif"));
     if (TYPEOF(fun) != PROMSXP) {

@@ -19,6 +19,7 @@
  */
 package com.oracle.truffle.r.runtime.gnur;
 
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RComplex;
@@ -28,6 +29,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntSequence;
 import com.oracle.truffle.r.runtime.data.RIntVector;
@@ -130,6 +132,9 @@ public enum SEXPTYPE {
         if (value instanceof RPairList) {
             return ((RPairList) value).isLanguage() ? LANGSXP : LISTSXP;
         }
+        if (value instanceof RForeignObjectWrapper) {
+            return VECSXP;
+        }
         Class<?> fastRClass = value.getClass();
         for (SEXPTYPE type : values()) {
             for (Class<?> clazz : type.fastRClasses) {
@@ -144,6 +149,7 @@ public enum SEXPTYPE {
         } else if (RPromise.class.isAssignableFrom(fastRClass)) {
             return PROMSXP;
         }
+        CompilerDirectives.transferToInterpreter();
         throw RInternalError.shouldNotReachHere(fastRClass.getName());
     }
 

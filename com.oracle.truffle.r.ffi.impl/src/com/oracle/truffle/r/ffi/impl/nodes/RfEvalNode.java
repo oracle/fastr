@@ -26,37 +26,31 @@ import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_ENVIRONME
 import static com.oracle.truffle.r.runtime.RError.Message.ARGUMENT_NOT_FUNCTION;
 import static com.oracle.truffle.r.runtime.RError.Message.UNKNOWN_OBJECT;
 
-import java.util.Arrays;
-
-import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.DirectCallNode;
 import com.oracle.truffle.api.nodes.Node;
-import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
-import com.oracle.truffle.api.source.SourceSection;
-import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNodeGen.RcppEvalNodeGen;
+import com.oracle.truffle.r.ffi.impl.nodes.RfEvalNodeGen.FunctionEvalNodeGen;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
+import com.oracle.truffle.r.nodes.function.call.SlowPathExplicitCall;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
@@ -83,26 +77,21 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     @Child private PromiseHelperNode promiseHelper;
     private final ConditionProfile envIsNullProfile = ConditionProfile.createBinaryProfile();
 
+    protected RfEvalNode() {
+    }
+
     public static RfEvalNode create() {
         return RfEvalNodeGen.create();
     }
 
-    private static RCaller createCallFast(REnvironment env, BranchProfile downcallFrameProfile) {
-        RFFIContext context = RContext.getInstance().getStateRFFI();
-        Integer downCallFrameDepth = context.rffiContextState.downcallFrameDepthStack.get(context.rffiContextState.downcallFrameDepthStack.size() - 1);
-        if (downCallFrameDepth == null) {
-            downcallFrameProfile.enter();
-            return createCall(env);
-        }
-
-        RCaller originalCaller = RArguments.getCall(env.getFrame());
-        return RCaller.createForPromise(originalCaller, downCallFrameDepth, env);
-    }
-
     @TruffleBoundary
     private static RCaller createCall(REnvironment env) {
-        // TODO: getActualCurrentFrame causes deopt
-        Frame frame = Utils.getActualCurrentFrame();
+        Frame frame = getCurrentRFrame();
+        if (frame == null) {
+            // Is it necessary?
+            // Warning: Utils.getActualCurrentFrame causes deopt
+            Utils.getActualCurrentFrame();
+        }
         final MaterializedFrame envFrame = env.getFrame();
         RCaller originalCaller = RArguments.getCall(envFrame);
         if (!RCaller.isValidCaller(originalCaller) && env instanceof REnvironment.NewEnv) {
@@ -140,7 +129,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             return value;
         }
 
-        return evalPromise(expr, env);
+        return handlePromise(expr, env);
     }
 
     @TruffleBoundary
@@ -155,58 +144,61 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         return RContext.getEngine().eval(expr, env, createCall(env));
     }
 
-    static final class RcppEvalFunction {
+    static final class FunctionInfo {
         final RFunction function;
         final RArgsValuesAndNames args;
 
-        RcppEvalFunction(RFunction function, RArgsValuesAndNames args) {
+        FunctionInfo(RFunction function, RArgsValuesAndNames args) {
             this.function = function;
             this.args = args;
         }
 
-        static RcppEvalFunction fromPairList(RFunction fun, RPairList argList, REnvironment env) {
+        static FunctionInfo fromPairList(RFunction fun, RPairList argList, REnvironment env) {
             int len = 0;
             boolean named = false;
-            for (RPairList item : argList) {
-                named = named || !item.isNullTag();
-                len++;
+            if (argList != null) {
+                for (RPairList item : argList) {
+                    named = named || !item.isNullTag();
+                    len++;
+                }
             }
             Object[] args = new Object[len];
             String[] names = named ? new String[len] : null;
             int i = 0;
-            for (RPairList plt : argList) {
-                Object a = plt.car();
+            if (argList != null) {
+                for (RPairList plt : argList) {
+                    Object a = plt.car();
 
-                if (a instanceof RSymbol) {
-                    RSyntaxNode lookupSyntaxNode = createLookupNode(a);
-                    Closure closure = Closure.createPromiseClosure(lookupSyntaxNode.asRNode());
-                    args[i] = RDataFactory.createPromise(PromiseState.Supplied, closure, env.getFrame());
-                } else if (a instanceof RPairList) {
-                    RPairList aPL = (RPairList) a;
-                    aPL = RDataFactory.createPairList(aPL.car(), aPL.cdr(), aPL.getTag(), SEXPTYPE.LANGSXP);
-                    createPromise(env, args, i, aPL);
-                } else {
-                    args[i] = a;
-                }
-
-                if (named) {
-                    Object ptag = plt.getTag();
-                    if (RPairList.isNull(ptag)) {
-                        names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
-                    } else if (ptag instanceof RSymbol) {
-                        names[i] = ((RSymbol) ptag).getName();
+                    if (a instanceof RSymbol) {
+                        RSyntaxNode lookupSyntaxNode = createLookupNode(a);
+                        Closure closure = Closure.createPromiseClosure(lookupSyntaxNode.asRNode());
+                        args[i] = RDataFactory.createPromise(PromiseState.Supplied, closure, env.getFrame());
+                    } else if (a instanceof RPairList) {
+                        RPairList aPL = (RPairList) a;
+                        aPL = RDataFactory.createPairList(aPL.car(), aPL.cdr(), aPL.getTag(), SEXPTYPE.LANGSXP);
+                        createPromise(env, args, i, aPL);
                     } else {
-                        names[i] = RRuntime.asString(ptag);
-                        assert names[i] != null : "unexpected type of tag in RPairList";
+                        args[i] = a;
                     }
+
+                    if (named) {
+                        Object ptag = plt.getTag();
+                        if (RPairList.isNull(ptag)) {
+                            names[i] = RRuntime.NAMES_ATTR_EMPTY_VALUE;
+                        } else if (ptag instanceof RSymbol) {
+                            names[i] = ((RSymbol) ptag).getName();
+                        } else {
+                            names[i] = RRuntime.asString(ptag);
+                            assert names[i] != null : "unexpected type of tag in RPairList";
+                        }
+                    }
+                    i++;
                 }
-                i++;
             }
 
-            return new RcppEvalFunction(fun, new RArgsValuesAndNames(args, named ? ArgumentsSignature.get(names) : ArgumentsSignature.empty(len)));
+            return new FunctionInfo(fun, new RArgsValuesAndNames(args, named ? ArgumentsSignature.get(names) : ArgumentsSignature.empty(len)));
         }
 
-        @TruffleBoundary
         private static void createPromise(REnvironment env, Object[] args, int i, RPairList aPL) {
             args[i] = RDataFactory.createPromise(PromiseState.Supplied, aPL.getClosure(), env.getFrame());
         }
@@ -216,117 +208,114 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
             RSyntaxNode lookupSyntaxNode = RContext.getASTBuilder().lookup(RSyntaxNode.LAZY_DEPARSE, ((RSymbol) a).getName(), false);
             return lookupSyntaxNode;
         }
-    }
 
-    private static final String tryCatch = "tryCatch";
-    private static final String evalq = "evalq";
-
-    RcppEvalFunction getRCppEvaluatedFunction(RPairList expr, REnvironment env) {
-        Object p = expr.car();
-        if (p instanceof RFunction) {
-            return RcppEvalFunction.fromPairList((RFunction) p, (RPairList) expr.cdr(), env);
-        } else if (p instanceof RSymbol && tryCatch == ((RSymbol) p).getName()) {
-            Object pp = expr.cdr();
-            if (pp instanceof RPairList) {
-                pp = ((RPairList) pp).car();
+        static FunctionInfo get(RPairList expr, REnvironment env) {
+            Object p = expr.car();
+            if (p instanceof RFunction) {
+                Object argList = expr.cdr();
+                return FunctionInfo.fromPairList((RFunction) p, argList instanceof RPairList ? (RPairList) argList : null, env);
+            } else if (p instanceof RSymbol && tryCatch == ((RSymbol) p).getName()) {
+                Object pp = expr.cdr();
                 if (pp instanceof RPairList) {
-                    p = ((RPairList) pp).car();
-                    if (p instanceof RSymbol && evalq == ((RSymbol) p).getName()) {
-                        pp = ((RPairList) pp).cdr();
-                        if (pp instanceof RPairList) {
-                            pp = ((RPairList) pp).car();
+                    pp = ((RPairList) pp).car();
+                    if (pp instanceof RPairList) {
+                        p = ((RPairList) pp).car();
+                        if (p instanceof RSymbol && evalq == ((RSymbol) p).getName()) {
+                            pp = ((RPairList) pp).cdr();
                             if (pp instanceof RPairList) {
-                                p = ((RPairList) pp).car();
-                                if (p instanceof RFunction) {
-                                    assert ((RPairList) pp).cdr() instanceof RPairList;
-                                    return RcppEvalFunction.fromPairList((RFunction) p, (RPairList) ((RPairList) pp).cdr(), env);
+                                pp = ((RPairList) pp).car();
+                                if (pp instanceof RPairList) {
+                                    p = ((RPairList) pp).car();
+                                    if (p instanceof RFunction) {
+                                        Object argList = ((RPairList) pp).cdr();
+                                        return FunctionInfo.fromPairList((RFunction) p, argList instanceof RPairList ? (RPairList) argList : null, env);
+                                    }
                                 }
                             }
                         }
                     }
                 }
             }
+            return null;
         }
-        return null;
+
     }
 
-    private static final class RcppEvalRootNode extends RootNode {
-        final RFunction fun;
-        @Child RExplicitCallNode callNode = RExplicitCallNode.create();
+    private static final String tryCatch = "tryCatch";
+    private static final String evalq = "evalq";
 
-        private RcppEvalRootNode(RFunction fun, FrameDescriptor desc) {
-            super(RContext.getInstance().getLanguage(), desc);
-            this.fun = fun;
-            Truffle.getRuntime().createCallTarget(this);
-        }
-
-        @Override
-        public SourceSection getSourceSection() {
-            return RSyntaxNode.INTERNAL;
-        }
-
-        @Override
-        public Object execute(VirtualFrame frame) {
-            RArgsValuesAndNames args = (RArgsValuesAndNames) frame.getArguments()[frame.getArguments().length - 1];
-            return callNode.call(frame, fun, args);
-        }
-
-        static CallTarget create(RFunction fun, FrameDescriptor desc) {
-            return new RcppEvalRootNode(fun, desc).getCallTarget();
-        }
-    }
-
-    abstract static class RcppEvalNode extends Node {
+    abstract static class FunctionEvalNode extends Node {
 
         protected static final int CACHE_SIZE = DSLConfig.getCacheSize(100);
 
-        abstract Object execute(VirtualFrame frame, RFunction fun, RArgsValuesAndNames args);
+        private final ValueProfile frameProfile = ValueProfile.createClassProfile();
+        private final ValueProfile frameAccessProfile = ValueProfile.createClassProfile();
 
-        DirectCallNode createDirectCallNode(RFunction fun, FrameDescriptor frameDesc) {
-            return Truffle.getRuntime().createDirectCallNode(RcppEvalRootNode.create(fun, frameDesc));
+        abstract Object execute(Object downcallFrame, FunctionInfo functionInfo, REnvironment env);
+
+        @Specialization(limit = "CACHE_SIZE", guards = {"env.getFrame().getFrameDescriptor() == cachedDesc"})
+        Object evalFastPath(Object downcallFrame, FunctionInfo functionInfo, REnvironment env,
+                        @SuppressWarnings("unused") @Cached("env.getFrame().getFrameDescriptor()") FrameDescriptor cachedDesc,
+                        @Cached("create()") RExplicitCallNode explicitCallNode) {
+            MaterializedFrame materializedFrame = (MaterializedFrame) downcallFrame;
+            MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
+            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, promiseFrame, env, null, functionInfo.function, functionInfo.args);
+            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
+
+            Object resultValue = explicitCallNode.execute(evalFrame, functionInfo.function, functionInfo.args, caller, materializedFrame);
+            // setVisibility(virtualFrame, getVisibilityNode.execute(evalFrame));
+            return resultValue;
         }
 
-        /**
-         * @param fun
-         */
-        @Specialization(limit = "CACHE_SIZE", guards = {"fun == cachedFun", "frame.getFrameDescriptor() == cachedFrameDesc"})
-        Object doCached(VirtualFrame frame, RFunction fun, RArgsValuesAndNames args,
-                        @SuppressWarnings("unused") @Cached("frame.getFrameDescriptor()") FrameDescriptor cachedFrameDesc,
-                        @SuppressWarnings("unused") @Cached("fun") RFunction cachedFun,
-                        @Cached("createDirectCallNode(cachedFun, cachedFrameDesc)") DirectCallNode callNode) {
-            Object[] extArgs = Arrays.copyOf(frame.getArguments(), frame.getArguments().length + 1);
-            extArgs[frame.getArguments().length] = args;
-            return callNode.call(extArgs);
+        @Specialization(replaces = "evalFastPath")
+        Object evalSlowPath(Object downcallFrame, FunctionInfo functionInfo, REnvironment env,
+                        @Cached("create()") SlowPathExplicitCall slowPathExplicitCall) {
+            MaterializedFrame materializedFrame = (MaterializedFrame) downcallFrame;
+            MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
+            RCaller caller = RCallerHelper.getExplicitCaller(materializedFrame, promiseFrame, env, null, functionInfo.function, functionInfo.args);
+            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
+
+            Object resultValue = slowPathExplicitCall.execute(evalFrame, materializedFrame, caller, functionInfo.function, functionInfo.args);
+            // setVisibility(virtualFrame, getVisibilityNode.execute(evalFrame));
+            return resultValue;
         }
 
-        @Specialization
-        @TruffleBoundary
-        Object doCached(RFunction fun, RArgsValuesAndNames args) {
-            throw RInternalError.shouldNotReachHere("todo");
+        private static MaterializedFrame getEvalFrame(VirtualFrame currentFrame, MaterializedFrame envFrame) {
+            return VirtualEvalFrame.create(envFrame, RArguments.getFunction(currentFrame), currentFrame, RArguments.getCall(currentFrame));
         }
 
     }
 
-    @Child private RcppEvalNode rcppEvalNode;
+    @Child private FunctionEvalNode functionEvalNode;
 
     @Specialization(guards = "expr.isLanguage()")
     Object handleLanguage(RPairList expr, Object envArg,
-                    @Cached("create()") BranchProfile nullFunProfile,
-                    @Cached("create()") BranchProfile downcallFrameProfile) {
+                    @Cached("create()") BranchProfile noDowncallFrameFunProfile,
+                    @Cached("create()") BranchProfile nullFunProfile) {
+        MaterializedFrame downcallFrame = getCurrentRFrame();
+        if (downcallFrame == null) {
+            noDowncallFrameFunProfile.enter();
+            return handleLanguageDefault(expr, envArg);
+        }
+
         REnvironment env = getEnv(envArg);
-        RcppEvalFunction rcppEvalFun = getRCppEvaluatedFunction(expr, env);
-        if (rcppEvalFun == null) {
+        FunctionInfo functionInfo = FunctionInfo.get(expr, env);
+        if (functionInfo == null) {
             nullFunProfile.enter();
             return handleLanguageDefault(expr, envArg);
         }
 
-        if (rcppEvalNode == null) {
+        if (functionEvalNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            rcppEvalNode = insert(RcppEvalNodeGen.create());
+            functionEvalNode = insert(FunctionEvalNodeGen.create());
         }
 
-        VirtualEvalFrame vf = VirtualEvalFrame.create(env.getFrame(), rcppEvalFun.function, null, createCallFast(env, downcallFrameProfile));
-        return rcppEvalNode.execute(vf, rcppEvalFun.function, rcppEvalFun.args);
+        return functionEvalNode.execute(downcallFrame, functionInfo, env);
+    }
+
+    private static MaterializedFrame getCurrentRFrame() {
+        RFFIContext context = RContext.getInstance().getStateRFFI();
+        return context.rffiContextState.downcallFrameStack.get(context.rffiContextState.downcallFrameStack.size() - 1);
     }
 
     @TruffleBoundary

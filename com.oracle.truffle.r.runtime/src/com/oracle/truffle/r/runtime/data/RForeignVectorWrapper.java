@@ -34,7 +34,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.interop.ForeignArrayToVectorNode;
 
-public abstract class RForeignWrapper implements RAbstractVector {
+public abstract class RForeignVectorWrapper implements RAbstractVector {
 
     protected static final Node GET_SIZE = Message.GET_SIZE.createNode();
     protected static final Node IS_NULL = Message.IS_NULL.createNode();
@@ -46,7 +46,7 @@ public abstract class RForeignWrapper implements RAbstractVector {
 
     protected final TruffleObject delegate;
 
-    protected RForeignWrapper(TruffleObject delegate) {
+    protected RForeignVectorWrapper(TruffleObject delegate) {
         this.delegate = delegate;
     }
 

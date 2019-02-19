@@ -53,6 +53,7 @@ import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import java.util.logging.Level;
 
@@ -308,13 +309,16 @@ public final class NativeDataAccess {
             if (id != 0) {
                 nativeMirrors.remove(id, this);
             }
+            // We cannot use RFFILog here, as the gc thread may not have any Truffle context
+            // attached to.
+
             // System.out.println(String.format("gc'ing %16x", id));
-            // RFFILog.log("gc'ing %16x (dataAddress=%16x)", id, dataAddress);
+            // System.err.printf("gc'ing %16x (dataAddress=%16x)\n", id, dataAddress);
             if (dataAddress == getEmptyDataAddress()) {
-                // RFFILog.log("1. freeing data at %16x (id=%16x)", dataAddress, id);
+                // System.err.printf("1. freeing data at %16x (id=%16x)\n", dataAddress, id);
                 assert (setDataAddress(0xbadbad)) != 0;
             } else if (dataAddress != 0 && !external) {
-                // RFFILog.log("2. freeing data at %16x (id=%16x)", dataAddress, id);
+                // System.err.printf("2. freeing data at %16x (id=%16x)\n", dataAddress, id);
                 freeNativeMemory(dataAddress);
                 if (dataAddressToNativeMirrors != null) {
                     dataAddressToNativeMirrors.remove(dataAddress);

@@ -47,7 +47,7 @@ import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignDoubleWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RVector;
@@ -79,7 +79,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * returned.
  * </p>
  * 
- * <b>Note</b> currently are {@link RForeignWrapper}-s used only in case of homogenous 1-dimensional
+ * <b>Note</b> currently are {@link RForeignVectorWrapper}-s used only in case of homogenous 1-dimensional
  * arrays resulting to a logical, double, integer or character vector.
  */
 @ImportStatic({Message.class, RRuntime.class, RType.class})

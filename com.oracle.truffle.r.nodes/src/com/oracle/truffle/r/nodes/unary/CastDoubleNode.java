@@ -37,7 +37,7 @@ import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RForeignBooleanWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignIntWrapper;
 import com.oracle.truffle.r.runtime.data.RForeignStringWrapper;
-import com.oracle.truffle.r.runtime.data.RForeignWrapper;
+import com.oracle.truffle.r.runtime.data.RForeignVectorWrapper;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
@@ -193,7 +193,7 @@ public abstract class CastDoubleNode extends CastDoubleBaseNode {
     }
 
     protected boolean isForeignWrapper(Object value) {
-        return value instanceof RForeignWrapper;
+        return value instanceof RForeignVectorWrapper;
     }
 
     @Specialization

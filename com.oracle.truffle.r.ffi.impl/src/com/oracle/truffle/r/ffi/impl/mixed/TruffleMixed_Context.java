@@ -39,6 +39,7 @@ import com.oracle.truffle.r.runtime.ffi.NativeFunction;
 import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
+import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
@@ -175,6 +176,20 @@ public class TruffleMixed_Context extends RFFIContext {
         } catch (Exception e) {
         }
         return result != null ? result : nfiContext.lookupNativeFunction(function);
+    }
+
+    @Override
+    public final Object protectChild(Object parent, Object child, RFFIFactory.Type rffiType) {
+        switch (rffiType) {
+            case LLVM:
+                return llvmContext.protectChild(parent, child, rffiType);
+
+            case NFI:
+                return nfiContext.protectChild(parent, child, rffiType);
+
+            default:
+                throw RInternalError.shouldNotReachHere();
+        }
     }
 
 }

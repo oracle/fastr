@@ -56,7 +56,6 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
         this.contents = contents;
     }
 
-    @TruffleBoundary
     public String getContents() {
         if (this == NA) {
             // The NA string may have been moved to the native space if someone called R_CHAR on it,
@@ -74,12 +73,10 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
         return contents;
     }
 
-    @TruffleBoundary
     public byte getByteAt(int index) {
         return NativeDataAccess.getDataAt(this, getBytes(), index);
     }
 
-    @TruffleBoundary
     public int getLength() {
         return NativeDataAccess.getDataLength(this, getBytes());
     }

@@ -26,6 +26,8 @@ import java.util.Iterator;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.library.ExportLibrary;
+import com.oracle.truffle.api.library.ExportMessage;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
@@ -66,6 +68,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * installation of the rlang package, the following {@link SEXPTYPE} are used as {@code CDR} value
  * in GNUR: 0, 1, 2, 6, 10, 19, 21.
  */
+@ExportLibrary(RPairListLibrary.class)
 public final class RPairList extends RSharingAttributeStorage implements RAbstractContainer, Iterable<RPairList> {
 
     private static final RSymbol FUNCTION_SYMBOL = RDataFactory.createSymbolInterned("function");
@@ -111,19 +114,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.car = RNull.instance;
         this.cdr = RNull.instance;
         this.tag = RNull.instance;
-        // patternState = PatternState.none;
     }
-
-// public enum PatternState {
-// fun,
-// funParent,
-// evalq,
-// evalqParent,
-// tryCatch,
-// none
-// }
-
-    // public final PatternState patternState;
 
     private static final String tryCatch = "tryCatch";
     private static final String evalq = "evalq";
@@ -139,29 +130,6 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         this.cdr = cdr;
         this.tag = tag;
         this.type = type;
-// if (car instanceof RFunction) {
-// patternState = PatternState.fun;
-// } else if (car instanceof RPairList) {
-// switch (((RPairList) car).patternState) {
-// case fun:
-// patternState = PatternState.funParent;
-// break;
-// case evalq:
-// patternState = PatternState.evalqParent;
-// break;
-// default:
-// patternState = PatternState.none;
-// break;
-// }
-// } else if (car instanceof RSymbol && evalq == ((RSymbol) car).getName() && cdr instanceof
-// RPairList && ((RPairList) cdr).patternState == PatternState.funParent) {
-// patternState = PatternState.evalq;
-// } else if (car instanceof RSymbol && tryCatch == ((RSymbol) car).getName() && cdr instanceof
-// RPairList && ((RPairList) cdr).patternState == PatternState.evalqParent) {
-// patternState = PatternState.tryCatch;
-// } else {
-// patternState = PatternState.none;
-// }
     }
 
     /**
@@ -343,6 +311,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
         return result;
     }
 
+    @ExportMessage
     public Object car() {
         if (closure != null) {
             // TODO: maybe we need to wipe the closure here?

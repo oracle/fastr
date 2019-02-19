@@ -247,6 +247,8 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
+        w.append("import com.oracle.truffle.r.runtime.ffi.RFFIFactory;\n");
+        w.append("import com.oracle.truffle.api.TruffleLanguage.ContextReference;\n");
 
         if (needsUnwrapImport) {
             w.append("import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;\n");
@@ -329,6 +331,7 @@ public final class FFIProcessor extends AbstractProcessor {
 
         }
         w.append("                @Child private HandleUpCallExceptionNode handleExceptionNode;");
+        w.append("                final ContextReference<RContext> contextReference = RContext.getInstance().getLanguage().getContextReference();\n");
         w.append("\n");
         w.append("                @Override\n");
         w.append("                public Object execute(VirtualFrame frame) {\n");
@@ -337,7 +340,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    if (RFFILog.logEnabled()) {\n");
         w.append("                        RFFILog.logUpCall(\"" + name + "\", arguments);\n");
         w.append("                    }\n");
-        w.append("                    RFFIContext ctx = RContext.getInstance().getStateRFFI();\n");
+        w.append("                    RFFIContext ctx = contextReference.get().getStateRFFI();\n");
         if (returnKind != TypeKind.VOID) {
             w.append("                    Object resultRObj0;\n");
             w.append("                    Object resultRObj;\n");
@@ -357,7 +360,7 @@ public final class FFIProcessor extends AbstractProcessor {
         if (nodeClass != null) {
             w.append("node.executeObject");
         } else {
-            w.append("((" + callName + ") ForeignAccess.getReceiver(frame)).upCallsImpl." + name);
+            w.append("upCallsImpl." + name);
         }
         w.append("(");
         if (useFrame) {
@@ -378,11 +381,11 @@ public final class FFIProcessor extends AbstractProcessor {
             }
         }
         if (resultOwnerRHS != null) {
-            w.append("                        ctx.protectChild(resultOwner, resultRObj);\n");
+            w.append("                        ctx.protectChild(resultOwner, resultRObj, upCallsImpl.getRFFIType());\n");
         } else {
             if (returnKind != TypeKind.VOID && needsReturnWrap) {
                 w.append("                        if (resultRObj0 != resultRObj) {\n");
-                w.append("                            ctx.protectChild(resultRObj0, resultRObj);\n");
+                w.append("                            ctx.protectChild(resultRObj0, resultRObj, upCallsImpl.getRFFIType());\n");
                 w.append("                        }\n");
             }
         }
@@ -404,7 +407,9 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("                    return 0; // void return type\n");
         } else {
             if (!returnKind.isPrimitive() && m.getAnnotationsByType(RFFICpointer.class).length == 0) {
-                w.append("                    ctx.registerReferenceUsedInNative(resultRObj); \n");
+                w.append("                    if (upCallsImpl.getRFFIType() == RFFIFactory.Type.NFI) {\n");
+                w.append("                       ctx.registerReferenceUsedInNative(resultRObj); \n");
+                w.append("                    }\n");
             }
             w.append("                    if (RFFILog.logEnabled()) {\n");
             w.append("                        RFFILog.logUpCallReturn(\"" + name + "\", resultRObj);\n");

@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
+import com.oracle.truffle.r.runtime.data.RForeignObjectWrapper;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RInteger;
 import com.oracle.truffle.r.runtime.data.RInteropScalar;
@@ -120,6 +121,8 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
             return RInteropNAMRForeign.ACCESS;
         } else if (obj instanceof RAbstractAtomicVector) {
             return RAbstractVectorAccessFactory.ACCESS;
+        } else if (obj instanceof RForeignObjectWrapper) {
+            return RForeignObjectWrapperMRForeign.ACCESS;
         } else {
             ForeignAccess access = FFI_RForeignAccessFactoryImpl.getForeignAccess(obj);
             if (access != null) {

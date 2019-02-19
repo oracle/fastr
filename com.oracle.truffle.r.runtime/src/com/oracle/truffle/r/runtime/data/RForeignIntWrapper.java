@@ -40,7 +40,7 @@ import com.oracle.truffle.r.runtime.data.nodes.FastPathVectorAccess.FastPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFromIntAccess;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 
-public final class RForeignIntWrapper extends RForeignWrapper implements RAbstractIntVector {
+public final class RForeignIntWrapper extends RForeignVectorWrapper implements RAbstractIntVector {
 
     public RForeignIntWrapper(TruffleObject delegate) {
         super(delegate);
@@ -114,7 +114,7 @@ public final class RForeignIntWrapper extends RForeignWrapper implements RAbstra
         @Override
         protected int getLength(RAbstractContainer vector) {
             try {
-                return (int) ForeignAccess.sendGetSize(getSize, ((RForeignWrapper) vector).delegate);
+                return (int) ForeignAccess.sendGetSize(getSize, ((RForeignVectorWrapper) vector).delegate);
             } catch (UnsupportedMessageException e) {
                 throw RInternalError.shouldNotReachHere(e);
             }

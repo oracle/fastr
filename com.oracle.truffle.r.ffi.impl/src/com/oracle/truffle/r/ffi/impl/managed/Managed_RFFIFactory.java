@@ -120,6 +120,11 @@ public final class Managed_RFFIFactory extends RFFIFactory {
             return (C) this;
         }
 
+        @Override
+        public Object protectChild(Object parent, Object child, Type rffiType) {
+            return child;
+        }
+
     }
 
     @Override

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,25 +20,26 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.nodes.function.call;
+package com.oracle.truffle.r.runtime.data;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
-import com.oracle.truffle.api.frame.MaterializedFrame;
-import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
-import com.oracle.truffle.r.runtime.RCaller;
-import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
-import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.api.interop.TruffleObject;
+import com.oracle.truffle.r.runtime.RRuntime;
 
-public final class SlowPathExplicitCall extends TruffleBoundaryNode {
-    @Child private RExplicitCallNode slowPathCallNode;
+public final class RForeignObjectWrapper extends RObject implements RTruffleObject {
 
-    public static SlowPathExplicitCall create() {
-        return new SlowPathExplicitCall();
+    private final TruffleObject delegate;
+
+    public RForeignObjectWrapper(TruffleObject delegate) {
+        this.delegate = delegate;
     }
 
-    @TruffleBoundary
-    public Object execute(MaterializedFrame evalFrame, Object callerFrame, RCaller caller, RFunction func, RArgsValuesAndNames args) {
-        slowPathCallNode = insert(RExplicitCallNode.create());
-        return slowPathCallNode.execute(evalFrame, func, args, caller, callerFrame);
+    public TruffleObject getDelegate() {
+        return delegate;
     }
+
+    @Override
+    public String toString() {
+        return RRuntime.NULL;
+    }
+
 }

@@ -38,7 +38,7 @@ import com.oracle.truffle.r.runtime.data.nodes.SlowPathVectorAccess.SlowPathFrom
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
 import com.oracle.truffle.r.runtime.interop.Foreign2R;
 
-public final class RForeignNamedListWrapper extends RForeignWrapper implements RAbstractListVector {
+public final class RForeignNamedListWrapper extends RForeignVectorWrapper implements RAbstractListVector {
 
     private final RStringVector names;
 
