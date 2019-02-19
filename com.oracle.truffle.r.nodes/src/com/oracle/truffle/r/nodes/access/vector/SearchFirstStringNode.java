@@ -316,9 +316,9 @@ final class SearchFirstStringNode extends Node {
 
             @Override
             public final boolean executeCompare(String a, String b) {
-                assert !Utils.identityEquals(a, RRuntime.STRING_NA);
-                assert !Utils.identityEquals(b, RRuntime.STRING_NA);
-                if (identityEquals.profile(Utils.identityEquals(a, b))) {
+                assert !RRuntime.isNA(a);
+                assert !RRuntime.isNA(b);
+                if (identityEquals.profile(Utils.fastPathIdentityEquals(a, b))) {
                     return true;
                 } else {
                     if (hashEquals.profile(a.hashCode() != b.hashCode())) {
@@ -329,9 +329,9 @@ final class SearchFirstStringNode extends Node {
             }
 
             public final boolean executeCompare(String a, int aHash, String b) {
-                assert !Utils.identityEquals(a, RRuntime.STRING_NA);
-                assert !Utils.identityEquals(b, RRuntime.STRING_NA);
-                if (identityEquals.profile(Utils.identityEquals(a, b))) {
+                assert !RRuntime.isNA(a);
+                assert !RRuntime.isNA(b);
+                if (identityEquals.profile(Utils.fastPathIdentityEquals(a, b))) {
                     return true;
                 } else {
                     if (hashEquals.profile(aHash != b.hashCode())) {
@@ -348,9 +348,9 @@ final class SearchFirstStringNode extends Node {
 
             @Override
             public final boolean executeCompare(String a, String b) {
-                assert !Utils.identityEquals(a, RRuntime.STRING_NA);
-                assert !Utils.identityEquals(b, RRuntime.STRING_NA);
-                if (identityEquals.profile(Utils.identityEquals(a, b))) {
+                assert !RRuntime.isNA(a);
+                assert !RRuntime.isNA(b);
+                if (identityEquals.profile(Utils.fastPathIdentityEquals(a, b))) {
                     return true;
                 } else {
                     return a.startsWith(b);
