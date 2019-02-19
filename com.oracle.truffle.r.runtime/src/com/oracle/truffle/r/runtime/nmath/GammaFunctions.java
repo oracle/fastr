@@ -4,7 +4,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * based on AS 91 (C) 1979 Royal Statistical Society
  *  and  on AS 111 (C) 1977 Royal Statistical Society

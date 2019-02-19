@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 2003-2004, The R Core Team
  * Copyright (c) 1998-2014, The R Foundation
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
