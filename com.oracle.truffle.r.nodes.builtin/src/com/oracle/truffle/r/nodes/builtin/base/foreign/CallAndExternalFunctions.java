@@ -22,6 +22,7 @@ package com.oracle.truffle.r.nodes.builtin.base.foreign;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -94,7 +95,6 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
-import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -1076,7 +1076,11 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList f) {
-            return FastRGridExternalLookup.lookupDotCallGraphics(lookupName(f));
+            if (RContext.getInstance().getOption(UseInternalGridGraphics)) {
+                return FastRGridExternalLookup.lookupDotCallGraphics(lookupName(f));
+            } else {
+                return null;
+            }
         }
 
         @SuppressWarnings("unused")
