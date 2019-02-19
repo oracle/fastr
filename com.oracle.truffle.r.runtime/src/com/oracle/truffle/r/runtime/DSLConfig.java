@@ -22,16 +22,24 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import static com.oracle.truffle.r.runtime.context.FastROptions.DSLCacheSizeFactor;
-import com.oracle.truffle.r.runtime.context.RContext;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 
 /**
  * Class that should eventually contain all DSL (and AST rewriting) related constants.
  */
 public final class DSLConfig {
 
+    @CompilationFinal private static double cacheSizeFactor = -1;
+
     private DSLConfig() {
         // only static methods
+    }
+
+    public static void initialize(double cacheSizeFactorValue) {
+        if (cacheSizeFactor != -1 && cacheSizeFactorValue != cacheSizeFactor) {
+            throw RInternalError.shouldNotReachHere("DSLCacheSizeFactor option must be initialized to the same value for all the contexts in one JVM.");
+        }
+        cacheSizeFactor = cacheSizeFactorValue;
     }
 
     /**
@@ -58,7 +66,7 @@ public final class DSLConfig {
      * generic specialization available.
      */
     public static int getCacheSize(int suggestedSize) {
-        return (int) (suggestedSize * RContext.getInstance().getNonNegativeDoubleOption(DSLCacheSizeFactor));
+        return (int) (suggestedSize * cacheSizeFactor);
     }
 
     /**
@@ -67,6 +75,6 @@ public final class DSLConfig {
      * to {@code 1} and use this final field as a guard.
      */
     public static boolean getLimit1Guard() {
-        return RContext.getInstance().getNonNegativeDoubleOption(DSLCacheSizeFactor) != 0;
+        return cacheSizeFactor != 0;
     }
 }

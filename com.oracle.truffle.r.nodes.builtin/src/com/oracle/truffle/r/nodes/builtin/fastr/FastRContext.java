@@ -50,6 +50,7 @@ import com.oracle.truffle.r.runtime.RSource;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.EvalThread;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ConsoleIO;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -119,7 +120,7 @@ public class FastRContext {
     public abstract static class Spawn extends RBuiltinNode.Arg2 {
         @Override
         public Object[] getDefaultParameterValues() {
-            return new Object[]{RMissing.instance, RContext.getInstance().getOption(SharedContexts) ? "SHARE_ALL" : "SHARE_NOTHING"};
+            return new Object[]{RMissing.instance, FastROptions.sharedContextsOptionValue ? "SHARE_ALL" : "SHARE_NOTHING"};
         }
 
         static {

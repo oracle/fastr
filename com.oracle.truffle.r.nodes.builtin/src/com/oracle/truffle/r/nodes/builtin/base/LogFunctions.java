@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,9 +30,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import java.util.Arrays;
 
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
+import com.oracle.truffle.api.nodes.ControlFlowException;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -42,6 +42,7 @@ import com.oracle.truffle.r.nodes.binary.BinaryMapArithmeticFunctionNode;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
@@ -65,6 +66,7 @@ public class LogFunctions {
 
         private final NAProfile naX = NAProfile.create();
         private final BranchProfile nanProfile = BranchProfile.create();
+        private final BranchProfile warningProfile = BranchProfile.create();
 
         @Override
         public Object[] getDefaultParameterValues() {
@@ -206,13 +208,22 @@ public class LogFunctions {
                 Arrays.fill(resultVector, 0, resultVector.length, Double.NaN);
             } else {
                 xNACheck.enable(vector);
-                RBaseNode[] warningCtx = new RBaseNode[1];
+                ShowWarningException showWarning = null;
                 for (int i = 0; i < vector.getLength(); i++) {
                     double value = vector.getDataAt(i);
-                    resultVector[i] = xNACheck.check(value) ? RRuntime.DOUBLE_NA : logb(value, base, warningCtx);
+                    if (xNACheck.check(value)) {
+                        resultVector[i] = RRuntime.DOUBLE_NA;
+                    } else {
+                        try {
+                            resultVector[i] = logb(value, base);
+                        } catch (ShowWarningException ex) {
+                            showWarning = ex;
+                            resultVector[i] = ex.result;
+                        }
+                    }
                 }
-                if (warningCtx[0] != null) {
-                    RError.warning(warningCtx[0], RError.Message.NAN_PRODUCED);
+                if (showWarning != null) {
+                    RError.warning(showWarning.context, showWarning.message);
                 }
             }
             boolean complete = xNACheck.neverSeenNA() && baseNACheck.neverSeenNA();
@@ -228,30 +239,48 @@ public class LogFunctions {
                 nanProfile.enter();
                 return base;
             }
-            RBaseNode[] warningCtx = new RBaseNode[1];
-            double ret = logb(x, base, warningCtx);
-            if (warningCtx[0] != null) {
-                RError.warning(warningCtx[0], RError.Message.NAN_PRODUCED);
+            try {
+                return logb(x, base);
+            } catch (ShowWarningException showWarn) {
+                RError.warning(showWarn.context, showWarn.message);
+                return showWarn.result;
             }
-            return ret;
         }
 
-        @TruffleBoundary
-        private double logb(double x, double base, RBaseNode[] warningCtx) {
+        private double logb(double x, double base) throws ShowWarningException {
             double logx = Math.log(x);
+            RBaseNode warningCtx = null;
             if (!Double.isNaN(x) && Double.isNaN(logx)) {
-                warningCtx[0] = this;
+                warningProfile.enter();
+                warningCtx = this;
             }
+            double result;
             if (base == Math.E) {
-                return logx;
+                result = logx;
+            } else {
+                result = logx / Math.log(base);
+                if (warningCtx == null && Double.isNaN(result)) {
+                    warningProfile.enter();
+                    warningCtx = RError.SHOW_CALLER;
+                }
             }
-
-            double result = logx / Math.log(base);
-            if (warningCtx[0] == null && Double.isNaN(result)) {
-                warningCtx[0] = RError.SHOW_CALLER;
+            if (warningCtx != null) {
+                throw new ShowWarningException(result, warningCtx, RError.Message.NAN_PRODUCED);
             }
-
             return result;
+        }
+
+        private static final class ShowWarningException extends ControlFlowException {
+            private static final long serialVersionUID = -5922014313815330744L;
+            final RBaseNode context;
+            final RError.Message message;
+            final double result;
+
+            ShowWarningException(double result, RBaseNode context, Message message) {
+                this.result = result;
+                this.context = context;
+                this.message = message;
+            }
         }
 
         private RComplexVector logInternal(RAbstractComplexVector vector, RComplex base, BinaryMapArithmeticFunctionNode divNode,

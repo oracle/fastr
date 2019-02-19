@@ -639,29 +639,6 @@ public final class RDataFactory {
             return traceDataCreated(new RPromise(state, env, closure));
         }
 
-        public final RPromise createEvaluatedPromise(PromiseState state, Closure closure, Object argumentValue) {
-            return traceDataCreated(new RPromise(state, closure, argumentValue));
-        }
-
-        public final RPromise createEvaluatedPromise(Closure closure, Object value) {
-            return traceDataCreated(new RPromise(PromiseState.Explicit, closure, value));
-        }
-
-        public RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
-                        int wrapIndex, MaterializedFrame execFrame) {
-            if (RContext.getInstance().noEagerEvalOption()) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex, execFrame));
-        }
-
-        public RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, MaterializedFrame execFrame) {
-            if (RContext.getInstance().noEagerEvalOption()) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1, execFrame));
-        }
-
         public final Object createPairList(int size, SEXPTYPE type) {
             if (size == 0) {
                 return RNull.instance;
@@ -1238,16 +1215,12 @@ public final class RDataFactory {
 
     public static RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
                     int wrapIndex, MaterializedFrame execFrame) {
-        if (RContext.getInstance().noEagerEvalOption()) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        assert !RContext.getInstance().noEagerEvalOption();
         return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex, execFrame));
     }
 
     public static RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, MaterializedFrame execFrame) {
-        if (RContext.getInstance().noEagerEvalOption()) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        assert !RContext.getInstance().noEagerEvalOption();
         return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1, execFrame));
     }
 

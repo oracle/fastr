@@ -32,9 +32,10 @@ import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.object.DynamicObject;
 import static com.oracle.truffle.r.runtime.context.FastROptions.ChannelReceiveTimeout;
-import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
+
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -730,7 +731,7 @@ public class RChannel {
             REnvironment env = (REnvironment) unserializeObject(f.getEnv());
             MaterializedFrame enclosingFrame = env.getFrame();
             RFunction fn;
-            if (RContext.getInstance().getOption(SharedContexts)) {
+            if (FastROptions.sharedContextsOptionValue) {
                 fn = RDataFactory.createFunction(f.getName(), f.getPackageName(), f.getTarget(), f.getRBuiltin(), enclosingFrame);
             } else {
                 HasSignature root = (HasSignature) f.getTarget().getRootNode();
