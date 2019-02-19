@@ -198,7 +198,7 @@ gateStyle : ${common} {
     ECLIPSE_EXE : "$ECLIPSE/eclipse"
   }
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,SpotBugs,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
     ["mx", "clean", "--no-native"]
     ${gateCmd} ["BuildWithEcj"]
   ]
