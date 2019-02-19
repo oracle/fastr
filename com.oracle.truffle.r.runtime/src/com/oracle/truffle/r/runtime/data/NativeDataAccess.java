@@ -115,7 +115,7 @@ public final class NativeDataAccess {
      * WARNING: stdout is problematic for embedded mode when using this logger. Always specify a log
      * file e.g. mx r --log.R.com.oracle.truffle.r.traceNativeCalls.level=FINE
      * --log.file=&lt;yourfile&gt;
-     * 
+     *
      */
     private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_RFFI);
 
@@ -1119,7 +1119,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RLogicalVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress;
         if (mirror.dataAddress == 0) {
             assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             int[] intArray = new int[data.length];
@@ -1135,7 +1135,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RIntVector vector, int[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress;
         if (mirror.dataAddress == 0) {
             assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noIntNative.invalidate();
@@ -1147,7 +1147,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RRawVector vector, byte[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress;
         if (mirror.dataAddress == 0) {
             assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noRawNative.invalidate();
@@ -1159,7 +1159,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RDoubleVector vector, double[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress;
         if (mirror.dataAddress == 0) {
             assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noDoubleNative.invalidate();
@@ -1171,7 +1171,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RComplexVector vector, double[] data, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress + ", data=" + data;
+        assert mirror.dataAddress == 0 ^ data == null : "mirror.dataAddress=" + mirror.dataAddress;
         if (mirror.dataAddress == 0) {
             assert mirror.length == 0 && mirror.truelength == 0 : "mirror.length=" + mirror.length + ", mirror.truelength=" + mirror.truelength;
             noComplexNative.invalidate();
@@ -1183,7 +1183,7 @@ public final class NativeDataAccess {
     static long allocateNativeContents(RStringVector vector, CharSXPWrapper[] charSXPdata, int length) {
         NativeMirror mirror = (NativeMirror) vector.getNativeMirror();
         assert mirror != null;
-        assert mirror.dataAddress == 0 ^ charSXPdata == null : "mirror.dataAddress=" + mirror.dataAddress + ", charSXPdata=" + charSXPdata;
+        assert mirror.dataAddress == 0 ^ charSXPdata == null : "mirror.dataAddress=" + mirror.dataAddress;
         if (mirror.dataAddress == 0) {
             noStringNative.invalidate();
             // Note: shall the character vector become writeable and not only read-only, we should

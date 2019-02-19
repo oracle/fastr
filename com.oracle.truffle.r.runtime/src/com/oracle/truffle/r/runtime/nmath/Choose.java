@@ -24,6 +24,7 @@ import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammafn;
 import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammafnSign;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 // transcribed from nmath/choose.c
@@ -140,7 +141,7 @@ public class Choose {
     }
 
     private static boolean isOdd(double x) {
-        return x != 2 * Math.floor(x / 2.);
+        return !Utils.identityEquals(x, 2 * Math.floor(x / 2.));
     }
 
     private static boolean isInt(double x) {

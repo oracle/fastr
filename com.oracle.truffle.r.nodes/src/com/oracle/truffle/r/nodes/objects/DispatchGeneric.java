@@ -34,6 +34,7 @@ import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.helpers.InheritsCheckNode;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -117,7 +118,7 @@ public abstract class DispatchGeneric extends RBaseNode {
             for (int i = 0; i < cachedClasses.getLength(); i++) {
                 // TODO: makes sure equality is good enough here, but it's for optimization only
                 // anwyay
-                if (cachedClasses.getDataAt(i) != classes.getDataAt(i)) {
+                if (!Utils.fastPathIdentityEquals(cachedClasses.getDataAt(i), classes.getDataAt(i))) {
                     equalsMethodRequired.enter();
                     if (cachedClasses.getDataAt(i).equals(classes.getDataAt(i))) {
                         return true;

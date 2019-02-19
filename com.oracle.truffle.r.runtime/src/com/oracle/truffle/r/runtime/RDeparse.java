@@ -1096,15 +1096,14 @@ public class RDeparse {
         private DeparseVisitor appendListContents(RAbstractVector v) {
             int n = v.getLength();
             boolean lbreak = false;
-            Object names = v.getNames();
-            RStringVector snames = names == RNull.instance ? null : (RStringVector) names;
+            RStringVector names = v.getNames();
             for (int i = 0; i < n; i++) {
                 if (i > 0) {
                     append(", ");
                 }
                 lbreak = listLinebreak(lbreak);
-                if (snames != null && niceNames()) {
-                    append(quotify(snames.getDataAt(i), '\"'));
+                if (names != null && niceNames()) {
+                    append(quotify(names.getDataAt(i), '\"'));
                     append(" = ");
                 }
                 appendValue(v.getDataAtAsObject(i));

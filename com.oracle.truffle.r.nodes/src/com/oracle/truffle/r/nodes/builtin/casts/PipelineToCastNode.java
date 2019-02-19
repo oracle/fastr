@@ -670,7 +670,7 @@ public final class PipelineToCastNode {
                 if (x == null || str.isEmpty()) {
                     return defaultValue;
                 } else {
-                    if (x == RRuntime.STRING_NA) {
+                    if (RRuntime.isNA(str)) {
                         return RRuntime.INT_NA;
                     } else {
                         return (int) str.charAt(index);

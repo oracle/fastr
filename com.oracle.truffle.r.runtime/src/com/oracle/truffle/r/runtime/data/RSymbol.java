@@ -95,7 +95,7 @@ public final class RSymbol extends RAttributeStorage {
         if (obj == this) {
             return true;
         } else if (obj instanceof RSymbol) {
-            return ((RSymbol) obj).getName() == this.nameWrapper.getContents();
+            return Utils.identityEquals(((RSymbol) obj).getName(), this.nameWrapper.getContents());
         }
         return false;
     }

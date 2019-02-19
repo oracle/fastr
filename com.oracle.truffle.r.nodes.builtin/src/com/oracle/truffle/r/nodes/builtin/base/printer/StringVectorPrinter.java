@@ -116,7 +116,7 @@ final class StringVectorPrinter extends VectorPrinter<RAbstractStringVector> {
             String s = access.getString(iter, offs + i);
             String xi = RRuntime.escapeString(s, false, quote);
 
-            if (xi == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(xi)) {
                 l = quote ? pp.getNaWidth() : pp.getNaWidthNoquote();
             } else {
                 l = xi.length();

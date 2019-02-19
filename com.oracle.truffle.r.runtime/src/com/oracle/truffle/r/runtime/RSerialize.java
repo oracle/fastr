@@ -700,6 +700,7 @@ public class RSerialize {
                         // for now we only record S4-ness here, and in this case it should be 0
                         assert (levs == 0);
                     } else {
+                        assert result != null;
                         ((RTypedValue) result).setGPBits(levs);
                     }
                     return checkResult(result);
@@ -1803,7 +1804,7 @@ public class RSerialize {
          * treats a {@code String} as an STRSXP.
          */
         private void writeCHARSXP(String s) throws IOException {
-            if (s == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(s)) {
                 int flags = Flags.packFlags(SEXPTYPE.CHARSXP, 0, false, false, false);
                 stream.writeInt(flags);
                 stream.writeInt(-1);

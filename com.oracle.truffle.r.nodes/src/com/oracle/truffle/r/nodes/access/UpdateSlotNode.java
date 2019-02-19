@@ -71,7 +71,6 @@ public abstract class UpdateSlotNode extends RBaseNode {
     }
 
     protected boolean isData(String name) {
-        assert Utils.isInterned(name);
-        return name == RRuntime.DOT_DATA;
+        return Utils.identityEquals(name, RRuntime.DOT_DATA);
     }
 }

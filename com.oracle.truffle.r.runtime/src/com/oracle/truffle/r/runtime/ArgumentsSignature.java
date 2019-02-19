@@ -69,7 +69,7 @@ public final class ArgumentsSignature implements Iterable<String> {
             return EMPTY_SIGNATURES[length];
         }
         CompilerDirectives.transferToInterpreter();
-        RError.performanceWarning("argument list exceeds " + EMPTY_SIGNATURES + " elements");
+        RError.performanceWarning("argument list exceeds " + EMPTY_SIGNATURES.length + " elements");
         return get(new String[length]);
     }
 
@@ -176,11 +176,11 @@ public final class ArgumentsSignature implements Iterable<String> {
         if (names == null) {
             return null;
         }
-        return names[index] == UNMATCHED ? null : names[index];
+        return Utils.identityEquals(names[index], UNMATCHED) ? null : names[index];
     }
 
     public boolean hasName(int index) {
-        return names != null && names[index] != UNMATCHED && names[index] != null;
+        return names != null && !Utils.identityEquals(names[index], UNMATCHED) && names[index] != null;
     }
 
     /**
@@ -192,7 +192,7 @@ public final class ArgumentsSignature implements Iterable<String> {
      * {@link #getName(int)} returns {@code null} in either case.
      */
     public boolean isUnmatched(int index) {
-        return names != null && names[index] == UNMATCHED;
+        return names != null && Utils.identityEquals(names[index], UNMATCHED);
     }
 
     public boolean isVarArg(int index) {
@@ -208,7 +208,7 @@ public final class ArgumentsSignature implements Iterable<String> {
             return -1;
         }
         for (int i = 0; i < names.length; i++) {
-            if (names[i] == find) {
+            if (Utils.identityEquals(names[i], find)) {
                 return i;
             }
         }

@@ -99,7 +99,7 @@ public class RSubstitute {
                 } catch (FrameSlotTypeException e) {
                     e.printStackTrace();
                 }
-                assert dotIdx <= dots.getLength() : "promise to a vararg .." + dotIdx + " outside of the varargs bounds";
+                assert dots != null && dotIdx <= dots.getLength() : "promise to a vararg .." + dotIdx + " outside of the varargs bounds";
                 return substituteElement(dots.getArgument(dotIdx - 1), builder);
             }
         }

@@ -44,7 +44,9 @@ public abstract class Menu extends RExternalBuiltinNode.Arg1 {
         ConsoleIO console = RContext.getInstance().getConsole();
         int first = choices.getLength() + 1;
         console.print("Selection: ");
-        String response = console.readLine().trim();
+        String line = console.readLine();
+        assert line != null;
+        String response = line.trim();
         if (response.length() > 0) {
             if (Character.isDigit(response.charAt(0))) {
                 try {

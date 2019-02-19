@@ -65,9 +65,9 @@ public class SpecialsUtils {
 
     public static boolean isCorrectUpdateSignature(ArgumentsSignature signature) {
         if (signature.getLength() == 3) {
-            return signature.getName(0) == null && signature.getName(1) == null && signature.getName(2) == valueArgName;
+            return signature.getName(0) == null && signature.getName(1) == null && Utils.identityEquals(signature.getName(2), valueArgName);
         } else if (signature.getLength() == 4) {
-            return signature.getName(0) == null && signature.getName(1) == null && signature.getName(2) == null && signature.getName(3) == valueArgName;
+            return signature.getName(0) == null && signature.getName(1) == null && signature.getName(2) == null && Utils.identityEquals(signature.getName(3), valueArgName);
         }
         return false;
     }

@@ -50,6 +50,7 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.AnonymousFrameVariable;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.DSLConfig;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -277,7 +278,7 @@ public abstract class Mapply extends RBuiltinNode.Arg3 {
                 for (int i = 0; i < cachedNames.length; i++) {
                     String name = listNames.getDataAt(i);
                     String cachedName = cachedNames[i];
-                    if (name == cachedName) {
+                    if (Utils.fastPathIdentityEquals(name, cachedName)) {
                         continue;
                     } else {
                         nonPerfectMatch.enter();

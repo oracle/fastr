@@ -33,6 +33,7 @@ import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveClassAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
@@ -117,7 +118,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
         for (int i = 0; i < properties.size(); i++) {
             Property p = properties.get(i);
             String name = (String) p.getKey();
-            if (name != RRuntime.DIM_ATTR_KEY && name != RRuntime.DIMNAMES_ATTR_KEY && name != RRuntime.NAMES_ATTR_KEY) {
+            if (!Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY) && !Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY) && !Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
                 removeAttrFallback(orgAttributes, name);
             }
         }

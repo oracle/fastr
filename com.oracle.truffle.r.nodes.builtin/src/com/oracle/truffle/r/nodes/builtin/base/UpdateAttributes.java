@@ -148,11 +148,10 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
         if (emptyListProfile.profile(list.getLength() == 0)) {
             result.resetAllAttributes(true);
         } else {
-            Object listNamesObject = getNamesNode.getNames(list);
-            if (listNamesObject == null || listNamesObject == RNull.instance) {
+            RStringVector listNames = getNamesNode.getNames(list);
+            if (listNames == null) {
                 throw error(RError.Message.ATTRIBUTES_NAMED);
             }
-            RStringVector listNames = (RStringVector) listNamesObject;
             result.resetAllAttributes(false);
             // error checking is a little weird - seems easier to separate it than weave it into the
             // update loop

@@ -42,6 +42,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RComplex;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -229,7 +230,7 @@ public class TrigExpFunctions {
             if (norm == 0d) {
                 return 0d;
             }
-            if (norm == -0.5d || norm == 0.5d) {
+            if (Utils.identityEquals(norm, -0.5d) || Utils.identityEquals(norm, 0.5d)) {
                 return Double.NaN;
             }
             return Math.tan(norm * Math.PI);

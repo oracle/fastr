@@ -188,7 +188,7 @@ public class MethodsListDispatch {
                     Object valAttrObj = attributableValue.getAttributes() == null ? null : valPckgAttrAccess.execute(attributableValue.getAttributes());
                     String valAttr = RRuntime.asStringLengthOne(valAttrObj);
                     // GNUR uses == to compare strings here
-                    if (valAttr != null && valAttr != pckgAttr) {
+                    if (valAttr != null && !valAttr.equals(pckgAttr)) {
                         return RNull.instance;
                     }
                 }

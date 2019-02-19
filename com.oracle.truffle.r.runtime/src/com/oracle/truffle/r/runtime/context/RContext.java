@@ -85,6 +85,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
@@ -487,6 +488,7 @@ public final class RContext {
      * Performs the real initialization of the context, invoked from
      * {@link TruffleLanguage#initializeContext}.
      */
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public RContext initializeContext() {
         fastrOptions.initialize();
 
@@ -579,6 +581,7 @@ public final class RContext {
         stateRProfile.initialize(this);
     }
 
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public void completeEmbeddedInitialization() {
         doEnvOptionsProfileInitialization();
         validateContextStates();
@@ -714,9 +717,9 @@ public final class RContext {
     /**
      * Convenience function for adding new values to an option whose value is expected to be a comma
      * separated list.
-     * 
+     *
      * TODO maybe support removal if there is a use-case.
-     * 
+     *
      * @see #matchesOption(org.graalvm.options.OptionKey, java.lang.String)
      */
     public void updateOption(OptionKey<String> key, String element) {

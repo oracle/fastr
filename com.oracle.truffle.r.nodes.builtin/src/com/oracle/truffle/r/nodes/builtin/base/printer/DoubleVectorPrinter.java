@@ -23,6 +23,7 @@ import java.io.IOException;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RDouble;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorAccess;
@@ -336,7 +337,7 @@ public final class DoubleVectorPrinter extends VectorPrinter<RAbstractDoubleVect
             nsig = digits;
             for (j = 1; j <= digits; j++) {
                 alpha /= 10.0;
-                if (alpha == Math.floor(alpha)) {
+                if (Utils.identityEquals(alpha, Math.floor(alpha))) {
                     nsig--;
                 } else {
                     break;

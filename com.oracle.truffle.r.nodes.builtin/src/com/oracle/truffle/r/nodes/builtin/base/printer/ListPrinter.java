@@ -190,7 +190,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                          * we need to distinguish character NA from "NA", which is a valid (if
                          * non-syntactic) name
                          */
-                        if (ss == RRuntime.STRING_NA) {
+                        if (RRuntime.isNA(ss)) {
                             tagbuf.append("$<NA>");
                         } else if (RDeparse.isValidName(ss)) {
                             tagbuf.append(String.format("$%s", ss));

@@ -92,7 +92,7 @@ public abstract class PMatch extends RBuiltinNode.Arg4 {
                 if (xs.length() == 0) {
                     continue;
                 }
-                if (xs == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(xs)) {
                     xs = "NA";
                 }
                 for (int t = 0; t < tl; t++) {

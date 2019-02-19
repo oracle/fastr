@@ -29,6 +29,7 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.RConnection.ReadLineWarning;
@@ -151,6 +152,7 @@ public abstract class ReadTableHead extends RExternalBuiltinNode.Arg7 {
             this.resultLines = new ArrayList<>(nlines);
         }
 
+        @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "incomplete implementation")
         int nextChar() throws IOException {
             int c;
             if (pushBackChar != -1) {

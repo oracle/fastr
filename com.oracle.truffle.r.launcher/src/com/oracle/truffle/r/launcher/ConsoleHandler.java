@@ -114,7 +114,7 @@ public abstract class ConsoleHandler {
 
     /**
      * Get the R prompt.
-     * 
+     *
      * @return the prompt
      */
     public abstract String getPrompt();
@@ -182,7 +182,12 @@ public abstract class ConsoleHandler {
 
         @Override
         public boolean hasMember(String key) {
-            return key.contains(key);
+            for (String k : keys) {
+                if (k.equals(key)) {
+                    return true;
+                }
+            }
+            return false;
         }
 
         @Override

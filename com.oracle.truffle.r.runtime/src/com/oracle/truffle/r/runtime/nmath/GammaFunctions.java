@@ -238,7 +238,7 @@ public abstract class GammaFunctions {
                     value *= i;
                 }
             } else { /* normal case */
-                value = Math.exp((y - 0.5) * Math.log(y) - y + M_LN_SQRT_2PI + ((2 * y == (int) (2 * y)) ? RMath.stirlerr(y) : lgammacor(y)));
+                value = Math.exp((y - 0.5) * Math.log(y) - y + M_LN_SQRT_2PI + (Utils.identityEquals(2 * y, (int) (2 * y)) ? RMath.stirlerr(y) : lgammacor(y)));
             }
             if (x > 0) {
                 return value;
@@ -947,7 +947,7 @@ public abstract class GammaFunctions {
          * (y-1)*...*(y-n) / lambda^n) ~ y/lambda + o(y/lambda)
          */
 
-        if (localY != Math.floor(localY)) {
+        if (!Utils.identityEquals(localY, Math.floor(localY))) {
             /*
              * The series does not converge as the terms start getting bigger (besides flipping
              * sign) for y < -lambda.

@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.closures.RClosures;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -331,6 +332,7 @@ public final class RStringVector extends RVector<Object[]> implements RAbstractS
      * Converts the data to {@link CharSXPWrapper} instances. Does nothing if the data are already
      * wrapped.
      */
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public void wrapStrings() {
         if (!isNativized()) {
             Object[] oldData = data;

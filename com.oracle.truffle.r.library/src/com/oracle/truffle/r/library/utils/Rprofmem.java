@@ -74,6 +74,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
             boolean append = RRuntime.fromLogical(appendL);
             try {
                 PrintStream out = new PrintStream(RContext.getInstance().getEnv().getTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
+                assert thresholdVec != null;
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
                 RDataFactory.addListener(LISTENER);
             } catch (IOException ex) {

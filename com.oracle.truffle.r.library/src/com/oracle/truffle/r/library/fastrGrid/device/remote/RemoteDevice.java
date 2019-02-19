@@ -47,6 +47,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 
 public final class RemoteDevice implements GridDevice {
 
@@ -125,6 +126,7 @@ public final class RemoteDevice implements GridDevice {
         }
     }
 
+    @SuppressFBWarnings(value = "LI_LAZY_INIT_UPDATE_STATIC", justification = "one-time initialization")
     private static Path javaCmd() {
         if (javaCmd == null) {
             String javaHome = System.getenv("JAVA_HOME");
@@ -139,6 +141,7 @@ public final class RemoteDevice implements GridDevice {
         return javaCmd;
     }
 
+    @SuppressFBWarnings(value = "LI_LAZY_INIT_UPDATE_STATIC", justification = "one-time initialization")
     private static void checkQueueInited() {
         if (queueWorker == null) {
             Runnable queueWorkerRun = new Runnable() {
@@ -198,6 +201,7 @@ public final class RemoteDevice implements GridDevice {
         }
     }
 
+    @SuppressFBWarnings(value = "LI_LAZY_INIT_STATIC", justification = "one-time initialization")
     private static boolean checkServerConnectable() {
         for (int i = SERVER_CONNECT_RETRIES - 1; i >= 0; i--) {
             if (serverProcess != null && !serverProcess.isAlive()) {
@@ -607,7 +611,7 @@ public final class RemoteDevice implements GridDevice {
             assert (this.result == null) : "Result already assigned";
             byte[] resultArg2 = resultArg;
             if (resultArg2 != null) {
-                assert (params[0] | RESULT_MASK) != 0 : "Attempt to assign result to non-result request";
+                assert (params[0] & RESULT_MASK) != 0 : "Attempt to assign result to non-result request";
             } else {
                 resultArg2 = EMPTY_RESULT;
             }

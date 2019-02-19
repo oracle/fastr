@@ -699,7 +699,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     private RVector<ArrayT> resize(int size, boolean resetAll) {
-        this.complete &= getLength() >= size;
+        this.complete = this.complete && getLength() >= size;
         RVector<ArrayT> res = this;
         RStringVector oldNames = res.getNamesFromAttrs();
         res = copyResized(size, true);

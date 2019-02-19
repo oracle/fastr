@@ -284,7 +284,7 @@ public class GetFunctions {
             }
 
             String checkNA(String x) {
-                if (x == RRuntime.STRING_NA) {
+                if (RRuntime.isNA(x)) {
                     complete = RDataFactory.INCOMPLETE_VECTOR;
                 }
                 return x;

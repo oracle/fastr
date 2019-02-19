@@ -65,6 +65,7 @@ import java.util.ArrayList;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleLanguage;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
@@ -455,22 +456,17 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector rawConnection(String description, @SuppressWarnings("unused") RAbstractStringVector text, String open) {
-            try {
-                return new RawRConnection(description, null, open).asVector();
-            } catch (IOException ex) {
-                throw RInternalError.shouldNotReachHere();
-            }
-        }
-
-        @Specialization
-        @TruffleBoundary
         protected RAbstractIntVector rawConnection(String description, RAbstractRawVector text, String open) {
             try {
                 return new RawRConnection(description, text.materialize().getDataTemp(), open).asVector();
             } catch (IOException ex) {
                 throw RInternalError.shouldNotReachHere();
             }
+        }
+
+        @Fallback
+        protected RAbstractIntVector rawConnection(@SuppressWarnings("unused") Object description, @SuppressWarnings("unused") Object text, @SuppressWarnings("unused") Object open) {
+            throw error(Message.INVALID_ARGUMENT, "raw");
         }
     }
 

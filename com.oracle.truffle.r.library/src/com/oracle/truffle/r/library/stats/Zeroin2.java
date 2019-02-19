@@ -33,6 +33,7 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -129,7 +130,10 @@ public abstract class Zeroin2 extends RExternalBuiltinNode.Arg7 {
                     double t1;
                     double t2;
                     double cb = c - b;
-                    if (a == c) { /* If we have only two distinct points linear interpolation */
+                    if (Utils.identityEquals(a, c)) { /*
+                                                       * If we have only two distinct points linear
+                                                       * interpolation
+                                                       */
                         t1 = fbx / fax; /* can only be applied */
                         p = cb * t1;
                         q = 1.0 - t1;

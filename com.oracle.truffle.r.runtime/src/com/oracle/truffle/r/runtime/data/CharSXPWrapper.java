@@ -108,7 +108,7 @@ public final class CharSXPWrapper extends RObject implements RTruffleObject, RTy
 
     private static CharSXPWrapper create(String contents, boolean intern) {
         assert !intern || Utils.isInterned(contents);
-        if (contents == RRuntime.STRING_NA) {
+        if (RRuntime.isNA(contents)) {
             return NA;
         } else {
             CharSXPWrapper cachedWrapper;

@@ -370,7 +370,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
         RSyntaxVisitor<Integer> vis = new RSyntaxVisitor<Integer>() {
             @Override
             protected Integer visit(RSyntaxCall call) {
-                if (call.getSyntaxLHS() instanceof RSyntaxLookup && ((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier() == LEFT_PAREN) {
+                if (call.getSyntaxLHS() instanceof RSyntaxLookup && Utils.identityEquals(((RSyntaxLookup) call.getSyntaxLHS()).getIdentifier(), LEFT_PAREN)) {
                     return accept(call.getSyntaxArguments()[0]);
                 }
 
@@ -451,7 +451,7 @@ public abstract class Deriv extends RExternalBuiltinNode {
             return false;
         }
         if (expr1 instanceof RSyntaxLookup) {
-            return ((RSyntaxLookup) expr1).getIdentifier() == ((RSyntaxLookup) expr2).getIdentifier();
+            return Utils.identityEquals(((RSyntaxLookup) expr1).getIdentifier(), ((RSyntaxLookup) expr2).getIdentifier());
         }
         if (expr1 instanceof RSyntaxConstant) {
             return ((RSyntaxConstant) expr1).getValue().equals(((RSyntaxConstant) expr2).getValue());

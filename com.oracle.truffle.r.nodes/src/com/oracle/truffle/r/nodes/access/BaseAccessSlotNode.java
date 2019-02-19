@@ -70,18 +70,18 @@ public abstract class BaseAccessSlotNode extends RBaseNode {
         if (value == null) {
             noSlot.enter();
             assert Utils.isInterned(name);
-            if (name == RRuntime.DOT_S3_CLASS) {
+            if (Utils.identityEquals(name, RRuntime.DOT_S3_CLASS)) {
                 if (classHierarchy == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     classHierarchy = insert(ClassHierarchyNodeGen.create(true, false));
                 }
                 return classHierarchy.execute(object);
-            } else if (name == RRuntime.DOT_DATA) {
+            } else if (Utils.identityEquals(name, RRuntime.DOT_DATA)) {
                 // TODO: any way to cache it or use a mechanism similar to overrides?
                 REnvironment methodsNamespace = REnvironment.getRegisteredNamespace("methods");
                 RFunction dataPart = getDataPartFunction(methodsNamespace);
                 return RContext.getEngine().evalFunction(dataPart, methodsNamespace.getFrame(), RCaller.create(null, RASTUtils.getOriginalCall(this)), true, null, object);
-            } else if (name == RRuntime.NAMES_ATTR_KEY && object instanceof RAbstractVector) {
+            } else if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY) && object instanceof RAbstractVector) {
                 assert false; // RS4Object can never be a vector?
                 return RNull.instance;
             }
@@ -104,8 +104,7 @@ public abstract class BaseAccessSlotNode extends RBaseNode {
     }
 
     protected boolean isDotData(String name) {
-        assert Utils.isInterned(name);
-        return name == RRuntime.DOT_DATA;
+        return Utils.identityEquals(name, RRuntime.DOT_DATA);
     }
 
     protected boolean slotAccessAllowed(RAttributable object) {

@@ -37,6 +37,7 @@ import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVM_Handle;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.ParsedLLVM_IR;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
@@ -134,10 +135,10 @@ public class TruffleLLVM_Context extends RFFIContext {
         CompilerAsserts.neverPartOfCompilation();
         if (!nativeFunctions.containsKey(function)) {
             TruffleObject[] lookupObjects = new TruffleObject[0];
-            if (function.getLibrary() == NativeFunction.baseLibrary()) {
+            if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 TruffleObject lookupObject = (TruffleObject) ((LLVM_Handle) DLL.getRdllInfo().handle).parsedIRs[0].lookupObject;
                 lookupObjects = new TruffleObject[]{lookupObject};
-            } else if (function.getLibrary() == NativeFunction.anyLibrary()) {
+            } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
                 DLLInfo dllInfo = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
                 if (dllInfo == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());

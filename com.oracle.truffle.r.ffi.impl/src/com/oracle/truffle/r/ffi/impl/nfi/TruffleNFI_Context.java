@@ -42,6 +42,7 @@ import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -143,9 +144,9 @@ public class TruffleNFI_Context extends RFFIContext {
         CompilerAsserts.neverPartOfCompilation();
         if (!nativeFunctions.containsKey(function)) {
             TruffleObject dllInfo;
-            if (function.getLibrary() == NativeFunction.baseLibrary()) {
+            if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
-            } else if (function.getLibrary() == NativeFunction.anyLibrary()) {
+            } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
                 DLLInfo lib = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
                 if (lib == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());

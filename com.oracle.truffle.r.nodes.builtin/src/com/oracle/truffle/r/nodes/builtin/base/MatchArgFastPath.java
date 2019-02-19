@@ -52,6 +52,7 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -260,7 +261,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
 
             for (int i = 0; i < arguments.getLength(); i++) {
                 assert symbol == arguments.getSignature().getName(i) || !symbol.equals(arguments.getSignature().getName(i));
-                if (symbol == arguments.getSignature().getName(i)) {
+                if (Utils.identityEquals(symbol, arguments.getSignature().getName(i))) {
                     RNode defaultArg = arguments.getDefaultArgument(i);
                     if (defaultArg == null) {
                         this.value = RContext.getASTBuilder().constant(RSyntaxNode.INTERNAL, RDataFactory.createEmptyStringVector()).asRNode();
@@ -274,7 +275,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
         }
 
         public boolean isSupported(VirtualFrame frame, RPromise arg) {
-            return RArguments.getFunction(frame).getTarget() == target && arg.getClosure().asSymbol() == symbol;
+            return RArguments.getFunction(frame).getTarget() == target && Utils.identityEquals(arg.getClosure().asSymbol(), symbol);
         }
 
         public Object execute(VirtualFrame frame) {

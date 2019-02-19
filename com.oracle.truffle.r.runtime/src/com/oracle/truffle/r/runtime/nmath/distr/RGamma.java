@@ -54,8 +54,8 @@ public final class RGamma extends RandFunction2_Double {
     public double execute(double a, double scale, RandomNumberProvider rand) {
 
         // TODO: state variables
-        double aa = Double.NaN;
-        double aaa = Double.NaN;
+        double aa = 0;
+        double aaa = 0;
         double s = 0;
         double s2 = 0;
         double d = 0; /* no. 1 (step 1) */

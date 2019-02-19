@@ -33,6 +33,7 @@ import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
 
 /**
@@ -204,13 +205,13 @@ public final class RMath {
 
     public static double sinpi(double x) {
         double norm = x % 2d;
-        if (norm == 0d || norm == 1d || norm == -1d) {
+        if (Utils.identityEquals(norm, 0d) || Utils.identityEquals(norm, 1d) || Utils.identityEquals(norm, -1d)) {
             return 0d;
         }
-        if (norm == -1.5d || norm == 0.5d) {
+        if (Utils.identityEquals(norm, -1.5d) || Utils.identityEquals(norm, 0.5d)) {
             return 1d;
         }
-        if (norm == -0.5d || norm == 1.5d) {
+        if (Utils.identityEquals(norm, -0.5d) || Utils.identityEquals(norm, 1.5d)) {
             return -1d;
         }
         return Math.sin(norm * Math.PI);
@@ -218,13 +219,13 @@ public final class RMath {
 
     public static double cospi(double x) {
         double norm = x % 2d;
-        if (norm == 0d) {
+        if (Utils.identityEquals(norm, 0d)) {
             return 1d;
         }
-        if (norm == -1d || norm == 1d) {
+        if (Utils.identityEquals(norm, -1d) || Utils.identityEquals(norm, 1d)) {
             return -1d;
         }
-        if (norm == -1.5d || norm == -0.5d || norm == 0.5d || norm == 1.5d) {
+        if (Utils.identityEquals(norm, -1.5d) || Utils.identityEquals(norm, -0.5d) || Utils.identityEquals(norm, 0.5d) || Utils.identityEquals(norm, 1.5d)) {
             return 0d;
         }
         return Math.cos(norm * Math.PI);
@@ -245,7 +246,7 @@ public final class RMath {
         } else if (x2 > 0.5) {
             x2--;
         }
-        return (x2 == 0.) ? 0. : ((x2 == 0.5) ? Double.NaN : Math.tan(MathConstants.M_PI * x2));
+        return (x2 == 0.) ? 0. : (Utils.identityEquals(x2, 0.5) ? Double.NaN : Math.tan(MathConstants.M_PI * x2));
     }
 
     //
@@ -432,7 +433,7 @@ public final class RMath {
 
         if (n <= 15.0) {
             nn = n + n;
-            if (nn == (int) nn) {
+            if (Utils.identityEquals(nn, (int) nn)) {
                 return (sferr_halves[(int) nn]);
             }
             return (GammaFunctions.lgammafn(n + 1.) - (n + 0.5) * Math.log(n) + n - M_LN_SQRT_2PI);
@@ -481,7 +482,7 @@ public final class RMath {
             for (j = 1;; j++) { /* Taylor series */
                 ej *= v;
                 s1 = s + ej / ((j << 1) + 1);
-                if (s1 == s) { /* last term was effectively 0 */
+                if (Utils.identityEquals(s1, s)) { /* last term was effectively 0 */
                     return s1;
                 }
                 s = s1;

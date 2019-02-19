@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.helpers;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
@@ -38,7 +39,7 @@ public abstract class ListFieldNodeBase extends Node {
             int fieldHash = field.hashCode();
             for (int i = 0; i < names.getLength(); i++) {
                 String current = names.getDataAt(i);
-                if (current == field || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
+                if (Utils.fastPathIdentityEquals(current, field) || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
                     return i;
                 }
             }

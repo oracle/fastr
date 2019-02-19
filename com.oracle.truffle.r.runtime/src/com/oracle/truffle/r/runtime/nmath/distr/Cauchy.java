@@ -22,6 +22,7 @@ package com.oracle.truffle.r.runtime.nmath.distr;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -157,7 +158,7 @@ public final class Cauchy {
                 }
             }
 
-            if (p == 0.5) {
+            if (Utils.identityEquals(p, 0.5)) {
                 return location;
             } // avoid 1/Inf below
             if (p == 0.) {
