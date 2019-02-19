@@ -176,7 +176,7 @@ public abstract class MakeNames extends RBuiltinNode.Arg2 {
                             newNames = updateNewNames(names, reuse, namesIter.getIndex(), newName, newNames);
                         } else {
                             newName = getName(name, allowUnderscore);
-                            if (!Utils.identityEquals(newName, name)) {
+                            if (!Utils.fastPathIdentityEquals(newName, name)) {
                                 // getName returns "name" in case nothing's changed
                                 newNames = updateNewNames(names, reuse, namesIter.getIndex(), newName, newNames);
                             }

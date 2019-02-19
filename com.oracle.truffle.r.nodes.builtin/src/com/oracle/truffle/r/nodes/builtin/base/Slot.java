@@ -64,7 +64,7 @@ final class PromiseAsNameNode extends Node {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             value = getValue(nameObj);
         }
-        if (Utils.identityEquals(value, ERROR_MARKER)) {
+        if (Utils.fastPathIdentityEquals(value, ERROR_MARKER)) {
             CompilerDirectives.transferToInterpreter();
             throw RError.error(RError.NO_CALLER, RError.Message.GENERIC, "invalid type or length for slot name");
         }
