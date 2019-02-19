@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -594,16 +594,10 @@ public class RErrorHandling {
     }
 
     @TruffleBoundary
-    public static RError handleInteropException(Node callObj, RuntimeException e) {
-        if (e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) {
-            if (RContext.getInstance().stateInteropTry.isInTry()) {
-                // will be catched and handled in .fastr.interop.try builtin
-                throw new FastRInteropTryException(e);
-            } else {
-                Object caller = callObj instanceof RBaseNode ? findCaller((RBaseNode) callObj) : findCaller(RError.findParentRBase(callObj));
-                String errorMessage = createErrorMessage(caller, "");
-                throw new RError(errorMessage, e);
-            }
+    public static RError handleInteropException(RuntimeException e) {
+        // ClassNotFoundException might be raised internaly by FastR in FastRInterop$JavaType
+        if ((e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) && RContext.getInstance().stateInteropTry.isInTry()) {
+            throw new FastRInteropTryException(e);
         }
         throw e;
     }

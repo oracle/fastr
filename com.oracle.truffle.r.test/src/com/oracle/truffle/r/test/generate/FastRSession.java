@@ -252,9 +252,13 @@ public final class FastRSession implements RSession {
                         evalContext.eval(src);
                         // checked exceptions are wrapped in PolyglotException
                     } catch (PolyglotException e) {
-                        // TODO need the wrapped exception for special handling of:
-                        // ParseException, RError, ... see bellow
-                        throw getWrappedThrowable(e);
+                        // TODO see bellow - need the wrapped exception for special handling of
+                        // ParseException, etc
+                        Throwable wt = getWrappedThrowable(e);
+                        if (wt instanceof RError) {
+                            REPL.handleError(null, evalContext, e);
+                        }
+                        throw wt;
                     }
                     consoleInput = readLine();
                 } catch (IncompleteSourceException e) {
@@ -304,7 +308,7 @@ public final class FastRSession implements RSession {
                 testClass.addPolyglotSymbols(evalContext);
             }
             timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
-            REPL.readEvalPrint(evalContext, new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false, output);
+            REPL.readEvalPrint(evalContext, new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false);
             String consoleInput = readLine();
             while (consoleInput != null) {
                 consoleInput = readLine();

@@ -65,6 +65,8 @@ public final class RError extends RuntimeException implements TruffleException {
     private final String verboseStackTrace;
     private final Node location;
 
+    private boolean printed = false;
+
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
@@ -172,15 +174,9 @@ public final class RError extends RuntimeException implements TruffleException {
         this.verboseStackTrace = RInternalError.createVerboseStackTrace();
     }
 
-    RError(String msg, Throwable cause) {
-        super(msg, cause);
-        this.location = null;
-        this.verboseStackTrace = RInternalError.createVerboseStackTrace();
-    }
-
     @Override
     public synchronized Throwable fillInStackTrace() {
-        return null;
+        return this;
     }
 
     @Override
@@ -190,6 +186,32 @@ public final class RError extends RuntimeException implements TruffleException {
 
     public String getVerboseStackTrace() {
         return verboseStackTrace;
+    }
+
+    public void setPrinted(boolean bl) {
+        this.printed = bl;
+    }
+
+    @Override
+    public Object getExceptionObject() {
+        return RContext.getInstance().getEnv().asGuestValue(getExceptionObjectInternal());
+    }
+
+    public class ExceptionObject {
+        public final boolean wasPrinted;
+
+        public ExceptionObject(boolean wasPrinted) {
+            this.wasPrinted = wasPrinted;
+        }
+    }
+
+    private ExceptionObject exceptionObject;
+
+    private Object getExceptionObjectInternal() {
+        if (exceptionObject == null) {
+            exceptionObject = new ExceptionObject(printed);
+        }
+        return exceptionObject;
     }
 
     public static RError error(ErrorContext node, Message msg) {

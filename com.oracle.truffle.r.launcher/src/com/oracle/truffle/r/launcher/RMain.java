@@ -224,7 +224,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             }
             srcFile = new File(fileOption);
         }
-        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true, errStream);
+        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true);
         StartupTiming.printSummary();
         return result;
     }
@@ -267,7 +267,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
     }
 
-    private int executeFile(Context context, String fileOption) {
+    private static int executeFile(Context context, String fileOption) {
         Source src;
         try {
             src = Source.newBuilder("R", new File(fileOption)).interactive(false).build();
@@ -284,13 +284,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
                 return e.getExitStatus();
             } else if (!e.isInternalError() && (e.isHostException() || e.isGuestException())) {
                 // Note: Internal exceptions are reported by the engine already
-                // the 'Error in 'caller' : part of the message was already printed
-                // in ErrorHandling.handleInteropException
-                try {
-                    ErrorHandler.handleError(e, errStream);
-                } catch (IOException ioEx) {
-                    System.err.println("IO error while printing an error message.");
-                }
+                REPL.handleError(null, context, e);
             }
             return 1;
         } catch (Throwable ex) {
