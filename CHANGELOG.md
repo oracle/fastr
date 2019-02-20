@@ -8,6 +8,7 @@ New features:
 Bug fixes:
 
 * when using GNU-R graphics (-UseInternalGridGraphics) FastR would still override the graphics package R functions
+* cannot install RcppParallel #52
 
 # 1.0 RC 12
 
