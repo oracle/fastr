@@ -63,6 +63,9 @@ public abstract class ArgumentStatePush extends Node {
     }
 
     protected int createWriteArgMask(VirtualFrame frame, RShareable shareable) {
+        if (RContext.getInstance().getOption(RefCountIncrementOnly)) {
+            return -1;
+        }
         if (shareable instanceof RAbstractContainer) {
             if ((shareable instanceof RPairList && ((RPairList) shareable).isLanguage()) || ((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
                 // don't decrement ref count for small objects or language objects- this
@@ -97,7 +100,7 @@ public abstract class ArgumentStatePush extends Node {
                     @Cached("createWriteArgMask(frame, shareable)") int writeArgMask) {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
-            if (writeArgMask != -1 && !RContext.getInstance().getOption(RefCountIncrementOnly)) {
+            if (writeArgMask != -1) {
                 if (frameSlot == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     synchronized (FrameSlotChangeMonitor.class) {

@@ -24,7 +24,10 @@ package com.oracle.truffle.r.runtime.context;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.Option;
+import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.FastRConfig;
+import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess.NativeDataInspector;
@@ -51,14 +54,14 @@ import org.graalvm.options.OptionValues;
 public class FastROptions {
     private static final FastROptionsOptionDescriptors descriptors = new FastROptionsOptionDescriptors();
 
-    @Option(category = OptionCategory.DEBUG, help = "Prints Java and R stack traces for all errors") //
+    @Option(category = OptionCategory.INTERNAL, help = "Prints Java and R stack traces for all errors") //
     public static final OptionKey<Boolean> PrintErrorStacktraces = new OptionKey<>(false);
-    @Option(category = OptionCategory.DEBUG, help = "Dumps Java and R stack traces to 'fastr_errors.log' for all errors") //
+    @Option(category = OptionCategory.USER, help = "Dumps Java and R stack traces to 'fastr_errors.log' for all errors") //
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
 
-    @Option(category = OptionCategory.DEBUG, help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")//
+    @Option(category = OptionCategory.INTERNAL, help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")//
     public static final OptionKey<String> Debug = new OptionKey<>("");
-    @Option(category = OptionCategory.DEBUG, help = "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)") //
+    @Option(category = OptionCategory.INTERNAL, help = "Rdebug=f1,f2.,,,; list of R function to call debug on (implies +Instrument)") //
     public static final OptionKey<String> Rdebug = new OptionKey<>("");
     @Option(category = OptionCategory.EXPERT, help = "Load the system, site and user profile scripts.") //
     public static final OptionKey<Boolean> LoadProfiles = new OptionKey<>(!FastRConfig.ManagedMode);
@@ -70,40 +73,40 @@ public class FastROptions {
     public static final OptionKey<Boolean> RefCountIncrementOnly = new OptionKey<>(false);
     @Option(category = OptionCategory.EXPERT, help = "Whether the internal (Java) grid graphics implementation should be used") //
     public static final OptionKey<Boolean> UseInternalGridGraphics = new OptionKey<>(true);
-    @Option(category = OptionCategory.EXPERT, help = "Whether the fast-path special call nodes should be created for simple enough arguments.") //
+    @Option(category = OptionCategory.INTERNAL, help = "Whether the fast-path special call nodes should be created for simple enough arguments.") //
     public static final OptionKey<Boolean> UseSpecials = new OptionKey<>(true);
     @Option(category = OptionCategory.EXPERT, help = "Generate source sections for unserialized code") //
     public static final OptionKey<Boolean> ForceSources = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, help = "Whether all child contexts are to be shared contexts") //
+    @Option(category = OptionCategory.INTERNAL, help = "Whether all child contexts are to be shared contexts") //
     public static final OptionKey<Boolean> SharedContexts = new OptionKey<>(true);
-    @Option(category = OptionCategory.EXPERT, help = "Whether all promises for frames on shared path are forced in presence of shared contexts") //
+    @Option(category = OptionCategory.INTERNAL, help = "Whether all promises for frames on shared path are forced in presence of shared contexts") //
     public static final OptionKey<Boolean> SearchPathForcePromises = new OptionKey<>(false);
     @Option(category = OptionCategory.EXPERT, help = "Load native code of packages, including builtin packages.") //
     public static final OptionKey<Boolean> LoadPackagesNativeCode = new OptionKey<>(!FastRConfig.ManagedMode);
     @Option(category = OptionCategory.EXPERT, help = "Allow only one thread to enter packages' native code") //
     public static final OptionKey<Boolean> SynchronizeNativeCode = new OptionKey<>(true);
     // Promises optimizations
-    @Option(category = OptionCategory.EXPERT, help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)") //
+    @Option(category = OptionCategory.INTERNAL, help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)") //
     public static final OptionKey<Boolean> EagerEval = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, help = "Unconditionally evaluates constants before creating Promises") //
+    @Option(category = OptionCategory.INTERNAL, help = "Unconditionally evaluates constants before creating Promises") //
     public static final OptionKey<Boolean> EagerEvalConstants = new OptionKey<>(true);
-    @Option(category = OptionCategory.EXPERT, help = "Enables optimistic eager evaluation of single variables reads") //
+    @Option(category = OptionCategory.INTERNAL, help = "Enables optimistic eager evaluation of single variables reads") //
     public static final OptionKey<Boolean> EagerEvalVariables = new OptionKey<>(true);
-    @Option(category = OptionCategory.EXPERT, help = "Enables optimistic eager evaluation of single variables reads (for default parameters)") //
+    @Option(category = OptionCategory.INTERNAL, help = "Enables optimistic eager evaluation of single variables reads (for default parameters)") //
     public static final OptionKey<Boolean> EagerEvalDefault = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, help = "Enables optimistic eager evaluation of trivial expressions") //
+    @Option(category = OptionCategory.INTERNAL, help = "Enables optimistic eager evaluation of trivial expressions") //
     public static final OptionKey<Boolean> EagerEvalExpressions = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, help = "Enables inline caches for promises evaluation") //
+    @Option(category = OptionCategory.INTERNAL, help = "Enables inline caches for promises evaluation") //
     public static final OptionKey<Integer> PromiseCacheSize = new OptionKey<>(3);
-    @Option(category = OptionCategory.EXPERT, help = "Factor by which are multiplied all DSL 'limit' values where applicable.") //
+    @Option(category = OptionCategory.INTERNAL, help = "Factor by which are multiplied all DSL 'limit' values where applicable.") //
     public static final OptionKey<Double> DSLCacheSizeFactor = new OptionKey<>(1.0);
 
     // Miscellaneous
-    @Option(category = OptionCategory.EXPERT, help = "Silently ignore unimplemented functions from graphics package") //
+    @Option(category = OptionCategory.INTERNAL, help = "Silently ignore unimplemented functions from graphics package") //
     public static final OptionKey<Boolean> IgnoreGraphicsCalls = new OptionKey<>(false);
-    @Option(category = OptionCategory.EXPERT, help = "List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string") //
+    @Option(category = OptionCategory.INTERNAL, help = "List of R level options default values. Syntax: 'optionName:value;optionName2:value;'. Value can be 'T' or 'F' in which case it is interpreted as boolean, otherwise as string") //
     public static final OptionKey<String> AdditionalOptions = new OptionKey<>("");
-    @Option(category = OptionCategory.DEBUG, help = "Enables timeout (in seconds) when receiving messages from a channel") //
+    @Option(category = OptionCategory.INTERNAL, help = "Enables timeout (in seconds) when receiving messages from a channel") //
     public static final OptionKey<Integer> ChannelReceiveTimeout = new OptionKey<>(0);
     @Option(category = OptionCategory.EXPERT, help = "Restrict force splitting of call targets") //
     public static final OptionKey<Boolean> RestrictForceSplitting = new OptionKey<>(true);
@@ -111,15 +114,15 @@ public class FastROptions {
     // Dicontinued since rc12
     // only a warning is printed to use the default logger mechaninsm
     // TODO remove at some later point
-    @Option(category = OptionCategory.DEBUG, help = "Print FastR performance warning") //
+    @Option(category = OptionCategory.INTERNAL, help = "Print FastR performance warning") //
     public static final OptionKey<Boolean> PerformanceWarnings = new OptionKey<>(false);
-    @Option(category = OptionCategory.DEBUG, help = "Print a message for each non-trivial variable lookup")//
+    @Option(category = OptionCategory.INTERNAL, help = "Print a message for each non-trivial variable lookup")//
     public static final OptionKey<Boolean> PrintComplexLookups = new OptionKey<>(false);
-    @Option(category = OptionCategory.DEBUG, help = "Trace all R function calls") //
+    @Option(category = OptionCategory.INTERNAL, help = "Trace all R function calls") //
     public static final OptionKey<Boolean> TraceCalls = new OptionKey<>(false);
-    @Option(category = OptionCategory.DEBUG, help = "TraceCalls output is sent to 'fastr_tracecalls.log'") //
+    @Option(category = OptionCategory.INTERNAL, help = "TraceCalls output is sent to 'fastr_tracecalls.log'") //
     public static final OptionKey<Boolean> TraceCallsToFile = new OptionKey<>(false);
-    @Option(category = OptionCategory.DEBUG, help = "Trace all native function calls (performed via .Call, .External, etc.)") //
+    @Option(category = OptionCategory.INTERNAL, help = "Trace all native function calls (performed via .Call, .External, etc.)") //
     public static final OptionKey<Boolean> TraceNativeCalls = new OptionKey<>(false);
 
     /**
@@ -136,6 +139,12 @@ public class FastROptions {
      * sources tarball, i.e. using <code>bin/R INSTALL [path-to-pkg-dir]</code>
      */
     public static final String DEBUG_LLVM_LIBS = "DEBUG_LLVM_LIBS";
+
+    /**
+     * For now we enforce that this option is set JVM wide, so that we can avoid reading it via
+     * {@link RContext} on the fastr path.
+     */
+    public static boolean sharedContextsOptionValue;
 
     private final RContext context;
 
@@ -156,6 +165,7 @@ public class FastROptions {
         values.put(key, value);
     }
 
+    private static boolean initializedFirstOptions;
     private boolean initialized;
 
     void initialize() {
@@ -186,7 +196,12 @@ public class FastROptions {
         }
 
         checkObsoleteJVMArgs();
-
+        DSLConfig.initialize(getValue(DSLCacheSizeFactor));
+        if (initializedFirstOptions && sharedContextsOptionValue != getValue(SharedContexts)) {
+            throw RError.error(RError.NO_CALLER, Message.GENERIC, "FastR option ShareContexts can be set only to a single value per JVM/native-image instance.");
+        }
+        sharedContextsOptionValue = getValue(SharedContexts);
+        initializedFirstOptions = true;
         initialized = true;
     }
 
