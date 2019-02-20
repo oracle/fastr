@@ -2852,6 +2852,7 @@ public class RSerialize {
             if (pathObj instanceof RAbstractStringVector) {
                 String path = ((RAbstractStringVector) pathObj).getDataAt(0);
                 Path libLoc = Paths.get(path).getParent();
+                assert libLoc != null;
                 RContext.getInstance().libraryPaths.add(0, libLoc.toString());
                 return true;
             }

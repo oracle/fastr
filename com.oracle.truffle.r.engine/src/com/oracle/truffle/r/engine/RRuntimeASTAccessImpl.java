@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -251,7 +251,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     caller = caller.getParent();
                 }
             }
-            if (caller != null && caller.isValidCaller()) {
+            if (caller.isValidCaller()) {
                 // This is where we need to ensure that we have an RLanguage object with a rep that
                 // is an RSyntaxNode.
                 return getSyntaxCaller(caller);

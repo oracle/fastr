@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -705,7 +705,7 @@ public class FrameFunctions {
                             int currentCallIdx = currentCall.getDepth() - 1;
                             RCaller parent = currentCall.getParent();
                             RCaller previous = currentCall;
-                            while (parent != null & parent.isPromise()) {
+                            while (parent != null && parent.isPromise()) {
                                 if (parent.hasSysParent()) {
                                     // parent.frame explicitly set by Rf_eval(quote(foo()), env) to
                                     // env

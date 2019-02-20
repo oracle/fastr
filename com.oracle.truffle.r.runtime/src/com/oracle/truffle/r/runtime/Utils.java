@@ -302,7 +302,11 @@ public final class Utils {
 
     private static boolean robustCheckWriteable(Path logFile) {
         try {
-            return Files.isWritable(logFile.getParent()) && (!Files.exists(logFile) || Files.isWritable(logFile));
+            if (logFile == null) {
+                return false;
+            }
+            Path parent = logFile.getParent();
+            return parent != null && Files.isWritable(parent) && (!Files.exists(logFile) || Files.isWritable(logFile));
         } catch (Throwable ex) {
             // may throw SecurityException, we catch all since we really need to be robust
             logGetLogPathError(ex.getMessage());

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -88,8 +88,12 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
                     String name = entry.getName();
                     if (name.endsWith(".R") || name.endsWith(".r")) {
                         Path p = Paths.get(name);
-                        String entryPkg = p.getName(p.getNameCount() - 3).getFileName().toString();
-                        String entryParent = p.getName(p.getNameCount() - 2).getFileName().toString();
+                        Path entryPkgPath = p.getName(p.getNameCount() - 3).getFileName();
+                        assert entryPkgPath != null;
+                        String entryPkg = entryPkgPath.toString();
+                        Path entryParentPath = p.getName(p.getNameCount() - 2).getFileName();
+                        assert entryParentPath != null;
+                        String entryParent = entryParentPath.toString();
                         if (entryParent.equals("R") && entryPkg.equals(pkgName)) {
                             int size = (int) entry.getSize();
                             byte[] buf = new byte[size];
