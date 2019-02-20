@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -467,7 +467,7 @@ public class ArgumentMatcher {
      * semi-generic and semi-hardcoded, see {@code RCallNode.callGroupGeneric} for more details.
      */
     private static Object getS3DefaultArgumentValue(S3DefaultArguments s3DefaultArguments, FormalArguments formals, int formalIndex) {
-        if (s3DefaultArguments == RArguments.SUMMARY_GROUP_DEFAULT_VALUE_NA_RM && formals.getSignature().getName(formalIndex) == RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME) {
+        if (s3DefaultArguments == RArguments.SUMMARY_GROUP_DEFAULT_VALUE_NA_RM && Utils.identityEquals(formals.getSignature().getName(formalIndex), RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME)) {
             return RRuntime.asLogical(false);
         }
         return null;

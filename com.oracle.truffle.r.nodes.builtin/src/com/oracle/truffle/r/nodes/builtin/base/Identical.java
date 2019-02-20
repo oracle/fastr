@@ -368,7 +368,7 @@ public abstract class Identical extends RBuiltinNode.Arg8 {
                     } else if (RPairList.isNull(tagX) || RPairList.isNull(tagY)) {
                         return RRuntime.LOGICAL_FALSE;
                     } else {
-                        if (tagY instanceof RSymbol && tagY instanceof RSymbol) {
+                        if (tagX instanceof RSymbol && tagY instanceof RSymbol) {
                             if (xSubList.getTag() != ySubList.getTag()) {
                                 return RRuntime.LOGICAL_FALSE;
                             }

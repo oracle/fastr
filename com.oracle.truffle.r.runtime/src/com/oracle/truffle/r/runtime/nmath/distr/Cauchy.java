@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2008, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ package com.oracle.truffle.r.runtime.nmath.distr;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_PI;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_1;
@@ -157,7 +158,7 @@ public final class Cauchy {
                 }
             }
 
-            if (p == 0.5) {
+            if (Utils.identityEquals(p, 0.5)) {
                 return location;
             } // avoid 1/Inf below
             if (p == 0.) {

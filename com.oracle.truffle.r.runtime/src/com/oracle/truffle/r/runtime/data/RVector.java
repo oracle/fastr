@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -699,7 +699,7 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
     }
 
     private RVector<ArrayT> resize(int size, boolean resetAll) {
-        this.complete &= getLength() >= size;
+        this.complete = this.complete && getLength() >= size;
         RVector<ArrayT> res = this;
         RStringVector oldNames = res.getNamesFromAttrs();
         res = copyResized(size, true);

@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -272,7 +273,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     protected static boolean isVariadicSymbol(RSymbol sym) {
         String x = sym.getName();
         // TODO: variadic symbols can have two digits up to ".99"
-        if (x != ArgumentsSignature.VARARG_NAME && x.length() > 2 && x.charAt(0) == '.' && x.charAt(1) == '.') {
+        if (!Utils.identityEquals(x, ArgumentsSignature.VARARG_NAME) && x.length() > 2 && x.charAt(0) == '.' && x.charAt(1) == '.') {
             for (int i = 2; i < x.length(); i++) {
                 if (!Character.isDigit(x.charAt(i))) {
                     return false;

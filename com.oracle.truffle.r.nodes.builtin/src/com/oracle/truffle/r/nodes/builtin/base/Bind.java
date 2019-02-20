@@ -363,7 +363,7 @@ public abstract class Bind extends RBaseNode {
                     } else {
                         String deparsedName = deparseArgName(promiseArgs, deparseLevel, vecInd);
                         dimNamesArray[ind++] = deparsedName;
-                        return deparsedName == RRuntime.NAMES_ATTR_EMPTY_VALUE ? -ind : ind;
+                        return Utils.identityEquals(deparsedName, RRuntime.NAMES_ATTR_EMPTY_VALUE) ? -ind : ind;
                     }
                 } else {
                     if (argNames[vecInd] == null) {
@@ -501,7 +501,7 @@ public abstract class Bind extends RBaseNode {
             } else {
                 // var arg is at the first position - as in the R bind call
                 String deparsedName = deparseArgName(promiseArgs, deparseLevel, 0);
-                dimNamesB = deparsedName == RRuntime.NAMES_ATTR_EMPTY_VALUE ? RNull.instance : RDataFactory.createStringVector(deparsedName);
+                dimNamesB = Utils.identityEquals(deparsedName, RRuntime.NAMES_ATTR_EMPTY_VALUE) ? RNull.instance : RDataFactory.createStringVector(deparsedName);
             }
         } else {
             String[] names = new String[signature.getLength()];
@@ -768,7 +768,7 @@ public abstract class Bind extends RBaseNode {
 
     private boolean dimResultNamesComplete(String[] rowDimNamesArray) {
         for (String s : rowDimNamesArray) {
-            if (dimNamesInComplete.profile(s == RRuntime.STRING_NA)) {
+            if (dimNamesInComplete.profile(RRuntime.isNA(s))) {
                 return RDataFactory.INCOMPLETE_VECTOR;
             }
         }

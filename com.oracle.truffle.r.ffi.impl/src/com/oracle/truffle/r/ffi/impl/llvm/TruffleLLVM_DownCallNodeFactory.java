@@ -37,6 +37,7 @@ import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 import com.oracle.truffle.r.runtime.ffi.DLL.DLLInfo;
@@ -68,9 +69,9 @@ public final class TruffleLLVM_DownCallNodeFactory extends DownCallNodeFactory {
                 CompilerAsserts.neverPartOfCompilation();
                 String library = fn.getLibrary();
                 DLLInfo dllInfo = null;
-                if (library == baseLibrary()) {
+                if (Utils.identityEquals(library, baseLibrary())) {
                     dllInfo = DLL.getRdllInfo();
-                } else if (library != anyLibrary()) {
+                } else if (!Utils.identityEquals(library, anyLibrary())) {
                     dllInfo = DLL.findLibrary(library);
                 }
                 SymbolHandle result = DLL.findSymbol(fn.getCallName(), dllInfo);

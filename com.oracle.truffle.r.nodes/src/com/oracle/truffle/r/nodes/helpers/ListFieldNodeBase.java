@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.helpers;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 
 /**
@@ -38,7 +39,7 @@ public abstract class ListFieldNodeBase extends Node {
             int fieldHash = field.hashCode();
             for (int i = 0; i < names.getLength(); i++) {
                 String current = names.getDataAt(i);
-                if (current == field || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
+                if (Utils.fastPathIdentityEquals(current, field) || hashCodeEquals(current, fieldHash) && contentsEquals(current, field)) {
                     return i;
                 }
             }

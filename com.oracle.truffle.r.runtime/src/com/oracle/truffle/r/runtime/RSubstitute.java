@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -99,7 +99,7 @@ public class RSubstitute {
                 } catch (FrameSlotTypeException e) {
                     e.printStackTrace();
                 }
-                assert dotIdx <= dots.getLength() : "promise to a vararg .." + dotIdx + " outside of the varargs bounds";
+                assert dots != null && dotIdx <= dots.getLength() : "promise to a vararg .." + dotIdx + " outside of the varargs bounds";
                 return substituteElement(dots.getArgument(dotIdx - 1), builder);
             }
         }

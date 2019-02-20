@@ -125,6 +125,7 @@ public class TruffleMixed_Context extends RFFIContext {
     @Override
     public long beforeDowncall(Type rffiType) {
         Type actualRffiType = rffiType == null ? Type.LLVM : rffiType;
+        assert rffiType != null;
         switch (rffiType) {
             case LLVM:
                 return llvmContext.beforeDowncall(actualRffiType);

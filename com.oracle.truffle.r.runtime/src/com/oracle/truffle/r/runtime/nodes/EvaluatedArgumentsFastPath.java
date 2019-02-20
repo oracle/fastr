@@ -75,6 +75,6 @@ final class EvaluatedArgumentsFastPath implements FastPathFactory {
     @Override
     public boolean equals(Object obj) {
         EvaluatedArgumentsFastPath other = (EvaluatedArgumentsFastPath) obj;
-        return Arrays.equals(forcedArguments, other.forcedArguments);
+        return forcedArguments == null && other.forcedArguments == null || forcedArguments != null && other.forcedArguments != null && Arrays.equals(forcedArguments, other.forcedArguments);
     }
 }

@@ -91,6 +91,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -497,7 +498,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         // comparison is enough. Signature length > 0, because we dispatched on at least one arg
         int typeXIdx = 0;
         if (summaryGroupNaRmProfile.profile(dispatch == RDispatch.SUMMARY_GROUP_GENERIC &&
-                        argsSignature.getName(typeXIdx) == RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME)) {
+                        Utils.identityEquals(argsSignature.getName(typeXIdx), RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME))) {
             typeXIdx = 1;
         }
 
@@ -599,7 +600,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 summaryGroupSignatureCached = argsSignature;
                 summaryGroupHasNaRmCached = false;
                 for (int i = 0; i < argsSignature.getLength(); i++) {
-                    if (argsSignature.getName(i) == RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME) {
+                    if (Utils.identityEquals(argsSignature.getName(i), RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME)) {
                         summaryGroupHasNaRmCached = true;
                         break;
                     }

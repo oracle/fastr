@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RExternalPtr;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -107,7 +108,7 @@ abstract class LookupAdapter extends RBuiltinNode.Arg3 implements Lookup {
         String name = null;
         if (symbol instanceof RList) {
             name = lookupName((RList) symbol);
-            name = name == UNKNOWN_EXTERNAL_BUILTIN ? null : name;
+            name = Utils.fastPathIdentityEquals(name, UNKNOWN_EXTERNAL_BUILTIN) ? null : name;
             if (name != null && lookup.lookupBuiltin((RList) symbol) != null) {
                 /*
                  * if we reach this point, then the cache saw a different value for f. the lists

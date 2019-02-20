@@ -32,6 +32,7 @@ import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RSuicide;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import java.util.logging.Level;
 import static com.oracle.truffle.r.runtime.RLogger.LOGGER_SYSTEM_FUNCTION;
@@ -83,6 +84,7 @@ public abstract class SystemFunctionFactory {
         }
     }
 
+    @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "incomplete implementation")
     protected void log(String command) {
         log(command, kind);
     }

@@ -379,7 +379,7 @@ public final class FFIProcessor extends AbstractProcessor {
         if (resultOwnerRHS != null) {
             w.append("                        ctx.protectChild(resultOwner, resultRObj);\n");
         } else {
-            if (returnKind != TypeKind.VOID) {
+            if (returnKind != TypeKind.VOID && needsReturnWrap) {
                 w.append("                        if (resultRObj0 != resultRObj) {\n");
                 w.append("                            ctx.protectChild(resultRObj0, resultRObj);\n");
                 w.append("                        }\n");

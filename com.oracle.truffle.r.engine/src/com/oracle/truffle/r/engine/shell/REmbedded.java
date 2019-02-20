@@ -35,6 +35,7 @@ import com.oracle.truffle.r.launcher.REPL;
 import com.oracle.truffle.r.launcher.RStartParams;
 import com.oracle.truffle.r.runtime.RSource.Internal;
 import com.oracle.truffle.r.runtime.RSuicide;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.context.RContext;
 
@@ -69,6 +70,7 @@ public class REmbedded {
      * initialize FastR as we cannot do that until the embedding system has had a chance to adjust
      * the {@link RStartParams}, which happens after this call returns.
      */
+    @SuppressFBWarnings(value = "LI_LAZY_INIT_UPDATE_STATIC", justification = "one-time initialization")
     private static void initializeR(String[] args, boolean initMainLoop) {
         assert context == null;
         RContext.setEmbedded();

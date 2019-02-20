@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -190,7 +190,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
                          * we need to distinguish character NA from "NA", which is a valid (if
                          * non-syntactic) name
                          */
-                        if (ss == RRuntime.STRING_NA) {
+                        if (RRuntime.isNA(ss)) {
                             tagbuf.append("$<NA>");
                         } else if (RDeparse.isValidName(ss)) {
                             tagbuf.append(String.format("$%s", ss));

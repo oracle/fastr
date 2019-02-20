@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 2003-2004, The R Core Team
  * Copyright (c) 1998-2014, The R Foundation
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
@@ -205,12 +206,12 @@ public final class Fmin extends RExternalBuiltinNode.Arg4 {
                     a = u;
                 else
                     b = u;
-                if (fu <= fw || w == x) {
+                if (fu <= fw || Utils.identityEquals(w, x)) {
                     v = w;
                     fv = fw;
                     w = u;
                     fw = fu;
-                } else if (fu <= fv || v == x || v == w) {
+                } else if (fu <= fv || Utils.identityEquals(v, x) || Utils.identityEquals(v, w)) {
                     v = u;
                     fv = fu;
                 }

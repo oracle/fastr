@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,6 +35,7 @@ import com.oracle.truffle.r.nodes.access.variables.DynamicReadFunctionVariableNo
 import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 
 /**
  * Version of {@link ReadVariableNode} that re-specializes on frame descriptor changes. It should be
@@ -121,24 +122,23 @@ public abstract class DynamicReadFunctionVariableNode extends Node {
         // Note: DSL gets crazy if the second argument is of type "Frame"
         public abstract Object execute(VirtualFrame frame, Object varFrame);
 
-        @Specialization(guards = "!local")
+        @Specialization
+        @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "incomplete implementation")
         protected Object cachedLocalRead(VirtualFrame frame, Object variableFrame) {
             Frame varFrame = (Frame) variableFrame;
-            ReadVariableNode read = cachedRead;
-            if (lastDescriptor != varFrame.getFrameDescriptor()) {
-                cachedRead = read = insert(createRead(identifier));
+            if (local) {
+                LocalReadVariableNode read = cachedLocalRead;
+                if (lastDescriptor != varFrame.getFrameDescriptor()) {
+                    cachedLocalRead = read = insert(createLocalRead(identifier));
+                }
+                return read.execute(frame, varFrame);
+            } else {
+                ReadVariableNode read = cachedRead;
+                if (lastDescriptor != varFrame.getFrameDescriptor()) {
+                    cachedRead = read = insert(createRead(identifier));
+                }
+                return read.execute(frame, varFrame);
             }
-            return read.execute(frame, varFrame);
-        }
-
-        @Specialization(guards = "local")
-        protected Object cachedRead(VirtualFrame frame, Object variableFrame) {
-            Frame varFrame = (Frame) variableFrame;
-            LocalReadVariableNode read = cachedLocalRead;
-            if (lastDescriptor != varFrame.getFrameDescriptor()) {
-                cachedLocalRead = read = insert(createLocalRead(identifier));
-            }
-            return read.execute(frame, varFrame);
         }
     }
 }

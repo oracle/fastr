@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -310,11 +311,11 @@ public final class SeqFunctions {
             int argsLen = args.getLength();
             if (argsLen == 1) {
                 String sig0 = args.getSignature().getName(0);
-                return sig0 != null && sig0 == lengthOut;
+                return sig0 != null && Utils.identityEquals(sig0, lengthOut);
             } else if (argsLen == 2) {
                 String sig0 = args.getSignature().getName(0);
                 String sig1 = args.getSignature().getName(1);
-                return sig0 == null && sig1 != null && sig1 == lengthOut;
+                return sig0 == null && sig1 != null && Utils.identityEquals(sig1, lengthOut);
             } else {
                 return false;
             }
@@ -899,8 +900,10 @@ public final class SeqFunctions {
                     result = RDataFactory.createDoubleVectorFromScalar(from);
                 } else {
                     boolean useDouble = fromMissing && !isInt(lengthOut);
-                    if (useDoubleProfile.profile((int) from == from && (int) to == to && !useDouble)) {
-                        result = RDataFactory.createIntVector(new int[]{(int) from, (int) to}, RDataFactory.COMPLETE_VECTOR);
+                    int intFrom = (int) from;
+                    int intTo = (int) to;
+                    if (useDoubleProfile.profile(Utils.identityEquals(intFrom, from) && Utils.identityEquals(intTo, to) && !useDouble)) {
+                        result = RDataFactory.createIntVector(new int[]{intFrom, intTo}, RDataFactory.COMPLETE_VECTOR);
                     } else {
                         result = RDataFactory.createDoubleVector(new double[]{from, to}, RDataFactory.COMPLETE_VECTOR);
                     }

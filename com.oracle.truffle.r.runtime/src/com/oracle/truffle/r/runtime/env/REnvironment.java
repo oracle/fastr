@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -46,6 +46,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.RType;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -947,7 +948,7 @@ public abstract class REnvironment extends RAttributeStorage {
         RContext.markNonSingle();
         ContextStateImpl parentState = RContext.getInstance().stateREnvironment;
         SearchPath searchPath = parentState.getSearchPath();
-        assert searchPath.size() > 0 && searchPath.get(0).getSearchName() == Global.SEARCHNAME;
+        assert searchPath.size() > 0 && Utils.fastPathIdentityEquals(searchPath.get(0).getSearchName(), Global.SEARCHNAME);
         // for global space don't replicate entries as all contexts should see their own values
         fun.apply(searchPath.get(0).getFrame(), false);
         for (int i = 1; i < searchPath.size(); i++) {

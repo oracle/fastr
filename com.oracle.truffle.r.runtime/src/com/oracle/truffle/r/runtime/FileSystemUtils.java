@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -113,7 +113,7 @@ public class FileSystemUtils {
 
     /**
      * Find that does not follow links and with a matcher not getting attributes as a parameter.
-     * 
+     *
      * @param start starting truffle file.
      * @param maxDepth maximum number of directory levels to search.
      * @param matcher function used to decide whether a file should be included in the returned
@@ -151,7 +151,7 @@ public class FileSystemUtils {
     /**
      * Walk file tree without possibility to follow links and with file attributes being null (those
      * passed into {@link FileVisitor}).
-     * 
+     *
      * @param start starting truffle file.
      * @param maxDepth maximum number of directory levels to search.
      * @param visitor file visitor to invoke for each file.
@@ -368,6 +368,7 @@ public class FileSystemUtils {
             return iterator;
         }
 
+        @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "incomplete implementation")
         boolean skipped() {
             return skipped;
         }

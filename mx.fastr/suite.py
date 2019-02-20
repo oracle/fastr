@@ -99,6 +99,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : ["TRUFFLE_R_PARSER_PROCESSOR"],
+      "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
     },
 
@@ -112,6 +113,7 @@ suite = {
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
+      "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
     },
@@ -126,6 +128,7 @@ suite = {
       "annotationProcessors" : [
         "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
+      "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
     },

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -188,7 +188,7 @@ public class MethodsListDispatch {
                     Object valAttrObj = attributableValue.getAttributes() == null ? null : valPckgAttrAccess.execute(attributableValue.getAttributes());
                     String valAttr = RRuntime.asStringLengthOne(valAttrObj);
                     // GNUR uses == to compare strings here
-                    if (valAttr != null && valAttr != pckgAttr) {
+                    if (valAttr != null && !valAttr.equals(pckgAttr)) {
                         return RNull.instance;
                     }
                 }

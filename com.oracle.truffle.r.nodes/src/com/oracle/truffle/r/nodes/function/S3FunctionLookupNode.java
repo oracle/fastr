@@ -357,7 +357,8 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
         @Override
         public Result execute(VirtualFrame frame, String genericName, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame) {
             do {
-                if ((genericIdentityProfile.profile(genericName != cachedGenericName) && !cachedGenericName.equals(genericName)) || !isEqualType(type) || group != cachedGroup) {
+                if ((genericIdentityProfile.profile(!Utils.fastPathIdentityEquals(genericName, cachedGenericName)) && !cachedGenericName.equals(genericName)) || !isEqualType(type) ||
+                                !Utils.identityEquals(group, cachedGroup)) {
                     return next.execute(frame, genericName, type, group, callerFrame, genericDefFrame);
                 }
                 if (!executeReads(frame, unsuccessfulReadsCallerFrame, callerFrame)) {
@@ -427,7 +428,7 @@ public abstract class S3FunctionLookupNode extends RBaseNode {
             for (int i = 0; i < cachedTypeContents.length; i++) {
                 String elementOne = cachedTypeContents[i];
                 String elementTwo = type.getDataAt(i);
-                if (elementOne != elementTwo) {
+                if (!Utils.fastPathIdentityEquals(elementOne, elementTwo)) {
                     notIdentityEqualElements.enter();
                     if (!elementOne.equals(elementTwo)) {
                         return false;

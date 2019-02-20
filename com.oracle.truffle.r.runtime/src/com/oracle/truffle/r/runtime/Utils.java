@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -518,6 +518,7 @@ public final class Utils {
         while (parent != null && parent.isPromise()) {
             parent = parent.getParent();
         }
+        assert parent != null;
         parent = parent.getParent();
         while (parent != null && parent.isPromise()) {
             parent = parent.getParent();
@@ -750,8 +751,25 @@ public final class Utils {
         return s.intern();
     }
 
+    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "intended behavior")
     public static boolean isInterned(String s) {
         return s == s.intern();
+    }
+
+    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "this is intended for interned strings")
+    public static boolean identityEquals(String value, String other) {
+        assert (value == null || isInterned(value)) && (other == null || isInterned(other));
+        return value == other;
+    }
+
+    @SuppressFBWarnings(value = "ES_COMPARING_PARAMETER_STRING_WITH_EQ", justification = "this is intended for fast path string comparisons that are followed by proper calls to equals")
+    public static boolean fastPathIdentityEquals(String value, String other) {
+        return value == other;
+    }
+
+    @SuppressFBWarnings(value = "FE_FLOATING_POINT_EQUALITY", justification = "intentional comparisons of floating point numbers")
+    public static boolean identityEquals(double value, double other) {
+        return value == other;
     }
 
     @TruffleBoundary

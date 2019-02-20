@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -52,11 +52,11 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
         RSyntaxElement arg0 = call.getSyntaxArguments()[0];
         RSyntaxElement arg1 = call.getSyntaxArguments().length > 1 ? call.getSyntaxArguments()[1] : null;
 
-        if (functionName == LEFT_PAREN) {
+        if (Utils.identityEquals(functionName, LEFT_PAREN)) {
             return accept(arg0);
         }
 
-        if (functionName == PLUS) {
+        if (Utils.identityEquals(functionName, PLUS)) {
             if (call.getSyntaxArguments().length == 1) {
                 return accept(arg0);
             } else {
@@ -64,7 +64,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
             }
         }
 
-        if (functionName == MINUS) {
+        if (Utils.identityEquals(functionName, MINUS)) {
             if (call.getSyntaxArguments().length == 1) {
                 return simplify(MINUS, accept(arg0), null);
             } else {
@@ -72,12 +72,12 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
             }
         }
 
-        if (functionName == TIMES) {
+        if (Utils.identityEquals(functionName, TIMES)) {
             return simplify(PLUS, simplify(TIMES, accept(arg0), cloneElement(arg1)),
                             simplify(TIMES, cloneElement(arg0), accept(arg1)));
         }
 
-        if (functionName == DIVIDE) {
+        if (Utils.identityEquals(functionName, DIVIDE)) {
             return simplify(MINUS,
                             simplify(DIVIDE, accept(arg0), cloneElement(arg1)),
                             simplify(DIVIDE,
@@ -85,7 +85,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                                             simplify(POWER, cloneElement(arg1), ConstantNode.create(2.))));
         }
 
-        if (functionName == POWER) {
+        if (Utils.identityEquals(functionName, POWER)) {
             if (isNumeric(arg1)) {
                 return simplify(TIMES,
                                 arg1,
@@ -110,30 +110,30 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
             }
         }
 
-        if (functionName == EXP) {
+        if (Utils.identityEquals(functionName, EXP)) {
             return simplify(TIMES, cloneElement(call), accept(arg0));
         }
 
-        if (functionName == LOG) {
+        if (Utils.identityEquals(functionName, LOG)) {
             if (call.getSyntaxArguments().length != 1) {
                 throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "only single-argument calls are supported");
             }
             return simplify(DIVIDE, accept(arg0), cloneElement(arg0));
         }
 
-        if (functionName == COS) {
+        if (Utils.identityEquals(functionName, COS)) {
             return simplify(TIMES,
                             simplify(SIN, cloneElement(arg0), null),
                             simplify(MINUS, accept(arg0), null));
         }
 
-        if (functionName == SIN) {
+        if (Utils.identityEquals(functionName, SIN)) {
             return simplify(TIMES,
                             simplify(COS, cloneElement(arg0), null),
                             accept(arg0));
         }
 
-        if (functionName == TAN) {
+        if (Utils.identityEquals(functionName, TAN)) {
             return simplify(DIVIDE,
                             accept(arg0),
                             simplify(POWER,
@@ -141,19 +141,19 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                                             ConstantNode.create(2.)));
         }
 
-        if (functionName == COSH) {
+        if (Utils.identityEquals(functionName, COSH)) {
             return simplify(TIMES,
                             simplify(SINH, cloneElement(arg0), null),
                             accept(arg0));
         }
 
-        if (functionName == SINH) {
+        if (Utils.identityEquals(functionName, SINH)) {
             return simplify(TIMES,
                             simplify(COSH, cloneElement(arg0), null),
                             accept(arg0));
         }
 
-        if (functionName == TANH) {
+        if (Utils.identityEquals(functionName, TANH)) {
             return simplify(DIVIDE,
                             accept(arg0),
                             simplify(POWER,
@@ -161,17 +161,17 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                                             ConstantNode.create(2.)));
         }
 
-        if (functionName == SQRT) {
+        if (Utils.identityEquals(functionName, SQRT)) {
             return accept(simplify(POWER, cloneElement(arg0), ConstantNode.create(0.5)));
         }
 
-        if (functionName == PNORM) {
+        if (Utils.identityEquals(functionName, PNORM)) {
             return simplify(TIMES,
                             simplify(DNORM, cloneElement(arg0), null),
                             accept(arg0));
         }
 
-        if (functionName == DNORM) {
+        if (Utils.identityEquals(functionName, DNORM)) {
             return simplify(TIMES,
                             simplify(MINUS, cloneElement(arg0), null),
                             simplify(TIMES,
@@ -179,7 +179,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                                             accept(arg0)));
         }
 
-        if (functionName == ASIN) {
+        if (Utils.identityEquals(functionName, ASIN)) {
             return simplify(DIVIDE,
                             accept(arg0),
                             simplify(SQRT,
@@ -189,7 +189,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                                             null));
         }
 
-        if (functionName == ACOS) {
+        if (Utils.identityEquals(functionName, ACOS)) {
             return simplify(MINUS,
                             simplify(DIVIDE,
                                             accept(arg0),
@@ -201,7 +201,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                             null);
         }
 
-        if (functionName == ATAN) {
+        if (Utils.identityEquals(functionName, ATAN)) {
             return simplify(DIVIDE,
                             accept(arg0),
                             simplify(PLUS,
@@ -209,32 +209,32 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                                             simplify(POWER, cloneElement(arg0), ConstantNode.create(2.))));
         }
 
-        if (functionName == LGAMMA) {
+        if (Utils.identityEquals(functionName, LGAMMA)) {
             return simplify(TIMES,
                             accept(arg0),
                             simplify(DIGAMMA, cloneElement(arg0), null));
         }
 
-        if (functionName == GAMMA) {
+        if (Utils.identityEquals(functionName, GAMMA)) {
             return simplify(TIMES,
                             accept(arg0),
                             simplify(TIMES, cloneElement(call),
                                             simplify(DIGAMMA, cloneElement(arg0), null)));
         }
 
-        if (functionName == DIGAMMA) {
+        if (Utils.identityEquals(functionName, DIGAMMA)) {
             return simplify(TIMES,
                             accept(arg0),
                             simplify(TRIGAMMA, cloneElement(arg0), null));
         }
 
-        if (functionName == TRIGAMMA) {
+        if (Utils.identityEquals(functionName, TRIGAMMA)) {
             return simplify(TIMES,
                             accept(arg0),
                             simplify(PSIGAMMA, cloneElement(arg0), ConstantNode.create(2)));
         }
 
-        if (functionName == PSIGAMMA) {
+        if (Utils.identityEquals(functionName, PSIGAMMA)) {
             if (call.getSyntaxArguments().length == 1) {
                 return simplify(TIMES,
                                 accept(arg0),
@@ -272,7 +272,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
     }
 
     private RSyntaxElement simplify(String functionName, RSyntaxElement arg1, RSyntaxElement arg2) {
-        if (functionName == PLUS) {
+        if (Utils.identityEquals(functionName, PLUS)) {
             if (arg2 == null) {
                 return arg1;
             } else if (isZero(arg1)) {
@@ -286,7 +286,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
             } else {
                 return newCall(PLUS, arg1, arg2);
             }
-        } else if (functionName == MINUS) {
+        } else if (Utils.identityEquals(functionName, MINUS)) {
             if (arg2 == null) {
                 if (isZero(arg1)) {
                     return ConstantNode.create(0.);
@@ -310,7 +310,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
                     return newCall(MINUS, arg1, arg2);
                 }
             }
-        } else if (functionName == TIMES) {
+        } else if (Utils.identityEquals(functionName, TIMES)) {
             if (isZero(arg1) || isZero(arg2)) {
                 return ConstantNode.create(0.);
             } else if (isOne(arg1)) {
@@ -324,7 +324,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
             } else {
                 return newCall(TIMES, arg1, arg2);
             }
-        } else if (functionName == DIVIDE) {
+        } else if (Utils.identityEquals(functionName, DIVIDE)) {
             if (isZero(arg1)) {
                 return ConstantNode.create(0.);
             } else if (isZero(arg2)) {
@@ -338,7 +338,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
             } else {
                 return newCall(DIVIDE, arg1, arg2);
             }
-        } else if (functionName == POWER) {
+        } else if (Utils.identityEquals(functionName, POWER)) {
             if (isZero(arg2)) {
                 return ConstantNode.create(1.);
             } else if (isZero(arg1)) {
@@ -350,15 +350,18 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
             } else {
                 return newCall(POWER, arg1, arg2);
             }
-        } else if (functionName == EXP) {
+        } else if (Utils.identityEquals(functionName, EXP)) {
             // FIXME: simplify exp(lgamma( E )) = gamma( E )
             return newCall(EXP, arg1, null);
-        } else if (functionName == LOG) {
+        } else if (Utils.identityEquals(functionName, LOG)) {
             // FIXME: simplify log(gamma( E )) = lgamma( E )
             return newCall(LOG, arg1, null);
-        } else if (functionName == COS || functionName == SIN || functionName == TAN || functionName == COSH || functionName == SINH || functionName == TANH || functionName == SQRT ||
-                        functionName == PNORM || functionName == DNORM || functionName == ASIN || functionName == ACOS || functionName == ATAN || functionName == GAMMA || functionName == LGAMMA ||
-                        functionName == DIGAMMA || functionName == TRIGAMMA || functionName == PSIGAMMA) {
+        } else if (Utils.identityEquals(functionName, COS) || Utils.identityEquals(functionName, SIN) || Utils.identityEquals(functionName, TAN) || Utils.identityEquals(functionName, COSH) ||
+                        Utils.identityEquals(functionName, SINH) || Utils.identityEquals(functionName, TANH) || Utils.identityEquals(functionName, SQRT) ||
+                        Utils.identityEquals(functionName, PNORM) || Utils.identityEquals(functionName, DNORM) || Utils.identityEquals(functionName, ASIN) ||
+                        Utils.identityEquals(functionName, ACOS) || Utils.identityEquals(functionName, ATAN) || Utils.identityEquals(functionName, GAMMA) ||
+                        Utils.identityEquals(functionName, LGAMMA) ||
+                        Utils.identityEquals(functionName, DIGAMMA) || Utils.identityEquals(functionName, TRIGAMMA) || Utils.identityEquals(functionName, PSIGAMMA)) {
             return newCall(functionName, arg1, arg2);
         } else {
             return ConstantNode.create(RRuntime.DOUBLE_NA);
@@ -375,7 +378,7 @@ public class DerivVisitor extends RSyntaxVisitor<RSyntaxElement> {
     }
 
     private static boolean isUminus(RSyntaxElement elem) {
-        if (elem instanceof RSyntaxCall && MINUS == getFunctionName(elem)) {
+        if (elem instanceof RSyntaxCall && Utils.identityEquals(MINUS, getFunctionName(elem))) {
             RSyntaxElement[] args = ((RSyntaxCall) elem).getSyntaxArguments();
             switch (args.length) {
                 case 1:
