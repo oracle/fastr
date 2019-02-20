@@ -251,7 +251,7 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
                     caller = caller.getParent();
                 }
             }
-            if (caller != null && caller.isValidCaller()) {
+            if (caller.isValidCaller()) {
                 // This is where we need to ensure that we have an RLanguage object with a rep that
                 // is an RSyntaxNode.
                 return getSyntaxCaller(caller);

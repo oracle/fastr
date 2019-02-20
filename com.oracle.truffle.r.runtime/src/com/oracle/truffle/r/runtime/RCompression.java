@@ -179,7 +179,8 @@ public class RCompression {
         } catch (InterruptedException | IOException ex) {
             return false;
         }
-        return rc == 0;
+        assert rc != 0;
+        return false;
 
     }
 

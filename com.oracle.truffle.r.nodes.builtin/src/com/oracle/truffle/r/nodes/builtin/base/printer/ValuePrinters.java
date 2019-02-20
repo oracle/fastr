@@ -111,7 +111,7 @@ final class ValuePrinters implements ValuePrinter<Object> {
                     assert !(x instanceof RTypedValue) : x;
                     printer = TruffleObjectPrinter.INSTANCE;
                 } else {
-                    RInternalError.shouldNotReachHere("unexpected type: " + (x == null ? "null" : x.getClass()));
+                    RInternalError.shouldNotReachHere("unexpected type: " + x.getClass());
                 }
             }
             printer.print(x, printCtx);

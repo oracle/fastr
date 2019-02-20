@@ -114,6 +114,7 @@ public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
         }
     }
 
+    @SuppressFBWarnings(value = "UC_USELESS_CONDITION", justification = "incomplete implementation")
     private static Object countFields(RConnection file, char sepChar, String quoteSet, @SuppressWarnings("unused") int nskip, boolean blskip, char comChar) throws IOException {
         LocalData data = new LocalData();
         data.sepchar = sepChar;

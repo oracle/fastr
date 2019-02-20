@@ -223,7 +223,9 @@ public class HTMLDumper extends AbstractDumper {
             builder.html(builder.head(builder.title(title)), builder.body(table));
             builder.dump();
 
-            return problemClassFile.getFileName().toString();
+            Path fileNamePath = problemClassFile.getFileName();
+            assert fileNamePath != null;
+            return fileNamePath.toString();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -265,7 +267,9 @@ public class HTMLDumper extends AbstractDumper {
             builder.html(builder.head(builder.title("Test Runs Failed to Analyze")), builder.body(table));
             builder.dump();
         }
-        return problemClassFile.getFileName().toString();
+        Path fileNamePath = problemClassFile.getFileName();
+        assert fileNamePath != null;
+        return fileNamePath.toString();
     }
 
 }

@@ -90,7 +90,7 @@ public final class ForwardedValuesAnalyser implements PipelineStepVisitor<Forwar
         ForwardingAnalysisResult localRes = new ForwardingAnalysisResult().blockAll().setForwardedType(step.getElementClass(), FORWARDED);
         if (step.getDefaultValue() == RNull.instance) {
             // see CoercedPhaseBuilder.findFirstOrNull()
-            localRes.setNull(FORWARDED);
+            localRes = localRes.setNull(FORWARDED);
         }
         result = result.and(localRes);
         return result;

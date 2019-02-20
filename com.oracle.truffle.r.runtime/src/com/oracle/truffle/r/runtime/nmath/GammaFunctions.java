@@ -51,6 +51,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.nmath.DPQ.EarlyReturn;
 import com.oracle.truffle.r.runtime.nmath.RMathError.MLError;
@@ -1248,6 +1249,7 @@ public abstract class GammaFunctions {
 
     @TruffleBoundary
     @SuppressWarnings("all")
+    @SuppressFBWarnings(value = "UC_USELESS_CONDITION", justification = "taken from original implementation")
     private static void dpsifn(double x, int n, int kode, DpsiFnResult result) {
         int mm;
         int mx;

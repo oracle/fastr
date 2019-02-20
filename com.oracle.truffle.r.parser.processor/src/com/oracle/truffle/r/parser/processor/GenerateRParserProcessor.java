@@ -167,8 +167,11 @@ public class GenerateRParserProcessor extends AbstractProcessor {
     }
 
     private static void deleteTmpDir(File dir) {
-        for (File f : dir.listFiles()) {
-            f.delete();
+        File[] files = dir.listFiles();
+        if (files != null) {
+            for (File f : files) {
+                f.delete();
+            }
         }
         dir.delete();
     }

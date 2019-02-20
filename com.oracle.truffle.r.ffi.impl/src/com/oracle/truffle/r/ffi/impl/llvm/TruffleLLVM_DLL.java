@@ -224,7 +224,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     continue;
                 }
                 Path zipName = Paths.get(entry.getName());
-                String name = zipName.getFileName().toString();
+                Path fileNamePath = zipName.getFileName();
+                assert fileNamePath != null;
+                String name = fileNamePath.toString();
                 int ix = name.indexOf('.');
                 if (ix > 0) {
                     name = name.substring(0, ix);
@@ -378,7 +380,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     private static String getLibName(String path) {
-        String fileName = FileSystems.getDefault().getPath(path).getFileName().toString();
+        Path fileNamePath = FileSystems.getDefault().getPath(path).getFileName();
+        assert fileNamePath != null;
+        String fileName = fileNamePath.toString();
         int ix = fileName.lastIndexOf(".");
         return fileName.substring(0, ix);
     }

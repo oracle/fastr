@@ -90,7 +90,7 @@ public class RowsumFunctions {
             int[] matches = new int[n];
             for (int i = 0; i < n; i++) {
                 Integer hi = table.get(g.getDataAtAsObject(i));
-                matches[i] = xv == null ? 0 : hi + 1;
+                matches[i] = hi + 1;
             }
             int offset = 0;
             int offsetg = 0;

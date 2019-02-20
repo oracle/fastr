@@ -31,10 +31,12 @@ import com.oracle.truffle.r.runtime.RRuntime;
 public final class RFileTypeDetector extends FileTypeDetector {
     @Override
     public String probeContentType(Path path) throws IOException {
-
-        String fileName = path.getFileName().toString();
-        if (fileName.endsWith(".R") || fileName.endsWith(".r")) {
-            return RRuntime.R_TEXT_MIME;
+        Path fileNamePath = path.getFileName();
+        if (fileNamePath != null) {
+            String fileName = fileNamePath.toString();
+            if (fileName.endsWith(".R") || fileName.endsWith(".r")) {
+                return RRuntime.R_TEXT_MIME;
+            }
         }
         return null;
     }

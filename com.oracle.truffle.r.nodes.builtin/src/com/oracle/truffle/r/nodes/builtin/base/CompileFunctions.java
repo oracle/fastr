@@ -136,7 +136,7 @@ public class CompileFunctions {
     public abstract static class BcVersion extends RBuiltinNode.Arg0 {
 
         static {
-            Casts casts = new Casts(BcVersion.class);
+            Casts.noCasts(BcVersion.class);
         }
 
         @Specialization

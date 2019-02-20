@@ -130,10 +130,8 @@ public final class PrintParameters {
 
     public static int getDefaultMaxPrint() {
         int max = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
-        if (max == RRuntime.INT_NA || max < 0) {
+        if (RRuntime.isNA(max) || max < 0) {
             max = 99999;
-        } else if (max == RRuntime.INT_NA) {
-            max--; // so we can add
         }
         return max;
     }

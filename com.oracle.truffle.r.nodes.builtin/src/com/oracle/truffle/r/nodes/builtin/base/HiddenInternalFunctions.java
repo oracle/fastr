@@ -470,7 +470,8 @@ public class HiddenInternalFunctions {
                     if (!rc) {
                         throw error(Message.GENERIC, "zlib compress error");
                     }
-                } else if (compression == 3) {
+                } else {
+                    assert compression == 3;
                     ctype = RCompression.Type.XZ;
                     offset = 5;
                     outLen = data.length;
@@ -479,8 +480,6 @@ public class HiddenInternalFunctions {
                     if (!rc) {
                         throw error(Message.GENERIC, "lzma compress error");
                     }
-                } else {
-                    throw RInternalError.shouldNotReachHere();
                 }
                 int[] intData = new int[2];
                 intData[1] = outLen + offset; // include length + type (compression == 3)

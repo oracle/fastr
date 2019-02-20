@@ -705,7 +705,7 @@ public class FrameFunctions {
                             int currentCallIdx = currentCall.getDepth() - 1;
                             RCaller parent = currentCall.getParent();
                             RCaller previous = currentCall;
-                            while (parent != null & parent.isPromise()) {
+                            while (parent != null && parent.isPromise()) {
                                 if (parent.hasSysParent()) {
                                     // parent.frame explicitly set by Rf_eval(quote(foo()), env) to
                                     // env
