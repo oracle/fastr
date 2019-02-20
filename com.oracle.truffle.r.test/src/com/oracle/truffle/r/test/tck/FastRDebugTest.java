@@ -681,7 +681,7 @@ public class FastRDebugTest {
             } catch (RuntimeException | Error e) {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-                frame.forEach(var -> {
+                frame.getScope().getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
                 throw e;
@@ -707,7 +707,7 @@ public class FastRDebugTest {
             } catch (RuntimeException | Error e) {
 
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-                frame.forEach(var -> {
+                frame.getScope().getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
                 throw e;
@@ -746,7 +746,7 @@ public class FastRDebugTest {
 
                 e.printStackTrace(System.err);
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-                frame.forEach(var -> {
+                frame.getScope().getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
                 throw e;
@@ -765,7 +765,7 @@ public class FastRDebugTest {
         final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
 
         final AtomicInteger numFrameVars = new AtomicInteger(0);
-        frame.forEach(var -> {
+        frame.getScope().getDeclaredValues().forEach(var -> {
             // skip synthetic slots
             for (RFrameSlot slot : RFrameSlot.values()) {
                 if (slot.toString().equals(var.getName())) {
@@ -845,7 +845,7 @@ public class FastRDebugTest {
                     String name = nameAndValuePairs[i++];
                     String expectedValue = nameAndValuePairs[i++];
                     boolean found = false;
-                    for (DebugValue value : frame) {
+                    for (DebugValue value : frame.getScope().getDeclaredValues()) {
                         if (name.equals(value.getName())) {
                             if (metaObjects) {
                                 DebugValue moDV = value.getMetaObject();
@@ -875,7 +875,7 @@ public class FastRDebugTest {
                 }
             } catch (RuntimeException | Error e) {
                 final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-                frame.forEach(var -> {
+                frame.getScope().getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
                 throw e;
