@@ -482,6 +482,7 @@ public class GrepFunctions {
                 } else {
                     pattern = RegExp.checkPreDefinedClasses(pattern);
                 }
+                String preparedReplacement = null;
                 String[] result = new String[len];
                 for (int i = 0; i < len; i++) {
                     String input = vector.getDataAt(i);
@@ -493,13 +494,17 @@ public class GrepFunctions {
                     String value;
                     if (fixed) {
                         if (gsub) {
-                            replacement = replacement.replace("$", "\\$");
-                            replacement = convertGroups(replacement, 0);
-                            value = Pattern.compile(pattern, Pattern.LITERAL).matcher(input).replaceAll(replacement);
+                            if (preparedReplacement == null) {
+                                preparedReplacement = replacement.replace("$", "\\$");
+                                preparedReplacement = convertGroups(preparedReplacement, 0);
+                            }
+                            value = Pattern.compile(pattern, Pattern.LITERAL).matcher(input).replaceAll(preparedReplacement);
                         } else {
                             int ix = input.indexOf(pattern);
-                            replacement = replacement.replace("\\\\", "\\");
-                            value = ix < 0 ? input : input.substring(0, ix) + replacement + input.substring(ix + pattern.length());
+                            if (preparedReplacement == null) {
+                                preparedReplacement = replacement.replace("\\\\", "\\");
+                            }
+                            value = ix < 0 ? input : input.substring(0, ix) + preparedReplacement + input.substring(ix + pattern.length());
                         }
                     } else if (perl) {
                         int lastEndOffset = 0;
@@ -562,12 +567,15 @@ public class GrepFunctions {
                         }
                     } else {
                         Matcher matcher = Pattern.compile(pattern, Pattern.DOTALL).matcher(input);
-                        replacement = convertGroups(replacement, matcher.groupCount());
-
+                        if (preparedReplacement == null) {
+                            preparedReplacement = replacement.replace("$", "\\$");
+                            // matcher.groupCount() only depends on the pattern (not on the input)
+                            preparedReplacement = convertGroups(preparedReplacement, matcher.groupCount());
+                        }
                         if (gsub) {
-                            value = matcher.replaceAll(replacement);
+                            value = matcher.replaceAll(preparedReplacement);
                         } else {
-                            value = matcher.replaceFirst(replacement);
+                            value = matcher.replaceFirst(preparedReplacement);
                         }
                     }
                     result[i] = value;
