@@ -64,7 +64,7 @@ public class TestBuiltin_gsub extends TestBase {
 
     @Test
     public void testgsub8() {
-        assertEval("argv <- list(\''([^']*)'', '‘\\\\1’', '‘/home/lzhao/hg/r-instrumented/tests/rpart.Rcheck’', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
+        assertEval("argv <- list('\\'([^\\']*)\\'', '-\\\\1-', '\\'/home/lzhao/hg/r-instrumented/tests/rpart.Rcheck\\'', FALSE, FALSE, FALSE, FALSE); .Internal(gsub(argv[[1]], argv[[2]], argv[[3]], argv[[4]], argv[[5]], argv[[6]], argv[[7]]))");
     }
 
     @Test

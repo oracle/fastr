@@ -78,47 +78,50 @@ public class GenerateRParserProcessor extends AbstractProcessor {
         }
     }
 
+    @SuppressWarnings("unchecked")
     @Override
     public boolean process(Set<? extends TypeElement> annotations, RoundEnvironment roundEnv) {
         if (roundEnv.processingOver()) {
             return true;
         }
-        for (Element element : roundEnv.getElementsAnnotatedWith(GenerateRParser.class)) {
-            File antlrGenDir = null;
-            try {
-                String pkg = ((PackageElement) element.getEnclosingElement()).getQualifiedName().toString();
+        for (TypeElement annotation : annotations) {
+            for (Element element : roundEnv.getElementsAnnotatedWith(annotation)) {
+                File antlrGenDir = null;
+                try {
+                    String pkg = ((PackageElement) element.getEnclosingElement()).getQualifiedName().toString();
 
-                Filer filer = processingEnv.getFiler();
-                File srcGenDir = getSrcGenDir(filer);
-                // note("srcgendir: " + srcGenDir.getAbsolutePath());
-                File suiteRoot = srcGenDir.getCanonicalFile().getParentFile().getParentFile().getParentFile();
-                // note("suiteRoot: " + suiteRoot.getAbsolutePath());
+                    Filer filer = processingEnv.getFiler();
+                    File srcGenDir = getSrcGenDir(filer);
+                    // note("srcgendir: " + srcGenDir.getAbsolutePath());
+                    File suiteRoot = srcGenDir.getCanonicalFile().getParentFile().getParentFile().getParentFile();
+                    // note("suiteRoot: " + suiteRoot.getAbsolutePath());
 
-                // Our src directory
-                File parserSrcDir = join(suiteRoot, pkg, "src", pkg.replace('.', File.separatorChar));
-                // note("parserSrcDir: " + parserSrcDir.getAbsolutePath());
-                antlrGenDir = mkTmpDir(null);
-                String[] command = new String[]{"-no-listener", "-no-visitor", "-o", antlrGenDir.getAbsolutePath(), join(parserSrcDir, "R.g").getAbsolutePath()};
-                // noteCommand(command);
+                    // Our src directory
+                    File parserSrcDir = join(suiteRoot, pkg, "src", pkg.replace('.', File.separatorChar));
+                    // note("parserSrcDir: " + parserSrcDir.getAbsolutePath());
+                    antlrGenDir = mkTmpDir(null);
+                    String[] command = new String[]{"-no-listener", "-no-visitor", "-o", antlrGenDir.getAbsolutePath(), join(parserSrcDir, "R.g").getAbsolutePath()};
+                    // noteCommand(command);
 
-                Tool tool = new Tool(command);
-                Listener listener = new Listener(tool);
-                tool.addListener(listener);
-                tool.processGrammarsOnCommandLine();
-                if (tool.errMgr.getNumErrors() > 0) {
-                    processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
-                                    String.format("Parser failed to execute command %s. Output:%s", Arrays.toString(command), listener.contents), element);
+                    Tool tool = new Tool(command);
+                    Listener listener = new Listener(tool);
+                    tool.addListener(listener);
+                    tool.processGrammarsOnCommandLine();
+                    if (tool.errMgr.getNumErrors() > 0) {
+                        processingEnv.getMessager().printMessage(Diagnostic.Kind.ERROR,
+                                        String.format("Parser failed to execute command %s. Output:%s", Arrays.toString(command), listener.contents), element);
+                        return false;
+                    }
+                    // Now create the actual source files, copying the ANTLR output
+                    createSourceFile(filer, pkg, "RParser", antlrGenDir);
+                    createSourceFile(filer, pkg, "RLexer", antlrGenDir);
+                } catch (Exception ex) {
+                    handleThrowable(ex, element);
                     return false;
-                }
-                // Now create the actual source files, copying the ANTLR output
-                createSourceFile(filer, pkg, "RParser", antlrGenDir);
-                createSourceFile(filer, pkg, "RLexer", antlrGenDir);
-            } catch (Exception ex) {
-                handleThrowable(ex, element);
-                return false;
-            } finally {
-                if (antlrGenDir != null) {
-                    deleteTmpDir(antlrGenDir);
+                } finally {
+                    if (antlrGenDir != null) {
+                        deleteTmpDir(antlrGenDir);
+                    }
                 }
             }
         }

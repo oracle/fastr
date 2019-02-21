@@ -66,8 +66,8 @@ suite = {
     "com.oracle.truffle.r.parser" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.parser.processor",
         "com.oracle.truffle.r.runtime",
+            "truffle:ANTLR4",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",

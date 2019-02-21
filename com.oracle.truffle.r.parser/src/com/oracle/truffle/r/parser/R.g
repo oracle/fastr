@@ -82,7 +82,8 @@ import com.oracle.truffle.r.parser.TokensMap;
     private Map<String, Source> sourceCache;
 
     public RParser(Source source, RLexer lexer, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language, Map<String, Source> sourceCache) {
-        this(new CommonTokenStream(lexer));
+        super(new CommonTokenStream(lexer));
+		_interp = new com.oracle.truffle.r.parser.DefaultRParserFactory.ThrowImmediatelyANTSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
         assert source != null && builder != null;
         this.initialSource = source;
         this.builder = builder;
@@ -91,7 +92,8 @@ import com.oracle.truffle.r.parser.TokensMap;
     }
 
     public RParser(Source source, RLexer lexer, Source fullSource, int startLine, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language, Map<String, Source> sourceCache) {
-        this(new CommonTokenStream(lexer));
+        super(new CommonTokenStream(lexer));
+        _interp = new com.oracle.truffle.r.parser.DefaultRParserFactory.ThrowImmediatelyANTSimulator(this,_ATN,_decisionToDFA,_sharedContextCache);
         assert source != null && builder != null;
         this.initialSource = source;
         this.builder = builder;
@@ -294,6 +296,9 @@ import com.oracle.truffle.r.parser.TokensMap;
     }
         public static String parseString(String value) {
             if (!value.contains("\\")) {
+                if ("``".equals(value)) {
+                    throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
+                }
                 return value.substring(1, value.length() - 1);
             } else {
                 StringBuilder str = new StringBuilder(value.length());
@@ -412,6 +417,11 @@ import com.oracle.truffle.r.parser.TokensMap;
                 return -1;
             }
         }
+
+    @Override
+	public void notifyListeners(LexerNoViableAltException e) {
+		getErrorListenerDispatch().syntaxError(this, null, _tokenStartLine, _tokenStartCharPositionInLine, null, e);
+	}
 }
 
 @lexer::init{
@@ -490,24 +500,22 @@ sequence returns [RSyntaxNode v]
 
 expr returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); RSyntaxNode rhs = null; }
-    : l=tilde_expr
+    : l=tilde_expr { $v = $l.v; }
       ( op=(ARROW | SUPER_ARROW){tok();} n_ ( r1=function[$l.v] { rhs = $r1.v; } | r2=expr { rhs = $r2.v; } )
                                            { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
       | op=RIGHT_ARROW{tok();} n_ r3=expr           { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r3.v, $l.v); }
       | op=SUPER_RIGHT_ARROW{tok();} n_ r4=expr     { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r4.v, $l.v); }
-      | { $v = $l.v; }
-      )
+      )?
     ;
 
 expr_or_assign returns [RSyntaxNode v]
     @init { Token start = getInputStream().LT(1); RSyntaxNode rhs = null; }
-    : l=tilde_expr
+    : l=tilde_expr { $v = $l.v; }
       ( op=(ARROW | SUPER_ARROW | ASSIGN){tok();} n_  ( r1=function[$l.v] { rhs = $r1.v; } | r2=expr_or_assign { rhs = $r2.v; } )
                                                                       { $v = builder.call(src(start, last()), operator($op), $l.v, rhs); }
       | op=RIGHT_ARROW{tok();} n_ r3=expr_or_assign             { $v = builder.call(src(start, last()), builder.lookup(src($op), "<-", true), $r3.v, $l.v); }
       | op=SUPER_RIGHT_ARROW{tok();} n_ r4=expr_or_assign { $v = builder.call(src(start, last()), builder.lookup(src($op), "<<-", true), $r4.v, $l.v); }
-      | { $v = $l.v; }
-      )
+      )?
     ;
 
 if_expr returns [RSyntaxNode v]
@@ -651,8 +659,7 @@ basic_expr returns [RSyntaxNode v]
         | (op=LPAR{tok();} a=args[null] y=RPAR{tok();}                 { $v = builder.call(src(start, $y), $v, $a.v); })
         )
       )+
-    | n_
-    )
+    )?
     ;
 
 simple_expr returns [RSyntaxNode v]
