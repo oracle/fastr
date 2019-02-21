@@ -55,7 +55,7 @@ public class FastROptions {
     private static final FastROptionsOptionDescriptors descriptors = new FastROptionsOptionDescriptors();
 
     @Option(category = OptionCategory.INTERNAL, help = "Prints Java and R stack traces for all errors") //
-    public static final OptionKey<Boolean> PrintErrorStacktraces = new OptionKey<>(true);
+    public static final OptionKey<Boolean> PrintErrorStacktraces = new OptionKey<>(false);
     @Option(category = OptionCategory.USER, help = "Dumps Java and R stack traces to 'fastr_errors.log' for all errors") //
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
 
