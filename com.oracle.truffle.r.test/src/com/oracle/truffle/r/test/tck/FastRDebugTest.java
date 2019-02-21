@@ -717,14 +717,12 @@ public class FastRDebugTest {
 
     private void assertArguments(final int line, final String code, final Object... expectedArgs) {
         run.addLast(() -> {
+            final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
+            DebugScope scope = frame.getScope();
+            if (scope == null) {
+                scope = suspendedEvent.getSession().getTopScope("R");
+            }
             try {
-                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-
-                DebugScope scope = frame.getScope();
-                if (scope == null) {
-                    scope = suspendedEvent.getSession().getTopScope("R");
-                }
-
                 int n = expectedArgs.length / 2;
                 List<DebugValue> actualValues = new ArrayList<>(n);
                 scope.getArguments().forEach((x) -> actualValues.add(x));
@@ -743,10 +741,8 @@ public class FastRDebugTest {
                     run.removeFirst().run();
                 }
             } catch (RuntimeException | Error e) {
-
                 e.printStackTrace(System.err);
-                final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
-                frame.getScope().getDeclaredValues().forEach(var -> {
+                scope.getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
                 throw e;
@@ -765,15 +761,18 @@ public class FastRDebugTest {
         final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
 
         final AtomicInteger numFrameVars = new AtomicInteger(0);
-        frame.getScope().getDeclaredValues().forEach(var -> {
-            // skip synthetic slots
-            for (RFrameSlot slot : RFrameSlot.values()) {
-                if (slot.toString().equals(var.getName())) {
-                    return;
+        DebugScope scope = frame.getScope();
+        if (scope != null) {
+            scope.getDeclaredValues().forEach(var -> {
+                // skip synthetic slots
+                for (RFrameSlot slot : RFrameSlot.values()) {
+                    if (slot.toString().equals(var.getName())) {
+                        return;
+                    }
                 }
-            }
-            numFrameVars.incrementAndGet();
-        });
+                numFrameVars.incrementAndGet();
+            });
+        }
         if (completeMatch) {
             assertEquals(line + ": " + code, expectedFrame.length / 2, numFrameVars.get());
         }
@@ -783,7 +782,7 @@ public class FastRDebugTest {
             Object expectedValue = expectedFrame[i + 1];
             expectedValue = expectedToString(expectedValue);
             String expectedValueStr = (expectedValue != null) ? expectedValue.toString() : null;
-            DebugScope scope = frame.getScope();
+            scope = frame.getScope();
             DebugValue value = null;
             if (scope != null) {
                 do {
