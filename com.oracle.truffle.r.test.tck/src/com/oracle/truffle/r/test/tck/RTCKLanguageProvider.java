@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -271,20 +271,20 @@ public final class RTCKLanguageProvider implements LanguageProvider {
         res.add(createInlineSnippet(
                         context,
                         "resources/mandel.R",
-                        5,
-                        6,
+                        25,
+                        26,
                         "resources/mandel_inline1.R"));
         res.add(createInlineSnippet(
                         context,
                         "resources/mandel.R",
-                        18,
-                        19,
+                        38,
+                        39,
                         "resources/mandel_inline2.R"));
         res.add(createInlineSnippet(
                         context,
                         "resources/quicksort.R",
-                        5,
-                        21,
+                        25,
+                        41,
                         "resources/quicksort_inline.R"));
         return Collections.unmodifiableList(res);
     }
