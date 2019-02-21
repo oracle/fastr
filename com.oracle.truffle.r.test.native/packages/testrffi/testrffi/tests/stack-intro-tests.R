@@ -60,7 +60,7 @@ check <- function(env, name) {
 }
 
 assert <- function(actual, expected, message = NULL) {
-    if (!isTRUE(all.equal(actual, expected))) {
+    if ((is.null(expected) && !is.null(actual)) || !isTRUE(all.equal(actual, expected))) {
         cat("Error:\n expected: "); print(expected);
         cat("   actual: "); print(actual); cat("\n");
         if (!is.null(message)) {
@@ -397,6 +397,11 @@ x <- fst(42)
 assert(x[[1]], quote(fst(42)))
 assert(x[[2]], quote(boo(fstvar)))
 
+# the same situation with sys.frames()
+boo <- function(boovar) bar(sys.frames())
+x <- fst(42)
+assertFrames(x, "fst", "boo")
+
 # -----------------
 # parent.frame and promise: as if the promise was evaluated in "bar"
 
@@ -533,6 +538,11 @@ assert(x[[2]], quote(f2(f3(f4(f1var)))))
 assert(x[[3]], quote(f3(f4(f1var))))
 assert(x[[4]], quote(f4(f1var)))
 
+# the same situation with sys.parents
+f4 <- function(f4var) sys.parents()
+x <- f1(42)
+assert(x, c(0, 1, 1, 1))
+
 # ----------------
 # parent.frame and nested promises
 f4 <- function(f4var) parent.frame(f4var);
@@ -594,15 +604,6 @@ x <- bar(2, 'dummy'); check(x, 'bar');
 x <- bar(3, 'dummy'); check(x, 'global');
 
 # the same with sys.parents()
-baz <- function(bazvar) parent.frame(bazvar)
-foo.c1 <- function(foo.c1var) baz(foo.c1var)
-foo.default <- function(foo.defaultvar) baz(foo.defaultvar)
-foo <- function(foovar) {
-    dispatch <<- parent.frame();
-    UseMethod("foo")
-}
-bar <- function(barvar, class) foo(structure(barvar, class=class))
-
 baz <- function(bazvar) sys.parents()
 
 x <- bar(1, 'c1');    assert(x, c(0L, 1L, 1L, 3L))
@@ -729,7 +730,7 @@ endNoIterateFrames()
 
 # -----------------
 # parent.frame and eval and custom environment
-# there is frame for the function that calls 'eval', then the frame of 'eval' and then the frame for custom environment
+# there is a frame for the function that calls 'eval', then the frame of 'eval' and then the frame for custom environment
 
 foo <- function(foovar) parent.frame(foovar)
 bar <- function(barvar) foo(barvar)
@@ -908,6 +909,64 @@ x <- fn(base::eval, 7); check(x[[1]], "global")
 # x <- fst(1); check(x, "bar");
 # x <- fst(2); check(x, "fst"); # Note: empty env, hard to guess what it is, probably env of the Recall R wrapper
 # x <- fst(3); check(x, "global");
+
+# -----------------
+# sys.call: returns the correct caller from a given level
+
+foo <- function(level, callNum) sys.call(callNum)
+bar <- function(level, callNum) if (level == 3) sys.call(callNum) else foo(level, callNum)
+boo <- function(level, callNum) if (level == 2) sys.call(callNum) else do.call(bar, list(level, callNum))
+fst <- function(level, callNum) if (level == 1) sys.call(callNum) else boo(level, callNum)
+
+x <- fst(1,0)
+assert(x, quote(fst(1,0)))
+x <- fst(1,1)
+assert(x, quote(fst(1,1)))
+x <- fst(1,-1)
+assert(x, NULL)
+x <- tryCatch(fst(1,-6), error=function(e) e)
+assert(x, simpleError("not that many frames on the stack", call=quote(sys.call(callNum))))
+x <- tryCatch(fst(1,6), error=function(e) e)
+assert(x, simpleError("not that many frames on the stack", call=quote(sys.call(callNum))))
+
+x <- fst(2,0)
+assert(x, quote(boo(level, callNum)))
+x <- fst(2,1)
+assert(x, quote(fst(2, 1)))
+x <- fst(2,2)
+assert(x, quote(boo(level, callNum)))
+
+x <- fst(3,0)
+assert(x, substitute(bar(3,0), env=as.list(.GlobalEnv)))
+x <- fst(3,1)
+assert(x, quote(fst(3, 1)))
+x <- fst(3,2)
+assert(x, quote(boo(level, callNum)))
+x <- fst(3,3)
+assert(x, quote(do.call(bar, list(level, callNum))))
+x <- fst(3,4)
+assert(x, substitute(bar(3,4), env=as.list(.GlobalEnv)))
+
+x <- fst(4,0)
+assert(x, quote(foo(level, callNum)))
+x <- fst(4,1)
+assert(x, quote(fst(4,1)))
+x <- fst(4,2)
+assert(x, quote(boo(level, callNum)))
+x <- fst(4,3)
+assert(x, quote(do.call(bar, list(level, callNum))))
+x <- fst(4,4)
+assert(x, substitute(bar(4,4), env=as.list(.GlobalEnv)))
+x <- fst(4,5)
+assert(x, quote(foo(level, callNum)))
+x <- fst(4,-1)
+assert(x, substitute(bar(4,-1), env=as.list(.GlobalEnv)))
+x <- fst(4,-2)
+assert(x, quote(do.call(bar, list(level, callNum))))
+x <- fst(4,-3)
+assert(x, quote(boo(level, callNum)))
+x <- fst(4,-4)
+assert(x, quote(fst(4,-4)))
 
 if (errorsCount > 0) {
     cat("FAILED TESTS: ", errorsCount)

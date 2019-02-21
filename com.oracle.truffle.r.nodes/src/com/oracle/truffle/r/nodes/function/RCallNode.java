@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.RestrictForceSplitting;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -76,9 +77,7 @@ import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import static com.oracle.truffle.r.runtime.context.FastROptions.RestrictForceSplitting;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -1186,37 +1185,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
             return call.execute(frame, function, caller, callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(), s3Args);
         }
-    }
-
-    public static final class InvalidateNoCallerFrame extends CallerFrameClosure {
-
-        private final Assumption needsNoCallerFrame;
-        private final MaterializedFrame frame;
-
-        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame) {
-            this.needsNoCallerFrame = needsNoCallerFrame;
-            this.frame = null;
-        }
-
-        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame, MaterializedFrame frame) {
-            this.needsNoCallerFrame = needsNoCallerFrame;
-            this.frame = frame;
-        }
-
-        @Override
-        public boolean setNeedsCallerFrame() {
-            if (needsNoCallerFrame.isValid()) {
-                needsNoCallerFrame.invalidate();
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public MaterializedFrame getMaterializedCallerFrame() {
-            return frame;
-        }
-
     }
 
     @Override

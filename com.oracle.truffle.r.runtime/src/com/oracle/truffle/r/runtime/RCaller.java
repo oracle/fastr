@@ -50,7 +50,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * in the sense of R's {@code parent.frame} semantics. These are crammed in the {@link #payload}
  * field (because often {@link #previous} is the same as the logical parent).</li>
  * </ul>
- * 
+ *
  * NOTE: It is important to create new unique caller instances for each stack frame, so that
  * {@link ReturnException#getTarget()} can uniquely identify the target frame.
  *
@@ -92,7 +92,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * 'internal frame' inside its arguments array.
  *
  * See {@code FrameFunctions}.
- * 
+ *
  * @see RArguments
  */
 public final class RCaller {
@@ -122,7 +122,7 @@ public final class RCaller {
      * Link to the {@link RCaller} stored in the arguments array of the previous R stack frame. We
      * need this link so that we do not have to walk the stack frames if we need to reach
      * {@link RCaller} instances on the stack.
-     * 
+     *
      * If this {@link RCaller} is artificial {@link RCaller} used for promise evaluation, then this
      * is not the R level parent frame in the sense of {@code parent.frame()} R function. In such
      * case {@link #payload} gives the R level parent frame.
@@ -144,7 +144,7 @@ public final class RCaller {
      * (RSyntaxNode case), if the function was invoked by other means and we do not have the actual
      * syntax for the invocation, we only provide it lazily via Supplier, so that we do not have to
      * always construct the AST nodes.
-     * 
+     *
      * If this {@link RCaller} represents an artificial context for promise evaluation, the payload
      * points to the {@link RCaller} of the context where the promise should be logically evaluated.
      */
@@ -306,29 +306,29 @@ public final class RCaller {
     }
 
     /**
-     * If the {@link RCaller} instance {@link #isPromise()}, then it may have explicitly set
-     * "sys parent", which overrides {@code parent.frame} should return if the traversing of the
-     * call stack ends up selecting this {@link RCaller} as the result. I.e. in such case, the
-     * "sys parent" is not parent of this {@link RCaller}, it is an alternative result that should
-     * be uses instead of this {@link RCaller} if the next {@link RCaller} asks for a
+     * If the {@link RCaller} instance {@link #isPromise()}, then it may have explicitly set "sys
+     * parent", which overrides {@code parent.frame} should return if the traversing of the call
+     * stack ends up selecting this {@link RCaller} as the result. I.e. in such case, the "sys
+     * parent" is not parent of this {@link RCaller}, it is an alternative result that should be
+     * uses instead of this {@link RCaller} if the next {@link RCaller} asks for a
      * {@code parent.frame}.
-     * 
+     *
      * There is a difference between how the stack is traversed if the {@link SysParent#sysParent}
      * of {@link RCaller} for a promise frame is an artificial environment (it doesn't really have
      * its place on the call stack) or environment of a function that is on the call stack. That is
      * why we further distinguish this situation here.
-     * 
+     *
      * NOTE: there is one potential issue and one potential optimization:
-     * 
+     *
      * The issue is with an environment of a function that is no longer on the call stack. Should we
      * treat it as "function sys parent"? We may have to store in RCaller whether the function has
      * terminated yet, i.e. is not on the call stack anymore? We can also optimize this and store
      * the RCaller of such function instead of its materialized frame.
-     * 
+     *
      * Opportunity: for sys parents representing environments of a function, we do not have to
      * materialize the frame and store it here, we could just use it's {@link RCaller}, but what to
      * do if the function is popped off the stack?
-     * 
+     *
      * See {@code ParentFrame} built in for more details.
      */
     public boolean isNonFunctionSysParent() {
@@ -410,7 +410,7 @@ public final class RCaller {
      * Creates {@link RCaller} for evaluation of the generic method. The logical parent of such
      * method should be the caller of the "dispatch" function (the function that calls
      * {@code UseMethod("xyz")}), but we still need to keep the actual parent.
-     * 
+     *
      * @param dispatchingCaller The logical parent.
      * @param call The syntax of the call, can be supplier of the result.
      * @param currentCaller The current {@link RCaller}.
@@ -428,16 +428,19 @@ public final class RCaller {
     }
 
     /**
+     * An instance of this class is held in the {@link RCaller#payload} field. Let's call such an
+     * {@link RCaller} instance the owner of this instance.
+     *
      * This wrapper serves two purposes depending on the context:
-     * 
-     * If {@link RCaller#isPromise()}, then this holds the environment that should replace the
-     * result of {@code parent.frame}, should this {@link RCaller} be selected as the result, in
-     * field {@link #sysParent}. Furthermore, {@link #payload} serves the same purpose as
+     *
+     * If the owner's {@link RCaller#isPromise()} returns true, then field {@link #sysParent} holds
+     * the environment that should replace the result of {@code parent.frame}, when the owner is
+     * selected as the result. Furthermore, {@link #payload} serves the same purpose as
      * {@link RCaller#payload} for promises.
-     * 
-     * If {@link RCaller#isPromise()} is false, then {@link #sysParent} gives {@link RCaller} that
-     * is the logical parent and {@link #payload} holds the syntax of the call, like
-     * {@link RCaller#payload} for non-promise {@link RCaller}s.
+     *
+     * If the owner's {@link RCaller#isPromise()} returns false, then {@link #sysParent} gives
+     * {@link RCaller} that is the logical parent and {@link #payload} holds the syntax of the call,
+     * like {@link RCaller#payload} for non-promise {@link RCaller}s.
      */
     private static final class SysParent {
         final Object sysParent;
