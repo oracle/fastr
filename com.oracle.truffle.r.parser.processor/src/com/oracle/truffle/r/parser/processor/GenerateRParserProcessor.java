@@ -58,7 +58,7 @@ public class GenerateRParserProcessor extends AbstractProcessor {
         public final Tool tool;
         public final StringBuilder contents = new StringBuilder();
 
-        public Listener(Tool tool) {
+        Listener(Tool tool) {
             this.tool = tool;
         }
 
