@@ -283,7 +283,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RSymbol name = (RSymbol) symbolArg;
         REnvironment env = (REnvironment) envArg;
         while (env != REnvironment.emptyEnv()) {
-            Object value = env.get(name.getName());
+            String nameKey = name.getName();
+            Object value = env.get(nameKey);
             if (value != null) {
                 if (value instanceof RPromise && ((RPromise) value).isOptimized()) {
                     // From the point of view of RFFI, optimized promises (i.e. promises with null
@@ -296,6 +297,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 }
                 if (value == RMissing.instance || value == REmpty.instance) {
                     return RSymbol.MISSING;
+                }
+                Object v = RRuntime.asAbstractVector(value);
+                if (v instanceof RAbstractVector) {
+                    v = ((RAbstractVector) v).materialize();
+                }
+                if (v != value) {
+                    env.putOverrideLock(nameKey, v);
+                    value = v;
                 }
                 return value;
             }

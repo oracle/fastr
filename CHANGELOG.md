@@ -1,3 +1,9 @@
+# 1.0 RC 14
+
+Bug fixes:
+
+* `C_numeric_deriv` gives wrong results of gradient #54
+
 # 1.0 RC 13
 
 New features:

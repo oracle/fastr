@@ -887,6 +887,23 @@ public abstract class REnvironment extends RAttributeStorage {
         frameAccess.put(key, value);
     }
 
+    @TruffleBoundary
+    public void putOverrideLock(String key, Object value) {
+        boolean keyLocked = frameAccess.bindingIsLocked(key);
+        if (keyLocked) {
+            frameAccess.unlockBinding(key);
+        }
+        try {
+            put(key, value);
+        } catch (PutException ex) {
+            RSuicide.rSuicide("exception in putOverrideLock");
+        } finally {
+            if (keyLocked) {
+                frameAccess.lockBinding(key);
+            }
+        }
+    }
+
     public void safePut(String key, Object value) {
         try {
             put(key, value);
