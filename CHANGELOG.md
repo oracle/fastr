@@ -3,6 +3,7 @@
 Bug fixes:
 
 * `C_numeric_deriv` gives wrong results of gradient #54
+* `tcrossprod` with a single vector #56
 
 # 1.0 RC 13
 

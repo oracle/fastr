@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -70,5 +70,11 @@ public class TestBuiltin_tcrossprod extends TestBase {
     @Test
     public void testTCrossprodDimnames() {
         assertEval("{ tcrossprod(structure(1:9, .Dim=c(3L,3L), .Dimnames=list(c('a', 'b', 'c'), c('A', 'B', 'C'))), structure(1:9, .Dim=c(3L,3L), .Dimnames=list(c('d', 'e', 'f'), c('D', 'E', 'F')))) }");
+    }
+
+    @Test
+    public void testSingleVector() {
+        assertEval("tcrossprod(c(1,2))");
+        assertEval("tcrossprod(matrix(1:4, nrow=2))");
     }
 }
