@@ -104,5 +104,6 @@ public class ParserGeneration {
         "allow unicode escape literals with {...}",
         "allow 'function(...=NULL)', which has no effect, but also causes not error in GNU-R",
         "report tokens and other metadata to the code builder",
+        "convert to ANTLR4",
     };
 }

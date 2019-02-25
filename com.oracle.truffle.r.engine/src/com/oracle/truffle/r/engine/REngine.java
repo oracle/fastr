@@ -274,13 +274,13 @@ final class REngine implements Engine, Engine.Timings {
     }
 
     private List<RSyntaxNode> parseSource(Source source) throws ParseException {
-        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+        RParserFactory.Parser parser = RParserFactory.getParser();
         return parser.script(source, new RASTBuilder(true), context.getLanguage());
     }
 
     @Override
     public ParsedExpression parse(Source source, boolean keepSource) throws ParseException {
-        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+        RParserFactory.Parser parser = RParserFactory.getParser();
         RASTBuilder builder = new RASTBuilder(true);
         List<RSyntaxNode> script = parser.script(source, builder, context.getLanguage());
         Object[] data = new Object[script.size()];
@@ -388,7 +388,7 @@ final class REngine implements Engine, Engine.Timings {
                     lineIndex++;
                     List<RSyntaxNode> currentStmts = null;
                     try {
-                        RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+                        RParserFactory.Parser parser = RParserFactory.getParser();
                         currentStmts = parser.statements(src, fullSource, startLine, new RASTBuilder(true), context.getLanguage());
                     } catch (IncompleteSourceException e) {
                         lastParseException = e;

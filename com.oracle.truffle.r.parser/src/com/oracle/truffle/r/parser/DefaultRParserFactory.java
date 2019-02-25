@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,108 +24,222 @@ package com.oracle.truffle.r.parser;
 
 import java.util.List;
 
-import org.antlr.runtime.MismatchedTokenException;
-import org.antlr.runtime.NoViableAltException;
-import org.antlr.runtime.RecognitionException;
-import org.antlr.runtime.Token;
+import org.antlr.v4.runtime.ANTLRErrorStrategy;
+import org.antlr.v4.runtime.BaseErrorListener;
+import org.antlr.v4.runtime.CharStreams;
+import org.antlr.v4.runtime.IntStream;
+import org.antlr.v4.runtime.Lexer;
+import org.antlr.v4.runtime.LexerNoViableAltException;
+import org.antlr.v4.runtime.NoViableAltException;
+import org.antlr.v4.runtime.ParserRuleContext;
+import org.antlr.v4.runtime.RecognitionException;
+import org.antlr.v4.runtime.Recognizer;
+import org.antlr.v4.runtime.Token;
+import org.antlr.v4.runtime.atn.ATN;
+import org.antlr.v4.runtime.atn.ATNConfigSet;
+import org.antlr.v4.runtime.atn.ParserATNSimulator;
+import org.antlr.v4.runtime.atn.PredictionContextCache;
+import org.antlr.v4.runtime.dfa.DFA;
 
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.source.Source;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
+import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 public class DefaultRParserFactory extends RParserFactory {
 
-    private static class DefaultParser<T> implements Parser<T> {
+    public static final class ThrowImmediatelyANTSimulator extends ParserATNSimulator {
 
-        @Override
-        public List<T> script(Source source, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
-            try {
-                try {
-                    RContext context = language.getContextReference().get();
-                    RParser<T> parser = new RParser<>(source, builder, language, context.sourceCache);
-                    return parser.script();
-                } catch (IllegalArgumentException e) {
-                    // the lexer will wrap exceptions in IllegalArgumentExceptions
-                    if (e.getCause() instanceof RecognitionException) {
-                        throw (RecognitionException) e.getCause();
-                    } else {
-                        throw e;
-                    }
-                }
-            } catch (RecognitionException e) {
-                throw handleRecognitionException(source, e);
-            }
+        public ThrowImmediatelyANTSimulator(org.antlr.v4.runtime.Parser parser, ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+            super(parser, atn, decisionToDFA, sharedContextCache);
+        }
+
+        public ThrowImmediatelyANTSimulator(ATN atn, DFA[] decisionToDFA, PredictionContextCache sharedContextCache) {
+            super(atn, decisionToDFA, sharedContextCache);
         }
 
         @Override
-        public List<T> statements(Source source, Source fullSource, int startLine, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
-            try {
-                try {
-                    RContext context = language.getContextReference().get();
-                    RParser<T> parser = new RParser<>(source, fullSource, startLine, builder, language, context.sourceCache);
-                    return parser.script();
-                } catch (IllegalArgumentException e) {
-                    // the lexer will wrap exceptions in IllegalArgumentExceptions
-                    if (e.getCause() instanceof RecognitionException) {
-                        throw (RecognitionException) e.getCause();
-                    } else {
-                        throw e;
-                    }
-                }
-            } catch (RecognitionException e) {
-                throw handleRecognitionException(source, e);
-            }
+        protected int getSynValidOrSemInvalidAltThatFinishedDecisionEntryRule(ATNConfigSet configs, ParserRuleContext outerContext) {
+            return ATN.INVALID_ALT_NUMBER;
+        }
+    }
+
+    private static final class ThrowImmediatelyErrorStrategy implements ANTLRErrorStrategy {
+
+        private static final ThrowImmediatelyErrorStrategy INSTANCE = new ThrowImmediatelyErrorStrategy();
+
+        @Override
+        public void reset(org.antlr.v4.runtime.Parser recognizer) {
+            // empty
         }
 
         @Override
-        public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<T> builder, TruffleRLanguage language) throws ParseException {
+        public Token recoverInline(org.antlr.v4.runtime.Parser recognizer) throws RecognitionException {
+            throw new IllegalArgumentException(new NoViableAltException(recognizer));
+        }
+
+        @Override
+        public void recover(org.antlr.v4.runtime.Parser recognizer, RecognitionException e) throws RecognitionException {
+            throw RInternalError.shouldNotReachHere();
+        }
+
+        @Override
+        public void sync(org.antlr.v4.runtime.Parser recognizer) throws RecognitionException {
+            // empty
+        }
+
+        @Override
+        public boolean inErrorRecoveryMode(org.antlr.v4.runtime.Parser recognizer) {
+            return false;
+        }
+
+        @Override
+        public void reportMatch(org.antlr.v4.runtime.Parser recognizer) {
+            // empty
+        }
+
+        @Override
+        public void reportError(org.antlr.v4.runtime.Parser recognizer, RecognitionException e) {
+            throw new IllegalArgumentException(e);
+        }
+
+    }
+
+    private static final class ThrowImmediatelyErrorListener extends BaseErrorListener {
+
+        public static final ThrowImmediatelyErrorListener INSTANCE = new ThrowImmediatelyErrorListener();
+
+        @Override
+        public void syntaxError(Recognizer<?, ?> recognizer, Object offendingSymbol, int line, int charPositionInLine, String msg, RecognitionException e) {
+            if (offendingSymbol instanceof Token) {
+                throw new IllegalArgumentException(new NoViableAltException((org.antlr.v4.runtime.Parser) recognizer));
+            } else {
+                Lexer lexer = (Lexer) recognizer;
+                throw new IllegalArgumentException(new LexerNoViableAltException(lexer, lexer.getInputStream(), lexer._tokenStartCharIndex, null));
+            }
+        }
+    }
+
+    private static class DefaultParser implements Parser {
+
+        @Override
+        public List<RSyntaxNode> script(Source source, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
             RContext context = language.getContextReference().get();
-            RParser<T> parser = new RParser<>(source, builder, language, context.sourceCache);
+            RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
+            RParser parser = new RParser(source, lexer, builder, language, context.sourceCache);
+            parser.removeErrorListeners();
+            parser.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            parser.setErrorHandler(ThrowImmediatelyErrorStrategy.INSTANCE);
+            parser.setBuildParseTree(false);
             try {
-                return parser.root_function(name);
+                try {
+                    return parser.script().v;
+                } catch (IllegalArgumentException e) {
+                    if (e.getCause() instanceof RecognitionException) {
+                        throw (RecognitionException) e.getCause();
+                    } else {
+                        throw e;
+                    }
+                }
             } catch (RecognitionException e) {
                 throw handleRecognitionException(source, e);
             }
         }
 
         @Override
-        public boolean isRecognitionException(Throwable t) {
-            return t instanceof RecognitionException;
+        public List<RSyntaxNode> statements(Source source, Source fullSource, int startLine, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
+            RContext context = language.getContextReference().get();
+            RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
+            RParser parser = new RParser(source, lexer, fullSource, startLine, builder, language, context.sourceCache);
+            parser.removeErrorListeners();
+            parser.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            parser.setErrorHandler(ThrowImmediatelyErrorStrategy.INSTANCE);
+            parser.setBuildParseTree(false);
+            try {
+                try {
+                    return parser.script().v;
+                } catch (IllegalArgumentException e) {
+                    if (e.getCause() instanceof RecognitionException) {
+                        throw (RecognitionException) e.getCause();
+                    } else {
+                        throw e;
+                    }
+                }
+            } catch (RecognitionException e) {
+                throw handleRecognitionException(source, e);
+            }
         }
 
         @Override
-        public int line(Throwable t) {
-            assert isRecognitionException(t);
-            return ((RecognitionException) t).line;
-        }
-
-        @Override
-        public int charPositionInLine(Throwable t) {
-            assert isRecognitionException(t);
-            return ((RecognitionException) t).charPositionInLine;
+        public RootCallTarget rootFunction(Source source, String name, RCodeBuilder<RSyntaxNode> builder, TruffleRLanguage language) throws ParseException {
+            RContext context = language.getContextReference().get();
+            RLexer lexer = new RLexer(CharStreams.fromString(source.getCharacters().toString()));
+            RParser parser = new RParser(source, lexer, builder, language, context.sourceCache);
+            parser.removeErrorListeners();
+            parser.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            lexer.removeErrorListeners();
+            lexer.addErrorListener(ThrowImmediatelyErrorListener.INSTANCE);
+            parser.setErrorHandler(ThrowImmediatelyErrorStrategy.INSTANCE);
+            parser.setBuildParseTree(false);
+            try {
+                try {
+                    return parser.root_function(name).v;
+                } catch (IllegalArgumentException e) {
+                    if (e.getCause() instanceof RecognitionException) {
+                        throw (RecognitionException) e.getCause();
+                    } else {
+                        throw e;
+                    }
+                }
+            } catch (RecognitionException e) {
+                throw handleRecognitionException(source, e);
+            }
         }
 
         private static ParseException handleRecognitionException(Source source, RecognitionException e) throws IncompleteSourceException, ParseException {
-            CharSequence line = e.line <= source.getLineCount() ? source.getCharacters(e.line) : "";
-            String substring = line.subSequence(0, Math.min(line.length(), e.charPositionInLine + 1)).toString();
-            String token = e.token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : e.token.getText();
-            int lineNr = e.line > source.getLineCount() ? source.getLineCount() : e.line;
-            if (e.getUnexpectedType() == Token.EOF && (e instanceof NoViableAltException || e instanceof MismatchedTokenException)) {
-                // the parser got stuck at the eof, request another line
-                throw new IncompleteSourceException(e, source, token, substring, lineNr);
+            Token token = e.getOffendingToken();
+            if (token == null) {
+                LexerNoViableAltException lexerException = (LexerNoViableAltException) e;
+                int start = lexerException.getStartIndex();
+                int lineNumber = source.getLineNumber(start);
+                CharSequence line = lineNumber <= source.getLineCount() ? source.getCharacters(lineNumber) : "";
+                String substring = line.subSequence(0, Math.min(line.length(), start - source.getLineStartOffset(lineNumber) + 1)).toString();
+                String contents = token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : token.getText();
+                int lineNr = lineNumber > source.getLineCount() ? source.getLineCount() : lineNumber;
+                if (lexerException.getInputStream().LA(1) == IntStream.EOF) {
+                    // the parser got stuck at the eof, request another line
+                    throw new IncompleteSourceException(e, source, contents, substring, lineNr);
+                } else {
+                    throw new ParseException(e, source, contents, substring, lineNr);
+                }
             } else {
-                throw new ParseException(e, source, token, substring, lineNr);
+                int lineNumber = token.getLine();
+                CharSequence line = lineNumber <= source.getLineCount() ? source.getCharacters(lineNumber) : "";
+                String substring = line.subSequence(0, Math.min(line.length(), token.getCharPositionInLine() + 1)).toString();
+                String contents = token == null ? (substring.length() == 0 ? "" : substring.substring(substring.length() - 1)) : token.getText();
+                int lineNr = lineNumber > source.getLineCount() ? source.getLineCount() : lineNumber;
+                if (token.getType() == Token.EOF) {
+                    // the parser got stuck at the eof, request another line
+                    throw new IncompleteSourceException(e, source, contents, substring, lineNr);
+                } else {
+                    throw new ParseException(e, source, contents, substring, lineNr);
+                }
             }
         }
     }
 
     @Override
-    protected <T> Parser<T> createParser() {
-        return new DefaultParser<>();
+    protected Parser createParser() {
+        return new DefaultParser();
     }
 }

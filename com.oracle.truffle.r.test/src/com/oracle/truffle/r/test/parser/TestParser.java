@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.test.parser;
 
 import java.io.File;
+import java.io.IOException;
 
 import org.junit.Test;
 
@@ -30,7 +31,7 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.nodes.RASTBuilder;
 import com.oracle.truffle.r.runtime.RParserFactory;
 import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestParser extends TestBase {
@@ -184,29 +185,17 @@ public class TestParser extends TestBase {
             String name = file.getName();
             if (name.endsWith(".r") || name.endsWith(".R")) {
                 Source source = null;
-                RParserFactory.Parser<RSyntaxNode> parser = RParserFactory.getParser();
+                RParserFactory.Parser parser = RParserFactory.getParser();
                 try {
                     source = RSource.fromFile(file);
                     parser.script(source, new RASTBuilder(true), null);
-                } catch (Throwable e) {
+                } catch (ParseException e) {
                     errorCount++;
-                    Throwable t = e;
-                    while (t.getCause() != null && t.getCause() != t) {
-                        t = t.getCause();
-                    }
                     System.out.println("Error while parsing " + file.getAbsolutePath());
-                    if (parser.isRecognitionException(t)) {
-                        System.out.println(source.getCharacters(parser.line(t)));
-                        System.out.printf("%" + parser.charPositionInLine(t) + "s^%n", "");
-                    }
-                    System.out.println(t);
-                    if (!t.getStackTrace()[0].getMethodName().equals("unimplemented")) {
-                        System.out.println(t.getStackTrace()[0]);
-                    } else {
-                        System.out.println(t.getStackTrace()[1]);
-                    }
-                    // e.printStackTrace();
+                    System.out.println(e.getErrorMessage());
                     System.out.println();
+                } catch (IOException e) {
+                    e.printStackTrace();
                 }
             }
         }
