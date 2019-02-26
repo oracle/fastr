@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import java.util.List;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CallTarget;
@@ -36,7 +35,6 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.ForeignAccess.StandardFactory;
 import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
@@ -47,25 +45,18 @@ import com.oracle.truffle.r.engine.TruffleRLanguageImpl;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorKeyInfoImplNodeGen;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorKeyInfoRootNodeGen;
 import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorReadImplNodeGen;
-import com.oracle.truffle.r.engine.interop.RAbstractVectorAccessFactoryFactory.VectorWriteImplNodeGen;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
 import com.oracle.truffle.r.nodes.access.vector.ExtractVectorNode;
-import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNode;
-import com.oracle.truffle.r.nodes.access.vector.ReplaceVectorNodeGen;
 import com.oracle.truffle.r.nodes.builtin.base.IsNA;
 import com.oracle.truffle.r.nodes.builtin.base.IsNANodeGen;
 import com.oracle.truffle.r.nodes.control.RLengthNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.NativeDataAccess;
 import com.oracle.truffle.r.runtime.data.RLogical;
-import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RScalar;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
-import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import com.oracle.truffle.r.runtime.interop.Foreign2R;
-import com.oracle.truffle.r.runtime.interop.Foreign2RNodeGen;
 import com.oracle.truffle.r.runtime.interop.R2Foreign;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
@@ -147,111 +138,6 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
         }
     }
 
-    abstract static class VectorWriteImplNode extends InteropRootNode {
-        @Child private ReplaceVectorNode replace;
-        @Child private Foreign2R foreign2R;
-
-        @Override
-        public final Object execute(VirtualFrame frame) {
-            List<Object> arguments = ForeignAccess.getArguments(frame);
-            Object receiver = ForeignAccess.getReceiver(frame);
-            return execute(frame, receiver, arguments.get(0), arguments.get(1));
-        }
-
-        protected abstract Object execute(VirtualFrame frame, Object receiver, Object identifier, Object valueObj);
-
-        @Specialization
-        protected Object write(RAbstractRawVector receiver, int idx, byte valueObj) {
-            return writeRaw(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        @Specialization
-        protected Object write(RAbstractRawVector receiver, long idx, byte valueObj) {
-            return writeRaw(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        private Object writeRaw(RAbstractRawVector receiver, Object[] positions, byte valueObj) {
-            if (replace == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace = insert(ReplaceVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false, true, true));
-            }
-            return replace.apply(receiver, positions, RRaw.valueOf(valueObj));
-        }
-
-        @Specialization
-        protected Object write(RAbstractLogicalVector receiver, int idx, byte valueObj) {
-            return writeLogical(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        @Specialization
-        protected Object write(RAbstractLogicalVector receiver, long idx, byte valueObj) {
-            return writeLogical(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        protected static boolean isIntNA(int valueObj) {
-            return RRuntime.isNA(valueObj);
-        }
-
-        @Specialization(guards = "isIntNA(valueObj)")
-        protected Object writeLogicalNA(RAbstractLogicalVector receiver, int idx, @SuppressWarnings("unused") int valueObj) {
-            return writeLogical(receiver, new Object[]{idx + 1}, RRuntime.LOGICAL_NA);
-        }
-
-        @Specialization(guards = "!isIntNA(valueObj)")
-        protected Object writeLogicalNonNA(RAbstractLogicalVector receiver, int idx, int valueObj) {
-            return writeLogical(receiver, new Object[]{idx + 1}, (byte) valueObj);
-        }
-
-        @Specialization(guards = "isIntNA(valueObj)")
-        protected Object writeLogicalNA(RAbstractLogicalVector receiver, long idx, @SuppressWarnings("unused") int valueObj) {
-            return writeLogical(receiver, new Object[]{idx + 1}, RRuntime.LOGICAL_NA);
-        }
-
-        @Specialization(guards = "!isIntNA(valueObj)")
-        protected Object writeLogicalNonNA(RAbstractLogicalVector receiver, long idx, int valueObj) {
-            return writeLogical(receiver, new Object[]{idx + 1}, (byte) valueObj);
-        }
-
-        private Object writeLogical(RAbstractLogicalVector receiver, Object[] positions, byte valueObj) {
-            if (replace == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace = insert(ReplaceVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false, true, true));
-            }
-            return replace.apply(receiver, positions, valueObj);
-        }
-
-        @Specialization
-        protected Object write(TruffleObject receiver, int idx, Object valueObj) {
-            // idx + 1 R is indexing from 1
-            return write(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        @Specialization
-        protected Object write(TruffleObject receiver, long idx, Object valueObj) {
-            // idx + 1 R is indexing from 1
-            return write(receiver, new Object[]{idx + 1}, valueObj);
-        }
-
-        private Object write(TruffleObject receiver, Object[] positions, Object valueObj) {
-            if (foreign2R == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                foreign2R = insert(Foreign2RNodeGen.create());
-            }
-            Object value = foreign2R.execute(valueObj);
-            if (replace == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                replace = insert(ReplaceVectorNodeGen.create(ElementAccessMode.SUBSCRIPT, false, true, true));
-            }
-            return replace.apply(receiver, positions, value);
-        }
-
-        @Fallback
-        protected Object write(@SuppressWarnings("unused") Object receiver, Object field, @SuppressWarnings("unused") Object object) {
-            CompilerDirectives.transferToInterpreter();
-            throw UnknownIdentifierException.raise("" + field);
-        }
-    }
-
     abstract static class VectorKeyInfoRootNode extends InteropRootNode {
         @Child private VectorKeyInfoImplNode keyInfoNode = VectorKeyInfoImplNodeGen.create();
 
@@ -286,7 +172,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
             if (unknownIdentifier.profile(idx < 0 || idx >= lengthNode.executeInteger(receiver))) {
                 return 0;
             }
-            return KeyInfo.READABLE | KeyInfo.MODIFIABLE;
+            return KeyInfo.READABLE;
         }
 
         @Fallback
@@ -409,7 +295,12 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
 
     @Override
     public CallTarget accessWrite() {
-        return Truffle.getRuntime().createCallTarget(VectorWriteImplNodeGen.create());
+        return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+            @Override
+            public Object execute(VirtualFrame frame) {
+                throw UnsupportedMessageException.raise(Message.WRITE);
+            }
+        });
     }
 
     @Override

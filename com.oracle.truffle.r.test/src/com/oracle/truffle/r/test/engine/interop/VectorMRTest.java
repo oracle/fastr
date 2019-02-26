@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,10 +22,8 @@
  */
 package com.oracle.truffle.r.test.engine.interop;
 
-import static org.hamcrest.CoreMatchers.instanceOf;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
@@ -47,32 +45,25 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 public class VectorMRTest extends AbstractMRTest {
 
+    @Override
+    protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
+    }
+
     @Test
-    public void testReadWrite() throws Exception {
+    public void testRead() throws Exception {
         final TruffleObject vi = RDataFactory.createIntSequence(1, 1, 10);
         assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2));
         assertEquals(3, ForeignAccess.sendRead(Message.READ.createNode(), vi, 2L));
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, "a"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), vi, 100), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, "s", "abc"), UnknownIdentifierException.class);
 
         TruffleObject vd = RDataFactory.createDoubleSequence(1.1, 1, 10);
         assertEquals(1.1, ForeignAccess.sendRead(Message.READ.createNode(), vd, 0));
 
         TruffleObject vb = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
         assertEquals(true, ForeignAccess.sendRead(Message.READ.createNode(), vb, 0));
-
-        TruffleObject nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, 0, 123);
-        assertEquals(123, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
-
-        assertEquals(10, ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), nvi));
-        nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), nvi, 100, 321);
-        assertEquals(101, ForeignAccess.sendGetSize(Message.GET_SIZE.createNode(), nvi));
-        assertEquals(321, ForeignAccess.sendRead(Message.READ.createNode(), nvi, 100));
-
-        nvi = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), nvi, 0, "abc");
-        assertEquals("abc", ForeignAccess.sendRead(Message.READ.createNode(), nvi, 0));
     }
 
     @Test
@@ -89,15 +80,6 @@ public class VectorMRTest extends AbstractMRTest {
     }
 
     @Test
-    public void testReadingNAAndWritingNABackKeepsNA() throws Exception {
-        final TruffleObject vi = RDataFactory.createIntVector(new int[]{42, RRuntime.INT_NA}, RDataFactory.INCOMPLETE_VECTOR);
-        Object naInteropValue = ForeignAccess.sendRead(Message.READ.createNode(), vi, 1);
-        Object result = ForeignAccess.sendWrite(Message.WRITE.createNode(), vi, 0, naInteropValue);
-        assertThat(result, instanceOf(RAbstractIntVector.class));
-        assertTrue("index 0 is NA in the updated vector", RRuntime.isNA(((RAbstractIntVector) result).getDataAt(0)));
-    }
-
-    @Test
     public void testKeyInfo() throws Exception {
         TruffleObject v = RDataFactory.createLogicalVector(new byte[]{1, 0, 1}, true);
         assertInteropException(() -> ForeignAccess.sendKeys(Message.KEYS.createNode(), v), UnsupportedMessageException.class);
@@ -105,7 +87,7 @@ public class VectorMRTest extends AbstractMRTest {
         int keyInfo = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), v, 0);
         assertTrue(KeyInfo.isExisting(keyInfo));
         assertTrue(KeyInfo.isReadable(keyInfo));
-        assertTrue(KeyInfo.isWritable(keyInfo));
+        assertFalse(KeyInfo.isWritable(keyInfo));
         assertFalse(KeyInfo.isInvocable(keyInfo));
         assertFalse(KeyInfo.isInternal(keyInfo));
 

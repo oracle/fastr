@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1998  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2015,  The R Core Team
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -194,7 +195,7 @@ public final class SeqFunctions {
     @ImportStatic(SeqFunctions.class)
     public abstract static class SeqFastPath extends FastPathAdapter {
 
-        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "lengthSpecials(args)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "lengthSpecials(args)", "getLimit1Guard()"}, limit = "1")
         protected Object seqNoClassFromAndLength(RArgsValuesAndNames args, //
                         @Cached("new()") SeqNoClassFromAndLengthNode cache) {
             if (cache.isNumericProfile.profile(cache.fromCheck.execute(args.getArgument(0)))) {
@@ -226,7 +227,7 @@ public final class SeqFunctions {
 
         }
 
-        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"!hasClass(args, cache.getClassAttributeNode)", "getLimit1Guard()"}, limit = "1")
         protected Object seqNoClassAndNumeric(RArgsValuesAndNames args,
                         @Cached("new()") SeqNoClassAndNumericNode cache) {
             Object[] rargs = reorderedArguments(args, cache.seqIntFunction);
@@ -310,11 +311,11 @@ public final class SeqFunctions {
             int argsLen = args.getLength();
             if (argsLen == 1) {
                 String sig0 = args.getSignature().getName(0);
-                return sig0 != null && sig0 == lengthOut;
+                return sig0 != null && Utils.identityEquals(sig0, lengthOut);
             } else if (argsLen == 2) {
                 String sig0 = args.getSignature().getName(0);
                 String sig1 = args.getSignature().getName(1);
-                return sig0 == null && sig1 != null && sig1 == lengthOut;
+                return sig0 == null && sig1 != null && Utils.identityEquals(sig1, lengthOut);
             } else {
                 return false;
             }
@@ -327,7 +328,7 @@ public final class SeqFunctions {
      */
     @TypeSystemReference(RTypes.class)
     public abstract static class SeqDefaultFastPath extends FastPathAdapter {
-        @Specialization(guards = {"cache.fromCheck.execute(fromObj)", "cache.toCheck.execute(toObj)", "cache.byCheck.execute(byObj)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"cache.fromCheck.execute(fromObj)", "cache.toCheck.execute(toObj)", "cache.byCheck.execute(byObj)", "getLimit1Guard()"}, limit = "1")
         protected Object seqDefaultNumeric(Object fromObj, Object toObj, Object byObj, Object lengthOut, Object alongWith,
                         @Cached("new()") SeqDefaultNumericNode cache) {
             return cache.seqInt.execute(fromObj, toObj, byObj, lengthOut, alongWith, RMissing.instance);
@@ -829,7 +830,7 @@ public final class SeqFunctions {
         }
 
         // common idiom
-        @Specialization(guards = {"cached.fromCheck.execute(fromObj)", "cached.lengthCheck.execute(lengthOut)", "LIMIT_1_GUARD"}, limit = "1")
+        @Specialization(guards = {"cached.fromCheck.execute(fromObj)", "cached.lengthCheck.execute(lengthOut)", "getLimit1Guard()"}, limit = "1")
         protected RAbstractVector seqWithFromLengthIntegralNumeric(Object fromObj, RMissing toObj, RMissing byObj, Object lengthOut, RMissing alongWith, Object dotdotdot,
                         @Cached("createBinaryProfile()") ConditionProfile loutEq0Profile,
                         @Cached("new()") SeqWithFromLengthIntegralNumericNode cached) {
@@ -899,8 +900,10 @@ public final class SeqFunctions {
                     result = RDataFactory.createDoubleVectorFromScalar(from);
                 } else {
                     boolean useDouble = fromMissing && !isInt(lengthOut);
-                    if (useDoubleProfile.profile((int) from == from && (int) to == to && !useDouble)) {
-                        result = RDataFactory.createIntVector(new int[]{(int) from, (int) to}, RDataFactory.COMPLETE_VECTOR);
+                    int intFrom = (int) from;
+                    int intTo = (int) to;
+                    if (useDoubleProfile.profile(Utils.identityEquals(intFrom, from) && Utils.identityEquals(intTo, to) && !useDouble)) {
+                        result = RDataFactory.createIntVector(new int[]{intFrom, intTo}, RDataFactory.COMPLETE_VECTOR);
                     } else {
                         result = RDataFactory.createDoubleVector(new double[]{from, to}, RDataFactory.COMPLETE_VECTOR);
                     }

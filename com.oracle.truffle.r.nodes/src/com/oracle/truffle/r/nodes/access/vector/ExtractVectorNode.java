@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,10 +57,8 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.RandomIterator;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
-@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
+@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class, DSLConfig.class})
 public abstract class ExtractVectorNode extends RBaseNode {
-
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(5);
 
     protected final ElementAccessMode mode;
     private final boolean recursive;
@@ -124,7 +122,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
 
     // Note: the factory that creates cached decides whether given positions are not recursive and
     // returns null they are. RAbstractContainer is not foreign by definition.
-    @Specialization(limit = "CACHE_LIMIT", guards = {"cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
+    @Specialization(limit = "getCacheSize(5)", guards = {"cached != null", "cached.isSupported(vector, positions, exact, dropDimensions)"})
     protected Object doExtractDefaultCached(RAbstractContainer vector, Object[] positions, Object exact, Object dropDimensions,  //
                     @Cached("createDefaultCacheOrNull(getThis(), vector, positions, exact, dropDimensions)") CachedExtractVectorNode cached) {
         assert !isRecursiveSubscript(vector, positions);

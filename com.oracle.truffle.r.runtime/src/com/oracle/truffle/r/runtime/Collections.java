@@ -44,7 +44,11 @@ public final class Collections {
         }
 
         public boolean add(KEY key) {
-            int ind = Math.abs(key.hashCode()) % keys.length;
+            int hc = key.hashCode();
+            if (hc == Integer.MIN_VALUE) {
+                hc = 0;
+            }
+            int ind = Math.abs(hc) % keys.length;
             int firstInd = ind;
             while (true) {
                 if (keys[ind] == null) {
@@ -75,7 +79,7 @@ public final class Collections {
                         keys = newKeys;
 
                         // start hashing from the beginning
-                        ind = Math.abs(key.hashCode()) % keys.length;
+                        ind = Math.abs(hc) % keys.length;
                     }
                 }
             }

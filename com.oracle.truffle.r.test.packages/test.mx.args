@@ -1,3 +1,2 @@
--DR:+IgnoreGraphicsCalls
--DR:AdditionalOptions=vdiffr_skip:T;svUnit.recordAll:F;svUnit.minTiming:10000;crayon.enabled:F
-
+--R.IgnoreGraphicsCalls
+--R.AdditionalOptions=vdiffr_skip:T;svUnit.recordAll:F;svUnit.minTiming:10000;crayon.enabled:F

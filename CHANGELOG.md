@@ -1,3 +1,26 @@
+# 1.0 RC 13
+
+New features:
+
+* new JUL-like logging infrastructure backed by Truffle
+* FastR options backed by Truffle now. New command-line format - i.e. bin/r --R.PerformanceWarning="true". Also configurable via org.graal.polyglot.Context.Builder.
+* script configure_fastr also regenerates etc/Renviron and etc/ldpaths
+* FastR vectors are not writeable from other languages
+  * in order to update FastR vectors from other languages:
+    retrieve reference to the subset assign function `` `[<-` `` and execute it.
+    Note that it will return the new vector with the updated values.
+
+Added missing R builtins and C API
+
+* `polyroot`
+* dummy implementation of `pcre_config`
+
+Bug fixes:
+
+* when using GNU-R graphics (--R.UseInternalGridGraphics=false) FastR would still override the graphics package R functions
+* cannot install RcppParallel #52
+* visibility propagation in `tryCatch`
+
 # 1.0 RC 12
 
 New Features:
@@ -27,6 +50,7 @@ Bug fixes:
 * `unlink` error for paths containing wildcard(s) but no path separator
 *  dims attribute errorneously set to RDoubleVector; exception when retrieving the dims #49
 * issues with the dplyr's `mutate` and `transmute`: #50 and #51
+* fixed promises result visibility propagation eliminating extra `NULL` output of `tryCatch(cat('Hello\n'))`
 
 # 1.0 RC 11
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998-2014 Ross Ihaka
  * Copyright (c) 2002-3, The R Core Team
- * Copyright (c) 2018, Oracle and/or its affiliates
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@ import static com.oracle.truffle.r.runtime.nmath.RMath.trunc;
 import static com.oracle.truffle.r.runtime.nmath.TOMS708.fabs;
 
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.Utils;
 
 // Checkstyle: stop
 // @formatter:off
@@ -559,8 +560,8 @@ public class BesselFunctions {
             /*
              * Using Abramowitz & Stegun 9.1.2 this may not be quite optimal (CPU and accuracy wise)
              */
-            return (((alpha - na == 0.5) ? 0 : bessel_j(x, -alpha) * cospi(alpha)) +
-                            ((alpha == na) ? 0 : bessel_y(x, -alpha) * sinpi(alpha)));
+            return ((Utils.identityEquals(alpha - na , 0.5) ? 0 : bessel_j(x, -alpha) * cospi(alpha)) +
+                            (Utils.identityEquals(alpha , na) ? 0 : bessel_y(x, -alpha) * sinpi(alpha)));
         } else if (alpha > 1e7) {
             RMathError.warning(RError.Message.BESSEL_NU_TOO_LARGE, "J", alpha, "j");
             return ML_NAN;
@@ -596,8 +597,8 @@ public class BesselFunctions {
             /*
              * Using Abramowitz & Stegun 9.1.2 this may not be quite optimal (CPU and accuracy wise)
              */
-            return (((alpha - na == 0.5) ? 0 : bessel_j_ex(x, -alpha, bj) * cospi(alpha)) +
-                            ((alpha == na) ? 0 : bessel_y_ex(x, -alpha, bj) * sinpi(alpha)));
+            return ((Utils.identityEquals(alpha - na ,0.5) ? 0 : bessel_j_ex(x, -alpha, bj) * cospi(alpha)) +
+                            (Utils.identityEquals(alpha , na) ? 0 : bessel_y_ex(x, -alpha, bj) * sinpi(alpha)));
         } else if (alpha > 1e7) {
             RMathError.warning(RError.Message.BESSEL_NU_TOO_LARGE, "J", alpha, "j");
             return ML_NAN;
@@ -1607,8 +1608,8 @@ public class BesselFunctions {
             /*
              * Using Abramowitz & Stegun 9.1.2 this may not be quite optimal (CPU and accuracy wise)
              */
-            return (((alpha - na == 0.5) ? 0 : bessel_y(x, -alpha) * cospi(alpha)) -
-                            ((alpha == na) ? 0 : bessel_j(x, -alpha) * sinpi(alpha)));
+            return ((Utils.identityEquals(alpha - na , 0.5) ? 0 : bessel_y(x, -alpha) * cospi(alpha)) -
+                            (Utils.identityEquals(alpha , na) ? 0 : bessel_j(x, -alpha) * sinpi(alpha)));
         } else if (alpha > 1e7) {
             RMathError.warning(RError.Message.BESSEL_NU_TOO_LARGE, "Y", alpha, "y");
             return ML_NAN;
@@ -1646,8 +1647,8 @@ public class BesselFunctions {
             /*
              * Using Abramowitz & Stegun 9.1.2 this may not be quite optimal (CPU and accuracy wise)
              */
-            return (((alpha - na == 0.5) ? 0 : bessel_y_ex(x, -alpha, by) * cospi(alpha)) -
-                            ((alpha == na) ? 0 : bessel_j_ex(x, -alpha, by) * sinpi(alpha)));
+            return ((Utils.identityEquals(alpha - na , 0.5) ? 0 : bessel_y_ex(x, -alpha, by) * cospi(alpha)) -
+                            (Utils.identityEquals(alpha ,na) ? 0 : bessel_j_ex(x, -alpha, by) * sinpi(alpha)));
         } else if (alpha > 1e7) {
             RMathError.warning(RError.Message.BESSEL_NU_TOO_LARGE, "Y", alpha, "y");
             return ML_NAN;
@@ -1784,7 +1785,7 @@ public class BesselFunctions {
             if (na == 1) {/* <==> .5 <= *alpha < 1 <==> -5. <= nu < 0 */
                 nu -= xna;
             }
-            if (nu == -.5) {
+            if (Utils.identityEquals(nu ,-.5) ){
                 p = M_SQRT_2dPI / Math.sqrt(ex);
                 ya = p * Math.sin(ex);
                 ya1 = -p * Math.cos(ex);
@@ -2163,8 +2164,8 @@ public class BesselFunctions {
             y = -x;
             yi = trunc(y);
             res = y - yi;
-            if (res != 0.) {
-                if (yi != trunc(yi * .5) * 2.)
+            if (!Utils.identityEquals(res ,0.)) {
+                if (!Utils.identityEquals(yi , trunc(yi * .5) * 2.))
                     parity = true;
                 fact = -M_PI / sinpi(res);
                 y += 1.;
@@ -2256,7 +2257,7 @@ public class BesselFunctions {
          */
         if (parity)
             res = -res;
-        if (fact != 1.)
+        if (!Utils.identityEquals(fact , 1.))
             res = fact / res;
         return res;
     }

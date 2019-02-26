@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,12 +19,12 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.io.PrintStream;
 import java.lang.ref.WeakReference;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.NoSuchFileException;
@@ -46,6 +46,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -105,6 +106,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxFunction;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxVisitor;
+import java.util.logging.Level;
 
 // Code loosely transcribed from GnuR serialize.c.
 
@@ -301,7 +303,7 @@ public class RSerialize {
      * lazily loaded.
      */
     private static boolean trace() {
-        return FastROptions.debugMatches("unserialize");
+        return RContext.getInstance().matchesOption(FastROptions.Debug, "unserialize");
     }
 
     private static ContextStateImpl getContextState() {
@@ -599,7 +601,7 @@ public class RSerialize {
                              * level or not (and they are not always at the top in the default
                              * packages)
                              */
-                            if (FastROptions.debugMatches("printUclosure")) {
+                            if (RContext.getInstance().matchesOption(FastROptions.Debug, "printUclosure")) {
                                 RPairList pairList = RDataFactory.createPairList(carItem, cdrItem, tagItem, type);
                                 if (attrItem != RNull.instance) {
                                     setAttributes(pairList, attrItem);
@@ -698,6 +700,7 @@ public class RSerialize {
                         // for now we only record S4-ness here, and in this case it should be 0
                         assert (levs == 0);
                     } else {
+                        assert result != null;
                         ((RTypedValue) result).setGPBits(levs);
                     }
                     return checkResult(result);
@@ -1252,6 +1255,8 @@ public class RSerialize {
     private static final class TracingInput extends Input {
         private int nesting;
 
+        private static final TruffleLogger LOGGER = RLogger.getLogger(RSerialize.class.getName());
+
         private TracingInput(RConnection conn) throws IOException {
             this(conn.getInputStream(), null, null, null);
         }
@@ -1262,23 +1267,24 @@ public class RSerialize {
 
         @Override
         protected Object readItem() throws IOException {
-            // CheckStyle: stop system..print check
             int flags = stream.readInt();
             SEXPTYPE type = SEXPTYPE.mapInt(Flags.ptype(flags));
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < nesting; i++) {
-                System.out.print("  ");
+                sb.append("  ");
             }
-            System.out.printf("%d %s", nesting, type);
-            if (type != SEXPTYPE.CHARSXP) {
-                System.out.println();
-            }
+            sb.append(nesting);
+            sb.append(" ");
+            sb.append(type);
             nesting++;
             Object result = super.readItem(flags);
             if (type == SEXPTYPE.CHARSXP) {
-                System.out.printf(" \"%s\"%n", result);
+                sb.append(" \"");
+                sb.append(result);
+                sb.append("\"");
             }
             nesting--;
-
+            LOGGER.log(Level.INFO, sb.toString());
             return result;
         }
     }
@@ -1679,7 +1685,7 @@ public class RSerialize {
                                         RFunction fun = (RFunction) obj;
                                         RPairList pl = (RPairList) serializeLanguageObject(state, fun);
                                         assert pl != null;
-                                        if (FastROptions.debugMatches("printWclosure")) {
+                                        if (RContext.getInstance().matchesOption(FastROptions.Debug, "printWclosure")) {
                                             Debug.printClosure(pl);
                                         }
                                         writeItem(pl.getTag());
@@ -1798,7 +1804,7 @@ public class RSerialize {
          * treats a {@code String} as an STRSXP.
          */
         private void writeCHARSXP(String s) throws IOException {
-            if (s == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(s)) {
                 int flags = Flags.packFlags(SEXPTYPE.CHARSXP, 0, false, false, false);
                 stream.writeInt(flags);
                 stream.writeInt(-1);
@@ -2246,12 +2252,11 @@ public class RSerialize {
     }
 
     private static class Debug {
+        private static final TruffleLogger LOGGER = RLogger.getLogger(RSerialize.class.getName());
         private static int indent;
-        private static PrintStream out;
 
         private static void printClosure(RPairList pl) {
             indent = 0;
-            out = System.out;
             printObject(pl);
         }
 
@@ -2266,6 +2271,7 @@ public class RSerialize {
 
         private static void printObject(Object obj) {
             printObject(obj, true);
+
         }
 
         private static void printObject(Object obj, boolean printType) {
@@ -2304,11 +2310,12 @@ public class RSerialize {
         }
 
         private static void print(String format, Object... objects) {
+            StringBuilder sb = new StringBuilder();
             for (int i = 0; i < indent * 2; i++) {
-                out.write(' ');
+                sb.append(' ');
             }
-            out.printf(format, objects);
-            out.write('\n');
+            sb.append(String.format(format, objects));
+            LOGGER.info(sb.toString());
         }
     }
 
@@ -2845,6 +2852,7 @@ public class RSerialize {
             if (pathObj instanceof RAbstractStringVector) {
                 String path = ((RAbstractStringVector) pathObj).getDataAt(0);
                 Path libLoc = Paths.get(path).getParent();
+                assert libLoc != null;
                 RContext.getInstance().libraryPaths.add(0, libLoc.toString());
                 return true;
             }

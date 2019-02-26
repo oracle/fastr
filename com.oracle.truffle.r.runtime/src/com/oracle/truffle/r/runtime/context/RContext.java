@@ -67,6 +67,11 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEval;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalConstants;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalDefault;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalExpressions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalVariables;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -80,6 +85,7 @@ import com.oracle.truffle.r.runtime.RProfile;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RRuntimeASTAccess;
 import com.oracle.truffle.r.runtime.RSerialize;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
@@ -101,6 +107,7 @@ import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
+import org.graalvm.options.OptionKey;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -366,6 +373,8 @@ public final class RContext {
 
     private final AllocationReporter allocationReporter;
 
+    private final FastROptions fastrOptions;
+
     private ContextState[] contextStates() {
         return new ContextState[]{stateREnvVars, stateRLocale, stateRProfile, stateTempPath, stateROptions, stateREnvironment, stateRErrorHandling, stateRConnection, stateStdConnections, stateRNG,
                         stateRFFI,
@@ -460,6 +469,8 @@ public final class RContext {
         this.allocationReporter = env.lookup(AllocationReporter.class);
         this.allocationReporter.addActiveListener(ALLOCATION_ACTIVATION_LISTENER);
         RDataFactory.setAllocationTracingEnabled(allocationReporter.isActive());
+
+        this.fastrOptions = new FastROptions(this);
     }
 
     static void outputWelcomeMessage(RStartParams rsp) {
@@ -477,7 +488,10 @@ public final class RContext {
      * Performs the real initialization of the context, invoked from
      * {@link TruffleLanguage#initializeContext}.
      */
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public RContext initializeContext() {
+        fastrOptions.initialize();
+
         // this must happen before engine activation in the code below
         if (contextKind == ContextKind.SHARE_NOTHING) {
             if (parentContext == null) {
@@ -567,6 +581,7 @@ public final class RContext {
         stateRProfile.initialize(this);
     }
 
+    @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public void completeEmbeddedInitialization() {
         doEnvOptionsProfileInitialization();
         validateContextStates();
@@ -618,6 +633,113 @@ public final class RContext {
 
     public Env getEnv() {
         return env;
+    }
+
+    public FastROptions getFastROptions() {
+        return fastrOptions;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> T getOption(OptionKey<T> key) {
+        return fastrOptions.getValue(key);
+    }
+
+    public int getNonNegativeIntOption(OptionKey<Integer> key) {
+        int res = getOption(key);
+        if (res >= 0) {
+            return res;
+        }
+        System.out.println("non negative integer option value expected");
+        new RuntimeException().printStackTrace();
+        System.exit(2);
+        return -1;
+    }
+
+    public double getNonNegativeDoubleOption(OptionKey<Double> key) {
+        double res = getOption(key);
+        if (res >= 0) {
+            return res;
+        }
+        System.out.println("non negative double option value expected");
+        new RuntimeException().printStackTrace();
+        System.exit(2);
+        return -1;
+    }
+
+    public boolean noEagerEvalOption() {
+        return !(getOption(EagerEval) || getOption(EagerEvalConstants) ||
+                        getOption(EagerEvalVariables) || getOption(EagerEvalDefault) ||
+                        getOption(EagerEvalExpressions));
+    }
+
+    /**
+     * Convenience function for matching against an option whose value is expected to be a comma
+     * separated list. If the option is set as an empty steing, i.e. {@code --R.Option=""}, all
+     * elements are deemed to match. Matching is done with {@link String#startsWith} to allow
+     * additional data to be tagged onto the element.
+     *
+     * E.g.
+     * <ul>
+     * <li>{@code --R.Option} returns {@code true} for all values of {@code element}.</li>
+     * <li>{@code --R.Option=foo} returns {@code true} if {@code element.equals("foo")}, else
+     * {@code false}.
+     * <li>{@code --R.Option=foo,bar=xx} returns {@code true} if {@code element.equals("bar")}, else
+     * {@code false}.
+     *
+     * @param element string to match against the option value list.
+     * @return {@code true} if the option is set with no {@code =value} component or if the given
+     *         {@code element} matches an element in the options value (comma separated list),
+     *         {@code false} otherwise.
+     */
+    public boolean matchesOption(OptionKey<String> key, String element) {
+        String value = getOption(key);
+
+        if (value == null) {
+            return false;
+        } else if (value.length() == 0) {
+            return true;
+        } else {
+            String[] parts = value.split(",");
+            for (String part : parts) {
+                if (part.startsWith(element)) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    @SuppressWarnings("unchecked")
+    public <T> void setOption(OptionKey<T> key, T value) {
+        fastrOptions.setValue(key, value);
+    }
+
+    /**
+     * Convenience function for adding new values to an option whose value is expected to be a comma
+     * separated list.
+     *
+     * TODO maybe support removal if there is a use-case.
+     *
+     * @see #matchesOption(org.graalvm.options.OptionKey, java.lang.String)
+     */
+    public void updateOption(OptionKey<String> key, String element) {
+        String s = getOption(key);
+        if (s == null) {
+            // nothing was set
+            s = element;
+        } else if (s.length() == 0) {
+            // everything on, we can't change this
+        } else {
+            String[] parts = s.split(",");
+            for (String part : parts) {
+                if (part.startsWith(element)) {
+                    // already on
+                    return;
+                }
+            }
+            s = s + "," + element;
+        }
+        setOption(key, s);
     }
 
     public InstrumentationState getInstrumentationState() {

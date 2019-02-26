@@ -50,6 +50,7 @@ import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -138,36 +139,36 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         String internedName = intern.execute(name);
         RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         // the name is interned, so identity comparison is sufficient
-        if (internedName == RRuntime.DIM_ATTR_KEY) {
+        if (Utils.identityEquals(internedName, RRuntime.DIM_ATTR_KEY)) {
             if (setDimNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setDimNode = insert(SetDimAttributeNode.create());
             }
             setDimNode.setDimensions(result, null);
-        } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.NAMES_ATTR_KEY)) {
             return updateNames(result, value);
-        } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(result, value);
-        } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.CLASS_ATTR_KEY)) {
             if (setClassAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setClassAttrNode = insert(SetClassAttributeNode.create());
             }
             setClassAttrNode.reset(result);
             return result;
-        } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.ROWNAMES_ATTR_KEY)) {
             if (setRowNamesAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setRowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
             }
             setRowNamesAttrNode.setRowNames(result, null);
-        } else if (internedName == RRuntime.TSP_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.TSP_ATTR_KEY)) {
             if (setTspAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setTspAttrNode = insert(SetTspAttributeNode.create());
             }
             setTspAttrNode.setTsp(result, null);
-        } else if (internedName == RRuntime.COMMENT_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.COMMENT_ATTR_KEY)) {
             if (setCommentAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setCommentAttrNode = insert(SetCommentAttributeNode.create());
@@ -196,7 +197,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
         String internedName = intern.execute(name);
         RAbstractContainer result = ((RAbstractContainer) nonShared.execute(container)).materialize();
         // the name is interned, so identity comparison is sufficient
-        if (internedName == RRuntime.DIM_ATTR_KEY) {
+        if (Utils.identityEquals(internedName, RRuntime.DIM_ATTR_KEY)) {
             RAbstractIntVector dimsVector = castInteger(castVector(value));
             if (dimsVector.getLength() == 0) {
                 throw error(RError.Message.LENGTH_ZERO_DIM_INVALID);
@@ -206,31 +207,31 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
                 setDimNode = insert(SetDimAttributeNode.create());
             }
             setDimNode.setDimensions(result, dimsVector.materialize().getDataCopy());
-        } else if (internedName == RRuntime.NAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.NAMES_ATTR_KEY)) {
             return updateNames(result, value);
-        } else if (internedName == RRuntime.DIMNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.DIMNAMES_ATTR_KEY)) {
             return updateDimNames(result, value);
-        } else if (internedName == RRuntime.CLASS_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.CLASS_ATTR_KEY)) {
             if (setClassAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setClassAttrNode = insert(SetClassAttributeNode.create());
             }
             setClassAttrNode.execute(result, convertClassAttrFromObject(value));
             return result;
-        } else if (internedName == RRuntime.ROWNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.ROWNAMES_ATTR_KEY)) {
             if (setRowNamesAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setRowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
             }
             setRowNamesAttrNode.setRowNames(result, castVector(value));
-        } else if (internedName == RRuntime.TSP_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.TSP_ATTR_KEY)) {
             RAbstractDoubleVector tsp = castDouble(castVector(value));
             if (setTspAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setTspAttrNode = insert(SetTspAttributeNode.create());
             }
             setTspAttrNode.setTsp(result, tsp);
-        } else if (internedName == RRuntime.COMMENT_ATTR_KEY) {
+        } else if (Utils.identityEquals(internedName, RRuntime.COMMENT_ATTR_KEY)) {
             if (setCommentAttrNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setCommentAttrNode = insert(SetCommentAttributeNode.create());

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -835,7 +835,7 @@ public final class TOMS708 {
             }
         }
         debugPrintf(" bpser(a=%f, b=%f, x=%f, log=%b): prelim.ans = %.14f;\n", a, b, x, logP, ans);
-        if (ans == DPQ.rd0(logP) || (!logP && a <= eps * 0.1)) {
+        if (Utils.identityEquals(ans, DPQ.rd0(logP)) || (!logP && a <= eps * 0.1)) {
             return ans;
         }
 
@@ -900,7 +900,7 @@ public final class TOMS708 {
 
         /* L10: */
         double retVal = giveLog ? brcmp1(mu, a, b, x, y, true) - log(a) : brcmp1(mu, a, b, x, y, false) / a;
-        if (n == 1 || (giveLog && retVal == ML_NEGINF) || (!giveLog && retVal == 0.)) {
+        if (n == 1 || (giveLog && Utils.identityEquals(retVal, ML_NEGINF)) || (!giveLog && retVal == 0.)) {
             return retVal;
         }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -35,15 +35,17 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.interop.UnsupportedTypeException;
+import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import static org.junit.Assert.fail;
 
 public class ListMRTest extends AbstractMRTest {
 
-    private String testValues = "i=1L, d=2.1, b=TRUE, fn=function() {}, n=NULL, 4";
+    private static final String testValues = "i=1L, d=2.1, b=TRUE, fn=function() {}, n=NULL, 4";
 
     @Override
     @Test
@@ -53,13 +55,18 @@ public class ListMRTest extends AbstractMRTest {
         }
     }
 
-    @Test
-    public void testKeysReadWrite() throws Exception {
-        testKeysReadWrite("list");
-        testKeysReadWrite("pairlist");
+    @Override
+    protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
     }
 
-    private void testKeysReadWrite(String createFun) throws Exception {
+    @Test
+    public void testKeysRead() throws Exception {
+        ListMRTest.this.testKeysRead("list");
+        ListMRTest.this.testKeysRead("pairlist");
+    }
+
+    private void testKeysRead(String createFun) throws Exception {
         RAbstractContainer l = create(createFun, testValues);
 
         assertSingletonVector(1, ForeignAccess.sendRead(Message.READ.createNode(), l, "i"));
@@ -78,18 +85,6 @@ public class ListMRTest extends AbstractMRTest {
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, "nnnoooonnne"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 100), UnknownIdentifierException.class);
-
-        TruffleObject obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "d", 123.1);
-        assertSingletonVector(123.1, ForeignAccess.sendRead(Message.READ.createNode(), obj, "d"));
-
-        obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 2, false);
-        assertSingletonVector(false, ForeignAccess.sendRead(Message.READ.createNode(), obj, "b"));
-
-        obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), l, "newnew", "nneeww");
-        assertSingletonVector("nneeww", ForeignAccess.sendRead(Message.READ.createNode(), obj, "newnew"));
-
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0f, false), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), l, 0d, false), UnknownIdentifierException.class);
     }
 
     @Test
@@ -111,14 +106,14 @@ public class ListMRTest extends AbstractMRTest {
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "d");
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
+        assertFalse(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, "fn");
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
+        assertFalse(KeyInfo.isWritable(info));
         assertTrue(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
 
@@ -134,20 +129,21 @@ public class ListMRTest extends AbstractMRTest {
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 0);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
+        assertFalse(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 1d);
         assertTrue(KeyInfo.isExisting(info));
         assertTrue(KeyInfo.isReadable(info));
-        assertTrue(KeyInfo.isWritable(info));
+        assertFalse(KeyInfo.isWritable(info));
         assertFalse(KeyInfo.isInvocable(info));
         assertFalse(KeyInfo.isInternal(info));
     }
 
     private static RAbstractContainer create(String createFun, String values) {
-        org.graalvm.polyglot.Source src = org.graalvm.polyglot.Source.newBuilder("R", createFun + "(" + values + ")", "<testrlist>").internal(true).buildLiteral();
+        String create = createFun + "(" + values + ")";
+        org.graalvm.polyglot.Source src = org.graalvm.polyglot.Source.newBuilder("R", create, "<testrlist>").internal(true).buildLiteral();
         Value result = context.eval(src);
         return (RAbstractContainer) FastRSession.getReceiver(result);
     }
@@ -161,8 +157,9 @@ public class ListMRTest extends AbstractMRTest {
     }
 
     @Override
+    // XXX RExpression???
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        return new TruffleObject[]{create("list", testValues), create("pairlist", testValues)};
+        return new TruffleObject[]{create("list", testValues), create("pairlist", testValues), create("expression", testValues)};
     }
 
     @Override
@@ -173,6 +170,14 @@ public class ListMRTest extends AbstractMRTest {
 
     @Override
     protected int getSize(TruffleObject obj) {
-        return obj instanceof RList ? ((RList) obj).getLength() : ((RPairList) obj).getLength();
+        if (obj instanceof RList) {
+            return ((RList) obj).getLength();
+        } else if (obj instanceof RPairList) {
+            return ((RPairList) obj).getLength();
+        } else if (obj instanceof RExpression) {
+            return ((RExpression) obj).getLength();
+        }
+        fail("unexpected list type " + obj.getClass().getName());
+        return -1;
     }
 }

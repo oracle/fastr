@@ -147,6 +147,7 @@ com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/H
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/InheritsBuiltin.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/IsListFactor.java,gnu_r.core.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/LaFunctions.java,gnu_r.copyright
+com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Polyroot.java,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Lapply.java,purdue.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Rapply.java,gnu_r.core.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/LoadSaveFunctions.java,gnu_r_gentleman_ihaka.copyright
@@ -946,6 +947,7 @@ com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/port.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/stats.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/library/stats/src/ts.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/colors.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/main/complex.c,gnu_r_gentleman_ihaka.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/contour-common.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/devices.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/engine.c,no.copyright

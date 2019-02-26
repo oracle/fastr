@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,12 @@ import com.oracle.truffle.r.nodes.access.ConstantNode;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.nodes.function.RCallNode.GetTempNode;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEval;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalConstants;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalDefault;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalExpressions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalVariables;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 import com.oracle.truffle.r.runtime.nodes.RNode;
@@ -47,28 +52,32 @@ public class EagerEvalHelper {
      * @return Whether to use optimizations for constants
      */
     public static boolean optConsts() {
-        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalConstants.getBooleanValue();
+        RContext ctx = RContext.getInstance();
+        return ctx.getOption(EagerEval) || ctx.getOption(EagerEvalConstants);
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optVars() {
-        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalVariables.getBooleanValue();
+        RContext ctx = RContext.getInstance();
+        return ctx.getOption(EagerEval) || ctx.getOption(EagerEvalVariables);
     }
 
     /**
      * @return Whether to use optimizations for single variables
      */
     public static boolean optDefault() {
-        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalDefault.getBooleanValue();
+        RContext ctx = RContext.getInstance();
+        return ctx.getOption(EagerEval) || ctx.getOption(EagerEvalDefault);
     }
 
     /**
      * @return Whether to use optimizations for arbitrary expressions
      */
     public static boolean optExprs() {
-        return FastROptions.EagerEval.getBooleanValue() || FastROptions.EagerEvalExpressions.getBooleanValue();
+        RContext ctx = RContext.getInstance();
+        return ctx.getOption(EagerEval) || ctx.getOption(EagerEvalExpressions);
     }
 
     /**

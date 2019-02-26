@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996, Robert Gentleman and Ross Ihaka
  * Copyright (c) 1998-2015, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -38,6 +38,7 @@ import static com.oracle.truffle.r.runtime.nmath.MathConstants.ML_NAN;
 import static com.oracle.truffle.r.runtime.nmath.MathConstants.M_LN2;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.nmath.DPQ;
 import com.oracle.truffle.r.runtime.nmath.MathFunctions.Function3_2;
@@ -416,7 +417,7 @@ public final class QBeta implements Function3_2 {
 
             /* Sometimes the approximation is negative (and == 0 is also not "ok") */
             if (bad_init && !(use_log_x && tx > 0)) {
-                if (u == Double.NEGATIVE_INFINITY) {
+                if (Utils.identityEquals(u, Double.NEGATIVE_INFINITY)) {
                     debugPrintf("  u = -Inf;");
                     u = M_LN2 * DBL_MIN_EXP;
                     xinbta = DBL_MIN;
@@ -466,7 +467,8 @@ public final class QBeta implements Function3_2 {
                      */
                     w = (y == Double.NEGATIVE_INFINITY) // y = -Inf well possible: we are on
                                                         // log scale!
-                                    ? 0. : (y - la) * Math.exp(y - u + logbeta + r * u + t * DPQ.rlog1exp(u));
+                                    ? 0.
+                                    : (y - la) * Math.exp(y - u + logbeta + r * u + t * DPQ.rlog1exp(u));
                     if (!Double.isFinite(w)) {
                         break;
                     }

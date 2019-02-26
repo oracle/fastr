@@ -687,6 +687,7 @@ public class BasePackage extends RBuiltinPackage {
         add(OnExit.class, OnExitNodeGen::create);
         add(OptionsFunctions.Options.class, OptionsFunctionsFactory.OptionsNodeGen::create);
         add(Order.class, OrderNodeGen::create);
+        add(PCREConfig.class, PCREConfigNodeGen::create);
         add(PMatch.class, PMatchNodeGen::create);
         add(PMinMax.PMax.class, PMinMaxNodeGen.PMaxNodeGen::create);
         add(PMinMax.PMin.class, PMinMaxNodeGen.PMinNodeGen::create);
@@ -695,6 +696,7 @@ public class BasePackage extends RBuiltinPackage {
         add(Paste.class, PasteNodeGen::create);
         add(Paste0.class, Paste0NodeGen::create);
         add(PathExpand.class, PathExpandNodeGen::create);
+        add(Polyroot.class, PolyrootNodeGen::create);
         add(Pretty.class, PrettyNodeGen::create);
         add(Primitive.class, PrimitiveNodeGen::create);
         add(PrintFunctions.PrintDefault.class, PrintFunctionsFactory.PrintDefaultNodeGen::create);

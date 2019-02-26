@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2003-2007, The R Core Team
  * Copyright (c) 2003-2007, The R Foundation
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammafn;
 import static com.oracle.truffle.r.runtime.nmath.GammaFunctions.lgammafnSign;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.RError.Message;
 
 // transcribed from nmath/choose.c
@@ -140,7 +141,7 @@ public class Choose {
     }
 
     private static boolean isOdd(double x) {
-        return x != 2 * Math.floor(x / 2.);
+        return !Utils.identityEquals(x, 2 * Math.floor(x / 2.));
     }
 
     private static boolean isInt(double x) {

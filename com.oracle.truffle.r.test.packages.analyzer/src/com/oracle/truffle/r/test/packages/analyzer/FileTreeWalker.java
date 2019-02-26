@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -78,7 +78,9 @@ public class FileTreeWalker {
     }
 
     protected Collection<RPackage> visitPackageRoot(Path pkgRoot, Date sinceDate) throws IOException {
-        String pkgName = pkgRoot.getFileName().toString();
+        Path pkgPath = pkgRoot.getFileName();
+        assert pkgPath != null;
+        String pkgName = pkgPath.toString();
 
         Collection<RPackage> pkgs = new LinkedList<>();
         try (DirectoryStream<Path> stream = Files.newDirectoryStream(pkgRoot)) {
@@ -92,7 +94,9 @@ public class FileTreeWalker {
     }
 
     protected RPackage visitPackageVersion(Path pkgVersionDir, String pkgName, Date sinceDate) {
-        String pkgVersion = pkgVersionDir.getFileName().toString();
+        Path pkgVersionPath = pkgVersionDir.getFileName();
+        assert pkgVersionPath != null;
+        String pkgVersion = pkgVersionPath.toString();
         RPackage pkg = new RPackage(pkgName, pkgVersion);
         LOGGER.info("Found package " + pkg);
 
@@ -115,7 +119,9 @@ public class FileTreeWalker {
     }
 
     protected RPackageTestRun visitTestRun(Path testRunDir, RPackage pkg, Date sinceDate) {
-        int testRun = Integer.parseInt(testRunDir.getFileName().toString());
+        Path testRunDirPath = testRunDir.getFileName();
+        assert testRunDirPath != null;
+        int testRun = Integer.parseInt(testRunDirPath.toString());
         LOGGER.info("Visiting test run " + testRun + " of package " + pkg);
         try {
             RPackageTestRun pkgTestRun = new RPackageTestRun(pkg, testRun);

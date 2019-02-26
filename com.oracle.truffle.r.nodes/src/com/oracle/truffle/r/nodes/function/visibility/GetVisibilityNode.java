@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.nodes.function.visibility;
 
+import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.frame.Frame;
@@ -61,4 +62,14 @@ public final class GetVisibilityNode extends Node {
             throw RInternalError.shouldNotReachHere(e);
         }
     }
+
+    public static boolean executeSlowPath(Frame frame) {
+        CompilerAsserts.neverPartOfCompilation();
+        try {
+            return frame.getBoolean(FrameSlotChangeMonitor.findOrAddFrameSlot(frame.getFrameDescriptor(), RFrameSlot.Visibility, FrameSlotKind.Boolean));
+        } catch (FrameSlotTypeException ex) {
+            return false;
+        }
+    }
+
 }

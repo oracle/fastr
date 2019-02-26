@@ -94,25 +94,25 @@ public final class SpecialAttributesFunctions {
          */
         public boolean execute(String name) {
             assert Utils.isInterned(name);
-            if (name == RRuntime.NAMES_ATTR_KEY) {
+            if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
                 namesProfile.enter();
                 return true;
-            } else if (name == RRuntime.DIM_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY)) {
                 dimProfile.enter();
                 return true;
-            } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY)) {
                 dimNamesProfile.enter();
                 return true;
-            } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY)) {
                 rowNamesProfile.enter();
                 return true;
-            } else if (name == RRuntime.TSP_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.TSP_ATTR_KEY)) {
                 tspProfile.enter();
                 return true;
-            } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.COMMENT_ATTR_KEY)) {
                 commentProfile.enter();
                 return true;
-            } else if (name == RRuntime.CLASS_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.CLASS_ATTR_KEY)) {
                 classProfile.enter();
                 return false;
             }
@@ -124,13 +124,13 @@ public final class SpecialAttributesFunctions {
          */
         public static boolean isSpecialAttribute(String name) {
             assert Utils.isInterned(name);
-            return name == RRuntime.NAMES_ATTR_KEY ||
-                            name == RRuntime.DIM_ATTR_KEY ||
-                            name == RRuntime.DIMNAMES_ATTR_KEY ||
-                            name == RRuntime.ROWNAMES_ATTR_KEY ||
-                            name == RRuntime.TSP_ATTR_KEY ||
-                            name == RRuntime.COMMENT_ATTR_KEY ||
-                            name == RRuntime.CLASS_ATTR_KEY;
+            return Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY) ||
+                            Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY) ||
+                            Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY) ||
+                            Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY) ||
+                            Utils.identityEquals(name, RRuntime.TSP_ATTR_KEY) ||
+                            Utils.identityEquals(name, RRuntime.COMMENT_ATTR_KEY) ||
+                            Utils.identityEquals(name, RRuntime.CLASS_ATTR_KEY);
 
         }
     }
@@ -159,50 +159,49 @@ public final class SpecialAttributesFunctions {
         }
 
         public void execute(RAttributable x, String name, Object value) {
-            assert Utils.isInterned(name);
-            if (name == RRuntime.NAMES_ATTR_KEY) {
+            if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
                 namesProfile.enter();
                 if (namesAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     namesAttrNode = insert(SetNamesAttributeNode.create());
                 }
                 namesAttrNode.execute(x, value);
-            } else if (name == RRuntime.DIM_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY)) {
                 dimProfile.enter();
                 if (dimAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dimAttrNode = insert(SetDimAttributeNode.create());
                 }
                 dimAttrNode.execute(x, value);
-            } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY)) {
                 dimNamesProfile.enter();
                 if (dimNamesAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dimNamesAttrNode = insert(SetDimNamesAttributeNode.create());
                 }
                 dimNamesAttrNode.execute(x, value);
-            } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY)) {
                 rowNamesProfile.enter();
                 if (rowNamesAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     rowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
                 }
                 rowNamesAttrNode.execute(x, value);
-            } else if (name == RRuntime.TSP_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.TSP_ATTR_KEY)) {
                 tspProfile.enter();
                 if (tspAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     tspAttrNode = insert(SetTspAttributeNode.create());
                 }
                 tspAttrNode.execute(x, value);
-            } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.COMMENT_ATTR_KEY)) {
                 commentProfile.enter();
                 if (commentAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     commentAttrNode = insert(SetCommentAttributeNode.create());
                 }
                 commentAttrNode.execute(x, value);
-            } else if (name == RRuntime.CLASS_ATTR_KEY) {
+            } else if (Utils.identityEquals(name, RRuntime.CLASS_ATTR_KEY)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw RInternalError.unimplemented("The \"class\" attribute should be set using a separate method");
             } else {
@@ -219,20 +218,19 @@ public final class SpecialAttributesFunctions {
      * @return the node
      */
     public static SetSpecialAttributeNode createSetSpecialAttributeNode(String name) {
-        assert Utils.isInterned(name);
-        if (name == RRuntime.NAMES_ATTR_KEY) {
+        if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
             return SetNamesAttributeNode.create();
-        } else if (name == RRuntime.DIM_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY)) {
             return SetDimAttributeNode.create();
-        } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY)) {
             return SetDimNamesAttributeNode.create();
-        } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY)) {
             return SetRowNamesAttributeNode.create();
-        } else if (name == RRuntime.TSP_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.TSP_ATTR_KEY)) {
             return SetTspAttributeNode.create();
-        } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.COMMENT_ATTR_KEY)) {
             return SetCommentAttributeNode.create();
-        } else if (name == RRuntime.CLASS_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.CLASS_ATTR_KEY)) {
             return SetClassAttributeNode.create();
         } else {
             throw RInternalError.shouldNotReachHere();
@@ -247,19 +245,19 @@ public final class SpecialAttributesFunctions {
      */
     public static RemoveSpecialAttributeNode createRemoveSpecialAttributeNode(String name) {
         assert Utils.isInterned(name);
-        if (name == RRuntime.NAMES_ATTR_KEY) {
+        if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
             return RemoveNamesAttributeNode.create();
-        } else if (name == RRuntime.DIM_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY)) {
             return RemoveDimAttributeNode.create();
-        } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY)) {
             return RemoveDimNamesAttributeNode.create();
-        } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY)) {
             return RemoveRowNamesAttributeNode.create();
-        } else if (name == RRuntime.TSP_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.TSP_ATTR_KEY)) {
             return RemoveTspAttributeNode.create();
-        } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.COMMENT_ATTR_KEY)) {
             return RemoveCommentAttributeNode.create();
-        } else if (name == RRuntime.CLASS_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.CLASS_ATTR_KEY)) {
             return RemoveClassAttributeNode.create();
         } else {
             throw RInternalError.shouldNotReachHere();
@@ -274,19 +272,19 @@ public final class SpecialAttributesFunctions {
      */
     public static GetFixedAttributeNode createGetSpecialAttributeNode(String name) {
         assert Utils.isInterned(name);
-        if (name == RRuntime.NAMES_ATTR_KEY) {
+        if (Utils.identityEquals(name, RRuntime.NAMES_ATTR_KEY)) {
             return GetNamesAttributeNode.create();
-        } else if (name == RRuntime.DIM_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY)) {
             return GetDimAttributeNode.create();
-        } else if (name == RRuntime.DIMNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY)) {
             return GetDimNamesAttributeNode.create();
-        } else if (name == RRuntime.ROWNAMES_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY)) {
             return GetRowNamesAttributeNode.create();
-        } else if (name == RRuntime.TSP_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.TSP_ATTR_KEY)) {
             return GetTspAttributeNode.create();
-        } else if (name == RRuntime.COMMENT_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.COMMENT_ATTR_KEY)) {
             return GetCommentAttributeNode.create();
-        } else if (name == RRuntime.CLASS_ATTR_KEY) {
+        } else if (Utils.identityEquals(name, RRuntime.CLASS_ATTR_KEY)) {
             return GetClassAttributeNode.create();
         } else {
             throw RInternalError.shouldNotReachHere();

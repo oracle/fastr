@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,12 +38,16 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.RLogger;
+import java.util.logging.Level;
 
 public class PackagePatching {
 
-    private static final boolean VERBOSE = System.getenv("FASTR_PATCHING_VERBOSE") != null;
+    private static final TruffleLogger LOGGER = RLogger.getLogger(PackagePatching.class.getName());
+
     private static final String NO_PATCHING_ENV_VAR = "FASTR_NO_PKG_PATCHING";
     private static final Patch[] patches = new Patch[]{
                     new Patch("reinterpret_cast<.*>\\((.*)\\)->gp & (\\w+|\\(.*\\))", "LEVELS($1) & ($2)"),
@@ -119,8 +123,8 @@ public class PackagePatching {
     }
 
     private static void log(String fmt, Object... args) {
-        if (VERBOSE) {
-            System.out.println(String.format(fmt, args));
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE, String.format(fmt, args));
         }
     }
 

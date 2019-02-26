@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,8 +31,9 @@ import com.oracle.truffle.api.frame.FrameSlotKind;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.RefCountIncrementOnly;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RShareable;
@@ -62,6 +63,9 @@ public abstract class ArgumentStatePush extends Node {
     }
 
     protected int createWriteArgMask(VirtualFrame frame, RShareable shareable) {
+        if (RContext.getInstance().getOption(RefCountIncrementOnly)) {
+            return -1;
+        }
         if (shareable instanceof RAbstractContainer) {
             if ((shareable instanceof RPairList && ((RPairList) shareable).isLanguage()) || ((RAbstractContainer) shareable).getLength() < REF_COUNT_SIZE_THRESHOLD) {
                 // don't decrement ref count for small objects or language objects- this
@@ -96,7 +100,7 @@ public abstract class ArgumentStatePush extends Node {
                     @Cached("createWriteArgMask(frame, shareable)") int writeArgMask) {
         if (isRefCountUpdateable.profile(!shareable.isSharedPermanent())) {
             shareable.incRefCount();
-            if (writeArgMask != -1 && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
+            if (writeArgMask != -1) {
                 if (frameSlot == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     synchronized (FrameSlotChangeMonitor.class) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -89,10 +89,10 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
         return left;
     }
 
-    @ImportStatic({RRuntime.class})
+    @ImportStatic({RRuntime.class, DSLConfig.class})
     protected abstract static class LogicalScalarCastNode extends RBaseNode {
 
-        protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+        protected static final int CACHE_LIMIT = 3;
 
         public abstract byte executeCast(Object o);
 
@@ -108,7 +108,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
             this.check = check;
         }
 
-        @Specialization(limit = "CACHE_LIMIT", guards = {"cachedClass != null", "operand.getClass() == cachedClass"})
+        @Specialization(limit = "getCacheSize(CACHE_LIMIT)", guards = {"cachedClass != null", "operand.getClass() == cachedClass"})
         protected byte doCached(Object operand,
                         @Cached("getNumericVectorClass(operand)") Class<? extends RAbstractVector> cachedClass) {
             return castImpl(cachedClass.cast(operand));

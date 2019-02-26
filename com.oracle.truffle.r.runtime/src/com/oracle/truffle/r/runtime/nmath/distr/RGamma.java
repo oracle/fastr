@@ -1,7 +1,7 @@
 /*
  * Copyright (C) 1998 Ross Ihaka
  * Copyright (c) 1998--2008, The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,8 +54,8 @@ public final class RGamma extends RandFunction2_Double {
     public double execute(double a, double scale, RandomNumberProvider rand) {
 
         // TODO: state variables
-        double aa = Double.NaN;
-        double aaa = Double.NaN;
+        double aa = 0;
+        double aaa = 0;
         double s = 0;
         double s2 = 0;
         double d = 0; /* no. 1 (step 1) */

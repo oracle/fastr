@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -470,7 +470,8 @@ public class HiddenInternalFunctions {
                     if (!rc) {
                         throw error(Message.GENERIC, "zlib compress error");
                     }
-                } else if (compression == 3) {
+                } else {
+                    assert compression == 3;
                     ctype = RCompression.Type.XZ;
                     offset = 5;
                     outLen = data.length;
@@ -479,8 +480,6 @@ public class HiddenInternalFunctions {
                     if (!rc) {
                         throw error(Message.GENERIC, "lzma compress error");
                     }
-                } else {
-                    throw RInternalError.shouldNotReachHere();
                 }
                 int[] intData = new int[2];
                 intData[1] = outLen + offset; // include length + type (compression == 3)

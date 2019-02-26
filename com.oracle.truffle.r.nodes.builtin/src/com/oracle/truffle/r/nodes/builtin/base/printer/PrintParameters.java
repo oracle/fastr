@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -130,10 +130,8 @@ public final class PrintParameters {
 
     public static int getDefaultMaxPrint() {
         int max = RRuntime.asInteger(RContext.getInstance().stateROptions.getValue("max.print"));
-        if (max == RRuntime.INT_NA || max < 0) {
+        if (RRuntime.isNA(max) || max < 0) {
             max = 99999;
-        } else if (max == RRuntime.INT_NA) {
-            max--; // so we can add
         }
         return max;
     }

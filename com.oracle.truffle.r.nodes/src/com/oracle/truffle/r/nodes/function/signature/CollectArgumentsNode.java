@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,6 +24,7 @@ package com.oracle.truffle.r.nodes.function.signature;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -42,9 +43,8 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
+@ImportStatic(DSLConfig.class)
 public abstract class CollectArgumentsNode extends RBaseNode {
-
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
 
     public abstract Object[] execute(VirtualFrame frame, ArgumentsSignature signature);
 
@@ -62,7 +62,7 @@ public abstract class CollectArgumentsNode extends RBaseNode {
     }
 
     @ExplodeLoop
-    @Specialization(limit = "CACHE_LIMIT", guards = {"cachedSignature == signature"})
+    @Specialization(limit = "getCacheSize(3)", guards = {"cachedSignature == signature"})
     protected Object[] combineCached(VirtualFrame frame, @SuppressWarnings("unused") ArgumentsSignature signature,
                     @Cached("signature") @SuppressWarnings("unused") ArgumentsSignature cachedSignature,
                     @Cached("createArgs(signature, frame)") Node[] reads,

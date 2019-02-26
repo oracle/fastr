@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -196,13 +196,12 @@ public class LogFileParser {
                 } else {
                     // try to find the file anywhere in the test run directory (there were some
                     // cases)
-                    Optional<Path> findFirst = null;
-                    findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
+                    Optional<Path> findFirst = Files.find(logFile.path.getParent(), 3, (path, attr) -> path.getFileName().equals(outputFile.getFileName())).findFirst();
                     if (findFirst.isPresent()) {
                         ignoreFiles.add(findFirst.get());
                         checkResults.problems.addAll(applyDetectors(Token.OUTPUT_MISMATCH_FASTR, findFirst.get(), 0, new FileLineStreamReader(findFirst.get())));
                     }
-                    if (findFirst == null || !findFirst.isPresent()) {
+                    if (!findFirst.isPresent()) {
                         LOGGER.warning("Cannot read output file " + outputFile);
 
                         // consume any lines to be able to continue
@@ -455,7 +454,9 @@ public class LogFileParser {
 
             private boolean endsWith(Path p, String... exts) {
                 for (String ext : exts) {
-                    if (p.getFileName().toString().endsWith(ext)) {
+                    Path path = p.getFileName();
+                    assert path != null;
+                    if (path.toString().endsWith(ext)) {
                         return true;
                     }
                 }

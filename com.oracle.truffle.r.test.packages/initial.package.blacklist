@@ -295,9 +295,6 @@ Reason: Bioconductor
 Package: lumi
 Reason: Bioconductor
 
-Package: rJava
-Reason: java
-
 Package: mzR
 Reason: Bioconductor
 

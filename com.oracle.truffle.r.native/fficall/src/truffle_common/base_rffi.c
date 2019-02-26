@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -119,3 +119,12 @@ void call_base_eSoftVersion(void (*call_eSoftVersion_setfields)(char *zlibVersio
 int call_base_umask(int mode) {
 	return umask(mode);
 }
+
+extern int R_cpolyroot(double *opr, double *opi, int *degree, double *zeror, double *zeroi, Rboolean *fail);
+
+int call_base_cpolyroot(double *opr, double *opi, int degree, double *zeror, double *zeroi) {
+    Rboolean fail = FALSE;
+    R_cpolyroot(opr, opi, &degree, zeror, zeroi, &fail);
+    return (fail == TRUE) ? 1 : 0;
+}
+

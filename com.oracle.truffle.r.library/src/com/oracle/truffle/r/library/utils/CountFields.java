@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,6 +28,7 @@ import com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.conn.RConnection;
 import com.oracle.truffle.r.runtime.conn.StdConnections;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -83,7 +84,7 @@ public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
         }
 
         int nskip;
-        if (nskipArg < 0 || nskipArg == RRuntime.INT_NA) {
+        if (nskipArg < 0 || RRuntime.isNA(nskipArg)) {
             nskip = 0;
         } else {
             nskip = nskipArg;
@@ -113,6 +114,7 @@ public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
         }
     }
 
+    @SuppressFBWarnings(value = "UC_USELESS_CONDITION", justification = "incomplete implementation")
     private static Object countFields(RConnection file, char sepChar, String quoteSet, @SuppressWarnings("unused") int nskip, boolean blskip, char comChar) throws IOException {
         LocalData data = new LocalData();
         data.sepchar = sepChar;
@@ -234,6 +236,7 @@ public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
 
     }
 
+    @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "partly unimplemented")
     private static int scanchar_raw(LocalData d) throws IOException {
         int c = (d.ttyflag) ? -1 : d.is.read();
         if (c == 0) {
@@ -250,6 +253,7 @@ public abstract class CountFields extends RExternalBuiltinNode.Arg6 {
         d.save = c;
     }
 
+    @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "partly unimplemented")
     private static int scanchar(int inQuote, LocalData d) throws IOException {
         int next;
         if (d.save != 0) {

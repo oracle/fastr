@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,10 +27,15 @@ import java.nio.file.FileSystems;
 import java.util.ArrayList;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.r.runtime.REnvVars;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RSuicide;
+import com.oracle.truffle.r.runtime.SuppressFBWarnings;
 import com.oracle.truffle.r.runtime.Utils;
+import java.util.logging.Level;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_SYSTEM_FUNCTION;
 import com.oracle.truffle.r.runtime.context.RContext;
 
 public abstract class SystemFunctionFactory {
@@ -47,6 +52,8 @@ public abstract class SystemFunctionFactory {
         }
     }
 
+    private static final TruffleLogger LOGGER = RLogger.getLogger(LOGGER_SYSTEM_FUNCTION);
+
     @TruffleBoundary
     public static SystemFunctionFactory getInstance() {
         return theInstance;
@@ -62,14 +69,22 @@ public abstract class SystemFunctionFactory {
      */
     public abstract Object execute(VirtualFrame frame, String command, boolean intern, int timeoutSecs);
 
-    @TruffleBoundary
     protected void log(String command, String useKind) {
-        if (RContext.getInstance().stateREnvVars.getMap().get("FASTR_LOG_SYSTEM") != null) {
-            System.out.printf("FastR system (%s): %s%n", useKind, command);
+        checkObsoleteEnvVar();
+        if (LOGGER.isLoggable(Level.FINE)) {
+            LOGGER.log(Level.FINE, "FastR system ({0}): {1}", new Object[]{useKind, command});
         }
     }
 
     @TruffleBoundary
+    private static void checkObsoleteEnvVar() {
+        if (RContext.getInstance().stateREnvVars.getMap().get("FASTR_LOG_SYSTEM") != null) {
+            System.out.println("WARNING: The FASTR_LOG_SYSTEM env variable was discontinued.\n" +
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.systemFunction.level=FINE");
+        }
+    }
+
+    @SuppressFBWarnings(value = "UWF_UNWRITTEN_FIELD", justification = "incomplete implementation")
     protected void log(String command) {
         log(command, kind);
     }

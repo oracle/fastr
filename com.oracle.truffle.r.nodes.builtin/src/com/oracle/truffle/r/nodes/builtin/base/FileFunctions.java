@@ -163,7 +163,7 @@ public class FileFunctions {
             byte[] status = new byte[len];
             if (len1 == 1) {
                 String file1 = file1Vec.getDataAt(0);
-                if (file1 != RRuntime.STRING_NA) {
+                if (!RRuntime.isNA(file1)) {
                     file1 = Utils.tildeExpand(file1);
                     try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
                         for (int f2 = 0; f2 < len2; f2++) {
@@ -184,7 +184,7 @@ public class FileFunctions {
                 }
                 for (int f = 0; f < len; f++) {
                     String file1 = file1A[f];
-                    if (file1 != RRuntime.STRING_NA) {
+                    if (!RRuntime.isNA(file1)) {
                         file1 = Utils.tildeExpand(file1);
                         try (BufferedOutputStream out = new BufferedOutputStream(RContext.getInstance().getEnv().getTruffleFile(file1).newOutputStream(StandardOpenOption.APPEND))) {
                             String file2 = file2A[f];
@@ -199,7 +199,7 @@ public class FileFunctions {
         }
 
         private boolean appendFile(BufferedOutputStream out, String pathArg) {
-            if (pathArg == RRuntime.STRING_NA) {
+            if (RRuntime.isNA(pathArg)) {
                 return false;
             }
             String path = Utils.tildeExpand(pathArg);
@@ -385,7 +385,7 @@ public class FileFunctions {
                 case isdir: ((byte[]) data[slot])[index] = (byte) value; updateComplete(slot, complete, (byte) value != RRuntime.LOGICAL_NA); return;
                 case mode: case mtime: case ctime: case atime:
                 case uid: case gid: ((int[]) data[slot])[index] = (int) value; updateComplete(slot, complete, (int) value != RRuntime.INT_NA); return;
-                case uname: case grname: ((String[]) data[slot])[index] = (String) value; updateComplete(slot, complete, (String) value != RRuntime.STRING_NA); return;
+                case uname: case grname: ((String[]) data[slot])[index] = (String) value; updateComplete(slot, complete, !RRuntime.isNA((String) value)); return;
                 default: throw RInternalError.shouldNotReachHere();
             }
             // @formatter:on
@@ -988,7 +988,17 @@ public class FileFunctions {
                             if (recursive) {
                                 assert toDir != null;
                                 // to is just one dir (checked above)
-                                status[i] = RRuntime.asLogical(copyDir(fromPath, toPath, copyOptions));
+                                boolean copyDirResult;
+                                if (!overwrite) {
+                                    try {
+                                        copyDirResult = copyDir(fromPath, toPath, copyOptions);
+                                    } catch (FileAlreadyExistsException ex) { // Ignore
+                                        copyDirResult = false;
+                                    }
+                                } else {
+                                    copyDirResult = copyDir(fromPath, toPath, copyOptions);
+                                }
+                                status[i] = RRuntime.asLogical(copyDirResult);
                             }
                         } else {
                             // copy to existing files is skipped unless overWrite
@@ -1027,6 +1037,7 @@ public class FileFunctions {
                 try {
                     dir.copy(newDir, copyOptions);
                 } catch (FileAlreadyExistsException x) {
+                    error = true;
                     // ok
                 } catch (DirectoryNotEmptyException x) {
                     // ok
@@ -1040,7 +1051,12 @@ public class FileFunctions {
             @Override
             public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) throws IOException {
                 TruffleFile newFile = toDir.resolve(fromDir.relativize(file).getPath());
-                file.copy(newFile, copyOptions);
+                try {
+                    file.copy(newFile, copyOptions);
+                } catch (FileAlreadyExistsException x) {
+                    error = true;
+                    // ok
+                }
                 return FileVisitResult.CONTINUE;
             }
 

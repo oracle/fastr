@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -60,13 +60,20 @@ public class TestBuiltin_eval extends TestBase {
 
         // lists
         assertEval("{ l <- list(a=1, b=2); eval(quote(a), l)}");
+
+        // sys.calls
+        assertEval(Ignored.ReferenceError, "{ length(.Internal(eval(quote(foo()),  list2env(list(foo=function() {sys.calls()})), baseenv()))) }");
+        // expected to return NULL
+        assertEval(Ignored.ImplementationError, "{ .Internal(eval(quote(foo()),  list2env(list(foo=function() {sys.calls()})), baseenv()))[[1]] }");
+        assertEval(Ignored.ReferenceError, "{ .Internal(eval(quote(foo()),  list2env(list(foo=function() {sys.calls()})), baseenv()))[[2]] }");
+
     }
 
     @Test
     public void testWithEnvirAndEnclose() {
         // note: symbol 'list' is from base environment
-        assertEval(Output.IgnoreErrorContext, "a <- 1; lang <- quote(list(a)); eval(lang, data.frame(), NULL)");
-        assertEval(Output.IgnoreErrorContext, "a <- 1; lang <- quote(list(a)); eval(lang, NULL, NULL)");
+        assertEval("a <- 1; lang <- quote(list(a)); eval(lang, data.frame(), NULL)");
+        assertEval("a <- 1; lang <- quote(list(a)); eval(lang, NULL, NULL)");
         assertEval("a <- 1; lang <- quote(list(a)); eval(lang, new.env(), new.env())");
         assertEval(Output.IgnoreErrorMessage, "y <- 2; x <- 2 ; eval(quote(x+y), c(-1, -2))");
 

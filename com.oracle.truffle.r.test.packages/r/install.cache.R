@@ -710,21 +710,38 @@ transitive.dependencies <- function(pkg, lib, pl = as.data.frame(available.packa
     unique(deps)
 }
 
+pkg.cache.in.overrides <- function(pkgname) pkgname %in% (if(is.fastr()) overrides$fastr else overrides$gnur)
+
+pkg.cache.full.install <- function(install.candidate.names, contriburl, lib.install) {
+    # separate uncached packages that are listed in 'overrides'
+    pkgs.in.overrides <- as.character(install.candidate.names[pkg.cache.in.overrides(install.candidate.names)])
+    pkgs.not.in.overrides <- as.character(install.candidate.names[!pkg.cache.in.overrides(install.candidate.names)])
+
+    # override packages need to be installed differently
+    if (length(pkgs.in.overrides) > 0) {
+        install.fastr.packages(as.character(pkgs.in.overrides), lib=lib.install, INSTALL_opts="--install-tests")
+    }
+
+    if (length(pkgs.not.in.overrides) > 0) {
+        install.packages(as.character(pkgs.not.in.overrides), contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+    }
+}
+
 # Fetches the package from the cache or installs it. This is also done for all transitive dependencies.
 pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.install) {
     tryCatch({
+        # determine available packages
+        pkg.list <- as.data.frame(available.packages(contriburl=contriburl, filters=list(add=TRUE, function(x) x), stringAsFactors=FALSE))
+
+        # query version of the package
+        pkg <- pkg.list[pkgname, c("Package", "Version")]
+
+        # compute transitive dependencies of the package to install
+        log.message("Computing transitive package dependencies for ", paste0(pkgname, "_", as.character(pkg$Version)), level=1)
+        transitive.pkg.list <- rbind(transitive.dependencies(pkgname, lib=lib.install, pl=pkg.list), pkg)
+        log.message("transitive deps: ", as.character(transitive.pkg.list$Package), level=1)
+
         if (pkg.cache.is.enabled(pkg.cache.env)) {
-            # determine available packages
-            pkg.list <- as.data.frame(available.packages(contriburl=contriburl), stringAsFactors=FALSE)
-
-            # query version of the package
-            pkg <- pkg.list[pkgname, c("Package", "Version")]
-
-            # compute transitive dependencies of the package to install
-            log.message("Computing transitive package dependencies for ", paste0(pkgname, "_", as.character(pkg$Version)), level=1)
-            transitive.pkg.list <- rbind(transitive.dependencies(pkgname, lib=lib.install, pl=pkg.list), pkg)
-            log.message("transitive deps: ", as.character(transitive.pkg.list$Package), level=1)
-
             # apply pkg cache to fetch cached packages first
             cached.pkgs <- apply(transitive.pkg.list, 1, function(pkg) pkg.cache.get(pkg.cache.env, pkg, lib.install))
             log.message("Number of uncached packages:", nrow(transitive.pkg.list[!cached.pkgs, ]), level=1)
@@ -732,23 +749,30 @@ pkg.cache.internal.install <- function(pkg.cache.env, pkgname, contriburl, lib.i
             # if there was at least one non-cached package
             if (any(!cached.pkgs) || length(cached.pkgs) == 0L) {
                 # install the package (and the transitive dependencies implicitly)
-                install.packages(as.character(transitive.pkg.list[!cached.pkgs, "Package"]), contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+                uncached.pkg.names <- transitive.pkg.list[!cached.pkgs, "Package"]
+
+                # install uncached packages
+                pkg.cache.full.install(uncached.pkg.names, contriburl, lib.install)
 
                 # cache packages that were not in the cache before
                 log.message("Caching uncached dependencies:", as.character(transitive.pkg.list[!cached.pkgs, "Package"]), level=1)
                 apply(transitive.pkg.list[!cached.pkgs, ], 1, function(pkg) pkg.cache.insert(pkg.cache.env, pkg, lib.install))
             }
         } else {
-            install.packages(pkgname, contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+            # Even if we do not use the package cache, we need to compute the dependencies transitively 
+            # because the deps may contain overridden packages.
+            pkg.cache.full.install(transitive.pkg.list[, "Package"], contriburl, lib.install)
         }
 
         # if we reach here, installation was a success
         0L
     }, error = function(e) {
         log.message(e$message)
+        log.message(traceback())
         return (1L)
     }, warning = function(e) {
         log.message(e$message)
         return (1L)
     })
 }
+

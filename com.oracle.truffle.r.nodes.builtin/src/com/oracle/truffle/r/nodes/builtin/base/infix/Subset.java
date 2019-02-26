@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE_SUBSET;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.r.nodes.access.vector.ElementAccessMode;
@@ -47,11 +48,12 @@ import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 
+@ImportStatic(DSLConfig.class)
 @RBuiltin(name = "[", kind = PRIMITIVE, parameterNames = {"x", "...",
                 "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, dispatch = INTERNAL_GENERIC, behavior = PURE_SUBSET, allowMissingInVarArgs = true)
 public abstract class Subset extends RBuiltinNode.Arg3 {
 
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(3);
+    protected static final int CACHE_LIMIT = 3;
 
     @RBuiltin(name = ".subset", kind = PRIMITIVE, parameterNames = {"", "...", "drop"}, argumentMatchingMode = MATCH_BY_NAME_EXACT_SKIP_FIRST, behavior = PURE_SUBSET)
     public abstract class DefaultBuiltin {
@@ -95,7 +97,7 @@ public abstract class Subset extends RBuiltinNode.Arg3 {
         return x;
     }
 
-    @Specialization(guards = {"!indexes.isEmpty()", "argsLen == indexes.getLength()"}, limit = "CACHE_LIMIT")
+    @Specialization(guards = {"!indexes.isEmpty()", "argsLen == indexes.getLength()"}, limit = "getCacheSize(CACHE_LIMIT)")
     @ExplodeLoop
     protected Object getIndexes(Object x, RArgsValuesAndNames indexes, Object drop,
                     @Cached("indexes.getLength()") int argsLen) {

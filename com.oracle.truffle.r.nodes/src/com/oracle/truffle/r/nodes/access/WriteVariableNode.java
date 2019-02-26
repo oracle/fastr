@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,8 +23,9 @@
 package com.oracle.truffle.r.nodes.access;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.InvisibleArgs;
 import com.oracle.truffle.r.runtime.RArguments;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 
@@ -61,7 +62,7 @@ public abstract class WriteVariableNode extends RNode {
      * Variant for saving function arguments, i.e. from {@link RArguments} into the frame.
      */
     public static WriteVariableNode createArgSave(String name, RNode rhs) {
-        if (FastROptions.InvisibleArgs.getBooleanValue()) {
+        if (RContext.getInstance().getOption(InvisibleArgs)) {
             return WriteLocalFrameVariableNode.create(name, Mode.INVISIBLE, rhs);
         } else {
             return WriteLocalFrameVariableNode.create(name, Mode.REGULAR, rhs);

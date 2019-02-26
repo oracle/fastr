@@ -55,13 +55,15 @@ import com.oracle.truffle.r.nodes.function.WrapDefaultArgumentNode;
 import com.oracle.truffle.r.nodes.function.signature.MissingNode;
 import com.oracle.truffle.r.nodes.function.signature.QuoteNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.ForceSources;
+import static com.oracle.truffle.r.runtime.context.FastROptions.RefCountIncrementOnly;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.context.Engine.ParserMetadata;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RNull;
@@ -321,7 +323,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         }
 
         saveArguments = new SaveArgumentsNode(init);
-        if (!params.isEmpty() && !FastROptions.RefCountIncrementOnly.getBooleanValue()) {
+        if (!params.isEmpty() && !RContext.getInstance().getOption(RefCountIncrementOnly)) {
             argPostProcess = PostProcessArgumentsNode.create(params.size());
         } else {
             argPostProcess = null;
@@ -337,7 +339,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
         FrameSlotChangeMonitor.initializeFunctionFrameDescriptor(name != null && !name.isEmpty() ? name : "<function>", descriptor);
         FunctionDefinitionNode rootNode = FunctionDefinitionNode.create(language, source, descriptor, argSourceSections, saveArguments, body, formals, name, argPostProcess);
 
-        if (FastROptions.ForceSources.getBooleanValue()) {
+        if (RContext.getInstance().getOption(ForceSources)) {
             // forces source sections to be generated
             rootNode.getSourceSection();
         }

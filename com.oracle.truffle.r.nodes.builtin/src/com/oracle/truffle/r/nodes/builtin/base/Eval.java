@@ -56,6 +56,7 @@ import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.ReturnException;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -181,7 +182,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     @Specialization(guards = "expr.isLanguage()")
     protected Object doEval(VirtualFrame frame, RPairList expr, Object envir, Object enclos) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
-        RCaller rCaller = getCaller(frame, environment, () -> RArguments.getCall(frame).getSyntaxNode());
+        RCaller call = RArguments.getCall(frame);
+        RCaller rCaller = getCaller(frame, environment, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
         try {
             RFunction evalFun = getFunctionArgument();
             return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
@@ -200,7 +202,8 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     protected Object doEval(VirtualFrame frame, RExpression expr, Object envir, Object enclos) {
         REnvironment environment = envCast.execute(frame, envir, enclos);
         // TODO: how the call should look like for an expression? Block statement?
-        RCaller rCaller = getCaller(frame, environment, () -> RArguments.getCall(frame).getSyntaxNode());
+        RCaller call = RArguments.getCall(frame);
+        RCaller rCaller = getCaller(frame, environment, call.isValidCaller() ? () -> call.getSyntaxNode() : null);
         try {
             RFunction evalFun = getFunctionArgument();
             return RContext.getEngine().eval(expr, environment, frame.materialize(), rCaller, evalFun);
@@ -270,7 +273,7 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
     protected static boolean isVariadicSymbol(RSymbol sym) {
         String x = sym.getName();
         // TODO: variadic symbols can have two digits up to ".99"
-        if (x != ArgumentsSignature.VARARG_NAME && x.length() > 2 && x.charAt(0) == '.' && x.charAt(1) == '.') {
+        if (!Utils.identityEquals(x, ArgumentsSignature.VARARG_NAME) && x.length() > 2 && x.charAt(0) == '.' && x.charAt(1) == '.') {
             for (int i = 2; i < x.length(); i++) {
                 if (!Character.isDigit(x.charAt(i))) {
                     return false;
@@ -295,13 +298,14 @@ public abstract class Eval extends RBuiltinNode.Arg3 {
         return expr;
     }
 
-    private static RCaller getCaller(VirtualFrame frame, REnvironment environment, Supplier<RSyntaxElement> call) {
+    private RCaller getCaller(VirtualFrame frame, REnvironment environment,
+                    Supplier<RSyntaxElement> call) {
         if (environment instanceof REnvironment.Function) {
             RCaller current = RArguments.getCall(frame);
             // TODO: payload should be the expression eval'ed probably
-            return RCaller.create(current.getDepth() + 1, current, call);
+            return call != null ? RCaller.create(current.getDepth() + 1, current, call) : RCaller.createForFrame(frame, current);
         } else {
-            return RCaller.create(frame, call);
+            return call != null ? RCaller.create(frame, call) : RCaller.create(frame, getOriginalCall());
         }
     }
 }

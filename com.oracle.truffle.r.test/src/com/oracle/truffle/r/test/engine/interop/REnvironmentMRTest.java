@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.test.engine.interop;
 
 import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
 
 import org.junit.Test;
 
@@ -33,11 +32,27 @@ import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
+import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import org.graalvm.polyglot.Source;
+import static org.hamcrest.CoreMatchers.instanceOf;
+import static org.junit.Assert.assertThat;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
 
 public class REnvironmentMRTest extends AbstractMRTest {
+
+    @Override
+    protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
+    }
+
+    @Override
+    protected boolean canWrite(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
+    }
 
     @Test
     public void testReadWrite() throws Exception {
@@ -141,10 +156,33 @@ public class REnvironmentMRTest extends AbstractMRTest {
         assertFalse(ForeignAccess.sendRemove(Message.REMOVE.createNode(), e, "i"));
     }
 
+    @Test
+    public void testReadingNAAndWritingNABackKeepsNA() throws Exception {
+        final TruffleObject e = createEnv("e <- new.env(); e$i <- 42; e$na <- NA_integer_; e")[0];
+        Object naInteropValue = ForeignAccess.sendRead(Message.READ.createNode(), e, "na");
+        Object result = ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "i", naInteropValue);
+        assertThat(result, instanceOf(REnvironment.class));
+        assertTrue("index 0 is NA in the updated vector", RRuntime.isNA(getEnvIntValue(result, "i")));
+    }
+
+    private static int getEnvIntValue(Object result, String name) {
+        Object value = ((REnvironment) result).get(name);
+        if (value instanceof Integer) {
+            return (int) value;
+        } else if (value instanceof RAbstractIntVector) {
+            return ((RAbstractIntVector) value).getDataAt(0);
+        }
+        fail("unexpected value " + value);
+        return -1;
+    }
+
     @Override
     protected TruffleObject[] createTruffleObjects() throws Exception {
-        Source src = Source.newBuilder("R", "e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e",
-                        "<testenv>").internal(true).buildLiteral();
+        return createEnv("e <- new.env(); e$s <- 'aaa'; e$i <- 123L; e$d <- 123.1; e$b <- TRUE; e$fn <- function() {}; e$n <- NULL; e$l <- 666; lockBinding('l', e); e");
+    }
+
+    private static TruffleObject[] createEnv(String txt) {
+        Source src = Source.newBuilder("R", txt, "<testenv>").internal(true).buildLiteral();
         return new TruffleObject[]{(TruffleObject) FastRSession.getReceiver(context.eval(src))};
     }
 

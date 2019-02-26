@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -74,6 +74,7 @@ public abstract class Rprofmem extends RExternalBuiltinNode.Arg3 {
             boolean append = RRuntime.fromLogical(appendL);
             try {
                 PrintStream out = new PrintStream(RContext.getInstance().getEnv().getTruffleFile(filename).newOutputStream(append ? StandardOpenOption.APPEND : StandardOpenOption.WRITE));
+                assert thresholdVec != null;
                 profmemState.initialize(out, thresholdVec.getDataAt(0));
                 RDataFactory.addListener(LISTENER);
             } catch (IOException ex) {

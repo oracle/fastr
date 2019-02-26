@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -57,11 +57,11 @@ public abstract class PackBits extends RBuiltinNode.Arg2 {
 
     private static void checkLength(int length, String resultType) {
         String tp = Utils.intern(resultType);
-        if (tp == RESULT_INTEGER) {
+        if (Utils.identityEquals(tp, RESULT_INTEGER)) {
             if (length % 32 != 0) {
                 throw RError.error(RError.SHOW_CALLER, RError.Message.MUST_BE_MULTIPLE, "x", 32);
             }
-        } else if (tp == RESULT_RAW) {
+        } else if (Utils.identityEquals(tp, RESULT_RAW)) {
             if (length % 8 != 0) {
                 throw RError.error(RError.SHOW_CALLER, RError.Message.MUST_BE_MULTIPLE, "x", 8);
             }
@@ -97,7 +97,7 @@ public abstract class PackBits extends RBuiltinNode.Arg2 {
     private static RAbstractVector bitSetToVector(BitSet bitSet, String type, int origVecLen) {
         byte[] byteArray = bitSet.toByteArray();
 
-        if (Utils.intern(type) == RESULT_INTEGER) {
+        if (Utils.identityEquals(Utils.intern(type), RESULT_INTEGER)) {
             int[] packed = toIntArray(byteArray, new int[origVecLen / 32]);
             return RDataFactory.createIntVector(packed, true);
         } else {

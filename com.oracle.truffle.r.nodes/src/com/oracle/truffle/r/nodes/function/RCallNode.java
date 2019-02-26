@@ -78,7 +78,7 @@ import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.RestrictForceSplitting;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -91,6 +91,7 @@ import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.RVisibility;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.builtins.FastPathFactory;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -497,7 +498,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         // comparison is enough. Signature length > 0, because we dispatched on at least one arg
         int typeXIdx = 0;
         if (summaryGroupNaRmProfile.profile(dispatch == RDispatch.SUMMARY_GROUP_GENERIC &&
-                        argsSignature.getName(typeXIdx) == RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME)) {
+                        Utils.identityEquals(argsSignature.getName(typeXIdx), RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME))) {
             typeXIdx = 1;
         }
 
@@ -599,7 +600,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 summaryGroupSignatureCached = argsSignature;
                 summaryGroupHasNaRmCached = false;
                 for (int i = 0; i < argsSignature.getLength(); i++) {
-                    if (argsSignature.getName(i) == RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME) {
+                    if (Utils.identityEquals(argsSignature.getName(i), RArguments.SUMMARY_GROUP_NA_RM_ARG_NAME)) {
                         summaryGroupHasNaRmCached = true;
                         break;
                     }
@@ -844,6 +845,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
+    @ImportStatic(DSLConfig.class)
     public abstract static class FunctionDispatch extends Node {
 
         /**
@@ -854,7 +856,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
          */
         public abstract Object execute(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments);
 
-        protected static final int CACHE_SIZE = DSLConfig.getCacheSize(4);
+        protected static final int CACHE_SIZE = 4;
 
         private final RCallNode originalCall;
         private final AlteredArguments alteredArguments;
@@ -899,7 +901,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             return createArguments(cachedTarget, false);
         }
 
-        @Specialization(limit = "CACHE_SIZE", guards = "function.getTarget() == cachedTarget")
+        @Specialization(limit = "getCacheSize(CACHE_SIZE)", guards = "function.getTarget() == cachedTarget")
         protected Object dispatch(VirtualFrame frame, RFunction function, Object varArgs, Object s3Args, Object s3DefaultArguments,
                         @Cached("function.getTarget()") @SuppressWarnings("unused") RootCallTarget cachedTarget,
                         @Cached("createCacheNode(cachedTarget)") LeafCallFunctionNode leafCall,
@@ -1171,7 +1173,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 call = insert(CallRFunctionNode.create(cachedTarget));
                 if (needsSplitting(cachedTarget)) {
-                    if (!FastROptions.RestrictForceSplitting.getBooleanValue()) {
+                    if (!RContext.getInstance().getOption(RestrictForceSplitting)) {
                         call.getCallNode().cloneCallTarget();
                     }
                 }

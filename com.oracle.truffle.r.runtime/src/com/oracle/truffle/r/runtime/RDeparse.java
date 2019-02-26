@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -1096,15 +1096,14 @@ public class RDeparse {
         private DeparseVisitor appendListContents(RAbstractVector v) {
             int n = v.getLength();
             boolean lbreak = false;
-            Object names = v.getNames();
-            RStringVector snames = names == RNull.instance ? null : (RStringVector) names;
+            RStringVector names = v.getNames();
             for (int i = 0; i < n; i++) {
                 if (i > 0) {
                     append(", ");
                 }
                 lbreak = listLinebreak(lbreak);
-                if (snames != null && niceNames()) {
-                    append(quotify(snames.getDataAt(i), '\"'));
+                if (names != null && niceNames()) {
+                    append(quotify(names.getDataAt(i), '\"'));
                     append(" = ");
                 }
                 appendValue(v.getDataAtAsObject(i));

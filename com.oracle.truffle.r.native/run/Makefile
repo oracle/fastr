@@ -48,9 +48,6 @@ BIN_FILES := $(wildcard $(GNUR_HOME_BINARY)/bin/*)
 
 DOC_FILES := $(wildcard $(GNUR_HOME_BINARY)/doc/*)
 
-# Not all of these work unchanged
-ETC_FILES := $(addprefix $(GNUR_HOME_BINARY)/etc/,javaconf ldpaths Renviron repositories)
-
 SHARE_FILES := $(addprefix $(GNUR_HOME_BINARY)/share/,R Rd make java encodings)
 
 LLVM_TOOLS := $(wildcard $(FASTR_NATIVE_DIR)/llvm_tools/llvm-*)
@@ -64,13 +61,13 @@ rundirs:
 	mkdir -p $(FASTR_BIN_DIR)/execRextras
 	mkdir -p $(FASTR_ETC_DIR)
 	mkdir -p $(FASTR_SHARE_DIR)
-	
+
 rcmds: $(FASTR_BIN_DIR)/R
 
 $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	cp -r $(BIN_FILES) $(FASTR_BIN_DIR)
-	
-    # overide bin/R
+
+	# overide bin/R
 	cp R.sh $(FASTR_BIN_DIR)/exec/R
 	# override bin/Rscript
 	cp Rscript_exec.sh $(FASTR_BIN_DIR)/execRextras/Rscript
@@ -82,18 +79,22 @@ $(FASTR_BIN_DIR)/R: Makefile R.sh Rscript.sh Rscript_exec.sh Rclasspath.sh
 	(sed -e 's!^\(R_HOME_DIR=\)\(.*\)!\1"$(FASTR_R_HOME)"!' | \
 	 sed -e 's/    -h.--help./    --r-help\)/' | \
 	 sed -e 's!      exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!      FASTR_INTERNAL_ARGS=`echo "$${FASTR_INTERNAL_ARGS} $${args}" | $${SED} -e 's/^[[:space:]]*//' | $${SED} -e 's/[[:blank:]]*$$//'` exec sh "$${R_HOME}/bin/Rcmd" "$${@}" ;;!') < $(R_SCRIPT) > $(FASTR_BIN_DIR)/R
-	chmod +x $(FASTR_BIN_DIR)/R 
+	chmod +x $(FASTR_BIN_DIR)/R
 	touch $(FASTR_ETC_DIR)/ldpaths
-	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(GNUR_HOME_BINARY)/etc/Renviron > $(FASTR_ETC_DIR)/Renviron
+	sed -e "s|\(R_LIBS_USER=.*-'\)\(.*\)'}|\1$(FASTR_R_HOME)/library'}|" < $(shell uname)/Renviron > $(FASTR_ETC_DIR)/Renviron
+	mkdir -p $(FASTR_ETC_DIR)/src/include
+	cp config.h.in $(FASTR_ETC_DIR)/src/include
+	cp $(GNUR_HOME_BINARY)/etc/Renviron.in $(FASTR_ETC_DIR)/Renviron.in
+	cp $(GNUR_HOME_BINARY)/etc/ldpaths.in $(FASTR_ETC_DIR)/ldpaths.in
 	cp $(GNUR_HOME_BINARY)/etc/Makeconf Makeconf.etc
 	cp $(GNUR_HOME_BINARY)/etc/javaconf $(FASTR_ETC_DIR)/javaconf
 	cp $(GNUR_HOME_BINARY)/etc/repositories $(FASTR_ETC_DIR)/repositories
 	cp $(GNUR_HOME_BINARY)/etc/ldpaths $(FASTR_ETC_DIR)/ldpaths
 	# the ed script adds -DFASTR to compiler options and removes JAVA related variables
 	ed Makeconf.etc < edMakeconf.etc
-	
+
 	echo $(DEFAULT_CRAN_MIRROR) > $(FASTR_ETC_DIR)/DEFAULT_CRAN_MIRROR
-	
+
 ifeq ($(FASTR_RFFI),llvm)
 	ed Makeconf.etc < edMakeconf.etc.llvm
 	cp $(LLVM_TOOLS) $(FASTR_BIN_DIR)
@@ -102,7 +103,7 @@ endif
 
 	## deploy helper script that can build native-image of FastR and update the launchers in GraalVM
 	cp install_r_native_image $(FASTR_BIN_DIR)
-    ## prepare the configuration artefacts for the manual FastR configuration in GraalVM 
+	## prepare the configuration artefacts for the manual FastR configuration in GraalVM
 	cp configure_fastr $(FASTR_BIN_DIR)
 	chmod +x $(FASTR_BIN_DIR)/configure_fastr
 	cp configure.ac $(FASTR_ETC_DIR)

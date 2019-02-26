@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,7 +40,6 @@ import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.nodes.NodeCost;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -640,29 +639,6 @@ public final class RDataFactory {
             return traceDataCreated(new RPromise(state, env, closure));
         }
 
-        public final RPromise createEvaluatedPromise(PromiseState state, Closure closure, Object argumentValue) {
-            return traceDataCreated(new RPromise(state, closure, argumentValue));
-        }
-
-        public final RPromise createEvaluatedPromise(Closure closure, Object value) {
-            return traceDataCreated(new RPromise(PromiseState.Explicit, closure, value));
-        }
-
-        public RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
-                        int wrapIndex, MaterializedFrame execFrame) {
-            if (FastROptions.noEagerEval()) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex, execFrame));
-        }
-
-        public RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, MaterializedFrame execFrame) {
-            if (FastROptions.noEagerEval()) {
-                throw RInternalError.shouldNotReachHere();
-            }
-            return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1, execFrame));
-        }
-
         public final Object createPairList(int size, SEXPTYPE type) {
             if (size == 0) {
                 return RNull.instance;
@@ -1239,16 +1215,12 @@ public final class RDataFactory {
 
     public static RPromise createEagerPromise(PromiseState state, Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback,
                     int wrapIndex, MaterializedFrame execFrame) {
-        if (FastROptions.noEagerEval()) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        assert !RContext.getInstance().noEagerEvalOption();
         return traceDataCreated(new RPromise.EagerPromise(state, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, wrapIndex, execFrame));
     }
 
     public static RPromise createPromisedPromise(Closure exprClosure, Object eagerValue, Assumption notChangedNonLocally, RCaller targetFrame, EagerFeedback feedback, MaterializedFrame execFrame) {
-        if (FastROptions.noEagerEval()) {
-            throw RInternalError.shouldNotReachHere();
-        }
+        assert !RContext.getInstance().noEagerEvalOption();
         return traceDataCreated(new RPromise.EagerPromise(PromiseState.Promised, exprClosure, eagerValue, notChangedNonLocally, targetFrame, feedback, -1, execFrame));
     }
 

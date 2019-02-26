@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -223,7 +223,9 @@ public class HTMLDumper extends AbstractDumper {
             builder.html(builder.head(builder.title(title)), builder.body(table));
             builder.dump();
 
-            return problemClassFile.getFileName().toString();
+            Path fileNamePath = problemClassFile.getFileName();
+            assert fileNamePath != null;
+            return fileNamePath.toString();
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -265,7 +267,9 @@ public class HTMLDumper extends AbstractDumper {
             builder.html(builder.head(builder.title("Test Runs Failed to Analyze")), builder.body(table));
             builder.dump();
         }
-        return problemClassFile.getFileName().toString();
+        Path fileNamePath = problemClassFile.getFileName();
+        assert fileNamePath != null;
+        return fileNamePath.toString();
     }
 
 }

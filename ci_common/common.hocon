@@ -1,7 +1,7 @@
 # java 7 is needed by Truffle (for now)
 java7 : {name : oraclejdk, version : "7",    platformspecific: true}
 # java 8 must be a jvmci enabled variant
-java8 : {name : labsjdk, version : "8u192-jvmci-0.52", platformspecific: true}
+java8 : {name : labsjdk, version : "8-jvmci-latest", platformspecific: true}
 java9 : {name : oraclejdk, version : "9.0.4+11", platformspecific: true}
 
 java8Downloads : {
@@ -50,15 +50,23 @@ logfiles : [
 # on the CI cluster. Not all of the modules are needed by FastR but all are needed by the
 # embedded GNU R that is built within FastR.
 
-pkgEnvironment: {
+environmentLinux: {
   environment : {
-    PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/zlib/1.2.11/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include"""
-    PKG_LDFLAGS_OVERRIDE : """-L/cm/shared/apps/zlib/1.2.11/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64"""
-	TZDIR: "/usr/share/zoneinfo"
+    PKG_INCLUDE_FLAGS_OVERRIDE : "-I/cm/shared/apps/zlib/1.2.11/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/curl/7.50.1/include"
+    PKG_LDFLAGS_OVERRIDE : "-L/cm/shared/apps/zlib/1.2.11/lib -L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64"
+    TZDIR: "/usr/share/zoneinfo"
   }
 }
 
-packagesLinux : ${pkgEnvironment} {
+environmentDarwin : {
+  environment : {
+    PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
+    F77: "/usr/local/bin/gfortran-4.9"
+    TZDIR: "/usr/share/zoneinfo"
+  }
+}
+
+packagesLinux : {
   packages : {
     git : ">=1.8.3"
     mercurial : ">=2.2"
@@ -66,10 +74,11 @@ packagesLinux : ${pkgEnvironment} {
     "pip:pylint" : "==1.1.0"
     "pip:ninja_syntax" : "==1.7.2"
     make : ">=3.83"
-    gcc-build-essentials : "==4.9.1" # GCC 4.9.0 fails on cluster
-    readline : "==6.3"
+    gcc-build-essentials : "==4.9.1" # TODO: upgrade to 4.9.2
     pcre : ">=8.38"
-    zlib : ">=1.2.11"
+    zlib : "==1.2.11"
+    # these are needed to build GNU-R
+    readline : "==6.3"
     curl : ">=7.50.1"
   }
 }
@@ -79,20 +88,27 @@ packagesDarwin : {
   "pip:pylint" : "==1.1.0"
   "pip:ninja_syntax" : "==1.7.2"
   "pcre" : "==8.38"
+  "homebrew/gcc" : "==4.9"
 }
 
-# Common settings for all builds but note that it uses the Linux package settings,
-# so these must be overridden in any darwin builds
+# Common settings for all builds
 
-common : ${java8Downloads} ${packagesLinux}  {
+common : ${java8Downloads} {
   logs: ${logfiles}
+  catch_files : [
+    "Graal diagnostic output saved in (?P<filename>.+\.zip)"
+  ]
   timelimit : "1:00:00"
   environment : {
-	PKG_TEST_ENV_miniUI : "LC_ALL=C"
-	PKG_TEST_ENV_compare : "LC_ALL=C"
-	FASTR_OPTION_PrintErrorStacktracesToFile: "true"
+    FASTR_TEST_trace_tests : "true"
+    PKG_TEST_ENV_miniUI : "LC_ALL=C"
+    PKG_TEST_ENV_compare : "LC_ALL=C"
+    FASTR_OPTION_PrintErrorStacktracesToFile: "true"
   }
 }
+
+commonLinux: ${common} ${packagesLinux} ${environmentLinux}
+commonDarwin: ${common} ${packagesDarwin} ${environmentDarwin}
 
 # Every "pull request" (PR) is subject to a series of "gate" commands that must pass
 # for the PR to be accepted into the master branch. The gate commands are run under
@@ -105,17 +121,24 @@ gateCmd : ["mx", "-v", "--strict-compliance", "rgate", "-B=--force-deprecation-a
 
 # The standard set of gate tasks: the actual executable tests are in the "UnitTests" task.
 
-gateTestCommon : ${common} {
+gateTestCommon : {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: with specials,Rembedded"]
   ]
 }
 
-gateTestLinux : ${gateTestCommon}  {
+gateTestLinux : ${gateTestCommon} ${commonLinux}
+
+gateTestDarwin : ${gateTestCommon} ${commonDarwin} {
+  setup : [
+    [set-export, PKG_INCLUDE_FLAGS_OVERRIDE, "-I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"]
+    [set-export, MOD_LIB_PATH, [echo, "${LD_LIBRARY_PATH}", |, tr, "\:", "\\n", |, grep, lib/gcc, |, tail, "-1"]]
+    [set-export, PKG_LDFLAGS_OVERRIDE, "-L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L${MOD_LIB_PATH} -L/usr/lib"]
+  ]
 }
 
-gateTestNoDSLCacheLinux : ${common} {
-  environment : ${common.environment} {
+gateTestNoDSLCacheLinux : ${commonLinux} {
+  environment : ${common.environment} ${environmentLinux.environment} {
     FASTR_RELEASE: "true", # release build so that we also tests recommended pkgs installation
     FASTR_OPTION_DSLCacheSizeFactor: "0"
   }
@@ -126,14 +149,14 @@ gateTestNoDSLCacheLinux : ${common} {
   ]
 }
 
-gateTestNoSpecialsLinux : ${common}  {
+gateTestNoSpecialsLinux : ${commonLinux}  {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials"]
   ]
 }
 
-gateTestNoDSLCacheNoSpecialsLinux : ${common} {
-  environment : ${common.environment} {
+gateTestNoDSLCacheNoSpecialsLinux : ${commonLinux} {
+  environment : ${common.environment} ${environmentLinux.environment} {
     FASTR_RELEASE: "true", # release build so that we also tests recommended pkgs installation
     FASTR_OPTION_DSLCacheSizeFactor: "0"
   }
@@ -144,22 +167,8 @@ gateTestNoDSLCacheNoSpecialsLinux : ${common} {
   ]
 }
 
-darwinEnvironment : {
-  environment :  {
-    PATH : "/usr/local/bin:$JAVA_HOME/bin:$PATH"
-    F77: "/usr/local/bin/gfortran-4.9"
-    TZDIR: "/usr/share/zoneinfo"
-	  PKG_INCLUDE_FLAGS_OVERRIDE : """-I/cm/shared/apps/pcre/8.38/include -I/cm/shared/apps/bzip2/1.0.6/include -I/cm/shared/apps/xz/5.2.2/include -I/cm/shared/apps/curl/7.50.1/include"""
-    PKG_LDFLAGS_OVERRIDE : """-L/cm/shared/apps/bzip2/1.0.6/lib -L/cm/shared/apps/xz/5.2.2/lib -L/cm/shared/apps/pcre/8.38/lib -L/cm/shared/apps/curl/7.50.1/lib -L/cm/shared/apps/gcc/4.9.1/lib64 -L/usr/local/Cellar/gcc@4.9/4.9.4/lib/gcc/4.9/ -L/usr/lib"""
-  }
-}
-
-gateTestDarwin : ${gateTestCommon} ${darwinEnvironment}  {
-  packages : ${packagesDarwin}
-}
-
-gateTestLinuxNFI : ${gateTestCommon}  {
-  environment :  {
+gateTestLinuxNFI : ${gateTestLinux} {
+  environment :  ${common.environment} ${environmentLinux.environment} {
       FASTR_RFFI : "nfi"
       TZDIR: "/usr/share/zoneinfo"
   }
@@ -172,10 +181,7 @@ requireGCC: {
     }
 }
 
-gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
-  setup: [
-    [export, "FASTR_TEST_trace_tests=true"]
-  ]
+gateTestJava9Linux : ${java9Downloads} ${gateTestLinux} {
   downloads : {
     JAVA_HOME : ${java9Downloads.downloads.JAVA_HOME}
     EXTRA_JAVA_HOMES : ${java9Downloads.downloads.EXTRA_JAVA_HOMES}
@@ -184,7 +190,7 @@ gateTestJava9Linux : ${java9Downloads} ${gateTestCommon} {
 
 # This performs a number of "style" checks on the code to ensure it confirms to the project standards.
 
-gateStyle : ${common} {
+gateStyle : ${commonLinux} {
   # need pyhocon fix
   downloads : {
     JAVA_HOME : ${java8Downloads.downloads.JAVA_HOME}
@@ -192,17 +198,17 @@ gateStyle : ${common} {
     JDT : {name: ecj, version: "4.5.1", platformspecific: false}
     ECLIPSE : {name: eclipse, version: "4.5.2", platformspecific: true}
   }
-  environment : {
+  environment : ${common.environment} ${environmentLinux.environment} {
     ECLIPSE_EXE : "$ECLIPSE/eclipse"
   }
   run : [
-    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
+    ${gateCmd} ["Versions,JDKReleaseInfo,Pylint,Canonicalization Check,BuildJavaWithJavac,SpotBugs,IDEConfigCheck,CodeFormatCheck,Checkstyle,Copyright check,UnitTests: ExpectedTestOutput file check"]
     ["mx", "clean", "--no-native"]
     ${gateCmd} ["BuildWithEcj"]
   ]
 }
 
-gateBuildWithEcj : ${common} {
+gateBuildWithEcj : ${commonLinux} {
   # need pyhocon fix
   downloads : {
     JAVA_HOME : ${java8Downloads.downloads.JAVA_HOME}
@@ -210,7 +216,7 @@ gateBuildWithEcj : ${common} {
     JDT : {name: ecj, version: "4.5.1", platformspecific: false}
     ECLIPSE : {name: eclipse, version: "4.5.2", platformspecific: true}
   }
-  environment : {
+  environment : ${common.environment} ${environmentLinux.environment} {
     ECLIPSE_EXE : "$ECLIPSE/eclipse"
   }
   run : [
@@ -220,7 +226,7 @@ gateBuildWithEcj : ${common} {
 
 # This check runs diagnostics on the implementation of the R "builtins" in FastR, e.g., that the argument processing is sound.
 
-rbcheck : ${common} {
+rbcheck : ${commonLinux} {
   run : [
     ${gateCmd} ["Versions,JDKReleaseInfo,BuildJavaWithJavac"]
     ["mx", "rbcheck"]
@@ -228,7 +234,7 @@ rbcheck : ${common} {
   ]
 }
 
-internalPkgtest: ${common} {
+internalPkgtest: ${commonLinux} {
   run : [
     ["mx", "build"]
     ["mx", "pkgtest", "--verbose", "--repos", "FASTR", "--pkg-filelist", "com.oracle.truffle.r.test.native/packages/pkg-filelist"]
@@ -236,7 +242,7 @@ internalPkgtest: ${common} {
   logs: ${common.logs}
 }
 
-gnurTests: ${common} {
+gnurTests: ${commonLinux} {
   run : [
     ["mx", "build"]
     ["mx", "gnu-rtests"]

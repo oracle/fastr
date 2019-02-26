@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.util.Objects;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.function.ArgumentMatcher;
@@ -43,9 +44,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * functions using a vararg parameter but expecting a specific amount of parameters by internally
  * matching them.
  */
+@ImportStatic(DSLConfig.class)
 public abstract class PrepareMatchInternalArguments extends Node {
-
-    protected static final int CACHE_SIZE = DSLConfig.getCacheSize(8);
 
     protected final RBaseNode callingNode;
     protected final FormalArguments formals;
@@ -59,7 +59,7 @@ public abstract class PrepareMatchInternalArguments extends Node {
         return ArgumentMatcher.matchArguments(supplied, formals.getSignature(), callingNode, null);
     }
 
-    @Specialization(limit = "CACHE_SIZE", guards = {"cachedExplicitArgSignature == explicitArgs.getSignature()"})
+    @Specialization(limit = "getCacheSize(8)", guards = {"cachedExplicitArgSignature == explicitArgs.getSignature()"})
     public RArgsValuesAndNames prepare(RArgsValuesAndNames explicitArgs, S3DefaultArguments s3DefaultArguments,
                     @SuppressWarnings("unused") @Cached("explicitArgs.getSignature()") ArgumentsSignature cachedExplicitArgSignature,
                     @Cached("createArguments(cachedExplicitArgSignature)") MatchPermutation permutation) {

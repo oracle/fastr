@@ -853,7 +853,7 @@ public class LaFunctions {
 
             int lwork = (int) tmp[0];
             double[] work = new double[lwork];
-            dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, work, lwork, iwork);
+            info = dgesddNode.execute(ju.charAt(0), n, p, xvals, n, sdata, udata, ldu, vtdata, ldvt, work, lwork, iwork);
             if (info != 0) {
                 error(Message.LAPACK_ERROR, info, "dgesdd");
             }

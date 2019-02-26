@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,7 +27,6 @@ import com.oracle.truffle.api.interop.KeyInfo;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnknownIdentifierException;
-import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
@@ -43,8 +42,13 @@ import org.junit.Test;
 
 public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
 
+    @Override
+    protected boolean canRead(@SuppressWarnings("unused") TruffleObject obj) {
+        return true;
+    }
+
     @Test
-    public void testReadWriteIdx() throws Exception {
+    public void testReadIdx() throws Exception {
         TruffleObject args = createTruffleObjects()[0];
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, 1f), UnknownIdentifierException.class);
@@ -61,12 +65,10 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
 
         TruffleObject emptyargs = RArgsValuesAndNames.EMPTY;
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), emptyargs, 0), UnknownIdentifierException.class);
-
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), args, 0, 321), UnsupportedMessageException.class);
     }
 
     @Test
-    public void testReadWriteName() throws Exception {
+    public void testReadName() throws Exception {
         TruffleObject args = createTruffleObjects()[0];
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, "nnnnooooonnnneee"), UnknownIdentifierException.class);
@@ -80,8 +82,6 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
 
         TruffleObject emptyargs = RArgsValuesAndNames.EMPTY;
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), emptyargs, "s"), UnknownIdentifierException.class);
-
-        assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), args, "s", "aaa"), UnsupportedMessageException.class);
     }
 
     @Test

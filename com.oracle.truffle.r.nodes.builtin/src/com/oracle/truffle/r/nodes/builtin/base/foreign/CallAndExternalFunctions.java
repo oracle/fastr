@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ package com.oracle.truffle.r.nodes.builtin.base.foreign;
 import static com.oracle.truffle.r.runtime.RVisibility.CUSTOM;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
 
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -94,7 +95,6 @@ import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.objects.GetPrimNameNodeGen;
 import com.oracle.truffle.r.nodes.objects.NewObjectNodeGen;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalCode;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -272,7 +272,7 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
-            if (FastROptions.UseInternalGridGraphics.getBooleanValue() && name != null) {
+            if (RContext.getInstance().getOption(UseInternalGridGraphics) && name != null) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotCall(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -752,7 +752,7 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList f) {
             String name = lookupName(f);
-            if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
+            if (RContext.getInstance().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -892,7 +892,7 @@ public class CallAndExternalFunctions {
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList symbol) {
             String name = lookupName(symbol);
-            if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
+            if (RContext.getInstance().getOption(UseInternalGridGraphics)) {
                 RExternalBuiltinNode gridExternal = FastRGridExternalLookup.lookupDotExternal2(name);
                 if (gridExternal != null) {
                     return gridExternal;
@@ -1076,7 +1076,11 @@ public class CallAndExternalFunctions {
         @Override
         @TruffleBoundary
         public RExternalBuiltinNode lookupBuiltin(RList f) {
-            return FastRGridExternalLookup.lookupDotCallGraphics(lookupName(f));
+            if (RContext.getInstance().getOption(UseInternalGridGraphics)) {
+                return FastRGridExternalLookup.lookupDotCallGraphics(lookupName(f));
+            } else {
+                return null;
+            }
         }
 
         @SuppressWarnings("unused")

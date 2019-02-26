@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -39,6 +39,7 @@ import com.oracle.truffle.r.launcher.RVersionNumber;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 import java.nio.file.FileSystems;
+import java.util.logging.Level;
 
 /**
  * Repository for environment variables, including those set by FastR itself, e.g.
@@ -444,8 +445,7 @@ public final class REnvVars implements RContext.ContextState {
         try {
             readEnvironFile(path);
         } catch (IOException ex) {
-            // CheckStyle: stop system..print check
-            System.out.println(ex.getMessage());
+            RLogger.getLogger(REnvVars.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
 }

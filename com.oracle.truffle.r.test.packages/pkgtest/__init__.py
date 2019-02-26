@@ -95,6 +95,17 @@ def _installpkgs_script():
     return join(packages_test, 'r', 'install.packages.R')
 
 
+def commit_fastr_builtins():
+    '''
+    There are some FastR builtins which we also want to use in GnuR (i.e. 'install.fastr.packages').
+    This function deparses these functions and writes them into a file which is then loaded by GnuR.
+    '''
+    dest_file = join(_packages_test_project_dir(), 'r', 'fastr.functions.rdx')
+    cmd_line = [get_fastr_rscript(), "--silent", "-e", '{ fastrRepoPath <- NULL; save(fastrRepoPath, install.fastr.packages, file="%s") }' % dest_file]
+    logging.debug("Generating fastr.functions.R: " + str(cmd_line))
+    return pkgtest_run(cmd_line)
+
+
 def _installpkgs(args, **kwargs):
     '''
     Runs the R script that does package/installation and testing.
@@ -163,6 +174,9 @@ def pkgtest(args):
     env['R_LIBS_USER'] = fastr_libinstall
     env['FASTR_OPTION_PrintErrorStacktracesToFile'] = 'false'
     env['FASTR_OPTION_PrintErrorStacktraces'] = 'true'
+
+    # transfer required FastR functions to GnuR
+    commit_fastr_builtins()
 
     # If '--cache-pkgs' is set, then also set the native API version value
     _set_pkg_cache_api_version(install_args, get_fastr_include_path())

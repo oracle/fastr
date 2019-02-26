@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * The INDEX_SUPPLIED_SIGNATURE is set to the permutation of the supplied signature that corresponds
  * to how the supplied arguments were permuted. The purpose of this slot is to store the names in the
  * original signature (especially positional vs. named) for later use in UseMethod.
- * 
+ *
  * The INDEX_CALLER_FRAME slot is used for either a {@link CallerFrameClosure} or the materialized
  * caller frame itself. Passing the materialized caller frame via arguments allows us to walk
  * the call stack without calling {@link com.oracle.truffle.api.TruffleRuntime#iterateFrames( FrameInstanceVisitor)},
@@ -191,8 +191,8 @@ public final class RArguments {
      */
     public static Object[] create(RFunction function, RCaller call, Object callerFrameObject, Object[] evaluatedArgs,
                     ArgumentsSignature suppliedSignature, MaterializedFrame enclosingFrame, DispatchArgs dispatchArgs) {
-        assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
         assert evaluatedArgs != null : "RArguments.create evaluatedArgs is null";
+        assert suppliedSignature.getLength() == evaluatedArgs.length : "suppliedSignature should match the evaluatedArgs (see Java docs).";
         assert call != null : "RArguments.create call is null";
         assert callerFrameObject != null : "RArguments.create callerFrameObject is null";
         // Eventually we want to have this invariant

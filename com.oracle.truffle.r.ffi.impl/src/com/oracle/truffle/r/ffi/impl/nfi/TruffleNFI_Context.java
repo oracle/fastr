@@ -22,10 +22,6 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCall;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceDownCallReturn;
-import static com.oracle.truffle.r.ffi.impl.common.RFFIUtils.traceEnabled;
-
 import java.lang.reflect.Field;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -45,8 +41,10 @@ import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.ffi.impl.common.LibPaths;
 import com.oracle.truffle.r.ffi.impl.nfi.TruffleNFI_DLL.NFIHandle;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
@@ -62,13 +60,15 @@ import com.oracle.truffle.r.runtime.ffi.PCRERFFI;
 import com.oracle.truffle.r.runtime.ffi.REmbedRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 import com.oracle.truffle.r.runtime.ffi.StatsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ToolsRFFI;
 import com.oracle.truffle.r.runtime.ffi.ZipRFFI;
 
 import sun.misc.Unsafe;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCall;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logDownCallReturn;
+import static com.oracle.truffle.r.runtime.ffi.RFFILog.logEnabled;
 
 class UnsafeAdapter {
     public static final Unsafe UNSAFE = initUnsafe();
@@ -90,7 +90,7 @@ class UnsafeAdapter {
 
 public class TruffleNFI_Context extends RFFIContext {
 
-    @CompilationFinal private static boolean hasAccessLock;
+    @CompilationFinal private boolean hasAccessLock;
     private static ReentrantLock accessLock;
 
     public TruffleNFI_Context() {
@@ -144,9 +144,9 @@ public class TruffleNFI_Context extends RFFIContext {
         CompilerAsserts.neverPartOfCompilation();
         if (!nativeFunctions.containsKey(function)) {
             TruffleObject dllInfo;
-            if (function.getLibrary() == NativeFunction.baseLibrary()) {
+            if (Utils.identityEquals(function.getLibrary(), NativeFunction.baseLibrary())) {
                 dllInfo = TruffleNFI_Context.getInstance().defaultLibrary;
-            } else if (function.getLibrary() == NativeFunction.anyLibrary()) {
+            } else if (Utils.identityEquals(function.getLibrary(), NativeFunction.anyLibrary())) {
                 DLLInfo lib = DLL.findLibraryContainingSymbol(RContext.getInstance(), function.getCallName());
                 if (lib == null) {
                     throw RInternalError.shouldNotReachHere("Could not find library containing symbol " + function.getCallName());
@@ -306,10 +306,14 @@ public class TruffleNFI_Context extends RFFIContext {
 
     @Override
     public ContextState initialize(RContext context) {
-        RFFILog.initializeTracing();
+        if (RContext.getInstance().getOption(TraceNativeCalls)) {
+            System.out.println("WARNING: The TraceNativeCalls option was discontinued!\n" +
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.nativeCalls.level=FINE --log.file=<yourfile>.\n" +
+                            "NOTE that stdout is problematic for embedded mode, when using this logger, also always specify a log file");
+        }
         initializeLock();
-        if (traceEnabled()) {
-            traceDownCall("initialize");
+        if (logEnabled()) {
+            logDownCall("initialize");
         }
         if (hasAccessLock) {
             acquireLock();
@@ -339,8 +343,8 @@ public class TruffleNFI_Context extends RFFIContext {
             }
             return this;
         } finally {
-            if (traceEnabled()) {
-                traceDownCallReturn("initialize", null);
+            if (logEnabled()) {
+                logDownCallReturn("initialize", null);
             }
             if (hasAccessLock) {
                 releaseLock();
@@ -348,8 +352,8 @@ public class TruffleNFI_Context extends RFFIContext {
         }
     }
 
-    private static synchronized void initializeLock() {
-        hasAccessLock = FastROptions.SynchronizeNativeCode.getBooleanValue();
+    private synchronized void initializeLock() {
+        hasAccessLock = RContext.getInstance().getOption(FastROptions.SynchronizeNativeCode);
         if (hasAccessLock && accessLock == null) {
             accessLock = new ReentrantLock();
         }

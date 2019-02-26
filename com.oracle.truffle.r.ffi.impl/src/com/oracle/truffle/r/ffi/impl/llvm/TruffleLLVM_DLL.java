@@ -50,6 +50,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
@@ -57,8 +58,9 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.runtime.FastROptions;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -70,6 +72,7 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
+import java.util.logging.Level;
 
 /**
  * The Truffle version of {@link DLLRFFI}. {@code dlopen} expects to find the LLVM IR in a "library"
@@ -221,7 +224,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     continue;
                 }
                 Path zipName = Paths.get(entry.getName());
-                String name = zipName.getFileName().toString();
+                Path fileNamePath = zipName.getFileName();
+                assert fileNamePath != null;
+                String name = fileNamePath.toString();
                 int ix = name.indexOf('.');
                 if (ix > 0) {
                     name = name.substring(0, ix);
@@ -375,7 +380,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     }
 
     private static String getLibName(String path) {
-        String fileName = FileSystems.getDefault().getPath(path).getFileName().toString();
+        Path fileNamePath = FileSystems.getDefault().getPath(path).getFileName();
+        assert fileNamePath != null;
+        String fileName = fileNamePath.toString();
         int ix = fileName.lastIndexOf(".");
         return fileName.substring(0, ix);
     }
@@ -427,9 +434,15 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             source = Source.newBuilder(language, ir.base64, ir.name).mimeType(mimeType).build();
         }
         CallTarget result = context.getEnv().parse(source);
+
         if (System.getenv("LLVM_PARSE_TIME") != null) {
+            System.out.println("WARNING: The LLVM_PARSE_TIME env variable was discontinued.\n" +
+                            "You can rerun FastR with --log.R." + TruffleLLVM_DLL.class.getName() + ".level=FINE");
+        }
+        TruffleLogger logger = RLogger.getLogger(TruffleLLVM_DLL.class.getName());
+        if (logger.isLoggable(Level.FINE)) {
             long end = System.nanoTime();
-            System.out.printf("parsed %s:%s in %f secs%n", libName, ir.name, ((double) (end - start)) / (double) nanos);
+            logger.log(Level.FINE, "parsed {0}:{1} in {2} secs", new Object[]{libName, ir.name, ((double) (end - start)) / (double) nanos});
         }
         return result;
     }

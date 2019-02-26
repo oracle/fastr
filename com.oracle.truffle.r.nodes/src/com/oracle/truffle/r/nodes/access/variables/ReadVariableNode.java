@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.dsl.TypeSystemReference;
@@ -51,14 +52,16 @@ import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.call.RExplicitCallNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintComplexLookups;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.runtime.StableValue;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RMissing;
@@ -82,6 +85,8 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSourceSectionNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
+import java.util.logging.Level;
+import static com.oracle.truffle.r.runtime.RLogger.LOGGER_COMPLEX_LOOKUPS;
 
 final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSyntaxLookup {
 
@@ -109,11 +114,8 @@ final class LookupNode extends RSourceSectionNode implements RSyntaxNode, RSynta
             CompilerDirectives.transferToInterpreterAndInvalidate();
             visibility = insert(SetVisibilityNode.create());
         }
-        try {
-            return read.executeInternal(frame, frame);
-        } finally {
-            visibility.execute(frame, true);
-        }
+        visibility.execute(frame, true);
+        return read.executeInternal(frame, frame);
     }
 
     @Override
@@ -693,8 +695,13 @@ public final class ReadVariableNode extends RBaseNode {
             lastLevel = new MultiAssumptionLevel(lastLevel, assumptions.toArray(new Assumption[assumptions.size()]));
         }
 
-        if (FastROptions.PrintComplexLookups.getBooleanValue()) {
-            System.out.println(identifier + " " + lastLevel);
+        if (RContext.getInstance().getOption(PrintComplexLookups)) {
+            System.out.println("WARNING: The PrintComplexLookups option was discontinued.\n" +
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.complexLookups.level=FINE");
+        }
+        TruffleLogger logger = RLogger.getLogger(LOGGER_COMPLEX_LOOKUPS);
+        if (logger.isLoggable(Level.FINE)) {
+            logger.log(Level.FINE, "{0} {1}", new Object[]{identifier, lastLevel});
         }
         return lastLevel;
     }

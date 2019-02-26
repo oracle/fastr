@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -55,16 +55,17 @@ import org.junit.Test;
 import org.junit.runner.Description;
 import org.junit.runner.Result;
 
-import com.oracle.truffle.r.runtime.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RSuicide;
 import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
+import java.util.Map;
 
 /**
  * Base class for all unit tests. The unit tests are actually arranged as a collection of
@@ -102,6 +103,11 @@ public class TestBase {
      * source code of the tests.
      */
     public static final boolean AddIgnoreForFailedTests = Boolean.getBoolean("AddIgnoreForFailedTests");
+
+    /**
+     * {@link FastROptions} passed from the mx {@code JUnit} invocation.
+     */
+    public static final Map<String, String> options = new HashMap<>();
 
     /**
      * See {@link com.oracle.truffle.r.test.builtins.TestTestBase} for examples.
@@ -196,6 +202,7 @@ public class TestBase {
             GEN_EXPECTED_QUIET("gen.expected.quiet"),
             CHECK_EXPECTED("check.expected"),
             TRACE_TESTS("trace.tests"),
+            OPTIONS_TESTS("options"),
             KEEP_TRAILING_WHITESPACE("keep.trailing.whitespace");
 
             private final String propSuffix;
@@ -236,11 +243,26 @@ public class TestBase {
                     expectedOutputManager = new ExpectedTestOutputManager(expectedTestOutputURL, false, checkExpected, genExpectedQuiet);
                     System.console();
                 }
+                // parse test options before initializing context
+                // FastRTestOutputManager -> FastrSession -> context
+                fastROptions();
                 fastROutputManager = new FastRTestOutputManager(fastROutputFile);
+
                 traceTests = getBooleanProperty(Props.TRACE_TESTS.propSuffix);
                 addOutputHook();
             } catch (Throwable ex) {
                 throw new AssertionError("R initialization failure", ex);
+            }
+        }
+
+        private static void fastROptions() {
+            String optionPrefix = PROP_BASE + Props.OPTIONS_TESTS.propSuffix;
+            for (Map.Entry<Object, Object> entry : System.getProperties().entrySet()) {
+                String prop = (String) entry.getKey();
+                if (prop.startsWith(optionPrefix)) {
+                    String name = prop.substring(optionPrefix.length() + 1);
+                    options.put(name, entry.getValue().toString());
+                }
             }
         }
 
@@ -393,7 +415,6 @@ public class TestBase {
             setRSessionName("FastR");
             // no point in printing errors to file when running tests (that contain errors on
             // purpose)
-            FastROptions.setValue("PrintErrorStacktracesToFile", false);
             fastRSession = FastRSession.create();
         }
     }

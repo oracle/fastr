@@ -42,13 +42,15 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueNonDefaultOptimizedNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PromiseCacheSize;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
@@ -122,7 +124,9 @@ public final class PromiseHelperNode extends RBaseNode {
     @Child private InlineCacheNode promiseClosureCache;
 
     @CompilationFinal private PrimitiveValueProfile optStateProfile = PrimitiveValueProfile.createEqualityProfile();
+    @CompilationFinal private ConditionProfile inOriginProfile = ConditionProfile.createBinaryProfile();
     @Child private GenerateValueNonDefaultOptimizedNode generateValueNonDefaultOptimizedNode = GenerateValueNonDefaultOptimizedNodeGen.create();
+    @Child private SetVisibilityNode setVisibility;
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
     /**
@@ -163,11 +167,19 @@ public final class PromiseHelperNode extends RBaseNode {
         try {
             if (promiseClosureCache == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(FastROptions.PromiseCacheSize.getNonNegativeIntValue())));
+                promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(RContext.getInstance().getNonNegativeIntOption(PromiseCacheSize))));
             }
             promise.setUnderEvaluation();
-            Frame execFrame = isInOriginFrame(frame, promise) ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));
+            boolean inOrigin = inOriginProfile.profile(isInOriginFrame(frame, promise));
+            Frame execFrame = inOrigin ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));
             Object value = promiseClosureCache.execute(execFrame, promise.getClosure());
+            if (!inOrigin && frame != null) {
+                if (setVisibility == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    setVisibility = insert(SetVisibilityNode.create());
+                }
+                setVisibility.execute(frame, getVisibilitySlowPath(execFrame));
+            }
             assert promise.getRawValue() == null;
             assert value != null;
             promise.setValue(value);
@@ -175,6 +187,11 @@ public final class PromiseHelperNode extends RBaseNode {
         } finally {
             promise.resetUnderEvaluation();
         }
+    }
+
+    @TruffleBoundary
+    private static boolean getVisibilitySlowPath(Frame frame) {
+        return GetVisibilityNode.executeSlowPath(frame);
     }
 
     private Object generateValueNonDefault(VirtualFrame frame, int state, EagerPromise promise) {

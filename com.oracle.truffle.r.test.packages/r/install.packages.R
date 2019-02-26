@@ -162,7 +162,13 @@ ignore.suggests <- list(
 	mboost = ignore.all.but('TH.data', 'survival', 'RColorBrewer'), # this pkg has only vignettes and grepping then gave these libs
 	quantmod = '*', # probably not necessary, the tests output does not contain any 'library', 'require' or 'load' calls
 	forcats = ignore.all.but('testthat'), # other suggested: ggplot2 and covcor not used in tests
-	sqldf = 'tcltk|RPostgreSQL|RJDBC|rJava|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
+	sqldf = 'tcltk|RPostgreSQL|RJDBC|RH2' # tcltk not on CRAN, RPostgreSQL can't be installed, RH2 and RJDBC depend on rJava which can't be installed
+)
+
+# manually maintained list of packages that need to be install with 'install.fastr.packages'
+overrides <- list(
+    fastr = c("rJava", "data.table"),
+    gnur = c("data.table")
 )
 
 choice.depends <- function(pkg, choice=c("direct","suggests")) {
@@ -193,12 +199,12 @@ fastr.test.jvm.args <- function() {
     mx.args.file <- "com.oracle.truffle.r.test.packages/test.mx.args"
     tryCatch({
         if (file.exists(mx.args.file)) {
-            opts <- paste0('"', paste0("--Ja @", readLines(mx.args.file), collapse=" "), '"')
-            log.message(paste0("MX_R_GLOBAL_ARGS=", opts), level=1)
+            opts <- paste0('"', paste0(readLines(mx.args.file), collapse=" "), '"')
+            log.message(paste0("FASTR_INTERNAL_ARGS=", opts), level=1)
             return (opts)
 	    }
     })
-    return ("'--Ja @-DR:+IgnoreGraphicsCalls'")
+    return ("'--R.IgnoreGraphicsCalls=true'") 
 }
 
 # returns a vector of package names that are the direct dependents of pkg
@@ -360,8 +366,6 @@ set.package.blacklist <- function() {
 	}
 }
 
-this.package <- "com.oracle.truffle.r.test.packages"
-
 set.initial.package.blacklist <- function() {
 	if (is.na(initial.blacklist.file)) {
 		# not set on command line
@@ -466,7 +470,7 @@ get.pkgs <- function() {
 		quit(save="no", status=100)
 	}
 	tryCatch({
-	    avail.pkgs <<- available.packages(type="source")
+	    avail.pkgs <<- available.packages(type="source", filters = list(add=TRUE, function(x) x))
     }, warning=my.warning)
 
     # Owing to a FastR bug, we may not invoke the handler above, but
@@ -495,6 +499,8 @@ get.pkgs <- function() {
 
 	in.installed <- function(x) x["Package"] %in% installed.pkgs
 
+	in.overrides <- function(x) FALSE
+
 	basic.exclude <- function(x, exclude.installed = T) {
 		in.blacklist(x) || ifelse(exclude.installed, in.installed(x), F)
 	}
@@ -504,15 +510,15 @@ get.pkgs <- function() {
 		# if inverting, alter sense of the basic match but still exclude blacklist/installed
 		if (!is.na(pkg.filelistfile)) {
 			if (invert.pkgset) {
-				match.fun <- function(x) !in.filelist(x) && !basic.exclude(x, exclude.installed)
+				match.fun <- function(x) !in.filelist(x) && (in.overrides(x) || !basic.exclude(x, exclude.installed))
 			} else {
-				match.fun <- function(x) in.filelist(x) && !basic.exclude(x, exclude.installed)
+				match.fun <- function(x) in.filelist(x) && (in.overrides(x) || !basic.exclude(x, exclude.installed))
 			}
 		} else {
 			if (invert.pkgset) {
-				match.fun <- function(x) !in.pattern(x) && !basic.exclude(x, exclude.installed)
+				match.fun <- function(x) !in.pattern(x) && (in.overrides(x) || !basic.exclude(x, exclude.installed))
 			} else {
-				match.fun <- function(x) in.pattern(x) && !basic.exclude(x, exclude.installed)
+				match.fun <- function(x) in.pattern(x) && (in.overrides(x) || !basic.exclude(x, exclude.installed))
 			}
 		}
 	}
@@ -525,7 +531,6 @@ get.pkgs <- function() {
 	if (length(toinstall.pkgs) == 0 && !use.installed.pkgs) {
 		print("Fatal error: requested package(s) found in repo(s)")
 		quit(save="no", status=100)
-
 	}
 
 	if (!is.na(random.count)) {
@@ -922,7 +927,8 @@ system.test <- function(pkgname, pkgEnv) {
 	# so we time out the entire set after 20 minutes.
     genEnv <- c(paste0("R_LIBS_USER=", shQuote(lib.install)),
              "R_LIBS=",
-             paste0("MX_R_GLOBAL_ARGS=", fastr.test.jvm.args())
+             # assuming there isn't already something else in FASTR_INTERNAL_ARGS
+             paste0("FASTR_INTERNAL_ARGS=", fastr.test.jvm.args())
             )
 	env <- c(pkgEnv, genEnv)
 	rc <- system2(rscript, args, env=env, timeout=1200)
@@ -971,7 +977,11 @@ parse.args <- function() {
             svalue <- strsplit(get.argvalue(), ",")[[1]]
 	        for (s in svalue) {
                 arg <- strsplit(s, "=", fixed=T)[[1]]
-                assign(arg[[1]], arg[[2]], envir=pkg.cache)
+                if (arg[[1]] == "dir") { 
+                    assign(arg[[1]], normalizePath(arg[[2]]), envir=pkg.cache)
+                } else {
+                    assign(arg[[1]], arg[[2]], envir=pkg.cache)
+                }
             }
 		} else if (a == "--random") {
 			random.count <<- as.integer(get.argvalue())
@@ -1231,20 +1241,32 @@ getCurrentScriptDir <- function() {
 }
 
 run <- function() {
-    parse.args()
-    if (!is.na(find.top.pkgs)) {
-        set.repos()
-        do.find.top.pkgs(find.top.pkgs)
-    } else {
-        run.setup()
-        do.it()
-    }
+    tryCatch({
+        parse.args()
+        if (!is.na(find.top.pkgs)) {
+            set.repos()
+            do.find.top.pkgs(find.top.pkgs)
+        } else {
+            run.setup()
+            do.it()
+        }
+    }, errors = function(e) traceback()
+    )
 }
 
 # load package cache code
 curScriptDir <- getCurrentScriptDir()
 if (!is.null(curScriptDir)) {
     source(file.path(curScriptDir, "install.cache.R"))
+    if (!is.fastr()) {
+        fastr.functions.path <- file.path(curScriptDir, "fastr.functions.rdx")
+        if (file.exists(fastr.functions.path)) {
+            loaded.names <- load(fastr.functions.path)
+            log.message("Loaded names: ", loaded.names)
+        } else {
+            log.message("Warning: Running with GnuR but could not find file '", fastr.functions.path, "'")
+        }
+    }
 } else {
     log.message("Cannot use package cache since script directory cannot be determined")
 
@@ -1253,6 +1275,8 @@ if (!is.null(curScriptDir)) {
     pkg.cache.get <<- function(...) FALSE
     pkg.cache.insert <<- function(...) FALSE
 }
+
+this.package <- dirname(curScriptDir)
 
 quiet <- F
 repo.list <- c("CRAN")

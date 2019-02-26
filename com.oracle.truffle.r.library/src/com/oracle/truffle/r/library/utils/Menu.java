@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -44,7 +44,9 @@ public abstract class Menu extends RExternalBuiltinNode.Arg1 {
         ConsoleIO console = RContext.getInstance().getConsole();
         int first = choices.getLength() + 1;
         console.print("Selection: ");
-        String response = console.readLine().trim();
+        String line = console.readLine();
+        assert line != null;
+        String response = line.trim();
         if (response.length() > 0) {
             if (Character.isDigit(response.charAt(0))) {
                 try {

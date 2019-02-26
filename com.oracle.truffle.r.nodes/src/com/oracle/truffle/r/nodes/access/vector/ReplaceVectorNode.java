@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -59,10 +59,8 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Syntax node for element writes.
  */
 
-@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class})
+@ImportStatic({RRuntime.class, com.oracle.truffle.api.interop.Message.class, DSLConfig.class})
 public abstract class ReplaceVectorNode extends RBaseNode {
-
-    protected static final int CACHE_LIMIT = DSLConfig.getCacheSize(5);
 
     protected final ElementAccessMode mode;
     private final boolean recursive;
@@ -104,7 +102,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
         return null;
     }
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions)"})
+    @Specialization(limit = "getCacheSize(5)", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions)"})
     protected Object doRecursive(RAbstractListVector vector, Object[] positions, Object value,  //
                     @Cached("createRecursiveCache(vector, positions)") RecursiveReplaceSubscriptNode cached) {
         return cached.apply(vector, positions, value);
@@ -118,7 +116,7 @@ public abstract class ReplaceVectorNode extends RBaseNode {
                         recursive, CachedReplaceVectorNode.isValueLengthGreaterThanOne(value), ignoreRefCount);
     }
 
-    @Specialization(limit = "CACHE_LIMIT", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, value)"})
+    @Specialization(limit = "getCacheSize(5)", guards = {"!isForeignObject(vector)", "cached != null", "cached.isSupported(vector, positions, value)"})
     protected Object doReplaceCached(RAbstractVector vector, Object[] positions, Object value,  //
                     @Cached("createDefaultCached(vector, positions, value)") CachedReplaceVectorNode cached) {
         assert !isRecursiveSubscript(vector, positions);

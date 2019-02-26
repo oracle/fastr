@@ -29,7 +29,7 @@ import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseSpecials;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RootWithBody;
@@ -284,7 +284,7 @@ public class SpecialCallTest extends TestBase {
     }
 
     private static void assertCallCounts(String setup, String test, int initialSpecialCount, int initialNormalCount, int finalSpecialCount, int finalNormalCount) {
-        if (!FastROptions.UseSpecials.getBooleanValue()) {
+        if (!RContext.getInstance().getOption(UseSpecials)) {
             return;
         }
         Source setupSource = Source.newBuilder(RRuntime.R_LANGUAGE_ID, "{" + setup + "}", "test").build();

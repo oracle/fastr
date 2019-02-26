@@ -4,7 +4,7 @@
  * Copyright (c) 1998--2014, The R Core Team
  * Copyright (c) 2002--2010, The R Foundation
  * Copyright (C) 2005--2006, Morten Welinder
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@ package com.oracle.truffle.r.library.graphics;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.oracle.truffle.r.library.fastrGrid.graphics.RGridGraphicsAdapter;
-import com.oracle.truffle.r.runtime.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.LoadPackagesNativeCode;
+import static com.oracle.truffle.r.runtime.context.FastROptions.UseInternalGridGraphics;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.CallRFFI;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -40,11 +41,11 @@ public class RGraphics {
     private static final AtomicBoolean initialized = new AtomicBoolean();
 
     public static void initialize(RContext context) {
-        if (FastROptions.UseInternalGridGraphics.getBooleanValue()) {
+        if (context.getOption(UseInternalGridGraphics)) {
             if (!context.internalGraphicsInitialized) {
                 RGridGraphicsAdapter.initialize(context);
             }
-        } else if (initialized.compareAndSet(false, true) && FastROptions.LoadPackagesNativeCode.getBooleanValue()) {
+        } else if (initialized.compareAndSet(false, true) && context.getOption(LoadPackagesNativeCode)) {
             DLL.DLLInfo dllInfo = DLL.findLibraryContainingSymbol(context, "InitGraphics");
             DLL.SymbolHandle symbolHandle = DLL.findSymbol("InitGraphics", dllInfo);
             assert symbolHandle != DLL.SYMBOL_NOT_FOUND;

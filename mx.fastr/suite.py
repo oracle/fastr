@@ -1,5 +1,5 @@
 suite = {
-  "mxversion" : "5.141.1",
+  "mxversion" : "5.210.4",
   "name" : "fastr",
   "versionConflictResolution" : "latest",
   "imports" : {
@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "ab426fd70e30026d6988d512d5afcd3cc29cd565",
+               "version" : "963639061d3af9e33d343aa817490a4bdb3a0c91",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -99,6 +99,7 @@ suite = {
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "annotationProcessors" : ["TRUFFLE_R_PARSER_PROCESSOR"],
+      "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
     },
 
@@ -112,6 +113,7 @@ suite = {
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
+      "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
     },
@@ -126,6 +128,7 @@ suite = {
       "annotationProcessors" : [
         "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
+      "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
       "jacoco" : "include",
     },

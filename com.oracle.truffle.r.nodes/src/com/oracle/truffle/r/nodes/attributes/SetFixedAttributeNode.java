@@ -94,7 +94,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return value;
     }
 
-    @Specialization(limit = "CACHE_LIMIT", //
+    @Specialization(limit = "getCacheLimit()", //
                     guards = {"shapeCheck(shape, attrs)", "location != null", "canSet(location, value)"}, //
                     assumptions = {"shape.getValidAssumption()"})
     protected void setAttrCached(DynamicObject attrs, Object value,
@@ -107,7 +107,7 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         }
     }
 
-    @Specialization(limit = "CACHE_LIMIT", //
+    @Specialization(limit = "getCacheLimit()", //
                     guards = {"shapeCheck(oldShape, attrs)", "oldLocation == null", "canStore(newLocation, value)"}, //
                     assumptions = {"oldShape.getValidAssumption()", "newShape.getValidAssumption()"})
     protected static void setNewAttrCached(DynamicObject attrs, Object value,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,7 @@ import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.security.CodeSource;
 import java.util.Enumeration;
@@ -74,7 +75,9 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
     @Override
     public InputStream getResourceAsStream(Class<?> accessor, String name) {
         // actual resource
-        String fileName = Paths.get(name).getFileName().toString();
+        Path fileNamePath = Paths.get(name).getFileName();
+        assert fileNamePath != null;
+        String fileName = fileNamePath.toString();
         FileInfo fileInfo = files.get(fileName);
         if (fileInfo == null || fileInfo.data == null) {
             return null;
@@ -108,7 +111,9 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
                     }
                     // using a proper jar URL causes build image problems
                     // and no-one really cares what the URL is - we have the data already
-                    String fileName = Paths.get(name).getFileName().toString();
+                    Path fileNamePath = Paths.get(name).getFileName();
+                    assert fileNamePath != null;
+                    String fileName = fileNamePath.toString();
                     files.put(fileName, new FileInfo(fileName, new URL("file://" + name), buf));
                 }
             }

@@ -7,14 +7,14 @@ include "ci_common/common.hocon"
 
 # The standard set of gate builds. N.B. the style/builtin checks are only run on Linux as they are not OS-dependent.
 
-# in case you want to enforce specific overlay commit, uncomment:
-# overlay = "1823c758582f31386f8ba4d89157265a23cebd04"
+# in case you do not want to enforce a specific overlay commit, comment:
+overlay = "f2f27ae819a1f8ce3398aaf43c79aec358acd0a2"
 builds = [
   ${gateTestLinux}            {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64"}
   ${gateTestNoDSLCacheLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-no-dsl-cache"}
   ${gateTestNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials"}
   ${gateTestNoDSLCacheNoSpecialsLinux}  {capabilities : [linux, amd64, fast],  targets : [gate], name: "gate-test-linux-amd64-nospecials-no-dsl-cache"}
-  ${gateTestDarwin}           {capabilities : [darwin_sierra, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
+  ${gateTestDarwin}           {capabilities : [darwin, amd64], targets : [gate], name: "gate-test-darwin-amd64"}
   ${gateStyle}                {capabilities : [linux, amd64],  targets : [gate], name: "gate-style-linux-amd64"}
   ${gateBuildWithEcj}         {capabilities : [linux, amd64],  targets : [gate], name: "gate-ecj-linux-amd64"}
   # GR-11799

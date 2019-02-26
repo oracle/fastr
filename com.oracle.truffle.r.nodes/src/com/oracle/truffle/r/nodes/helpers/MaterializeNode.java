@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,6 +27,7 @@ import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.nodes.attributes.HasAttributesNode;
@@ -38,9 +39,10 @@ import com.oracle.truffle.r.runtime.data.RAttributesLayout.RAttribute;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 
+@ImportStatic(DSLConfig.class)
 public abstract class MaterializeNode extends Node {
 
-    protected static final int LIMIT = DSLConfig.getCacheSize(10);
+    protected static final int LIMIT = 10;
 
     @Child private HasAttributesNode hasAttributes;
     @Child private IterableAttributeNode attributesIt;
@@ -65,7 +67,7 @@ public abstract class MaterializeNode extends Node {
         return materialized;
     }
 
-    @Specialization(limit = "LIMIT", guards = {"vec.getClass() == cachedClass"})
+    @Specialization(limit = "getCacheSize(LIMIT)", guards = {"vec.getClass() == cachedClass"})
     protected RAttributable doAbstractContainerCached(RAttributable vec,
                     @SuppressWarnings("unused") @Cached("vec.getClass()") Class<?> cachedClass) {
         if (vec instanceof RList) {

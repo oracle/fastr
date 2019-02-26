@@ -120,7 +120,7 @@ public final class ChildContextInfo {
         if (kind == ContextKind.SHARE_PARENT_RO) {
             throw RInternalError.shouldNotReachHere();
         }
-        assert kind != ContextKind.SHARE_PARENT_RW || (kind == ContextKind.SHARE_PARENT_RW && parent.getKind() == ContextKind.SHARE_NOTHING && parent.getMultiSlotInd() == 0);
+        assert kind != ContextKind.SHARE_PARENT_RW || (parent.getKind() == ContextKind.SHARE_NOTHING && parent.getMultiSlotInd() == 0);
         return new ChildContextInfo(startParams, env, kind, parent, stdin, stdout, stderr, id, kind == ContextKind.SHARE_PARENT_RW ? 0 : multiSlotInd);
     }
 

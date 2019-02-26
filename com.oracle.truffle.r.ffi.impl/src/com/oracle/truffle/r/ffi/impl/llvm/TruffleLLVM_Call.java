@@ -42,6 +42,7 @@ import com.oracle.truffle.r.ffi.impl.llvm.upcalls.CharSXPToNativeArrayCall;
 import com.oracle.truffle.r.ffi.impl.upcalls.Callbacks;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
+import static com.oracle.truffle.r.runtime.context.FastROptions.TraceNativeCalls;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -53,13 +54,16 @@ import com.oracle.truffle.r.runtime.ffi.FFIUnwrapNode;
 import com.oracle.truffle.r.runtime.ffi.DLL.SymbolHandle;
 import com.oracle.truffle.r.runtime.ffi.NativeCallInfo;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
-import com.oracle.truffle.r.runtime.ffi.RFFILog;
 import com.oracle.truffle.r.runtime.ffi.RFFIVariables;
 
 public final class TruffleLLVM_Call implements CallRFFI {
 
     public TruffleLLVM_Call() {
-        RFFILog.initializeTracing();
+        if (RContext.getInstance().getOption(TraceNativeCalls)) {
+            System.out.println("WARNING: The TraceNativeCalls option was discontinued!\n" +
+                            "You can rerun FastR with --log.R.com.oracle.truffle.r.nativeCalls.level=FINE --log.file=<yourfile>.\n" +
+                            "NOTE that stdout is problematic for embedded mode, when using this logger, also always specify a log file");
+        }
     }
 
     static final class ContextStateImpl implements RContext.ContextState {

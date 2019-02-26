@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,21 +22,24 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
+
 /**
  * Class that should eventually contain all DSL (and AST rewriting) related constants.
  */
 public final class DSLConfig {
-    private static final double DSL_CACHE_SIZE_FACTOR = FastROptions.DSLCacheSizeFactor.getNonNegativeDoubleValue();
 
-    /**
-     * Some DSL {@code limit}s must be set to either constant {@code 1} or constant {@code 0},
-     * otherwise the DSL compiler will fail. To allow these to be still configured, we set the limit
-     * to {@code 1} and use this final field as a guard.
-     */
-    public static final boolean LIMIT_1_GUARD = FastROptions.DSLCacheSizeFactor.getNonNegativeDoubleValue() != 0;
+    @CompilationFinal private static double cacheSizeFactor = -1;
 
     private DSLConfig() {
         // only static methods
+    }
+
+    public static void initialize(double cacheSizeFactorValue) {
+        if (cacheSizeFactor != -1 && cacheSizeFactorValue != cacheSizeFactor) {
+            throw RInternalError.shouldNotReachHere("DSLCacheSizeFactor option must be initialized to the same value for all the contexts in one JVM.");
+        }
+        cacheSizeFactor = cacheSizeFactorValue;
     }
 
     /**
@@ -63,6 +66,15 @@ public final class DSLConfig {
      * generic specialization available.
      */
     public static int getCacheSize(int suggestedSize) {
-        return (int) (suggestedSize * DSL_CACHE_SIZE_FACTOR);
+        return (int) (suggestedSize * cacheSizeFactor);
+    }
+
+    /**
+     * Some DSL {@code limit}s must be set to either constant {@code 1} or constant {@code 0},
+     * otherwise the DSL compiler will fail. To allow these to be still configured, we set the limit
+     * to {@code 1} and use this final field as a guard.
+     */
+    public static boolean getLimit1Guard() {
+        return cacheSizeFactor != 0;
     }
 }
