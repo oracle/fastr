@@ -600,11 +600,11 @@ _pkgtest_module = None
 
 
 def pkgtest_load():
+    global _pkgtest_module
     if not _pkgtest_module:
-        global _pkgtest_module
-        _pkgtest_module = None
         sys.path.append(_pkgtest_project)
-        import pkgtest as _pkgtest_module
+        import pkgtest
+        _pkgtest_module = pkgtest
     return _pkgtest_module
 
 
