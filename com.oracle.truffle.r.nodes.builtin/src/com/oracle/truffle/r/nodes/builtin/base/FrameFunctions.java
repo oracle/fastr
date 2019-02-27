@@ -433,7 +433,7 @@ public class FrameFunctions {
         }
 
         private static boolean isMissing(RNode node) {
-            return ConstantNode.isMissing(node) || isEmptyVarArg(node);
+            return ConstantNode.isMissing(node) || ConstantNode.isEmpty(node) || isEmptyVarArg(node);
         }
 
         private static boolean isEmptyVarArg(RNode node) {
