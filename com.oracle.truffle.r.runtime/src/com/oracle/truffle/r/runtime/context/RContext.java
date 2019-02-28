@@ -32,7 +32,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -52,7 +51,7 @@ import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleContext;
-import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
@@ -365,7 +364,7 @@ public final class RContext {
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
-    public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
+    public final WeakHashMap<TruffleFile, REnvironment> srcfileEnvironments = new WeakHashMap<>();
     public final List<String> libraryPaths = new ArrayList<>(1);
     public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
     public final LanguageClosureCache languageClosureCache = new LanguageClosureCache();
@@ -392,8 +391,8 @@ public final class RContext {
     /**
      * Sets the fields that do not depend on complex initialization.
      *
-     * @param env values passed from {@link TruffleLanguage#createContext}
-     * @param instrumenter value passed from {@link TruffleLanguage#createContext}
+     * @param env values passed from {@code TruffleLanguage#createContext}
+     * @param instrumenter value passed from {@code TruffleLanguage#createContext}
      * @param isInitial {@code true} if this is the initial (primordial) context.
      */
     private RContext(TruffleRLanguage language, Env env, Instrumenter instrumenter, boolean isInitial) {
@@ -486,7 +485,7 @@ public final class RContext {
 
     /**
      * Performs the real initialization of the context, invoked from
-     * {@link TruffleLanguage#initializeContext}.
+     * {@code TruffleLanguage#initializeContext}.
      */
     @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public RContext initializeContext() {

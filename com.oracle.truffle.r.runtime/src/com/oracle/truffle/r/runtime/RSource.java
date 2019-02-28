@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.File;
 import java.io.IOException;
 import java.lang.ref.WeakReference;
 import java.net.URI;
@@ -31,6 +30,7 @@ import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Set;
 import java.util.WeakHashMap;
 
 import com.oracle.truffle.api.CompilerAsserts;
@@ -100,14 +100,14 @@ public class RSource {
     }
 
     /**
-     * A weak map associating {@link Source} objects to corresponding origin (= {@link File} or
-     * {@link URL}, ...).
+     * A weak map associating {@link Source} objects to corresponding origin (= {@link TruffleFile}
+     * or {@link URL}, ...).
      */
     private static final WeakHashMap<Object, WeakReference<Source>> deserializedSources = new WeakHashMap<>();
 
     /**
      * Create an (external) source from the {@code text} that is known to originate from the file
-     * system path {@code path}. The simulates the behavior of {@link #fromFile}.
+     * system path {@code path}.
      */
     public static Source fromFileName(String text, String path, boolean internal) throws URISyntaxException {
         TruffleFile file = RContext.getInstance().getEnv().getTruffleFile(path).getAbsoluteFile();
@@ -180,46 +180,14 @@ public class RSource {
      * Create an (external) source from the file system path {@code path}.
      */
     public static Source fromFileName(String path, boolean internal) throws IOException {
-        File file = new File(path);
-        return getCachedByOrigin(file, origin -> {
-            Env env = RContext.getInstance().getEnv();
-            TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
-            return Source.newBuilder(RRuntime.R_LANGUAGE_ID, tFile).internal(internal).build();
-        });
-    }
-
-    /**
-     * Create an (external) source from the file system path denoted by {@code file}.
-     */
-    public static Source fromFile(File file) throws IOException {
-        return getCachedByOrigin(file, origin -> {
-            Env env = RContext.getInstance().getEnv();
-            TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
-            return Source.newBuilder(RRuntime.R_LANGUAGE_ID, tFile).name(file.getName()).build();
-        });
-    }
-
-    /**
-     * Create a source from the file system path denoted by {@code file}.
-     */
-    public static Source fromTempFile(File file) throws IOException {
-        return getCachedByOrigin(file, origin -> {
-            Env env = RContext.getInstance().getEnv();
-            TruffleFile tFile = env.getTruffleFile(file.getAbsolutePath());
-            return Source.newBuilder(RRuntime.R_LANGUAGE_ID, tFile).name(file.getName()).internal(true).build();
-        });
-    }
-
-    /**
-     * Create an (external) source from {@code url}.
-     */
-    public static Source fromURL(URL url, String name) throws IOException {
-        return getCachedByOrigin(url, origin -> Source.newBuilder(RRuntime.R_LANGUAGE_ID, url).name(name).build());
+        Env env = RContext.getInstance().getEnv();
+        final TruffleFile file = env.getTruffleFile(path);
+        return getCachedByOrigin(file, origin -> Source.newBuilder(RRuntime.R_LANGUAGE_ID, file).internal(internal).build());
     }
 
     /**
      * Create an (external) source from an R srcfile (
-     * {@link RSrcref#createSrcfile(Path, java.util.Set)}).
+     * {@link RSrcref#createSrcfile(RContext, TruffleFile, Set)}).
      */
     public static Source fromSrcfile(REnvironment env) throws IOException {
         Path filename = Paths.get(getPath(env, SrcrefFields.filename.name()));

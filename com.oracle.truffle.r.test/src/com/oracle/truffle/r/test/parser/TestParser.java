@@ -22,16 +22,8 @@
  */
 package com.oracle.truffle.r.test.parser;
 
-import java.io.File;
-import java.io.IOException;
-
 import org.junit.Test;
 
-import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.nodes.RASTBuilder;
-import com.oracle.truffle.r.runtime.RParserFactory;
-import com.oracle.truffle.r.runtime.RSource;
-import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.test.TestBase;
 
 public class TestParser extends TestBase {
@@ -163,41 +155,5 @@ public class TestParser extends TestBase {
         assertEval("`%5%` <- function(a,b) 1; 10 %5% 20");
         assertEval("`%Š%` <- function(a,b) 1; 10 %Š% 20");
         assertEval("`%!@#$^&*()%` <- function(a,b) 1; 10 %!@#$^&*()% 20");
-    }
-
-    /**
-     * Recursively look for .r source files in the args[0] directory and parse them.
-     */
-    public static void main(String[] args) {
-        recurse(new File(args[0]));
-        System.out.println("errors: " + errorCount);
-    }
-
-    static int errorCount;
-
-    private static void recurse(File file) {
-        assert file.exists();
-        if (file.isDirectory()) {
-            for (File sub : file.listFiles()) {
-                recurse(sub);
-            }
-        } else {
-            String name = file.getName();
-            if (name.endsWith(".r") || name.endsWith(".R")) {
-                Source source = null;
-                RParserFactory.Parser parser = RParserFactory.getParser();
-                try {
-                    source = RSource.fromFile(file);
-                    parser.script(source, new RASTBuilder(true), null);
-                } catch (ParseException e) {
-                    errorCount++;
-                    System.out.println("Error while parsing " + file.getAbsolutePath());
-                    System.out.println(e.getErrorMessage());
-                    System.out.println();
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-            }
-        }
     }
 }

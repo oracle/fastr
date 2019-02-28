@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,6 +29,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.SVGDevice;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
 import com.oracle.truffle.r.runtime.data.RNull;
 
@@ -56,7 +57,7 @@ public class DevCairo extends RExternalBuiltinNode {
             throw error(Message.INVALID_ARG_TYPE);
         }
 
-        GridContext.getContext().setCurrentDevice("svg", new SVGDevice(FileDevUtils.formatInitialFilename(filename), witdh / 72., height / 72.), filename);
+        GridContext.getContext().setCurrentDevice("svg", new SVGDevice(RContext.getInstance(), FileDevUtils.formatInitialFilename(filename), witdh / 72., height / 72.), filename);
         return RNull.instance;
     }
 }

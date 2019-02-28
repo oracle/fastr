@@ -1342,7 +1342,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             SourceSection ss = f.getRootNode().getSourceSection();
             String path = RSource.getPath(ss.getSource());
             // TODO: is it OK to pass "" if path is null?
-            return RSrcref.createLloc(ss, path == null ? "" : path);
+            return RSrcref.createLloc(RContext.getInstance(), ss, path == null ? "" : path);
         }
     }
 

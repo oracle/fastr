@@ -19,6 +19,8 @@
  */
 package com.oracle.truffle.r.runtime;
 
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -1413,10 +1415,12 @@ public class RSerialize {
         private final State state;
         private final POutputStream stream;
         private final int version;
+        private final RContext context;
 
-        private Output(OutputStream os, int format, int version, CallHook hook) throws IOException {
+        private Output(RContext context, int format, int version, CallHook hook, OutputStream os) throws IOException {
             super(hook);
-            this.state = new PLState(hook != null ? hook.getSessionRef() : null);
+            this.context = context;
+            this.state = new PLState(context, hook != null ? hook.getSessionRef() : null);
             this.version = version;
             switch (format) {
                 case ASCII:
@@ -1828,9 +1832,10 @@ public class RSerialize {
                     String path = RSource.getPathInternal(ss.getSource());
                     if (path != null) {
                         // do this only for packages
-                        Path relPath = relativizeLibPath(Paths.get(path));
+                        Env env = context.getEnv();
+                        TruffleFile relPath = relativizeLibPath(env, env.getTruffleFile(path));
                         if (relPath != null) {
-                            REnvironment createSrcfile = RSrcref.createSrcfile(relPath, state.envRefHolder);
+                            REnvironment createSrcfile = RSrcref.createSrcfile(context, relPath, state.envRefHolder);
                             Object createLloc = RSrcref.createLloc(ss, createSrcfile);
                             writePairListEntry(RRuntime.R_SRCREF, createLloc);
                             writePairListEntry(RRuntime.R_SRCFILE, createSrcfile);
@@ -1922,7 +1927,10 @@ public class RSerialize {
 
         private static final WeakHashMap<Object, Set<Object>> envRefHolderMap = new WeakHashMap<>();
 
-        private State(Object serialSessionRef) {
+        private final RContext context;
+
+        private State(RContext context, Object serialSessionRef) {
+            this.context = context;
             if (serialSessionRef != null) {
                 Set<Object> refHolder = envRefHolderMap.get(serialSessionRef);
                 if (refHolder == null) {
@@ -1933,6 +1941,10 @@ public class RSerialize {
             } else {
                 envRefHolder = new HashSet<>();
             }
+        }
+
+        public RContext getContext() {
+            return context;
         }
 
         /**
@@ -2043,8 +2055,8 @@ public class RSerialize {
         private static final RPairList NULL = RDataFactory.createPairList();
         private final Deque<RPairList> active = new LinkedList<>();
 
-        private PLState(Object serialSessionRef) {
-            super(serialSessionRef);
+        private PLState(RContext context, Object serialSessionRef) {
+            super(context, serialSessionRef);
         }
 
         @Override
@@ -2234,10 +2246,10 @@ public class RSerialize {
      * For {@code lazyLoadDBinsertValue}.
      */
     @TruffleBoundary
-    public static byte[] serialize(Object obj, int type, int version, Object refhook) {
+    public static byte[] serialize(RContext context, Object obj, int type, int version, Object refhook) {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         try {
-            Output output = new Output(out, type, version, (CallHook) refhook);
+            Output output = new Output(context, type, version, (CallHook) refhook, out);
             output.serialize(obj);
             return out.toByteArray();
         } catch (IOException ex) {
@@ -2246,8 +2258,8 @@ public class RSerialize {
     }
 
     @TruffleBoundary
-    public static void serialize(RConnection conn, Object obj, int type, int version, Object refhook) throws IOException {
-        Output output = new Output(conn.getOutputStream(), type, version, (CallHook) refhook);
+    public static void serialize(RContext context, RConnection conn, Object obj, int type, int version, Object refhook) throws IOException {
+        Output output = new Output(context, type, version, (CallHook) refhook, conn.getOutputStream());
         output.serialize(obj);
     }
 
@@ -2543,18 +2555,20 @@ public class RSerialize {
             String pathInternal = RSource.getPathInternal(ss.getSource());
 
             // do this only for packages
-            Path relPath = relativizeLibPath(Paths.get(pathInternal));
+            RContext ctx = state.getContext();
+            Env env = ctx.getEnv();
+            TruffleFile relPath = relativizeLibPath(env, env.getTruffleFile(pathInternal));
             if (relPath != null) {
                 RAttributable attributable = (RAttributable) serObj;
-                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(relPath, state.envRefHolder));
+                attributable.setAttr(RRuntime.R_SRCFILE, RSrcref.createSrcfile(ctx, relPath, state.envRefHolder));
                 RList createBlockSrcrefs = RSrcref.createBlockSrcrefs(syntaxElement);
                 if (createBlockSrcrefs != null) {
                     attributable.setAttr(RRuntime.R_SRCREF, createBlockSrcrefs);
-                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ctx, ss));
                 } else {
-                    Object createLloc = RSrcref.createLloc(ss);
+                    Object createLloc = RSrcref.createLloc(ctx, ss);
                     attributable.setAttr(RRuntime.R_SRCREF, createLloc);
-                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ss));
+                    attributable.setAttr(RRuntime.R_WHOLE_SRCREF, RSrcref.createLloc(ctx, ss));
                 }
             }
         }
@@ -2564,10 +2578,10 @@ public class RSerialize {
      * Relativizes the given path to its corresponding library path. If the given path is not a
      * child of any library path, {@code null} will be returned.
      */
-    private static Path relativizeLibPath(Path sourcePath) {
+    private static TruffleFile relativizeLibPath(Env env, TruffleFile sourcePath) {
         for (String libPath : RContext.getInstance().libraryPaths) {
             if (sourcePath.startsWith(libPath)) {
-                return Paths.get(libPath).relativize(sourcePath);
+                return env.getTruffleFile(libPath).relativize(sourcePath);
             }
         }
         return null;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -120,7 +120,7 @@ public enum RFFIVariables {
      */
     public static RFFIVariables[] initialize(RContext context) {
         R_Home.value = REnvVars.rHome();
-        R_TempDir.value = TempPathName.tempDirPath();
+        R_TempDir.value = TempPathName.tempDirPath(context);
         R_GlobalEnv.value = RContext.getInstance().stateREnvironment.getGlobalEnv();
         R_BaseEnv.value = RContext.getInstance().stateREnvironment.getBaseEnv();
         R_BaseNamespace.value = RContext.getInstance().stateREnvironment.getBaseNamespace();

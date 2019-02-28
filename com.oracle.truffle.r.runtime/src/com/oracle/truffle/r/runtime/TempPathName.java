@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,18 +22,15 @@
  */
 package com.oracle.truffle.r.runtime;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.FileVisitResult;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.nio.file.SimpleFileVisitor;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.Random;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.ffi.BaseRFFI;
 
@@ -81,26 +78,26 @@ public class TempPathName implements RContext.ContextState {
             return;
         }
         try {
-            Files.walkFileTree(Paths.get(tempDirPath), new DeleteVisitor());
+            FileSystemUtils.walkFileTree(context.getEnv().getTruffleFile(tempDirPath), new DeleteVisitor());
         } catch (Throwable e) {
             // unexpected and we are exiting anyway
         }
     }
 
-    public static String tempDirPath() {
-        return RContext.getInstance().stateTempPath.tempDirPath;
+    public static String tempDirPath(RContext context) {
+        return context.stateTempPath.tempDirPath;
     }
 
-    public static String tempDirPathChecked() {
-        String path = tempDirPath();
-        if (!Files.isDirectory(Paths.get(path))) {
-            RContext ctx = RContext.getInstance();
+    public static String tempDirPathChecked(RContext ctx) {
+        String path = tempDirPath(ctx);
+        TruffleFile tFile = ctx.getEnv().getTruffleFile(path);
+        if (!tFile.isDirectory()) {
             if (ctx.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
                 RContext parentCtx = ctx.getParent();
                 parentCtx.stateTempPath.initialize(parentCtx);
             }
             ctx.stateTempPath.initialize(ctx);
-            path = tempDirPath();
+            path = tempDirPath(ctx);
         }
         return path;
     }
@@ -110,17 +107,15 @@ public class TempPathName implements RContext.ContextState {
     }
 
     @TruffleBoundary
-    public static String createNonExistingFilePath(String pattern, String tempDir, String fileExt) {
+    public static String createNonExistingFilePath(Env env, String pattern, String tempDir, String fileExt) {
         while (true) {
-            StringBuilder sb = new StringBuilder(tempDir);
-            sb.append(File.separatorChar);
-            sb.append(pattern);
+            StringBuilder sb = new StringBuilder(env.getTruffleFile(tempDir).resolve(pattern).toString());
             appendRandomString(sb);
             if (fileExt.length() > 0) {
                 sb.append(fileExt);
             }
             String path = sb.toString();
-            if (!RContext.getInstance().getEnv().getTruffleFile(path).exists()) {
+            if (!env.getTruffleFile(path).exists()) {
                 return path;
             }
         }
@@ -132,20 +127,20 @@ public class TempPathName implements RContext.ContextState {
         }
     }
 
-    private static final class DeleteVisitor extends SimpleFileVisitor<Path> {
+    private static final class DeleteVisitor extends SimpleFileVisitor<TruffleFile> {
 
         @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
+        public FileVisitResult visitFile(TruffleFile file, BasicFileAttributes attrs) throws IOException {
             return del(file);
         }
 
         @Override
-        public FileVisitResult postVisitDirectory(Path dir, IOException exc) throws IOException {
+        public FileVisitResult postVisitDirectory(TruffleFile dir, IOException exc) throws IOException {
             return del(dir);
         }
 
-        private static FileVisitResult del(Path p) throws IOException {
-            Files.delete(p);
+        private static FileVisitResult del(TruffleFile p) throws IOException {
+            p.delete();
             return FileVisitResult.CONTINUE;
         }
     }

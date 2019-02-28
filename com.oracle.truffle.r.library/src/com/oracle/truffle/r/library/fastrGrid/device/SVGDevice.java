@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -27,32 +27,35 @@ import static com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.INCH_
 import static java.lang.Math.round;
 
 import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.text.DecimalFormat;
 import java.util.Base64;
-import java.util.Collections;
 
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.library.fastrGrid.GridColorUtils;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridFontStyle;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineEnd;
 import com.oracle.truffle.r.library.fastrGrid.device.DrawingContext.GridLineJoin;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public class SVGDevice implements GridDevice, FileGridDevice {
     private static final DecimalFormat DECIMAL_FORMAT = new DecimalFormat("0.000");
     private static final double COORD_FACTOR = INCH_TO_POINTS_FACTOR;
 
     private final StringBuilder data = new StringBuilder(1024);
+    private final Env env;
     private String filename;
     private final double width;
     private final double height;
 
     private DrawingContext cachedCtx;
 
-    public SVGDevice(String filename, double width, double height) {
+    public SVGDevice(RContext context, String filename, double width, double height) {
+        this.env = context.getEnv();
         this.filename = filename;
         this.width = width;
         this.height = height;
@@ -217,10 +220,13 @@ public class SVGDevice implements GridDevice, FileGridDevice {
     private void saveFile() throws DeviceCloseException {
         closeSVGDocument(data);
         try {
-            if (Paths.get(filename).equals(Paths.get("/dev/null"))) {
+            TruffleFile file = env.getTruffleFile(filename);
+            if (FileGridDevice.isDevNull(file)) {
                 return;
             }
-            Files.write(Paths.get(filename), Collections.singleton(data.toString()), StandardCharsets.UTF_8);
+            try (OutputStream stream = file.newOutputStream()) {
+                stream.write(data.toString().getBytes(StandardCharsets.UTF_8));
+            }
         } catch (IOException e) {
             throw new DeviceCloseException(e);
         }

@@ -455,7 +455,7 @@ public class HiddenInternalFunctions {
             };
 
             try {
-                byte[] data = RSerialize.serialize(value, type, RSerialize.DEFAULT_VERSION, callHook);
+                byte[] data = RSerialize.serialize(RContext.getInstance(), value, type, RSerialize.DEFAULT_VERSION, callHook);
                 // See comment in LazyLoadDBFetch for format
                 int outLen;
                 int offset;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,17 +20,13 @@
 package com.oracle.truffle.r.runtime;
 
 import java.io.IOException;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
 import java.nio.file.NoSuchFileException;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.attribute.PosixFileAttributes;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.runtime.context.RContext;
@@ -83,14 +79,15 @@ public class RSrcref {
     /**
      * Internal version of srcfile(path).
      */
-    public static REnvironment createSrcfile(String path, Set<Object> envRefHolder) {
-        return createSrcfile(FileSystems.getDefault().getPath(Utils.tildeExpand(path)), envRefHolder);
+    public static REnvironment createSrcfile(RContext context, String path, Set<Object> envRefHolder) {
+        TruffleFile file = context.getEnv().getTruffleFile(Utils.tildeExpand(path));
+        return createSrcfile(context, file, envRefHolder);
     }
 
     @TruffleBoundary
-    static REnvironment createSrcfile(Path path, Set<Object> envRefHolder) {
+    static REnvironment createSrcfile(RContext context, TruffleFile path, Set<Object> envRefHolder) {
         // A srcfile is an environment
-        REnvironment env = RContext.getInstance().srcfileEnvironments.get(path);
+        REnvironment env = context.srcfileEnvironments.get(path);
         if (env == null) {
             env = RDataFactory.createNewEnv("");
             if (envRefHolder != null) {
@@ -108,10 +105,9 @@ public class RSrcref {
         return env;
     }
 
-    private static int getTimestamp(Path path) {
+    private static int getTimestamp(TruffleFile path) {
         try {
-            PosixFileAttributes pfa = Files.readAttributes(path, PosixFileAttributes.class);
-            return Utils.getTimeInSecs(pfa.lastModifiedTime());
+            return Utils.getTimeInSecs(path.getLastModifiedTime());
         } catch (IOException ex) {
             return RRuntime.INT_NA;
         }
@@ -122,8 +118,8 @@ public class RSrcref {
      * . assert: srcfile was created from the {@link Source} associated with {@code ss} or is
      * {@code null} in which case it will be created from {@code ss}.
      */
-    public static RIntVector createLloc(SourceSection ss, String path) {
-        return createLloc(ss, createSrcfile(path, null));
+    public static RIntVector createLloc(RContext context, SourceSection ss, String path) {
+        return createLloc(ss, createSrcfile(context, path, null));
     }
 
     /**
@@ -156,7 +152,7 @@ public class RSrcref {
     }
 
     @TruffleBoundary
-    public static Object createLloc(SourceSection src) {
+    public static Object createLloc(RContext context, SourceSection src) {
         if (src == null) {
             return RNull.instance;
         }
@@ -170,7 +166,7 @@ public class RSrcref {
             env.setClassAttr(RDataFactory.createStringVector(new String[]{"srcfilecopy", RRuntime.R_SRCFILE}, true));
             try {
                 String pathStr = RSource.getPathInternal(source);
-                Path path = Paths.get(pathStr != null ? pathStr : "");
+                TruffleFile path = context.getEnv().getTruffleFile(pathStr != null ? pathStr : "");
 
                 env.put(SrcrefFields.filename.name(), path.toString());
                 env.put(SrcrefFields.fixedNewlines.name(), RRuntime.LOGICAL_TRUE);
@@ -180,7 +176,7 @@ public class RSrcref {
                 }
                 env.put(SrcrefFields.lines.name(), RDataFactory.createStringVector(lines, true));
                 env.safePut(SrcrefFields.Enc.name(), "unknown");
-                env.safePut(SrcrefFields.isFile.name(), RRuntime.asLogical(Files.isRegularFile(path)));
+                env.safePut(SrcrefFields.isFile.name(), RRuntime.asLogical(path.isRegularFile()));
                 env.safePut(SrcrefFields.timestamp.name(), getTimestamp(path));
                 env.safePut(SrcrefFields.wd.name(), BaseRFFI.GetwdRootNode.create().getCallTarget().call());
             } catch (PutException e) {
@@ -287,7 +283,7 @@ public class RSrcref {
         private static void addSrcref(List<Object> blockSrcrefs, RSyntaxElement element) {
             SourceSection lazySourceSection = element.getLazySourceSection();
             if (lazySourceSection != null) {
-                blockSrcrefs.add(createLloc(lazySourceSection));
+                blockSrcrefs.add(createLloc(RContext.getInstance(), lazySourceSection));
             }
         }
 

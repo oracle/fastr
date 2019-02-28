@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -42,11 +42,11 @@ import java.util.stream.Stream;
 
 import com.oracle.truffle.r.nodes.builtin.RBuiltinFactory;
 import com.oracle.truffle.r.nodes.builtin.base.BasePackage;
-import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.RVisibility;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.builtins.RBuiltinKind;
 import com.oracle.truffle.r.test.TestBase.Ignored;
+import com.oracle.truffle.r.test.Utils;
 
 /**
  * Utility to analyze builtins implemented in FastR vs. builtins available in GNU R. The GNU R
@@ -64,7 +64,7 @@ import com.oracle.truffle.r.test.TestBase.Ignored;
  */
 public final class RBuiltinCheck {
 
-    private static final Path DEFAULT_NAMESC = Paths.get(REnvVars.gnurHome(), "src", "main", "names.c");
+    private static final Path DEFAULT_NAMESC = Paths.get(Utils.gnurHome(), "src", "main", "names.c");
     private static final String BUILTIN_TEST_PATH = "com.oracle.truffle.r.test/src/com/oracle/truffle/r/test/builtins/TestBuiltin_%s.java";
 
     // old-style code annotation to get rid of javadoc error.
