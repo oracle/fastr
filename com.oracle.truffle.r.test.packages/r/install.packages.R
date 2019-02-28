@@ -340,9 +340,9 @@ set.repos <- function() {
 				cran.mirror <<- readLines(con)[[1]]
 				close(con)
 			}, error = function(err) {
-				cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory?")
+				cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory and did you build it?")
 				print(err)
-				exit(1)
+                quit("no", status=1)
 			})
 			repos[["CRAN"]] <- cran.mirror
 		} else {

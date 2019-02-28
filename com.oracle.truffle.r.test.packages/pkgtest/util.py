@@ -40,7 +40,7 @@ def get_opts():
     return _opts
 
 
-def get_fastr_home():
+def get_fastr_repo_dir():
     return _opts.fastr_home
 
 
@@ -66,9 +66,13 @@ def get_gnur_include_path():
     return join(get_gnur_home(), 'include')
 
 
-def get_fastr_include_path():
+def get_fastr_home():
     if get_graalvm_home():
-        return join(get_graalvm_home(), "jre", "languages", "R", "include")
+        return join(get_graalvm_home(), "jre", "languages", "R")
+    return get_fastr_repo_dir()
+
+
+def get_fastr_include_path():
     return join(get_fastr_home(), 'include')
 
 
@@ -81,7 +85,22 @@ def get_fastr_rscript():
     graalvm_dir = get_graalvm_home()
     if graalvm_dir is not None:
         return join(graalvm_dir, "bin", "Rscript")
-    return join(get_fastr_home(), 'bin', 'Rscript')
+    return join(get_fastr_repo_dir(), 'bin', 'Rscript')
+
+
+def get_default_cran_mirror():
+    default_cran_mirror_file = join(get_fastr_home(), 'etc', 'DEFAULT_CRAN_MIRROR')
+    url = None
+    try:
+        f = open(default_cran_mirror_file, "r")
+        url = f.readline()
+        if url:
+            url = url.strip()
+    except IOError as e:
+        logging.error("Could not read %s: %s" % (default_cran_mirror_file, e))
+    finally:
+        f.close()
+    return url
 
 
 def get_r_version(rscript_binary):
