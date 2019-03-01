@@ -104,7 +104,7 @@ public enum RVersionInfo {
                                 } else {
                                     data.value = "x86_64-unknown-linux-gnu";
                                 }
-                            } else if (osName.toLowerCase().equals("sunos")) {
+                            } else if (osName.equalsIgnoreCase("sunos")) {
                                 if (Arch.value.equals("sparcv9")) {
                                     data.value = "sparcv9-sun-solaris2.11";
                                 } else {
