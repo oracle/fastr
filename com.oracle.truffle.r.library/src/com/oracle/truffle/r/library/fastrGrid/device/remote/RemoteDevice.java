@@ -30,7 +30,6 @@ import java.lang.ref.WeakReference;
 import java.net.HttpURLConnection;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -239,19 +238,12 @@ public final class RemoteDevice implements GridDevice {
             }
 
             // Check that server is connectable
-            Socket socket = new Socket();
-            try {
+            try (Socket socket = new Socket()) {
                 socket.connect(new InetSocketAddress(SERVER_PORT), SERVER_CONNECT_TIMEOUT);
                 return true;
-            } catch (SocketTimeoutException ex) {
-            } catch (IOException ex) {
-            } finally {
-                try {
-                    socket.close();
-                } catch (IOException ex) {
-                }
+            } catch (IOException e) {
+                log.severe(e.getMessage());
             }
-
             if (serverProcess != null) {
                 // In case the server start delay timeout was
                 // insufficient this (repetitive) timeout should
@@ -385,23 +377,20 @@ public final class RemoteDevice implements GridDevice {
         conn.setRequestMethod("GET");
         conn.setRequestProperty("User-Agent", "R-Grid-Remote-Client");
         conn.setDoOutput(true);
-        OutputStream os = conn.getOutputStream();
         byte[] osBuf = request.params;
         if (log.isLoggable(Level.FINER)) {
             log.finer(RemoteDeviceDataExchange.bytesToString("Data to server:", osBuf, osBuf.length));
         }
-        try {
+        try (OutputStream os = conn.getOutputStream()) {
             os.write(osBuf);
-        } finally {
-            os.close();
         }
         int responseCode = conn.getResponseCode();
         if (responseCode == 200) { // Status OK
-            InputStream is = conn.getInputStream();
-            byte[] isBuf = new byte[is.available() + 1];
+            byte[] isBuf = null;
             int off = 0;
             int len;
-            try {
+            try (InputStream is = conn.getInputStream()) {
+                isBuf = new byte[is.available() + 1];
                 while ((len = is.read(isBuf, off, isBuf.length - off)) != -1) {
                     off += len;
                     if (off == isBuf.length) {
@@ -410,8 +399,6 @@ public final class RemoteDevice implements GridDevice {
                         isBuf = newBuf;
                     }
                 }
-            } finally {
-                is.close();
             }
             if (log.isLoggable(Level.FINER)) {
                 log.finer(RemoteDeviceDataExchange.bytesToString("Response from server:", isBuf, off));

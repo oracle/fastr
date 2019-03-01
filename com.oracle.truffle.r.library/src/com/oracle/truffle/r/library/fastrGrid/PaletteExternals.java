@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1997-2014, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -65,7 +65,7 @@ public final class PaletteExternals {
             GridState state = GridContext.getContext().getGridState();
             GridPalette newPalette = null;
             if (palette.getLength() == 1) {
-                if (palette.getDataAt(0).toLowerCase().equals("default")) {
+                if (palette.getDataAt(0).equalsIgnoreCase("default")) {
                     newPalette = GridColorUtils.getDefaultPalette();
                 } else {
                     throw error(Message.GENERIC, "unknown palette (need >= 2 colors)");

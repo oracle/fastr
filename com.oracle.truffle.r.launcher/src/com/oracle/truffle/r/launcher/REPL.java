@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -247,10 +247,10 @@ public class REPL {
         void stopLoop() {
             try {
                 interrupt();
-                final FileOutputStream fis = new FileOutputStream(fifoInFile);
-                fis.write(66);
-                fis.flush();
-                fis.close();
+                try (final FileOutputStream fis = new FileOutputStream(fifoInFile)) {
+                    fis.write(66);
+                    fis.flush();
+                }
                 join(8000);
             } catch (Exception e) {
                 e.printStackTrace();
@@ -259,10 +259,10 @@ public class REPL {
 
         void releaseFifoOut() {
             try {
-                final FileOutputStream fis = new FileOutputStream(fifoOutFile);
-                fis.write(65);
-                fis.flush();
-                fis.close();
+                try (final FileOutputStream fis = new FileOutputStream(fifoOutFile)) {
+                    fis.write(65);
+                    fis.flush();
+                }
             } catch (Exception e) {
                 e.printStackTrace();
             }
@@ -272,12 +272,12 @@ public class REPL {
         public void run() {
             while (!isInterrupted()) {
                 try {
-                    final FileInputStream fis = new FileInputStream(fifoInFile);
-                    fis.read();
-                    if (isInterrupted()) {
-                        break;
+                    try (final FileInputStream fis = new FileInputStream(fifoInFile)) {
+                        fis.read();
+                        if (isInterrupted()) {
+                            break;
+                        }
                     }
-                    fis.close();
                 } catch (IOException e) {
                     e.printStackTrace();
                 }

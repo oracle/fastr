@@ -115,11 +115,11 @@ public class RemoteDeviceServer {
 
         private void handleImpl(HttpExchange exchange) throws IOException {
             totalRequestsServiced++;
-            InputStream is = exchange.getRequestBody();
-            byte[] isBuf = new byte[is.available() + 1];
+            byte[] isBuf;
             int off = 0;
             int len;
-            try {
+            try (InputStream is = exchange.getRequestBody()) {
+                isBuf = new byte[is.available() + 1];
                 while ((len = is.read(isBuf, off, isBuf.length - off)) != -1) {
                     off += len;
                     if (off == isBuf.length) {
@@ -128,8 +128,6 @@ public class RemoteDeviceServer {
                         isBuf = newBuf;
                     }
                 }
-            } finally {
-                is.close();
             }
             if (log.isLoggable(Level.FINER)) {
                 log.finer(RemoteDeviceDataExchange.bytesToString("Server Input: ", isBuf, off));
@@ -338,11 +336,8 @@ public class RemoteDeviceServer {
                 log.finer(RemoteDeviceDataExchange.bytesToString("Server Output: ", osBuf, osBuf.length));
             }
             exchange.sendResponseHeaders(200, osBuf.length);
-            OutputStream os = exchange.getResponseBody();
-            try {
+            try (OutputStream os = exchange.getResponseBody()) {
                 os.write(osBuf);
-            } finally {
-                os.close();
             }
             totalBytesWritten += osBuf.length;
             exchange.close();
@@ -525,16 +520,16 @@ public class RemoteDeviceServer {
 
         @Override
         public void handle(HttpExchange exchange) throws IOException {
-            OutputStream os = exchange.getResponseBody();
-            String response = (handleQuit ? LocalTime.now().toString() + ": Grid server stopped. Exit.\n" : "") +
-                            "Total devices created: " + lastDeviceId + ", active: " + id2Device.size() +
-                            "\nTotal DrawingContexts created: " + lastDrawingContextId + ", active: " + id2DrawingContext.size() +
-                            "\nTotal requests serviced: " + totalRequestsServiced +
-                            "\nTotal bytes read: " + totalBytesRead + ", written: " + totalBytesWritten;
-            byte[] responseBytes = response.getBytes();
-            exchange.sendResponseHeaders(200, responseBytes.length);
-            os.write(responseBytes);
-            os.close();
+            try (OutputStream os = exchange.getResponseBody()) {
+                String response = (handleQuit ? LocalTime.now().toString() + ": Grid server stopped. Exit.\n" : "") +
+                                "Total devices created: " + lastDeviceId + ", active: " + id2Device.size() +
+                                "\nTotal DrawingContexts created: " + lastDrawingContextId + ", active: " + id2DrawingContext.size() +
+                                "\nTotal requests serviced: " + totalRequestsServiced +
+                                "\nTotal bytes read: " + totalBytesRead + ", written: " + totalBytesWritten;
+                byte[] responseBytes = response.getBytes();
+                exchange.sendResponseHeaders(200, responseBytes.length);
+                os.write(responseBytes);
+            }
             if (handleQuit) {
                 server.stop(0);
                 System.exit(0);

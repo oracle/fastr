@@ -93,9 +93,7 @@ public class EagerResourceHandlerFactory extends ResourceHandlerFactory implemen
 
     private static void gatherResources() {
         CodeSource source = RBuiltinPackage.class.getProtectionDomain().getCodeSource();
-        try {
-            URL jarURL = source.getLocation();
-            JarFile fastrJar = new JarFile(new File(jarURL.toURI()));
+        try (JarFile fastrJar = new JarFile(new File(source.getLocation().toURI()))) {
             Enumeration<JarEntry> iter = fastrJar.entries();
             while (iter.hasMoreElements()) {
                 JarEntry entry = iter.nextElement();
