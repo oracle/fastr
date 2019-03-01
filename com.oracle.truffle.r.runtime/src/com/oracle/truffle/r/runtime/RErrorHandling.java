@@ -594,10 +594,19 @@ public class RErrorHandling {
     }
 
     @TruffleBoundary
-    public static RError handleInteropException(RuntimeException e) {
+    public static RError handleInteropException(Node callObj, RuntimeException e) {
         // ClassNotFoundException might be raised internaly by FastR in FastRInterop$JavaType
-        if ((e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) && RContext.getInstance().stateInteropTry.isInTry()) {
-            throw new FastRInteropTryException(e);
+        if (e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) {
+            if (RContext.getInstance().stateInteropTry.isInTry()) {
+                // will be catched and handled in .fastr.interop.try builtin
+                throw new FastRInteropTryException(e);
+            } else {
+                if (e.getCause() instanceof ClassNotFoundException) {
+                    // CCE thrown in FastrInterop.JavaType
+                    Throwable cause = e.getCause();
+                    throw RError.error(callObj, Message.GENERIC, cause.getClass().getName() + ": " + cause.getMessage());
+                }
+            }
         }
         throw e;
     }
