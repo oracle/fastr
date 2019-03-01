@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -88,7 +88,7 @@ done
 
 JAVA_HOME="$( dirname "$JRE" )"
 cp="$(IFS=: ; echo "${absolute_cp[*]}")"
-cp="$JAVA_HOME/jre/languages/R/legacy/fastr-legacy-launcher.jar:$cp"
+cp="$JAVA_HOME/jre/languages/R/fastr-launcher.jar:$cp"
 
 ## REMOVE FOR NATIVE IMAGE: END
 # internal variable used to pass args to child R processes
@@ -98,4 +98,4 @@ fi
 
 # we can invoke FastR directly, but we do have to set R_HOME
 export R_HOME="$JRE/languages/R"
-exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${jvm_args[@]}" com.oracle.truffle.r.legacylauncher.LegacyLauncher com.oracle.truffle.r.launcher.RMain Rscript "${FASTR_INTERNAL_ARGS[@]}" "${launcher_args[@]}"
+exec "$JAVA_HOME/bin/java" -cp "$cp" -noverify -Dgraal.TruffleCompilationThreshold=10000 -Dgraal.TruffleCompilerThreads=2 -Xmx4g "${jvm_args[@]}" com.oracle.truffle.r.launcher.RMain Rscript "${FASTR_INTERNAL_ARGS[@]}" "${launcher_args[@]}"
