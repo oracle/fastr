@@ -1576,6 +1576,8 @@ public class TestJavaInterop extends TestBase {
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:54)",
                                         false, false, "", false),
                         true);
+
+        assertEvalFastR("java.type('no.class')", errorIn("java.type(\"no.class\")", "  java.lang.ClassNotFoundException: no.class not found", false, false, ""), true);
     }
 
     private String getRValue(Object value) {
