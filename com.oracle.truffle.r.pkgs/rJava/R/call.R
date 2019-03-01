@@ -143,9 +143,6 @@
               # so lets retrieve it "just in case"
               if(is.polyglot.value(o)) {
                 clazzname <- o$getClass()$getName()
-                if(clazzname == "java.lang.Class") {
-                    clazzname <- o$getName()
-                }
               } else {
                 if (is.character(o)) {
                     clazzname <- "java.lang.String"
