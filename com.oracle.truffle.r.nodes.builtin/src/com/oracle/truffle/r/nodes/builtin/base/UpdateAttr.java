@@ -60,6 +60,7 @@ import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 @RBuiltin(name = "attr<-", kind = PRIMITIVE, parameterNames = {"x", "which", "value"}, behavior = PURE)
@@ -184,6 +185,8 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
     protected static RStringVector convertClassAttrFromObject(Object value) {
         if (value instanceof RStringVector) {
             return (RStringVector) value;
+        } else if (value instanceof RAbstractStringVector) {
+            return ((RAbstractStringVector) value).materialize();
         } else if (value instanceof String) {
             return RDataFactory.createStringVector((String) value);
         } else {
