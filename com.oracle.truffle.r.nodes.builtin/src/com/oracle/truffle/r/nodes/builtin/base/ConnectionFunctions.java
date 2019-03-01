@@ -1281,7 +1281,7 @@ public abstract class ConnectionFunctions {
 
             String open = openArg;
             try {
-                return new FifoRConnection(path, open, blocking, encoding).asVector();
+                return new FifoRConnection(RContext.getInstance().getEnv(), path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FIFO, path);
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);

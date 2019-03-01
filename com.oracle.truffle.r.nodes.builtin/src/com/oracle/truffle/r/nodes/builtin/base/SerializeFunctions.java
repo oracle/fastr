@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -45,6 +45,7 @@ import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RSerialize;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.conn.RConnection;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.model.RAbstractRawVector;
@@ -80,7 +81,7 @@ public class SerializeFunctions {
             if (type == RSerialize.XDR && openConn.isTextMode()) {
                 throw node.error(RError.Message.BINARY_CONNECTION_REQUIRED);
             }
-            RSerialize.serialize(openConn, object, type, RSerialize.DEFAULT_VERSION, null);
+            RSerialize.serialize(RContext.getInstance(), openConn, object, type, RSerialize.DEFAULT_VERSION, null);
             return RNull.instance;
         } catch (IOException ex) {
             throw node.error(RError.Message.GENERIC, ex.getMessage());
@@ -180,7 +181,7 @@ public class SerializeFunctions {
 
         @Specialization
         protected Object serialize(Object object, @SuppressWarnings("unused") RNull conn, int type, @SuppressWarnings("unused") Object version, @SuppressWarnings("unused") RNull refhook) {
-            byte[] data = RSerialize.serialize(object, type, RSerialize.DEFAULT_VERSION, null);
+            byte[] data = RSerialize.serialize(RContext.getInstance(), object, type, RSerialize.DEFAULT_VERSION, null);
             return RDataFactory.createRawVector(data);
         }
     }

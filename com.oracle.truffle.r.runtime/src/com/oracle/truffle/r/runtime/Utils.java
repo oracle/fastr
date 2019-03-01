@@ -591,7 +591,7 @@ public final class Utils {
             String path = RSource.getPath(source);
             RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
             if (path != null) {
-                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(section, path));
+                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(RContext.getInstance(), section, path));
             }
             RPairList pl = RDataFactory.createPairList(callerSource);
             if (prev != null) {

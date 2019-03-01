@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,19 @@
  */
 package com.oracle.truffle.r.ffi.impl.llvm.tools;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 import com.oracle.truffle.r.ffi.impl.llvm.LLVM_IR;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL;
 import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.LLVMArchive;
+import com.oracle.truffle.r.ffi.impl.llvm.TruffleLLVM_DLL.ZipFileUtilsProvider;
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
 
 public class ShowLLVMIR {
@@ -65,7 +71,23 @@ public class ShowLLVMIR {
             usage();
         }
         try {
-            LLVMArchive ar = TruffleLLVM_DLL.getZipLLVMIR(objPath);
+            LLVMArchive ar = TruffleLLVM_DLL.getZipLLVMIR(objPath, new ZipFileUtilsProvider() {
+                @Override
+                public String getFileName(String path) {
+                    Path fileName = Paths.get(path).getFileName();
+                    return fileName == null ? null : fileName.toString();
+                }
+
+                @Override
+                public OutputStream getOutputStream(String path1, String path2) throws IOException {
+                    return new FileOutputStream(Paths.get(path1, path2).toString());
+                }
+
+                @Override
+                public InputStream getInputStream(String path) throws FileNotFoundException {
+                    return new FileInputStream(path);
+                }
+            });
             LLVM_IR[] irs = ar.irs;
             if (irs == null) {
                 System.out.printf("no llvm ir in %s\n", objPath);

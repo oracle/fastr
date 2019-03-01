@@ -36,7 +36,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.UncheckedIOException;
 import java.nio.file.CopyOption;
@@ -165,7 +164,7 @@ public class FileFunctions {
                 String file1 = file1Vec.getDataAt(0);
                 if (!RRuntime.isNA(file1)) {
                     file1 = Utils.tildeExpand(file1);
-                    try (BufferedOutputStream out = new BufferedOutputStream(new FileOutputStream(file1, true))) {
+                    try (BufferedOutputStream out = new BufferedOutputStream(RContext.getInstance().getEnv().getTruffleFile(file1).newOutputStream(StandardOpenOption.APPEND))) {
                         for (int f2 = 0; f2 < len2; f2++) {
                             String file2 = file2Vec.getDataAt(f2);
                             status[f2] = RRuntime.asLogical(appendFile(out, file2));

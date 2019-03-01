@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.builtins.RBehavior;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 
 @RBuiltin(name = "tempdir", kind = INTERNAL, parameterNames = {"check"}, behavior = RBehavior.READS_STATE)
@@ -44,7 +45,8 @@ public abstract class TempDir extends RBuiltinNode.Arg1 {
     @TruffleBoundary
     @Specialization
     protected Object tempdir(boolean check) {
-        String tempDirPath = check ? TempPathName.tempDirPathChecked() : TempPathName.tempDirPath();
+        RContext ctx = RContext.getInstance();
+        String tempDirPath = check ? TempPathName.tempDirPathChecked(ctx) : TempPathName.tempDirPath(ctx);
         return RDataFactory.createStringVectorFromScalar(tempDirPath);
     }
 }

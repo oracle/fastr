@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -103,7 +103,7 @@ public final class InitWindowedDevice extends RExternalBuiltinNode {
         String formatName = name.substring(0, name.indexOf("::"));
         String filename = name.substring(name.lastIndexOf(':') + 1);
         try {
-            GridDevice device = GridContext.openLocalOrRemoteDevice(FileDevUtils.formatInitialFilename(filename), formatName, width, height);
+            GridDevice device = GridContext.openLocalOrRemoteDevice(RContext.getInstance(), FileDevUtils.formatInitialFilename(filename), formatName, width, height);
             GridContext.getContext().setCurrentDevice(formatName.toUpperCase(), device, filename);
         } catch (NotSupportedImageFormatException e) {
             throw error(Message.GENERIC, String.format("Format '%s' is not supported.", formatName));

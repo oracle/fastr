@@ -137,7 +137,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
             return RDataFactory.createExpression(new Object[0]);
         }
         try {
-            Source source = srcFile != RNull.instance ? createSource(srcFile, coalescedLines) : createSource(conn, coalescedLines);
+            Source source = srcFile != RNull.instance ? createSource(RContext.getInstance(), srcFile, coalescedLines) : createSource(conn, coalescedLines);
             boolean keepSource = srcFile instanceof REnvironment;
             ParsedExpression parseRes = RContext.getEngine().parse(source, keepSource);
             RExpression exprs = parseRes.getExpression();
@@ -181,7 +181,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
     /**
      * Creates a {@link Source} object by gleaning information from {@code srcFile}.
      */
-    private static Source createSource(Object srcFile, String coalescedLines) {
+    private static Source createSource(RContext context, Object srcFile, String coalescedLines) {
         if (srcFile instanceof REnvironment) {
             REnvironment srcFileEnv = (REnvironment) srcFile;
             Object b = srcFileEnv.get("isFile");
@@ -196,7 +196,7 @@ public abstract class Parse extends RBuiltinNode.Arg6 {
                  * but GnuR does not appear to do tilde expansion
                  */
                 fileName = Utils.tildeExpand(fileName);
-                TruffleFile fnf = RContext.getInstance().getEnv().getTruffleFile(fileName);
+                TruffleFile fnf = context.getEnv().getTruffleFile(fileName);
                 String path = null;
                 if (!fnf.isAbsolute()) {
                     String wd = RRuntime.asString(srcFileEnv.get("wd"));

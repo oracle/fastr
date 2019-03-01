@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,8 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.device;
 
+import com.oracle.truffle.api.TruffleFile;
+
 /**
  * Should be implemented by devices that save their output into a file. Such devices should only
  * accept complete filenames, i.e. without '%d' placeholder, and the handling of the placeholder is
@@ -38,4 +40,8 @@ public interface FileGridDevice extends GridDevice {
      * @throws DeviceCloseException
      */
     void openNewPage(String filename) throws DeviceCloseException;
+
+    static boolean isDevNull(TruffleFile file) {
+        return file.getAbsoluteFile().getPath().equals("/dev/null");
+    }
 }

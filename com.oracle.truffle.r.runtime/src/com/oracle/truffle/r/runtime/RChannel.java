@@ -526,7 +526,7 @@ public class RChannel {
                 // them - should we define a new method to be used here?
                 attributable.initAttributes(null);
             }
-            byte[] serializedAttributable = RSerialize.serialize(attributable, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
+            byte[] serializedAttributable = RSerialize.serialize(RContext.getInstance(), attributable, RSerialize.XDR, RSerialize.DEFAULT_VERSION, null);
             if (attributes != null) {
                 attributable.initAttributes(attributes);
                 attributes = createShareableSlow(attributes, true);
