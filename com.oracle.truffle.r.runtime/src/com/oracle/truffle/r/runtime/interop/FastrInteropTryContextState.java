@@ -29,7 +29,8 @@ import com.oracle.truffle.r.runtime.context.RContext;
  */
 public class FastrInteropTryContextState implements RContext.ContextState {
     /**
-     * Values is either NULL or an RPairList, for {@code restarts}.
+     * Is either <code>null</code> or the last exception catched in scope of
+     * <code> .fastr.interop.try</code>.
      */
     public Throwable lastException = null;
     /**
