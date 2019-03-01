@@ -210,19 +210,6 @@ suite = {
       "jacoco" : "include",
     },
 
-    "com.oracle.truffle.r.legacylauncher" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "sdk:GRAAL_SDK",
-      ],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "1.8",
-      "annotationProcessors" : [
-      ],
-      "workingSets" : "Truffle,FastR",
-      "jacoco" : "include",
-    },
-
     "com.oracle.truffle.r.ffi.impl" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
@@ -346,14 +333,6 @@ suite = {
       "description" : "internal support for generating FFI classes",
       "dependencies" : ["com.oracle.truffle.r.ffi.processor"],
       "maven" : "False",
-    },
-
-    "FASTR_LEGACY_LAUNCHER" : {
-      "description" : "legacy launcher for the GraalVM",
-      "dependencies" : ["com.oracle.truffle.r.legacylauncher"],
-      "distDependencies" : [
-        "sdk:GRAAL_SDK"
-      ],
     },
 
     "FASTR_LAUNCHER" : {
