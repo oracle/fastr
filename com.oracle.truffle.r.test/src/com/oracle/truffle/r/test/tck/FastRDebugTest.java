@@ -194,6 +194,7 @@ public class FastRDebugTest {
 
         final Source evalSrc = sourceFromText("main()\n", "test2.r");
         Value result = context.eval(evalSrc);
+        assertExecutedOK();
         assertEquals("result is correct", 55, result.asInt());
     }
 
