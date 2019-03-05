@@ -78,6 +78,9 @@ public abstract class RRootNode extends RootNode implements HasSignature {
 
     public abstract void setContainsDispatch(boolean containsDispatch);
 
+    /**
+     * @return the built-in factory or null
+     */
     public abstract RBuiltinFactory getBuiltin();
 
     @Override

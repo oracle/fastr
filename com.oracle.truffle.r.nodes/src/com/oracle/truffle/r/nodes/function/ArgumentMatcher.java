@@ -91,8 +91,9 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * algorithm taking into consideration the names and positions of arguments as well as their number.
  * After that, the resulting arguments (potentially reordered and eventually wrapped into "...") are
  * wrapped into additional {@link PromiseNode}s which are basically an abstraction layer for normal
- * and inlined functions.<br/>
- * The resulting {@link RNode} are cached inside {@link RCallNode} and executed every call (the
+ * and inlined functions. See {@link PromiseNode#create(RPromiseFactory, boolean, boolean)} for
+ * details on the types of {@link PromiseNode promise nodes}.<br/>
+ * The resulting {@link RNode}s are cached inside {@link RCallNode} and executed every call (the
  * cache is not invalidated): Depending on whether the function to be called is a normal or inlined
  * function, or a separate argument needs special treatment, the {@link PromiseNode} returns either
  * a {@link RPromise} OR the directly evaluated value.<br/>
@@ -474,11 +475,10 @@ public class ArgumentMatcher {
     }
 
     /**
-     * @param builtin The {@link RBuiltinDescriptor} of the function
+     * @param builtin The {@link RBuiltinDescriptor} of the function or null
      * @param formalIndex The formalIndex of this argument
      * @param fastPath
-     * @return A single suppliedArg and its corresponding defaultValue wrapped up into a
-     *         {@link PromiseNode}
+     * @return true if the given argument should be inlined
      */
     private static boolean shouldInlineArgument(RBuiltinDescriptor builtin, int formalIndex, FastPathFactory fastPath) {
         if (fastPath != null && fastPath.evaluatesArgument(formalIndex)) {
@@ -486,6 +486,9 @@ public class ArgumentMatcher {
         }
         // This is for actual function calls. However, if the arguments are meant for a
         // builtin, we have to consider whether they should be forced or not!
+
+        // A possible duplicity: there is a FastPathFactory (FastPathFactory#fromRBuiltin) designed
+        // for builtins that already does that
         return builtin != null && builtin.evaluatesArg(formalIndex);
     }
 
@@ -535,7 +538,7 @@ public class ArgumentMatcher {
     }
 
     private static RNode wrapMatched(FormalArguments formals, RBuiltinDescriptor builtin, RNodeClosureCache closureCache, RNode suppliedArg, int formalIndex, boolean noOpt, FastPathFactory fastPath) {
-        // Create promise, unless it's the empty value. Note that MissingNode relies no this and
+        // Create promise, unless it's the empty value. Note that MissingNode relies on this and
         // expects empty argument values (REmpty instances) to be never wrapped in a promise.
         if (suppliedArg instanceof ConstantNode) {
             ConstantNode a = (ConstantNode) suppliedArg;
