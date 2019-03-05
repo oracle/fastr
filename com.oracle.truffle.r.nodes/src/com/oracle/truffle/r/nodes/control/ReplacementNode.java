@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.RCallSpecialNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
+import com.oracle.truffle.r.runtime.builtins.RBuiltinDescriptor;
 import com.oracle.truffle.r.runtime.builtins.RSpecialFactory.FullCallNeededException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.Closure;
@@ -72,6 +73,21 @@ abstract class ReplacementNode extends OperatorNode {
         CompilerAsserts.neverPartOfCompilation();
         // Note: if specials are turned off in FastR, onlySpecials will never be true
         boolean createSpecial = hasOnlySpecialCalls(calls);
+        if (createSpecial) {
+            RSyntaxElement syntaxLHS = calls.get(0).getSyntaxLHS();
+            String name;
+            if (syntaxLHS instanceof RSyntaxLookup) {
+                String symbol = ((RSyntaxLookup) syntaxLHS).getIdentifier();
+                name = symbol + "<-";
+            } else {
+                // data types (and lengths) are verified in isNamespaceLookupCall
+                RSyntaxElement[] args = ((RSyntaxCall) syntaxLHS).getSyntaxArguments();
+                name = ((RSyntaxLookup) args[1]).getIdentifier() + "<-";
+            }
+            RBuiltinDescriptor builtinDescriptor = RContext.lookupBuiltinDescriptor(name);
+            createSpecial &= builtinDescriptor != null && builtinDescriptor.getSpecialCall() != null;
+        }
+
         if (createSpecial) {
             /*
              * This assumes that whenever there's a special call for the "extract", there's also a

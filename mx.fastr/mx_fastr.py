@@ -262,7 +262,7 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
     env = os.environ.copy()
     env['R_HOME'] = _fastr_suite.dir
     so_suffix = '.dylib' if platform.system().lower() == 'darwin' else '.so'
-    env['NFI_LIB'] = join(mx.suite('truffle').get_output_root(platformDependent=True), 'truffle-nfi-native/bin/libtrufflenfi' + so_suffix)
+    env['NFI_LIB'] = join(mx.distribution('TRUFFLE_NFI_NATIVE').get_output(), 'bin', 'libtrufflenfi' + so_suffix)
     tests_script = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/embedded/test.sh')
     return mx.run([tests_script], env=env, nonZeroIsFatal=nonZeroIsFatal)
 
