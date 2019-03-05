@@ -75,7 +75,7 @@ public class ProcessSystemFunctionFactory extends SystemFunctionFactory {
                     p.destroy();
                     RError.warning(SHOW_CALLER, Message.COMMAND_TIMED_OUT, command, timeoutSecs);
                 }
-                rc = exited ? 0 : 127;
+                rc = exited ? p.exitValue() : 127;
             } else {
                 rc = p.waitFor();
             }
