@@ -1,5 +1,9 @@
 # 1.0 RC 14
 
+* all FastR specific options (NOT those GNU-R compatible like `--save`) are experimental except for `--R.PrintErrorStacktracesToFile`,
+which is an option that enables logging of FastR internal errors for bug reporting purposes. Experimental options can be unlocked
+using `--experimental-options` or with `ContextBuilder#allowExperimentalOptions`.
+
 Bug fixes:
 
 * `C_numeric_deriv` gives wrong results of gradient #54

@@ -22,5 +22,5 @@ Note that boolean FastR options are prefixed with the language id "R" and passed
 aforementioned options:
 
 ```
-mx --J @'-Dfastr.rffi.factory.type=managed' r --R.LoadPackagesNativeCode=true --R.LoadProfiles=true
+mx --J @'-Dfastr.rffi.factory.type=managed' r --experimental-options --R.LoadPackagesNativeCode=true --R.LoadProfiles=true
 ```

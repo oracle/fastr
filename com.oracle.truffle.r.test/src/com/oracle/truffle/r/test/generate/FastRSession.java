@@ -136,7 +136,7 @@ public final class FastRSession implements RSession {
     }
 
     public static Context.Builder getContextBuilder(String... languages) {
-        Context.Builder builder = Context.newBuilder(languages);
+        Context.Builder builder = Context.newBuilder(languages).allowExperimentalOptions(true);
         setCLIOptions(builder);
         builder.allowAllAccess(true);
         // no point in printing errors to file when running tests (that contain errors on purpose)
