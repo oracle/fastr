@@ -95,6 +95,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
     vmArgs += set_graal_options()
     vmArgs += _sulong_options()
+    args = _sulong_args() + args
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -145,6 +146,13 @@ def set_graal_options():
     if mx.suite("compiler", fatalIfMissing=False):
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         return result
+    else:
+        return []
+
+def _sulong_args():
+    mx_sulong = mx.suite("sulong", fatalIfMissing=False)
+    if mx_sulong:
+        return ['--experimental-options']
     else:
         return []
 

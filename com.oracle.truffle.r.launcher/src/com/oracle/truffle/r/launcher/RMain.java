@@ -187,7 +187,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         Context context;
         String tracedLibs = System.getenv("DEBUG_LLVM_LIBS");
         if (tracedLibs != null) {
-            context = preparedContext = contextBuilderAllowAll.option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
+            context = preparedContext = contextBuilderAllowAll.allowExperimentalOptions(true).option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
                             consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         } else {
             context = preparedContext = contextBuilderAllowAll.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
