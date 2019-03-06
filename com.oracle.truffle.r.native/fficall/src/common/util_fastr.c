@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -396,3 +396,19 @@ double R_atof(const char *str)
 {
     return R_strtod5(str, NULL, '.', FALSE, FALSE);
 }
+
+Rboolean Rf_StringBlank(SEXP x)
+{
+	return x == R_NilValue || CHAR(x)[0] == (char) 0;
+}
+
+Rboolean Rf_StringTrue(const char *name)
+{
+	return strcmp(name, "T") == 0 || strcmp(name, "True") == 0 || strcmp(name, "TRUE") == 0 || strcmp(name, "true") == 0;
+}
+
+Rboolean Rf_StringFalse(const char *name)
+{
+	return strcmp(name, "F") == 0 || strcmp(name, "False") == 0 || strcmp(name, "FALSE") == 0 || strcmp(name, "false") == 0;
+}
+

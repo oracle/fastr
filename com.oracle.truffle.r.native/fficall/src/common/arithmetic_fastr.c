@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -206,3 +206,48 @@ double R_pow(double x, double y) /* = x ^ y */
     return R_NaN; // all other cases: (-Inf)^{+-Inf, non-int}; (neg)^{+-Inf}
 }
 
+#define LDOUBLE double
+
+double Rf_logspace_sum (const double* logx, int n)
+{
+    if(n == 0) return R_NegInf; // = log( sum(<empty>) )
+    if(n == 1) return logx[0];
+    if(n == 2) return logspace_add(logx[0], logx[1]);
+    // else (n >= 3) :
+    int i;
+    // Mx := max_i log(x_i)
+    double Mx = logx[0];
+    for(i = 1; i < n; i++) if(Mx < logx[i]) Mx = logx[i];
+    LDOUBLE s = (LDOUBLE) 0.;
+    for(i = 0; i < n; i++) s += EXP(logx[i] - Mx);
+    return Mx + (double) LOG(s);
+}
+
+attribute_hidden double Rf_d1mach(int i)
+{
+    switch(i) {
+    case 1: return DBL_MIN;
+    case 2: return DBL_MAX;
+
+    case 3: /* = FLT_RADIX  ^ - DBL_MANT_DIG
+	      for IEEE:  = 2^-53 = 1.110223e-16 = .5*DBL_EPSILON */
+	return 0.5*DBL_EPSILON;
+
+    case 4: /* = FLT_RADIX  ^ (1- DBL_MANT_DIG) =
+	      for IEEE:  = 2^-52 = DBL_EPSILON */
+	return DBL_EPSILON;
+
+    case 5: return M_LOG10_2;
+
+    default: return 0.0;
+    }
+}
+
+#ifdef __cplusplus
+extern "C"
+#endif
+
+double F77_NAME(d1mach)(int *i)
+{
+    return Rf_d1mach(*i);
+}
