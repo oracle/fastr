@@ -136,6 +136,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * {@link RArgsValuesAndNames}, which can be passes directly in the {@link RArguments} object and
  * whose type is understood by the language's builtins (both representations are name-preserving).
  * </p>
+ * See {@code documentation/dev/arcane.md} that contains a description of the fast path optimization
+ * mechanism and other related topics.
  */
 public class ArgumentMatcher {
 

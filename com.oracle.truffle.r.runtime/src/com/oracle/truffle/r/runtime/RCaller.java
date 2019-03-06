@@ -46,9 +46,10 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  * <li>link to the {@link RCaller} associated with the previous R stack frame.</li>
  * <li>frame number as described in {@code sys.parent} R function documentation: frames are numbered
  * from 0 (global environment).</li>
- * <li>the AST of the call that invoked this context and link to the "sys parent" -- logical parent
- * in the sense of R's {@code parent.frame} semantics. These are crammed in the {@link #payload}
- * field (because often {@link #previous} is the same as the logical parent).</li>
+ * <li>the AST of the call that invoked this context or a link to the "sys parent" in promise
+ * evaluation frames -- logical parent in the sense of R's {@code parent.frame} semantics. These are
+ * crammed in the {@link #payload} field (because often {@link #previous} is the same as the logical
+ * parent).</li>
  * </ul>
  *
  * NOTE: It is important to create new unique caller instances for each stack frame, so that
@@ -133,11 +134,10 @@ public final class RCaller {
      * The payload can be
      * <ul>
      * <li>{@code null} for top level {@link RCaller} (~global environment)</li>
-     * <li>{@link RSyntaxNode}</li>
-     * <li>{@link Supplier} of the {@link RSyntaxNode}</li>
-     * <li>{@link RCaller} (which marks promise evaluation frames, see {@link #isPromise()})</li>
-     * <li>{@link SysParent} (allows to store both the call syntax and sys parent
-     * environment/RCaller for promises, see also {@link #isNonFunctionSysParent()})</li>
+     * <li>{@link RSyntaxNode} or its {@link Supplier supplier} in a regular (i.e. non-promise
+     * evaluation) frame</li>
+     * <li>{@link RCaller} in a promise evaluation frame, see {@link #isPromise()}</li>
+     * <li>{@link NonPromiseLogicalParent} or {@link PromiseLogicalParent}</li>
      * </ul>
      *
      * If the function was invoked via regular call node, then the syntax can be that call node
@@ -155,7 +155,7 @@ public final class RCaller {
     }
 
     private RCaller(int depth, RCaller previous, Object payload) {
-        assert payload == null || payload instanceof Supplier<?> || payload instanceof RCaller || payload instanceof SysParent || payload instanceof RSyntaxNode : payload;
+        assert payload == null || payload instanceof Supplier<?> || payload instanceof RCaller || payload instanceof LogicalParent || payload instanceof RSyntaxNode : payload;
         this.depth = depth;
         this.previous = previous;
         this.payload = payload;
@@ -177,20 +177,39 @@ public final class RCaller {
         return previous;
     }
 
-    public RCaller getParent() {
-        if (payload instanceof SysParent) {
-            SysParent sysParent = (SysParent) payload;
-            if (sysParent.sysParent instanceof RCaller) {
-                return (RCaller) sysParent.sysParent;
+    public RCaller getLogicalParent() {
+        if (payload instanceof LogicalParent) {
+            return ((LogicalParent) payload).parent;
+        } else {
+            if (payload instanceof RCaller) {
+                assert isPromise();
+                return (RCaller) payload;
+            } else {
+                assert !isPromise();
+                return previous;
             }
         }
-        return previous;
+    }
+
+    public RCaller getLogicalParent(BranchProfile payloadProfile) {
+        if (payload instanceof LogicalParent) {
+            payloadProfile.enter();
+            return ((LogicalParent) payload).parent;
+        } else {
+            if (payload instanceof RCaller) {
+                assert isPromise();
+                return (RCaller) payload;
+            } else {
+                assert !isPromise();
+                return previous;
+            }
+        }
     }
 
     public RSyntaxElement getSyntaxNode() {
         assert payload != null;
         assert !isPromise();
-        Object res = payload instanceof SysParent ? ((SysParent) payload).payload : payload;
+        Object res = payload instanceof NonPromiseLogicalParent ? ((NonPromiseLogicalParent) payload).callNodeOrSupplier : payload;
         return res instanceof RSyntaxElement ? (RSyntaxElement) res : (RSyntaxElement) ((Supplier<?>) res).get();
     }
 
@@ -228,7 +247,7 @@ public final class RCaller {
      * parent from there.
      */
     public boolean isPromise() {
-        return (payload instanceof RCaller) || (payload instanceof SysParent && ((SysParent) payload).isPromise());
+        return (payload instanceof RCaller) || (payload instanceof PromiseLogicalParent);
     }
 
     public static void iterateCallers(RCaller start, Consumer<RCaller> consumer) {
@@ -255,11 +274,7 @@ public final class RCaller {
     public static RCaller unwrapPromiseCaller(RCaller callerIn) {
         RCaller caller = callerIn;
         while (RCaller.isValidCaller(caller) && caller.isPromise()) {
-            if (caller.payload instanceof SysParent) {
-                caller = (RCaller) ((SysParent) caller.payload).payload;
-            } else {
-                caller = (RCaller) caller.payload;
-            }
+            caller = caller.getLogicalParent();
         }
         return caller;
     }
@@ -272,12 +287,7 @@ public final class RCaller {
     public static RCaller unwrapPromiseCaller(RCaller callerIn, UnwrapPromiseCallerProfile profile) {
         RCaller caller = callerIn;
         if (profile.firstPromiseProfile.profile(RCaller.isValidCaller(caller) && caller.isPromise())) {
-            if (caller.payload instanceof SysParent) {
-                profile.sysParentProfile.enter();
-                caller = (RCaller) ((SysParent) caller.payload).payload;
-            } else {
-                caller = (RCaller) caller.payload;
-            }
+            caller = caller.getLogicalParent(profile.sysParentProfile);
         }
         if (!RCaller.isValidCaller(caller) || !caller.isPromise()) {
             return caller;
@@ -295,9 +305,9 @@ public final class RCaller {
         // TODO: use in sys.parent?
         RCaller caller = callerIn;
         while (profile.firstPromiseProfile.profile(RCaller.isValidCaller(caller) && caller.isPromise())) {
-            if (caller.payload instanceof SysParent) {
+            if (caller.payload instanceof PromiseLogicalParent) {
                 profile.sysParentProfile.enter();
-                return (REnvironment) ((SysParent) caller.payload).sysParent;
+                return ((PromiseLogicalParent) caller.payload).envOverride;
             } else {
                 caller = (RCaller) caller.payload;
             }
@@ -306,17 +316,17 @@ public final class RCaller {
     }
 
     /**
-     * If the {@link RCaller} instance {@link #isPromise()}, then it may have explicitly set "sys
-     * parent", which overrides {@code parent.frame} should return if the traversing of the call
-     * stack ends up selecting this {@link RCaller} as the result. I.e. in such case, the "sys
-     * parent" is not parent of this {@link RCaller}, it is an alternative result that should be
-     * uses instead of this {@link RCaller} if the next {@link RCaller} asks for a
-     * {@code parent.frame}.
+     * If the {@link RCaller} instance {@link #isPromise()}, then it may have explicitly set the
+     * "sys parent" environment, which overrides the result {@code parent.frame} would return if the
+     * traversing of the call stack ends up selecting this {@link RCaller} as the result. I.e. in
+     * such a case, the "sys parent" is not the parent of this {@link RCaller}, instead, it is an
+     * alternative result that should be used instead of this {@link RCaller} if the next
+     * {@link RCaller} asks for a {@code parent.frame}.
      *
-     * There is a difference between how the stack is traversed if the {@link SysParent#sysParent}
-     * of {@link RCaller} for a promise frame is an artificial environment (it doesn't really have
-     * its place on the call stack) or environment of a function that is on the call stack. That is
-     * why we further distinguish this situation here.
+     * There is a difference between how the stack is traversed if the
+     * {@link PromiseLogicalParent#envOverride} of {@link RCaller} for a promise frame is an
+     * artificial environment (it doesn't really have its place on the call stack) or environment of
+     * a function that is on the call stack. That is why we further distinguish this situation here.
      *
      * NOTE: there is one potential issue and one potential optimization:
      *
@@ -332,9 +342,9 @@ public final class RCaller {
      * See {@code ParentFrame} built in for more details.
      */
     public boolean isNonFunctionSysParent() {
-        if (payload instanceof SysParent) {
-            SysParent sysParent = (SysParent) payload;
-            return sysParent.isPromise() && !(sysParent.sysParent instanceof REnvironment.Function);
+        if (payload instanceof PromiseLogicalParent) {
+            PromiseLogicalParent promiseLogicalParent = (PromiseLogicalParent) payload;
+            return !(promiseLogicalParent.envOverride instanceof REnvironment.Function);
         }
         return false;
     }
@@ -403,7 +413,7 @@ public final class RCaller {
      */
     public static RCaller createForPromise(RCaller originalCaller, REnvironment sysParent, RCaller currentCaller) {
         int newDepth = currentCaller == null ? 0 : currentCaller.getDepth();
-        return new RCaller(newDepth, currentCaller, new SysParent(sysParent, originalCaller));
+        return new RCaller(newDepth, currentCaller, new PromiseLogicalParent(sysParent, originalCaller));
     }
 
     /**
@@ -416,7 +426,7 @@ public final class RCaller {
      * @param currentCaller The current {@link RCaller}.
      */
     public static RCaller createForGenericFunctionCall(RCaller dispatchingCaller, Object call, RCaller currentCaller) {
-        return new RCaller(currentCaller.getDepth() + 1, currentCaller, new SysParent(dispatchingCaller, call));
+        return new RCaller(currentCaller.getDepth() + 1, currentCaller, new NonPromiseLogicalParent(dispatchingCaller, call));
     }
 
     public boolean getVisibility() {
@@ -428,41 +438,50 @@ public final class RCaller {
     }
 
     /**
-     * An instance of this class is held in the {@link RCaller#payload} field. Let's call such an
-     * {@link RCaller} instance the owner of this instance.
-     *
-     * This wrapper serves two purposes depending on the context:
-     *
-     * If the owner's {@link RCaller#isPromise()} returns true, then field {@link #sysParent} holds
-     * the environment that should replace the result of {@code parent.frame}, when the owner is
-     * selected as the result. Furthermore, {@link #payload} serves the same purpose as
-     * {@link RCaller#payload} for promises.
-     *
-     * If the owner's {@link RCaller#isPromise()} returns false, then {@link #sysParent} gives
-     * {@link RCaller} that is the logical parent and {@link #payload} holds the syntax of the call,
-     * like {@link RCaller#payload} for non-promise {@link RCaller}s.
+     * An instance of one of two subclasses of this class is held in the {@link RCaller#payload}
+     * field. Let's call such an {@link RCaller} instance the owner of this instance. The
+     * {@link #parent} field contains the logical parent of the owner.
      */
-    private static final class SysParent {
-        final Object sysParent;
+    private abstract static class LogicalParent {
+        final RCaller parent;
+
+        LogicalParent(RCaller parent) {
+            this.parent = parent;
+        }
+    }
+
+    /**
+     * This class is used for promise callers only. The field {@link #envOverride} holds the
+     * environment that should replace the result of {@code parent.frame}, when the owner is
+     * selected as the result.
+     */
+    private static final class PromiseLogicalParent extends LogicalParent {
         /**
-         * Field that can hold the same data as {@link RCaller#payload}, but not another
-         * {@link SysParent} and not {@code null}.
+         * See {@link RCaller#isNonFunctionSysParent()}.
          */
-        final Object payload;
+        final REnvironment envOverride;
 
-        boolean isPromise() {
-            return payload instanceof RCaller;
+        PromiseLogicalParent(REnvironment envOverride, RCaller parent) {
+            super(parent);
+            this.envOverride = envOverride;
         }
+    }
 
-        SysParent(REnvironment env, RCaller payload) {
-            this.sysParent = env;
-            this.payload = payload;
-        }
+    /**
+     * This class is used for non-promise callers only. The field {@link #callNodeOrSupplier} holds
+     * the syntax of the call or its supplier {@code Supplier} (like {@link RCaller#payload} for
+     * non-promise {@link RCaller}s).
+     */
+    private static final class NonPromiseLogicalParent extends LogicalParent {
+        /**
+         * Field that holds the call AST node {@link RSyntaxNode} or its supplier {@code Supplier}.
+         */
+        final Object callNodeOrSupplier;
 
-        SysParent(RCaller sysParent, Object call) {
-            assert call == null || call instanceof Supplier<?> || call instanceof RSyntaxNode : call;
-            this.sysParent = sysParent;
-            this.payload = call;
+        NonPromiseLogicalParent(RCaller parent, Object callNodeOrSupplier) {
+            super(parent);
+            assert callNodeOrSupplier == null || callNodeOrSupplier instanceof Supplier<?> || callNodeOrSupplier instanceof RSyntaxNode : callNodeOrSupplier;
+            this.callNodeOrSupplier = callNodeOrSupplier;
         }
     }
 

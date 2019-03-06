@@ -119,6 +119,8 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
  * Represents and executes the syntax node for a function call.
+ *
+ * See {@code documentation/dev/arcane.md} for the documentation of the {@link RCallNode} AST.
  */
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = RNode.class)
@@ -996,11 +998,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @Child private RBuiltinNode builtin;
         /**
-         * Evaluates potential promises in varArgs
+         * Evaluates potential promises in varArgs.
          */
         @Child private PromiseCheckHelperNode varArgsPromiseHelper;
         /**
-         * Evaluates arg promises
+         * Evaluates arg promises.
          */
         @Children private final PromiseHelperNode[] promiseHelpers;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();

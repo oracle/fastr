@@ -795,7 +795,7 @@ public class FrameFunctions {
 
         @SuppressWarnings("static-method")
         public boolean isEnd(State iterState) {
-            return depth(iterState) == 0 || !RCaller.isValidCaller(iterState.actualCall);
+            return !RCaller.isValidCaller(iterState.actualCall) || depth(iterState) == 0;
         }
 
         @SuppressWarnings("static-method")
@@ -833,7 +833,7 @@ public class FrameFunctions {
 
             // TODO: Is this condition necessary?
             if (iterState.call != null) {
-                iterState.call = iterState.call.getParent();
+                iterState.call = iterState.call.getLogicalParent();
             }
         }
 
@@ -892,7 +892,7 @@ public class FrameFunctions {
 
         @SuppressWarnings("static-method")
         public int parentDepth(State iterState) {
-            RCaller parent = iterState.call.getParent();
+            RCaller parent = iterState.call.getLogicalParent();
             int parentDepth;
             if (parent.isNonFunctionSysParent()) {
                 // For environments that are not function frames, GNU-R uses the depth of the
@@ -954,7 +954,7 @@ public class FrameFunctions {
 
             // TODO: Is this condition necessary?
             if (actualCall != null) {
-                iterState.call = actualCall.getParent();
+                iterState.call = actualCall.getLogicalParent();
             }
         }
 
