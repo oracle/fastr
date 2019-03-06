@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -192,7 +192,7 @@ public class FastRInterop {
                 return foreign2rNode.execute(parseFileAndCall(path, languageId));
             } catch (RuntimeException e) {
                 if (e instanceof TruffleException && !(e instanceof RError)) {
-                    throw RErrorHandling.handleInteropException(this, e);
+                    throw RErrorHandling.handleInteropException(e);
                 }
                 throw e;
             } finally {
@@ -491,10 +491,10 @@ public class FastRInterop {
             } else {
                 interopExceptionProfile.enter();
                 if (result instanceof RuntimeException) {
-                    throw RErrorHandling.handleInteropException(this, (RuntimeException) result);
+                    throw RErrorHandling.handleInteropException((RuntimeException) result);
                 } else {
                     assert result instanceof Throwable : "class " + clazz + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
-                    throw RErrorHandling.handleInteropException(this, new RuntimeException((Throwable) result));
+                    throw RErrorHandling.handleInteropException(new RuntimeException((Throwable) result));
                 }
             }
         }
@@ -941,10 +941,10 @@ public class FastRInterop {
             }
             interopExceptionProfile.enter();
             if (result instanceof RuntimeException) {
-                throw RErrorHandling.handleInteropException(this, (RuntimeException) result);
+                throw RErrorHandling.handleInteropException((RuntimeException) result);
             } else {
                 assert result instanceof Throwable : "class " + className + " resulted into " + (result == null ? "NULL" : result.getClass().getName());
-                throw RErrorHandling.handleInteropException(this, new RuntimeException((Throwable) result));
+                throw RErrorHandling.handleInteropException(new RuntimeException((Throwable) result));
             }
         }
 
@@ -1077,7 +1077,7 @@ public class FastRInterop {
             } catch (IllegalStateException | SecurityException | IllegalArgumentException | ArityException | UnsupportedMessageException e) {
                 throw javaInstantiationError(e);
             } catch (RuntimeException e) {
-                throw RErrorHandling.handleInteropException(this, e);
+                throw RErrorHandling.handleInteropException(e);
             }
         }
 
@@ -1155,6 +1155,7 @@ public class FastRInterop {
             } catch (FastRInteropTryException e) {
                 CompilerDirectives.transferToInterpreter();
                 Throwable cause = e.getCause();
+                // ClassNotFoundException might be raised internally in FastRInterop$JavaType
                 if (cause instanceof TruffleException || cause.getCause() instanceof ClassNotFoundException) {
                     cause = cause instanceof TruffleException ? RContext.getInstance().getEnv().asHostException(cause) : cause.getCause();
                     if (RRuntime.fromLogical(check)) {

@@ -384,6 +384,10 @@ public final class RContext {
         embedded = true;
     }
 
+    /**
+     * Returns {@code true} if this context is run in native embedding compatible with GNU-R
+     * scenario. Note: this is not java embedding via GraalSDK.
+     */
     public static boolean isEmbedded() {
         return embedded;
     }

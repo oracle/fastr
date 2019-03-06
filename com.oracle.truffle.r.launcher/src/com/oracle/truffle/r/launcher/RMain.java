@@ -224,7 +224,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             }
             srcFile = new File(fileOption);
         }
-        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true, errStream);
+        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true);
         StartupTiming.printSummary();
         return result;
     }
@@ -278,10 +278,16 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         try {
             context.eval(src);
             return 0;
-        } catch (Throwable ex) {
-            if (ex instanceof PolyglotException && ((PolyglotException) ex).isExit()) {
-                return ((PolyglotException) ex).getExitStatus();
+        } catch (PolyglotException e) {
+            if (e.isExit()) {
+                // usually from quit
+                return e.getExitStatus();
+            } else if (!e.isInternalError() && (e.isHostException() || e.isGuestException())) {
+                // Note: Internal exceptions are reported by the engine already
+                REPL.handleError(null, context, e);
             }
+            return 1;
+        } catch (Throwable ex) {
             // Internal exceptions are reported by the engine already
             return 1;
         }

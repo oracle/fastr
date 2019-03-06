@@ -65,6 +65,8 @@ public final class RError extends RuntimeException implements TruffleException {
     private final String verboseStackTrace;
     private final Node location;
 
+    private boolean printed = false;
+
     /**
      * This exception should be subclassed by subsystems that need to throw subsystem-specific
      * exceptions to be caught by builtin implementations, which can then invoke
@@ -162,12 +164,19 @@ public final class RError extends RuntimeException implements TruffleException {
     public static final ErrorContext ROOTNODE = new ErrorContextImpl();
 
     /**
-     * TODO the string is not really needed as all output is performed prior to the throw.
+     * If the message is set (non-null), then it was not printed yet and it is left to the
+     * embedder/REPL to deal with the exception and eventual printing. The message should not
+     * contain the last new line that would otherwise be printed.
      */
     RError(String msg, Node location) {
         super(msg);
         this.location = location;
         this.verboseStackTrace = RInternalError.createVerboseStackTrace();
+    }
+
+    @Override
+    public synchronized Throwable fillInStackTrace() {
+        return this;
     }
 
     @Override
@@ -177,6 +186,32 @@ public final class RError extends RuntimeException implements TruffleException {
 
     public String getVerboseStackTrace() {
         return verboseStackTrace;
+    }
+
+    public void setPrinted(boolean bl) {
+        this.printed = bl;
+    }
+
+    @Override
+    public Object getExceptionObject() {
+        return RContext.getInstance().getEnv().asGuestValue(getExceptionObjectInternal());
+    }
+
+    public class ExceptionObject {
+        public final boolean wasPrinted;
+
+        public ExceptionObject(boolean wasPrinted) {
+            this.wasPrinted = wasPrinted;
+        }
+    }
+
+    private ExceptionObject exceptionObject;
+
+    private Object getExceptionObjectInternal() {
+        if (exceptionObject == null) {
+            exceptionObject = new ExceptionObject(printed);
+        }
+        return exceptionObject;
     }
 
     public static RError error(ErrorContext node, Message msg) {

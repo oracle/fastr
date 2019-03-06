@@ -28,8 +28,8 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.concurrent.Callable;
@@ -46,7 +46,7 @@ import jline.console.UserInterruptException;
 /**
  * Implements the read-eval-print loop.
  *
- * @see #readEvalPrint(Context, ConsoleHandler, File, boolean, OutputStream)
+ * @see #readEvalPrint(Context, ConsoleHandler, File, boolean)
  */
 public class REPL {
     /**
@@ -62,9 +62,10 @@ public class REPL {
     private static final Source GET_CONTINUE_PROMPT = Source.newBuilder("R", ".Internal(getOption('continue'))", "<continue-prompt>").internal(true).buildLiteral();
     private static final Source SET_CONSOLE_PROMPT_HANDLER = Source.newBuilder("R", ".fastr.set.consoleHandler", "<set-console-handler>").internal(true).buildLiteral();
     private static final Source GET_EXECUTOR = Source.newBuilder("R", ".fastr.getExecutor()", "<get-executor>").internal(true).buildLiteral();
+    private static final Source PRINT_ERROR = Source.newBuilder("R", ".fastr.printError", "<print-error>").internal(true).buildLiteral();
 
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, boolean useExecutor, OutputStream errStream) {
-        return readEvalPrint(context, consoleHandler, null, useExecutor, errStream);
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, boolean useExecutor) {
+        return readEvalPrint(context, consoleHandler, null, useExecutor);
     }
 
     /**
@@ -77,7 +78,7 @@ public class REPL {
      * In case 2, we must implicitly execute a {@code quit("default, 0L, TRUE} command before
      * exiting. So,in either case, we never return.
      */
-    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor, OutputStream errStream) {
+    public static int readEvalPrint(Context context, ConsoleHandler consoleHandler, File srcFile, boolean useExecutor) {
         final ExecutorService executor;
         final EventLoopThread eventLoopThread;
         if (useExecutor) {
@@ -153,7 +154,7 @@ public class REPL {
                             } else if (e.isHostException() || e.isGuestException()) {
                                 // the 'Error in 'caller' : part of the message was already printed
                                 // in ErrorHandling.handleInteropException
-                                printPolyglotStackTrace(e, errStream);
+                                handleError(executor, context, e);
                                 // drop through to continue REPL and remember last eval was an error
                                 lastStatus = 1;
                             }
@@ -296,7 +297,18 @@ public class REPL {
         }
     }
 
-    public static void printPolyglotStackTrace(PolyglotException e, OutputStream output) throws IOException {
+    public static void handleError(ExecutorService executor, Context context, PolyglotException e) {
+        String errorText = getErrorText(e);
+        if (!errorText.isEmpty()) {
+            run(executor, () -> context.eval(PRINT_ERROR).execute(errorText));
+        }
+    }
+
+    private static String getErrorText(PolyglotException eIn) {
+        PolyglotException e = eIn;
+        if (eIn.getCause() instanceof PolyglotException) {
+            e = (PolyglotException) eIn.getCause();
+        }
         List<PolyglotException.StackFrame> stackTrace = new ArrayList<>();
         for (PolyglotException.StackFrame s : e.getPolyglotStackTrace()) {
             stackTrace.add(s);
@@ -322,20 +334,48 @@ public class REPL {
             }
         }
 
-        if (stackTrace.isEmpty()) {
-            return;
+        StringBuilder sb = new StringBuilder();
+        if (!stackTrace.isEmpty()) {
+            // we just removed all trailing <R> frames and there stil is something left =>
+            // this has to be a non R exception
+            sb.append("Error in polyglot evaluation : ");
         }
 
-        StringBuilder sb = new StringBuilder();
-        sb.append(e.isHostException() ? e.asHostException().toString() : e.getMessage());
-        sb.append('\n');
-        for (PolyglotException.StackFrame s : stackTrace) {
-            sb.append("\tat ");
-            sb.append(s);
-            sb.append('\n');
+        if (!wasPrinted(e)) {
+            if (e.isHostException()) {
+                sb.append(e.asHostException().toString());
+            } else if (e.getMessage() != null) {
+                sb.append(e.getMessage());
+            }
         }
-        output.write(sb.toString().getBytes());
-        output.flush();
+
+        if (!stackTrace.isEmpty()) {
+            sb.append('\n');
+            Iterator<PolyglotException.StackFrame> it = stackTrace.iterator();
+            while (it.hasNext()) {
+                PolyglotException.StackFrame s = it.next();
+                sb.append("\tat ");
+                sb.append(s);
+                if (it.hasNext()) {
+                    sb.append('\n');
+                }
+            }
+        }
+        return sb.toString();
+    }
+
+    private static boolean wasPrinted(PolyglotException e) {
+        Value guestObject = e.getGuestObject();
+        // TODO ensure we are accessing only the FastR RError object and
+        // not some another guest object with a wasPrinted member
+        if (guestObject == null || !guestObject.hasMember("wasPrinted")) {
+            return false;
+        }
+        Value wasPrinted = guestObject.getMember("wasPrinted");
+        if (!wasPrinted.isBoolean()) {
+            return false;
+        }
+        return wasPrinted.asBoolean();
     }
 
     /**
