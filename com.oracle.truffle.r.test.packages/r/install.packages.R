@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -204,7 +204,7 @@ fastr.test.jvm.args <- function() {
             return (opts)
 	    }
     })
-    return ("'--R.IgnoreGraphicsCalls=true'") 
+    return ("'--experimental-options --R.IgnoreGraphicsCalls=true'")
 }
 
 # returns a vector of package names that are the direct dependents of pkg

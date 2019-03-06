@@ -171,7 +171,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     }
 
     @Override
-    protected void launch(Builder contextBuilder) {
+    protected void launch(Builder contextBuilderIn) {
         StartupTiming.timestamp("RMain.launch");
         assert client != null;
         if (rArguments == null) {
@@ -179,18 +179,18 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             return;
         }
         this.consoleHandler = ConsoleHandler.createConsoleHandler(options, null, inStream, outStream);
-        Builder contextBuilderAllowAll = contextBuilder.allowAllAccess(true);
-        if (ignoreJvmArguments) {
-            contextBuilderAllowAll = contextBuilderAllowAll.allowHostAccess(useJVM);
+        Builder contextBuilder = contextBuilderIn;
+        if (!ignoreJvmArguments) {
+            contextBuilder = contextBuilder.allowHostAccess(useJVM);
         }
 
         Context context;
         String tracedLibs = System.getenv("DEBUG_LLVM_LIBS");
         if (tracedLibs != null) {
-            context = preparedContext = contextBuilderAllowAll.option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
+            context = preparedContext = contextBuilder.option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
                             consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         } else {
-            context = preparedContext = contextBuilderAllowAll.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
+            context = preparedContext = contextBuilder.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         }
 
         this.consoleHandler.setContext(context);

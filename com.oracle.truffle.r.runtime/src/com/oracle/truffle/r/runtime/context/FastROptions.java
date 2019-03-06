@@ -38,6 +38,7 @@ import org.graalvm.options.OptionCategory;
 import org.graalvm.options.OptionDescriptor;
 import org.graalvm.options.OptionDescriptors;
 import org.graalvm.options.OptionKey;
+import org.graalvm.options.OptionStability;
 import org.graalvm.options.OptionValues;
 
 /**
@@ -56,7 +57,7 @@ public class FastROptions {
 
     @Option(category = OptionCategory.INTERNAL, help = "Prints Java and R stack traces for all errors") //
     public static final OptionKey<Boolean> PrintErrorStacktraces = new OptionKey<>(false);
-    @Option(category = OptionCategory.USER, help = "Dumps Java and R stack traces to 'fastr_errors.log' for all errors") //
+    @Option(category = OptionCategory.USER, stability = OptionStability.STABLE, help = "Dumps Java and R stack traces to 'fastr_errors-{context ID}_{PID}.log' for all internal errors") //
     public static final OptionKey<Boolean> PrintErrorStacktracesToFile = new OptionKey<>(false);
 
     @Option(category = OptionCategory.INTERNAL, help = "Debug=name1,name2,...; Turn on debugging output for 'name1', 'name2', etc.")//
@@ -83,7 +84,7 @@ public class FastROptions {
     public static final OptionKey<Boolean> SearchPathForcePromises = new OptionKey<>(false);
     @Option(category = OptionCategory.EXPERT, help = "Load native code of packages, including builtin packages.") //
     public static final OptionKey<Boolean> LoadPackagesNativeCode = new OptionKey<>(!FastRConfig.ManagedMode);
-    @Option(category = OptionCategory.EXPERT, help = "Allow only one thread to enter packages' native code") //
+    @Option(category = OptionCategory.EXPERT, help = "Allow only one thread to enter native code of packages") //
     public static final OptionKey<Boolean> SynchronizeNativeCode = new OptionKey<>(true);
     // Promises optimizations
     @Option(category = OptionCategory.INTERNAL, help = "If enabled, overrides all other EagerEval switches (see EagerEvalHelper)") //
@@ -114,9 +115,9 @@ public class FastROptions {
     // Dicontinued since rc12
     // only a warning is printed to use the default logger mechaninsm
     // TODO remove at some later point
-    @Option(category = OptionCategory.INTERNAL, help = "Print FastR performance warning") //
+    @Option(category = OptionCategory.EXPERT, help = "Print FastR performance warning") //
     public static final OptionKey<Boolean> PerformanceWarnings = new OptionKey<>(false);
-    @Option(category = OptionCategory.INTERNAL, help = "Print a message for each non-trivial variable lookup")//
+    @Option(category = OptionCategory.EXPERT, help = "Print a message for each non-trivial variable lookup")//
     public static final OptionKey<Boolean> PrintComplexLookups = new OptionKey<>(false);
     @Option(category = OptionCategory.INTERNAL, help = "Trace all R function calls") //
     public static final OptionKey<Boolean> TraceCalls = new OptionKey<>(false);
