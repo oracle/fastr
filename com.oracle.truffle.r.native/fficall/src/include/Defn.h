@@ -88,6 +88,10 @@ extern Rboolean utf8locale;
 extern Rboolean mbcslocale;
 extern Rboolean latin1locale;
 
+#define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
+
+int Rstrlen(SEXP s, int quote);
+
 #define INI_as(v)
 extern char* OutDec	INI_as(".");
 extern Rboolean known_to_be_latin1 INI_as(FALSE);

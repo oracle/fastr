@@ -1,7 +1,7 @@
 /*
  *  R : A Computer Language for Statistical Data Analysis
  *  Copyright (C) 1999--2014  The R Core Team.
- *  Copyright (c) 2018, 2018, Oracle and/or its affiliates
+ *  Copyright (c) 2018, 2019, Oracle and/or its affiliates
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,6 +18,7 @@
  *  https://www.R-project.org/Licenses/
  */
 #include <rffiutils.h>
+#include <Defn.h>
 #include <R_ext/Applic.h>
 
 void Rdqags(integr_fn f, void *ex, double *a, double *b,

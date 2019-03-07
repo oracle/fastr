@@ -1,6 +1,6 @@
 /*
- * Copyright (c) 1995-1996  Robert Gentleman and Ross Ihaka
- * Copyright (c) 1997-2014, The R Core Team
+ * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
+ * Copyright (c) 1997-2014,  The R Core Team
  * Copyright (c) 2018, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
@@ -23,6 +23,7 @@
 #include <Riconv.h>
 #include <errno.h>
 #include <iconv.h>
+#include <Defn.h>
 
 // Implementation of following functions is taken verbatim from GNUR from sysutils.c
 // We do not include the whole file as it contains more functions than we need
