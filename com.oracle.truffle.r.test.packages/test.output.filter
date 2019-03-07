@@ -120,3 +120,7 @@ clpAPI => D/Clp0032I Optimal objective 3.236842105 - 1 iterations time
 # RcppBDT
 RcppBDT => s/code for methods in class .* was not checked for suspicious field assignments \(recommended package ‘codetools’ not available\?\)/
 
+# --------
+# sqldf
+sqldf => s/There were [0-9]* or more warnings \(use warnings\(\) to see the first [0-9]*\)/
+
