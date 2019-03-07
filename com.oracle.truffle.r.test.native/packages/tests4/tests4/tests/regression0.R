@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2019, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -22,9 +22,18 @@
 #
 stopifnot(require(methods))
 stopifnot(require(tests4))
-setClass("User", representation(name = "character", pin = "numeric"), prototype(name = NA_character_, pin = NA_integer_))
-u <- new("User", name = "username")
-u@pin
 
-u2 <- new("User", pin = 1234L)
-u2@name
+setGeneric("testMe", function(x, y) standardGeneric("testMe"))
+
+setMethod("testMe", signature(x='missing', y='character'),
+function(y) {
+	print(as.list(environment()))
+	testMe(x = y)
+})
+
+setMethod("testMe", signature(x='character', y='missing'),
+function(x) {
+	print(x)
+})
+
+testMe(y='not working')
