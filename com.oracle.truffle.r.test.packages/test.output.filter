@@ -44,6 +44,9 @@
 # normalize environment addresses
 .* => s/<environment: 0x[0-9A-Fa-f]*>/<environment: 0xCAFEBABE>
 
+# ignore warnings for invalid source references
+.* => D+0-1/Invalid source reference
+
 # for individual packages:
 
 # ------
