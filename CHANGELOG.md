@@ -5,6 +5,10 @@ which is an option that enables logging of FastR internal errors for bug reporti
 using `--experimental-options` or with `ContextBuilder#allowExperimentalOptions`.
 * the MRAN mirror used by FastR by default instead of CRAN was bumped to 2019-02-13
 
+Added missing R builtins and C API
+
+* `Rf_StringBlank`
+
 Bug fixes:
 
 * `C_numeric_deriv` gives wrong results of gradient #54
