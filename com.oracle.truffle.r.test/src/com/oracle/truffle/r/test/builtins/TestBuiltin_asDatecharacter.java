@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -31,5 +31,23 @@ public class TestBuiltin_asDatecharacter extends TestBase {
     @Test
     public void testasDatecharacter1() {
         assertEval("argv <- structure(list(x = c('2007-11-06', NA)), .Names = 'x');do.call('as.Date.character', argv)");
+
+        assertEval("{ as.Date('2017-02-29') }");
+        assertEval("{ as.Date('2017-01-31') }");
+        assertEval("{ as.Date('2017-01-32') }");
+        assertEval("{ as.Date('2017-02-28') }");
+        assertEval("{ as.Date('2017-02-29') }");
+        assertEval("{ as.Date('2016-02-29') }");
+        assertEval("{ as.Date('2017-02-30') }");
+        assertEval("{ as.Date('2017-03-31') }");
+        assertEval("{ as.Date('2017-04-31') }");
+        assertEval("{ as.Date('2017-05-31') }");
+        assertEval("{ as.Date('2017-04-32') }");
+        assertEval("{ as.Date('2017-00-10') }");
+        assertEval("{ as.Date('2017-10-00') }");
+        assertEval("{ as.Date('2017-12-31') }");
+        assertEval("{ as.Date('2017-12-32') }");
+        assertEval("{ as.Date('2017-13-01') }");
+
     }
 }

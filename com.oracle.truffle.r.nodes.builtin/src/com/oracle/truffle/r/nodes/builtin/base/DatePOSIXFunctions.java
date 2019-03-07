@@ -30,22 +30,37 @@ import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 
 import java.text.ParsePosition;
+import java.time.Clock;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.ZoneId;
 import java.time.ZoneOffset;
 import java.time.ZonedDateTime;
+import java.time.chrono.Chronology;
+import java.time.chrono.ChronoLocalDate;
+import java.time.chrono.ChronoLocalDateTime;
+import java.time.chrono.ChronoPeriod;
+import java.time.chrono.ChronoZonedDateTime;
+import java.time.chrono.Era;
+import java.time.chrono.IsoChronology;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeFormatterBuilder;
 import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
+import java.time.format.ResolverStyle;
+import java.time.format.SignStyle;
 import java.time.format.TextStyle;
 import java.time.temporal.ChronoField;
 import java.time.temporal.TemporalAccessor;
+import java.time.temporal.TemporalField;
+import java.time.temporal.ValueRange;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Locale;
+import java.util.Map;
 import java.util.TimeZone;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
@@ -70,7 +85,7 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractListVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
-import java.time.LocalTime;
+import java.time.Month;
 
 // from GnuR datatime.c
 
@@ -435,7 +450,7 @@ public class DatePOSIXFunctions {
             DateTimeFormatterBuilder[] builders = createFormatters(format, true);
             DateTimeFormatter[] formatters = new DateTimeFormatter[builders.length];
             for (int i = 0; i < builders.length; i++) {
-                formatters[i] = builders[i].toFormatter();
+                formatters[i] = builders[i].toFormatter().withChronology(LeapYearChronology.INSTANCE);
             }
 
             for (int i = 0; i < length; i++) {
@@ -485,7 +500,7 @@ public class DatePOSIXFunctions {
     private static DateTimeFormatterBuilder createFormatter(String format, boolean forInput) {
         DateTimeFormatterBuilder builder = new DateTimeFormatterBuilder();
         if (forInput) {
-            // Opposite of STRICT mode; allows to parse single-digit hour and minute like '0:3:22'.
+            // Lenient parsing required to parse datetimes like "2002-6-24-0-0-10"
             builder.parseLenient();
         }
         boolean escaped = false;
@@ -564,7 +579,11 @@ public class DatePOSIXFunctions {
                          * 24:00:00 are accepted for input, since ISO 8601 allows these. For output
                          * 00-23 is required thus using HOUR_OF_DAY.
                          */
-                        builder.appendValue(forInput ? ChronoField.CLOCK_HOUR_OF_DAY : ChronoField.HOUR_OF_DAY, 2);
+                        if (forInput) {
+                            builder.appendValue(ChronoField.CLOCK_HOUR_OF_DAY, 1, 2, SignStyle.NOT_NEGATIVE);
+                        } else {
+                            builder.appendValue(ChronoField.HOUR_OF_DAY, 2);
+                        }
                         break;
                     case 'I':
                         // Hours as decimal number (01–12).
@@ -580,7 +599,11 @@ public class DatePOSIXFunctions {
                         break;
                     case 'M':
                         // Minute as decimal number (00–59).
-                        builder.appendValue(ChronoField.MINUTE_OF_HOUR, 2);
+                        if (forInput) {
+                            builder.appendValue(ChronoField.MINUTE_OF_HOUR, 1, 2, SignStyle.NOT_NEGATIVE);
+                        } else {
+                            builder.appendValue(ChronoField.MINUTE_OF_HOUR, 2);
+                        }
                         break;
                     case 'n':
                         // Newline on output, arbitrary whitespace on input.
@@ -625,7 +648,11 @@ public class DatePOSIXFunctions {
                          * Second as decimal number (00–61), allowing for up to two leap-seconds
                          * (but POSIX-compliant implementations will ignore leap seconds).
                          */
-                        builder.appendValue(ChronoField.SECOND_OF_MINUTE, 2);
+                        if (forInput) {
+                            builder.appendValue(ChronoField.SECOND_OF_MINUTE, 1, 2, SignStyle.NOT_NEGATIVE);
+                        } else {
+                            builder.appendValue(ChronoField.SECOND_OF_MINUTE, 2);
+                        }
                         break;
                     case 't':
                         // Tab on output, arbitrary whitespace on input.
@@ -633,8 +660,9 @@ public class DatePOSIXFunctions {
                         break;
                     case 'T':
                         // Equivalent to %H:%M:%S.
-                        builder.appendValue(ChronoField.CLOCK_HOUR_OF_DAY, 2).appendLiteral(':').appendValue(ChronoField.MINUTE_OF_HOUR, 2).appendLiteral(':').appendValue(
-                                        ChronoField.SECOND_OF_MINUTE, 2);
+                        builder.appendValue(ChronoField.CLOCK_HOUR_OF_DAY, forInput ? 1 : 2).appendLiteral(':').appendValue(ChronoField.MINUTE_OF_HOUR, forInput ? 1 : 2).appendLiteral(
+                                        ':').appendValue(
+                                                        ChronoField.SECOND_OF_MINUTE, forInput ? 1 : 2);
                         break;
                     case 'u':
                         // Weekday as a decimal number (1–7, Monday is 1).
@@ -785,5 +813,166 @@ public class DatePOSIXFunctions {
             zone = RRuntime.asString(vector.getDataAtAsObject(1));
         }
         return zone;
+    }
+
+    private static final class LeapYearChronology implements Chronology {
+
+        static LeapYearChronology INSTANCE = new LeapYearChronology(IsoChronology.INSTANCE);
+
+        private static final int[] maxDayOfMonths = new int[]{31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31};
+
+        private final Chronology delegate;
+
+        LeapYearChronology(Chronology delegate) {
+            this.delegate = delegate;
+        }
+
+        @Override
+        public String getId() {
+            return delegate.getId();
+        }
+
+        @Override
+        public String getCalendarType() {
+            return delegate.getCalendarType();
+        }
+
+        @Override
+        public ChronoLocalDate date(Era era, int yearOfEra, int month, int dayOfMonth) {
+            return delegate.date(era, yearOfEra, month, dayOfMonth);
+        }
+
+        @Override
+        public ChronoLocalDate date(int prolepticYear, int month, int dayOfMonth) {
+            return delegate.date(prolepticYear, month, dayOfMonth);
+        }
+
+        @Override
+        public ChronoLocalDate dateYearDay(Era era, int yearOfEra, int dayOfYear) {
+            return delegate.dateYearDay(era, yearOfEra, dayOfYear);
+        }
+
+        @Override
+        public ChronoLocalDate dateYearDay(int prolepticYear, int dayOfYear) {
+            return delegate.dateYearDay(prolepticYear, dayOfYear);
+        }
+
+        @Override
+        public ChronoLocalDate dateEpochDay(long epochDay) {
+            return delegate.dateEpochDay(epochDay);
+        }
+
+        @Override
+        public ChronoLocalDate dateNow() {
+            return delegate.dateNow();
+        }
+
+        @Override
+        public ChronoLocalDate dateNow(ZoneId zone) {
+            return delegate.dateNow(zone);
+        }
+
+        @Override
+        public ChronoLocalDate dateNow(Clock clock) {
+            return delegate.dateNow(clock);
+        }
+
+        @Override
+        public ChronoLocalDate date(TemporalAccessor temporal) {
+            return delegate.date(temporal);
+        }
+
+        @Override
+        public ChronoLocalDateTime<? extends ChronoLocalDate> localDateTime(TemporalAccessor temporal) {
+            return delegate.localDateTime(temporal);
+        }
+
+        @Override
+        public ChronoZonedDateTime<? extends ChronoLocalDate> zonedDateTime(TemporalAccessor temporal) {
+            return delegate.zonedDateTime(temporal);
+        }
+
+        @Override
+        public ChronoZonedDateTime<? extends ChronoLocalDate> zonedDateTime(Instant instant, ZoneId zone) {
+            return delegate.zonedDateTime(instant, zone);
+        }
+
+        @Override
+        public boolean isLeapYear(long prolepticYear) {
+            return delegate.isLeapYear(prolepticYear);
+        }
+
+        @Override
+        public int prolepticYear(Era era, int yearOfEra) {
+            return delegate.prolepticYear(era, yearOfEra);
+        }
+
+        @Override
+        public Era eraOf(int eraValue) {
+            return delegate.eraOf(eraValue);
+        }
+
+        @Override
+        public List<Era> eras() {
+            return delegate.eras();
+        }
+
+        @Override
+        public ValueRange range(ChronoField field) {
+            return delegate.range(field);
+        }
+
+        @Override
+        public String getDisplayName(TextStyle style, Locale locale) {
+            return delegate.getDisplayName(style, locale);
+        }
+
+        @Override
+        public ChronoLocalDate resolveDate(Map<TemporalField, Long> fieldValues, ResolverStyle resolverStyle) {
+            // date(int prolepticYear, int month, int dayOfMonth) not called -> handle here
+            Long day = fieldValues.get(ChronoField.DAY_OF_MONTH);
+            if (day != null && day >= 29) {
+                Long month = fieldValues.get(ChronoField.MONTH_OF_YEAR);
+                if (month != null && month <= 12) {
+                    if (month == 2 && day == 29) {
+                        Long year = fieldValues.get(ChronoField.YEAR);
+                        if (year != null && !isLeapYear(year)) {
+                            throw new DateTimeException("Invalid date 'February 29' as '" + year + "' is not a leap year");
+                        }
+                    } else {
+                        int monthInt = (int) (long) month;
+                        if (day > maxDayOfMonths[(monthInt) - 1]) {
+                            throw new DateTimeException("Invalid date '" + Month.of(monthInt).name() + " " + day + "'");
+                        }
+                    }
+                }
+            }
+            return delegate.resolveDate(fieldValues, resolverStyle);
+        }
+
+        @Override
+        public ChronoPeriod period(int years, int months, int days) {
+            return delegate.period(years, months, days);
+        }
+
+        @Override
+        public int compareTo(Chronology other) {
+            return delegate.compareTo(other);
+        }
+
+        @Override
+        public boolean equals(Object obj) {
+            return delegate.equals(obj);
+        }
+
+        @Override
+        public int hashCode() {
+            return delegate.hashCode();
+        }
+
+        @Override
+        public String toString() {
+            return delegate.toString();
+        }
     }
 }
