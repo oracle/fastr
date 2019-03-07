@@ -91,7 +91,8 @@ ROCR => D/detaching ‘ROCR.hiv’
 # quantmod: PDF device not supported in saveChart()
 quantmod => D-2/  PDF device not supported.
 quantmod => D/  incomplete final line found
-quantmod => s/There were [0-9]+ warnings \(use warnings\(\) to see them\)/
+quantmod => s/There were [0-9]* or more warnings \(use warnings\(\) to see the first [0-9]*\)/
+quantmod => D+1-1/In read.table(file = file, header = header, sep = sep, quote = quote,  :
 
 # --------
 sqldf => D/A svUnit test suite run in
