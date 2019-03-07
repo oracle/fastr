@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -77,6 +77,12 @@ public class TestBuiltin_lengthassign extends TestBase {
         assertEval("{ x<-c(a=7, b=42); length(x)<-1; x }");
         assertEval("{ x<-NULL; length(x)<-2; x }");
         assertEval("{ x<-NULL; length(x)<-0; x }");
+
+        // regression: updating length of b caused attributes reset of a
+        assertEval("{a <- structure(c(3,4), names=c('a','b'),package=c('methods')); b <- a; length(b) <- 1; list(a=a,b=b)}");
+        // undocumented GNU-R feature/bug that "methods" rely on: updating length of x to L is no-op
+        // if length(x) == L, so then x retains all its attributes
+        assertEval("{a <- structure(c(3,4), names=c('a','b'),package=c('methods')); length(a) <- 2; a}");
     }
 
     @Test

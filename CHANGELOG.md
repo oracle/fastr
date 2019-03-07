@@ -9,6 +9,9 @@ Bug fixes:
 * `C_numeric_deriv` gives wrong results of gradient #54
 * `tcrossprod` with a single vector #56
 * whenever possible, errors are propagated to the FastR embedder
+* `length<-` would remove attributes from the target even if it was a shared value
+* `length(x) <- N` should not strip attributes if `length(x) == N`, which is not in line with GNU-R documentation,
+but relied upon in the `methods` package #55
 
 # 1.0 RC 13
 
