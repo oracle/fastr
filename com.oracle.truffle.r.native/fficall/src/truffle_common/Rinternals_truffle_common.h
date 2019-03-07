@@ -1148,11 +1148,6 @@ SEXP *STRING_PTR(SEXP x) {
     return FASTR_DATAPTR(x);
 }
 
-SEXP * NORET VECTOR_PTR(SEXP x) {
-    TRACE0();
-    unimplemented("VECTOR_PTR");
-}
-
 SEXP Rf_asChar(SEXP x) {
     TRACE0();
     SEXP result = ((call_Rf_asChar) callbacks[Rf_asChar_x])(x);

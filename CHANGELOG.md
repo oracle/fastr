@@ -3,6 +3,11 @@
 * all FastR specific options (NOT those GNU-R compatible like `--save`) are experimental except for `--R.PrintErrorStacktracesToFile`,
 which is an option that enables logging of FastR internal errors for bug reporting purposes. Experimental options can be unlocked
 using `--experimental-options` or with `ContextBuilder#allowExperimentalOptions`.
+* the MRAN mirror used by FastR by default instead of CRAN was bumped to 2019-02-13
+
+Added missing R builtins and C API
+
+* `Rf_StringBlank`
 
 Bug fixes:
 

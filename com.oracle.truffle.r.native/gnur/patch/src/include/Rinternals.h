@@ -656,7 +656,12 @@ void SET_STRING_ELT(SEXP x, R_xlen_t i, SEXP v);
 SEXP SET_VECTOR_ELT(SEXP x, R_xlen_t i, SEXP v);
 SEXP *(STRING_PTR)(SEXP x);
 const SEXP *(STRING_PTR_RO)(SEXP x);
-SEXP * NORET (VECTOR_PTR)(SEXP x);
+
+// FastR note: VECTOR_PTR is defined only if R_INTERNALS is defined, otherwise it fails (hence the NORET),
+// but some packages rely on VECTOR_PTR and it can work in FastR (to some extent), so we define it here
+// like if R_INTERNALS were defined
+#define VECTOR_PTR(x)	((SEXP *) DATAPTR(x))
+// SEXP * NORET (VECTOR_PTR)(SEXP x);
 
 /* ALTREP support */
 void *(STDVEC_DATAPTR)(SEXP x);
