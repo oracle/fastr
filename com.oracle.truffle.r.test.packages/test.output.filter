@@ -45,6 +45,7 @@
 .* => s/<environment: 0x[0-9A-Fa-f]*>/<environment: 0xCAFEBABE>
 
 # ignore warnings for invalid source references
+.* => D/Warning messages:
 .* => D+0-1/Invalid source reference
 
 # for individual packages:
@@ -114,3 +115,8 @@ clpAPI => D/Clp0006I 1  Obj 3.2368421
 clpAPI => D/Clp0000I Optimal - objective value 3.2368421
 clpAPI => D/Coin0511I After Postsolve, objective 3.2368421, infeasibilities - dual 0 (0), primal 0 (0)
 clpAPI => D/Clp0032I Optimal objective 3.236842105 - 1 iterations time
+
+# --------
+# RcppBDT
+RcppBDT => s/code for methods in class .* was not checked for suspicious field assignments \(recommended package ‘codetools’ not available\?\)/
+
