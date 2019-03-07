@@ -375,7 +375,8 @@ public abstract class InternalNode extends OperatorNode {
                     }
                     Object basicFun = getBasicFunction.execute(frame, builtinFactory.getName());
                     if (basicFun != null) {
-                        Object result = getCallMatcher().execute(frame, builtinFactory.getSignature(), args, (RFunction) basicFun, builtinFactory.getGenericName(), null);
+                        // TODO: check what the dispatchCaller argument should be
+                        Object result = getCallMatcher().execute(frame, null, null, builtinFactory.getSignature(), args, (RFunction) basicFun, builtinFactory.getGenericName(), null);
                         if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
                             return result;
                         }
@@ -388,7 +389,7 @@ public abstract class InternalNode extends OperatorNode {
                 }
                 Result lookupResult = lookup.execute(frame, builtinFactory.getGenericName(), clazz, null, frame.materialize(), null);
                 if (lookupResult != null) {
-                    return getCallMatcher().execute(frame, builtinFactory.getSignature(), args, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
+                    return getCallMatcher().execute(frame, null, null, builtinFactory.getSignature(), args, lookupResult.function, lookupResult.targetFunctionName, lookupResult.createS3Args(frame));
                 }
             }
             return null;

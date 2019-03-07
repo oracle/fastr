@@ -27,7 +27,6 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.SUBSTITUTE;
 
 import java.util.ArrayList;
-import java.util.function.Function;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
@@ -61,6 +60,8 @@ import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.HasSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapSysParentProfile;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -74,8 +75,8 @@ import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RIntVector;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
@@ -94,7 +95,7 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
  *
  * The main thing to note is distinction between {@code sys.parent} and {@code sys.frame}.
  * {@code sys.parent} gives you "logical" parent, but not necessarily the frame preceding the
- * current frame on the call stack. In FastR this is captured by {@link RCaller#getParent()}.
+ * current frame on the call stack. In FastR this is captured by {@link RCaller#getPrevious()}.
  * {@code sys.frame(n)} gives you frame with number {@code n} and traverses the stack without taking
  * the parent relation into account. In FastR the frame number is captured in
  * {@link RCaller#getDepth()}. See also builtins in {@code FrameFunctions} for more details.
@@ -110,6 +111,7 @@ public class FrameFunctions {
         private final ConditionProfile globalFrameProfile = ConditionProfile.createBinaryProfile();
         private final BranchProfile iterateProfile = BranchProfile.create();
         private final BranchProfile slowPathProfile = BranchProfile.create();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
 
         /**
          * Determine the frame access mode of a subclass. The rule of thumb is that subclasses that
@@ -151,26 +153,15 @@ public class FrameFunctions {
             return RArguments.getFunction(targetFrame);
         }
 
-        protected RCaller getCall(VirtualFrame frame, int n) {
-            assert access == FrameAccess.READ_ONLY;
-            RCaller currentCall = RArguments.getCall(frame);
-            int actualFrame = decodeFrameNumber(currentCall, n);
-            Frame targetFrame = getNumberedFrame(frame, actualFrame, false);
-            return RArguments.getCall(targetFrame);
-        }
-
         /**
          * Handles n > 0 and n < 0 and errors relating to stack depth.
          */
-        private int decodeFrameNumber(RCaller currentCall, int n) {
+        protected int decodeFrameNumber(RCaller currentCall, int n) {
             RCaller call = currentCall;
             if (!ignoreDotInternal) {
-                call = call.getParent();
+                call = call.getPrevious();
             }
-
-            while (call.isPromise()) {
-                call = call.getParent();
-            }
+            call = RCaller.unwrapPromiseCaller(call, unwrapCallerProfile);
             int depth = call.getDepth();
             if (n > 0) {
                 if (n > depth) {
@@ -203,6 +194,8 @@ public class FrameFunctions {
                 if (RArguments.getDepth(frame) - actualFrame <= ITERATE_LEVELS) {
                     iterateProfile.enter();
                     current = getCallerFrame(frame);
+                    // An optimization attempt: a small number of "exploded" iterations should be
+                    // fast
                     for (int i = 0; i < ITERATE_LEVELS; i++) {
                         if (current == null) {
                             break;
@@ -221,6 +214,11 @@ public class FrameFunctions {
 
         private Frame getNumberedFrameSlowPath(MaterializedFrame frame, int actualFrame, boolean materialize) {
             Frame resultViaCaller = getNumberedCallerFrameSlowPath(frame, actualFrame);
+            /*
+             * The materialize flag and the seemingly unnecessary cast to MateralizedFrame is here
+             * to prevent Graal from merging two control paths that would lead to an unjustified
+             * escape analysis complaint about an escaping VirtualFrame.
+             */
             if (resultViaCaller != null) {
                 return materialize ? (MaterializedFrame) resultViaCaller : resultViaCaller;
             }
@@ -272,11 +270,14 @@ public class FrameFunctions {
         }
 
         @Specialization
-        protected Object sysCall(VirtualFrame frame, int which) {
-            /*
-             * sys.call preserves provided names but does not create them, unlike match.call.
-             */
-            return createCall(helper.getCall(frame, which));
+        protected Object sysCall(VirtualFrame frame, int which,
+                        @Cached("new()") SysCallsIterator callIter) {
+            int n = helper.decodeFrameNumber(RArguments.getCall(frame), which);
+            SysCallsIterator.State iterState = callIter.start(frame);
+            while (callIter.depth(iterState) != n && !callIter.isEnd(iterState)) {
+                callIter.previous(iterState);
+            }
+            return createCall(callIter.actual(iterState));
         }
 
         @TruffleBoundary
@@ -469,22 +470,13 @@ public class FrameFunctions {
 
     @RBuiltin(name = "sys.nframe", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysNFrame extends RBuiltinNode.Arg0 {
-
-        private final BranchProfile isPromiseCurrentProfile = BranchProfile.create();
-        private final BranchProfile isPromiseResultProfile = BranchProfile.create();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
 
         @Specialization
         protected int sysNFrame(VirtualFrame frame) {
-            RCaller call = RArguments.getCall(frame);
-            while (call.isPromise()) {
-                isPromiseCurrentProfile.enter();
-                call = call.getParent();
-            }
-            call = call.getParent();
-            while (call.isPromise()) {
-                isPromiseResultProfile.enter();
-                call = call.getParent();
-            }
+            RCaller currentCaller = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile1);
+            RCaller call = RCaller.unwrapPromiseCaller(currentCaller.getPrevious(), unwrapCallerProfile2);
             return call.getDepth();
         }
     }
@@ -548,29 +540,28 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.frames", kind = INTERNAL, parameterNames = {}, behavior = COMPLEX)
     public abstract static class SysFrames extends RBuiltinNode.Arg0 {
 
-        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
-        @Child private PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
-
         @Specialization
-        protected Object sysFrames(VirtualFrame frame) {
-            int depth = RArguments.getDepth(frame);
-            if (depth == 1) {
+        protected Object sysFrames(VirtualFrame frame,
+                        @Cached("new()") SysFramesIterator iter) {
+            SysFramesIterator.State iterState = iter.start(frame);
+            if (iter.isEnd(iterState)) {
                 return RNull.instance;
             } else {
                 RPairList result = RDataFactory.createPairList();
                 RPairList next = result;
-                for (int i = 1; i < depth; i++) {
-                    MaterializedFrame mf = (MaterializedFrame) helper.getNumberedFrame(frame, i, true);
-                    deoptFrameNode.deoptimizeFrame(RArguments.getArguments(mf));
-                    next.setCar(REnvironment.frameToEnvironment(mf));
-                    if (i != depth - 1) {
+                do {
+                    REnvironment frameEnv = iter.environment(frame, iterState);
+                    next.setCar(frameEnv);
+                    if (iter.isLast(iterState)) {
+                        next.setCdr(RNull.instance);
+                    } else {
                         RPairList pl = RDataFactory.createPairList();
                         next.setCdr(pl);
                         next = pl;
-                    } else {
-                        next.setCdr(RNull.instance);
                     }
-                }
+                    iter.next(iterState);
+                } while (!iter.isEnd(iterState));
+
                 return result;
             }
         }
@@ -580,35 +571,15 @@ public class FrameFunctions {
     public abstract static class SysCalls extends RBuiltinNode.Arg0 {
 
         @Specialization
-        protected Object sysCalls(VirtualFrame frame) {
-            RCaller call = RArguments.getCall(frame);
-            while (call.isPromise()) {
-                // isPromiseCurrentProfile.enter();
-                call = call.getParent();
+        protected Object sysCalls(VirtualFrame frame,
+                        @Cached("new()") SysCallsIterator callIter) {
+            SysCallsIterator.State iterState = callIter.start(frame);
+            Object result = RNull.instance;
+            while (!callIter.isEnd(iterState)) {
+                result = RDataFactory.createPairList(createCall(callIter.actual(iterState)), result);
+                callIter.previous(iterState);
             }
-            call = call.getParent();
-            while (call.isPromise()) {
-                // isPromiseResultProfile.enter();
-                call = call.getParent();
-            }
-            int depth = call.getDepth();
-            if (depth == 0) {
-                return RNull.instance;
-            } else {
-                Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
-                    Object result = RNull.instance;
-
-                    @Override
-                    public Object apply(Frame f) {
-                        RCaller currentCall = RArguments.getCall(f);
-                        if (currentCall.isValidCaller() && !currentCall.isPromise() && currentCall.getDepth() <= depth) {
-                            result = RDataFactory.createPairList(createCall(currentCall), result);
-                        }
-                        return (!currentCall.isPromise() && RArguments.getDepth(f) == 1) ? result : null;
-                    }
-                });
-                return result;
-            }
+            return result;
         }
 
         @TruffleBoundary
@@ -621,33 +592,32 @@ public class FrameFunctions {
     @RBuiltin(name = "sys.parent", kind = INTERNAL, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class SysParent extends RBuiltinNode.Arg1 {
 
-        private final BranchProfile nullCallerProfile = BranchProfile.create();
-        private final BranchProfile promiseProfile = BranchProfile.create();
-        private final BranchProfile nonNullCallerProfile = BranchProfile.create();
-
         static {
             Casts casts = new Casts(SysParent.class);
             casts.arg("n").asIntegerVector().findFirst();
         }
 
         @Specialization
-        protected int sysParent(VirtualFrame frame, int n) {
-            RCaller call = RArguments.getCall(frame);
-            int i = 0;
-            while (i < n + 1) {
-                call = call.getParent();
-                if (call == null) {
-                    nullCallerProfile.enter();
-                    return 0;
-                }
-                while (call.isPromise()) {
-                    promiseProfile.enter();
-                    call = call.getParent();
-                }
-                i++;
+        protected int sysParent(VirtualFrame frame, int n,
+                        @Cached("new()") SysParentIterator iter) {
+            SysParentIterator.State iterState = iter.start(frame);
+            if (n <= 0) {
+                // Undocumented feature of GNU-R parent.frame(n) with n <= 0 returns the current
+                // frame number
+                return iter.depth(iterState);
             }
-            nonNullCallerProfile.enter();
-            return call.getDepth();
+
+            // IMPORTANT NOTE: when changing the logic in the loop below, review also SysParents and
+            // ParentFrame
+
+            // TODO: finish comment: The difference between sys.parent and sys.parents is that...
+
+            int i = 0;
+            while (i < n && !iter.isEnd(iterState)) {
+                i++;
+                iter.previous(iterState);
+            }
+            return iter.depth(iterState);
         }
     }
 
@@ -680,50 +650,35 @@ public class FrameFunctions {
     public abstract static class SysParents extends RBuiltinNode.Arg0 {
 
         @Specialization
-        protected RIntVector sysParents(VirtualFrame frame) {
-            RCaller call = RArguments.getCall(frame);
-            while (call.isPromise()) {
-                // isPromiseCurrentProfile.enter();
-                call = call.getParent();
-            }
-            call = call.getParent();
-            while (call.isPromise()) {
-                // isPromiseResultProfile.enter();
-                call = call.getParent();
-            }
-            int depth = call.getDepth();
-            if (depth == 0) {
-                return RDataFactory.createEmptyIntVector();
-            } else {
-                int[] data = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, int[]>() {
-                    int[] result = new int[depth];
+        protected RIntVector sysParents(VirtualFrame frame,
+                        @Cached("new()") SysParentsIterator iter) {
+            SysParentsIterator.State iterState = iter.start(frame);
 
-                    @Override
-                    public int[] apply(Frame f) {
-                        RCaller currentCall = RArguments.getCall(f);
-                        if (!currentCall.isPromise() && currentCall.getDepth() <= depth) {
-                            int currentCallIdx = currentCall.getDepth() - 1;
-                            RCaller parent = currentCall.getParent();
-                            RCaller previous = currentCall;
-                            while (parent != null && parent.isPromise()) {
-                                if (parent.hasSysParent()) {
-                                    // parent.frame explicitly set by Rf_eval(quote(foo()), env) to
-                                    // env
-                                    // GNU R gives parent number == frame created for calling foo().
-                                    // There is no actual numbered frame that would be equal to env.
-                                    parent = previous;
-                                    break;
-                                }
-                                previous = parent;
-                                parent = parent.getParent();
-                            }
-                            result[currentCallIdx] = parent == null ? 0 : parent.getDepth();
-                        }
-                        return (!currentCall.isPromise() && RArguments.getDepth(f) == 1) ? result : null;
-                    }
-                });
-                return RDataFactory.createIntVector(data, RDataFactory.COMPLETE_VECTOR);
+            if (iter.isEnd(iterState)) {
+                // sys.parents called at the top level
+                return RDataFactory.createEmptyIntVector();
             }
+            if (iter.isTop(iterState)) {
+                return RDataFactory.createIntVectorFromScalar(0);
+            }
+
+            // "* 2" to play it safe, call.getDepth() should be enough?
+            int[] result = new int[iter.depth(iterState) * 2];
+            int resultIdx = 0;
+            while (!iter.isEnd(iterState)) {
+                int parentDepth = iter.parentDepth(iterState);
+                if (parentDepth < 0) {
+                    break;
+                }
+                result[resultIdx++] = parentDepth;
+                iter.previous(iterState);
+            }
+
+            int[] reversed = new int[resultIdx];
+            for (int i = 0; i < reversed.length; i++) {
+                reversed[i] = result[resultIdx - 1 - i];
+            }
+            return RDataFactory.createIntVector(reversed, RDataFactory.COMPLETE_VECTOR);
         }
     }
 
@@ -732,9 +687,6 @@ public class FrameFunctions {
      */
     @RBuiltin(name = "parent.frame", kind = SUBSTITUTE, parameterNames = {"n"}, behavior = COMPLEX)
     public abstract static class ParentFrame extends RBuiltinNode.Arg1 {
-
-        @Child private FrameHelper helper;
-        @Child private GetCallerFrameNode getCaller;
 
         public abstract REnvironment execute(VirtualFrame frame, int n);
 
@@ -750,50 +702,291 @@ public class FrameFunctions {
 
         @Specialization
         protected REnvironment parentFrame(VirtualFrame frame, int nIn,
-                        @Cached("create()") BranchProfile nullCallerProfile,
-                        @Cached("create()") BranchProfile promiseProfile,
-                        @Cached("create()") BranchProfile nonNullCallerProfile,
-                        @Cached("create()") BranchProfile explicitSysParent,
                         @Cached("createEqualityProfile()") ValueProfile nProfile,
-                        @Cached("createBinaryProfile()") ConditionProfile useGetCallerFrameNode) {
+                        @Cached("new()") ParentFrameIterator iter) {
             int n = nProfile.profile(nIn);
             if (n <= 0) {
                 throw error(RError.Message.INVALID_VALUE, "n");
             }
-            RCaller originalCall = RArguments.getCall(frame);
-            RCaller call = originalCall;
-            while (call.isPromise()) {
-                promiseProfile.enter();
-                call = call.getParent();
-            }
+
+            ParentFrameIterator.State iterState = iter.start(frame);
+
             int i = 0;
-            while (i < n) {
-                call = call.getParent();
-                if (call == null) {
-                    nullCallerProfile.enter();
-                    return REnvironment.globalEnv();
-                }
-                // If the frame is promise evaluation frame, we use the parent to get to the actual
-                // frame of the function where the promise should be evaluated.
-                while (call.isPromise()) {
-                    if (i == n - 1 && call.hasSysParent()) {
-                        // promise RCallers are allowed to override "parent.frame"
-                        // this is necessary for Rf_eval(expr, env), where parent.frame() should be
-                        // env
-                        explicitSysParent.enter();
-                        return call.getSysParent();
-                    }
-                    promiseProfile.enter();
-                    call = call.getParent();
-                }
+            while (i < n && !iter.isEnd(iterState)) {
+                iter.previous(iterState);
                 i++;
             }
-            nonNullCallerProfile.enter();
-            if (useGetCallerFrameNode.profile(originalCall.getDepth() == call.getDepth() + 1)) {
+            return iter.environment(frame, iterState);
+        }
+    }
+
+    public static final class SysFramesIterator extends RBaseNode {
+
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
+
+        @Child private FrameHelper helper = new FrameHelper(FrameAccess.MATERIALIZE);
+        @Child private PromiseDeoptimizeFrameNode deoptFrameNode = new PromiseDeoptimizeFrameNode();
+
+        public SysFramesIterator() {
+        }
+
+        public State start(VirtualFrame frame) {
+            RCaller sysFramesCall = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile1);
+            RCaller actualCall = RCaller.unwrapPromiseCaller(sysFramesCall.getPrevious(), unwrapCallerProfile2);
+            return new State(actualCall.getDepth());
+        }
+
+        @SuppressWarnings("static-method")
+        public void next(State iterState) {
+            iterState.i++;
+        }
+
+        @SuppressWarnings("static-method")
+        public REnvironment environment(VirtualFrame frame, State iterState) {
+            MaterializedFrame mf = (MaterializedFrame) helper.getNumberedFrame(frame, iterState.i, true);
+            deoptFrameNode.deoptimizeFrame(RArguments.getArguments(mf));
+            return REnvironment.frameToEnvironment(mf);
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isLast(State iterState) {
+            return iterState.i == iterState.deepestFrame;
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isEnd(State iterState) {
+            return iterState.i > iterState.deepestFrame;
+        }
+
+        static final class State {
+            private int deepestFrame;
+            private int i = 1;
+
+            private State(int deepestFrame) {
+                this.deepestFrame = deepestFrame;
+            }
+
+        }
+    }
+
+    public static final class SysCallsIterator extends RBaseNode {
+
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
+
+        public SysCallsIterator() {
+        }
+
+        public State start(VirtualFrame frame) {
+            RCaller sysCallsCall = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile1);
+            return new State(RCaller.unwrapPromiseCaller(sysCallsCall.getPrevious(), unwrapCallerProfile2));
+        }
+
+        @SuppressWarnings("static-method")
+        public void previous(State iterState) {
+            iterState.actualCall = RCaller.unwrapPrevious(iterState.actualCall.getPrevious());
+        }
+
+        @SuppressWarnings("static-method")
+        public int depth(State iterState) {
+            return iterState.actualCall.getDepth();
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isEnd(State iterState) {
+            return !RCaller.isValidCaller(iterState.actualCall) || depth(iterState) == 0;
+        }
+
+        @SuppressWarnings("static-method")
+        public RCaller actual(State iterState) {
+            return iterState.actualCall;
+        }
+
+        static final class State {
+            private RCaller actualCall;
+
+            private State(RCaller actualCall) {
+                this.actualCall = actualCall;
+            }
+
+        }
+    }
+
+    public static final class SysParentIterator extends RBaseNode {
+
+        private final BranchProfile nullCallerProfile = BranchProfile.create();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile3 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapResultCallerProfile = new UnwrapPromiseCallerProfile();
+
+        public State start(VirtualFrame frame) {
+            RCaller sysParentCall = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile1);
+            return new State(RCaller.unwrapPromiseCaller(sysParentCall.getPrevious(), unwrapCallerProfile2));
+        }
+
+        @SuppressWarnings("static-method")
+        public void previous(State iterState) {
+            iterState.savedCall = iterState.call = RCaller.unwrapPromiseCaller(iterState.call, unwrapCallerProfile3);
+            // Get the real parent frame
+
+            // TODO: Is this condition necessary?
+            if (iterState.call != null) {
+                iterState.call = iterState.call.getLogicalParent();
+            }
+        }
+
+        @SuppressWarnings("static-method")
+        public int depth(State iterState) {
+            if (!RCaller.isValidCaller(iterState.call)) {
+                nullCallerProfile.enter();
+                return 0;
+            }
+            if (iterState.call.isNonFunctionSysParent()) {
+                // For environments that are not function frames, GNU-R uses the depth of the
+                // last function frame encountered.
+                return iterState.savedCall.getDepth();
+            }
+            return RCaller.unwrapPromiseCaller(iterState.call, unwrapResultCallerProfile).getDepth();
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isEnd(State iterState) {
+            return !RCaller.isValidCaller(iterState.call) || iterState.call.isNonFunctionSysParent();
+        }
+
+        static final class State {
+            private RCaller savedCall;
+            private RCaller call;
+
+            State(RCaller call) {
+                this.call = call;
+                this.savedCall = call;
+            }
+        }
+    }
+
+    public static final class SysParentsIterator extends RBaseNode {
+
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile1 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile2 = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile3 = new UnwrapPromiseCallerProfile();
+
+        public State start(VirtualFrame frame) {
+            RCaller sysParentsCall = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile1);
+            return new State(RCaller.unwrapPromiseCaller(sysParentsCall.getPrevious(), unwrapCallerProfile2));
+        }
+
+        @SuppressWarnings("static-method")
+        public void previous(State iterState) {
+            // Jump to the next real (i.e. not artificial promise evaluation) frame on the
+            // evaluation stack, not to the logical parent (is the sense of parent.frame)
+            iterState.call = RCaller.unwrapPrevious(iterState.call.getPrevious());
+        }
+
+        @SuppressWarnings("static-method")
+        public int depth(State iterState) {
+            return iterState.call.getDepth();
+        }
+
+        @SuppressWarnings("static-method")
+        public int parentDepth(State iterState) {
+            RCaller parent = iterState.call.getLogicalParent();
+            int parentDepth;
+            if (parent.isNonFunctionSysParent()) {
+                // For environments that are not function frames, GNU-R uses the depth of the
+                // last function frame encountered.
+                parentDepth = iterState.call.getDepth();
+            } else {
+                parent = RCaller.unwrapPromiseCaller(parent, unwrapCallerProfile3);
+                if (parent == null) {
+                    parentDepth = -1; // It indicates the end of the iteration
+                } else {
+                    parentDepth = parent.getDepth();
+                }
+            }
+
+            return parentDepth;
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isEnd(State iterState) {
+            return !RCaller.isValidCaller(iterState.call);
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isTop(State iterState) {
+            return iterState.call.getPrevious() == null;
+        }
+
+        static final class State {
+            private RCaller call;
+
+            State(RCaller call) {
+                this.call = call;
+            }
+        }
+    }
+
+    public static final class ParentFrameIterator extends RBaseNode {
+
+        private final BranchProfile nullCallerProfile = BranchProfile.create();
+        private final UnwrapPromiseCallerProfile unwrapOriginalCallerProfile = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
+        private final UnwrapPromiseCallerProfile unwrapResultCallerProfile = new UnwrapPromiseCallerProfile();
+        private final UnwrapSysParentProfile unwrapSysParentProfile = new UnwrapSysParentProfile();
+        private final ConditionProfile useGetCallerFrameNode = ConditionProfile.createBinaryProfile();
+
+        @Child private FrameHelper helper;
+        @Child private GetCallerFrameNode getCaller;
+
+        public State start(VirtualFrame frame) {
+            RCaller parentFrameCall = RArguments.getCall(frame);
+            int originalDepth = parentFrameCall.getDepth();
+            RCaller call = RCaller.unwrapPromiseCaller(parentFrameCall, unwrapOriginalCallerProfile);
+            return new State(originalDepth, call);
+        }
+
+        @SuppressWarnings("static-method")
+        public void previous(State iterState) {
+            RCaller actualCall = RCaller.unwrapPromiseCaller(iterState.call, unwrapCallerProfile);
+
+            // TODO: Is this condition necessary?
+            if (actualCall != null) {
+                iterState.call = actualCall.getLogicalParent();
+            }
+        }
+
+        @SuppressWarnings("static-method")
+        public REnvironment environment(VirtualFrame frame, State iterState) {
+            RCaller call = iterState.call;
+            if (!RCaller.isValidCaller(iterState.call)) {
+                nullCallerProfile.enter();
+                return REnvironment.globalEnv();
+            }
+
+            REnvironment sysParent = RCaller.unwrapSysParent(call, unwrapSysParentProfile);
+            if (sysParent != null) {
+                return sysParent;
+            }
+            call = RCaller.unwrapPromiseCaller(call, unwrapResultCallerProfile);
+            if (useGetCallerFrameNode.profile(iterState.originalDepth == call.getDepth() + 1)) {
                 // If the parent frame is the caller frame, we can use more efficient code:
                 return REnvironment.frameToEnvironment(getCallerFrameNode().execute(frame));
             }
             return REnvironment.frameToEnvironment((MaterializedFrame) getFrameHelper().getNumberedFrame(frame, call.getDepth(), true));
+
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isEnd(State iterState) {
+            return !RCaller.isValidCaller(iterState.call);
+        }
+
+        @SuppressWarnings("static-method")
+        public boolean isTop(State iterState) {
+            return iterState.call.getPrevious() == null;
         }
 
         private FrameHelper getFrameHelper() {
@@ -811,5 +1004,16 @@ public class FrameFunctions {
             }
             return getCaller;
         }
+
+        static final class State {
+            private final int originalDepth;
+            private RCaller call;
+
+            State(int originalDepth, RCaller call) {
+                this.originalDepth = originalDepth;
+                this.call = call;
+            }
+        }
     }
+
 }

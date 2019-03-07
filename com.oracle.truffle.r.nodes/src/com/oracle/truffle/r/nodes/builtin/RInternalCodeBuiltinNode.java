@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -67,7 +67,7 @@ public final class RInternalCodeBuiltinNode extends RExternalBuiltinNode {
             throw RInternalError.shouldNotReachHere("Could not load RInternalCodeBuiltin function '" + functionName + "'.");
         }
 
-        return call.execute(frame, actualArgs.getSignature(), actualArgs.getArguments(), function, functionName, null);
+        return call.execute(frame, null, null, actualArgs.getSignature(), actualArgs.getArguments(), function, functionName, null);
     }
 
 }

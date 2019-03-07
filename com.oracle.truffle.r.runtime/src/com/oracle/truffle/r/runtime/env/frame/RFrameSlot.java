@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,11 +70,13 @@ public final class RFrameSlot {
      * <li>{@code null} if the visibility was not set yet</li>
      * </ul>
      *
-     * Whenever an {@RBuiltinNode} is called via {@code RCallNode}, the resulting visibility is
-     * stored in the current frame. At the end of a {@code FunctionDefinitionNode}, the current
-     * state is stored into {@link RCaller#setVisibility(boolean)} if it is non-{@code null}. After
-     * each call site, the value of {@link RCaller#getVisibility()} is extracted and stored into the
-     * frame slot.
+     * Whenever an {@code RBuiltinNode} or R function is called via {@code RCallNode}, the resulting
+     * visibility is stored in the current frame. At the end of a {@code FunctionDefinitionNode},
+     * the current state is stored into {@link RCaller#setVisibility(boolean)} if it is non-
+     * {@code null}. After each call site, the value of {@link RCaller#getVisibility()} is extracted
+     * and stored into the frame slot. Note: the {@link RCaller} is passed as an argument to the
+     * callee frame. The callee can "return" the visibility to the caller via setting it in the
+     * given {@link RCaller} instance.
      */
     public static final RFrameSlot Visibility = new RFrameSlot("Visibility", false);
     /**

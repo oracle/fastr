@@ -81,7 +81,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         return new CallMatcherUninitializedNode(argsAreEvaluated, 0);
     }
 
-    public abstract Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs);
+    public abstract Object execute(VirtualFrame frame, RCaller parentCaller, RCaller dispatchCaller, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function,
+                    String functionName, DispatchArgs dispatchArgs);
 
     protected CallMatcherCachedNode specialize(ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, CallMatcherNode next) {
 
@@ -179,10 +180,11 @@ public abstract class CallMatcherNode extends RBaseNode {
         private final int depth;
 
         @Override
-        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
+        public Object execute(VirtualFrame frame, RCaller parentCaller, RCaller dispatchCaller, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function,
+                        String functionName, DispatchArgs dispatchArgs) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             if (depth >= DSLConfig.getCacheSize(MAX_CACHE_DEPTH)) {
-                return replace(new CallMatcherGenericNode(argsAreEvaluated)).execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
+                return replace(new CallMatcherGenericNode(argsAreEvaluated)).execute(frame, parentCaller, dispatchCaller, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             } else {
                 CallMatcherCachedNode cachedNode = replace(specialize(suppliedSignature, suppliedArguments, function, new CallMatcherUninitializedNode(argsAreEvaluated, depth + 1)));
                 // for splitting if necessary
@@ -191,7 +193,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                         cachedNode.call.getCallNode().cloneCallTarget();
                     }
                 }
-                return cachedNode.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
+                return cachedNode.execute(frame, parentCaller, dispatchCaller, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             }
         }
 
@@ -253,7 +255,8 @@ public abstract class CallMatcherNode extends RBaseNode {
         }
 
         @Override
-        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
+        public Object execute(VirtualFrame frame, RCaller parentCaller, RCaller dispatchCaller, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function,
+                        String functionName, DispatchArgs dispatchArgs) {
             if (suppliedSignature == cachedSuppliedSignature && function == cachedFunction && checkLastArgSignature(cachedSuppliedSignature, suppliedArguments)) {
 
                 // Note: see CallMatcherNode#specialize for details on suppliedSignature/Arguments
@@ -279,10 +282,15 @@ public abstract class CallMatcherNode extends RBaseNode {
                         fastPath = null;
                     }
 
-                    RCaller parent = RArguments.getCall(frame).getParent();
+                    RCaller parent = dispatchCaller != null ? dispatchCaller : RArguments.getCall(frame).getPrevious();
                     String genFunctionName = functionName == null ? function.getName() : functionName;
                     Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, preparePermutation, suppliedArguments, suppliedSignature);
-                    RCaller caller = genFunctionName == null ? RCaller.createInvalid(frame, parent) : RCaller.create(frame, parent, argsSupplier);
+                    RCaller caller;
+                    if (genFunctionName == null) {
+                        caller = RCaller.createInvalid(frame, parent);
+                    } else {
+                        caller = RCaller.createForGenericFunctionCall(parent, argsSupplier, parentCaller != null ? parentCaller : RArguments.getCall(frame));
+                    }
                     MaterializedFrame callerFrame = dispatchArgs instanceof S3Args ? ((S3Args) dispatchArgs).callEnv : null;
                     try {
                         return call.execute(frame, cachedFunction, caller, callerFrame, reorderedArgs, matchedArgs.getSignature(), cachedFunction.getEnclosingFrame(), dispatchArgs);
@@ -295,7 +303,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                     return result;
                 }
             } else {
-                return next.execute(frame, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
+                return next.execute(frame, parentCaller, dispatchCaller, suppliedSignature, suppliedArguments, function, functionName, dispatchArgs);
             }
         }
 
@@ -357,11 +365,12 @@ public abstract class CallMatcherNode extends RBaseNode {
         @Child private CallRBuiltinCachedNode callRBuiltin = CallRBuiltinCachedNode.create(2);
 
         @Override
-        public Object execute(VirtualFrame frame, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function, String functionName, DispatchArgs dispatchArgs) {
+        public Object execute(VirtualFrame frame, RCaller parentCaller, RCaller dispatchCaller, ArgumentsSignature suppliedSignature, Object[] suppliedArguments, RFunction function,
+                        String functionName, DispatchArgs dispatchArgs) {
             RArgsValuesAndNames reorderedArgs = reorderArguments(suppliedArguments, function, suppliedSignature, this);
             evaluatePromises(frame, function, reorderedArgs.getArguments(), ((RRootNode) function.getRootNode()).getFormalArguments().getSignature().getVarArgIndex());
 
-            RCaller parent = RArguments.getCall(frame).getParent();
+            RCaller parent = dispatchCaller != null ? dispatchCaller : RArguments.getCall(frame).getPrevious();
             String genFunctionName = functionName == null ? function.getName() : functionName;
 
             RCaller caller;
@@ -369,7 +378,7 @@ public abstract class CallMatcherNode extends RBaseNode {
                 caller = RCaller.createInvalid(frame, parent);
             } else {
                 Supplier<RSyntaxElement> argsSupplier = RCallerHelper.createFromArguments(genFunctionName, new RArgsValuesAndNames(suppliedArguments, suppliedSignature));
-                caller = RCaller.create(frame, parent, argsSupplier);
+                caller = RCaller.createForGenericFunctionCall(parent, argsSupplier, parentCaller != null ? parentCaller : RArguments.getCall(frame));
             }
 
             MaterializedFrame callerFrame = (dispatchArgs instanceof S3Args) ? ((S3Args) dispatchArgs).callEnv : null;

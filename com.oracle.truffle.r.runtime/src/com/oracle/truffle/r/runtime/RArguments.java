@@ -249,7 +249,7 @@ public final class RArguments {
     }
 
     public static RCaller getCall(Frame frame) {
-        return (RCaller) frame.getArguments()[INDEX_CALL];
+        return frame == null ? null : (RCaller) frame.getArguments()[INDEX_CALL];
     }
 
     public static int getDepth(Frame frame) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -241,14 +241,11 @@ public abstract class Rprof extends RExternalBuiltinNode.Arg8 implements MemoryC
             Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
-                public Object apply(Frame f) {
-                    RCaller call = RArguments.getCall(f);
-                    if (call != null && call.isValidCaller()) {
-                        while (call.isPromise()) {
-                            call = call.getParent();
-                        }
-                        RSyntaxElement syntaxNode = call.getSyntaxNode();
-                        stack.add(syntaxNode);
+                public Object apply(Frame fIn) {
+                    Frame f = RArguments.unwrap(fIn);
+                    RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(f));
+                    if (RCaller.isValidCaller(call)) {
+                        stack.add(call.getSyntaxNode());
                     }
                     return null;
                 }

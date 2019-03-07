@@ -1247,7 +1247,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             if (!currentCaller.isPromise() && currentCaller.isValidCaller() && currentCaller != RContext.getInstance().stateInstrumentation.getBrowserState().getInBrowserCaller()) {
                 break;
             }
-            currentCaller = currentCaller.getParent();
+            currentCaller = currentCaller.getPrevious();
         }
         return currentCaller == null || currentCaller == RCaller.topLevel ? RNull.instance : currentCaller;
     }
@@ -1258,7 +1258,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         Utils.warn("Potential memory leak (parent function context object)");
         RCaller currentCaller = guaranteeInstanceOf(c, RCaller.class);
         while (true) {
-            currentCaller = currentCaller.getParent();
+            currentCaller = currentCaller.getPrevious();
             if (currentCaller == null ||
                             (!currentCaller.isPromise() && currentCaller.isValidCaller() && currentCaller != RContext.getInstance().stateInstrumentation.getBrowserState().getInBrowserCaller())) {
                 break;

@@ -769,7 +769,7 @@ public final class RError extends RuntimeException implements TruffleException {
         ERROR_WRITING_CONNECTION("error writing connection: %s"),
         ERROR_FLUSHING_CONNECTION("error flushing connection: %s"),
         ALREADY_OPEN_CONNECTION("connection is already open"),
-        NO_ITEM_NAMED("no item named '%s' on the search list"),
+        NO_ITEM_NAMED("no item called \"%s\" on the search list"),
         INVALID_OBJECT("invalid object for 'as.environment'"),
         EMPTY_NO_PARENT("the empty environment has no parent"),
         ARG_NOT_AN_ENVIRONMENT("argument to '%s' is not an environment"),
