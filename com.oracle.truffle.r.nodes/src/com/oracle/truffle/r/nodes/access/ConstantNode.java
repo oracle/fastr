@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -30,6 +30,7 @@ import com.oracle.truffle.api.source.SourceSection;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.REmpty;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
@@ -48,6 +49,10 @@ public abstract class ConstantNode extends RSourceSectionNode implements RSyntax
 
     public static boolean isMissing(RNode node) {
         return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value == RMissing.instance;
+    }
+
+    public static boolean isEmpty(RNode node) {
+        return node instanceof ConstantObjectNode && ((ConstantObjectNode) node).value == REmpty.instance;
     }
 
     public static String getString(RSyntaxNode node) {

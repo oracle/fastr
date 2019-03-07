@@ -83,7 +83,8 @@
             RgetObjectArrayCont = .RgetObjectArrayCont,
             RcreateArray = .RcreateArray,
             RgetField = .RgetField,
-            RsetField = .RsetField))
+            RsetField = .RsetField,
+            RgetSimpleClassNames = .RgetSimpleClassNames))
 }
 
 .createZeroRef <- function() {
@@ -119,14 +120,29 @@
 
 .RJavaCheckExceptions <- function(silent) {
     silent # force args
-
-    .fastr.interop.checkException(silent, ".jcheck")
+    res <- .fastr.interop.checkException(silent, ".jcheck")
+    if(is.list(res)) {
+        if(!silent) {            
+            ex <- structure(
+                list(
+                  message = res$msg,
+                  call = res$call,
+                  jobj = new("jobjRef", jobj=.fromJ(res$jobj, toExtPointer=TRUE), jclass=res$jobj$getClass()$getName())
+                ),
+                class = .RgetSimpleClassNames(res$jobj, TRUE)
+            )
+            stop(ex)
+        }
+        return(1)
+    } else {
+        return(res)
+    }
 }
 
 .RpollException <- function() {    
     e <- .fastr.interop.getTryException(FALSE)
     if(is.null(e)) {
-        return(NULL)        
+        return(NULL)
     }
     .fromJ(e)
 }
@@ -380,7 +396,7 @@
         }
     }
     
-    res <- .fromJ(res, toExtPointer=TRUE)    
+    res <- .fromJ(res, toExtPointer=TRUE)
     return(new("jobjRef", jobj=res, jclass=clsname))
 }
 
@@ -548,24 +564,42 @@
     type <- typeof(ar)
     if(type %in% c("integer", "double", "character", "logical", "raw")) {
         ar <- .vectorToJArray(ar)
-        sig <- ar$getClass()$getName()
+        sig <- tojni(ar$getClass()$getName())
         return(new("jarrayRef", jobj=.fromJ(ar), jclass=sig, jsig=sig))
     } else if(is.list(ar)) {
-
-        lapply(ar, function(e) {
-            if(!is.null(e) && !.IS_JOBJREF(e)) {
-                stop("Cannot create a Java array from a list that contains anything other than Java object references.")
-            }
-        })
         
-        if(length(cl) > 0) {
-            clsName <- cl[1]            
-        } else {
-            clsName <- "java.lang.Object"    
+        noJavaRef <- FALSE
+        for(e in ar) {
+            if(!is.null(e) && !.IS_JOBJREF(e)) {
+                noJavaRef <- TRUE
+                break;
+            }
         }
-        ar <- .listToJ(ar)
-        ar <- .fastr.interop.asJavaArray(ar, clsName)
-        sig <- ar$getClass()$getName()
+        if(noJavaRef) {
+            stop("Cannot create a Java array from a list that contains anything other than Java object references.")
+        }
+
+        if(typeof(cl)=="character" && length(cl) > 0) {
+            clsName <- cl[1]
+            if(is.null(java.type(clsName, T))) {
+                stop(paste0("Cannot find class ", clsName, "."))
+            }
+            if(nchar(cl) < 253) {
+                # we do not convert to jni the same as in RcreateArray
+                if(startsWith(cl[1], "[")) {
+                    sig <- paste0("[", cl[1])
+                } else {
+                    sig <- paste0("[L", cl[1], ";")
+                }
+            } else {
+                sig <- "[Ljava/lang/Object;"
+            }
+        } else {
+            clsName <- "java.lang.Object"
+            sig <- "[Ljava/lang/Object;"
+        }
+    
+        ar <- .fastr.interop.asJavaArray(.listToJ(ar), clsName)        
         return(new("jarrayRef", jobj=.fromJ(ar), jclass=sig, jsig=sig))
     } 
     stop("Unsupported type to create Java array from.")
@@ -618,8 +652,8 @@
     }
 }
 
-.RinitJVM <- function(...) {    
-    .rJava_initialized <- TRUE
+.RinitJVM <- function(...) {  
+    assign(".rJava_initialized", TRUE, .env)  
 }
 
 .RJava_needs_init <- function(...) {
@@ -632,6 +666,14 @@
 
 .RJava_checkJVM <- function(...) {
     # do nothing
+}
+
+.RgetSimpleClassNames <- function(obj, addConditionClasses) {
+    obj; addConditionClasses # force args
+    if (inherits(obj, "externalptr")) {
+        obj <- attr(obj, "external.object", exact=TRUE)
+    }
+    as.character(java.type("RJavaTools")$getSimpleClassNames(obj, as.logical(addConditionClasses)))
 }
 
 .initRJavaTools <- function(...) {
