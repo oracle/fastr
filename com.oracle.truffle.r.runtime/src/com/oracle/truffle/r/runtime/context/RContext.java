@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEval;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalConstants;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalDefault;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalExpressions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalVariables;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -45,7 +51,10 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.graalvm.options.OptionKey;
+
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
@@ -66,11 +75,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEval;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalConstants;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalDefault;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalExpressions;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalVariables;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -106,7 +110,6 @@ import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-import org.graalvm.options.OptionKey;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -652,10 +655,8 @@ public final class RContext {
         if (res >= 0) {
             return res;
         }
-        System.out.println("non negative integer option value expected");
-        new RuntimeException().printStackTrace();
-        System.exit(2);
-        return -1;
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere(String.format("R option '%s' has invalid value"));
     }
 
     public double getNonNegativeDoubleOption(OptionKey<Double> key) {
@@ -663,10 +664,8 @@ public final class RContext {
         if (res >= 0) {
             return res;
         }
-        System.out.println("non negative double option value expected");
-        new RuntimeException().printStackTrace();
-        System.exit(2);
-        return -1;
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere(String.format("R option '%s' has invalid value"));
     }
 
     public boolean noEagerEvalOption() {

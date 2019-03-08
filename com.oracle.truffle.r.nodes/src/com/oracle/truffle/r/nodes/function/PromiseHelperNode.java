@@ -22,18 +22,20 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.PromiseCacheSize;
+
 import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.ReportPolymorphism;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.nodes.ExplodeLoop;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
@@ -45,10 +47,10 @@ import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import static com.oracle.truffle.r.runtime.context.FastROptions.PromiseCacheSize;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RPromise;
@@ -121,12 +123,21 @@ public final class PromiseHelperNode extends RBaseNode {
         }
     }
 
+    public PromiseHelperNode() {
+        this((byte) 0);
+    }
+
+    public PromiseHelperNode(byte recursiveCounter) {
+        this.recursiveCounter = recursiveCounter;
+    }
+
+    private final byte recursiveCounter;
     @Child private InlineCacheNode promiseClosureCache;
 
     @CompilationFinal private PrimitiveValueProfile optStateProfile = PrimitiveValueProfile.createEqualityProfile();
     @CompilationFinal private ConditionProfile inOriginProfile = ConditionProfile.createBinaryProfile();
-    @Child private GenerateValueNonDefaultOptimizedNode generateValueNonDefaultOptimizedNode = GenerateValueNonDefaultOptimizedNodeGen.create();
     @Child private SetVisibilityNode setVisibility;
+    @Child private GenerateValueNonDefaultOptimizedNode generateValueNonDefaultOptimizedNode;
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
     /**
@@ -153,8 +164,13 @@ public final class PromiseHelperNode extends RBaseNode {
             return evaluateSlowPath(frame, promise);
         }
         if (isDefaultOptProfile.profile(PromiseState.isDefaultOpt(state))) {
+            // default values of arguments are evaluated in the frame of the function that takes
+            // them, we do not need to retrieve the frame of the promise, we already have it
             return generateValueDefault(frame, promise);
         } else {
+            // non-default arguments we need to evaluate in the frame of the function that supplied
+            // them and that would mean frame materialization, we first try to see if the promise
+            // can be optimized
             return generateValueNonDefault(frame, state, (EagerPromise) promise);
         }
     }
@@ -169,6 +185,7 @@ public final class PromiseHelperNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseClosureCache = insert(InlineCacheNode.create(DSLConfig.getCacheSize(RContext.getInstance().getNonNegativeIntOption(PromiseCacheSize))));
             }
+            // TODO: no wrapping of arguments here?, why we do not have to set visibility here?
             promise.setUnderEvaluation();
             boolean inOrigin = inOriginProfile.profile(isInOriginFrame(frame, promise));
             Frame execFrame = inOrigin ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));
@@ -197,6 +214,10 @@ public final class PromiseHelperNode extends RBaseNode {
     private Object generateValueNonDefault(VirtualFrame frame, int state, EagerPromise promise) {
         assert !PromiseState.isDefaultOpt(state);
         if (!isDeoptimized(promise)) {
+            if (generateValueNonDefaultOptimizedNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                generateValueNonDefaultOptimizedNode = insert(GenerateValueNonDefaultOptimizedNodeGen.create(recursiveCounter));
+            }
             Object result = generateValueNonDefaultOptimizedNode.execute(frame, state, promise);
             if (result != null) {
                 return result;
@@ -341,15 +362,10 @@ public final class PromiseHelperNode extends RBaseNode {
     private final ConditionProfile isDefaultProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isFrameForEnvProfile = ConditionProfile.createBinaryProfile();
 
-    private final ValueProfile valueProfile = ValueProfile.createClassProfile();
-
     // Eager
     private final ConditionProfile isExplicitProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDefaultOptProfile = ConditionProfile.createBinaryProfile();
     private final ConditionProfile isDeoptimizedProfile = ConditionProfile.createBinaryProfile();
-
-    public PromiseHelperNode() {
-    }
 
     /**
      * @return The state of the {@link RPromise#isUnderEvaluation()} flag.
@@ -359,20 +375,10 @@ public final class PromiseHelperNode extends RBaseNode {
     }
 
     /**
-     * Used in case the {@link RPromise} is evaluated outside.
-     *
-     * @param newValue
-     */
-    public void setValue(Object newValue, RPromise promise) {
-        promise.setValue(valueProfile.profile(newValue));
-    }
-
-    /**
-     * @param frame
      * @return Whether the given {@link RPromise} is in its origin context and thus can be resolved
      *         directly inside the AST.
      */
-    public boolean isInOriginFrame(VirtualFrame frame, RPromise promise) {
+    private boolean isInOriginFrame(VirtualFrame frame, RPromise promise) {
         if (isDefaultArgument(promise) && isNullFrame(promise)) {
             return true;
         }
@@ -382,21 +388,124 @@ public final class PromiseHelperNode extends RBaseNode {
         return isFrameForEnvProfile.profile(frame == promise.getFrame());
     }
 
+    /**
+     * Attempts to generate the value of the given promise in optimized way without having to
+     * materialize the promise's exec frame. If that's not possible, returns {@code null}.
+     * 
+     * Note: we have to create a new instance of {@link WrapArgumentNode} for each
+     * {@link EagerPromise#wrapIndex()} we encounter, but only for {@link EagerPromise#wrapIndex()}
+     * that are up to {@link ArgumentStatePush#MAX_COUNTED_ARGS}, this is also because the
+     * {@link WrapArgumentNode} takes the argument index as constructor parameter. Values of R
+     * arguments have to be channelled through the {@link WrapArgumentNode} so that the reference
+     * counting can work for the arguments, but the reference counting is only done for up to
+     * {@link ArgumentStatePush#MAX_COUNTED_ARGS} arguments.
+     */
+    @ImportStatic(DSLConfig.class)
     @ReportPolymorphism
     protected abstract static class GenerateValueNonDefaultOptimizedNode extends Node {
 
+        protected static final int ASSUMPTION_CACHE_SIZE = ArgumentStatePush.MAX_COUNTED_ARGS + 4;
+        protected static final int CACHE_SIZE = ArgumentStatePush.MAX_COUNTED_ARGS * 2;
+        protected static final int RECURSIVE_PROMISE_LIMIT = 3;
+
+        // If set to -1, then no further recursion should take place
+        // This avoids having to invoke DSLConfig.getCacheSize in PE'd code
+        private final byte recursiveCounter;
+        @Child private PromiseHelperNode nextNode = null;
+        @Child private SetVisibilityNode visibility;
+
+        protected GenerateValueNonDefaultOptimizedNode(byte recursiveCounter) {
+            if (recursiveCounter > DSLConfig.getCacheSize(RECURSIVE_PROMISE_LIMIT)) {
+                this.recursiveCounter = -1;
+            } else {
+                this.recursiveCounter = recursiveCounter;
+            }
+        }
+
         public abstract Object execute(VirtualFrame frame, int state, EagerPromise promise);
 
-        @Specialization(guards = {"promise.getIsValidAssumption() == eagerAssumption", "eagerAssumption.isValid()"})
-        protected Object doCached(VirtualFrame frame, int state, EagerPromise promise,
-                        @SuppressWarnings("unused") @Cached("promise.getIsValidAssumption()") Assumption eagerAssumption) {
+        // @formatter:off
+        // data from "rutgen" tests
+        // column A: # of distinct tuples (assumption, wrapIndex, state) observed per GenerateValueNonDefaultOptimizedNode instance
+        // column B: # of GenerateValueNonDefaultOptimizedNode instances
+        // A    B
+        // 1    10555
+        // 2    1387
+        // 3    308
+        // 4    199
+        // 5    54
+        // 6    34
+        // 7    40
+        // 8    8
+        // 9    31
+        // 10   8
+        // 11   4
+        // 12   4
+        // 14   19
+        // >14  <=4
+        // @formatter:on
+
+        @Specialization(guards = {
+                        "promise.getIsValidAssumption() == eagerAssumption",
+                        "eagerAssumption.isValid()",
+                        "isCompatibleEagerValueProfile(eagerValueProfile, state)",
+                        "isCompatibleWrapNode(wrapArgumentNode, promise, state)"}, //
+                        limit = "getCacheSize(ASSUMPTION_CACHE_SIZE)")
+        Object doCachedAssumption(VirtualFrame frame, int state, EagerPromise promise,
+                        @SuppressWarnings("unused") @Cached("promise.getIsValidAssumption()") Assumption eagerAssumption,
+                        @Cached("createEagerValueProfile(state)") ValueProfile eagerValueProfile,
+                        @Cached("createWrapArgumentNode(promise, state)") WrapArgumentNode wrapArgumentNode) {
+            return generateValue(frame, state, promise, wrapArgumentNode, eagerValueProfile);
+        }
+
+        @Specialization(replaces = "doCachedAssumption", guards = {
+                        "isCompatibleWrapNode(wrapArgumentNode, promise, state)",
+                        "isCompatibleEagerValueProfile(eagerValueProfile, state)"}, //
+                        limit = "CACHE_SIZE")
+        Object doUncachedAssumption(VirtualFrame frame, int state, EagerPromise promise,
+                        @Cached("createBinaryProfile()") ConditionProfile isValidProfile,
+                        @Cached("createEagerValueProfile(state)") ValueProfile eagerValueProfile,
+                        @Cached("createWrapArgumentNode(promise, state)") WrapArgumentNode wrapArgumentNode) {
+            // Note: the assumption inside the promise is not constant anymore, so we profile the
+            // result of isValid
+            if (isValidProfile.profile(promise.isValid())) {
+                return generateValue(frame, state, promise, wrapArgumentNode, eagerValueProfile);
+            } else {
+                return null;
+            }
+        }
+
+        @Specialization(replaces = "doUncachedAssumption")
+        Object doFallback(@SuppressWarnings("unused") int state, @SuppressWarnings("unused") EagerPromise promise) {
+            throw RInternalError.shouldNotReachHere("The cache of doUncachedAssumption should never overflow");
+        }
+
+        // If promise evaluates to another promise, we create another RPromiseHelperNode to evaluate
+        // that, but only up to certain recursion level
+        private Object evaluateNextNode(VirtualFrame frame, RPromise nextPromise) {
+            if (recursiveCounter == -1) {
+                evaluateNextNodeSlowPath(frame.materialize(), nextPromise);
+            }
+            if (nextNode == null) {
+                CompilerDirectives.transferToInterpreterAndInvalidate();
+                nextNode = insert(new PromiseHelperNode((byte) (recursiveCounter + 1)));
+            }
+            return nextNode.evaluate(frame, nextPromise);
+        }
+
+        @TruffleBoundary
+        private static void evaluateNextNodeSlowPath(MaterializedFrame frame, RPromise nextPromise) {
+            PromiseHelperNode.evaluateSlowPath(frame, nextPromise);
+        }
+
+        private Object generateValue(VirtualFrame frame, int state, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile) {
             Object value;
             if (PromiseState.isEager(state)) {
-                assert PromiseState.isEager(state);
-                value = getEagerValue(frame, promise);
+                assert eagerValueProfile != null;
+                value = getEagerValue(frame, promise, wrapArgumentNode, eagerValueProfile);
             } else {
                 RPromise nextPromise = (RPromise) promise.getEagerValue();
-                value = checkNextNode().evaluate(frame, nextPromise);
+                value = evaluateNextNode(frame, nextPromise);
             }
             assert promise.getRawValue() == null;
             assert value != null;
@@ -404,65 +513,42 @@ public final class PromiseHelperNode extends RBaseNode {
             return value;
         }
 
-        @Specialization(replaces = "doCached")
-        @TruffleBoundary
-        protected Object switchToSlowPath(@SuppressWarnings("unused") int state, @SuppressWarnings("unused") EagerPromise promise) {
-            return null;
+        /**
+         * for R arguments that need to be wrapped using WrapArgumentNode, creates the
+         * WrapArgumentNode, otherwise returns null.
+         */
+        static WrapArgumentNode createWrapArgumentNode(EagerPromise promise, int state) {
+            return needsWrapNode(promise.wrapIndex(), state) ? WrapArgumentNode.create(promise.wrapIndex()) : null;
         }
 
-        @Child private PromiseHelperNode nextNode = null;
-
-        private PromiseHelperNode checkNextNode() {
-            if (nextNode == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                nextNode = insert(new PromiseHelperNode());
+        static boolean isCompatibleWrapNode(WrapArgumentNode wrapNode, EagerPromise promise, int state) {
+            if (needsWrapNode(promise.wrapIndex(), state)) {
+                return wrapNode != null && wrapNode.getIndex() == promise.wrapIndex();
+            } else {
+                return wrapNode == null;
             }
-            return nextNode;
         }
 
-        @Children private final WrapArgumentNode[] wrapNodes = new WrapArgumentNode[ArgumentStatePush.MAX_COUNTED_ARGS];
-        private final ConditionProfile shouldWrap = ConditionProfile.createBinaryProfile();
-        private final ValueProfile eagerValueProfile = ValueProfile.createClassProfile();
-        private static final int UNINITIALIZED = -1;
-        private static final int GENERIC = -2;
-        @CompilationFinal private int cachedWrapIndex = UNINITIALIZED;
-        @Child private SetVisibilityNode visibility;
+        private static boolean needsWrapNode(int wrapIndex, int state) {
+            return PromiseState.isEager(state) && wrapIndex != ArgumentStatePush.INVALID_INDEX && wrapIndex < ArgumentStatePush.MAX_COUNTED_ARGS;
+        }
+
+        static boolean isCompatibleEagerValueProfile(ValueProfile profile, int state) {
+            return !PromiseState.isEager(state) || profile != null;
+        }
+
+        static ValueProfile createEagerValueProfile(int state) {
+            return PromiseState.isEager(state) ? ValueProfile.createClassProfile() : null;
+        }
 
         /**
-         * Returns {@link EagerPromise#getEagerValue()} profiled.
+         * Returns {@link EagerPromise#getEagerValue()} profiled and takes care of wrapping the
+         * value with {@link WrapArgumentNode}.
          */
-        @ExplodeLoop
-        private Object getEagerValue(VirtualFrame frame, EagerPromise promise) {
+        private Object getEagerValue(VirtualFrame frame, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile) {
             Object o = promise.getEagerValue();
-            int wrapIndex = promise.wrapIndex();
-            if (shouldWrap.profile(wrapIndex != ArgumentStatePush.INVALID_INDEX)) {
-                if (cachedWrapIndex == UNINITIALIZED) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    cachedWrapIndex = wrapIndex;
-                }
-                if (cachedWrapIndex != GENERIC && wrapIndex != cachedWrapIndex) {
-                    CompilerDirectives.transferToInterpreterAndInvalidate();
-                    cachedWrapIndex = GENERIC;
-                }
-                if (cachedWrapIndex != GENERIC) {
-                    if (cachedWrapIndex < ArgumentStatePush.MAX_COUNTED_ARGS) {
-                        if (wrapNodes[cachedWrapIndex] == null) {
-                            CompilerDirectives.transferToInterpreterAndInvalidate();
-                            wrapNodes[cachedWrapIndex] = insert(WrapArgumentNode.create(cachedWrapIndex));
-                        }
-                        wrapNodes[cachedWrapIndex].execute(frame, o);
-                    }
-                } else {
-                    for (int i = 0; i < ArgumentStatePush.MAX_COUNTED_ARGS; i++) {
-                        if (wrapIndex == i) {
-                            if (wrapNodes[i] == null) {
-                                CompilerDirectives.transferToInterpreterAndInvalidate();
-                                wrapNodes[i] = insert(WrapArgumentNode.create(i));
-                            }
-                            wrapNodes[i].execute(frame, o);
-                        }
-                    }
-                }
+            if (wrapArgumentNode != null) {
+                wrapArgumentNode.execute(frame, o);
             }
             if (visibility == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
