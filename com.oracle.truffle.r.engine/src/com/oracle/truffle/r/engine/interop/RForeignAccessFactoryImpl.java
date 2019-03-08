@@ -24,7 +24,6 @@ package com.oracle.truffle.r.engine.interop;
 
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.MessageResolution;
 import com.oracle.truffle.r.ffi.impl.interop.FFI_RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.RConnection;
@@ -57,8 +56,8 @@ import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.env.frame.ActiveBinding;
 
 /**
- * For most types we use the {@link MessageResolution} facility to automatically generate the
- * factory for creating the {@link ForeignAccess} instance. The exceptions are the (many) subclasses
+ * For most types we use the {@code MessageResolution} facility to automatically generate the
+ * factory for creating the {@code ForeignAccess} instance. The exceptions are the (many) subclasses
  * of {@link RAbstractVector} as these have the same handling but the generator cannot handle
  * abstract classes.
  *

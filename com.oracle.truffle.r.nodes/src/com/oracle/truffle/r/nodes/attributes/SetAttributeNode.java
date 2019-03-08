@@ -138,7 +138,7 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
     @Specialization(replaces = "setSpecAttrInAttributable", //
                     guards = "isSpecialAttributeNode.execute(name)")
     @SuppressWarnings("unused")
-    protected void setSpecAttrInAttributable(RAttributable x, String name, Object value,
+    protected void setSpecAttrInAttributableGeneric(RAttributable x, String name, Object value,
                     @Cached("create()") SpecialAttributesFunctions.IsSpecialAttributeNode isSpecialAttributeNode,
                     @Cached("create()") SpecialAttributesFunctions.GenericSpecialAttributeNode genericSpecialAttrNode) {
         genericSpecialAttrNode.execute(x, name, value);

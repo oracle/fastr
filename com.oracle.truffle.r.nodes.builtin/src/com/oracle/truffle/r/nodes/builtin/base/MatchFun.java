@@ -139,15 +139,15 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
 
         @SuppressWarnings("unused")
         @Specialization(limit = "getCacheSize(LIMIT)", guards = {"funValue == cachedFunValue", "getCallerFrameDescriptor(frame) == cachedCallerFrameDescriptor"})
-        protected RFunction matchfunCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend,
+        protected RFunction matchfunSymbolCached(VirtualFrame frame, RPromise funPromise, RSymbol funValue, boolean descend,
                         @Cached("funValue") RSymbol cachedFunValue,
                         @Cached("getCallerFrameDescriptor(frame)") FrameDescriptor cachedCallerFrameDescriptor,
                         @Cached("createLookup(cachedFunValue.getName(), descend)") ReadVariableNode lookup) {
             return checkResult(lookup.execute(frame, getCallerFrame.execute(frame)));
         }
 
-        @Specialization(replaces = "matchfunCached")
-        protected RFunction matchfunGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RSymbol funValue, boolean descend) {
+        @Specialization(replaces = "matchfunSymbolCached")
+        protected RFunction matchfunSymbolGeneric(VirtualFrame frame, @SuppressWarnings("unused") RPromise funPromise, RSymbol funValue, boolean descend) {
             return checkResult(slowPathLookup(funValue.getName(), getCallerFrame.execute(frame), descend));
         }
 
