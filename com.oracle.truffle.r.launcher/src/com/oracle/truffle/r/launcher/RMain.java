@@ -135,7 +135,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
         List<String> unrecognizedArgs = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
-            if (!ignoreJvmArguments && "--jvm.help".equals(arguments.get(i))) {
+            if (!ignoreJvmArguments && ("--jvm.help".equals(arguments.get(i)) || "--vm.help".equals(arguments.get(i)))) {
                 // This condition should be removed when FastR always ships with native launcher
                 // that handles this option for us
                 printJvmHelp();
@@ -378,21 +378,21 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     }
 
     // The following code is copied from org.graalvm.launcher.Launcher and it should be removed
-    // when the R launcher always ships native version that handles --jvm.help for us.
+    // when the R launcher always ships native version that handles --vm.help for us.
 
     private static void printJvmHelp() {
         System.out.println("JVM options:");
-        printOption("--jvm.classpath <...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's classpath");
-        printOption("--jvm.D<name>=<value>", "Set a system property");
-        printOption("--jvm.esa", "Enable system assertions");
-        printOption("--jvm.ea[:<packagename>...|:<classname>]", "Enable assertions with specified granularity");
-        printOption("--jvm.agentlib:<libname>[=<options>]", "Load native agent library <libname>");
-        printOption("--jvm.agentpath:<pathname>[=<options>]", "Load native agent library by full pathname");
-        printOption("--jvm.javaagent:<jarpath>[=<options>]", "Load Java programming language agent");
-        printOption("--jvm.Xbootclasspath/a:<...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's boot classpath");
-        printOption("--jvm.Xmx<size>", "Set maximum Java heap size");
-        printOption("--jvm.Xms<size>", "Set initial Java heap size");
-        printOption("--jvm.Xss<size>", "Set java thread stack size");
+        printOption("--vm.classpath <...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's classpath");
+        printOption("--vm.D<name>=<value>", "Set a system property");
+        printOption("--vm.esa", "Enable system assertions");
+        printOption("--vm.ea[:<packagename>...|:<classname>]", "Enable assertions with specified granularity");
+        printOption("--vm.agentlib:<libname>[=<options>]", "Load native agent library <libname>");
+        printOption("--vm.agentpath:<pathname>[=<options>]", "Load native agent library by full pathname");
+        printOption("--vm.javaagent:<jarpath>[=<options>]", "Load Java programming language agent");
+        printOption("--vm.Xbootclasspath/a:<...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's boot classpath");
+        printOption("--vm.Xmx<size>", "Set maximum Java heap size");
+        printOption("--vm.Xms<size>", "Set initial Java heap size");
+        printOption("--vm.Xss<size>", "Set java thread stack size");
     }
 
     private static void printOption(String option, String description, int indentation) {
