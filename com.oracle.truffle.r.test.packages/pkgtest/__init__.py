@@ -657,12 +657,24 @@ def installpkgs(args, **kwargs):
 
 
 def pkgtest_cmp(args):
-    with open(args[0]) as f:
+    gnur_filename = args[0]
+    fastr_filename = args[1]
+    if len(args) >= 4:
+        test_output_filters = args[2]
+        pkg_name = args[3]
+    else:
+        test_output_filters = None
+        pkg_name = None
+    dump_preprocessed = args[4] if len(args) >= 5 else None
+
+    filters = select_filters_for_package(args[2], pkg_name) if len(args) >= 3 else None
+
+    with open(gnur_filename) as f:
         gnur_content = f.readlines()
-    with open(args[1]) as f:
+    with open(fastr_filename) as f:
         fastr_content = f.readlines()
     from fuzzy_compare import fuzzy_compare
-    return fuzzy_compare(gnur_content, fastr_content, args[0], args[1])
+    return fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, filters, dump_preprocessed)
 
 
 def find_top100(args):
