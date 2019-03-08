@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@
 #include <stdlib.h>
 
 #include <R_ext/eventloop.h>
+#include <Defn.h>
 
 Rboolean known_to_be_latin1 = FALSE;
 Rboolean known_to_be_utf8 = FALSE;
@@ -69,6 +70,11 @@ SEXP do_getGraphicsEventEnv(SEXP call, SEXP op, SEXP args, SEXP env)
 void *Rf_AdobeSymbol2utf8(char *work, const char *c0, size_t nwork) {
     unimplemented("Rf_AdobeSymbol2utf8");
     return NULL;
+}
+
+size_t ucstoutf8(char *s, const unsigned int wc) {
+    unimplemented("Rf_ucstoutf8");
+    return 0;
 }
 
 size_t Rf_ucstoutf8(char *s, const unsigned int wc) {
@@ -136,7 +142,7 @@ SEXP NewEnvironment(SEXP a, SEXP b, SEXP c) {
 	return NULL;
 }
 
-void* PRIMFUN(SEXP x) {
+CCODE PRIMFUN(SEXP x) {
 	unimplemented("NewEnvironment");
 	return NULL;
 }
@@ -151,3 +157,12 @@ int IntegerFromString(SEXP a, int* b) {
 	return 0;
 }
 
+int Scollate(SEXP a, SEXP b) {
+	unimplemented("Scollate(");
+	return 0;
+}
+
+// used in main/format.c
+void z_prec_r(Rcomplex *r, Rcomplex *x, double digits) {
+    unimplemented("z_prec_r");
+}

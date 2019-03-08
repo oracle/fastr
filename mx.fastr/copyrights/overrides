@@ -109,6 +109,7 @@ com.oracle.truffle.r.test.native/embedded/test.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rclasspath.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript_exec.sh,oracle_bash.copyright
 com.oracle.truffle.r.native/run/Rscript.sh,oracle_bash.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_common/Riconv.c,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/Abbrev.java,gnu_r_gentleman_ihaka2.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/MaxCol.java,gnu_r.core.venables.copyright
 com.oracle.truffle.r.nodes.builtin/src/com/oracle/truffle/r/nodes/builtin/base/FindInterval.java,gnu_r.core.copyright
@@ -955,8 +956,8 @@ com.oracle.truffle.r.native/gnur/patch/src/main/format.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/graphics.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/gzio.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plot.c,no.copyright
-com.oracle.truffle.r.native/gnur/patch/src/main/plot3d.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/plotmath.c,no.copyright
+com.oracle.truffle.r.native/gnur/patch/src/main/plot3d.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/rlocale.c,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/rlocale_data.h,no.copyright
 com.oracle.truffle.r.native/gnur/patch/src/main/sort.c,no.copyright
@@ -1022,3 +1023,5 @@ com.oracle.truffle.r.pkgs/data.table/src/uniqlist.c,no.copyright
 com.oracle.truffle.r.pkgs/data.table/src/vecseq.c,no.copyright
 com.oracle.truffle.r.pkgs/data.table/src/wrappers.c,no.copyright
 com.oracle.truffle.r.pkgs/data.table/vignettes/Makefile,no.copyright
+com.oracle.truffle.r.native/fficall/src/truffle_common/Riconv.c,gnu_r_gentleman_ihaka2.copyright
+com.oracle.truffle.r.native/gnur/patch/src/main/localecharset.c,gnu_r.language.oracle

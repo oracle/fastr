@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -32,6 +32,21 @@
 #define min(a, b) (((a)<(b))?(a):(b))
 #endif
 #define NB 1000
+
+extern void *unimplemented(char *msg);
+
+// Rstrlen is used in code from gnur-patch
+// It is not clear, whether we really need it
+int Rstrlen(SEXP s, int quote) {
+    unimplemented("Rstrlen");
+    return 0;
+}
+
+// IndexWidth used in code from gnur-patch
+// It is not clear, whether we really need it
+int attribute_hidden IndexWidth(R_xlen_t n) {
+    return (int) (log10(n + 0.5) + 1);
+}
 
 const char *EncodeReal(double x, int w, int d, int e, char cdec)
 {

@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -132,6 +132,77 @@ void F77_NAME(xerbla)(const char *srname, int *info)
     strncpy(buf, srname, 6);
     buf[6] = '\0';
     printf("BLAS/LAPACK routine '%6s' gave error code %d", buf, -(*info));
+}
+
+// following functions are here to resolve externals used in functions from gnur-patch
+
+attribute_hidden
+int F77_NAME(realp0) (const char *label, int *nchar, float *data, int *ndata)
+{
+    int k, nc = *nchar, nd = *ndata;
+    double *ddata;
+
+    if(nc < 0) nc = (int) strlen(label);
+    if(nc > 255) {
+        warning(_("invalid character length in 'realpr'"));
+        nc = 0;
+    }
+    else if(nc > 0) {
+        for (k = 0; k < nc; k++)
+            Rprintf("%c", label[k]);
+        Rprintf("\n");
+    }
+    if(nd > 0) {
+        ddata = (double *) malloc(nd*sizeof(double));
+        if(!ddata) error(_("memory allocation error in 'realpr'"));
+        for (k = 0; k < nd; k++) ddata[k] = (double) data[k];
+        error("Unimplemented: printRealVector in print_fastr.c");
+        // printRealVector(ddata, nd, 1);
+        free(ddata);
+    }
+    return(0);
+}
+
+attribute_hidden
+int F77_NAME(intpr0) (const char *label, int *nchar, int *data, int *ndata)
+{
+    int k, nc = *nchar;
+
+    if(nc < 0) nc = (int) strlen(label);
+    if(nc > 255) {
+        warning(_("invalid character length in 'intpr'"));
+        nc = 0;
+    } else if(nc > 0) {
+        for (k = 0; k < nc; k++)
+            Rprintf("%c", label[k]);
+        Rprintf("\n");
+    }
+    if(*ndata > 0) {
+        error("Unimplemented: printIntegerVector in print_fastr.c");
+        // printIntegerVector(data, *ndata, 1);
+    }
+    return(0);
+}
+
+attribute_hidden
+int F77_NAME(dblep0) (const char *label, int *nchar, double *data, int *ndata)
+{
+    int k, nc = *nchar;
+
+    if(nc < 0) nc = (int) strlen(label);
+    if(nc > 255) {
+        warning(_("invalid character length in 'dblepr'"));
+        nc = 0;
+    } else if(nc > 0) {
+        for (k = 0; k < nc; k++)
+            Rprintf("%c", label[k]);
+        Rprintf("\n");
+    }
+    if(*ndata > 0) {
+        error("Unimplemented: printRealVector in print_fastr.c");
+        // printRealVector(data, *ndata, 1);
+    }
+    return(0);
 }
 
 // FastR: the rest of the file is omitted

@@ -19,11 +19,10 @@
  */
 
 #include <Rinternals.h>
+#include <Defn.h>
 #include <stdlib.h>
 #include <float.h>
 #include <R_ext/RS.h>
-
-#define _(Source) (Source)
 
 // selected functions from util.c:
 
@@ -44,7 +43,7 @@ TypeTable[] = {
     { "char",		CHARSXP	   },
     { "logical",	LGLSXP	   },
     { "integer",	INTSXP	   },
-    { "double",		REALSXP	   }, /*-  "real", for R <= 0.61.x */
+    { "double",		REALSXP	   }, /*- "real", for R <= 0.61.x */
     { "complex",	CPLXSXP	   },
     { "character",	STRSXP	   },
     { "...",		DOTSXP	   },
@@ -62,6 +61,20 @@ TypeTable[] = {
 
     { (char *)NULL,	-1	   }
 };
+
+void NORET UNIMPLEMENTED_TYPEt(const char *s, SEXPTYPE t) {
+    int i;
+
+    for (i = 0; TypeTable[i].str; i++) {
+    if (TypeTable[i].type == t)
+        error(_("unimplemented type '%s' in '%s'\n"), TypeTable[i].str, s);
+    }
+    error(_("unimplemented type (%d) in '%s'\n"), t, s);
+}
+
+void NORET UNIMPLEMENTED_TYPE(const char *s, SEXP x) {
+    UNIMPLEMENTED_TYPEt(s, TYPEOF(x));
+}
 
 const char *Rf_type2char(SEXPTYPE t) {
     int i;
@@ -125,8 +138,74 @@ void F77_NAME(rchkusr)(void)
     R_CheckUserInterrupt();
 }
 
-size_t
-Rf_utf8towcs(wchar_t *wc, const char *s, size_t n)
+
+/* These return the result in wchar_t, but does assume
+   wchar_t is UCS-2/4 and so are for internal use only */
+size_t utf8toucs(wchar_t *wc, const char *s) {
+    unsigned int byte;
+    wchar_t local, *w;
+    byte = *((unsigned char *)s);
+    w = wc ? wc: &local;
+
+    if (byte == 0) {
+	    *w = (wchar_t) 0;
+	    return 0;
+    } else if (byte < 0xC0) {
+	    *w = (wchar_t) byte;
+	    return 1;
+    } else if (byte < 0xE0) {
+	    if(strlen(s) < 2) return (size_t)-2;
+	    if ((s[1] & 0xC0) == 0x80) {
+	        *w = (wchar_t) (((byte & 0x1F) << 6) | (s[1] & 0x3F));
+	        return 2;
+	    } else return (size_t)-1;
+    } else if (byte < 0xF0) {
+        if(strlen(s) < 3) return (size_t)-2;
+        if (((s[1] & 0xC0) == 0x80) && ((s[2] & 0xC0) == 0x80)) {
+            *w = (wchar_t) (((byte & 0x0F) << 12)
+                | (unsigned int) ((s[1] & 0x3F) << 6)
+                | (s[2] & 0x3F));
+            byte = (unsigned int) *w;
+            /* Surrogates range */
+            if(byte >= 0xD800 && byte <= 0xDFFF) return (size_t)-1;
+            if(byte == 0xFFFE || byte == 0xFFFF) return (size_t)-1;
+            return 3;
+        } else return (size_t)-1;
+    }
+    if(sizeof(wchar_t) < 4) return (size_t)-2;
+    /* So now handle 4,5.6 byte sequences with no testing */
+    if (byte < 0xf8) {
+        if(strlen(s) < 4) return (size_t)-2;
+            *w = (wchar_t) (((byte & 0x0F) << 18)
+                | (unsigned int) ((s[1] & 0x3F) << 12)
+                | (unsigned int) ((s[2] & 0x3F) << 6)
+                | (s[3] & 0x3F));
+            return 4;
+    } else if (byte < 0xFC) {
+        if(strlen(s) < 5) return (size_t)-2;
+        *w = (wchar_t) (((byte & 0x0F) << 24)
+            | (unsigned int) ((s[1] & 0x3F) << 12)
+            | (unsigned int) ((s[2] & 0x3F) << 12)
+            | (unsigned int) ((s[3] & 0x3F) << 6)
+            | (s[4] & 0x3F));
+        return 5;
+    } else {
+        if(strlen(s) < 6) return (size_t)-2;
+        *w = (wchar_t) (((byte & 0x0F) << 30)
+            | (unsigned int) ((s[1] & 0x3F) << 24)
+            | (unsigned int) ((s[2] & 0x3F) << 18)
+            | (unsigned int) ((s[3] & 0x3F) << 12)
+            | (unsigned int) ((s[4] & 0x3F) << 6)
+            | (s[5] & 0x3F));
+        return 6;
+    }
+}
+
+size_t Rf_utf8toucs(wchar_t *wc, const char *s) {
+    return utf8toucs(wc, s);
+}
+
+size_t utf8towcs(wchar_t *wc, const char *s, size_t n)
 {
     ssize_t m, res = 0;
     const char *t;
@@ -148,6 +227,10 @@ Rf_utf8towcs(wchar_t *wc, const char *s, size_t n)
 	    if (m == 0) break;
 	}
     return (size_t) res;
+}
+
+size_t Rf_utf8towcs(wchar_t *wc, const char *s, size_t n) {
+    return utf8towcs(wc, s, n);
 }
 
 #include <errno.h>

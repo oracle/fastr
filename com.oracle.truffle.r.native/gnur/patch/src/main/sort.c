@@ -1495,18 +1495,7 @@ SEXP attribute_hidden do_rank(SEXP call, SEXP op, SEXP args, SEXP rho)
 
 SEXP attribute_hidden do_xtfrm(SEXP call, SEXP op, SEXP args, SEXP rho)
 {
-    SEXP fn, prargs, ans;
-
-    checkArity(op, args);
-    check1arg(args, call, "x");
-
-    if(DispatchOrEval(call, op, "xtfrm", args, rho, &ans, 0, 1)) return ans;
-    /* otherwise dispatch the default method */
-    PROTECT(fn = findFun(install("xtfrm.default"), rho));
-    PROTECT(prargs = promiseArgs(args, R_GlobalEnv));
-    SET_PRVALUE(CAR(prargs), CAR(args));
-    ans = applyClosure(call, fn, prargs, rho, R_NilValue);
-    UNPROTECT(2);
-    return ans;
-
+    printf("FATAL ERROR\n");
+    printf("UNIMPLEMENTED: do_xtfrm\n");
+    exit(1);
 }
