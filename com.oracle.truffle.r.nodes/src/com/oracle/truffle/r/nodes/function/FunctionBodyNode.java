@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.nodes.function;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.frame.FrameDescriptor;
 import com.oracle.truffle.api.frame.FrameSlot;
@@ -51,28 +52,18 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
     @Child private SaveArgumentsNode saveArguments;
     @Child private SetupS3ArgsNode setupS3Args;
     @Child private SetupS4ArgsNode setupS4Args;
-    private final boolean hasLargeBody;
+    @CompilationFinal private Boolean hasLargeBody;
 
     public FunctionBodyNode(SaveArgumentsNode saveArguments, RNode body) {
         this.body = body;
         this.saveArguments = saveArguments;
-        SourceSection sourceSection = body.getSourceSection();
-        // Very basic heuristic for "large" body
-        if (sourceSection != null) {
-            hasLargeBody = sourceSection.getEndLine() - sourceSection.getStartLine() >= LARGE_BODY_LINES_COUNT;
-        } else if (body instanceof BlockNode) {
-            BlockNode block = (BlockNode) body;
-            hasLargeBody = block.getSequence().length >= LARGE_BODY_STMTS_COUNT;
-        } else {
-            hasLargeBody = false;
-        }
     }
 
     @Override
     public Object visibleExecute(VirtualFrame frame) {
         setupDispatchSlots(frame);
         saveArguments.execute(frame);
-        if (hasLargeBody) {
+        if (hasLargeBody()) {
             return executeLargeBody(frame.materialize());
         } else {
             return body.visibleExecute(frame);
@@ -92,6 +83,23 @@ public final class FunctionBodyNode extends Node implements RootBodyNode {
     @Override
     public SourceSection getSourceSection() {
         return body.getSourceSection();
+    }
+
+    private boolean hasLargeBody() {
+        if (hasLargeBody == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            SourceSection sourceSection = body.getSourceSection();
+            // Very basic heuristic for "large" body
+            if (sourceSection != null) {
+                hasLargeBody = sourceSection.getEndLine() - sourceSection.getStartLine() >= LARGE_BODY_LINES_COUNT;
+            } else if (body instanceof BlockNode) {
+                BlockNode block = (BlockNode) body;
+                hasLargeBody = block.getSequence().length >= LARGE_BODY_STMTS_COUNT;
+            } else {
+                hasLargeBody = false;
+            }
+        }
+        return hasLargeBody;
     }
 
     private void setupDispatchSlots(VirtualFrame frame) {
