@@ -763,6 +763,8 @@ public class DatePOSIXFunctions {
             } else {
                 if (c == '%') {
                     escaped = true;
+                } else if (forInput && Character.isWhitespace(c)) {
+                    builder.appendPattern("['\t']['    ']['  '][' ']['\t']");
                 } else {
                     builder.appendLiteral(c);
                 }
