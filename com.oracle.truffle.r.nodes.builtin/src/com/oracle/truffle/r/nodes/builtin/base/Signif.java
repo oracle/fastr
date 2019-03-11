@@ -111,7 +111,9 @@ public abstract class Signif extends RBuiltinNode.Arg2 {
                             digitCount = 1;
                         }
                         double val = xAccess.getDouble(xIter);
-                        if (infProfile.profile(Double.isInfinite(val))) {
+                        if (infProfile.profile(Double.isNaN(val))) {
+                            res = Double.NaN;
+                        } else if (infProfile.profile(Double.isInfinite(val))) {
                             res = Double.POSITIVE_INFINITY;
                         } else {
                             res = bigIntegerSignif(digitCount, val);
