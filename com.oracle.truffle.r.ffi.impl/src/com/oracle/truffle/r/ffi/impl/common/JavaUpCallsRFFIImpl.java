@@ -1617,9 +1617,18 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public void Rf_unprotect(int x) {
         RFFIContext context = getContext();
         ArrayList<RObject> stack = context.rffiContextState.protectStack;
-        for (int i = 0; i < x; i++) {
-            context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
+        try {
+            for (int i = 0; i < x; i++) {
+                context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
         }
+    }
+
+    private static boolean debugWarning(String message) {
+        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
+        return true;
     }
 
     @Override
