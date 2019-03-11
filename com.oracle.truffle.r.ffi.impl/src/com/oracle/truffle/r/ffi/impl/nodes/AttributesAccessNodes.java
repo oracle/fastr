@@ -106,8 +106,9 @@ public final class AttributesAccessNodes {
 
         @Specialization(guards = "!isNull(value)")
         protected Object setValue(RAttributable target, Object name, Object value,
+                        @Cached("create()") InternStringNode intern,
                         @Cached("create()") SetAttributeNode setAttribNode) {
-            setAttribNode.execute(target, (String) getCastNameNode().doCast(name), value);
+            setAttribNode.execute(target, intern.execute((String) getCastNameNode().doCast(name)), value);
             return RNull.instance;
         }
 
@@ -118,8 +119,9 @@ public final class AttributesAccessNodes {
 
         @Specialization
         protected Object unsetValue(RAttributable target, Object name, @SuppressWarnings("unused") RNull nullVal,
+                        @Cached("create()") InternStringNode intern,
                         @Cached("create()") RemoveAttributeNode removeAttributeNode) {
-            removeAttributeNode.execute(target, (String) getCastNameNode().doCast(name));
+            removeAttributeNode.execute(target, intern.execute((String) getCastNameNode().doCast(name)));
             return RNull.instance;
         }
 

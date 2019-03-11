@@ -25,6 +25,7 @@ package com.oracle.truffle.r.nodes.attributes;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
+import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.FinalLocationException;
@@ -36,6 +37,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.RInternalError;
+import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
 
@@ -49,6 +51,7 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
  * initialized. Then the recursive instance of this class is used to set the attribute value to the
  * attributes.
  */
+@ImportStatic(Utils.class)
 public abstract class SetAttributeNode extends AttributeAccessNode {
 
     @Child private SetAttributeNode recursive;
@@ -124,13 +127,13 @@ public abstract class SetAttributeNode extends AttributeAccessNode {
 
     @Specialization(limit = "getCacheSize(3)", //
                     guards = {
-                                    "isSpecialAttributeNode.execute(name)",
+                                    "isSpecialAttributeNode.execute(cachedName)",
                                     "cachedName.equals(name)"
                     })
     @SuppressWarnings("unused")
     protected void setSpecAttrInAttributable(RAttributable x, String name, Object value,
                     @Cached("create()") SpecialAttributesFunctions.IsSpecialAttributeNode isSpecialAttributeNode,
-                    @Cached("name") String cachedName,
+                    @Cached("intern(name)") String cachedName,
                     @Cached("createSpecAttrNode(cachedName)") SpecialAttributesFunctions.SetSpecialAttributeNode setSpecAttrNode) {
         setSpecAttrNode.execute(x, value);
     }
