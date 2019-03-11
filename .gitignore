@@ -148,3 +148,11 @@ com.oracle.truffle.r.native/gnur/patch-build
 com.oracle.truffle.r.test.native/embedded/embedded.actual.output
 com.oracle.truffle.r.test.native/embedded/main.actual.output
 f2c
+test.fastr
+test.gnur
+test.diffs
+install.tmp.fastr
+install.tmp.gnur
+lib.install.packages.fastr
+lib.install.packages.gnur
+/com.oracle.truffle.r.release/doc/
