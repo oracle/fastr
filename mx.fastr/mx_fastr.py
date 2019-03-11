@@ -645,25 +645,25 @@ def _pkgtest_args(args):
 def pkgtest(args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["pkgtest"] + full_args)
-    pkgtest_load().pkgtest(full_args)
+    return pkgtest_load().pkgtest(full_args)
 
 
 def installpkgs(args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["installpkgs"] + full_args)
-    pkgtest_load().installpkgs(full_args)
+    return pkgtest_load().installpkgs(full_args)
 
 
 def find_top100(*args, **kwargs):
     full_args = _pkgtest_args(args) + ["100"]
     mx.logv(["find_top"] + full_args)
-    pkgtest_load().find_top(full_args)
+    return pkgtest_load().find_top(full_args)
 
 
 def find_top(*args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["find_top"] + full_args)
-    pkgtest_load().find_top(args)
+    return pkgtest_load().find_top(args)
 
 
 def r_pkgtest_analyze(args, **kwargs):
