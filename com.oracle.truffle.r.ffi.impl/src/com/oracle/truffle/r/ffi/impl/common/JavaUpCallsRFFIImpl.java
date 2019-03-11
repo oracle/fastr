@@ -97,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -1546,6 +1547,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object R_MethodsNamespace() {
         return REnvironment.getRegisteredNamespace("methods");
+    }
+
+    // basic support for weak reference API - they are not actually weak and don't call finalizers
+
+    @Override
+    @TruffleBoundary
+    public Object R_MakeWeakRef(Object key, Object val, Object fin, long onexit) {
+        return new RWeakRef(key, val, fin, onexit != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_MakeWeakRefC(Object key, Object val, long fin, long onexit) {
+        return new RWeakRef(key, val, fin, onexit != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_WeakRefKey(Object w) {
+        return guaranteeInstanceOf(w, RWeakRef.class).getKey();
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_WeakRefValue(Object w) {
+        return guaranteeInstanceOf(w, RWeakRef.class).getValue();
     }
 
     @Override

@@ -26,6 +26,8 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapperMRForeign;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
+import com.oracle.truffle.r.runtime.data.RWeakRefMRForeign;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 
 public class FFI_RForeignAccessFactoryImpl {
@@ -36,6 +38,8 @@ public class FFI_RForeignAccessFactoryImpl {
             return DLLDotSymbolMRForeign.ACCESS;
         } else if (obj instanceof CharSXPWrapper) {
             return CharSXPWrapperMRForeign.ACCESS;
+        } else if (obj instanceof RWeakRef) {
+            return RWeakRefMRForeign.ACCESS;
         } else {
             return null;
         }

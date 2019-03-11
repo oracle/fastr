@@ -27,6 +27,14 @@ import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 public interface MemoryUpCallsRFFI {
     // Checkstyle: stop method name check
 
+    Object R_MakeWeakRef(Object key, Object val, Object fin, long onexit);
+
+    Object R_MakeWeakRefC(Object key, Object val, long fin, long onexit);
+
+    Object R_WeakRefKey(Object w);
+
+    Object R_WeakRefValue(Object w);
+
     void R_PreserveObject(Object obj);
 
     void R_ReleaseObject(Object obj);
