@@ -166,6 +166,8 @@ public final class CompleteCases extends RExternalBuiltinNode {
                     result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
+        } else if (entry == RNull.instance) {
+            // ignore NULL values
         } else {
             throw invalidType(entry);
         }
