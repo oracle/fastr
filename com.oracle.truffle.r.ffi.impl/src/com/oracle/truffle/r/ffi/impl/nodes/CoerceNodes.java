@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -228,7 +228,7 @@ public final class CoerceNodes {
         }
 
         @Specialization(replaces = {"doCachedNotList", "doCached"}, guards = {"!isS4Object(value)", "isValidMode(mode)"})
-        Object doCached(Object value, int mode) {
+        Object doGeneric(Object value, int mode) {
             CompilerDirectives.transferToInterpreter();
             String type = value != null ? value.getClass().getSimpleName() : "null";
             throw RInternalError.unimplemented("Rf_coerceVector unimplemented for type %s or mode %s.", type, mode);

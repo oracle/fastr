@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -33,7 +33,7 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.runtime.CallerFrameClosure;
 
 /**
- * There are some situations in R where we need to access a frame of other than the current
+ * There are some situations in R where we need to access the frame of other than the current
  * function, for this we need to materialize such frames and pass it in the arguments array or use
  * {@code TruffleRuntime.iterateFrames(FrameInstanceVisitor)}, which causes the inspected functions
  * to be deoptimized.
@@ -65,7 +65,7 @@ public abstract class CallRFunctionBaseNode extends Node {
 
     private Object getCallerFrameClosure(VirtualFrame callerFrame) {
         if (CompilerDirectives.inInterpreter()) {
-            // In the interperter we always pass the caller frame to the callee via the
+            // In the interpreter we always pass the caller frame to the callee via the
             // CallerFrameClosure. The callee may still invalidate needsNoCallerFrame assumption,
             // but it should always get direct access to the caller frame.
             return new InvalidateNoCallerFrame(needsNoCallerFrame, callerFrame != null ? callerFrame.materialize() : null);

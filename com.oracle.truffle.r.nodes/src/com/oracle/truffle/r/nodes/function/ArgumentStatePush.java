@@ -42,7 +42,9 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
 
 /**
- * A {@link ArgumentStatePush} is used to bump up state transition for function arguments.
+ * A {@link ArgumentStatePush} is used to bump up state transition for function arguments. <br>
+ * See {@code documentation/dev/arcane.md} that contains a description of the
+ * incrementing/decrementing reference count in arguments.
  */
 public abstract class ArgumentStatePush extends Node {
 

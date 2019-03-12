@@ -25,16 +25,11 @@ package com.oracle.truffle.r.ffi.impl.llvm;
 import java.io.BufferedInputStream;
 import java.io.BufferedReader;
 import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.io.PrintStream;
-import java.nio.file.FileSystems;
-import java.nio.file.Files;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Base64;
@@ -43,6 +38,7 @@ import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Set;
+import java.util.logging.Level;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
@@ -50,6 +46,7 @@ import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.TruffleLogger;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.Message;
@@ -58,11 +55,11 @@ import com.oracle.truffle.api.interop.UnknownIdentifierException;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
-import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.RLogger;
 import com.oracle.truffle.r.runtime.RPlatform;
 import com.oracle.truffle.r.runtime.RPlatform.OSInfo;
+import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextState;
 import com.oracle.truffle.r.runtime.ffi.DLL;
@@ -72,7 +69,6 @@ import com.oracle.truffle.r.runtime.ffi.DLLRFFI;
 import com.oracle.truffle.r.runtime.ffi.RFFIContext;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 import com.oracle.truffle.r.runtime.ffi.RFFIFactory.Type;
-import java.util.logging.Level;
 
 /**
  * The Truffle version of {@link DLLRFFI}. {@code dlopen} expects to find the LLVM IR in a "library"
@@ -115,7 +111,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             // TODO: Is it really needed when using the new lookup mechanism?
             if (!context.isInitial()) {
                 for (LLVM_IR ir : truffleDLL.libRModules) {
-                    parseLLVM("libR", ir);
+                    parseLLVM(context.getEnv(), "libR", ir);
                 }
             }
             if (context.getKind() == RContext.ContextKind.SHARE_PARENT_RW) {
@@ -125,7 +121,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     if (dllInfo.handle instanceof LLVM_Handle) {
                         LLVM_Handle llvmHandle = (LLVM_Handle) dllInfo.handle;
                         for (ParsedLLVM_IR parsedIR : llvmHandle.parsedIRs) {
-                            parseLLVM(llvmHandle.libName, parsedIR.ir);
+                            parseLLVM(context.getEnv(), llvmHandle.libName, parsedIR.ir);
                         }
                     }
                 }
@@ -202,10 +198,18 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         }
     }
 
+    public abstract static class ZipFileUtilsProvider {
+        public abstract String getFileName(String path);
+
+        public abstract OutputStream getOutputStream(String path1, String path2) throws IOException;
+
+        public abstract InputStream getInputStream(String path) throws IOException;
+    }
+
     @TruffleBoundary
-    public static LLVMArchive getZipLLVMIR(String path) throws IOException {
+    public static LLVMArchive getZipLLVMIR(String path, ZipFileUtilsProvider fileUtils) throws IOException {
         List<String> nativeLibs = Collections.emptyList();
-        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(new FileInputStream(path + "l")))) {
+        try (ZipInputStream zis = new ZipInputStream(new BufferedInputStream(fileUtils.getInputStream(path + "l")))) {
             ArrayList<LLVM_IR> irList = new ArrayList<>();
             while (true) {
                 ZipEntry entry = zis.getNextEntry();
@@ -223,10 +227,9 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     nativeLibs = getNativeLibs(bytes);
                     continue;
                 }
-                Path zipName = Paths.get(entry.getName());
-                Path fileNamePath = zipName.getFileName();
+                String fileNamePath = fileUtils.getFileName(entry.getName());
                 assert fileNamePath != null;
-                String name = fileNamePath.toString();
+                String name = fileNamePath;
                 int ix = name.indexOf('.');
                 if (ix > 0) {
                     name = name.substring(0, ix);
@@ -235,10 +238,10 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 irList.add(ir);
                 // debugging
                 if (System.getenv("FASTR_LLVM_DEBUG") != null) {
-                    try (FileOutputStream bs = new FileOutputStream(Paths.get("tmpzip", name).toString())) {
+                    try (OutputStream bs = fileUtils.getOutputStream("tmpzip", name)) {
                         bs.write(bytes);
                     }
-                    try (PrintStream bs = new PrintStream(new FileOutputStream(Paths.get("tmpb64", name).toString()))) {
+                    try (PrintStream bs = new PrintStream(fileUtils.getOutputStream("tmpb64", name))) {
                         bs.print(ir.base64);
                     }
                 }
@@ -272,13 +275,30 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         @Override
         @TruffleBoundary
         public LibHandle execute(String path, boolean local, boolean now) {
-            RFFIContext stateRFFI = RContext.getInstance().getStateRFFI();
+            RContext context = RContext.getInstance();
+            final Env env = context.getEnv();
+            RFFIContext stateRFFI = context.getStateRFFI();
             long before = stateRFFI.beforeDowncall(RFFIFactory.Type.LLVM);
 
             try {
-                LLVMArchive ar = getZipLLVMIR(path);
+                LLVMArchive ar = getZipLLVMIR(path, new ZipFileUtilsProvider() {
+                    @Override
+                    public String getFileName(String p) {
+                        return env.getTruffleFile(p).getName();
+                    }
+
+                    @Override
+                    public OutputStream getOutputStream(String path1, String path2) throws IOException {
+                        return env.getTruffleFile(path1).resolve(path2).newOutputStream();
+                    }
+
+                    @Override
+                    public InputStream getInputStream(String p) throws IOException {
+                        return env.getTruffleFile(p).newInputStream();
+                    }
+                });
                 LLVM_IR[] irs = ar.irs;
-                String libName = getLibName(path);
+                String libName = getLibName(env, path);
                 if (libName.equals("libR")) {
                     // save for new RContexts
                     truffleDLL.libRModules = irs;
@@ -288,7 +308,7 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                 ParsedLLVM_IR[] parsedIRs = new ParsedLLVM_IR[irs.length];
                 for (int i = 0; i < irs.length; i++) {
                     LLVM_IR ir = irs[i];
-                    Object irLookupObject = parseLLVM(libName, ir).call();
+                    Object irLookupObject = parseLLVM(env, libName, ir).call();
                     parsedIRs[i] = new ParsedLLVM_IR(ir, irLookupObject);
                 }
                 return new LLVM_Handle(libName, parsedIRs);
@@ -303,7 +323,6 @@ public class TruffleLLVM_DLL implements DLLRFFI {
                     sb.append(t.getMessage());
                     t = t.getCause();
                 }
-                ex.printStackTrace();
                 throw new UnsatisfiedLinkError(sb.toString());
             } finally {
                 stateRFFI.afterDowncall(before, RFFIFactory.Type.LLVM);
@@ -379,10 +398,8 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         return new TruffleLLVM_DLCloseNode();
     }
 
-    private static String getLibName(String path) {
-        Path fileNamePath = FileSystems.getDefault().getPath(path).getFileName();
-        assert fileNamePath != null;
-        String fileName = fileNamePath.toString();
+    private static String getLibName(Env env, String path) {
+        String fileName = env.getTruffleFile(path).getName();
         int ix = fileName.lastIndexOf(".");
         return fileName.substring(0, ix);
     }
@@ -393,16 +410,16 @@ public class TruffleLLVM_DLL implements DLLRFFI {
     private LLVM_IR[] libRModules;
 
     @TruffleBoundary
-    private static CallTarget parseLLVM(String libName, LLVM_IR ir) {
+    private static CallTarget parseLLVM(Env env, String libName, LLVM_IR ir) {
         if (ir instanceof LLVM_IR.Binary) {
             LLVM_IR.Binary bir = (LLVM_IR.Binary) ir;
-            return parseBinary(libName, bir);
+            return parseBinary(env, libName, bir);
         } else {
             throw RInternalError.unimplemented("LLVM text IR");
         }
     }
 
-    private static CallTarget parseBinary(String libName, LLVM_IR.Binary ir) {
+    private static CallTarget parseBinary(Env env, String libName, LLVM_IR.Binary ir) {
         long start = System.nanoTime();
         RContext context = RContext.getInstance();
         long nanos = 1000 * 1000 * 1000;
@@ -412,16 +429,18 @@ public class TruffleLLVM_DLL implements DLLRFFI {
             String mimeType = "application/x-llvm-ir-bitcode";
             String language = Source.findLanguage(mimeType);
             try {
-                Path irFile = new File(ir.libPath).getParentFile().toPath().resolve(ir.name + ".bc");
-                Path llFile = new File(ir.libPath).getParentFile().toPath().resolve(ir.name + ".ll");
+                TruffleFile irFile = env.getTruffleFile(ir.libPath).getParent().resolve(ir.name + ".bc");
+                TruffleFile llFile = env.getTruffleFile(ir.libPath).getParent().resolve(ir.name + ".ll");
                 byte[] decoded = null;
-                if (!irFile.toFile().exists()) {
+                if (!irFile.exists()) {
                     decoded = Base64.getDecoder().decode(ir.base64);
-                    Files.write(irFile, decoded);
+                    try (OutputStream out = irFile.newOutputStream()) {
+                        out.write(decoded);
+                    }
                 }
-                if (!llFile.toFile().exists()) {
+                if (!llFile.exists()) {
                     decoded = decoded != null ? decoded : Base64.getDecoder().decode(ir.base64);
-                    disassemble(llFile.toFile(), decoded);
+                    disassemble(llFile, decoded);
                 }
                 TruffleFile irTruffleFile = RContext.getInstance().getEnv().getTruffleFile(irFile.toUri());
                 source = Source.newBuilder(language, irTruffleFile).mimeType(mimeType).build();
@@ -463,10 +482,11 @@ public class TruffleLLVM_DLL implements DLLRFFI {
         return false;
     }
 
-    private static void disassemble(File llFile, byte[] ir) {
+    // Method used only for internal debugging, not run by default
+    private static void disassemble(TruffleFile llFile, byte[] ir) {
         try {
             ProcessBuilder pb = new ProcessBuilder("llvm-dis");
-            pb.redirectOutput(llFile);
+            pb.redirectOutput(Paths.get(llFile.getAbsoluteFile().getPath()).toFile());
             Process p = pb.start();
             OutputStream is = p.getOutputStream();
             is.write(ir);

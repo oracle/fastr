@@ -236,6 +236,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.api.frame.VirtualFrame;\n");
         w.append("import com.oracle.truffle.api.interop.ForeignAccess;\n");
         w.append("import com.oracle.truffle.api.interop.TruffleObject;\n");
+        w.append("import com.oracle.truffle.api.nodes.Node;\n");
         w.append("import com.oracle.truffle.api.nodes.RootNode;\n");
         w.append("import com.oracle.truffle.r.runtime.context.RContext;\n");
         if (!returnKind.isPrimitive() && returnKind != TypeKind.VOID) {
@@ -244,6 +245,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFIContext;\n");
         w.append("import com.oracle.truffle.r.runtime.ffi.RFFILog;\n");
         w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI;\n");
+        w.append("import com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode;\n");
         w.append("import com.oracle.truffle.r.runtime.data.RTruffleObject;\n");
 
         if (needsUnwrapImport) {
@@ -326,8 +328,7 @@ public final class FFIProcessor extends AbstractProcessor {
             }
 
         }
-        // TODO: turn this field into "@Child private", initialize lazily
-        w.append("                com.oracle.truffle.r.ffi.impl.upcalls.UpCallsRFFI.HandleUpCallExceptionNode handleExceptionNode = upCallsImpl.createHandleUpCallExceptionNode();");
+        w.append("                @Child private HandleUpCallExceptionNode handleExceptionNode;");
         w.append("\n");
         w.append("                @Override\n");
         w.append("                public Object execute(VirtualFrame frame) {\n");
@@ -388,7 +389,7 @@ public final class FFIProcessor extends AbstractProcessor {
         w.append("                    } catch (Throwable ex) {\n");
         w.append("                        CompilerDirectives.transferToInterpreter();\n");
         w.append("                        RFFILog.logException(ex);\n");
-        w.append("                        handleExceptionNode.execute(ex);\n");
+        w.append("                        getHandleExceptionNode().execute(ex);\n");
         if (returnKind.isPrimitive()) {
             w.append("                        resultRObj = Integer.valueOf(-1);\n");
         } else if (returnKind != TypeKind.VOID) {
@@ -410,6 +411,15 @@ public final class FFIProcessor extends AbstractProcessor {
             w.append("                    }\n");
             w.append("                    return resultRObj;\n");
         }
+        w.append("                }\n");
+        w.append("    \n");
+        w.append("                private HandleUpCallExceptionNode getHandleExceptionNode() {\n");
+        w.append("                    if (handleExceptionNode == null) {\n");
+        w.append("                        CompilerDirectives.transferToInterpreterAndInvalidate();\n");
+        w.append("                        Node n = (Node) upCallsImpl.createHandleUpCallExceptionNode();\n");
+        w.append("                        handleExceptionNode = (HandleUpCallExceptionNode) insert(n);\n");
+        w.append("                    }\n");
+        w.append("                    return handleExceptionNode;\n");
         w.append("                }\n");
         w.append("            });\n");
         w.append("        }\n");

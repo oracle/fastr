@@ -135,7 +135,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
 
         List<String> unrecognizedArgs = new ArrayList<>();
         for (int i = 0; i < arguments.size(); i++) {
-            if (!ignoreJvmArguments && "--jvm.help".equals(arguments.get(i))) {
+            if (!ignoreJvmArguments && ("--jvm.help".equals(arguments.get(i)) || "--vm.help".equals(arguments.get(i)))) {
                 // This condition should be removed when FastR always ships with native launcher
                 // that handles this option for us
                 printJvmHelp();
@@ -171,7 +171,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     }
 
     @Override
-    protected void launch(Builder contextBuilder) {
+    protected void launch(Builder contextBuilderIn) {
         StartupTiming.timestamp("RMain.launch");
         assert client != null;
         if (rArguments == null) {
@@ -179,18 +179,18 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             return;
         }
         this.consoleHandler = ConsoleHandler.createConsoleHandler(options, null, inStream, outStream);
-        Builder contextBuilderAllowAll = contextBuilder.allowAllAccess(true);
-        if (ignoreJvmArguments) {
-            contextBuilderAllowAll = contextBuilderAllowAll.allowHostAccess(useJVM);
+        Builder contextBuilder = contextBuilderIn;
+        if (!ignoreJvmArguments) {
+            contextBuilder = contextBuilder.allowHostAccess(useJVM);
         }
 
         Context context;
         String tracedLibs = System.getenv("DEBUG_LLVM_LIBS");
         if (tracedLibs != null) {
-            context = preparedContext = contextBuilderAllowAll.option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
+            context = preparedContext = contextBuilder.option("inspect", "true").option("llvm.enableLVI", "true").option("llvm.llDebug", "true").arguments("R", rArguments).in(
                             consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         } else {
-            context = preparedContext = contextBuilderAllowAll.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
+            context = preparedContext = contextBuilder.arguments("R", rArguments).in(consoleHandler.createInputStream()).out(outStream).err(errStream).build();
         }
 
         this.consoleHandler.setContext(context);
@@ -224,7 +224,7 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
             }
             srcFile = new File(fileOption);
         }
-        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true, errStream);
+        int result = REPL.readEvalPrint(context, consoleHandler, srcFile, true);
         StartupTiming.printSummary();
         return result;
     }
@@ -278,10 +278,16 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         try {
             context.eval(src);
             return 0;
-        } catch (Throwable ex) {
-            if (ex instanceof PolyglotException && ((PolyglotException) ex).isExit()) {
-                return ((PolyglotException) ex).getExitStatus();
+        } catch (PolyglotException e) {
+            if (e.isExit()) {
+                // usually from quit
+                return e.getExitStatus();
+            } else if (!e.isInternalError() && (e.isHostException() || e.isGuestException())) {
+                // Note: Internal exceptions are reported by the engine already
+                REPL.handleError(null, context, e);
             }
+            return 1;
+        } catch (Throwable ex) {
             // Internal exceptions are reported by the engine already
             return 1;
         }
@@ -372,21 +378,21 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
     }
 
     // The following code is copied from org.graalvm.launcher.Launcher and it should be removed
-    // when the R launcher always ships native version that handles --jvm.help for us.
+    // when the R launcher always ships native version that handles --vm.help for us.
 
     private static void printJvmHelp() {
         System.out.println("JVM options:");
-        printOption("--jvm.classpath <...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's classpath");
-        printOption("--jvm.D<name>=<value>", "Set a system property");
-        printOption("--jvm.esa", "Enable system assertions");
-        printOption("--jvm.ea[:<packagename>...|:<classname>]", "Enable assertions with specified granularity");
-        printOption("--jvm.agentlib:<libname>[=<options>]", "Load native agent library <libname>");
-        printOption("--jvm.agentpath:<pathname>[=<options>]", "Load native agent library by full pathname");
-        printOption("--jvm.javaagent:<jarpath>[=<options>]", "Load Java programming language agent");
-        printOption("--jvm.Xbootclasspath/a:<...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's boot classpath");
-        printOption("--jvm.Xmx<size>", "Set maximum Java heap size");
-        printOption("--jvm.Xms<size>", "Set initial Java heap size");
-        printOption("--jvm.Xss<size>", "Set java thread stack size");
+        printOption("--vm.classpath <...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's classpath");
+        printOption("--vm.D<name>=<value>", "Set a system property");
+        printOption("--vm.esa", "Enable system assertions");
+        printOption("--vm.ea[:<packagename>...|:<classname>]", "Enable assertions with specified granularity");
+        printOption("--vm.agentlib:<libname>[=<options>]", "Load native agent library <libname>");
+        printOption("--vm.agentpath:<pathname>[=<options>]", "Load native agent library by full pathname");
+        printOption("--vm.javaagent:<jarpath>[=<options>]", "Load Java programming language agent");
+        printOption("--vm.Xbootclasspath/a:<...>", "A " + File.pathSeparator + " separated list of classpath entries that will be added to the JVM's boot classpath");
+        printOption("--vm.Xmx<size>", "Set maximum Java heap size");
+        printOption("--vm.Xms<size>", "Set initial Java heap size");
+        printOption("--vm.Xss<size>", "Set java thread stack size");
     }
 
     private static void printOption(String option, String description, int indentation) {

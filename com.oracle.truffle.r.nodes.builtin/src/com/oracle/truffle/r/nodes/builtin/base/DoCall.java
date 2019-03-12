@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -215,23 +215,32 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * If the call leads to actual call via
          * {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionNode}, which creates new
          * frame and new set of arguments for it, then for this new arguments we explicitly provide
-         * a caller that looks like the function was called from the explicitly given environment
-         * (it will be its parent call), but at the same time its depth is one above the do.call
-         * function that actually invoked it.
+         * {@link RCaller} that looks like the function was called from the explicitly given
+         * environment (it will be its parent call), but at the same time its depth is one above the
+         * do.call function that actually invoked it.
          *
          * @see RCaller
          * @see RArguments
          */
         private static RCaller getExplicitCaller(VirtualFrame virtualFrame, MaterializedFrame envFrame, @SuppressWarnings("unused") REnvironment env, String funcName, RFunction func,
                         RArgsValuesAndNames args) {
-            // TODO: use the "env" for the sys parent in RCaller...
             Supplier<RSyntaxElement> callerSyntax;
             if (funcName != null) {
                 callerSyntax = RCallerHelper.createFromArguments(funcName, args);
             } else {
                 callerSyntax = RCallerHelper.createFromArguments(func, args);
             }
-            return RCaller.create(RArguments.getDepth(virtualFrame) + 1, RArguments.getCall(envFrame), callerSyntax);
+            RCaller originalPromiseCaller = RCaller.topLevel;
+            if (env instanceof REnvironment.Function) {
+                originalPromiseCaller = RArguments.getCall(envFrame);
+            }
+            RCaller currentCall = RArguments.getCall(virtualFrame);
+            // Note: it is OK that there is actually no frame for the "fakePromiseCaller" since
+            // artificial frames for promises are anyway ignored when walking the stack. Even in the
+            // case of real promises, there may be not actual frame created for their evaluation:
+            // see InlineCacheNode.
+            RCaller fakePromiseCaller = RCaller.createForPromise(originalPromiseCaller, env, currentCall);
+            return RCaller.create(currentCall.getDepth() + 1, fakePromiseCaller, callerSyntax);
         }
 
         private RArgsValuesAndNames getArguments(RNodeClosureCache nodeCache, SymbolClosureCache closureCache, MaterializedFrame promiseFrame, boolean quote, ConditionProfile quoteProfile,

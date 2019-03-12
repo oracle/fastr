@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,12 +28,12 @@ import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.nodes.InvalidAssumptionException;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.access.FrameSlotNode;
 import com.oracle.truffle.r.nodes.access.variables.LocalReadVariableNode;
 import com.oracle.truffle.r.nodes.function.PromiseNode;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerFeedback;
 import com.oracle.truffle.r.runtime.data.RPromise.RPromiseFactory;
@@ -42,8 +42,31 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+/**
+ * Creates optimized promise for a lookup of a symbol.
+ *
+ * This node gets executed when the function is being called and therefore inside the frame of the
+ * caller and it can simple read the value of the symbol. The issue is with reading the symbol value
+ * like this is that it can change between now (the function is being called) and the time when the
+ * promise should actually be evaluated (the argument is accessed for the first time inside callee).
+ * Example:
+ *
+ * <pre>
+ *     function <- foo(x) { assign('a', 42, parent.frame()); return(x) }
+ *     a <- 22
+ *     foo(a) # gives 42
+ * </pre>
+ *
+ * The problem is solved by getting {@link FrameSlotChangeMonitor#getNotChangedNonLocallyAssumption}
+ * for the given frame slot and putting that into the promise object. The promise object, when asked
+ * for its value checks this assumption first, which happens in
+ * {@link com.oracle.truffle.r.nodes.function.PromiseHelperNode}.
+ *
+ * The implementors override functions that handle the fallback case when the assumption is
+ * invalidated.
+ */
 public abstract class OptVariablePromiseBaseNode extends PromiseNode implements EagerFeedback {
-    private final BranchProfile promiseCallerProfile = BranchProfile.create();
+    private final UnwrapPromiseCallerProfile unwrapCallerProfile = new UnwrapPromiseCallerProfile();
     private final RSyntaxLookup originalRvn;
     @Child private FrameSlotNode frameSlotNode;
     @Child private RNode fallback = null;
@@ -95,11 +118,7 @@ public abstract class OptVariablePromiseBaseNode extends PromiseNode implements 
 
         // Create EagerPromise with the eagerly evaluated value under the assumption that the
         // value won't be altered until 1. read
-        RCaller call = RArguments.getCall(frame);
-        while (call.isPromise()) {
-            promiseCallerProfile.enter();
-            call = call.getParent();
-        }
+        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapCallerProfile);
 
         MaterializedFrame execFrame = null;
         if (CompilerDirectives.inInterpreter()) {

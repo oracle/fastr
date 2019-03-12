@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,18 +20,31 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.parser.processor;
+package com.oracle.truffle.r.test;
 
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+import java.nio.file.FileSystems;
 
-/**
- * An annotation that simply serves to cause the parser generator to run.
- */
-@Retention(RetentionPolicy.CLASS)
-@Target(ElementType.TYPE)
-public @interface GenerateRParser {
+import com.oracle.truffle.r.launcher.RVersionNumber;
+import com.oracle.truffle.r.runtime.REnvVars;
 
+public class Utils {
+    private static final String GNUR_R_HOME = "GNUR_HOME_BINARY";
+    /**
+     * Cached value of {@code GNUR_HOME}.
+     */
+    private static String gnurHome;
+
+    /**
+     * @return the original GNUR home directory. This directory is needed for building FastR and
+     *         testing.
+     */
+    public static String gnurHome() {
+        if (gnurHome == null) {
+            gnurHome = System.getenv(GNUR_R_HOME);
+            if (gnurHome == null) {
+                gnurHome = FileSystems.getDefault().getPath(REnvVars.rHome(), "libdownloads", RVersionNumber.R_HYPHEN_FULL).toString();
+            }
+        }
+        return gnurHome;
+    }
 }

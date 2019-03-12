@@ -44,6 +44,10 @@
 # normalize environment addresses
 .* => s/<environment: 0x[0-9A-Fa-f]*>/<environment: 0xCAFEBABE>
 
+# ignore warnings for invalid source references
+.* => D/Warning messages:
+.* => D+0-1/Invalid source reference
+
 # for individual packages:
 
 # ------
@@ -87,7 +91,8 @@ ROCR => D/detaching ‘ROCR.hiv’
 # quantmod: PDF device not supported in saveChart()
 quantmod => D-2/  PDF device not supported.
 quantmod => D/  incomplete final line found
-quantmod => s/There were [0-9]+ warnings \(use warnings\(\) to see them\)/
+quantmod => s/There were [0-9]* or more warnings \(use warnings\(\) to see the first [0-9]*\)/
+quantmod => D+1-1/In read.table(file = file, header = header, sep = sep, quote = quote,  :
 
 # --------
 sqldf => D/A svUnit test suite run in
@@ -111,3 +116,12 @@ clpAPI => D/Clp0006I 1  Obj 3.2368421
 clpAPI => D/Clp0000I Optimal - objective value 3.2368421
 clpAPI => D/Coin0511I After Postsolve, objective 3.2368421, infeasibilities - dual 0 (0), primal 0 (0)
 clpAPI => D/Clp0032I Optimal objective 3.236842105 - 1 iterations time
+
+# --------
+# RcppBDT
+RcppBDT => s/code for methods in class .* was not checked for suspicious field assignments \(recommended package ‘codetools’ not available\?\)/
+
+# --------
+# sqldf
+sqldf => s/There were [0-9]* or more warnings \(use warnings\(\) to see the first [0-9]*\)/
+

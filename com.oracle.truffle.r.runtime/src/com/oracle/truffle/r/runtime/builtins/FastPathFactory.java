@@ -36,7 +36,9 @@ import com.oracle.truffle.r.runtime.nodes.RFastPathNode;
  *
  * A fast path can be added to a function using {@code RootNode.setFastPath(FastPathFactory)}. When
  * the function is invoked, the fast path is invoked first and only if it returns {@code null}, then
- * the original implementation is invoked.
+ * the original implementation is invoked. <br>
+ * See {@code documentation/dev/arcane.md} that contains a description of the fast path optimization
+ * mechanism and other related topics.
  */
 public interface FastPathFactory {
 

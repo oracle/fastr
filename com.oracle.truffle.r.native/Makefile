@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ export FASTR_R_HOME=$(abspath $(TOPDIR)/..)
 export FASTR_LIB_DIR=$(FASTR_R_HOME)/lib
 export FASTR_NATIVE_DIR = $(TOPDIR)
 export R_VERSION = 3.5.1
-export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2018-11-18"
+export DEFAULT_CRAN_MIRROR = "https://mran.microsoft.com/snapshot/2019-02-13"
 export GNUR_HOME = $(TOPDIR)/gnur/patch-build
 
 $(info R_VERSION: $(R_VERSION))

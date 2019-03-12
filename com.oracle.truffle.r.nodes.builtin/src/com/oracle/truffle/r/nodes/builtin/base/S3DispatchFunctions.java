@@ -40,6 +40,7 @@ import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.GetCallerFrameNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode.PromiseCheckHelperNode;
+import com.oracle.truffle.r.nodes.function.RCallerHelper;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode;
 import com.oracle.truffle.r.nodes.function.S3FunctionLookupNode.Result;
 import com.oracle.truffle.r.nodes.function.signature.CollectArgumentsNode;
@@ -49,6 +50,7 @@ import com.oracle.truffle.r.nodes.function.signature.CombineSignaturesNodeGen;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
+import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RDispatch;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -79,7 +81,7 @@ public abstract class S3DispatchFunctions {
             callMatcher = CallMatcherNode.create(false);
         }
 
-        protected Object dispatch(VirtualFrame frame, String generic, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
+        protected Object dispatch(VirtualFrame frame, RCaller parentCaller, String generic, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
                         ArgumentsSignature suppliedSignature, Object[] suppliedArguments) {
             Result lookupResult = methodLookup.execute(frame, generic, type, group, callerFrame, genericDefFrame);
 
@@ -88,7 +90,8 @@ public abstract class S3DispatchFunctions {
                 dotMethod = patchDotMethod(frame, lookupResult, dotMethod);
             }
             S3Args s3Args = lookupResult.createS3Args(dotMethod, callerFrame, genericDefFrame, group);
-            Object result = callMatcher.execute(frame, suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName, s3Args);
+            Object result = callMatcher.execute(frame, parentCaller, RArguments.getCall(callerFrame), suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName,
+                            s3Args);
             return result;
         }
 
@@ -169,7 +172,7 @@ public abstract class S3DispatchFunctions {
 
             ArgumentsSignature suppliedSignature = RArguments.getSuppliedSignature(frame);
             Object[] suppliedArguments = RArguments.getArguments(frame);
-            Object result = helper.dispatch(frame, generic, type, null, callerFrame, genericDefFrame, suppliedSignature, suppliedArguments);
+            Object result = helper.dispatch(frame, RArguments.getCall(frame), generic, type, null, callerFrame, genericDefFrame, suppliedSignature, suppliedArguments);
             throw new ReturnException(result, RArguments.getCall(frame));
         }
 
@@ -299,7 +302,13 @@ public abstract class S3DispatchFunctions {
                 suppliedArguments = combinedResult.getArguments();
                 finalSignature = combinedResult.getSignature();
             }
-            return helper.dispatch(frame, generic, readType(frame), group, genericCallFrame, genericDefFrame, finalSignature, suppliedArguments);
+            // In GNU-R NextMethod is "Internal" so there is actually a frame created for it.
+            // In FastR we only create an artificial RCaller, so that NextMethod appears in some of
+            // the sys.* functions, but sys.frame is not going to work for it.
+            RCaller currentCall = RArguments.getCall(frame);
+            RCaller dispatchingCaller = RArguments.getCall(genericCallFrame);
+            RCaller parentCaller = RCaller.createForGenericFunctionCall(dispatchingCaller, RCallerHelper.createFromArguments("NextMethod", RArgsValuesAndNames.EMPTY), currentCall);
+            return helper.dispatch(frame, parentCaller, generic, readType(frame), group, genericCallFrame, genericDefFrame, finalSignature, suppliedArguments);
         }
 
         private MaterializedFrame getDefFrame(VirtualFrame frame) {

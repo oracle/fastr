@@ -34,6 +34,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.regex.Pattern;
 
@@ -44,6 +45,13 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RLogger;
 import java.util.logging.Level;
 
+/**
+ * Patches C/C++ source code at given path to be more compatible with FastR, i.e. replaces typical
+ * hacks with usage of proper API that FastR implements.
+ *
+ * This patching is run from during the package installation, but only for packages installed from
+ * tarballs.
+ */
 public class PackagePatching {
 
     private static final TruffleLogger LOGGER = RLogger.getLogger(PackagePatching.class.getName());
@@ -129,7 +137,7 @@ public class PackagePatching {
     }
 
     private static boolean isSource(Path path) {
-        String sPath = path.toString().toLowerCase();
+        String sPath = path.toString().toLowerCase(Locale.ROOT);
         return sPath.endsWith(".c") || sPath.endsWith(".h") || sPath.endsWith(".cpp") || sPath.endsWith(".hpp") || sPath.endsWith(".cc");
     }
 

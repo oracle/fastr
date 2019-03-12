@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,6 +25,7 @@ package com.oracle.truffle.r.library.fastrGrid.grDevices;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.r.library.fastrGrid.GridContext;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 /**
  * Opens the default graphical device if no device is has been opened yet. Internal node not exposed
@@ -36,7 +37,7 @@ public final class OpenDefaultDevice extends Node {
     public void execute() {
         // if no device has been opened yet, open the default one and make it current
         if (GridContext.getContext().getCurrentDevice() == null) {
-            GridContext.getContext().openDefaultDevice();
+            GridContext.getContext().openDefaultDevice(RContext.getInstance());
         }
     }
 }

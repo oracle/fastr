@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -24,11 +24,13 @@ package com.oracle.truffle.r.library.fastrGrid.device;
 
 import java.io.IOException;
 
+import com.oracle.truffle.api.TruffleLanguage.Env;
+
 /**
  * Devices that support saving their current state into a file should implement this interface.
  * Note: this only makes sense for interactive devices. Devices like SVG are already saving into a
  * file.
  */
 public interface ImageSaver {
-    void save(String path, String fileType) throws IOException;
+    void save(Env env, String path, String fileType) throws IOException;
 }

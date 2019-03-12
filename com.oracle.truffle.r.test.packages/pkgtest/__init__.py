@@ -46,12 +46,12 @@ def _create_libinstall(rvm, test_installed):
     Create lib.install.packages.<rvm>/install.tmp.<rvm>/test.<rvm> for <rvm>: fastr or gnur
     If use_installed_pkgs is True, assume lib.install exists and is populated (development)
     '''
-    libinstall = join(get_fastr_home(), "lib.install.packages." + rvm)
+    libinstall = join(get_fastr_repo_dir(), "lib.install.packages." + rvm)
     if not test_installed:
         # make sure its empty
         shutil.rmtree(libinstall, ignore_errors=True)
         os.mkdir(libinstall)
-    install_tmp = join(get_fastr_home(), "install.tmp." + rvm)
+    install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm)
     #    install_tmp = join(_fastr_suite_dir(), "install.tmp")
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.mkdir(install_tmp)
@@ -60,7 +60,7 @@ def _create_libinstall(rvm, test_installed):
 
 
 def _create_testdot(rvm):
-    testdir = join(get_fastr_home(), "test." + rvm)
+    testdir = join(get_fastr_repo_dir(), "test." + rvm)
     shutil.rmtree(testdir, ignore_errors=True)
     os.mkdir(testdir)
     return testdir
@@ -80,7 +80,7 @@ def _packages_test_project():
 
 
 def _packages_test_project_dir():
-    return _find_subdir(get_fastr_home(), _packages_test_project())
+    return _find_subdir(get_fastr_repo_dir(), _packages_test_project())
 
 
 def _ensure_R_on_PATH(env, bindir):
@@ -135,6 +135,20 @@ def prepare_r_install_arguments(args):
         args += ['--testdir', get_opts().fastr_testdir]
         if not '--print-install-status' in args:
             args += ['--print-install-status']
+
+    # get default CRAN mirror from our FastR home
+    default_cran_mirror_url = "CRAN=" + get_default_cran_mirror()
+
+    # We intercept '--repos SNAPSHOT' since in GraalVM mode, we do not necessarily have a 'etc/DEFAULT_CRAN_MIRROR' for
+    # GnuR in an accessible location.
+    if '--repos' in args:
+        repos_idx = args.index('--repos')
+        if repos_idx + 1 < len(args) and args[repos_idx + 1] == 'SNAPSHOT':
+            logging.info("Overwriting '--repos SNAPSHOT' with '--repos %s'" % default_cran_mirror_url)
+            args[repos_idx + 1] = default_cran_mirror_url
+    else:
+        logging.info("No '--repos' specified, using default CRAN mirror: " + default_cran_mirror_url)
+        args += [ "--repos", default_cran_mirror_url]
     return args
 
 
@@ -319,7 +333,7 @@ class TestStatus:
 
 
 def _pkg_testdir(rvm, pkg_name):
-    return join(get_fastr_home(), 'test.' + rvm, pkg_name)
+    return join(get_fastr_repo_dir(), 'test.' + rvm, pkg_name)
 
 
 def _get_test_outputs(rvm, pkg_name, test_info):
@@ -367,7 +381,7 @@ def _gnur_install_test(forwarded_args, pkgs, gnur_libinstall, gnur_install_tmp):
     N.B. That means that regardless of how the packages were specified to pkgtest
     we always use a --pkg-filelist' arg to GNU R
     '''
-    gnur_packages = join(get_fastr_home(), 'gnur.packages')
+    gnur_packages = join(get_fastr_repo_dir(), 'gnur.packages')
     with open(gnur_packages, 'w') as f:
         for pkg in pkgs:
             f.write(pkg)
@@ -643,12 +657,24 @@ def installpkgs(args, **kwargs):
 
 
 def pkgtest_cmp(args):
-    with open(args[0]) as f:
+    gnur_filename = args[0]
+    fastr_filename = args[1]
+    if len(args) >= 4:
+        test_output_filters = args[2]
+        pkg_name = args[3]
+    else:
+        test_output_filters = None
+        pkg_name = None
+    dump_preprocessed = args[4] if len(args) >= 5 else None
+
+    filters = select_filters_for_package(args[2], pkg_name) if len(args) >= 3 else None
+
+    with open(gnur_filename) as f:
         gnur_content = f.readlines()
-    with open(args[1]) as f:
+    with open(fastr_filename) as f:
         fastr_content = f.readlines()
     from fuzzy_compare import fuzzy_compare
-    return fuzzy_compare(gnur_content, fastr_content, args[0], args[1])
+    return fuzzy_compare(gnur_content, fastr_content, gnur_filename, fastr_filename, filters, dump_preprocessed)
 
 
 def find_top100(args):
@@ -658,7 +684,7 @@ def find_top100(args):
 def find_top(args):
     rargs = util.parse_arguments(['--use-installed-pkgs', '--find-top'] + args)
     n = args[-1]
-    libinstall = join(get_fastr_home(), "top%s.tmp" % n)
+    libinstall = join(get_fastr_repo_dir(), "top%s.tmp" % n)
     if not os.path.exists(libinstall):
         os.mkdir(libinstall)
     os.environ['R_LIBS_USER'] = libinstall

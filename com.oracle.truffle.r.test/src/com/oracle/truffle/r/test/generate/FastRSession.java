@@ -35,6 +35,7 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
@@ -74,7 +75,6 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.engine.interop.VectorMRTest;
-import java.util.Arrays;
 
 public final class FastRSession implements RSession {
 
@@ -136,7 +136,7 @@ public final class FastRSession implements RSession {
     }
 
     public static Context.Builder getContextBuilder(String... languages) {
-        Context.Builder builder = Context.newBuilder(languages);
+        Context.Builder builder = Context.newBuilder(languages).allowExperimentalOptions(true);
         setCLIOptions(builder);
         builder.allowAllAccess(true);
         // no point in printing errors to file when running tests (that contain errors on purpose)
@@ -252,9 +252,13 @@ public final class FastRSession implements RSession {
                         evalContext.eval(src);
                         // checked exceptions are wrapped in PolyglotException
                     } catch (PolyglotException e) {
-                        // TODO need the wrapped exception for special handling of:
-                        // ParseException, RError, ... see bellow
-                        throw getWrappedThrowable(e);
+                        // TODO see bellow - need the wrapped exception for special handling of
+                        // ParseException, etc
+                        Throwable wt = getWrappedThrowable(e);
+                        if (wt instanceof RError) {
+                            REPL.handleError(null, evalContext, e);
+                        }
+                        throw wt;
                     }
                     consoleInput = readLine();
                 } catch (IncompleteSourceException e) {
@@ -304,7 +308,7 @@ public final class FastRSession implements RSession {
                 testClass.addPolyglotSymbols(evalContext);
             }
             timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
-            REPL.readEvalPrint(evalContext, new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false, output);
+            REPL.readEvalPrint(evalContext, new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false);
             String consoleInput = readLine();
             while (consoleInput != null) {
                 consoleInput = readLine();

@@ -22,11 +22,12 @@
  */
 package com.oracle.truffle.r.nodes.function;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.RestrictForceSplitting;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.oracle.truffle.api.Assumption;
 import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -76,9 +77,7 @@ import com.oracle.truffle.r.nodes.profile.TruffleBoundaryNode;
 import com.oracle.truffle.r.nodes.profile.VectorLengthProfile;
 import com.oracle.truffle.r.runtime.Arguments;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
-import com.oracle.truffle.r.runtime.CallerFrameClosure;
 import com.oracle.truffle.r.runtime.DSLConfig;
-import static com.oracle.truffle.r.runtime.context.FastROptions.RestrictForceSplitting;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RArguments.S3Args;
 import com.oracle.truffle.r.runtime.RArguments.S3DefaultArguments;
@@ -118,6 +117,11 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxElement;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
+/**
+ * Represents and executes the syntax node for a function call.
+ *
+ * See {@code documentation/dev/arcane.md} for the documentation of the {@link RCallNode} AST.
+ */
 @NodeInfo(cost = NodeCost.NONE)
 @NodeChild(value = "function", type = RNode.class)
 @ReportPolymorphism
@@ -270,18 +274,18 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         return (signature != null && signature.isEmpty()) || nullBuiltinProfile.profile(function.getRBuiltin() == null) || function.getRBuiltin().getDispatch() == RDispatch.DEFAULT;
     }
 
+    @Specialization
+    public Object callForeign(VirtualFrame frame, DeferredFunctionValue function,
+                    @Cached("createForeignInvoke()") ForeignInvoke call) {
+        return call.execute(frame, function);
+    }
+
     @Specialization(guards = "isDefaultDispatch(function)")
     public Object call(VirtualFrame frame, RFunction function,
                     @Cached("createUninitializedCall()") FunctionDispatch call,
                     @Cached("createIdentityProfile()") ValueProfile builtinValueProfile) {
         RBuiltinDescriptor builtin = builtinValueProfile.profile(function.getRBuiltin());
         return call.execute(frame, function, lookupVarArgs(frame, builtin), null, null);
-    }
-
-    @Specialization
-    public Object callForeign(VirtualFrame frame, DeferredFunctionValue function,
-                    @Cached("createForeignInvoke()") ForeignInvoke call) {
-        return call.execute(frame, function);
     }
 
     protected RNode createDispatchArgument(int index) {
@@ -402,12 +406,13 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         if (!argAndNames.isEmpty()) {
             Object dispatchObject = argAndNames.getArgument(0);
             if (isAttributableProfile.profile(dispatchObject instanceof RAttributeStorage) && isS4Profile.profile(((RAttributeStorage) dispatchObject).isS4())) {
-                RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
-                // TODO create a node that looks up the name in the names attribute
-                int index = list.getElementIndexByName(builtin.getName());
-                if (index != -1) {
-                    RFunction basicFun = (RFunction) list.getDataAt(index);
-                    Object result = call.execute(frame, basicFun, argAndNames, null, null);
+                if (getBasicFunction == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    getBasicFunction = insert(new GetBasicFunction());
+                }
+                Object basicFun = getBasicFunction.execute(frame, builtin.getName());
+                if (basicFun != null) {
+                    Object result = call.execute(frame, (RFunction) basicFun, argAndNames, null, null);
                     if (result != RRuntime.DEFERRED_DEFAULT_MARKER) {
                         return result;
                     }
@@ -845,6 +850,9 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
+    /**
+     * Dispatches a call to a function for given arguments.
+     */
     @ImportStatic(DSLConfig.class)
     public abstract static class FunctionDispatch extends Node {
 
@@ -979,11 +987,23 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         public abstract Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args);
     }
 
+    /**
+     * It executes a builtin node using its call method (not the execute), which casts the
+     * arguments. Potential argument promises are evaluated before the execution.
+     *
+     * NB: The arguments are not cast here, but in the builtin.
+     */
     @NodeInfo(cost = NodeCost.NONE)
     public static final class BuiltinCallNode extends LeafCallFunctionNode {
 
         @Child private RBuiltinNode builtin;
+        /**
+         * Evaluates potential promises in varArgs.
+         */
         @Child private PromiseCheckHelperNode varArgsPromiseHelper;
+        /**
+         * Evaluates arg promises.
+         */
         @Children private final PromiseHelperNode[] promiseHelpers;
         @Child private SetVisibilityNode visibility = SetVisibilityNode.create();
 
@@ -1024,7 +1044,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         @ExplodeLoop
-        public Object[] castArguments(VirtualFrame frame, Object[] args) {
+        public Object[] forceArgPromises(VirtualFrame frame, Object[] args) {
             int argCount = formals.getLength();
             int varArgIndex = formals.getSignature().getVarArgIndex();
             Object[] result = new Object[argCount];
@@ -1125,7 +1145,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
         @Override
         public Object execute(VirtualFrame frame, RFunction currentFunction, RArgsValuesAndNames orderedArguments, S3Args s3Args) {
-            Object result = builtin.call(frame, castArguments(frame, orderedArguments.getArguments()));
+            Object result = builtin.call(frame, forceArgPromises(frame, orderedArguments.getArguments()));
             assert result != null : "builtins cannot return 'null': " + builtinDescriptor.getName();
             assert !(result instanceof RConnection) : "builtins cannot return connection': " + builtinDescriptor.getName();
             visibility.execute(frame, builtinDescriptor.getVisibility());
@@ -1133,6 +1153,11 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
     }
 
+    /**
+     * It executes {@link RFastPathNode} first, if available. It also splits the function's call
+     * target, if needed. Then it executes CallRFunctionNode if either RFastPathNode is not
+     * available or it returns null
+     */
     private static final class DispatchedCallNode extends LeafCallFunctionNode {
 
         @Child private CallRFunctionNode call;
@@ -1186,37 +1211,6 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
 
             return call.execute(frame, function, caller, callerFrame, orderedArguments.getArguments(), orderedArguments.getSignature(), function.getEnclosingFrame(), s3Args);
         }
-    }
-
-    public static final class InvalidateNoCallerFrame extends CallerFrameClosure {
-
-        private final Assumption needsNoCallerFrame;
-        private final MaterializedFrame frame;
-
-        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame) {
-            this.needsNoCallerFrame = needsNoCallerFrame;
-            this.frame = null;
-        }
-
-        protected InvalidateNoCallerFrame(Assumption needsNoCallerFrame, MaterializedFrame frame) {
-            this.needsNoCallerFrame = needsNoCallerFrame;
-            this.frame = frame;
-        }
-
-        @Override
-        public boolean setNeedsCallerFrame() {
-            if (needsNoCallerFrame.isValid()) {
-                needsNoCallerFrame.invalidate();
-                return true;
-            }
-            return false;
-        }
-
-        @Override
-        public MaterializedFrame getMaterializedCallerFrame() {
-            return frame;
-        }
-
     }
 
     @Override

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -342,7 +342,7 @@ void uR_ShowMessage(const char *x) {
     unimplemented("R_ShowMessage");
 }
 
-int uR_ReadConsole(const char *a, unsigned char *b, int c, int d) {
+int R_ReadConsole(const char *a, unsigned char *b, int c, int d) {
     unimplemented("R_ReadConsole");
     return 0;
 }
@@ -476,7 +476,7 @@ void uR_CleanUp(SA_TYPE x, int y, int z) {
 
 void (*ptr_R_Suicide)(const char *) = uR_Suicide;
 void (*ptr_R_ShowMessage)(const char *) = uR_ShowMessage;
-int  (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int) = uR_ReadConsole;
+int  (*ptr_R_ReadConsole)(const char *, unsigned char *, int, int) = R_ReadConsole;
 void (*ptr_R_WriteConsole)(const char *, int) = uR_WriteConsole;
 void (*ptr_R_WriteConsoleEx)(const char *, int, int) = uR_WriteConsoleEx;
 void (*ptr_R_ResetConsole)(void) = uR_ResetConsole;
@@ -512,7 +512,7 @@ void setupOverrides(void) {
         name = (*jniEnv)->NewStringUTF(jniEnv, "R_CleanUp");
         (*jniEnv)->CallStaticVoidMethod(jniEnv, rInterfaceCallbacksClass, ovrMethodID, name);
     }
-    if (*ptr_R_ReadConsole != uR_ReadConsole) {
+    if (*ptr_R_ReadConsole != R_ReadConsole) {
         name = (*jniEnv)->NewStringUTF(jniEnv, "R_ReadConsole");
         (*jniEnv)->CallStaticVoidMethod(jniEnv, rInterfaceCallbacksClass, ovrMethodID, name);
     }

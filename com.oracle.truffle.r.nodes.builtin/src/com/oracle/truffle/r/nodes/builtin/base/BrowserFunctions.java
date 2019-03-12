@@ -107,7 +107,7 @@ public class BrowserFunctions {
                             getCallerFrame = insert(new GetCallerFrameNode());
                         }
                         actualFrame = getCallerFrame.execute(mFrame);
-                        caller = caller.getParent();
+                        caller = caller.getPrevious();
                     }
                     doPrint(caller);
                     browserInteractNode.execute(actualFrame, caller);
@@ -126,7 +126,7 @@ public class BrowserFunctions {
         @TruffleBoundary
         private static void doPrint(RCaller caller) {
             String callerString;
-            if (caller == null || (!caller.isValidCaller() && caller.getDepth() == 0 && caller.getParent() == null)) {
+            if (caller == null || (!caller.isValidCaller() && caller.getDepth() == 0 && caller.getPrevious() == null)) {
                 callerString = "top level";
             } else {
                 callerString = RContext.getRRuntimeASTAccess().getCallerSource(caller);

@@ -68,42 +68,44 @@ class LazyResourceHandlerFactory extends ResourceHandlerFactory implements Handl
             Path sourcePath = Paths.get(url.toURI().getPath());
             File sourceFile = sourcePath.toFile();
             if (sourceFile.isDirectory()) {
-                InputStream is = accessor.getResourceAsStream(pkgName + "/R");
-                if (is != null) {
-                    try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
-                        String line;
-                        while ((line = r.readLine()) != null) {
-                            if (line.endsWith(".r") || line.endsWith(".R")) {
-                                final String rResource = pkgName + "/R/" + line.trim();
-                                result.put(sourcePath.toString(), Utils.getResourceAsString(accessor, rResource, true));
+                try (InputStream is = accessor.getResourceAsStream(pkgName + "/R")) {
+                    if (is != null) {
+                        try (BufferedReader r = new BufferedReader(new InputStreamReader(is))) {
+                            String line;
+                            while ((line = r.readLine()) != null) {
+                                if (line.endsWith(".r") || line.endsWith(".R")) {
+                                    final String rResource = pkgName + "/R/" + line.trim();
+                                    result.put(sourcePath.toString(), Utils.getResourceAsString(accessor, rResource, true));
+                                }
                             }
                         }
                     }
                 }
             } else {
-                JarFile fastrJar = new JarFile(sourceFile);
-                Enumeration<JarEntry> iter = fastrJar.entries();
-                while (iter.hasMoreElements()) {
-                    JarEntry entry = iter.nextElement();
-                    String name = entry.getName();
-                    if (name.endsWith(".R") || name.endsWith(".r")) {
-                        Path p = Paths.get(name);
-                        Path entryPkgPath = p.getName(p.getNameCount() - 3).getFileName();
-                        assert entryPkgPath != null;
-                        String entryPkg = entryPkgPath.toString();
-                        Path entryParentPath = p.getName(p.getNameCount() - 2).getFileName();
-                        assert entryParentPath != null;
-                        String entryParent = entryParentPath.toString();
-                        if (entryParent.equals("R") && entryPkg.equals(pkgName)) {
-                            int size = (int) entry.getSize();
-                            byte[] buf = new byte[size];
-                            InputStream is = fastrJar.getInputStream(entry);
-                            int totalRead = 0;
-                            int n;
-                            while ((n = is.read(buf, totalRead, buf.length - totalRead)) > 0) {
-                                totalRead += n;
+                try (JarFile fastrJar = new JarFile(sourceFile)) {
+                    Enumeration<JarEntry> iter = fastrJar.entries();
+                    while (iter.hasMoreElements()) {
+                        JarEntry entry = iter.nextElement();
+                        String name = entry.getName();
+                        if (name.endsWith(".R") || name.endsWith(".r")) {
+                            Path p = Paths.get(name);
+                            Path entryPkgPath = p.getName(p.getNameCount() - 3).getFileName();
+                            assert entryPkgPath != null;
+                            String entryPkg = entryPkgPath.toString();
+                            Path entryParentPath = p.getName(p.getNameCount() - 2).getFileName();
+                            assert entryParentPath != null;
+                            String entryParent = entryParentPath.toString();
+                            if (entryParent.equals("R") && entryPkg.equals(pkgName)) {
+                                int size = (int) entry.getSize();
+                                byte[] buf = new byte[size];
+                                InputStream is = fastrJar.getInputStream(entry);
+                                int totalRead = 0;
+                                int n;
+                                while ((n = is.read(buf, totalRead, buf.length - totalRead)) > 0) {
+                                    totalRead += n;
+                                }
+                                result.put(p.toString(), new String(buf));
                             }
-                            result.put(p.toString(), new String(buf));
                         }
                     }
                 }

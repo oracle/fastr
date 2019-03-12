@@ -184,7 +184,6 @@ typedef SEXP (*call_VECTOR_ELT)(SEXP x, R_xlen_t i);
 typedef void (*call_SET_STRING_ELT)(SEXP x, R_xlen_t i, SEXP v);
 typedef SEXP (*call_SET_VECTOR_ELT)(SEXP x, R_xlen_t i, SEXP v);
 typedef SEXP *(*call_STRING_PTR)(SEXP x);
-typedef SEXP *(*call_VECTOR_PTR)(SEXP x);
 typedef SEXP (*call_Rf_asChar)(SEXP x);
 typedef SEXP (*call_Rf_PairToVectorList)(SEXP x);
 typedef SEXP (*call_Rf_VectorToPairList)(SEXP x);

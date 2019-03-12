@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 1995--2015, The R Core Team
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
  */
 
 #include <Rinternals.h>
-
-#define _(Source) (Source)
 
 // selected functions copied from errors.c:
 /*

@@ -518,15 +518,8 @@ public final class Utils {
      * in progress.
      */
     public static Frame getCallerFrame(RCaller caller, FrameAccess fa) {
-        RCaller parent = caller;
-        while (parent != null && parent.isPromise()) {
-            parent = parent.getParent();
-        }
-        assert parent != null;
-        parent = parent.getParent();
-        while (parent != null && parent.isPromise()) {
-            parent = parent.getParent();
-        }
+        RCaller parent = RCaller.unwrapPromiseCaller(caller);
+        parent = RCaller.unwrapPromiseCaller(parent.getPrevious());
         return parent == null ? null : getStackFrame(fa, parent);
     }
 
@@ -591,7 +584,7 @@ public final class Utils {
             String path = RSource.getPath(source);
             RStringVector callerSource = RDataFactory.createStringVectorFromScalar(RContext.getRRuntimeASTAccess().getCallerSource(call));
             if (path != null) {
-                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(section, path));
+                callerSource.setAttr(RRuntime.R_SRCREF, RSrcref.createLloc(RContext.getInstance(), section, path));
             }
             RPairList pl = RDataFactory.createPairList(callerSource);
             if (prev != null) {

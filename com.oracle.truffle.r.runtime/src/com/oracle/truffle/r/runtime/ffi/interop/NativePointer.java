@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,14 +23,13 @@
 package com.oracle.truffle.r.runtime.ffi.interop;
 
 import com.oracle.truffle.api.interop.ForeignAccess;
-import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
 
 /**
  * Created when a {@link RTruffleObject} subclass has no meaningful native representation,
- * nevertheless a {@link Message#TO_NATIVE} message is sent to it.
+ * nevertheless a {@code Message#TO_NATIVE} message is sent to it.
  */
 public abstract class NativePointer implements TruffleObject {
 

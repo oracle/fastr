@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "963639061d3af9e33d343aa817490a4bdb3a0c91",
+               "version" : "c4bb8ed4ab9708486745b69ccb3f9f68a1bbf488",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -34,38 +34,12 @@ suite = {
   "defaultLicense" : "GPLv3",
 
   # libraries that we depend on
-  # N.B. The first four with a "path" attribute must be located
-  # relative to the suite root and not the mx cache because they are
-  # explicitly referenced in the Parser annotation processor.
-  # We reference ANTLR twice, because the "path" reference is not
-  # properly handled by MX in all cases and causes integration problems.
   "libraries" : {
     "GNUR" : {
         "path" : "libdownloads/R-3.5.1.tar.gz", # keep in sync with the GraalVM support distribution
         "urls" : ["http://cran.rstudio.com/src/base/R-3/R-3.5.1.tar.gz"],
         "sha1" : "9314d3d372b05546a33791fbc8dd579c92ebd16b",
         "resource" : "true"
-    },
-
-    "ANTLR-3.5_4_ANNOT_PROC" : {
-      "path" : "libdownloads/antlr-runtime-3.5.jar",
-      "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-runtime/3.5/antlr-runtime-3.5.jar"],
-      "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
-    },
-
-    "ANTLR-C-3.5" : {
-      "path" : "libdownloads/antlr-complete-3.5.1.jar",
-      "urls" : ["http://central.maven.org/maven2/org/antlr/antlr-complete/3.5.1/antlr-complete-3.5.1.jar"],
-      "sha1" : "ebb4b995fd67a9b291ea5b19379509160f56e154",
-    },
-
-    "ANTLR-3.5" : {
-      "sha1" : "0baa82bff19059401e90e1b90020beb9c96305d7",
-      "maven" : {
-        "groupId" : "org.antlr",
-        "artifactId" : "antlr-runtime",
-        "version" : "3.5",
-      },
     },
 
     "XZ-1.8" : {
@@ -82,8 +56,7 @@ suite = {
     "com.oracle.truffle.r.parser.processor" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "ANTLR-3.5_4_ANNOT_PROC",
-        "ANTLR-C-3.5",
+          "truffle:ANTLR4_COMPLETE",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -93,8 +66,8 @@ suite = {
     "com.oracle.truffle.r.parser" : {
       "sourceDirs" : ["src"],
       "dependencies" : [
-        "com.oracle.truffle.r.parser.processor",
         "com.oracle.truffle.r.runtime",
+            "truffle:ANTLR4",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -197,7 +170,6 @@ suite = {
      "generatedDependencies" : [
         "com.oracle.truffle.r.parser",
      ],
-
       "annotationProcessors" : [
           "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
@@ -229,19 +201,6 @@ suite = {
         "sdk:GRAAL_SDK",
         "sdk:LAUNCHER_COMMON",
         "truffle:JLINE",
-      ],
-      "checkstyle" : "com.oracle.truffle.r.runtime",
-      "javaCompliance" : "1.8",
-      "annotationProcessors" : [
-      ],
-      "workingSets" : "Truffle,FastR",
-      "jacoco" : "include",
-    },
-
-    "com.oracle.truffle.r.legacylauncher" : {
-      "sourceDirs" : ["src"],
-      "dependencies" : [
-        "sdk:GRAAL_SDK",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
@@ -365,8 +324,7 @@ suite = {
       "description" : "internal support for generating the R parser",
       "dependencies" : ["com.oracle.truffle.r.parser.processor"],
       "exclude" : [
-        "ANTLR-3.5",
-        "ANTLR-C-3.5",
+        "truffle:ANTLR4_COMPLETE",
        ],
        "maven" : "False",
     },
@@ -375,14 +333,6 @@ suite = {
       "description" : "internal support for generating FFI classes",
       "dependencies" : ["com.oracle.truffle.r.ffi.processor"],
       "maven" : "False",
-    },
-
-    "FASTR_LEGACY_LAUNCHER" : {
-      "description" : "legacy launcher for the GraalVM",
-      "dependencies" : ["com.oracle.truffle.r.legacylauncher"],
-      "distDependencies" : [
-        "sdk:GRAAL_SDK"
-      ],
     },
 
     "FASTR_LAUNCHER" : {
@@ -403,7 +353,7 @@ suite = {
       "mainClass" : "com.oracle.truffle.r.launcher.RCommand",
       "exclude" : [
         "truffle:JLINE",
-        "ANTLR-3.5",
+        "truffle:ANTLR4",
         "GNUR",
         "XZ-1.8",
       ],
@@ -422,7 +372,7 @@ suite = {
       "mainClass" : "com.oracle.truffle.r.library.fastrGrid.server.RemoteDeviceServer",
       "exclude" : [
         "truffle:JLINE",
-        "ANTLR-3.5",
+        "truffle:ANTLR4",
         "GNUR",
         "XZ-1.8",
       ],

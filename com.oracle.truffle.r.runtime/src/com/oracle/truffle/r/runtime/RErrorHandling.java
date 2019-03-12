@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,10 +34,10 @@ import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RString;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
@@ -516,18 +516,31 @@ public class RErrorHandling {
                 errorHandlingState.warnings.clear();
                 Utils.writeStderr("Lost warning messages", true);
             }
-            throw new RError(errorMessage, location);
+            throw new RError(null, location);
         }
 
-        Utils.writeStderr(errorMessage, true);
+        Object errorExpr = RContext.getInstance().stateROptions.getValue("error");
+        boolean printNow = errorExpr != RNull.instance || RContext.isEmbedded();
 
-        if (getRErrorHandlingState().warnings.size() > 0) {
-            Utils.writeStderr("In addition: ", false);
-            printWarnings(false);
+        if (printNow) {
+            // We print immediately if we are in the GNU-R compatible embedding mode or when there
+            // is some user code going to be run before our exception would reach whoever is
+            // embedding FastR via GraalSDK including the launcher. Note that if there is tryCatch,
+            // we do not even reach here -- that is handled in signalError
+            Utils.writeStderr(errorMessage, true);
+            if (getRErrorHandlingState().warnings.size() > 0) {
+                Utils.writeStderr("In addition: ", false);
+                printWarnings(false);
+            }
+        } else {
+            if (getRErrorHandlingState().warnings.size() > 0) {
+                StringBuilder sb = new StringBuilder(errorMessage).append("\nIn addition: ");
+                printWarnings(sb, false);
+                errorMessage = sb.toString();
+            }
         }
 
         // we are not quite done - need to check for options(error=expr)
-        Object errorExpr = RContext.getInstance().stateROptions.getValue("error");
         if (errorExpr != RNull.instance) {
             int oldInError = errorHandlingState.inError;
             try {
@@ -572,7 +585,7 @@ public class RErrorHandling {
                 throw RInternalError.shouldNotReachHere("cannot write .Traceback");
             }
         }
-        throw new RError(errorMessage, location);
+        throw new RError(printNow ? null : errorMessage, location);
     }
 
     private static MaterializedFrame safeCurrentFrame() {
@@ -582,22 +595,17 @@ public class RErrorHandling {
 
     @TruffleBoundary
     public static RError handleInteropException(Node callObj, RuntimeException e) {
+        // ClassNotFoundException might be raised internaly by FastR in FastRInterop$JavaType
         if (e instanceof TruffleException || e.getCause() instanceof ClassNotFoundException) {
             if (RContext.getInstance().stateInteropTry.isInTry()) {
                 // will be catched and handled in .fastr.interop.try builtin
                 throw new FastRInteropTryException(e);
             } else {
-                // unfortunatelly, the whole error report has to be printed in two steps:
-                // 1.) first print the caller part of the error message, while we still have the
-                // caller node
-                Object caller = callObj instanceof RBaseNode ? findCaller((RBaseNode) callObj) : findCaller(RError.findParentRBase(callObj));
-                String errorMessage = createErrorMessage(caller, "");
-                Utils.writeStderr(errorMessage, true);
-                // 2.) and pass-over (re-throw) the foreign exception to truffle,
-                // once it is caught in REPL wrapped in a PolylotException we will be
-                // able to print the guest lang polyglot stacktrace via
-                // PolyglotException.getPolyglotStackTrace()
-                throw e;
+                if (e.getCause() instanceof ClassNotFoundException) {
+                    // CCE thrown in FastrInterop.JavaType
+                    Throwable cause = e.getCause();
+                    throw RError.error(callObj, Message.GENERIC, cause.getClass().getName() + ": " + cause.getMessage());
+                }
             }
         }
         throw e;
@@ -712,6 +720,16 @@ public class RErrorHandling {
 
     @TruffleBoundary
     public static void printWarnings(boolean suppress) {
+        StringBuilder sb = new StringBuilder();
+        printWarnings(sb, suppress);
+        if (sb.length() > 0) {
+            sb.append('\n');
+            Utils.writeStderr(sb.toString(), false);
+        }
+    }
+
+    @TruffleBoundary
+    public static void printWarnings(StringBuilder sb, boolean suppress) {
         ContextStateImpl errorHandlingState = getRErrorHandlingState();
         Warnings warnings = errorHandlingState.warnings;
         if (suppress) {
@@ -725,38 +743,41 @@ public class RErrorHandling {
         if (errorHandlingState.inPrintWarning) {
             if (nWarnings > 0) {
                 warnings.clear();
-                Utils.writeStderr("Lost warning messages", true);
+                sb.append("Lost warning messages");
             }
             return;
         }
         try {
             errorHandlingState.inPrintWarning = true;
             if (nWarnings == 1) {
-                Utils.writeStderr("Warning message:", true);
+                sb.append("Warning message:").append('\n');
                 Warning warning = warnings.get(0);
                 if (warning.call == RNull.instance) {
-                    Utils.writeStderr(warning.message, true);
+                    sb.append(warning.message);
                 } else {
-                    printWarningMessage("In ", warning, 69);
+                    printWarningMessage(sb, "In ", warning, 69);
                 }
             } else if (nWarnings <= 10) {
-                Utils.writeStderr("Warning messages:", true);
+                sb.append("Warning messages:\n");
                 for (int i = 0; i < nWarnings; i++) {
                     Warning warning = warnings.get(i);
                     if (warning.call == RNull.instance) {
-                        Utils.writeStderr((i + 1) + ":", true);
-                        Utils.writeStderr("  " + warning.message, true);
+                        sb.append((i + 1)).append(':').append('\n');
+                        sb.append("  ").append(warning.message);
                     } else {
-                        Utils.writeStderr(Integer.toString(i + 1), false);
-                        printWarningMessage(": In ", warning, 65);
+                        sb.append(i + 1);
+                        printWarningMessage(sb, ": In ", warning, 65);
+                    }
+                    if (i < nWarnings - 1) {
+                        sb.append('\n');
                     }
                 }
             } else {
                 if (nWarnings < errorHandlingState.maxWarnings) {
-                    Utils.writeStderr(String.format("There were %d warnings (use warnings() to see them)", nWarnings), true);
+                    sb.append(String.format("There were %d warnings (use warnings() to see them)", nWarnings));
                 } else {
                     assert nWarnings == errorHandlingState.maxWarnings : "warnings above the limit should not have been added";
-                    Utils.writeStderr(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, nWarnings), true);
+                    sb.append(String.format("There were %d or more warnings (use warnings() to see the first %d)", nWarnings, nWarnings));
                 }
             }
             Object[] wData = new Object[nWarnings];
@@ -773,17 +794,17 @@ public class RErrorHandling {
         }
     }
 
-    private static void printWarningMessage(String prefix, Warning warning, int maxLen) {
+    private static void printWarningMessage(StringBuilder sb, String prefix, Warning warning, int maxLen) {
         String callString = RContext.getRRuntimeASTAccess().getCallerSource((RPairList) warning.call);
 
         String message = warning.message;
         int firstLineLength = message.contains("\n") ? message.indexOf('\n') : message.length();
         if (callString.length() + firstLineLength > maxLen) {
             // split long lines
-            Utils.writeStderr(prefix + callString + " :", true);
-            Utils.writeStderr("  " + message, true);
+            sb.append(prefix).append(callString).append(" :\n");
+            sb.append("  ").append(message);
         } else {
-            Utils.writeStderr(prefix + callString + " : " + message, true);
+            sb.append(prefix).append(callString).append(" : ").append(message);
         }
     }
 

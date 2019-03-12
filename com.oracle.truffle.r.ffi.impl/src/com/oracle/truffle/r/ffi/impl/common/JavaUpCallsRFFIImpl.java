@@ -283,7 +283,8 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         RSymbol name = (RSymbol) symbolArg;
         REnvironment env = (REnvironment) envArg;
         while (env != REnvironment.emptyEnv()) {
-            Object value = env.get(name.getName());
+            String nameKey = name.getName();
+            Object value = env.get(nameKey);
             if (value != null) {
                 if (value instanceof RPromise && ((RPromise) value).isOptimized()) {
                     // From the point of view of RFFI, optimized promises (i.e. promises with null
@@ -296,6 +297,14 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                 }
                 if (value == RMissing.instance || value == REmpty.instance) {
                     return RSymbol.MISSING;
+                }
+                Object v = RRuntime.asAbstractVector(value);
+                if (v instanceof RAbstractVector) {
+                    v = ((RAbstractVector) v).materialize();
+                }
+                if (v != value) {
+                    env.putOverrideLock(nameKey, v);
+                    value = v;
                 }
                 return value;
             }
@@ -1238,7 +1247,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             if (!currentCaller.isPromise() && currentCaller.isValidCaller() && currentCaller != RContext.getInstance().stateInstrumentation.getBrowserState().getInBrowserCaller()) {
                 break;
             }
-            currentCaller = currentCaller.getParent();
+            currentCaller = currentCaller.getPrevious();
         }
         return currentCaller == null || currentCaller == RCaller.topLevel ? RNull.instance : currentCaller;
     }
@@ -1249,7 +1258,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         Utils.warn("Potential memory leak (parent function context object)");
         RCaller currentCaller = guaranteeInstanceOf(c, RCaller.class);
         while (true) {
-            currentCaller = currentCaller.getParent();
+            currentCaller = currentCaller.getPrevious();
             if (currentCaller == null ||
                             (!currentCaller.isPromise() && currentCaller.isValidCaller() && currentCaller != RContext.getInstance().stateInstrumentation.getBrowserState().getInBrowserCaller())) {
                 break;
@@ -1333,7 +1342,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
             SourceSection ss = f.getRootNode().getSourceSection();
             String path = RSource.getPath(ss.getSource());
             // TODO: is it OK to pass "" if path is null?
-            return RSrcref.createLloc(ss, path == null ? "" : path);
+            return RSrcref.createLloc(RContext.getInstance(), ss, path == null ? "" : path);
         }
     }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -25,10 +25,11 @@ package com.oracle.truffle.r.nodes.builtin.base;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 
+import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNode;
@@ -36,6 +37,7 @@ import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
+import com.oracle.truffle.r.runtime.RCaller.UnwrapPromiseCallerProfile;
 import com.oracle.truffle.r.runtime.ReturnException;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RList;
@@ -47,7 +49,7 @@ import com.oracle.truffle.r.runtime.nodes.RNode;
 final class ReturnSpecial extends RNode {
 
     @Child private RNode value;
-    private final BranchProfile isPromiseEvalProfile = BranchProfile.create();
+    @CompilationFinal private UnwrapPromiseCallerProfile unwrapCallerProfile;
 
     protected ReturnSpecial(RNode value) {
         this.value = value;
@@ -55,7 +57,11 @@ final class ReturnSpecial extends RNode {
 
     @Override
     public Object execute(VirtualFrame frame) {
-        return Return.doReturn(frame, value.visibleExecute(frame), isPromiseEvalProfile);
+        if (unwrapCallerProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            unwrapCallerProfile = new UnwrapPromiseCallerProfile();
+        }
+        return Return.doReturn(frame, value.visibleExecute(frame), unwrapCallerProfile);
     }
 }
 
@@ -64,6 +70,10 @@ final class ReturnSpecial extends RNode {
  * {@link RArguments#getCall(com.oracle.truffle.api.frame.Frame) call}. The return value will be
  * delivered via a {@link ReturnException}, which is subsequently caught in the
  * {@link FunctionDefinitionNode}.
+ * 
+ * If the current {@link RCaller} denotes promise evaluation, we unwrap it to get to the
+ * {@link RCaller} stored in the arguments array of the frame that should be logically evaluating
+ * the promise that contains this "return" call.
  */
 @RBuiltin(name = "return", kind = PRIMITIVE, parameterNames = {"value"}, behavior = COMPLEX, nonEvalArgs = {0})
 public abstract class Return extends RBuiltinNode.Arg1 {
@@ -81,30 +91,26 @@ public abstract class Return extends RBuiltinNode.Arg1 {
         return new Object[]{RNull.instance};
     }
 
-    static ReturnException doReturn(VirtualFrame frame, Object value, BranchProfile isPromiseEvalProfile) {
-        RCaller call = RArguments.getCall(frame);
-        while (call.isPromise()) {
-            isPromiseEvalProfile.enter();
-            call = call.getParent();
-        }
+    static ReturnException doReturn(VirtualFrame frame, Object value, UnwrapPromiseCallerProfile unwrapProfile) {
+        RCaller call = RCaller.unwrapPromiseCaller(RArguments.getCall(frame), unwrapProfile);
         throw new ReturnException(value, call);
     }
 
     @Specialization
     protected Object returnFunction(VirtualFrame frame, RPromise x,
                     @Cached("new()") PromiseHelperNode promiseHelper,
-                    @Cached("create()") BranchProfile isPromiseEvalProfile,
+                    @Cached("new()") UnwrapPromiseCallerProfile unwrapCallerProfile,
                     @Cached("create()") SetVisibilityNode visibility) {
         if (x.isEvaluated()) {
             visibility.execute(frame, true);
         }
         Object value = promiseHelper.evaluate(frame, x);
-        throw doReturn(frame, value, isPromiseEvalProfile);
+        throw doReturn(frame, value, unwrapCallerProfile);
     }
 
     @Specialization
     protected RList returnFunction(VirtualFrame frame, @SuppressWarnings("unused") RMissing x,
-                    @Cached("create()") BranchProfile isPromiseEvalProfile) {
-        throw doReturn(frame, RNull.instance, isPromiseEvalProfile);
+                    @Cached("new()") UnwrapPromiseCallerProfile unwrapCallerProfile) {
+        throw doReturn(frame, RNull.instance, unwrapCallerProfile);
     }
 }

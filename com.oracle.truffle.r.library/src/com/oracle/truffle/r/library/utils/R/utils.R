@@ -57,12 +57,7 @@ eval(expression({
 		data.table = c(paste0(
 			"CRAN data.table uses some C API that FastR cannot emulate, there is a patched version of data.table available ",
 			"at https://github.com/oracle/fastr/master/com.oracle.truffle.r.pkgs/data.table.\n",
-			"You can run function install.fastr.packages('data.table') to install it from GitHub.")),
-		dplyr = c(paste0(
-			"The current version of CRAN dplyr uses some C API that FastR cannot emulate.\n",
-			"For the best results we recommend installing revision dbbb918771bb6f803f5f9a126a38b613f7af0211 from https://github.com/tidyverse/dplyr and its dependencies from CRAN.\n",
-			"The installation of dplyr via `install.packages('dplyr')` already installed all the dependencies. If you wish so you can now override the problematic version of dplyr with:\n",
-			"install.packages('https://api.github.com/repos/tidyverse/dplyr/tarball/dbbb918771bb6f803f5f9a126a38b613f7af0211', repos=NULL)"))
+			"You can run function install.fastr.packages('data.table') to install it from GitHub."))
 	)
 
 	excludedPkgs <- c('rJava', 'data.table')

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 #include <rffiutils.h>
 #include <stdlib.h>
 #include <string.h>
+#include <Defn.h>
 
 #define T_MEM_TABLE_INITIAL_SIZE 0
 // The table of transient objects that have been allocated dur the current FFI call

@@ -95,6 +95,7 @@ def do_run_r(args, command, extraVmArgs=None, jdk=None, **kwargs):
 
     vmArgs += set_graal_options()
     vmArgs += _sulong_options()
+    args = _sulong_args() + args
 
     if extraVmArgs is None or not '-da' in extraVmArgs:
         # unless explicitly disabled we enable assertion checking
@@ -145,6 +146,13 @@ def set_graal_options():
     if mx.suite("compiler", fatalIfMissing=False):
         result = ['-Dgraal.InliningDepthError=500', '-Dgraal.EscapeAnalysisIterations=3', '-XX:JVMCINMethodSizeLimit=1000000']
         return result
+    else:
+        return []
+
+def _sulong_args():
+    mx_sulong = mx.suite("sulong", fatalIfMissing=False)
+    if mx_sulong:
+        return ['--experimental-options']
     else:
         return []
 
@@ -262,7 +270,7 @@ def rembedtest(args, nonZeroIsFatal=False, extraVmArgs=None):
     env = os.environ.copy()
     env['R_HOME'] = _fastr_suite.dir
     so_suffix = '.dylib' if platform.system().lower() == 'darwin' else '.so'
-    env['NFI_LIB'] = join(mx.suite('truffle').get_output_root(platformDependent=True), 'truffle-nfi-native/bin/libtrufflenfi' + so_suffix)
+    env['NFI_LIB'] = join(mx.distribution('TRUFFLE_NFI_NATIVE').get_output(), 'bin', 'libtrufflenfi' + so_suffix)
     tests_script = join(_fastr_suite.dir, 'com.oracle.truffle.r.test.native/embedded/test.sh')
     return mx.run([tests_script], env=env, nonZeroIsFatal=nonZeroIsFatal)
 
@@ -600,11 +608,11 @@ _pkgtest_module = None
 
 
 def pkgtest_load():
+    global _pkgtest_module
     if not _pkgtest_module:
-        global _pkgtest_module
-        _pkgtest_module = None
         sys.path.append(_pkgtest_project)
-        import pkgtest as _pkgtest_module
+        import pkgtest
+        _pkgtest_module = pkgtest
     return _pkgtest_module
 
 
@@ -637,25 +645,25 @@ def _pkgtest_args(args):
 def pkgtest(args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["pkgtest"] + full_args)
-    pkgtest_load().pkgtest(full_args)
+    return pkgtest_load().pkgtest(full_args)
 
 
 def installpkgs(args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["installpkgs"] + full_args)
-    pkgtest_load().installpkgs(full_args)
+    return pkgtest_load().installpkgs(full_args)
 
 
 def find_top100(*args, **kwargs):
     full_args = _pkgtest_args(args) + ["100"]
     mx.logv(["find_top"] + full_args)
-    pkgtest_load().find_top(full_args)
+    return pkgtest_load().find_top(full_args)
 
 
 def find_top(*args, **kwargs):
     full_args = _pkgtest_args(args)
     mx.logv(["find_top"] + full_args)
-    pkgtest_load().find_top(args)
+    return pkgtest_load().find_top(args)
 
 
 def r_pkgtest_analyze(args, **kwargs):

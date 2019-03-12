@@ -1506,76 +1506,78 @@ public class TestJavaInterop extends TestBase {
     @Test
     public void testException() {
         assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException')",
-                        errorIn(".fastr.interop.new(Class, ...)",
+                        errorIn("polyglot evaluation",
                                         "java.lang.RuntimeException\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:35)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
 
         assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.lang.RuntimeException', 'msg')",
-                        errorIn(".fastr.interop.new(Class, ...)",
+                        errorIn("polyglot evaluation",
                                         "java.lang.RuntimeException: msg\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:41)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
 
         assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException')",
-                        errorIn(".fastr.interop.new(Class, ...)",
+                        errorIn("polyglot evaluation",
                                         "java.io.IOException\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:35)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
 
         assertEvalFastR("new('" + TestExceptionsClass.class.getName() + "', 'java.io.IOException', 'msg')",
-                        errorIn(".fastr.interop.new(Class, ...)",
+                        errorIn("polyglot evaluation",
                                         "java.io.IOException: msg\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.<init>(TestExceptionsClass.java:41)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
 
         assertEvalFastR(
                         CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException')",
-                        errorIn("to$exception(\"java.io.IOException\")",
+                        errorIn("polyglot evaluation",
                                         "java.io.IOException\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:50)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
 
         assertEvalFastR(
                         CREATE_EXCEPTIONS_TO + "to$exception('java.io.IOException', 'msg')",
-                        errorIn("to$exception(\"java.io.IOException\", \"msg\")",
+                        errorIn("polyglot evaluation",
                                         "java.io.IOException: msg\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:65)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:54)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
 
         assertEvalFastR(
                         CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\")",
+                        errorIn("polyglot evaluation",
                                         "java.lang.RuntimeException\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:58)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:50)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
 
         assertEvalFastR(
                         CREATE_EXCEPTIONS_TO + "to$exception('java.lang.RuntimeException', 'msg')",
-                        errorIn("to$exception(\"java.lang.RuntimeException\", \"msg\")",
+                        errorIn("polyglot evaluation",
                                         "java.lang.RuntimeException: msg\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.throwEx(TestExceptionsClass.java:63)\n" +
                                                         "\tat com.oracle.truffle.r.test.library.fastr.TestExceptionsClass.exception(TestExceptionsClass.java:54)",
-                                        false, false, ""),
+                                        false, false, "", false),
                         true);
+
+        assertEvalFastR("java.type('no.class')", errorIn("java.type(\"no.class\")", "  java.lang.ClassNotFoundException: no.class not found", false, false, ""), true);
     }
 
     private String getRValue(Object value) {
@@ -1764,6 +1766,10 @@ public class TestJavaInterop extends TestBase {
     }
 
     private static String errorIn(String left, String right, boolean warning, boolean onlyText, String sep) {
+        return errorIn(left, right, warning, onlyText, sep, true);
+    }
+
+    private static String errorIn(String left, String right, boolean warning, boolean onlyText, String sep, boolean breakLongContext) {
         String errorIn;
         if (warning) {
             errorIn = "Warning message:\n";
@@ -1779,7 +1785,7 @@ public class TestJavaInterop extends TestBase {
         sb.append(errorIn);
         sb.append(left.replaceAll("\\'", "\\\\\\'"));
         sb.append(delim);
-        if (errorIn.length() + left.length() + delim.length() + 1 + right.length() >= 75) {
+        if (breakLongContext && errorIn.length() + left.length() + delim.length() + 1 + right.length() >= 75) {
             sb.append("', '\n', '");
         }
         sb.append(right.replaceAll("\\'", "\\\\\\'"));

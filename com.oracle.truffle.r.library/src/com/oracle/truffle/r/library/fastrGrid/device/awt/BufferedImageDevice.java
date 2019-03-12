@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,30 +22,31 @@
  */
 package com.oracle.truffle.r.library.fastrGrid.device.awt;
 
-import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
 import static java.awt.image.BufferedImage.TYPE_INT_RGB;
 
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 import javax.imageio.ImageIO;
 
+import com.oracle.truffle.api.TruffleFile;
+import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.r.library.fastrGrid.device.FileGridDevice;
+import com.oracle.truffle.r.library.fastrGrid.device.NotSupportedImageFormatException;
+import com.oracle.truffle.r.runtime.context.RContext;
 
 public final class BufferedImageDevice extends Graphics2DDevice implements FileGridDevice {
     private final BufferedImage image;
     private final String fileType;
+    private final Env env;
     private String filename;
 
-    private BufferedImageDevice(String filename, String fileType, BufferedImage image, Graphics2D graphics, int width, int height) {
+    private BufferedImageDevice(RContext context, String fileType, BufferedImage image, Graphics2D graphics, int width, int height, String filename) {
         super(graphics, width, height, true);
+        this.env = context.getEnv();
         this.filename = filename;
         this.fileType = fileType;
         this.image = image;
@@ -53,14 +54,14 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
         graphics.clearRect(0, 0, width, height);
     }
 
-    public static BufferedImageDevice open(String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
+    public static BufferedImageDevice open(RContext context, String filename, String fileType, int width, int height) throws NotSupportedImageFormatException {
         if (!isSupportedFormat(fileType)) {
             throw new NotSupportedImageFormatException();
         }
         BufferedImage image = new BufferedImage(width, height, TYPE_INT_RGB);
         Graphics2D graphics = (Graphics2D) image.getGraphics();
         defaultInitGraphics(graphics);
-        return new BufferedImageDevice(filename, fileType, image, graphics, width, height);
+        return new BufferedImageDevice(context, fileType, image, graphics, width, height, filename);
     }
 
     @Override
@@ -77,18 +78,19 @@ public final class BufferedImageDevice extends Graphics2DDevice implements FileG
 
     private void saveImage() throws DeviceCloseException {
         try {
-            Path parent = Paths.get(filename).getParent();
-            if (Paths.get(filename).equals(Paths.get("/dev/null"))) {
+            TruffleFile file = env.getTruffleFile(filename);
+            TruffleFile parent = file.getParent();
+            if (FileGridDevice.isDevNull(file)) {
                 return;
             }
-            if (parent != null && !Files.exists(parent)) {
+            if (parent != null && !parent.exists()) {
                 // Bug in JDK? when the path contains directory that does not exist, the code throws
                 // NPE and prints out to the standard output (!) stack trace of
                 // FileNotFoundException. We still catch the exception, because this check and
                 // following Image.write are not atomic.
                 throw new DeviceCloseException(new FileNotFoundException("Path " + filename + " does not exist"));
             }
-            ImageIO.write(image, fileType, new File(filename));
+            ImageIO.write(image, fileType, file.newOutputStream());
         } catch (IOException e) {
             throw new DeviceCloseException(e);
         } catch (NullPointerException npe) {

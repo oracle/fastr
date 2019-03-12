@@ -2,7 +2,7 @@
  * Copyright (c) 1995, 1996, 1997  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1995-2014, The R Core Team
  * Copyright (c) 2002-2008, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -88,6 +88,10 @@ extern Rboolean utf8locale;
 extern Rboolean mbcslocale;
 extern Rboolean latin1locale;
 
+#define mbs_init(x) memset(x, 0, sizeof(mbstate_t))
+
+int Rstrlen(SEXP s, int quote);
+
 #define INI_as(v)
 extern char* OutDec	INI_as(".");
 extern Rboolean known_to_be_latin1 INI_as(FALSE);
@@ -103,6 +107,9 @@ CCODE (PRIMFUN)(SEXP x);
 /* main/sort.c */
 void orderVector1(int *indx, int n, SEXP key, Rboolean nalast,
 		  Rboolean decreasing, SEXP rho);
+
+/* From localecharset.c */
+extern const char *locale2charset(const char *);
 
 #define Unix
 #ifdef Unix

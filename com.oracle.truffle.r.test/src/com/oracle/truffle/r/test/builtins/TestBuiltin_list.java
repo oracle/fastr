@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -375,5 +375,7 @@ public class TestBuiltin_list extends TestBase {
         assertEval("{ x<-list(y=1, 2);  c(a=x, c(y=7,z=42)) }");
 
         assertEval("list(1,2,3,)");
+
+        assertEval(Output.IgnoreErrorContext, "l<- list(1); l[[1]] <- l[[1]] + 1 <- l[[1]]");
     }
 }

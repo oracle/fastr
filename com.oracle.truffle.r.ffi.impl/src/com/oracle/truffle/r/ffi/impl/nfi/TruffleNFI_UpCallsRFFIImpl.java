@@ -22,13 +22,19 @@
  */
 package com.oracle.truffle.r.ffi.impl.nfi;
 
+import java.util.concurrent.atomic.AtomicReference;
+
+import com.oracle.truffle.api.CallTarget;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.api.Truffle;
+import com.oracle.truffle.api.frame.VirtualFrame;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.api.interop.InteropException;
 import com.oracle.truffle.api.interop.Message;
 import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.api.interop.UnsupportedMessageException;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.ffi.impl.common.JavaUpCallsRFFIImpl;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -45,6 +51,7 @@ import com.oracle.truffle.r.runtime.ffi.UnsafeAdapter;
 public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
 
     private final Node asPointer = Message.AS_POINTER.createNode();
+    private AtomicReference<CallTarget> setSymbolCallTarget = new AtomicReference<>();
 
     @Override
     public RFFIFactory.Type getRFFIType() {
@@ -85,13 +92,27 @@ public class TruffleNFI_UpCallsRFFIImpl extends JavaUpCallsRFFIImpl {
     @Override
     @TruffleBoundary
     protected DotSymbol setSymbol(DLLInfo dllInfo, int nstOrd, Object routines, int index) {
-        Node executeNode = Message.EXECUTE.createNode();
-        try {
-            return (DotSymbol) FFIUnwrapNode.unwrap(
-                            ForeignAccess.sendExecute(executeNode, TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol), dllInfo, nstOrd, routines, index));
-        } catch (InteropException ex) {
-            throw RInternalError.shouldNotReachHere(ex);
-        }
+        setSymbolCallTarget.compareAndSet(null, Truffle.getRuntime().createCallTarget(new RootNode(null) {
+            @Child private Node executeNode = Message.EXECUTE.createNode();
+            @Child private FFIUnwrapNode unwrapNode = FFIUnwrapNode.create();
+
+            @Override
+            public Object execute(VirtualFrame frame) {
+                try {
+                    TruffleObject setSymFun = lookupSetSymbol();
+                    Object result = ForeignAccess.sendExecute(executeNode, setSymFun, frame.getArguments());
+                    return unwrapNode.execute(result);
+                } catch (InteropException ex) {
+                    throw RInternalError.shouldNotReachHere(ex);
+                }
+            }
+
+            @TruffleBoundary
+            private TruffleObject lookupSetSymbol() {
+                return TruffleNFI_Context.getInstance().lookupNativeFunction(NativeFunction.Rdynload_setSymbol);
+            }
+        }));
+        return (DotSymbol) setSymbolCallTarget.get().call(dllInfo, nstOrd, routines, index);
     }
 
     @Override

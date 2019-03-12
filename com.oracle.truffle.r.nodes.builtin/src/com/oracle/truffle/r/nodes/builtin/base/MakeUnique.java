@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -81,7 +81,7 @@ public abstract class MakeUnique extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected RAbstractStringVector makeUnique(RStringSequence names, @SuppressWarnings("unused") String sep) {
+    protected RAbstractStringVector makeUniqueSequence(RStringSequence names, @SuppressWarnings("unused") String sep) {
         // a string sequence cannot have duplicates if stride is not zero
         if (names.getStride() != 0) {
             return names;

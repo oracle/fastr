@@ -700,15 +700,14 @@ public abstract class RVector<ArrayT> extends RSharingAttributeStorage implement
 
     private RVector<ArrayT> resize(int size, boolean resetAll) {
         this.complete = this.complete && getLength() >= size;
-        RVector<ArrayT> res = this;
-        RStringVector oldNames = res.getNamesFromAttrs();
-        res = copyResized(size, true);
+        RStringVector oldNames = UpdateShareableChildValue.update(this, this.getNamesFromAttrs());
+        RVector<ArrayT> res = copyResized(size, true);
         if (this.isShared()) {
             assert res.isTemporary();
             res.incRefCount();
         }
         if (resetAll) {
-            resetAllAttributes(oldNames == null);
+            res.resetAllAttributes(oldNames == null);
         } else {
             res.copyAttributesFromVector(this);
             res.setDimensionsNoCheck(null);

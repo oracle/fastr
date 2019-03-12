@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -31,6 +31,7 @@ import com.oracle.truffle.r.library.fastrGrid.device.GridDevice;
 import com.oracle.truffle.r.library.fastrGrid.device.ImageSaver;
 import com.oracle.truffle.r.nodes.builtin.RExternalBuiltinNode;
 import com.oracle.truffle.r.runtime.RError.Message;
+import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RNull;
 
 public abstract class SavePlot extends RExternalBuiltinNode.Arg3 {
@@ -53,7 +54,7 @@ public abstract class SavePlot extends RExternalBuiltinNode.Arg3 {
                             "Note that FastR savePlot function ignores the device argument and always uses the current device.");
         }
         try {
-            ((ImageSaver) device).save(filename, type);
+            ((ImageSaver) device).save(RContext.getInstance().getEnv(), filename, type);
         } catch (IOException e) {
             throw error(Message.GENERIC, "I/O error occured when saving the image.");
         }

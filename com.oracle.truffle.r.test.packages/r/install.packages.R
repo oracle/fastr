@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -204,7 +204,7 @@ fastr.test.jvm.args <- function() {
             return (opts)
 	    }
     })
-    return ("'--R.IgnoreGraphicsCalls=true'") 
+    return ("'--experimental-options --R.IgnoreGraphicsCalls=true'")
 }
 
 # returns a vector of package names that are the direct dependents of pkg
@@ -340,9 +340,9 @@ set.repos <- function() {
 				cran.mirror <<- readLines(con)[[1]]
 				close(con)
 			}, error = function(err) {
-				cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory?")
+				cat("ERROR while getting etc/DEFAULT_CRAN_MIRROR, are you running this in FastR home directory and did you build it?")
 				print(err)
-				exit(1)
+                quit("no", status=1)
 			})
 			repos[["CRAN"]] <- cran.mirror
 		} else {

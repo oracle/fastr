@@ -1,9 +1,10 @@
 ## classes
-exportClasses(Vehicle)
-exportClasses(Truck)
-exportClasses(Car)
-exportClasses(Inspector)
-exportClasses(StateInspector)
+exportClasses(Product)
+exportClasses(TV)
+exportClasses(Laptop)
+exportClasses(OrderProcessor)
+exportClasses(LicensingProcessor)
+exportClasses(OrderProcessor)
 
 ## methods
-exportMethods(inspect.vehicle)
+exportMethods(processOrder)

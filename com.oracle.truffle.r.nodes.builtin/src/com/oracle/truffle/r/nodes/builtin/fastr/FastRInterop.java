@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -96,6 +96,7 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
+import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractDoubleVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
@@ -708,6 +709,7 @@ public class FastRInterop {
     public abstract static class ToJavaArray extends RBuiltinNode.Arg3 {
 
         BranchProfile interopExceptionProfile = BranchProfile.create();
+        private Node writeNode;
 
         static {
             Casts casts = new Casts(ToJavaArray.class);
@@ -886,7 +888,11 @@ public class FastRInterop {
                 for (int i = 0; i < dim; i++) {
                     try {
                         Object value = r2Foreign.execute(vec.getDataAtAsObject(i));
-                        ForeignAccess.sendWrite(Message.WRITE.createNode(), truffleArray, i, value);
+                        if (writeNode == null) {
+                            CompilerDirectives.transferToInterpreterAndInvalidate();
+                            writeNode = insert(Message.WRITE.createNode());
+                        }
+                        ForeignAccess.sendWrite(writeNode, truffleArray, i, value);
                     } catch (InteropException ex) {
                         throw error(RError.Message.GENERIC, ex.getMessage());
                     }
@@ -1119,7 +1125,7 @@ public class FastRInterop {
         Env env = RContext.getInstance().getEnv();
         if (env != null && env.isHostLookupAllowed()) {
             try {
-                Object found = env.lookupHostSymbol(demangle(className));
+                Object found = env.lookupHostSymbol(patchClassName(className));
                 if (found != null) {
                     return found;
                 }
@@ -1133,8 +1139,39 @@ public class FastRInterop {
     }
 
     @TruffleBoundary
-    private static String demangle(String className) {
-        return className.replaceAll("/", ".");
+    private static String patchClassName(String className) {
+        String res = className;
+        if (res.startsWith("[")) {
+            int idx = 0;
+            while (idx < res.length() && res.charAt(idx) == '[') {
+                idx++;
+            }
+            StringBuilder sb = new StringBuilder();
+            if (idx < res.length()) {
+                String ss = res.substring(idx, res.length());
+                if (ss.equals("Z")) {
+                    ss = "boolean";
+                } else if (ss.equals("C")) {
+                    ss = "char";
+                } else if (ss.equals("D")) {
+                    ss = "double";
+                } else if (ss.equals("F")) {
+                    ss = "float";
+                } else if (ss.equals("I")) {
+                    ss = "int";
+                } else if (ss.equals("S")) {
+                    ss = "short";
+                } else if (ss.equals("J")) {
+                    ss = "long";
+                }
+                sb.append(ss);
+            }
+            for (int i = 0; i < idx; i++) {
+                sb.append("[]");
+            }
+            res = sb.toString();
+        }
+        return res.replaceAll("/", ".");
     }
 
     @RBuiltin(name = ".fastr.interop.try", kind = PRIMITIVE, parameterNames = {"function", "check"}, behavior = COMPLEX)
@@ -1155,8 +1192,9 @@ public class FastRInterop {
             } catch (FastRInteropTryException e) {
                 CompilerDirectives.transferToInterpreter();
                 Throwable cause = e.getCause();
+                // ClassNotFoundException might be raised internally in FastRInterop$JavaType
                 if (cause instanceof TruffleException || cause.getCause() instanceof ClassNotFoundException) {
-                    cause = cause instanceof TruffleException ? RContext.getInstance().getEnv().asHostException(cause) : cause.getCause();
+                    cause = cause instanceof TruffleException ? cause : cause.getCause();
                     if (RRuntime.fromLogical(check)) {
                         String causeName = cause.getClass().getName();
                         String msg = cause.getMessage();
@@ -1185,28 +1223,32 @@ public class FastRInterop {
         }
 
         @Specialization
-        public Object getException(byte silent, @SuppressWarnings("unused") RMissing callerFor) {
-            return getException(silent, (String) null);
+        public Object checkException(byte silent, @SuppressWarnings("unused") RMissing callerFor) {
+            return checkException(silent, (String) null);
         }
 
         @Specialization
-        public Object getException(byte silent, String showCallerOf) {
+        public Object checkException(byte silent, String showCallerOf) {
             Throwable t = getInteropTryState().lastException;
             if (t != null) {
                 CompilerDirectives.transferToInterpreter();
                 getInteropTryState().lastException = null;
                 if (!RRuntime.fromLogical(silent)) {
+                    Env env = RContext.getInstance().getEnv();
+                    if (env.isHostException(t)) {
+                        t = env.asHostException(t);
+                    }
                     String causeName = t.getClass().getName();
                     String msg = t.getMessage();
                     msg = msg != null ? String.format("%s: %s", causeName, msg) : causeName;
-                    if (showCallerOf == null) {
-                        throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, msg);
-                    } else {
-                        throw RError.error(new RError.ShowCallerOf(showCallerOf), RError.Message.GENERIC, msg);
-                    }
+                    Object caller = RContext.getRRuntimeASTAccess().findCaller(showCallerOf != null ? new RError.ShowCallerOf(showCallerOf) : RError.SHOW_CALLER);
+
+                    Object jobj = env.asGuestValue(t);
+                    RStringVector names = RDataFactory.createStringVector(new String[]{"msg", "call", "jobj"}, true);
+                    return RDataFactory.createList(new Object[]{msg, caller, jobj}, names);
                 }
             }
-            return RNull.instance;
+            return 0;
         }
     }
 

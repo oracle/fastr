@@ -174,7 +174,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = {"isSquare(x)", "!isRExpression(x)", "xReuse.supports(x)"})
     protected RAbstractVector transposeSquare(RAbstractVector x,
-                    @Cached("createNonShared(x)") VectorReuse xReuse) {
+                    @Cached("createTemporary(x)") VectorReuse xReuse) {
         RAbstractVector result = xReuse.getResult(x);
         VectorAccess resultAccess = xReuse.access(result);
         try (RandomIterator resultIter = resultAccess.randomAccess(result)) {
@@ -185,7 +185,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     @Specialization(replaces = "transposeSquare", guards = {"isSquare(x)", "!isRExpression(x)"})
     protected RAbstractVector transposeSquareGeneric(RAbstractVector x,
-                    @Cached("createNonSharedGeneric()") VectorReuse xReuse) {
+                    @Cached("createTemporaryGeneric()") VectorReuse xReuse) {
         return transposeSquare(x, xReuse);
     }
 
@@ -230,7 +230,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = {"!isMatrix(x)", "!isRExpression(x)", "reuseNonSharedNode.supports(x)"}, limit = "getVectorAccessCacheSize()")
     protected RVector<?> transposeNonMatrix(RAbstractVector x,
-                    @Cached("createNonShared(x)") VectorReuse reuseNonSharedNode) {
+                    @Cached("createTemporary(x)") VectorReuse reuseNonSharedNode) {
         RVector<?> reused = reuseNonSharedNode.getResult(x).materialize();
         putNewDimsFromNames(reused, reused, new int[]{1, x.getLength()});
         return reused;
@@ -238,7 +238,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
 
     @Specialization(replaces = "transposeNonMatrix", guards = {"!isMatrix(x)", "!isRExpression(x)"})
     protected RVector<?> transposeNonMatrixGeneric(RAbstractVector x,
-                    @Cached("createNonSharedGeneric()") VectorReuse reuseNonSharedNode) {
+                    @Cached("createTemporaryGeneric()") VectorReuse reuseNonSharedNode) {
         return transposeNonMatrix(x, reuseNonSharedNode);
     }
 
@@ -295,7 +295,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     }
 
     @Fallback
-    protected RVector<?> transpose(@SuppressWarnings("unused") Object x) {
+    protected RVector<?> transposeOthers(@SuppressWarnings("unused") Object x) {
         throw error(Message.ARGUMENT_NOT_MATRIX);
     }
 }

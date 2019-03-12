@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -20,27 +20,18 @@
  * or visit www.oracle.com if you need additional information or have any
  * questions.
  */
-package com.oracle.truffle.r.legacylauncher;
+package com.oracle.truffle.r.parser.processor;
 
-import java.lang.reflect.Method;
-import java.util.Arrays;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
-import org.graalvm.polyglot.Engine;
+/**
+ * An annotation that simply serves to cause the parser generator to run.
+ */
+@Retention(RetentionPolicy.CLASS)
+@Target(ElementType.TYPE)
+public @interface GenerateRParser {
 
-public final class LegacyLauncher {
-
-    public static void main(String[] args) throws NoSuchMethodException, SecurityException {
-        String className = args[0];
-        Method loadClassMethod = Engine.class.getDeclaredMethod("loadLanguageClass", String.class);
-        try {
-            loadClassMethod.setAccessible(true);
-            Class<?> result = (Class<?>) loadClassMethod.invoke(null, className);
-            result.getMethod("main", String[].class).invoke(null, (Object) Arrays.copyOfRange(args, 1, args.length));
-        } catch (NoSuchMethodException | SecurityException e) {
-            e.printStackTrace();
-        } catch (Exception e) {
-            e.printStackTrace();
-            System.exit(1);
-        }
-    }
 }

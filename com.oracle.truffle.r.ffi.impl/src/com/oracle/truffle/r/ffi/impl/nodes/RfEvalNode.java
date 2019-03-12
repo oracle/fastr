@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -62,12 +62,14 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     }
 
     private static RCaller createCall(REnvironment env) {
+        // TODO: getActualCurrentFrame causes deopt
         Frame frame = Utils.getActualCurrentFrame();
         RCaller originalCaller = RArguments.getCall(env.getFrame());
+        RCaller currentCaller = RArguments.getCall(frame);
         if (env == REnvironment.globalEnv(RContext.getInstance())) {
-            return RCaller.createForPromise(originalCaller, frame);
+            return RCaller.createForPromise(originalCaller, currentCaller);
         } else {
-            return RCaller.createForPromise(originalCaller, frame, env);
+            return RCaller.createForPromise(originalCaller, env, currentCaller);
         }
     }
 

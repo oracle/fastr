@@ -90,7 +90,7 @@ public interface Engine {
             console.println(getErrorMessage());
         }
 
-        private String getErrorMessage() {
+        public String getErrorMessage() {
             String msg;
             if (source.getLineCount() == 1) {
                 msg = String.format(RError.Message.UNEXPECTED.message, token, substring);

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -276,7 +276,6 @@ def mx_register_dynamic_suite_constituents(register_project, register_distributi
                 "bin/Rscript": "file:com.oracle.truffle.r.release/src/Rscript_legacy",
                 "bin/exec/R": "file:com.oracle.truffle.r.release/src/R_legacy",
                 "native-image.properties": "file:mx.fastr/native-image.properties",
-                "legacy/": "dependency:fastr:FASTR_LEGACY_LAUNCHER",
             },
             path=None,
             platformDependent=True,

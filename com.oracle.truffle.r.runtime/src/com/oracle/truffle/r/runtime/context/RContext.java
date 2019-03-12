@@ -22,6 +22,12 @@
  */
 package com.oracle.truffle.r.runtime.context;
 
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEval;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalConstants;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalDefault;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalExpressions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalVariables;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -32,7 +38,6 @@ import java.nio.CharBuffer;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.CodingErrorAction;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EnumSet;
@@ -46,13 +51,16 @@ import java.util.concurrent.Executors;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+import org.graalvm.options.OptionKey;
+
 import com.oracle.truffle.api.Assumption;
+import com.oracle.truffle.api.CompilerDirectives;
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.RootCallTarget;
 import com.oracle.truffle.api.Truffle;
 import com.oracle.truffle.api.TruffleContext;
-import com.oracle.truffle.api.TruffleLanguage;
+import com.oracle.truffle.api.TruffleFile;
 import com.oracle.truffle.api.TruffleLanguage.Env;
 import com.oracle.truffle.api.instrumentation.AllocationReporter;
 import com.oracle.truffle.api.instrumentation.Instrumenter;
@@ -67,11 +75,6 @@ import com.oracle.truffle.api.nodes.Node;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.r.launcher.RCmdOptions;
 import com.oracle.truffle.r.launcher.RStartParams;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEval;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalConstants;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalDefault;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalExpressions;
-import static com.oracle.truffle.r.runtime.context.FastROptions.EagerEvalVariables;
 import com.oracle.truffle.r.runtime.LazyDBCache;
 import com.oracle.truffle.r.runtime.PrimitiveMethodsInfo;
 import com.oracle.truffle.r.runtime.REnvVars;
@@ -107,7 +110,6 @@ import com.oracle.truffle.r.runtime.interop.RNullMRContextState;
 import com.oracle.truffle.r.runtime.nodes.RCodeBuilder;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 import com.oracle.truffle.r.runtime.rng.RRNG;
-import org.graalvm.options.OptionKey;
 
 /**
  * Encapsulates the runtime state ("context") of an R session. All access to that state from the
@@ -365,7 +367,7 @@ public final class RContext {
 
     public final WeakHashMap<String, WeakReference<String>> stringMap = new WeakHashMap<>();
     public final WeakHashMap<Source, REnvironment> sourceRefEnvironments = new WeakHashMap<>();
-    public final WeakHashMap<Path, REnvironment> srcfileEnvironments = new WeakHashMap<>();
+    public final WeakHashMap<TruffleFile, REnvironment> srcfileEnvironments = new WeakHashMap<>();
     public final List<String> libraryPaths = new ArrayList<>(1);
     public final Map<Integer, Thread> threads = new ConcurrentHashMap<>();
     public final LanguageClosureCache languageClosureCache = new LanguageClosureCache();
@@ -385,6 +387,10 @@ public final class RContext {
         embedded = true;
     }
 
+    /**
+     * Returns {@code true} if this context is run in native embedding compatible with GNU-R
+     * scenario. Note: this is not java embedding via GraalSDK.
+     */
     public static boolean isEmbedded() {
         return embedded;
     }
@@ -392,8 +398,8 @@ public final class RContext {
     /**
      * Sets the fields that do not depend on complex initialization.
      *
-     * @param env values passed from {@link TruffleLanguage#createContext}
-     * @param instrumenter value passed from {@link TruffleLanguage#createContext}
+     * @param env values passed from {@code TruffleLanguage#createContext}
+     * @param instrumenter value passed from {@code TruffleLanguage#createContext}
      * @param isInitial {@code true} if this is the initial (primordial) context.
      */
     private RContext(TruffleRLanguage language, Env env, Instrumenter instrumenter, boolean isInitial) {
@@ -486,7 +492,7 @@ public final class RContext {
 
     /**
      * Performs the real initialization of the context, invoked from
-     * {@link TruffleLanguage#initializeContext}.
+     * {@code TruffleLanguage#initializeContext}.
      */
     @SuppressFBWarnings(value = "ST_WRITE_TO_STATIC_FROM_INSTANCE_METHOD", justification = "intentional")
     public RContext initializeContext() {
@@ -649,10 +655,8 @@ public final class RContext {
         if (res >= 0) {
             return res;
         }
-        System.out.println("non negative integer option value expected");
-        new RuntimeException().printStackTrace();
-        System.exit(2);
-        return -1;
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere(String.format("R option '%s' has invalid value"));
     }
 
     public double getNonNegativeDoubleOption(OptionKey<Double> key) {
@@ -660,10 +664,8 @@ public final class RContext {
         if (res >= 0) {
             return res;
         }
-        System.out.println("non negative double option value expected");
-        new RuntimeException().printStackTrace();
-        System.exit(2);
-        return -1;
+        CompilerDirectives.transferToInterpreter();
+        throw RInternalError.shouldNotReachHere(String.format("R option '%s' has invalid value"));
     }
 
     public boolean noEagerEvalOption() {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,9 +29,9 @@ import java.nio.file.FileSystems;
 import java.util.concurrent.TimeUnit;
 
 import com.oracle.truffle.r.runtime.ProcessOutputManager;
-import com.oracle.truffle.r.runtime.REnvVars;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.Utils;
 
 /**
  * A non-interactive one-shot invocation of GnuR that is robust, if slow, in the face of
@@ -73,7 +73,7 @@ public class GnuROneShotRSession implements RSession {
         }
         String testGenGnuR = System.getenv(FASTR_TESTGEN_GNUR);
         if (testGenGnuR == null || testGenGnuR.equals("internal")) {
-            GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(REnvVars.gnurHome(), "bin", "R").toString();
+            GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(Utils.gnurHome(), "bin", "R").toString();
         } else {
             GNUR_COMMANDLINE[0] = FileSystems.getDefault().getPath(testGenGnuR, "bin", "R").toString();
         }
