@@ -4,6 +4,12 @@
 which is an option that enables logging of FastR internal errors for bug reporting purposes. Experimental options can be unlocked
 using `--experimental-options` or with `ContextBuilder#allowExperimentalOptions`.
 * the MRAN mirror used by FastR by default instead of CRAN was bumped to 2019-02-13
+* options for the JVM or native image are now passed using `--vm.` prefix in both cases instead of `--jvm.` or `--native.`
+(e.g., `--jvm.Dproperty=false` becomes `--vm.Dproperty=false`)
+
+New features:
+
+* whenever possible, errors are propagated to the FastR embedder
 
 Added missing R builtins and C API
 
@@ -13,7 +19,6 @@ Bug fixes:
 
 * `C_numeric_deriv` gives wrong results of gradient #54
 * `tcrossprod` with a single vector #56
-* whenever possible, errors are propagated to the FastR embedder
 * `length<-` would remove attributes from the target even if it was a shared value
 * `length(x) <- N` should not strip attributes if `length(x) == N`, which is not in line with GNU-R documentation,
 but relied upon in the `methods` package #55
