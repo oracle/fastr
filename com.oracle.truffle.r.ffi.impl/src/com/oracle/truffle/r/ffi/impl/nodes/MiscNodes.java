@@ -66,6 +66,7 @@ import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RComplexVector;
 import com.oracle.truffle.r.runtime.data.RDoubleVector;
 import com.oracle.truffle.r.runtime.data.RFunction;
@@ -368,9 +369,14 @@ public final class MiscNodes {
         }
 
         @Specialization
-        Object doNewObject(Object vec, Object val) {
+        Object doNewObject(RAttributable vec, Object val) {
             setNamesNode.setAttr(vec, val);
             return vec;
+        }
+
+        @Fallback
+        Object doFallback(Object vec, Object val) {
+            throw unsupportedTypes("Rf_namesgets", vec, val);
         }
 
         public static NamesGetsNode create() {

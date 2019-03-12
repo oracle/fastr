@@ -181,11 +181,11 @@ public class MethodsListDispatch {
             if (value == null) {
                 return RNull.instance;
             } else {
-                Object pckgAttrObj = klass.getAttributes() == null ? null : klassPckgAttrAccess.execute(klass.getAttributes());
+                Object pckgAttrObj = klassPckgAttrAccess.execute(klass);
                 String pckgAttr = RRuntime.asStringLengthOne(pckgAttrObj);
                 if (pckgAttr != null && value instanceof RAttributable) {
                     RAttributable attributableValue = (RAttributable) value;
-                    Object valAttrObj = attributableValue.getAttributes() == null ? null : valPckgAttrAccess.execute(attributableValue.getAttributes());
+                    Object valAttrObj = valPckgAttrAccess.execute(attributableValue);
                     String valAttr = RRuntime.asStringLengthOne(valAttrObj);
                     // GNUR uses == to compare strings here
                     if (valAttr != null && !valAttr.equals(pckgAttr)) {

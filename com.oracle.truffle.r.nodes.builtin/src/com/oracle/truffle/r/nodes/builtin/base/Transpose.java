@@ -29,12 +29,10 @@ import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.ImportStatic;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.interop.TruffleObject;
-import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.LoopConditionProfile;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.CopyOfRegAttributesNodeGen;
-import com.oracle.truffle.r.nodes.attributes.InitAttributesNode;
 import com.oracle.truffle.r.nodes.attributes.RemoveAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SetFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
@@ -72,7 +70,6 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     private final LoopConditionProfile loopProfile = LoopConditionProfile.createCountingProfile();
 
     @Child private CopyOfRegAttributesNode copyRegAttributes = CopyOfRegAttributesNodeGen.create();
-    @Child private InitAttributesNode initAttributes = InitAttributesNode.create();
     @Child private SetFixedAttributeNode putDimensions = SetFixedAttributeNode.createDim();
     @Child private SetFixedAttributeNode putDimNames = SetFixedAttributeNode.createDimNames();
     @Child private GetDimNamesAttributeNode getDimNamesNode = GetDimNamesAttributeNode.create();
@@ -243,12 +240,12 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     }
 
     private void putNewDimsFromDimnames(RAbstractVector source, RAbstractVector dest, int[] newDim) {
-        putDimensions.setAttr(initAttributes.execute(dest), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
+        putDimensions.setAttr(dest, RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         convertDimNames(source, dest);
     }
 
     private void putNewDimsFromNames(RAbstractVector source, RAbstractVector dest, int[] newDim) {
-        putDimensions.setAttr(initAttributes.execute(dest), RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
+        putDimensions.setAttr(dest, RDataFactory.createIntVector(newDim, RDataFactory.COMPLETE_VECTOR));
         convertNamesToDimnames(source, dest);
     }
 
@@ -261,7 +258,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
             RStringVector axisNames = extractAxisNamesNode.execute(dimNames);
             RStringVector transAxisNames = axisNames == null ? null : RDataFactory.createStringVector(new String[]{axisNames.getDataAt(1), axisNames.getDataAt(0)}, true);
             RList newDimNames = RDataFactory.createList(new Object[]{dimNames.getDataAt(1), dimNames.getDataAt(0)}, transAxisNames);
-            putDimNames.setAttr(dest.getAttributes(), newDimNames);
+            putDimNames.setAttr(dest, newDimNames);
         }
     }
 
@@ -273,13 +270,12 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
         RAbstractStringVector names = (RAbstractStringVector) getNamesNode.execute(source);
         if (names != null) {
             RList newDimNames = RDataFactory.createList(new Object[]{RNull.instance, names});
-            DynamicObject attributes = dest.getAttributes();
-            putDimNames.setAttr(attributes, newDimNames);
+            putDimNames.setAttr(dest, newDimNames);
             if (removeAttributeNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 removeAttributeNode = insert(RemoveAttributeNode.create());
             }
-            removeAttributeNode.execute(attributes, "names");
+            removeAttributeNode.execute(dest, "names");
         }
     }
 

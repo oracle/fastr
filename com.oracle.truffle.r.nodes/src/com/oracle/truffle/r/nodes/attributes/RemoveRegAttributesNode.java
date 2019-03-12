@@ -31,7 +31,6 @@ import com.oracle.truffle.api.object.DynamicObject;
 import com.oracle.truffle.api.object.Property;
 import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.ConditionProfile;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveClassAttributeNode;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.Utils;
 import com.oracle.truffle.r.runtime.data.RAttributable;
@@ -49,7 +48,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
     @Child private GetFixedAttributeNode dimAttrGetter = GetFixedAttributeNode.createDim();
     @Child private GetFixedAttributeNode namesAttrGetter = GetFixedAttributeNode.createNames();
     @Child private GetFixedAttributeNode classAttrGetter = GetFixedAttributeNode.createClass();
-    @Child private RemoveClassAttributeNode removeClassAttributeNode;
+    @Child private RemoveFixedAttributeNode removeClassAttributeNode;
 
     protected RemoveRegAttributesNode() {
     }
@@ -77,7 +76,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     protected final boolean onlyDimAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(attributes) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && dimAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyDimAttribute(source)")
@@ -87,7 +86,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     protected final boolean onlyNamesAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(attributes) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && namesAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyNamesAttribute(source)")
@@ -97,14 +96,14 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
 
     protected final boolean onlyClassAttribute(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
-        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(attributes) != null;
+        return attributes != null && sizeOneProfile.profile(attributes.size() == 1) && classAttrGetter.execute(source) != null;
     }
 
     @Specialization(guards = "onlyClassAttribute(source)")
     protected void copyClassOnly(RAttributeStorage source) {
         if (removeClassAttributeNode == null) {
             CompilerDirectives.transferToInterpreterAndInvalidate();
-            removeClassAttributeNode = insert(RemoveClassAttributeNode.create());
+            removeClassAttributeNode = insert(RemoveFixedAttributeNode.createClass());
         }
         removeClassAttributeNode.execute(source);
     }

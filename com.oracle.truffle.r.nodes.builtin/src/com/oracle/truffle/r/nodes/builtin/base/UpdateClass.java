@@ -138,7 +138,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
             }
         }
 
-        setClassAttrNode.execute(result, RDataFactory.createStringVector(className));
+        setClassAttrNode.setAttr(result, RDataFactory.createStringVector(className));
         return result;
     }
 
@@ -155,13 +155,13 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
     @TruffleBoundary
     protected Object setClass(RAbstractContainer arg, RStringVector className) {
         RAbstractContainer result = reuseNonShared(arg);
-        setClassAttrNode.execute(result, className);
+        setClassAttrNode.setAttr(result, className);
         return result;
     }
 
     @Specialization
     protected Object setClass(RFunction arg, RAbstractStringVector className) {
-        setClassAttrNode.execute(arg, className.materialize());
+        setClassAttrNode.setAttr(arg, className.materialize());
         return arg;
     }
 
@@ -173,7 +173,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object setClass(REnvironment arg, RAbstractStringVector className) {
-        setClassAttrNode.execute(arg, className.materialize());
+        setClassAttrNode.setAttr(arg, className.materialize());
         return arg;
     }
 
@@ -185,7 +185,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object setClass(RSymbol arg, RAbstractStringVector className) {
-        setClassAttrNode.execute(arg, className.materialize());
+        setClassAttrNode.setAttr(arg, className.materialize());
         return arg;
     }
 
@@ -197,7 +197,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object setClass(RExternalPtr arg, RAbstractStringVector className) {
-        setClassAttrNode.execute(arg, className.materialize());
+        setClassAttrNode.setAttr(arg, className.materialize());
         return arg;
     }
 
@@ -209,7 +209,7 @@ public abstract class UpdateClass extends RBuiltinNode.Arg2 {
 
     @Specialization
     protected Object setClass(RS4Object arg, RAbstractStringVector className) {
-        setClassAttrNode.execute(arg, className.materialize());
+        setClassAttrNode.setAttr(arg, className.materialize());
         return arg;
     }
 

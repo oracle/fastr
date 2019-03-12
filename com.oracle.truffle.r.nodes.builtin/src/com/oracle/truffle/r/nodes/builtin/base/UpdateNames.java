@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,8 +32,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.profiles.ConditionProfile;
+import com.oracle.truffle.r.nodes.attributes.RemoveFixedAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAttributeNode;
-import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.RemoveDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.helpers.RFactorNodes.GetLevels;
 import com.oracle.truffle.r.nodes.unary.CastStringNode;
@@ -57,7 +57,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
     @Child private CastStringNode castStringNode;
     @Child private GetLevels getFactorLevels;
     @Child private GetDimAttributeNode getDimNode;
-    @Child private RemoveDimNamesAttributeNode removeDimNamesNode;
+    @Child private RemoveFixedAttributeNode removeDimNamesNode;
 
     static {
         Casts casts = new Casts(UpdateNames.class);
@@ -93,7 +93,7 @@ public abstract class UpdateNames extends RBuiltinNode.Arg2 {
             if (getDimNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 getDimNode = GetDimAttributeNode.create();
-                removeDimNamesNode = RemoveDimNamesAttributeNode.create();
+                removeDimNamesNode = RemoveFixedAttributeNode.createDimNames();
             }
             int[] dims = getDimNode.getDimensions(result);
             if (dims != null && dims.length == 1) {

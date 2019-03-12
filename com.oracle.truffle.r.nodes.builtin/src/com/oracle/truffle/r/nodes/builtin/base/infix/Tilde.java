@@ -86,7 +86,7 @@ public abstract class Tilde extends RBuiltinNode.Arg2 {
 
         // Do not cache the closure because formulas are usually not evaluated.
         RPairList lang = RDataFactory.createLanguage(Closure.createLanguageClosure(call));
-        setClassAttrNode.execute(lang, FORMULA_CLASS);
+        setClassAttrNode.setAttr(lang, FORMULA_CLASS);
         REnvironment env = REnvironment.frameToEnvironment(frame.materialize());
         setEnvAttrNode.setAttr(lang, env);
         return lang;

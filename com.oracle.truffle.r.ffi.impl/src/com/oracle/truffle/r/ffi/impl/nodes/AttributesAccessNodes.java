@@ -81,7 +81,10 @@ public final class AttributesAccessNodes {
             } else {
                 name = castToString(nameObj);
             }
-            Object result = getAttributeNode.execute(source, name);
+            Object result = null;
+            if (source instanceof RAttributable) {
+                result = getAttributeNode.execute((RAttributable) source, name);
+            }
             return result == null ? RNull.instance : sharedAttrUpdate.updateState(source, result);
         }
 

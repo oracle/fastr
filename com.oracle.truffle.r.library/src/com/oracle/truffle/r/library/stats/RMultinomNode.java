@@ -139,10 +139,10 @@ public abstract class RMultinomNode extends RExternalBuiltinNode.Arg3 {
             // take names from probVec (if any) as row names in the result
             RIntVector resultVec = RDataFactory.createIntVector(result, true, new int[]{probsAccess.getLength(probsIter), n});
             if (hasAttributesProfile.profile(probs.getAttributes() != null)) {
-                Object probsNames = getNamesNode.execute(probs.getAttributes());
+                Object probsNames = getNamesNode.execute(probs);
                 updateSharedAttributeNode.execute(probs, probsNames);
                 Object[] dimnamesData = new Object[]{probsNames, RNull.instance};
-                setDimNamesNode.setAttr(resultVec.getAttributes(), RDataFactory.createList(dimnamesData));
+                setDimNamesNode.setAttr(resultVec, RDataFactory.createList(dimnamesData));
             }
             return resultVec;
         }

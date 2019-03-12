@@ -415,7 +415,7 @@ public class FileFunctions {
                         setClassAttrNode = insert(SetClassAttributeNode.create());
                     }
                     RIntVector res = RDataFactory.createIntVector((int[]) data, complete);
-                    setClassAttrNode.execute(res, OCTMODE);
+                    setClassAttrNode.setAttr(res, OCTMODE);
                     return res;
                 case mtime: case ctime: case atime:
                 case uid: case gid: return RDataFactory.createIntVector((int[]) data, complete);

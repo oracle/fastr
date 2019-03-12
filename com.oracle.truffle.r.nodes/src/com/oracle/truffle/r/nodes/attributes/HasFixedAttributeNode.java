@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,13 +22,9 @@
  */
 package com.oracle.truffle.r.nodes.attributes;
 
-import com.oracle.truffle.api.CompilerDirectives;
-import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.object.DynamicObject;
-import com.oracle.truffle.api.object.Location;
-import com.oracle.truffle.api.object.Shape;
 import com.oracle.truffle.api.profiles.BranchProfile;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
@@ -44,8 +40,6 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
  */
 public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
 
-    @Child private HasFixedAttributeNode recursive;
-
     protected HasFixedAttributeNode(String name) {
         super(name);
     }
@@ -58,30 +52,12 @@ public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
         return HasFixedAttributeNodeGen.create(RRuntime.DIM_ATTR_KEY);
     }
 
-    public abstract boolean execute(Object attr);
-
-    protected boolean hasProperty(Shape shape) {
-        return shape.hasProperty(name);
-    }
-
-    @Specialization(limit = "getCacheSize(3)", //
-                    guards = {"shapeCheck(shape, attrs)"}, //
-                    assumptions = {"shape.getValidAssumption()"})
-    protected boolean hasAttrCached(@SuppressWarnings("unused") DynamicObject attrs,
-                    @Cached("lookupShape(attrs)") @SuppressWarnings("unused") Shape shape,
-                    @Cached("lookupLocation(shape, name)") Location location) {
-        return location != null;
-    }
-
-    @Specialization(replaces = "hasAttrCached")
-    @TruffleBoundary
-    protected boolean hasAttrFallback(DynamicObject attrs) {
-        return attrs.containsKey(name);
-    }
+    public abstract boolean execute(RAttributable attr);
 
     @Specialization
     protected boolean hasAttrFromAttributable(RAttributable x,
                     @Cached("create()") BranchProfile attrNullProfile,
+                    @Cached("create(name)") HasFixedPropertyNode hasFixedPropertyNode,
                     @Cached("createBinaryProfile()") ConditionProfile attrStorageProfile,
                     @Cached("createClassProfile()") ValueProfile xTypeProfile) {
 
@@ -96,12 +72,6 @@ public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
             attrNullProfile.enter();
             return false;
         }
-
-        if (recursive == null) {
-            CompilerDirectives.transferToInterpreterAndInvalidate();
-            recursive = insert(create(name));
-        }
-
-        return recursive.execute(attributes);
+        return hasFixedPropertyNode.execute(attributes);
     }
 }

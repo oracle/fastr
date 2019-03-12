@@ -88,7 +88,7 @@ public abstract class UpdateDim extends RBuiltinNode.Arg2 {
             attrs = RAttributesLayout.createDim(dimensionsMaterialized);
             result.initAttributes(attrs);
         } else {
-            putDimensions.setAttr(attrs, dimensionsMaterialized);
+            putDimensions.setAttr(result, dimensionsMaterialized);
         }
         return result;
     }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -70,7 +70,7 @@ public abstract class ProcTime extends RBuiltinNode.Arg0 {
             RNAMES = RDataFactory.createStringVector(NAMES, RDataFactory.COMPLETE_VECTOR);
         }
         RDoubleVector result = RDataFactory.createDoubleVector(data, complete, RNAMES);
-        setClassAttrNode.execute(result, PROC_TIME_CLASS);
+        setClassAttrNode.setAttr(result, PROC_TIME_CLASS);
 
         if (userSysTimeInNanos == null) {
             warning(Message.GENERIC, "Retrieving user and system time is not supported in this FastR configuration.");

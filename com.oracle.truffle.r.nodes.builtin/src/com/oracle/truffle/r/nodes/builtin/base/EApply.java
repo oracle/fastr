@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
+import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RFunction;
 import com.oracle.truffle.r.runtime.data.RDataFactory.VectorFactory;
 import com.oracle.truffle.r.runtime.data.RStringVector;
@@ -66,7 +67,7 @@ public abstract class EApply extends RBuiltinNode.Arg4 {
 
         RStringVector names = null;
         if (useNames) {
-            names = result.length == 0 ? factory.createEmptyStringVector() : extractNamesNode.execute(l);
+            names = result.length == 0 ? factory.createEmptyStringVector() : extractNamesNode.execute((RAttributable) l);
         }
         return factory.createList(result, names);
     }

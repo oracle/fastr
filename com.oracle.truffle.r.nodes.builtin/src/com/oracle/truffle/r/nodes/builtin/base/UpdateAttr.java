@@ -45,7 +45,6 @@ import com.oracle.truffle.r.nodes.unary.CastIntegerNode;
 import com.oracle.truffle.r.nodes.unary.CastIntegerNodeGen;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNodeGen;
-import com.oracle.truffle.r.nodes.unary.GetNonSharedNode;
 import com.oracle.truffle.r.nodes.unary.InternStringNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
@@ -219,7 +218,7 @@ public abstract class UpdateAttr extends RBuiltinNode.Arg3 {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 setClassAttrNode = insert(SetClassAttributeNode.create());
             }
-            setClassAttrNode.execute(result, convertClassAttrFromObject(value));
+            setClassAttrNode.setAttr(result, convertClassAttrFromObject(value));
             return result;
         } else if (Utils.identityEquals(internedName, RRuntime.ROWNAMES_ATTR_KEY)) {
             if (setRowNamesAttrNode == null) {

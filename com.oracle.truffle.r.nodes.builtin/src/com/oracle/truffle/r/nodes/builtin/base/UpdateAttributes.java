@@ -232,7 +232,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
                 if (value == RNull.instance) {
                     setClassNode.reset(res);
                 } else {
-                    setClassNode.execute(res, UpdateAttr.convertClassAttrFromObject(value));
+                    setClassNode.setAttr(res, UpdateAttr.convertClassAttrFromObject(value));
                 }
             } else if (attrName.equals(RRuntime.ROWNAMES_ATTR_KEY)) {
                 if (setRowNamesNode == null) {

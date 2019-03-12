@@ -596,7 +596,7 @@ public class IsTypeFunctions {
             if (attrNull.profile(attributes == null) || attrEmpty.profile(attributes.size() == 0)) {
                 return true;
             } else {
-                return attributes.size() == 1 && attrNames.profile(namesGetter.execute(attributes) != null);
+                return attributes.size() == 1 && attrNames.profile(namesGetter.execute(x) != null);
             }
         }
     }

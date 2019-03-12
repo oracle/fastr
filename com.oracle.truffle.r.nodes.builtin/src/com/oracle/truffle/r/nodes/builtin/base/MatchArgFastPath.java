@@ -42,6 +42,8 @@ import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.r.nodes.RRootNode;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
+
+import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.base.MatchArgFastPathNodeGen.MatchArgInternalNodeGen;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNodeGen;
@@ -137,6 +139,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
 
         @Specialization(guards = {"!severalOK", "!hasS3Class(classHierarchy, choices)"})
         protected Object matchArg(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @SuppressWarnings("unused") @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (identical.executeByte(arg, choices, true, true, true, true, true, true) == RRuntime.LOGICAL_TRUE) {
                 return choices.getDataAtAsObject(0);
@@ -159,7 +162,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
             RVector<?> resultVector = choices.createEmptySameType(count, true);
             int matchedIdx = matched.getDataAt(0) - 1;
             resultVector.transferElementSameType(0, choices, matchedIdx);
-            RStringVector names = choices.getNames();
+            RStringVector names = getNamesNode.getNames(choices);
             if (names != null) {
                 resultVector.initAttributes(RAttributesLayout.createNames(RDataFactory.createStringVector(names.getDataAt(matchedIdx))));
             }
@@ -168,6 +171,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
 
         @Specialization(guards = {"severalOK", "!hasS3Class(classHierarchy, choices)"})
         protected Object matchArgSeveral(VirtualFrame frame, RAbstractStringVector arg, RAbstractVector choices, @SuppressWarnings("unused") boolean severalOK,
+                        @Cached("create()") GetNamesAttributeNode getNamesNode,
                         @SuppressWarnings("unused") @Cached("createClassHierarchyNode()") ClassHierarchyNode classHierarchy) {
             if (arg.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
@@ -185,7 +189,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
                     int matchedIdx = matched.getDataAt(i) - 1;
                     if (matchedIdx >= 0) {
                         resultVector.transferElementSameType(0, choices, matchedIdx);
-                        RStringVector names = choices.getNames();
+                        RStringVector names = getNamesNode.getNames(choices);
                         if (names != null) {
                             resultVector.initAttributes(RAttributesLayout.createNames(RDataFactory.createStringVector(names.getDataAt(matchedIdx))));
                         }
@@ -194,7 +198,7 @@ public abstract class MatchArgFastPath extends RFastPathNode {
                 }
                 assert false;
             }
-            RStringVector namesVector = choices.getNames();
+            RStringVector namesVector = getNamesNode.getNames(choices);
             String[] names = namesVector != null ? new String[count] : null;
             int resultIdx = -1;
             for (int i = 0; i < matched.getLength(); i++) {

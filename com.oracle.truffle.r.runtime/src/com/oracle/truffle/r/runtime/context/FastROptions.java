@@ -210,6 +210,10 @@ public class FastROptions {
         initialized = true;
     }
 
+    public static String getForwardedOptions(RContext context) {
+        return context.getOption(PrintErrorStacktracesToFile) ? "--R.PrintErrorStacktracesToFile=true " : null;
+    }
+
     @TruffleBoundary
     private static void checkObsoleteJVMArgs() {
         // The jvm arg syntax was dicontinued in rc13
