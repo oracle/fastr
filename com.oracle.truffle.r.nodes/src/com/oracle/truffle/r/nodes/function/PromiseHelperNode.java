@@ -72,6 +72,22 @@ public final class PromiseHelperNode extends RBaseNode {
         private final ConditionProfile isPromiseProfile = ConditionProfile.createCountingProfile();
 
         /**
+         * Check promise evaluation and update visibility.
+         *
+         * @return If obj is an {@link RPromise}, it is evaluated and its result returned
+         */
+        public Object checkVisibleEvaluate(VirtualFrame frame, Object obj) {
+            if (isPromiseProfile.profile(obj instanceof RPromise)) {
+                if (promiseHelper == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    promiseHelper = insert(new PromiseHelperNode());
+                }
+                return promiseHelper.visibleEvaluate(frame, (RPromise) obj);
+            }
+            return obj;
+        }
+
+        /**
          * @return If obj is an {@link RPromise}, it is evaluated and its result returned
          */
         public Object checkEvaluate(VirtualFrame frame, Object obj) {
@@ -141,8 +157,8 @@ public final class PromiseHelperNode extends RBaseNode {
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
 
     /**
-     * Main entry point for proper evaluation of the given Promise; including
-     * {@link RPromise#isEvaluated()}, dependency cycles. Guarded by
+     * Main entry point for proper evaluation of the given Promise when visibility updating is not
+     * required; including {@link RPromise#isEvaluated()}, dependency cycles. Guarded by
      * {@link #isInOriginFrame(VirtualFrame,RPromise)}.
      *
      * @param frame The current {@link VirtualFrame}
@@ -150,6 +166,22 @@ public final class PromiseHelperNode extends RBaseNode {
      * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
      */
     public Object evaluate(VirtualFrame frame, RPromise promise) {
+        return evaluateImpl(frame, promise, false);
+    }
+
+    /**
+     * Evaluation of the given Promise updating visibility; including {@link RPromise#isEvaluated()}
+     * , dependency cycles. Guarded by {@link #isInOriginFrame(VirtualFrame,RPromise)}.
+     *
+     * @param frame The current {@link VirtualFrame}
+     * @param promise The {@link RPromise} to evaluate
+     * @return Evaluates the given {@link RPromise} in the given frame using the given inline cache
+     */
+    public Object visibleEvaluate(VirtualFrame frame, RPromise promise) {
+        return evaluateImpl(frame, promise, true);
+    }
+
+    private Object evaluateImpl(VirtualFrame frame, RPromise promise, boolean visibleExec) {
         Object value = promise.getRawValue();
         if (isEvaluatedProfile.profile(value != null)) {
             return value;
@@ -166,16 +198,16 @@ public final class PromiseHelperNode extends RBaseNode {
         if (isDefaultOptProfile.profile(PromiseState.isDefaultOpt(state))) {
             // default values of arguments are evaluated in the frame of the function that takes
             // them, we do not need to retrieve the frame of the promise, we already have it
-            return generateValueDefault(frame, promise);
+            return generateValueDefault(frame, promise, visibleExec);
         } else {
             // non-default arguments we need to evaluate in the frame of the function that supplied
             // them and that would mean frame materialization, we first try to see if the promise
             // can be optimized
-            return generateValueNonDefault(frame, state, (EagerPromise) promise);
+            return generateValueNonDefault(frame, state, (EagerPromise) promise, visibleExec);
         }
     }
 
-    private Object generateValueDefault(VirtualFrame frame, RPromise promise) {
+    private Object generateValueDefault(VirtualFrame frame, RPromise promise, boolean visibleExec) {
         // Check for dependency cycle
         if (isUnderEvaluation(promise)) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
@@ -190,7 +222,7 @@ public final class PromiseHelperNode extends RBaseNode {
             boolean inOrigin = inOriginProfile.profile(isInOriginFrame(frame, promise));
             Frame execFrame = inOrigin ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));
             Object value = promiseClosureCache.execute(execFrame, promise.getClosure());
-            if (!inOrigin && frame != null) {
+            if (visibleExec && !inOrigin && frame != null) {
                 if (setVisibility == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     setVisibility = insert(SetVisibilityNode.create());
@@ -211,14 +243,14 @@ public final class PromiseHelperNode extends RBaseNode {
         return GetVisibilityNode.executeSlowPath(frame);
     }
 
-    private Object generateValueNonDefault(VirtualFrame frame, int state, EagerPromise promise) {
+    private Object generateValueNonDefault(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec) {
         assert !PromiseState.isDefaultOpt(state);
         if (!isDeoptimized(promise)) {
             if (generateValueNonDefaultOptimizedNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 generateValueNonDefaultOptimizedNode = insert(GenerateValueNonDefaultOptimizedNodeGen.create(recursiveCounter));
             }
-            Object result = generateValueNonDefaultOptimizedNode.execute(frame, state, promise);
+            Object result = generateValueNonDefaultOptimizedNode.execute(frame, state, promise, visibleExec);
             if (result != null) {
                 return result;
             } else {
@@ -229,7 +261,7 @@ public final class PromiseHelperNode extends RBaseNode {
             }
         }
         // Call
-        return generateValueDefault(frame, promise);
+        return generateValueDefault(frame, promise, visibleExec);
     }
 
     @TruffleBoundary
@@ -422,7 +454,7 @@ public final class PromiseHelperNode extends RBaseNode {
             }
         }
 
-        public abstract Object execute(VirtualFrame frame, int state, EagerPromise promise);
+        public abstract Object execute(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec);
 
         // @formatter:off
         // data from "rutgen" tests
@@ -451,38 +483,38 @@ public final class PromiseHelperNode extends RBaseNode {
                         "isCompatibleEagerValueProfile(eagerValueProfile, state)",
                         "isCompatibleWrapNode(wrapArgumentNode, promise, state)"}, //
                         limit = "getCacheSize(ASSUMPTION_CACHE_SIZE)")
-        Object doCachedAssumption(VirtualFrame frame, int state, EagerPromise promise,
+        Object doCachedAssumption(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec,
                         @SuppressWarnings("unused") @Cached("promise.getIsValidAssumption()") Assumption eagerAssumption,
                         @Cached("createEagerValueProfile(state)") ValueProfile eagerValueProfile,
                         @Cached("createWrapArgumentNode(promise, state)") WrapArgumentNode wrapArgumentNode) {
-            return generateValue(frame, state, promise, wrapArgumentNode, eagerValueProfile);
+            return generateValue(frame, state, promise, wrapArgumentNode, eagerValueProfile, visibleExec);
         }
 
         @Specialization(replaces = "doCachedAssumption", guards = {
                         "isCompatibleWrapNode(wrapArgumentNode, promise, state)",
                         "isCompatibleEagerValueProfile(eagerValueProfile, state)"}, //
                         limit = "CACHE_SIZE")
-        Object doUncachedAssumption(VirtualFrame frame, int state, EagerPromise promise,
+        Object doUncachedAssumption(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec,
                         @Cached("createBinaryProfile()") ConditionProfile isValidProfile,
                         @Cached("createEagerValueProfile(state)") ValueProfile eagerValueProfile,
                         @Cached("createWrapArgumentNode(promise, state)") WrapArgumentNode wrapArgumentNode) {
             // Note: the assumption inside the promise is not constant anymore, so we profile the
             // result of isValid
             if (isValidProfile.profile(promise.isValid())) {
-                return generateValue(frame, state, promise, wrapArgumentNode, eagerValueProfile);
+                return generateValue(frame, state, promise, wrapArgumentNode, eagerValueProfile, visibleExec);
             } else {
                 return null;
             }
         }
 
         @Specialization(replaces = "doUncachedAssumption")
-        Object doFallback(@SuppressWarnings("unused") int state, @SuppressWarnings("unused") EagerPromise promise) {
+        Object doFallback(@SuppressWarnings("unused") int state, @SuppressWarnings("unused") EagerPromise promise, @SuppressWarnings("unused") boolean visibleExec) {
             throw RInternalError.shouldNotReachHere("The cache of doUncachedAssumption should never overflow");
         }
 
         // If promise evaluates to another promise, we create another RPromiseHelperNode to evaluate
         // that, but only up to certain recursion level
-        private Object evaluateNextNode(VirtualFrame frame, RPromise nextPromise) {
+        private Object evaluateNextNode(VirtualFrame frame, RPromise nextPromise, boolean visibleExec) {
             if (recursiveCounter == -1) {
                 evaluateNextNodeSlowPath(frame.materialize(), nextPromise);
             }
@@ -490,7 +522,9 @@ public final class PromiseHelperNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 nextNode = insert(new PromiseHelperNode((byte) (recursiveCounter + 1)));
             }
-            return nextNode.evaluate(frame, nextPromise);
+            return visibleExec
+                            ? nextNode.visibleEvaluate(frame, nextPromise)
+                            : nextNode.evaluate(frame, nextPromise);
         }
 
         @TruffleBoundary
@@ -498,14 +532,14 @@ public final class PromiseHelperNode extends RBaseNode {
             PromiseHelperNode.evaluateSlowPath(frame, nextPromise);
         }
 
-        private Object generateValue(VirtualFrame frame, int state, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile) {
+        private Object generateValue(VirtualFrame frame, int state, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile, boolean visibleExec) {
             Object value;
             if (PromiseState.isEager(state)) {
                 assert eagerValueProfile != null;
-                value = getEagerValue(frame, promise, wrapArgumentNode, eagerValueProfile);
+                value = getEagerValue(frame, promise, wrapArgumentNode, eagerValueProfile, visibleExec);
             } else {
                 RPromise nextPromise = (RPromise) promise.getEagerValue();
-                value = evaluateNextNode(frame, nextPromise);
+                value = evaluateNextNode(frame, nextPromise, visibleExec);
             }
             assert promise.getRawValue() == null;
             assert value != null;
@@ -545,16 +579,18 @@ public final class PromiseHelperNode extends RBaseNode {
          * Returns {@link EagerPromise#getEagerValue()} profiled and takes care of wrapping the
          * value with {@link WrapArgumentNode}.
          */
-        private Object getEagerValue(VirtualFrame frame, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile) {
+        private Object getEagerValue(VirtualFrame frame, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile, boolean visibleExec) {
             Object o = promise.getEagerValue();
             if (wrapArgumentNode != null) {
                 wrapArgumentNode.execute(frame, o);
             }
-            if (visibility == null) {
-                CompilerDirectives.transferToInterpreterAndInvalidate();
-                visibility = insert(SetVisibilityNode.create());
+            if (visibleExec) {
+                if (visibility == null) {
+                    CompilerDirectives.transferToInterpreterAndInvalidate();
+                    visibility = insert(SetVisibilityNode.create());
+                }
+                visibility.execute(frame, true);
             }
-            visibility.execute(frame, true);
             return eagerValueProfile.profile(o);
         }
     }

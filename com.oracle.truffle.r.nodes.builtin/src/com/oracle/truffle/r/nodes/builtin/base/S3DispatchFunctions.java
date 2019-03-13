@@ -201,7 +201,7 @@ public abstract class S3DispatchFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseCheckHelper = insert(new PromiseCheckHelperNode());
             }
-            return promiseCheckHelper.checkEvaluate(frame, enclosingArg);
+            return promiseCheckHelper.checkVisibleEvaluate(frame, enclosingArg);
         }
 
         private static Object getFirstNonMissingArg(VirtualFrame frame, int startIdx) {
