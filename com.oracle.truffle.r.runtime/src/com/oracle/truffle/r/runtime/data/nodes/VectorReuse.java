@@ -69,6 +69,8 @@ public final class VectorReuse extends Node {
         return clazz.cast(value);
     }
 
+    // TODO: this access is used to write into the result, but there is no guarantee that the result
+    // is materialized, i.e. writeable, vector
     public VectorAccess access(RAbstractVector result) {
         return isGeneric ? result.slowPathAccess() : access;
     }

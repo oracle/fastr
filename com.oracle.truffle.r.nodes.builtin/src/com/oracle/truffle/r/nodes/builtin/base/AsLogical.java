@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,7 @@ import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RArgsValuesAndNames;
+import com.oracle.truffle.r.runtime.data.RLogicalVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractLogicalVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
 
@@ -54,7 +55,7 @@ public abstract class AsLogical extends RBuiltinNode.Arg2 {
         if (noAttributes.profile(v.getAttributes() == null)) {
             return v;
         } else {
-            RAbstractLogicalVector res = reuseTemporaryNode.getResult(v).materialize();
+            RLogicalVector res = (RLogicalVector) reuseTemporaryNode.getMaterializedResult(v);
             res.resetAllAttributes(true);
             return res;
         }

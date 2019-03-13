@@ -228,7 +228,7 @@ public abstract class Transpose extends RBuiltinNode.Arg1 {
     @Specialization(guards = {"!isMatrix(x)", "!isRExpression(x)", "reuseNonSharedNode.supports(x)"}, limit = "getVectorAccessCacheSize()")
     protected RVector<?> transposeNonMatrix(RAbstractVector x,
                     @Cached("createTemporary(x)") VectorReuse reuseNonSharedNode) {
-        RVector<?> reused = reuseNonSharedNode.getResult(x).materialize();
+        RVector<?> reused = (RVector<?>) reuseNonSharedNode.getMaterializedResult(x);
         putNewDimsFromNames(reused, reused, new int[]{1, x.getLength()});
         return reused;
     }

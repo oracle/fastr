@@ -130,7 +130,7 @@ public abstract class APerm extends RBuiltinNode.Arg3 {
         int[] dim = getDimsNode.getDimensions(vector);
         checkErrorConditions(dim);
 
-        RVector<?> reused = reuseNonSharedNode.getResult(vector).materialize();
+        RVector<?> reused = (RVector<?>) reuseNonSharedNode.getMaterializedResult(vector);
 
         // we have to remove some attributes
         // remove all regular attributes (including the class attribute)

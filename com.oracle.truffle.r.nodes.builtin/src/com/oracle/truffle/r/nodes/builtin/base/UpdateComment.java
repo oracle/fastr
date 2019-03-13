@@ -41,6 +41,7 @@ import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RShareable;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 import com.oracle.truffle.r.runtime.data.nodes.VectorReuse;
@@ -60,7 +61,7 @@ public abstract class UpdateComment extends RBuiltinNode.Arg2 {
                     @Cached("createNonShared(container)") VectorReuse vectorReuse,
                     @Cached("create()") ShareObjectNode updateRefCountNode) {
         updateRefCountNode.execute(value);
-        RAbstractVector res = vectorReuse.getResult(container).materialize();
+        RVector<?> res = (RVector<?>) vectorReuse.getMaterializedResult(container);
         setCommentAttrNode.setAttr(res, value);
         return res;
     }
