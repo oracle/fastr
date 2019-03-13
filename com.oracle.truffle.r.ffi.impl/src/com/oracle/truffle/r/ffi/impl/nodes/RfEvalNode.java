@@ -76,13 +76,13 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     @Specialization
     @TruffleBoundary
     Object handlePromise(RPromise expr, @SuppressWarnings("unused") RNull nulLEnv) {
-        return getPromiseHelper().evaluate(Utils.getActualCurrentFrame().materialize(), expr);
+        return getPromiseHelper().visibleEvaluate(Utils.getActualCurrentFrame().materialize(), expr);
     }
 
     @Specialization
     @TruffleBoundary
     Object handlePromise(RPromise expr, REnvironment env) {
-        return getPromiseHelper().evaluate(env.getFrame(), expr);
+        return getPromiseHelper().visibleEvaluate(env.getFrame(), expr);
     }
 
     @Specialization
@@ -121,7 +121,7 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
         Object car = l.car();
         RFunction f = null;
         if (isPromiseProfile.profile(car instanceof RPromise)) {
-            car = getPromiseHelper().evaluate(null, (RPromise) car);
+            car = getPromiseHelper().visibleEvaluate(null, (RPromise) car);
         }
 
         if (car instanceof RFunction) {

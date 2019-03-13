@@ -84,7 +84,7 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
     protected byte binary(VirtualFrame frame, Object leftValue, Object rightValue) {
         byte left = leftCast.executeCast(leftBox.execute(leftValue));
         if (profile.profile(logic.requiresRightOperand(left))) {
-            return logic.applyLogical(left, rightCast.executeCast(rightBox.execute(promiseHelper.checkEvaluate(frame, rightValue))));
+            return logic.applyLogical(left, rightCast.executeCast(rightBox.execute(promiseHelper.checkVisibleEvaluate(frame, rightValue))));
         }
         return left;
     }
