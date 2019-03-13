@@ -262,7 +262,10 @@ gnurTests: ${commonLinux} {
 
 coverageLinux : ${commonLinux}  {
   run : [
-    ["mx", "--jacoco-whitelist-package", "com.oracle.truffle.r", "--jacoco-exclude-annotation", "@GeneratedBy", "--strict-compliance", "rgate", "-B=--force-deprecation-as-warning", "--strict-mode", "-t", "Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials,UnitTests: with specials,Rembedded", "--jacocout", "html"],
-    ["mx", "--jacoco-whitelist-package", "com.oracle.truffle.r", "--jacoco-exclude-annotation", "@GeneratedBy", "sonarqube-upload", "-Dsonar.host.url=$SONAR_HOST_URL", "-Dsonar.projectKey=com.oracle.graalvm.r", "-Dsonar.projectName=GraalVM - R", "--exclude-generated"]
+// cannot run with excluded "GeneratedBy" since that would lead to "command line too long"
+//  ["mx", "--jacoco-whitelist-package", "com.oracle.truffle.r", "--jacoco-exclude-annotation", "@GeneratedBy", "--strict-compliance", "rgate", "-B=--force-deprecation-as-warning", "--strict-mode", "-t", "Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials,UnitTests: with specials,Rembedded", "--jacocout", "html"],
+//  ["mx", "--jacoco-whitelist-package", "com.oracle.truffle.r", "--jacoco-exclude-annotation", "@GeneratedBy", "sonarqube-upload", "-Dsonar.host.url=$SONAR_HOST_URL", "-Dsonar.projectKey=com.oracle.graalvm.r", "-Dsonar.projectName=GraalVM - R", "--exclude-generated"]
+  ["mx", "--jacoco-whitelist-package", "com.oracle.truffle.r", "--strict-compliance", "rgate", "-B=--force-deprecation-as-warning", "--strict-mode", "-t", "Versions,JDKReleaseInfo,BuildJavaWithJavac,UnitTests: no specials,UnitTests: with specials,Rembedded", "--jacocout", "html"],
+  ["mx", "--jacoco-whitelist-package", "com.oracle.truffle.r", "sonarqube-upload", "-Dsonar.host.url=$SONAR_HOST_URL", "-Dsonar.projectKey=com.oracle.graalvm.r", "-Dsonar.projectName=GraalVM - R", "--exclude-generated"]
   ]
 }
