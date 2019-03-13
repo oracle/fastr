@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -38,6 +38,7 @@ import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RIntVector;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RLogicalVector;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RRawVector;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
@@ -528,6 +529,7 @@ public abstract class VectorAccess extends RBaseNode {
         private static final RExpression TEMPLATE_EXPRESSION = RDataFactory.createExpression(4);
         private static final RLogicalVector TEMPLATE_LOGICAL = RDataFactory.getPermanent().createLogicalVector(4);
         private static final RRawVector TEMPLATE_RAW = RDataFactory.getPermanent().createRawVector(4);
+        private static final RPairList TEMPLATE_PAIRLIST = RDataFactory.getPermanent().createPairList();
     }
 
     public static VectorAccess createNew(RType type) {
@@ -549,6 +551,9 @@ public abstract class VectorAccess extends RBaseNode {
                 return Lazy.TEMPLATE_LOGICAL.access();
             case Raw:
                 return Lazy.TEMPLATE_RAW.access();
+            case PairList:
+            case Language:
+                return Lazy.TEMPLATE_PAIRLIST.access();
             case RInteropChar:
             case RInteropFloat:
             case RInteropLong:

@@ -121,6 +121,19 @@ public class TestBuiltin_attrassign extends TestBase {
     }
 
     @Test
+    public void testNamesAssign() {
+        String[] values = new String[]{"c(3,9)", "1:2", "as.pairlist(list(1,2))", "quote(foo(3))"};
+        // cast of names preserves attributes
+        assertEval(template("{ x <- %0; attr(x, 'names') <- structure(c(1,2), names=c('q','r'), abc=3); names(x) }", values));
+        // but making them longer will drop custom attributes, but keep and enlarge the names...
+        assertEval(Ignored.Unimplemented, template("{ x <- %0; attr(x, 'names') <- structure(1, names=c('q'), abc=3); names(x) }", values));
+        // names will be made longer to match the owner length
+        assertEval(template("{ x <- %0; attr(x, 'names') <- 1; names(x) }", values));
+        // No conversion via as.character like with names<-
+        assertEval("{ as.character.namesAssignCls <- function(x) x+1; x <- 1; attr(x, 'names') <- structure(2, class='namesAssignCls'); names(x) }");
+    }
+
+    @Test
     public void testSetAttrOnNull() {
         assertEval("x<-NULL; attr(x, 'a') <- NULL");
         assertEval("x<-NULL; attr(x, 'a') <- 42");

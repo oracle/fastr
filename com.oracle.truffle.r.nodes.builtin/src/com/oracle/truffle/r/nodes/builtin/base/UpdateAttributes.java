@@ -97,7 +97,7 @@ public abstract class UpdateAttributes extends RBuiltinNode.Arg2 {
             CompilerDirectives.transferToInterpreterAndInvalidate();
             updateNames = insert(UpdateNamesNodeGen.create());
         }
-        return (RAbstractContainer) updateNames.executeStringVector(container, o);
+        return (RAbstractContainer) updateNames.executeStringVector(null, container, o);
     }
 
     private RAbstractContainer updateDimNames(RAbstractContainer container, Object o) {

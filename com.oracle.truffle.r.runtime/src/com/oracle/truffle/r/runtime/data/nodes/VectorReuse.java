@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,9 +23,13 @@
 package com.oracle.truffle.r.runtime.data.nodes;
 
 import com.oracle.truffle.api.CompilerDirectives;
+import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.nodes.Node;
+import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
 
 /**
@@ -36,6 +40,11 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
  *
  * This node can be configured to copy all non-temporary vectors, i.e. only temporary vectors will
  * be reused, or to copy all shared vectors, i.e. non-shared and temporary vectors will be reused.
+ * 
+ * Reusing non-shared vectors is only correct in builtins that have replacement form, e.g.
+ * {@code names<-}. Builtins are normally not allowed to modify their arguments (unless temporary),
+ * but this is a hack also used in GNU-R that avoids creating a copy in {@code names(a) <- val},
+ * which get rewritten to {@code a <- `names<-`(a, val)}.
  */
 public final class VectorReuse extends Node {
 
@@ -45,9 +54,10 @@ public final class VectorReuse extends Node {
     private final boolean isTempOrNonShared;
     private final boolean needsTemporary;
     protected final boolean isGeneric;
-    protected final Class<? extends RAbstractVector> clazz;
+    protected final Class<? extends RAbstractContainer> clazz;
+    @CompilationFinal private ValueProfile copiedValueProfile;
 
-    public VectorReuse(RAbstractVector vector, boolean needsTemporary, boolean isGeneric) {
+    public VectorReuse(RAbstractContainer vector, boolean needsTemporary, boolean isGeneric) {
         this.isShareableClass = isGeneric ? false : vector instanceof RSharingAttributeStorage;
         this.clazz = isGeneric ? null : vector.getClass();
         this.needsTemporary = needsTemporary;
@@ -55,7 +65,7 @@ public final class VectorReuse extends Node {
         this.isTempOrNonShared = isShareableClass && isTempOrNonShared(vector);
     }
 
-    protected RAbstractVector cast(RAbstractVector value) {
+    protected RAbstractContainer cast(RAbstractContainer value) {
         return clazz.cast(value);
     }
 
@@ -63,7 +73,7 @@ public final class VectorReuse extends Node {
         return isGeneric ? result.slowPathAccess() : access;
     }
 
-    public boolean supports(RAbstractVector value) {
+    public boolean supports(RAbstractContainer value) {
         assert !isGeneric : "cannot call 'supports' on generic vector reuse";
         RSharingAttributeStorage.verify(value);
         if (value.getClass() != clazz) {
@@ -84,17 +94,17 @@ public final class VectorReuse extends Node {
     }
 
     @TruffleBoundary
-    private static RAbstractVector copyVector(RAbstractVector vector) {
+    private static RAbstractContainer copyVector(RAbstractContainer vector) {
         return vector.copy();
     }
 
-    private boolean isTempOrNonShared(RAbstractVector vector) {
+    private boolean isTempOrNonShared(RAbstractContainer vector) {
         return needsTemporary ? ((RSharingAttributeStorage) vector).isTemporary() : !((RSharingAttributeStorage) vector).isShared();
     }
 
     @SuppressWarnings("unchecked")
-    public <T extends RAbstractVector> T getResult(T vector) {
-        RAbstractVector result;
+    public <T extends RAbstractContainer> T getResult(T vector) {
+        RAbstractContainer result;
         if (isGeneric) {
             RSharingAttributeStorage.verify(vector);
             if (vector instanceof RSharingAttributeStorage && isTempOrNonShared(vector)) {
@@ -112,6 +122,41 @@ public final class VectorReuse extends Node {
         return (T) result;
     }
 
+    @SuppressWarnings("unchecked")
+    public <T extends RAbstractContainer> T getMaterializedResult(T vector) {
+        RAbstractContainer result;
+        if (isGeneric) {
+            RSharingAttributeStorage.verify(vector);
+            if (vector instanceof RSharingAttributeStorage && isTempOrNonShared(vector)) {
+                result = vector.materialize();
+            } else {
+                result = copyVector(vector).materialize();
+            }
+        } else {
+            if (!isShareableClass || !isTempOrNonShared) {
+                if (!RVector.class.isAssignableFrom(clazz) && RAbstractVector.class.isAssignableFrom(clazz)) {
+                    // materialization of non RVector subclasses of RAbstractVector create a copy
+                    // in materialize already
+                    result = cast(vector).materialize();
+                    assert result != vector;
+                } else {
+                    result = profileCopiedValue(cast(vector).copy()).materialize();
+                }
+            } else {
+                result = cast(vector).materialize();
+            }
+        }
+        return (T) result;
+    }
+
+    private RAbstractContainer profileCopiedValue(RAbstractContainer vec) {
+        if (copiedValueProfile == null) {
+            CompilerDirectives.transferToInterpreterAndInvalidate();
+            copiedValueProfile = ValueProfile.createClassProfile();
+        }
+        return copiedValueProfile.profile(vec);
+    }
+
     public static VectorReuse createTemporaryGeneric() {
         return new VectorReuse(null, true, true);
     }
@@ -120,11 +165,11 @@ public final class VectorReuse extends Node {
         return new VectorReuse(null, false, true);
     }
 
-    public static VectorReuse createTemporary(RAbstractVector vector) {
+    public static VectorReuse createTemporary(RAbstractContainer vector) {
         return new VectorReuse(vector, true, false);
     }
 
-    public static VectorReuse createNonShared(RAbstractVector vector) {
+    public static VectorReuse createNonShared(RAbstractContainer vector) {
         return new VectorReuse(vector, false, false);
     }
 }

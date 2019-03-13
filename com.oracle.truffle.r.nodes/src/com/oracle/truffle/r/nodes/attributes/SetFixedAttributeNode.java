@@ -31,6 +31,7 @@ import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.runtime.data.RAttributable;
 import com.oracle.truffle.r.runtime.data.RAttributeStorage;
+import com.oracle.truffle.r.runtime.data.RSharingAttributeStorage;
 
 /**
  * This node is responsible for setting a value to the predefined (fixed) attribute. Its
@@ -47,6 +48,8 @@ import com.oracle.truffle.r.runtime.data.RAttributeStorage;
  * GNU-R, which we should also implement only in the builtins.
  */
 public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
+
+    private final BranchProfile fixupRHS = BranchProfile.create();
 
     protected SetFixedAttributeNode(String name) {
         super(name);
@@ -76,7 +79,18 @@ public abstract class SetFixedAttributeNode extends FixedAttributeAccessNode {
         return SpecialAttributesFunctions.SetClassAttributeNode.create();
     }
 
-    public final void setAttr(RAttributable attr, Object value) {
+    public final void setAttr(RAttributable attr, Object valueIn) {
+        Object value = valueIn;
+        if (attr == value) {
+            // TODO: in theory we should inspect the whole object (attributes and elements for
+            // lists/envs/...) to see if there is potential cycle
+            fixupRHS.enter();
+            if (value instanceof RSharingAttributeStorage) {
+                value = ((RSharingAttributeStorage) value).deepCopy();
+            } else {
+                RSharingAttributeStorage.verify(value);
+            }
+        }
         execute(attr, castValue(value));
     }
 

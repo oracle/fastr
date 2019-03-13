@@ -52,6 +52,10 @@ public abstract class HasFixedAttributeNode extends FixedAttributeAccessNode {
         return HasFixedAttributeNodeGen.create(RRuntime.DIM_ATTR_KEY);
     }
 
+    public static HasFixedAttributeNode createClass() {
+        return HasFixedAttributeNodeGen.create(RRuntime.CLASS_ATTR_KEY);
+    }
+
     public abstract boolean execute(RAttributable attr);
 
     @Specialization

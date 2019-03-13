@@ -39,6 +39,7 @@ import com.oracle.truffle.r.nodes.access.vector.ExtractListElement;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctionsFactory.GetDimAttributeNodeGen;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.opt.UpdateShareableChildValueNode;
+import com.oracle.truffle.r.nodes.helpers.MaterializeNode;
 import com.oracle.truffle.r.nodes.unary.CastNode;
 import com.oracle.truffle.r.nodes.unary.CastToVectorNode;
 import com.oracle.truffle.r.runtime.RError;
@@ -165,42 +166,42 @@ public final class SpecialAttributesFunctions {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     namesAttrNode = insert(SetNamesAttributeNode.create());
                 }
-                namesAttrNode.execute(x, value);
+                namesAttrNode.setAttr(x, value);
             } else if (Utils.identityEquals(name, RRuntime.DIM_ATTR_KEY)) {
                 dimProfile.enter();
                 if (dimAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dimAttrNode = insert(SetDimAttributeNode.create());
                 }
-                dimAttrNode.execute(x, value);
+                dimAttrNode.setAttr(x, value);
             } else if (Utils.identityEquals(name, RRuntime.DIMNAMES_ATTR_KEY)) {
                 dimNamesProfile.enter();
                 if (dimNamesAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     dimNamesAttrNode = insert(SetDimNamesAttributeNode.create());
                 }
-                dimNamesAttrNode.execute(x, value);
+                dimNamesAttrNode.setAttr(x, value);
             } else if (Utils.identityEquals(name, RRuntime.ROWNAMES_ATTR_KEY)) {
                 rowNamesProfile.enter();
                 if (rowNamesAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     rowNamesAttrNode = insert(SetRowNamesAttributeNode.create());
                 }
-                rowNamesAttrNode.execute(x, value);
+                rowNamesAttrNode.setAttr(x, value);
             } else if (Utils.identityEquals(name, RRuntime.TSP_ATTR_KEY)) {
                 tspProfile.enter();
                 if (tspAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     tspAttrNode = insert(SetTspAttributeNode.create());
                 }
-                tspAttrNode.execute(x, value);
+                tspAttrNode.setAttr(x, value);
             } else if (Utils.identityEquals(name, RRuntime.COMMENT_ATTR_KEY)) {
                 commentProfile.enter();
                 if (commentAttrNode == null) {
                     CompilerDirectives.transferToInterpreterAndInvalidate();
                     commentAttrNode = insert(SetCommentAttributeNode.create());
                 }
-                commentAttrNode.execute(x, value);
+                commentAttrNode.setAttr(x, value);
             } else if (Utils.identityEquals(name, RRuntime.CLASS_ATTR_KEY)) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 throw RInternalError.unimplemented("The \"class\" attribute should be set using a separate method");
@@ -277,6 +278,8 @@ public final class SpecialAttributesFunctions {
     public abstract static class SetNamesAttributeNode extends SetSpecialAttributeNode {
 
         private final ConditionProfile nullDimNamesProfile = ConditionProfile.createBinaryProfile();
+        @Child private CastNode castValue = newCastBuilder().allowNull().boxPrimitive().asStringVector(true, true, true).buildCastNode();
+        @Child private MaterializeNode materializeNode = MaterializeNode.create(false);
 
         protected SetNamesAttributeNode() {
             super(RRuntime.NAMES_ATTR_KEY);
@@ -294,6 +297,15 @@ public final class SpecialAttributesFunctions {
             }
         }
 
+        @Override
+        protected Object castValue(Object value) {
+            // Note: this cast can handle pairlists too, but:
+            // TODO: error when some pairlist/list element is not a single value
+            // It seems that we assume that names is RStringVector and nothing else in too many
+            // places in the system
+            return materializeNode.execute(castValue.doCast(value));
+        }
+
         @Specialization(insertBefore = "setAttrInAttributable")
         protected void resetDimNames(RAbstractContainer x, @SuppressWarnings("unused") RNull rnull,
                         @Cached("createNames()") RemoveFixedAttributeNode removeNamesAttrNode) {
@@ -301,8 +313,9 @@ public final class SpecialAttributesFunctions {
         }
 
         @Specialization(insertBefore = "setAttrInAttributable")
-        protected void setNamesInVector(RAbstractVector x, RStringVector newNames,
+        protected void setNamesInVector(RAbstractVector x, RStringVector newNamesIn,
                         @Cached("createBinaryProfile()") ConditionProfile useDimNamesProfile,
+                        @Cached("create()") BranchProfile resizeNames,
                         @Cached("create()") GetDimAttributeNode getDimNode,
                         @Cached("create()") SetDimNamesAttributeNode setDimNamesNode,
                         @Cached("create()") BranchProfile attrNullProfile,
@@ -311,11 +324,15 @@ public final class SpecialAttributesFunctions {
                         @Cached("createClassProfile()") ValueProfile xTypeProfile,
                         @Cached("create()") ShareObjectNode updateRefCountNode) {
             RAbstractVector xProfiled = xTypeProfile.profile(x);
-            if (newNames.getLength() > xProfiled.getLength()) {
-                CompilerDirectives.transferToInterpreter();
-                throw error(RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, newNames.getLength(), xProfiled.getLength());
+            RStringVector newNames = newNamesIn;
+            checkNamesLength(xProfiled, newNames);
+            // Make names longer to match the length of "x" if necessary
+            if (newNames.getLength() < xProfiled.getLength()) {
+                resizeNames.enter();
+                // TODO: this should preserve "names" (and make them long enough) and maybe other
+                // reg attributes?
+                newNames = (RStringVector) newNames.copyResized(xProfiled.getLength(), true);
             }
-
             int[] dimensions = getDimNode.getDimensions(x);
             if (useDimNamesProfile.profile(dimensions != null && dimensions.length == 1)) {
                 // for one dimensional array, "names" is really "dimnames[[1]]" (see R
@@ -323,7 +340,6 @@ public final class SpecialAttributesFunctions {
                 RList newDimNames = RDataFactory.createList(new Object[]{newNames});
                 setDimNamesNode.setDimNames(xProfiled, newDimNames);
             } else {
-                assert newNames != xProfiled;
                 DynamicObject attrs = xProfiled.getAttributes();
                 if (attrs == null) {
                     attrNullProfile.enter();
@@ -338,10 +354,32 @@ public final class SpecialAttributesFunctions {
 
         @Specialization(insertBefore = "setAttrInAttributable", guards = "!isRAbstractVector(x)")
         @TruffleBoundary
-        protected void setNamesInContainer(RAbstractContainer x, RStringVector newNames,
+        protected void setNamesInContainer(RAbstractContainer x, RStringVector newNamesIn,
+                        @Cached("create()") BranchProfile resizeNames,
                         @Cached("createClassProfile()") ValueProfile contClassProfile) {
             RAbstractContainer xProfiled = contClassProfile.profile(x);
+            RStringVector newNames = newNamesIn;
+            checkNamesLength(xProfiled, newNames);
+            if (newNames.getLength() < xProfiled.getLength()) {
+                resizeNames.enter();
+                // Note: for RPairList and language (which are the only RAbstractContainers that are
+                // not RAbstractVector) we should not fill with NAs, but with empty strings that's
+                // what GNU-R does.
+                newNames = (RStringVector) newNames.copyResized(xProfiled.getLength(), false);
+                Object store = newNames.getInternalStore();
+                for (int i = newNamesIn.getLength(); i < xProfiled.getLength(); i++) {
+                    newNames.setDataAt(store, i, "");
+                }
+
+            }
             xProfiled.setNames(newNames);
+        }
+
+        private void checkNamesLength(RAbstractContainer target, RStringVector names) {
+            if (names.getLength() > target.getLength()) {
+                CompilerDirectives.transferToInterpreter();
+                throw error(RError.Message.ATTRIBUTE_VECTOR_SAME_LENGTH, RRuntime.NAMES_ATTR_KEY, names.getLength(), target.getLength());
+            }
         }
     }
 
