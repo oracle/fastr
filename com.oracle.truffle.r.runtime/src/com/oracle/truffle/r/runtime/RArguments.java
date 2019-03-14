@@ -87,6 +87,9 @@ import com.oracle.truffle.r.runtime.env.frame.FrameSlotChangeMonitor;
  * the call stack without calling {@link com.oracle.truffle.api.TruffleRuntime#iterateFrames( FrameInstanceVisitor)},
  * which would case deopts.
  *
+ * The INDEX_CALL slot contains the {@link RCaller caller} of the current frame. It corresponds to the caller frame
+ * stored in INDEX_CALLER_FRAME.
+ *
  * @see RCaller
  */
 // @formatter:on

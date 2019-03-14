@@ -93,7 +93,7 @@ public abstract class MatchFun extends RBuiltinNode.Arg2 {
         private final MatchFun outer;
 
         private final BranchProfile needsMaterialize = BranchProfile.create();
-        @Child private GetCallerFrameNode getCallerFrame = new GetCallerFrameNode();
+        @Child private GetCallerFrameNode getCallerFrame = GetCallerFrameNode.create();
 
         MatchFunInternal(MatchFun outer) {
             this.outer = outer;

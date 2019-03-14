@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -48,7 +48,7 @@ public abstract class Recall extends RBuiltinNode.Arg1 {
 
     @Child private LocalReadVariableNode readArgs = LocalReadVariableNode.create(ArgumentsSignature.VARARG_NAME, false);
 
-    @Child private GetCallerFrameNode callerFrame = new GetCallerFrameNode();
+    @Child private GetCallerFrameNode callerFrame = GetCallerFrameNode.create();
 
     @Child private RExplicitCallNode call = RExplicitCallNode.create();
 

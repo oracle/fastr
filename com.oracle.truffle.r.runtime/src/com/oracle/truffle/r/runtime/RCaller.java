@@ -349,6 +349,21 @@ public final class RCaller {
         return false;
     }
 
+    public boolean hasEnvOverride() {
+        return payload instanceof PromiseLogicalParent && ((PromiseLogicalParent) payload).envOverride != null;
+    }
+
+    public REnvironment getEnvOverride() {
+        if (payload instanceof PromiseLogicalParent) {
+            return ((PromiseLogicalParent) payload).envOverride;
+        }
+        return null;
+    }
+
+    public boolean hasPreviousOverridden() {
+        return payload instanceof NonPromiseLogicalParent && ((NonPromiseLogicalParent) payload).parent != null;
+    }
+
     public static RCaller createInvalid(Frame callingFrame) {
         return new RCaller(callingFrame, null);
     }
@@ -435,6 +450,11 @@ public final class RCaller {
 
     public void setVisibility(boolean visibility) {
         this.visibility = visibility;
+    }
+
+    public RCaller withLogicalParent(RCaller logicalParent) {
+        assert !isPromise();
+        return new RCaller(this.depth, this.previous, new NonPromiseLogicalParent(logicalParent, this.payload));
     }
 
     /**
