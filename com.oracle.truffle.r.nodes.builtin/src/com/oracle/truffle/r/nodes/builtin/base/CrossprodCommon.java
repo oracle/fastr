@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -36,6 +36,8 @@ import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimAt
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.GetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.attributes.SpecialAttributesFunctions.SetDimNamesAttributeNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
+import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
+import com.oracle.truffle.r.nodes.function.opt.UnShareObjectNode;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.builtins.RBuiltin;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -117,8 +119,15 @@ public abstract class CrossprodCommon extends RBuiltinNode.Arg2 {
     }
 
     @Specialization
-    protected Object crossprod(RAbstractVector x, @SuppressWarnings("unused") RNull y) {
-        return copyDimNames(x, x, (RAbstractVector) matMult.executeObject(transposeX(x), transposeY(x)));
+    protected Object crossprod(RAbstractVector x, @SuppressWarnings("unused") RNull y,
+                    @Cached("create()") ShareObjectNode shareObjectNode,
+                    @Cached("create()") UnShareObjectNode unShareObjectNode) {
+        // We need to bump up ref count of "x" so that the transpose does not reuse a temporary
+        // vector
+        shareObjectNode.execute(x);
+        RAbstractVector result = copyDimNames(x, x, (RAbstractVector) matMult.executeObject(transposeX(x), transposeY(x)));
+        unShareObjectNode.execute(x);
+        return result;
     }
 
     private Object transposeX(RAbstractVector x) {

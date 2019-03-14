@@ -76,5 +76,6 @@ public class TestBuiltin_tcrossprod extends TestBase {
     public void testSingleVector() {
         assertEval("tcrossprod(c(1,2))");
         assertEval("tcrossprod(matrix(1:4, nrow=2))");
+        assertEval("apply(array(NA, dim=c(2,1)), 2 ,tcrossprod)");
     }
 }
