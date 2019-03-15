@@ -82,7 +82,7 @@ public abstract class WithVisible extends RBuiltinNode.Arg1 {
         if (x.isEvaluated()) {
             return RDataFactory.createList(new Object[]{x.getValue(), RRuntime.LOGICAL_TRUE}, LISTNAMES);
         }
-        Object value = promiseHelper.visibleEvaluate(frame, x);
+        Object value = promiseHelper.evaluate(frame, x);
         if (value == RMissing.instance) {
             CompilerDirectives.transferToInterpreter();
             throw error(Message.ARGUMENT_MISSING, "x");
