@@ -161,28 +161,34 @@ public final class RInternalError extends Error implements TruffleException {
 
     @TruffleBoundary
     public static void reportErrorAndConsoleLog(Throwable throwable, int contextId) {
-        reportErrorDefault(throwable, contextId);
+        reportErrorDefault(throwable, null, contextId);
     }
 
     @TruffleBoundary
     public static void reportError(Throwable t) {
-        reportErrorDefault(t, 0);
+        reportErrorDefault(t, null, 0);
     }
 
     @TruffleBoundary
-    private static void reportErrorDefault(Throwable t, int contextId) {
-        RContext ctx = RContext.getInstance();
-        boolean detailedMessage = ctx.getOption(PrintErrorStacktraces) || ctx.getOption(PrintErrorStacktracesToFile);
+    public static void reportError(Throwable t, RContext ctx) {
+        reportErrorDefault(t, ctx, 0);
+    }
+
+    @TruffleBoundary
+    private static void reportErrorDefault(Throwable t, RContext ctx, int contextId) {
+        RContext context = ctx != null ? ctx : RContext.getInstance();
+        boolean detailedMessage = context.getOption(PrintErrorStacktraces) || context.getOption(PrintErrorStacktracesToFile);
+
         String errMsg = ".";
         if (detailedMessage) {
             errMsg = ": \"";
             errMsg += t instanceof RInternalError && t.getMessage() != null && !t.getMessage().isEmpty() ? t.getMessage() : t.getClass().getSimpleName();
             errMsg += "\"";
         }
-        reportError(errMsg, t, contextId);
+        reportError(errMsg, t, context, contextId);
     }
 
-    private static void reportError(String errMsg, Throwable throwable, int contextId) {
+    private static void reportError(String errMsg, Throwable throwable, RContext ctx, int contextId) {
         try {
             Throwable t = throwable;
             ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -199,8 +205,8 @@ public final class RInternalError extends Error implements TruffleException {
                 verboseStackTrace = "";
             }
 
-            boolean printErrorStacktraces = getOption(PrintErrorStacktraces);
-            boolean printErrorStacktracesToFile = getOption(PrintErrorStacktracesToFile);
+            boolean printErrorStacktraces = getOption(PrintErrorStacktraces, ctx);
+            boolean printErrorStacktracesToFile = getOption(PrintErrorStacktracesToFile, ctx);
             if (printErrorStacktraces) {
                 System.err.println(out.toString());
                 System.err.println(verboseStackTrace);
@@ -243,8 +249,7 @@ public final class RInternalError extends Error implements TruffleException {
         }
     }
 
-    private static boolean getOption(OptionKey<Boolean> key) {
-        RContext ctx = RContext.getInstance();
+    private static boolean getOption(OptionKey<Boolean> key, RContext ctx) {
         if (ctx != null) {
             return ctx.getOption(key);
         } else {
