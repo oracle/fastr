@@ -70,6 +70,7 @@ import com.oracle.truffle.r.runtime.context.ChildContextInfo;
 import com.oracle.truffle.r.runtime.context.Engine.IncompleteSourceException;
 import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.FastROptions;
+import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktraces;
 import static com.oracle.truffle.r.runtime.context.FastROptions.PrintErrorStacktracesToFile;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
@@ -139,6 +140,7 @@ public final class FastRSession implements RSession {
         Context.Builder builder = Context.newBuilder(languages).allowExperimentalOptions(true);
         setCLIOptions(builder);
         builder.allowAllAccess(true);
+        builder.option(FastROptions.getName(PrintErrorStacktraces), "true");
         // no point in printing errors to file when running tests (that contain errors on purpose)
         builder.option(FastROptions.getName(PrintErrorStacktracesToFile), "false");
         return builder;
@@ -279,7 +281,7 @@ public final class FastRSession implements RSession {
         } catch (Throwable t) {
             if (!TestBase.ProcessFailedTests || TestBase.ShowFailedTestsResults) {
                 if (t instanceof RInternalError) {
-                    RInternalError.reportError(t);
+                    RInternalError.reportError(t, mainRContext);
                 }
                 t.printStackTrace();
             }
