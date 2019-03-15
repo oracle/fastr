@@ -15,3 +15,9 @@ Version: 1.0
 Depends: R
 License: GPL-2
 NeedsCompilation: no
+
+Package: gnurtests
+Version: 1.0
+Depends: R
+License: GPL-3
+NeedsCompilation: no
