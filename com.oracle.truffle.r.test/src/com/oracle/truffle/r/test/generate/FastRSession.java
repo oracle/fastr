@@ -126,7 +126,7 @@ public final class FastRSession implements RSession {
         return createContext(contextKind, true);
     }
 
-    public FastRContext createContext(ContextKind contextKind, boolean allowHostAccess) {
+    public FastRContext createContext(ContextKind contextKind, @SuppressWarnings("unused") boolean allowHostAccess) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         Map<String, String> env = new HashMap<>();
         env.put("TZ", "GMT");

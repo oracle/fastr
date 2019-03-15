@@ -33,19 +33,17 @@ import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
+
+import org.graalvm.polyglot.Context;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
-
-import org.graalvm.polyglot.Context;
-
 import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -95,9 +93,14 @@ public class FastRContext {
     @RBuiltin(name = ".fastr.context.get", kind = PRIMITIVE, parameterNames = {}, behavior = READS_STATE)
     public static final class Get extends RBuiltinNode.Arg0 {
         @Override
-        public Object execute(VirtualFrame frame) {
+        public Object execute(@SuppressWarnings("unused") VirtualFrame frame) {
+            return getContext();
+        }
+
+        @TruffleBoundary
+        private static Object getContext() {
             RContext context = RContext.getInstance();
-            return (TruffleObject) context.getEnv().asGuestValue(context);
+            return context.getEnv().asGuestValue(context);
         }
     }
 
@@ -111,7 +114,12 @@ public class FastRContext {
         }
 
         @Override
-        public Object execute(VirtualFrame frame, Object info) {
+        public Object execute(@SuppressWarnings("unused") VirtualFrame frame, Object info) {
+            return createNewContext(info);
+        }
+
+        @TruffleBoundary
+        private static Object createNewContext(Object info) {
             RContext context = RContext.getInstance();
             ChildContextInfo ctxInfo = (ChildContextInfo) context.getEnv().asHostObject(info);
             TruffleContext truffleCtx = ctxInfo.createTruffleContext();
@@ -134,10 +142,15 @@ public class FastRContext {
 
         @Override
         public Object execute(VirtualFrame frame, Object info) {
+            closeContext(info);
+            return RNull.instance;
+        }
+
+        @TruffleBoundary
+        private static void closeContext(Object info) {
             RContext context = RContext.getInstance();
             ContextData data = (ContextData) context.getEnv().asHostObject(info);
             data.truffleContext.close();
-            return RNull.instance;
         }
     }
 
