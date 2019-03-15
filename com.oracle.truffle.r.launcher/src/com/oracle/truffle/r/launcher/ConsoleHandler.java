@@ -26,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.MalformedInputException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.util.List;
@@ -61,6 +62,8 @@ public abstract class ConsoleHandler {
                  */
                 File file = fileArgument.startsWith("~") ? new File(System.getProperty("user.home") + fileArgument.substring(1)) : new File(fileArgument);
                 lines = Files.readAllLines(file.toPath());
+            } catch (MalformedInputException e) {
+                throw RMain.fatal("cannot open file '%s': Invalid byte sequence for given charset", fileArgument);
             } catch (IOException e) {
                 throw RMain.fatal("cannot open file '%s': No such file or directory", fileArgument);
             }

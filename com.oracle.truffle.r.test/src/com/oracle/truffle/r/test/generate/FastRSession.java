@@ -122,18 +122,16 @@ public final class FastRSession implements RSession {
         return Source.newBuilder("R", txt, name).internal(true).interactive(true).buildLiteral();
     }
 
-    public Context createContext(ContextKind contextKind) {
+    public FastRContext createContext(ContextKind contextKind) {
         return createContext(contextKind, true);
     }
 
-    public Context createContext(ContextKind contextKind, boolean allowHostAccess) {
+    public FastRContext createContext(ContextKind contextKind, boolean allowHostAccess) {
         RStartParams params = new RStartParams(RCmdOptions.parseArguments(new String[]{Client.R.argumentName(), "--vanilla", "--slave", "--silent", "--no-restore"}, false), false);
         Map<String, String> env = new HashMap<>();
         env.put("TZ", "GMT");
-        ChildContextInfo ctx = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
-        RContext.childInfo = ctx;
-
-        return getContextBuilder("R", "llvm").allowHostAccess(allowHostAccess).engine(mainEngine).build();
+        ChildContextInfo info = ChildContextInfo.create(params, env, contextKind, contextKind == ContextKind.SHARE_NOTHING ? null : mainRContext, input, output, output);
+        return FastRContext.create(mainContext, info);
     }
 
     public static Context.Builder getContextBuilder(String... languages) {
@@ -240,7 +238,7 @@ public final class FastRSession implements RSession {
         Timer timer = null;
         output.reset();
         input.setContents(expression);
-        try (Context evalContext = createContext(contextKind, allowHostAccess)) {
+        try (FastRContext evalContext = createContext(contextKind, allowHostAccess)) {
             // set up some interop objects used by fastr-specific tests:
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
@@ -258,7 +256,7 @@ public final class FastRSession implements RSession {
                         // ParseException, etc
                         Throwable wt = getWrappedThrowable(e);
                         if (wt instanceof RError) {
-                            REPL.handleError(null, evalContext, e);
+                            REPL.handleError(null, evalContext.getContext(), e);
                         }
                         throw wt;
                     }
@@ -304,13 +302,13 @@ public final class FastRSession implements RSession {
         Timer timer = null;
         output.reset();
         input.setContents(expression);
-        try (Context evalContext = createContext(contextKind, allowHostAccess)) {
+        try (FastRContext evalContext = createContext(contextKind, allowHostAccess)) {
             // set up some interop objects used by fastr-specific tests:
             if (testClass != null) {
                 testClass.addPolyglotSymbols(evalContext);
             }
             timer = scheduleTimeBoxing(evalContext.getEngine(), timeout == USE_DEFAULT_TIMEOUT ? timeoutValue : timeout);
-            REPL.readEvalPrint(evalContext, new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false);
+            REPL.readEvalPrint(evalContext.getContext(), new StringConsoleHandler(Arrays.asList(expression.split("\n")), output), null, false);
             String consoleInput = readLine();
             while (consoleInput != null) {
                 consoleInput = readLine();
@@ -417,11 +415,11 @@ public final class FastRSession implements RSession {
         }
     }
 
-    public static void execInContext(Context context, Callable<Object> c) {
+    public static void execInContext(FastRContext context, Callable<Object> c) {
         execInContext(context, c, (Class<?>[]) null);
     }
 
-    public static <E extends Exception> void execInContext(Context context, Callable<Object> c, Class<?>... acceptExceptions) {
+    public static <E extends Exception> void execInContext(FastRContext context, Callable<Object> c, Class<?>... acceptExceptions) {
         context.eval(FastRSession.GET_CONTEXT); // ping creation of TruffleRLanguage
         context.getPolyglotBindings().putMember("testSymbol", (ProxyExecutable) (Value... args) -> {
             try {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,6 +32,7 @@ import org.junit.Test;
 import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import java.io.File;
 import org.graalvm.polyglot.Value;
@@ -187,7 +188,7 @@ public class TestInterop extends TestBase {
 
     // TODO: export/importSymbol
     @Override
-    public void addPolyglotSymbols(org.graalvm.polyglot.Context context) {
+    public void addPolyglotSymbols(FastRContext context) {
         FastRSession.execInContext(context, () -> {
             RContext rContext = RContext.getInstance();
             for (TestJavaObject t : TestInterop.testJavaObjects) {
@@ -195,10 +196,10 @@ public class TestInterop extends TestBase {
                 context.getPolyglotBindings().putMember(t.name, tobj);
             }
             for (TestVariable t : TestInterop.testVariables) {
-                context.getBindings("R").putMember(t.name, t.value);
+                context.getContext().getBindings("R").putMember(t.name, t.value);
                 context.getPolyglotBindings().putMember(t.name, t.value);
-                context.getBindings("R").putMember(t.name + "Read", (ProxyExecutable) (Value... args) -> {
-                    assertEquals(context.getBindings("R").getMember(t.name).as(t.clazz), t.value);
+                context.getContext().getBindings("R").putMember(t.name + "Read", (ProxyExecutable) (Value... args) -> {
+                    assertEquals(context.getContext().getBindings("R").getMember(t.name).as(t.clazz), t.value);
                     return true;
                 });
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -37,8 +37,9 @@ import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RStringVector;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.model.RAbstractContainer;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import org.graalvm.polyglot.Context;
+
 import org.graalvm.polyglot.Source;
 import org.graalvm.polyglot.Value;
 
@@ -56,7 +57,7 @@ class DefaultArgsExtractor {
     }
 
     Map<String, Samples<?>> extractDefaultArgs(String functionName) {
-        final Context context = fastRSession.createContext(ContextKind.SHARE_PARENT_RW);
+        final FastRContext context = fastRSession.createContext(ContextKind.SHARE_PARENT_RW);
 
         HashMap<String, Samples<?>> samplesMap = new HashMap<>();
         try {
