@@ -23,7 +23,6 @@
 package com.oracle.truffle.r.nodes.builtin.base;
 
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.abstractVectorValue;
-import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.notEmpty;
 import static com.oracle.truffle.r.nodes.builtin.CastBuilder.Predef.typeName;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.PURE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.INTERNAL;
@@ -48,19 +47,24 @@ import com.oracle.truffle.r.runtime.data.nodes.VectorAccess.SequentialIterator;
 public abstract class RepeatInternal extends RBuiltinNode.Arg2 {
 
     private final ConditionProfile timesOneProfile = ConditionProfile.createBinaryProfile();
+    private final ConditionProfile valueLen0Profile = ConditionProfile.createBinaryProfile();
 
     static {
         Casts casts = new Casts(RepeatInternal.class);
         casts.arg("x").mustBe(abstractVectorValue(), RError.Message.ATTEMPT_TO_REPLICATE, typeName());
-        casts.arg("times").defaultError(RError.Message.INVALID_TYPE, typeName(), "times", "vector").mustBe(abstractVectorValue()).asIntegerVector().mustBe(notEmpty(),
-                        RError.Message.INVALID_VALUE, "times");
+        casts.arg("times").defaultError(RError.Message.INVALID_TYPE, typeName(), "times", "vector").mustBe(abstractVectorValue()).asIntegerVector();
     }
 
     private RAbstractVector performRep(RAbstractVector value, RAbstractIntVector times, VectorFactory factory, VectorAccess valueAccess, VectorAccess timesAccess, VectorAccess resultAccess) {
         try (SequentialIterator valueIter = valueAccess.access(value); SequentialIterator timesIter = timesAccess.access(times)) {
             int valueLength = valueAccess.getLength(valueIter);
             int timesLength = timesAccess.getLength(timesIter);
-
+            if (valueLen0Profile.profile(valueLength == 0)) {
+                return factory.createVector(valueAccess.getType(), 0, false);
+            }
+            if (timesLength == 0) {
+                throw error(RError.Message.INVALID_VALUE, "times");
+            }
             RVector<?> result;
             if (timesOneProfile.profile(timesLength == 1)) {
                 timesAccess.next(timesIter);

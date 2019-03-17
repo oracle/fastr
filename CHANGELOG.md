@@ -1,3 +1,9 @@
+# 1.0 RC 15
+
+Bug fixes:
+
+* `rep.int` with value argument of length 0 just returns the value argument
+
 # 1.0 RC 14
 
 * all FastR specific options (NOT those GNU-R compatible like `--save`) are experimental except for `--R.PrintErrorStacktracesToFile`,
