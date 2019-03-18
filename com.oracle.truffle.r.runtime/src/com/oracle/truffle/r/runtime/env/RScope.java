@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -243,6 +243,16 @@ public final class RScope {
 
                 @TruffleBoundary
                 protected Object access(VariablesObject receiver, String identifier) {
+                    boolean exists = false;
+                    for (String key : receiver.ls()) {
+                        if (identifier.equals(key)) {
+                            exists = true;
+                            break;
+                        }
+                    }
+                    if (!exists) {
+                        return KeyInfo.INSERTABLE;
+                    }
                     int result = KeyInfo.READABLE;
                     if (!receiver.frameAccess.bindingIsLocked(identifier)) {
                         result |= KeyInfo.MODIFIABLE;

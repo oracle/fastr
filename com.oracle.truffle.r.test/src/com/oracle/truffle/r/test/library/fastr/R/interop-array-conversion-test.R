@@ -1,4 +1,4 @@
-# Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+# Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
 # DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
 #
 # This code is free software; you can redistribute it and/or modify it
@@ -608,12 +608,12 @@ if(any(R.version$engine == "FastR")) {
 
     checkAllEqual(
         actual=as.data.frame(mixedArray),
-        expected=as.data.frame(list(1, 'a', '1')),
+        expected=as.data.frame(list(1L, 'a', '1')),
         desc='as.data.frame(Object[] {1, "a", "1"})')
 
     checkAllEqual(
         actual=as.data.frame(mixed2DArray),
-        expected=as.data.frame(list(c(1, 2, 3), c('a', 'b', 'c'))),
+        expected=as.data.frame(list(c(1L, 2L, 3L), c('a', 'b', 'c'))),
         desc='as.data.frame(Object[][] {{1, 2, 3}, {"a", "b", "c"}})')
 
     checkError(

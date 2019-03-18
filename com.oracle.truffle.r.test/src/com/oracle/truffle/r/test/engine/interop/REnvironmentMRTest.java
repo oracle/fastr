@@ -37,8 +37,6 @@ import com.oracle.truffle.r.runtime.data.model.RAbstractIntVector;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import org.graalvm.polyglot.Source;
-import static org.hamcrest.CoreMatchers.instanceOf;
-import static org.junit.Assert.assertThat;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
@@ -65,20 +63,20 @@ public class REnvironmentMRTest extends AbstractMRTest {
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), e, "nnnoooonnne"), UnknownIdentifierException.class);
 
-        TruffleObject obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "s", "abc");
-        Object value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "s");
+        ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "s", "abc");
+        Object value = ForeignAccess.sendRead(Message.READ.createNode(), e, "s");
         assertSingletonVector("abc", value);
 
-        obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "b", false);
-        value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "b");
+        ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "b", false);
+        value = ForeignAccess.sendRead(Message.READ.createNode(), e, "b");
         assertSingletonVector(false, value);
 
-        obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "i", (short) 1234);
-        value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "i");
+        ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "i", (short) 1234);
+        value = ForeignAccess.sendRead(Message.READ.createNode(), e, "i");
         assertSingletonVector(1234, value);
 
-        obj = (TruffleObject) ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "newnew", "nneeww");
-        value = ForeignAccess.sendRead(Message.READ.createNode(), obj, "newnew");
+        ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "newnew", "nneeww");
+        value = ForeignAccess.sendRead(Message.READ.createNode(), e, "newnew");
         assertSingletonVector("nneeww", value);
 
         assertInteropException(() -> ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "l", 667), UnsupportedMessageException.class);
@@ -160,13 +158,12 @@ public class REnvironmentMRTest extends AbstractMRTest {
     public void testReadingNAAndWritingNABackKeepsNA() throws Exception {
         final TruffleObject e = createEnv("e <- new.env(); e$i <- 42; e$na <- NA_integer_; e")[0];
         Object naInteropValue = ForeignAccess.sendRead(Message.READ.createNode(), e, "na");
-        Object result = ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "i", naInteropValue);
-        assertThat(result, instanceOf(REnvironment.class));
-        assertTrue("index 0 is NA in the updated vector", RRuntime.isNA(getEnvIntValue(result, "i")));
+        ForeignAccess.sendWrite(Message.WRITE.createNode(), e, "i", naInteropValue);
+        Object result = ForeignAccess.sendRead(Message.READ.createNode(), e, "i");
+        assertTrue("index 0 is NA in the updated vector", RRuntime.isNA(getEnvIntValue(result)));
     }
 
-    private static int getEnvIntValue(Object result, String name) {
-        Object value = ((REnvironment) result).get(name);
+    private static int getEnvIntValue(Object value) {
         if (value instanceof Integer) {
             return (int) value;
         } else if (value instanceof RAbstractIntVector) {
