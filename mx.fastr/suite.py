@@ -74,6 +74,7 @@ suite = {
       "annotationProcessors" : ["TRUFFLE_R_PARSER_PROCESSOR"],
       "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.nodes" : {
