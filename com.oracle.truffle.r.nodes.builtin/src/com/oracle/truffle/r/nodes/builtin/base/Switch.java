@@ -125,13 +125,13 @@ public abstract class Switch extends RBuiltinNode.Arg2 {
                 throw RError.error(RError.NO_CALLER, RError.Message.ZERO_LENGTH_VARIABLE);
             } else if (xStr.equals(suppliedArgName)) {
                 // match, evaluate the associated arg
-                Object optionalArgValue = promiseHelper.checkVisibleEvaluate(frame, optionalArgValues[i]);
+                Object optionalArgValue = promiseHelper.checkEvaluate(frame, optionalArgValues[i]);
                 if (optionalArgValue == RMissing.instance) {
                     matchedArgIsMissing.enter();
 
                     // Fall-through: If the matched value is missing, take the next non-missing
                     for (int j = i + 1; j < optionalArgValues.length; j++) {
-                        Object val = promiseHelper.checkVisibleEvaluate(frame, optionalArgValues[j]);
+                        Object val = promiseHelper.checkEvaluate(frame, optionalArgValues[j]);
                         if (val != RMissing.instance) {
                             return val;
                         }
