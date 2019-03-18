@@ -360,7 +360,7 @@ public final class RCaller {
         return null;
     }
 
-    public boolean hasPreviousOverridden() {
+    public boolean hasParentOverridden() {
         return payload instanceof NonPromiseLogicalParent && ((NonPromiseLogicalParent) payload).parent != null;
     }
 

@@ -200,52 +200,51 @@ by RASTBuilder and passed to the FunctionDefinitionNode constructor.
 ### `CALLER_FRAME` argument life-cycle 
 (see `CallerFrameClosureProvider`)
 
-```
- Legend:
- (*)     - a caller frame closure holding a materialised frame; it never occurs in the compiler
- ( )     - a caller frame closure with no frame; it never occurs in the interpreter
-  *      - a materialised closure
-  ^      - a stack introspection
- <opt>   - optimisation; the boundary between interpreted and compiled code
- <deopt> - deoptimisation; the boundary between compiled and interpreted code
-```
+	Legend:
+	(*)     - a caller frame closure holding a materialised frame; it never occurs in the interpreter
+	( )     - a caller frame closure with no frame; it never occurs in the compiler
+	*       - a materialised closure
+	^       - a request for the frame, e.g. stack introspection
+	<opt>   - optimisation; the boundary between interpreted and compiled code
+	<deopt> - deoptimisation; the boundary between compiled and interpreted code
  
 #### The caller frame is available on the first call
-```
-  a) no stack introspection
 
-  time
-  ------------------------------------->
+	a) no stack introspection
 
-  (*) (*) (*) <opt> ( ) ( ) ( )
+	time
+	------------------------------------->
+
+	(*) (*) (*) <opt> ( ) ( ) ( )
 
 
-  b) early stack introspection (i.e. in the interpreter)
+	b) early stack introspection (i.e. in the interpreter)
 
-  (*) (*)  *  <opt>  *   *   *
-       ^					
+	(*) (*)  *  <opt>  *   *   *
+	     ^					
 
-  c) late stack introspection (i.e. in the compiler)
+	c) late stack introspection (i.e. in the compiler)
 
-  (*) (*) (*) <opt> ( )  ( ) <deopt>  *  *
-```  
+	(*) (*) (*) <opt> ( )  ( ) <deopt>  *  *
+	                        ^
+
   
 #### The caller frame is not available on the first call
-```
-  time
-  ------------------------------------->
 
-  a) no stack introspection
+	time
+	------------------------------------->
 
-  ( ) ( ) ( ) <opt> ( ) ( ) ( )
+	a) no stack introspection
+
+	( ) ( ) ( ) <opt> ( ) ( ) ( )
 
 
-  b) early stack introspection (i.e. in the interpreter)
+	b) early stack introspection (i.e. in the interpreter)
 
-  ( ) ( )  *  <opt>  *   *   *
-       ^					
+	( ) ( )  *  <opt>  *   *   *
+         ^					
 
-  c) late stack introspection (i.e. in the compiler)
+	c) late stack introspection (i.e. in the compiler)
 
-  ( ) ( ) ( ) <opt> ( )  ( ) <deopt>  *  *
-```
+	( ) ( ) ( ) <opt> ( )  ( ) <deopt>  *  *
+                            ^
