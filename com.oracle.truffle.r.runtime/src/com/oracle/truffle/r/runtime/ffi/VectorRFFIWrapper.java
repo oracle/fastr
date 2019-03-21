@@ -258,6 +258,22 @@ public final class VectorRFFIWrapper implements TruffleObject {
             }
         }
 
+        @Resolve(message = "IS_POINTER")
+        public abstract static class IsPointerNode extends Node {
+            protected boolean access(@SuppressWarnings("unused") VectorRFFIWrapper receiver) {
+                return true;
+            }
+        }
+
+        @Resolve(message = "AS_POINTER")
+        public abstract static class AsPointerNode extends Node {
+            @Child private VectorRFFIWrapperNativePointer.DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
+
+            protected Object access(VectorRFFIWrapper receiver) {
+                return dispatch.execute(receiver.vector);
+            }
+        }
+
         @Resolve(message = "HAS_SIZE")
         public abstract static class VectorWrapperHasSizeNode extends Node {
             protected Object access(@SuppressWarnings("unused") VectorRFFIWrapper receiver) {
