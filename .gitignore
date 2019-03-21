@@ -147,3 +147,4 @@ documentation/.pydevproject
 com.oracle.truffle.r.native/gnur/patch-build
 com.oracle.truffle.r.test.native/embedded/embedded.actual.output
 com.oracle.truffle.r.test.native/embedded/main.actual.output
+f2c
