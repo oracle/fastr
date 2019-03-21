@@ -105,6 +105,51 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
     public static class VectorRFFIWrapperNativePointer implements TruffleObject {
 
+        public static final ForeignAccess ACCESS = ForeignAccess.create(VectorRFFIWrapperNativePointer.class, new StandardFactory() {
+            @Override
+            public CallTarget accessIsNull() {
+                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                    @Override
+                    public Object execute(VirtualFrame frame) {
+                        return false;
+                    }
+                });
+            }
+
+            @Override
+            public CallTarget accessIsPointer() {
+                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                    @Override
+                    public Object execute(VirtualFrame frame) {
+                        return true;
+                    }
+                });
+            }
+
+            @Override
+            public CallTarget accessAsPointer() {
+                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                    @Child private DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
+
+                    @Override
+                    public Object execute(VirtualFrame frame) {
+                        VectorRFFIWrapperNativePointer receiver = (VectorRFFIWrapperNativePointer) ForeignAccess.getReceiver(frame);
+                        return dispatch.execute(receiver.vector);
+                    }
+                });
+            }
+
+            @Override
+            public CallTarget accessToNative() {
+                return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
+                    @Override
+                    public Object execute(VirtualFrame frame) {
+                        return ForeignAccess.getReceiver(frame);
+                    }
+                });
+            }
+        });
+
         private final TruffleObject vector;
 
         VectorRFFIWrapperNativePointer(TruffleObject vector) {
@@ -194,50 +239,7 @@ public final class VectorRFFIWrapper implements TruffleObject {
 
         @Override
         public ForeignAccess getForeignAccess() {
-            return ForeignAccess.create(VectorRFFIWrapperNativePointer.class, new StandardFactory() {
-                @Override
-                public CallTarget accessIsNull() {
-                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                        @Override
-                        public Object execute(VirtualFrame frame) {
-                            return false;
-                        }
-                    });
-                }
-
-                @Override
-                public CallTarget accessIsPointer() {
-                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                        @Override
-                        public Object execute(VirtualFrame frame) {
-                            return true;
-                        }
-                    });
-                }
-
-                @Override
-                public CallTarget accessAsPointer() {
-                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                        @Child private DispatchAllocate dispatch = DispatchAllocateNodeGen.create();
-
-                        @Override
-                        public Object execute(VirtualFrame frame) {
-                            VectorRFFIWrapperNativePointer receiver = (VectorRFFIWrapperNativePointer) ForeignAccess.getReceiver(frame);
-                            return dispatch.execute(receiver.vector);
-                        }
-                    });
-                }
-
-                @Override
-                public CallTarget accessToNative() {
-                    return Truffle.getRuntime().createCallTarget(new InteropRootNode() {
-                        @Override
-                        public Object execute(VirtualFrame frame) {
-                            return ForeignAccess.getReceiver(frame);
-                        }
-                    });
-                }
-            });
+            return ACCESS;
         }
     }
 

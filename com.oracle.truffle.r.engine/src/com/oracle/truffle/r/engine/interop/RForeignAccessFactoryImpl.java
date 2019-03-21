@@ -22,7 +22,6 @@
  */
 package com.oracle.truffle.r.engine.interop;
 
-import com.oracle.truffle.api.CompilerAsserts;
 import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.r.ffi.impl.interop.FFI_RForeignAccessFactoryImpl;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -71,7 +70,6 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
 
     @Override
     public ForeignAccess getForeignAccess(RTruffleObject obj) {
-        CompilerAsserts.neverPartOfCompilation("getForeignAccess");
         if (obj instanceof RNull) {
             return RNullMRForeign.ACCESS;
         } else if (obj instanceof RList) {
@@ -121,7 +119,7 @@ public final class RForeignAccessFactoryImpl implements RForeignAccessFactory {
         } else if (obj instanceof RInteropNA) {
             return RInteropNAMRForeign.ACCESS;
         } else if (obj instanceof RAbstractAtomicVector) {
-            return ForeignAccess.createAccess(new RAbstractVectorAccessFactory(), RAbstractVectorAccessFactory.CHECK_FACTORY);
+            return RAbstractVectorAccessFactory.ACCESS;
         } else {
             ForeignAccess access = FFI_RForeignAccessFactoryImpl.getForeignAccess(obj);
             if (access != null) {
