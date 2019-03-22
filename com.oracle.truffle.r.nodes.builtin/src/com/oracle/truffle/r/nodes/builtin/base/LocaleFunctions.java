@@ -36,6 +36,9 @@ import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
+import java.text.NumberFormat;
+import java.util.Currency;
+import java.util.Locale;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.dsl.Specialization;
@@ -127,10 +130,80 @@ public class LocaleFunctions {
         @Specialization
         @TruffleBoundary
         protected Object localeconv() {
-            DecimalFormat format = (DecimalFormat) DecimalFormat.getInstance();
-            DecimalFormatSymbols symbols = format.getDecimalFormatSymbols();
-            char sep = symbols.getDecimalSeparator();
-            return RDataFactory.createList(new Object[]{sep}, RDataFactory.createStringVectorFromScalar("decimal_point"));
+            RLocale.ContextStateImpl stateRLocale = RContext.getInstance().stateRLocale;
+            Locale numericLocale = stateRLocale.getLocale(RLocale.NUMERIC);
+            Locale monetaryLocale = stateRLocale.getLocale(RLocale.MONETARY);
+            NumberFormat numericFormat = NumberFormat.getNumberInstance(numericLocale);
+            NumberFormat monetaryFormat = NumberFormat.getInstance(monetaryLocale);
+            DecimalFormatSymbols decimalSymbols = DecimalFormatSymbols.getInstance(numericLocale);
+            DecimalFormatSymbols monetarySymbols = DecimalFormatSymbols.getInstance(monetaryLocale);
+            Currency currency = monetarySymbols.getCurrency();
+
+            int len = 18;
+            int i = 0;
+            String[] values = new String[len];
+            String[] names = new String[len];
+            names[i] = "decimal_point";
+            values[i++] = String.valueOf(decimalSymbols.getDecimalSeparator());
+            names[i] = "thousands_sep"; // for non-monetary quantities
+            values[i++] = numericFormat.isGroupingUsed() ? String.valueOf(decimalSymbols.getGroupingSeparator()) : "";
+            names[i] = "grouping";
+            StringBuilder grouping = new StringBuilder(2);
+            if (numericFormat.isGroupingUsed() && (numericFormat instanceof DecimalFormat)) {
+                int groupingSize = ((DecimalFormat) numericFormat).getGroupingSize();
+                for (int j = 2; j > 0; j--) {
+                    grouping.append((char) groupingSize);
+                }
+                grouping.setLength(0);
+            }
+            values[i++] = grouping.toString();
+            names[i] = "int_curr_symbol";
+            values[i++] = monetarySymbols.getInternationalCurrencySymbol() + ' '; // Appears
+                                                                                  // space-terminated
+                                                                                  // in GNU-R
+            names[i] = "currency_symbol";
+            values[i++] = monetarySymbols.getCurrencySymbol();
+            names[i] = "mon_decimal_point";
+            values[i++] = String.valueOf(monetarySymbols.getMonetaryDecimalSeparator());
+            names[i] = "mon_thousands_sep";
+            values[i++] = String.valueOf(monetarySymbols.getGroupingSeparator());
+            names[i] = "mon_grouping";
+            if (monetaryFormat.isGroupingUsed() && (monetaryFormat instanceof DecimalFormat)) {
+                int groupingSize = ((DecimalFormat) monetaryFormat).getGroupingSize();
+                for (int j = 2; j > 0; j--) {
+                    grouping.append((char) groupingSize);
+                }
+                grouping.setLength(0);
+            }
+            values[i++] = grouping.toString();
+            names[i] = "positive_sign";
+            values[i++] = ""; // TODO not found a corresponding java method yet
+            names[i] = "negative_sign";
+            values[i++] = String.valueOf(monetarySymbols.getMinusSign());
+            names[i] = "int_frac_digits";
+            values[i++] = String.valueOf(currency.getDefaultFractionDigits());
+            names[i] = "frac_digits";
+            values[i++] = String.valueOf(currency.getDefaultFractionDigits());
+            names[i] = "p_cs_precedes"; // "1" if currency symbol precedes positive value or "0"
+                                        // otherwise
+            values[i++] = "1"; // No corresponding java method found yet - best match found:
+                               // (DecimalFormat.getPositivePrefix() != null)
+            names[i] = "p_sep_by_space"; // "1" if a space separates currency symbol from a positive
+                                         // value or "0" otherwise
+            values[i++] = "0"; // No corresponding java method found yet
+            names[i] = "n_cs_precedes"; // "1" if currency symbol precedes negative value or "0"
+                                        // otherwise
+            values[i++] = "1"; // No corresponding java method found yet
+            names[i] = "n_sep_by_space"; // "1" if a space separates currency symbol from a negative
+                                         // value or "0" otherwise
+            values[i++] = "0"; // No corresponding java method found yet
+            names[i] = "p_sign_posn"; // value indicating the positioning of the positive sign for a
+                                      // non-negative internationally formatted monetary quantity
+            values[i++] = "1"; // No corresponding java method found yet
+            names[i] = "n_sign_posn"; // value indicating the positioning of the negative sign for a
+                                      // negative internationally formatted monetary quantity
+            values[i++] = "1"; // No corresponding java method found yet
+            return RDataFactory.createStringVector(values, true, RDataFactory.createStringVector(names, true));
         }
     }
 
