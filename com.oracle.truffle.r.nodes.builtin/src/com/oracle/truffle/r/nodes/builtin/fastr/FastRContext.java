@@ -33,16 +33,17 @@ import static com.oracle.truffle.r.runtime.RVisibility.OFF;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.COMPLEX;
 import static com.oracle.truffle.r.runtime.builtins.RBehavior.READS_STATE;
 import static com.oracle.truffle.r.runtime.builtins.RBuiltinKind.PRIMITIVE;
+import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
+
+import org.graalvm.polyglot.Context;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.TruffleContext;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.interop.TruffleObject;
 import com.oracle.truffle.r.launcher.RCmdOptions.Client;
 import com.oracle.truffle.r.nodes.builtin.NodeWithArgumentCasts.Casts;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
-import static com.oracle.truffle.r.runtime.context.FastROptions.SharedContexts;
 import com.oracle.truffle.r.runtime.RChannel;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RRuntime;
@@ -90,12 +91,76 @@ public class FastRContext {
     }
 
     @RBuiltin(name = ".fastr.context.get", kind = PRIMITIVE, parameterNames = {}, behavior = READS_STATE)
-    public abstract static class Get extends RBuiltinNode.Arg0 {
-        @Specialization
+    public static final class Get extends RBuiltinNode.Arg0 {
+        @Override
+        public Object execute(@SuppressWarnings("unused") VirtualFrame frame) {
+            return getContext();
+        }
+
         @TruffleBoundary
-        protected TruffleObject get() {
+        private static Object getContext() {
             RContext context = RContext.getInstance();
-            return (TruffleObject) context.getEnv().asGuestValue(context);
+            return context.getEnv().asGuestValue(context);
+        }
+    }
+
+    /**
+     * Creates a new internal context for the unit tests. Intended to be used only for unit tests.
+     */
+    @RBuiltin(name = ".fastr.context.testing.new", kind = PRIMITIVE, parameterNames = {"info"}, behavior = READS_STATE)
+    public static final class FastRContextNew extends RBuiltinNode.Arg1 {
+        static {
+            Casts.noCasts(FastRContextNew.class);
+        }
+
+        @Override
+        public Object execute(@SuppressWarnings("unused") VirtualFrame frame, Object info) {
+            return createNewContext(info);
+        }
+
+        @TruffleBoundary
+        private static Object createNewContext(Object info) {
+            RContext context = RContext.getInstance();
+            ChildContextInfo ctxInfo = (ChildContextInfo) context.getEnv().asHostObject(info);
+            TruffleContext truffleCtx = ctxInfo.createTruffleContext();
+            Object prev = truffleCtx.enter();
+            Context hostContext = Context.getCurrent();
+            truffleCtx.leave(prev);
+            return context.getEnv().asGuestValue(new ContextData(truffleCtx, hostContext));
+        }
+    }
+
+    /**
+     * Closes an internal context used for the unit test evaluation. Intended to be used only for
+     * unit tests.
+     */
+    @RBuiltin(name = ".fastr.context.testing.close", kind = PRIMITIVE, parameterNames = {"info"}, behavior = READS_STATE)
+    public static final class FastRContextClose extends RBuiltinNode.Arg1 {
+        static {
+            Casts.noCasts(FastRContextClose.class);
+        }
+
+        @Override
+        public Object execute(VirtualFrame frame, Object info) {
+            closeContext(info);
+            return RNull.instance;
+        }
+
+        @TruffleBoundary
+        private static void closeContext(Object info) {
+            RContext context = RContext.getInstance();
+            ContextData data = (ContextData) context.getEnv().asHostObject(info);
+            data.truffleContext.close();
+        }
+    }
+
+    public static final class ContextData {
+        public final TruffleContext truffleContext;
+        public final Context context;
+
+        public ContextData(TruffleContext truffleContext, Context context) {
+            this.truffleContext = truffleContext;
+            this.context = context;
         }
     }
 

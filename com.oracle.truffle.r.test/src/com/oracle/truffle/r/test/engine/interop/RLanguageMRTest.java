@@ -53,7 +53,7 @@ public class RLanguageMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isExisting(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, 1f);
-        assertFalse(KeyInfo.isExisting(info));
+        assertTrue(KeyInfo.isExisting(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), rl, rl.getLength());
         assertFalse(KeyInfo.isExisting(info));
@@ -87,7 +87,7 @@ public class RLanguageMRTest extends AbstractMRTest {
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, "nnnoooonnne"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, rl.getLength()), UnknownIdentifierException.class);
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0d) == RDataFactory.createSymbolInterned("+"));
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), rl, 0f), UnknownIdentifierException.class);
+        assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0f) == RDataFactory.createSymbolInterned("+"));
 
         // TODO add some meaningful read tests
         Assert.assertNotNull(ForeignAccess.sendRead(Message.READ.createNode(), rl, 0));

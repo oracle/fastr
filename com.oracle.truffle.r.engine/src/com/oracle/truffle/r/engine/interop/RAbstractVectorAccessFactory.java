@@ -365,6 +365,7 @@ public final class RAbstractVectorAccessFactory implements StandardFactory {
     }
 
     public static final Supplier<RootNode> CHECK_FACTORY = new CheckFactory();
+    public static final ForeignAccess ACCESS = ForeignAccess.createAccess(new RAbstractVectorAccessFactory(), RAbstractVectorAccessFactory.CHECK_FACTORY);
 
     private static final class CheckFactory implements Supplier<RootNode> {
         @Override

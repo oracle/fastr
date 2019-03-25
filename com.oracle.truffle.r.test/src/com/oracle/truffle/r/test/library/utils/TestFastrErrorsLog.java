@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,7 +48,7 @@ import org.junit.BeforeClass;
 
 public class TestFastrErrorsLog extends TestBase {
 
-    private static org.graalvm.polyglot.Context context;
+    private static FastRContext context;
 
     @BeforeClass
     public static void setupClass() {

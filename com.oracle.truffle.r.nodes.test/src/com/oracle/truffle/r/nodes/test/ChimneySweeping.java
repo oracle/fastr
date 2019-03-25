@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -58,11 +58,12 @@ import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RMissing;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import com.oracle.truffle.r.test.generate.TestOutputManager;
 import com.oracle.truffle.r.test.generate.TestOutputManager.TestInfo;
-import org.graalvm.polyglot.Context;
+
 import org.graalvm.polyglot.Value;
 import static org.junit.Assert.fail;
 import static com.oracle.truffle.r.test.generate.FastRSession.execInContext;
@@ -226,7 +227,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
     @Override
     SingleBuiltinDiagnostics init() throws Throwable {
         super.init();
-        try (Context context = diagSuite.fastRSession.createContext(ContextKind.SHARE_PARENT_RW)) {
+        try (FastRContext context = diagSuite.fastRSession.createContext(ContextKind.SHARE_PARENT_RW)) {
             execInContext(context, () -> {
                 this.castNodes = builtinFactory.getCastNodes();
                 print(0, "\n*** Chimney-sweeping of '" + builtinName + "' (" + builtinFactory.getBuiltinMetaClass().getName() + ") ***");
@@ -361,7 +362,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         }
     }
 
-    private Set<RList> extractValidArgsForBuiltin(Context context) {
+    private Set<RList> extractValidArgsForBuiltin(FastRContext context) {
         String snippetAnchor;
         switch (kind) {
             case INTERNAL:
@@ -385,7 +386,7 @@ class ChimneySweeping extends SingleBuiltinDiagnostics {
         return args;
     }
 
-    private RList evalValidArgs(String argsExpr, Context context) {
+    private RList evalValidArgs(String argsExpr, FastRContext context) {
         try {
             Value eval = context.eval(FastRSession.createSource(argsExpr, RSource.Internal.UNIT_TEST.string));
             Object res = FastRSession.getReceiver(eval);

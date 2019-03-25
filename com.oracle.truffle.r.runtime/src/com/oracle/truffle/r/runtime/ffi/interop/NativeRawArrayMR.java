@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2016, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -56,6 +56,20 @@ public class NativeRawArrayMR {
     public abstract static class NRAToNativeNode extends Node {
         protected Object access(NativeRawArray receiver) {
             return new RawNativePointer(receiver);
+        }
+    }
+
+    @Resolve(message = "IS_POINTER")
+    public abstract static class IsPointerNode extends Node {
+        protected boolean access(@SuppressWarnings("unused") NativeRawArray receiver) {
+            return true;
+        }
+    }
+
+    @Resolve(message = "AS_POINTER")
+    public abstract static class AsPointerNode extends Node {
+        protected Object access(NativeRawArray receiver) {
+            return receiver.convertToNative();
         }
     }
 

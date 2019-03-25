@@ -51,13 +51,13 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
     public void testReadIdx() throws Exception {
         TruffleObject args = createTruffleObjects()[0];
 
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, 1f), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, 1d), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, -1), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), args, 100), UnknownIdentifierException.class);
 
         assertSingletonVector("abc", ForeignAccess.sendRead(Message.READ.createNode(), args, 0));
         assertSingletonVector(123, ForeignAccess.sendRead(Message.READ.createNode(), args, 1));
+        assertSingletonVector(123, ForeignAccess.sendRead(Message.READ.createNode(), args, 1d));
+        assertSingletonVector(123, ForeignAccess.sendRead(Message.READ.createNode(), args, 1f));
         assertSingletonVector(1.1, ForeignAccess.sendRead(Message.READ.createNode(), args, 2));
         assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), args, 3));
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), args, 4) instanceof RFunction);
@@ -91,7 +91,7 @@ public class RArgsValuesAndNamesMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isExisting(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), e, 1f);
-        assertFalse(KeyInfo.isExisting(info));
+        assertTrue(KeyInfo.isExisting(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), e, 0);
         assertTrue(KeyInfo.isExisting(info));
