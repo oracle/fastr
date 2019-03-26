@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2012-2014, Purdue University
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -188,6 +188,10 @@ public class TestBuiltin_repint extends TestBase {
         assertEval("{ rep.int(7, -4)  }");
         assertEval("{ rep.int(c(7,1), c(1,-4))  }");
         assertEval("{ rep.int(c(7,1), c(1,4,5))  }");
+
+        assertEval("rep.int(integer(0), character(0))");
+        assertEval("rep.int(integer(0), numeric(0))");
+        assertEval("rep.int(character(0), numeric(0))");
     }
 
     @Test
