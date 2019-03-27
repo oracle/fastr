@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,14 @@ import com.oracle.truffle.r.ffi.processor.RFFICpointer;
 
 public interface MemoryUpCallsRFFI {
     // Checkstyle: stop method name check
+
+    Object R_MakeWeakRef(Object key, Object val, Object fin, long onexit);
+
+    Object R_MakeWeakRefC(Object key, Object val, long fin, long onexit);
+
+    Object R_WeakRefKey(Object w);
+
+    Object R_WeakRefValue(Object w);
 
     void R_PreserveObject(Object obj);
 

@@ -97,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -375,6 +376,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_lengthgets(Object x, int newSize) {
+        if (x == RNull.instance) {
+            return RNull.instance;
+        }
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         return vec.resize(newSize);
     }
@@ -1545,6 +1549,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         return REnvironment.getRegisteredNamespace("methods");
     }
 
+    // basic support for weak reference API - they are not actually weak and don't call finalizers
+
+    @Override
+    @TruffleBoundary
+    public Object R_MakeWeakRef(Object key, Object val, Object fin, long onexit) {
+        return new RWeakRef(key, val, fin, onexit != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_MakeWeakRefC(Object key, Object val, long fin, long onexit) {
+        return new RWeakRef(key, val, fin, onexit != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_WeakRefKey(Object w) {
+        return guaranteeInstanceOf(w, RWeakRef.class).getKey();
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_WeakRefValue(Object w) {
+        return guaranteeInstanceOf(w, RWeakRef.class).getValue();
+    }
+
     @Override
     @TruffleBoundary
     public void R_PreserveObject(Object obj) {
@@ -1587,9 +1617,18 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public void Rf_unprotect(int x) {
         RFFIContext context = getContext();
         ArrayList<RObject> stack = context.rffiContextState.protectStack;
-        for (int i = 0; i < x; i++) {
-            context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
+        try {
+            for (int i = 0; i < x; i++) {
+                context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
         }
+    }
+
+    private static boolean debugWarning(String message) {
+        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
+        return true;
     }
 
     @Override

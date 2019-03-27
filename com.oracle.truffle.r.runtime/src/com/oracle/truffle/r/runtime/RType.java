@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -54,6 +54,7 @@ public enum RType {
     DefunctReal("real", -1),
     DefunctSingle("single", -1),
     ExternalPtr("externalptr", -1),
+    WeakRef("weakref", -1),
     S4Object("S4", -1),
     Connection("connection", -1),
     Dots("...", -1),
@@ -218,6 +219,8 @@ public enum RType {
                 return DefunctSingle;
             case "externalptr":
                 return ExternalPtr;
+            case "weakref":
+                return WeakRef;
             case "S4":
                 return S4Object;
             case "connection":

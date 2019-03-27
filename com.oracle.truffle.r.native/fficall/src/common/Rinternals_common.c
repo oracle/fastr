@@ -118,7 +118,7 @@ void *DATAPTR(SEXP x) {
 	} else if (type == CPLXSXP) {
 	    return COMPLEX(x);
     } else if (type == CHARSXP) {
-        return R_CHAR(x);
+        return (void*) R_CHAR(x);
     } else {
         return FASTR_DATAPTR(x);
 	}

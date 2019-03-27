@@ -140,7 +140,7 @@ public abstract class InternalNode extends OperatorNode {
             if (factory == null || factory.getKind() != RBuiltinKind.INTERNAL) {
                 // determine whether we're supposed to implement this builtin
                 if (factory == null && NOT_IMPLEMENTED.contains(name)) {
-                    throw RInternalError.unimplemented(".Internal " + name);
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "unimplemented .Internal " + name);
                 }
                 throw RError.error(RError.SHOW_CALLER, RError.Message.NO_SUCH_INTERNAL, name);
             }

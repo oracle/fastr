@@ -173,7 +173,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
             stateStdConnections.setBuffer(buffer);
             RContext.getEngine().evalFunction((RFunction) printObj, callingFrame, RCaller.topLevel, false, ArgumentsSignature.empty(1), asVector);
             // remove the last "\n", which is useful for REPL, but not here
-            if (buffer.charAt(buffer.length() - 1) == '\n') {
+            if (buffer.length() > 0 && buffer.charAt(buffer.length() - 1) == '\n') {
                 buffer.setLength(buffer.length() - 1);
             }
             return buffer.toString();
