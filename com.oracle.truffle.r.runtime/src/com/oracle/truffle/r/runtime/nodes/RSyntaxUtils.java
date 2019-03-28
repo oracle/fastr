@@ -54,14 +54,14 @@ public abstract class RSyntaxUtils {
                 RSyntaxElement[] arguments = element.getSyntaxArguments();
                 ArgumentsSignature callSignature = element.getSyntaxSignature();
                 if (lhs instanceof RSyntaxLookup && "{".equals(((RSyntaxLookup) lhs).getIdentifier())) {
-                    str.append("\n" + space() + "{");
+                    str.append("\n").append(space()).append("{");
                     level++;
                     for (int i = 0; i < arguments.length; i++) {
                         RSyntaxElement child = arguments[i];
-                        str.append("\n" + space() + accept(child));
+                        str.append("\n").append(space()).append(accept(child));
                     }
                     level--;
-                    str.append("\n" + space() + "}\n" + space());
+                    str.append("\n").append(space()).append("}\n").append(space());
                 } else {
                     str.append(accept(lhs));
                     printArguments(str, arguments, callSignature);
@@ -73,7 +73,7 @@ public abstract class RSyntaxUtils {
                 str.append('(');
                 for (int i = 0; i < arguments.length; i++) {
                     RSyntaxElement child = arguments[i];
-                    str.append((i > 0 ? ", " : "") + (callSignature.getName(i) == null ? "" : callSignature.getName(i) + "=") + (child == null ? "" : accept(child)));
+                    str.append(i > 0 ? ", " : "").append(callSignature.getName(i) == null ? "" : callSignature.getName(i) + "=").append(child == null ? "" : accept(child));
                 }
                 str.append(')');
             }

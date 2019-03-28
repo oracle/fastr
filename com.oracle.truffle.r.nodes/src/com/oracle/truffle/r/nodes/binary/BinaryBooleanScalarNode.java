@@ -64,14 +64,12 @@ public abstract class BinaryBooleanScalarNode extends RBuiltinNode.Arg2 {
     @Child private BoxPrimitiveNode rightBox;
     @Child private PromiseCheckHelperNode promiseHelper;
 
-    private final BooleanOperation booleanLogic;
-
     static {
         Casts.noCasts(BinaryBooleanScalarNode.class);
     }
 
     BinaryBooleanScalarNode(BooleanOperationFactory factory) {
-        this.booleanLogic = factory.createOperation();
+        BooleanOperation booleanLogic = factory.createOperation();
         logic = new BinaryMapBooleanFunctionNode(booleanLogic);
         leftCast = LogicalScalarCastNodeGen.create(booleanLogic.opName(), "x", logic.getLeftNACheck());
         leftBox = BoxPrimitiveNodeGen.create();

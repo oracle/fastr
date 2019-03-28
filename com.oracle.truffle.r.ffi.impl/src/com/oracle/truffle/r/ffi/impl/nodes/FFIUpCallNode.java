@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -32,7 +32,7 @@ public abstract class FFIUpCallNode extends Node {
     protected abstract int numArgs();
 
     @TruffleBoundary
-    protected static final RError unsupportedTypes(String name, Object... args) {
+    protected static RError unsupportedTypes(String name, Object... args) {
         assert args.length > 0;
         StringBuilder sb = new StringBuilder(args.length * 15);
         sb.append("wrong argument types provided to ").append(name).append(": ").append(Utils.getTypeName(args[0]));

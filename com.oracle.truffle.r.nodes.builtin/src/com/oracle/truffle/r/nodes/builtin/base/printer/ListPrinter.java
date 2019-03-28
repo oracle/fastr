@@ -56,7 +56,7 @@ final class ListPrinter extends AbstractValuePrinter<RAbstractListVector> {
         // singleton
     }
 
-    private static int TAGBUFLEN = 256;
+    private static final int TAGBUFLEN = 256;
 
     @Override
     @TruffleBoundary

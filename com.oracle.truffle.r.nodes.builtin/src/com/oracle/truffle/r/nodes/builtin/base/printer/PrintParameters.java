@@ -90,7 +90,7 @@ public final class PrintParameters {
         if (printGap != RNull.instance) {
             this.gap = RRuntime.asInteger(printGap);
             if (this.gap == RRuntime.INT_NA || this.gap < 0) {
-                throw new IllegalArgumentException(String.format("'gap' must be non-negative integer"));
+                throw new IllegalArgumentException("'gap' must be non-negative integer");
             }
         }
 

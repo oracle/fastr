@@ -259,7 +259,7 @@ public final class Utils {
         }
         int pid = RContext.getInitialPid();
         // Do not use PID if it was not set yet (logging/error during initialization)
-        String pidStr = pid == 0 ? "" : "_pid" + Integer.toString(pid);
+        String pidStr = pid == 0 ? "" : "_pid" + pid;
         String baseName = fileNamePrefix + pidStr + ".log";
         while (true) {
             if (dir != null) {
@@ -394,13 +394,13 @@ public final class Utils {
      */
     public static void printDebugInfo(StringBuilder sb, Object arg) {
         if (arg instanceof RSymbol) {
-            sb.append("\"" + arg.toString() + "\"");
+            sb.append("\"").append(arg.toString()).append("\"");
         } else if (arg instanceof RAbstractVector) {
             RAbstractVector vec = (RAbstractVector) arg;
             if (vec.getLength() == 0) {
                 sb.append("empty");
             } else {
-                sb.append("len:" + vec.getLength() + ";data:");
+                sb.append("len:").append(vec.getLength()).append(";data:");
                 for (int i = 0; i < Math.min(3, vec.getLength()); i++) {
                     String str = ((RAbstractVector) arg).getDataAtAsObject(0).toString();
                     str = str.length() > 30 ? str.substring(0, 27) + "..." : str;

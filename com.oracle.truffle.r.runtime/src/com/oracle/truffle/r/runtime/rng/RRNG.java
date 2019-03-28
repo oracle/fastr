@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2012, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,6 +20,7 @@
 package com.oracle.truffle.r.runtime.rng;
 
 import java.lang.ref.WeakReference;
+import java.util.Objects;
 import java.util.function.Supplier;
 
 import com.oracle.truffle.api.CompilerDirectives.CompilationFinal;
@@ -289,7 +290,7 @@ public class RRNG {
         // re-read unconditionally since it may change in updateCurrentGenerator
         rng = getContextState().currentGenerator;
 
-        if (newSeed != SAME_SEED) {
+        if (!Objects.equals(newSeed, SAME_SEED)) {
             initGenerator(rng, newSeed);
         }
 

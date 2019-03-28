@@ -123,7 +123,7 @@ public interface DLLRFFI {
         }
     }
 
-    public interface LibHandle {
+    interface LibHandle {
         RFFIFactory.Type getRFFIType();
     }
 }

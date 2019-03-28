@@ -65,7 +65,7 @@ public abstract class RemoveRegAttributesNode extends AttributeAccessNode {
         // nothing to do
     }
 
-    protected static final boolean emptyAttributes(RAttributeStorage source) {
+    protected static boolean emptyAttributes(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
         return attributes == null || attributes.isEmpty();
     }

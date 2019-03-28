@@ -360,8 +360,7 @@ public class CastUtils {
             UpperBoundsConjunction from = UpperBoundsConjunction.fromType(actualInputType);
             UpperBoundsConjunction to = UpperBoundsConjunction.fromType(formalInputType);
 
-            Cast.Coverage result = to.coverageFrom(from, includeImplicits);
-            return result;
+            return to.coverageFrom(from, includeImplicits);
         }
 
         public static boolean hasImplicitCast(Type actualInputCls, Type formalInputCls) {

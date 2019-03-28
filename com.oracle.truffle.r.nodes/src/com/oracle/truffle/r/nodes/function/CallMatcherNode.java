@@ -464,8 +464,7 @@ public abstract class CallMatcherNode extends RBaseNode {
             RArgsValuesAndNames evaledArgs = new RArgsValuesAndNames(argValues, signature);
 
             // ...to match them against the chosen function's formal arguments
-            RArgsValuesAndNames evaluated = ArgumentMatcher.matchArgumentsEvaluated((RRootNode) function.getRootNode(), evaledArgs, null, callingNode);
-            return evaluated;
+            return ArgumentMatcher.matchArgumentsEvaluated((RRootNode) function.getRootNode(), evaledArgs, null, callingNode);
         }
 
         protected static Object checkMissing(Object value) {

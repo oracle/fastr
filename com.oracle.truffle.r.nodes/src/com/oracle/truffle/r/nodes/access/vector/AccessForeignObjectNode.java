@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -174,12 +174,11 @@ abstract class AccessForeignObjectNode extends RBaseNode {
                         @Cached("create()") ReadElementNode readElement,
                         @Cached("create()") WriteElementNode writeElement,
                         @Cached("create()") VectorLengthProfile lengthProfile) {
-            Object writtenValue = value;
             TruffleObject result = object;
             for (int i = 0; i < lengthProfile.profile(positions.length) - 1; i++) {
                 result = (TruffleObject) readElement.execute(positions[i], result);
             }
-            writeElement.execute(positions[positions.length - 1], result, writtenValue);
+            writeElement.execute(positions[positions.length - 1], result, value);
             return object;
         }
 

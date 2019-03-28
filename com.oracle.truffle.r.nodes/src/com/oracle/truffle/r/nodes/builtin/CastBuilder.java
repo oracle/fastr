@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -704,14 +704,12 @@ public final class CastBuilder {
          */
         @SuppressWarnings({"rawtypes", "unchecked"})
         public static Filter<Object, RArgsValuesAndNames> validVarArgs() {
-            Filter f = integerValue().or(doubleValue()).or(logicalValue());
-            return f;
+            return (Filter) integerValue().or(doubleValue()).or(logicalValue());
         }
 
         @SuppressWarnings({"rawtypes", "unchecked"})
         public static Filter<Object, RAbstractVector> numericValue() {
-            Filter f = integerValue().or(doubleValue()).or(logicalValue());
-            return f;
+            return (Filter) integerValue().or(doubleValue()).or(logicalValue());
         }
 
         /**
@@ -720,8 +718,7 @@ public final class CastBuilder {
          */
         @SuppressWarnings({"rawtypes", "unchecked"})
         public static Filter<Object, RAbstractVector> abstractVectorValue() {
-            Filter f = numericValue().or(stringValue()).or(complexValue()).or(rawValue()).or(instanceOf(RAbstractListVector.class));
-            return f;
+            return (Filter) numericValue().or(stringValue()).or(complexValue()).or(rawValue()).or(instanceOf(RAbstractListVector.class));
         }
 
         public static Filter<Object, Integer> atomicIntegerValue() {

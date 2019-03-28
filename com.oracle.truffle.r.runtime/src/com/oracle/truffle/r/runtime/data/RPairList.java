@@ -441,7 +441,7 @@ public final class RPairList extends RSharingAttributeStorage implements RAbstra
 
     @Override
     public boolean hasDimensions() {
-        return isLanguage() ? false : true;
+        return !isLanguage();
     }
 
     @Override

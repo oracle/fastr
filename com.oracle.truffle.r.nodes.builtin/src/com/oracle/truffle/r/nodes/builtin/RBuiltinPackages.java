@@ -200,9 +200,6 @@ public final class RBuiltinPackages implements RBuiltinLookup {
     public boolean isPrimitiveBuiltin(String name) {
         RBuiltinPackage pkg = basePackage;
         RBuiltinDescriptor rbf = pkg.lookupByName(name);
-        if (rbf != null && rbf.getKind() != RBuiltinKind.INTERNAL) {
-            return true;
-        }
-        return false;
+        return rbf != null && rbf.getKind() != RBuiltinKind.INTERNAL;
     }
 }

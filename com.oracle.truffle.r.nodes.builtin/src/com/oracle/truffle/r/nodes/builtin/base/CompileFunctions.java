@@ -188,8 +188,7 @@ public class CompileFunctions {
         @Specialization
         protected RList growconst(RList constBuf) {
             int n = constBuf.getLength();
-            RList ret = (RList) constBuf.copyResized(n << 1, true);
-            return ret;
+            return (RList) constBuf.copyResized(n << 1, true);
         }
     }
 
@@ -240,8 +239,7 @@ public class CompileFunctions {
             if (n < 0 || n > constBuf.getLength()) {
                 throw RError.error(this, RError.Message.BAD_CONSTANT_COUNT);
             }
-            RList ret = (RList) constBuf.copyResized(n, false);
-            return ret;
+            return (RList) constBuf.copyResized(n, false);
         }
     }
 

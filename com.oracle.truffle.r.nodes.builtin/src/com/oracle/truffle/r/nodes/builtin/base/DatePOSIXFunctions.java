@@ -471,7 +471,7 @@ public class DatePOSIXFunctions {
                         LocalTime tm = LocalTime.from(parse);
                         time = LocalDateTime.of(LocalDate.now(), tm);
                     }
-                    double ms = (time.toInstant(ZoneOffset.UTC).toEpochMilli() % 1000) / 1000;
+                    double ms = (time.toInstant(ZoneOffset.UTC).toEpochMilli() % 1000) / 1000.0;
                     builder.setEntry(i, time.getSecond() + ms, time.getMinute(), time.getHour(), time.getDayOfMonth(), time.getMonthValue() - 1, time.getYear() - 1900, time.getDayOfWeek().ordinal(),
                                     time.getDayOfYear(), 0);
                     continue;

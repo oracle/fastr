@@ -1269,7 +1269,7 @@ public final class SpecialAttributesFunctions {
         }
 
         public final boolean isObject(Object x) {
-            return getClassAttr(x) != null ? true : false;
+            return getClassAttr(x) != null;
         }
     }
 

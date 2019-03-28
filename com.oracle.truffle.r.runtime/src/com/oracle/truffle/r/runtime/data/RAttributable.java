@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -126,7 +126,7 @@ public interface RAttributable extends RTypedValue {
      * Returns {@code true} if and only if the value has a {@code class} attribute added explicitly.
      */
     default boolean isObject() {
-        return getClassAttr() != null ? true : false;
+        return getClassAttr() != null;
     }
 
     static void copyAttributes(RAttributable obj, DynamicObject attrs) {

@@ -1277,9 +1277,7 @@ public abstract class ConnectionFunctions {
 
         @Specialization
         @TruffleBoundary
-        protected RAbstractIntVector fifo(String path, String openArg, boolean blocking, String encoding) {
-
-            String open = openArg;
+        protected RAbstractIntVector fifo(String path, String open, boolean blocking, String encoding) {
             try {
                 return new FifoRConnection(RContext.getInstance().getEnv(), path, open, blocking, encoding).asVector();
             } catch (IOException ex) {
@@ -1305,9 +1303,8 @@ public abstract class ConnectionFunctions {
         @TruffleBoundary
         protected RAbstractIntVector pipe(String path, String openArg, String encoding) {
 
-            String open = openArg;
             try {
-                return new PipeRConnection(path, open, encoding).asVector();
+                return new PipeRConnection(path, openArg, encoding).asVector();
             } catch (IOException ex) {
                 warning(RError.Message.CANNOT_OPEN_FIFO, path);
                 throw error(RError.Message.CANNOT_OPEN_CONNECTION);

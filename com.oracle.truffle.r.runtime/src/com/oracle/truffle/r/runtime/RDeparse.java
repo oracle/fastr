@@ -904,7 +904,7 @@ public class RDeparse {
             }
 
             if (v instanceof CharSXPWrapper) {
-                sb.append("<CHARSXP: \"" + ((CharSXPWrapper) v).getContents() + "\">");
+                sb.append("<CHARSXP: \"").append(((CharSXPWrapper) v).getContents()).append("\">");
                 return this;
             }
 
@@ -1303,10 +1303,7 @@ public class RDeparse {
         if (name.equals("...")) {
             return true;
         }
-        if (keywords.contains(name)) {
-            return false;
-        }
-        return true;
+        return !keywords.contains(name);
     }
 
     private static char safeCharAt(String s, int i) {

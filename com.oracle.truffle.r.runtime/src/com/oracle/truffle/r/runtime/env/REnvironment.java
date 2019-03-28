@@ -1147,10 +1147,7 @@ public abstract class REnvironment extends RAttributeStorage {
         if (pattern != null && !pattern.matcher(nameToMatch).matches()) {
             return false;
         }
-        if (AnonymousFrameVariable.isAnonymous(nameToMatch)) {
-            return false;
-        }
-        return true;
+        return !AnonymousFrameVariable.isAnonymous(nameToMatch);
     }
 
     /**
