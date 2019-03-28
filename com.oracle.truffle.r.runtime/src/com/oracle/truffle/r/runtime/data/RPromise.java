@@ -80,8 +80,8 @@ public class RPromise extends RObject implements RTypedValue {
          */
         Explicit(EXPLICIT_BIT | FULL_PROMISE_BIT),
         /**
-         * This promise is currently being evaluated. This necessary to avoid cyclic evaluation, and
-         * can by checked via {@link #isUnderEvaluation()}.
+         * This promise is currently being evaluated. This is necessary to avoid cyclic evaluation,
+         * and can by checked via {@link #isUnderEvaluation()}.
          */
         UnderEvaluation(UNDER_EVALUATION_BIT);
 
@@ -91,7 +91,7 @@ public class RPromise extends RObject implements RTypedValue {
             this.bits = bits;
         }
 
-        public static boolean isDefaultOpt(int state) {
+        public static boolean isFullPromise(int state) {
             return (state & FULL_PROMISE_BIT) != 0;
         }
 
@@ -212,6 +212,7 @@ public class RPromise extends RObject implements RTypedValue {
     public final void setValue(Object newValue) {
         assert !isEvaluated();
         assert newValue != null;
+        assert !(newValue instanceof RPromise);
         this.value = newValue;
     }
 
@@ -273,17 +274,21 @@ public class RPromise extends RObject implements RTypedValue {
     /**
      * This is a {@link RPromise} implementation that performs two optimizations:
      * <ul>
-     * <li>1. It does not carry a {@link MaterializedFrame} ({@link RPromise#execFrame}) but knows
-     * how to retrieve the correct one if needed</li>
+     * <li>1. It does not carry a {@link MaterializedFrame} when in the compiler,
+     * ({@link RPromise#execFrame}) but it knows how to retrieve the correct one if needed (by
+     * traversing the Truffle frames and using the {@link EagerPromise#targetFrame} r-caller as the
+     * anchor)</li>
      * <li>2. It carries a pre-evaluated value of the symbol-expression it is supposed to evaluate
      * on first read</li>
      * </ul>
      * The 1. optimization is only possible if the {@link EagerPromise} does not leave the stack it
      * was created in, e.g. by the means of "sys.frame", "function" or similar. If it needs to be
-     * present for any reason, {@link #materialize()} is called.<br/>
-     * The 2. optimization is only possible as long it can be guaranteed that the symbol it was
+     * present for any reason, {@link #materialize()} is called (see
+     * {@code PromiseHelperNode.PromiseDeoptimizeFrameNode}).<br/>
+     * The 2. optimization is only possible as long as it can be guaranteed that the symbol it was
      * originally read from has not been altered in the mean time. If this cannot be guaranteed for
-     * any reason, a Promise gets {@link #deoptimize()} (which includes {@link #materialize()}ion).
+     * any reason, this promise gets {@link #deoptimize() deoptimized} (which includes
+     * {@link #materialize() materialization}).
      */
     public static final class EagerPromise extends RPromise {
         private final Object eagerValue;

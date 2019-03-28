@@ -58,6 +58,7 @@ import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.EagerPromise;
 import com.oracle.truffle.r.runtime.data.RPromise.PromiseState;
 import com.oracle.truffle.r.runtime.data.RShareable;
+import com.oracle.truffle.r.runtime.env.frame.CannotOptimizePromise;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
 /**
@@ -112,7 +113,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
          *
          * @param arguments The frame's arguments, which will be checked for {@link RPromise}s to
          *            deoptimize
-         * @return Whether there was at least on {@link RPromise} which needed to be deoptimized.
+         * @return Whether there was at least one {@link RPromise} which needed to be deoptimized.
          */
         public boolean deoptimizeFrame(Object[] arguments) {
             boolean deoptOne = false;
@@ -129,7 +130,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         }
 
         private boolean deoptimize(RPromise promise) {
-            if (!PromiseState.isDefaultOpt(promise.getState())) {
+            if (!PromiseState.isFullPromise(promise.getState())) {
                 deoptimizeProfile.enter();
                 EagerPromise eager = (EagerPromise) promise;
                 return eager.deoptimize();
@@ -156,6 +157,14 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     @Child private SetVisibilityNode setVisibility;
     @Child private GenerateValueNonDefaultOptimizedNode generateValueNonDefaultOptimizedNode;
     private final ValueProfile promiseFrameProfile = ValueProfile.createClassProfile();
+
+    private static void checkFullPromise(Frame frame) {
+        if (frame != null) {
+            if (RArguments.getCall(frame).evaluateOnlyEagerPromises()) {
+                throw new CannotOptimizePromise();
+            }
+        }
+    }
 
     /**
      * Main entry point for proper evaluation of the given Promise when visibility updating is not
@@ -196,19 +205,24 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
             optStateProfile = PrimitiveValueProfile.createEqualityProfile();
             return evaluateSlowPath(frame, promise);
         }
-        if (isDefaultOptProfile.profile(PromiseState.isDefaultOpt(state))) {
-            // default values of arguments are evaluated in the frame of the function that takes
-            // them, we do not need to retrieve the frame of the promise, we already have it
-            return generateValueDefault(frame, promise, visibleExec);
+
+        // Default values of arguments are evaluated in the frame of the function that takes
+        // them, we do not need to retrieve the frame of the promise, we already have it.
+        //
+        // Non-default (a.k.a. "supplied") arguments we need to evaluate in the frame of the
+        // function that supplied them and that would mean frame materialization, we first try
+        // to see if the promise can be optimized.
+
+        if (isDefaultOptProfile.profile(PromiseState.isFullPromise(state))) {
+            return generateValueFromFullPromise(frame, promise, visibleExec);
         } else {
-            // non-default arguments we need to evaluate in the frame of the function that supplied
-            // them and that would mean frame materialization, we first try to see if the promise
-            // can be optimized
-            return generateValueNonDefault(frame, state, (EagerPromise) promise, visibleExec);
+            return generateValueFromEagerPromise(frame, state, (EagerPromise) promise, visibleExec);
         }
     }
 
-    private Object generateValueDefault(VirtualFrame frame, RPromise promise, boolean visibleExec) {
+    private Object generateValueFromFullPromise(VirtualFrame frame, RPromise promise, boolean visibleExec) {
+        checkFullPromise(frame);
+
         // Check for dependency cycle
         if (isUnderEvaluation(promise)) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
@@ -244,8 +258,8 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         return GetVisibilityNode.executeSlowPath(frame);
     }
 
-    private Object generateValueNonDefault(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec) {
-        assert !PromiseState.isDefaultOpt(state);
+    private Object generateValueFromEagerPromise(VirtualFrame frame, int state, EagerPromise promise, boolean visibleExec) {
+        assert !PromiseState.isFullPromise(state);
         if (!isDeoptimized(promise)) {
             if (generateValueNonDefaultOptimizedNode == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
@@ -255,14 +269,18 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
             if (result != null) {
                 return result;
             } else {
+                checkFullPromise(frame);
                 // Fallback: eager evaluation failed, now take the slow path
                 CompilerDirectives.transferToInterpreter();
                 promise.notifyFailure();
                 promise.materialize();
             }
+        } else {
+            checkFullPromise(frame);
         }
+
         // Call
-        return generateValueDefault(frame, promise, visibleExec);
+        return generateValueFromFullPromise(frame, promise, visibleExec);
     }
 
     @TruffleBoundary
@@ -282,7 +300,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                 if (promise.isEvaluated()) {
                     return promise.getValue();
                 }
-                Object obj = generateValueDefaultSlowPath(frame, promise);
+                Object obj = generateValueFromFullPromiseSlowPath(frame, promise);
                 // if the value is temporary, we increment the reference count. The reason is that
                 // temporary values are considered available to be reused and altered (e.g. as a
                 // result of arithmetic operation), which is what we do not want to happen to a
@@ -298,17 +316,19 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
             }
         }
         Object obj;
-        if (PromiseState.isDefaultOpt(state)) {
+        if (PromiseState.isFullPromise(state)) {
             // Evaluate guarded by underEvaluation
-            obj = generateValueDefaultSlowPath(frame, promise);
+            obj = generateValueFromFullPromiseSlowPath(frame, promise);
         } else {
-            obj = generateValueEagerSlowPath(frame, state, (EagerPromise) promise);
+            obj = generateValueFromEagerPromiseSlowPath(frame, state, (EagerPromise) promise);
         }
         promise.setValue(obj);
         return obj;
     }
 
-    private static Object generateValueDefaultSlowPath(VirtualFrame frame, RPromise promise) {
+    private static Object generateValueFromFullPromiseSlowPath(VirtualFrame frame, RPromise promise) {
+        checkFullPromise(frame);
+
         // Check for dependency cycle
         if (promise.isUnderEvaluation()) {
             throw RError.error(RError.SHOW_CALLER, RError.Message.PROMISE_CYCLE);
@@ -331,8 +351,8 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), callerFrameObject, RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame)));
     }
 
-    private static Object generateValueEagerSlowPath(VirtualFrame frame, int state, EagerPromise promise) {
-        assert !PromiseState.isDefaultOpt(state);
+    private static Object generateValueFromEagerPromiseSlowPath(VirtualFrame frame, int state, EagerPromise promise) {
+        assert !PromiseState.isFullPromise(state);
         if (!promise.isDeoptimized()) {
             Assumption eagerAssumption = promise.getIsValidAssumption();
             if (eagerAssumption.isValid()) {
@@ -347,14 +367,17 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
                     return o;
                 }
             } else {
+                checkFullPromise(frame);
                 promise.notifyFailure();
 
                 // Fallback: eager evaluation failed, now take the slow path
                 promise.materialize();
             }
+        } else {
+            checkFullPromise(frame);
         }
         // Call
-        return generateValueDefaultSlowPath(frame, promise);
+        return generateValueFromFullPromiseSlowPath(frame, promise);
     }
 
     /**
@@ -362,7 +385,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
      * <code>null</code>
      */
     public void materialize(RPromise promise) {
-        if (!isDefaultOptProfile.profile(PromiseState.isDefaultOpt(promise.getState()))) {
+        if (!isDefaultOptProfile.profile(PromiseState.isFullPromise(promise.getState()))) {
             EagerPromise eager = (EagerPromise) promise;
             eager.materialize();
         }
@@ -422,14 +445,14 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
     }
 
     /**
-     * Attempts to generate the value of the given promise in optimized way without having to
+     * Attempts to generate the value of the given promise in an optimized way without having to
      * materialize the promise's exec frame. If that's not possible, returns {@code null}.
-     * 
+     *
      * Note: we have to create a new instance of {@link WrapArgumentNode} for each
      * {@link EagerPromise#wrapIndex()} we encounter, but only for {@link EagerPromise#wrapIndex()}
      * that are up to {@link ArgumentStatePush#MAX_COUNTED_ARGS}, this is also because the
      * {@link WrapArgumentNode} takes the argument index as constructor parameter. Values of R
-     * arguments have to be channelled through the {@link WrapArgumentNode} so that the reference
+     * arguments have to be channeled through the {@link WrapArgumentNode} so that the reference
      * counting can work for the arguments, but the reference counting is only done for up to
      * {@link ArgumentStatePush#MAX_COUNTED_ARGS} arguments.
      */
@@ -583,6 +606,7 @@ public final class PromiseHelperNode extends CallerFrameClosureProvider {
         private Object getEagerValue(VirtualFrame frame, EagerPromise promise, WrapArgumentNode wrapArgumentNode, ValueProfile eagerValueProfile, boolean visibleExec) {
             Object o = promise.getEagerValue();
             if (wrapArgumentNode != null) {
+                // handle the reference counting
                 wrapArgumentNode.execute(frame, o);
             }
             if (visibleExec) {

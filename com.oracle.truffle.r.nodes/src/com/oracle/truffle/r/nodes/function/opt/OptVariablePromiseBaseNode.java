@@ -43,18 +43,18 @@ import com.oracle.truffle.r.runtime.nodes.RSyntaxLookup;
 import com.oracle.truffle.r.runtime.nodes.RSyntaxNode;
 
 /**
- * Creates optimized promise for a lookup of a symbol.
+ * Creates an optimized promise for a lookup of a symbol.
  *
- * This node gets executed when the function is being called and therefore inside the frame of the
- * caller and it can simple read the value of the symbol. The issue is with reading the symbol value
- * like this is that it can change between now (the function is being called) and the time when the
- * promise should actually be evaluated (the argument is accessed for the first time inside callee).
- * Example:
+ * This factory-node gets executed when a function is being called and therefore it takes place
+ * inside the frame of the caller. However, there may be an issue when the promise reads the value
+ * of a symbol whose value can change between now (the function is being called) and the time when
+ * the promise is actually evaluated (the argument is accessed for the first time inside the
+ * callee). Example:
  *
  * <pre>
- *     function <- foo(x) { assign('a', 42, parent.frame()); return(x) }
+ *     foo <- function(x) { assign('a', 42, parent.frame()); return(x) }
  *     a <- 22
- *     foo(a) # gives 42
+ *     foo(a) # must give 42
  * </pre>
  *
  * The problem is solved by getting {@link FrameSlotChangeMonitor#getNotChangedNonLocallyAssumption}
