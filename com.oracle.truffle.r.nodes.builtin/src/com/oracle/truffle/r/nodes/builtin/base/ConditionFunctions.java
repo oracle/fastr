@@ -34,8 +34,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -69,7 +71,8 @@ public class ConditionFunctions {
         }
 
         protected FrameSlot createHandlerFrameSlot(VirtualFrame frame) {
-            return ((FunctionDefinitionNode) getRootNode()).getHandlerFrameSlot(frame);
+            RootNode rootNode = RArguments.getFunction(frame).getRootNode();
+            return ((FunctionDefinitionNode) rootNode).getHandlerFrameSlot(frame);
         }
 
         @Specialization
@@ -121,7 +124,8 @@ public class ConditionFunctions {
         }
 
         protected FrameSlot createRestartFrameSlot(VirtualFrame frame) {
-            return ((FunctionDefinitionNode) getRootNode()).getRestartFrameSlot(frame);
+            RootNode rootNode = RArguments.getFunction(frame).getRootNode();
+            return ((FunctionDefinitionNode) rootNode).getRestartFrameSlot(frame);
         }
 
         @Specialization

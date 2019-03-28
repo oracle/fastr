@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -779,7 +779,7 @@ public class DebugHandling {
         public void onEnter(EventContext context, VirtualFrame frame) {
             if (!RContext.getInstance().stateInstrumentation.debugGloballyDisabled()) {
                 CompilerDirectives.transferToInterpreter();
-                RootNode rootNode = context.getInstrumentedNode().getRootNode();
+                Node rootNode = RArguments.getFunction(frame).getRootNode();
                 if (rootNode instanceof FunctionDefinitionNode) {
                     FunctionDefinitionNode fdn = (FunctionDefinitionNode) rootNode;
                     FunctionStatementsEventListener ensureSingleStep = ensureSingleStep(fdn, null);

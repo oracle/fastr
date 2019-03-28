@@ -47,8 +47,9 @@ import com.oracle.truffle.r.nodes.builtin.base.printer.ComplexVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.base.printer.DoubleVectorPrinter;
 import com.oracle.truffle.r.nodes.builtin.helpers.DebugHandling;
 import com.oracle.truffle.r.nodes.builtin.helpers.TraceHandling;
+import com.oracle.truffle.r.nodes.control.AbstractBlockNode;
 import com.oracle.truffle.r.nodes.control.AbstractLoopNode;
-import com.oracle.truffle.r.nodes.control.BlockNode;
+import com.oracle.truffle.r.nodes.control.BlockNode.HugeBlockRootNode;
 import com.oracle.truffle.r.nodes.control.IfNode;
 import com.oracle.truffle.r.nodes.control.ReplacementDispatchNode;
 import com.oracle.truffle.r.nodes.function.ClassHierarchyNode;
@@ -281,13 +282,13 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             return node instanceof RCallNode;
         }
         if (tag == FunctionBodyBlockTag.class) {
-            return node instanceof BlockNode && ((BlockNode) node).unwrapParent() instanceof RootBodyNode;
+            return node instanceof AbstractBlockNode && ((AbstractBlockNode) node).unwrapParent() instanceof RootBodyNode;
         }
         if (tag == LoopTag.class) {
             return node instanceof AbstractLoopNode;
         }
         if (tag == StatementTag.class) {
-            if (node instanceof BlockNode) {
+            if (node instanceof AbstractBlockNode) {
                 // so that the stepping location is not the block itself, but the first statement in
                 // the block, note that the FastR's own debugging and tracing mechanism uses
                 // FunctionBodyBlockTag to recognize function bodies.
@@ -295,14 +296,15 @@ class RRuntimeASTAccessImpl implements RRuntimeASTAccess {
             }
             // How to recognize statement from some node inside a statement (e.g. expression)?
             Node parent = ((RInstrumentableNode) node).unwrapParent();
-            if (parent instanceof BlockNode) {
+            if (parent instanceof AbstractBlockNode) {
                 // It's in a block of statements
                 return true;
             } else {
                 // single statement block: as function body, if/else body, loop body
                 // note: RepeatingNode is not a RSyntaxElement but the body of a loop is
                 // under the repeating node !
-                return parent instanceof RootBodyNode || parent instanceof IfNode || AbstractLoopNode.isLoopBody(node) || EngineRootNode.isEngineBody(parent);
+                return parent instanceof RootBodyNode || parent instanceof IfNode || AbstractLoopNode.isLoopBody(node) ||
+                                EngineRootNode.isEngineBody(parent) || parent instanceof HugeBlockRootNode;
             }
         }
         // TODO: ExpressionTag: (!statement && !loop && !if && !call && !root)??
