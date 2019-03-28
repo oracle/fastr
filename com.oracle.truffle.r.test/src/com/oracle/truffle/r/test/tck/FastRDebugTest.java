@@ -850,7 +850,6 @@ public class FastRDebugTest {
                             if (metaObjects) {
                                 DebugValue moDV = value.getMetaObject();
                                 if (moDV != null || expectedValue != null) {
-                                    expectedValue = "[1] \"" + expectedValue + "\"";
                                     String mo = moDV.as(String.class);
                                     Assert.assertEquals("MetaObjects of '" + name + "' differ:", expectedValue, mo);
                                 }
