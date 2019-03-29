@@ -118,7 +118,7 @@ public class EnvFunctions {
 
         @Specialization
         protected Object asEnvironmentInt(VirtualFrame frame, RAbstractIntVector pos,
-                        @Cached("new()") GetCallerFrameNode getCallerFrame) {
+                        @Cached("create()") GetCallerFrameNode getCallerFrame) {
             if (pos.getLength() == 0) {
                 CompilerDirectives.transferToInterpreter();
                 throw error(Message.INVALID_ARGUMENT, "pos");
@@ -346,7 +346,7 @@ public class EnvFunctions {
 
         @Specialization
         protected Object environment(VirtualFrame frame, @SuppressWarnings("unused") RNull fun,
-                        @Cached("new()") GetCallerFrameNode callerFrame,
+                        @Cached("create()") GetCallerFrameNode callerFrame,
                         @Cached("new()") PromiseDeoptimizeFrameNode deoptFrameNode) {
             MaterializedFrame matFrame = callerFrame.execute(frame);
 

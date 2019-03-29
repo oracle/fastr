@@ -32,6 +32,8 @@ import com.oracle.truffle.api.dsl.Cached;
 import com.oracle.truffle.api.dsl.Fallback;
 import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.Frame;
+import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.access.variables.ReadVariableNode;
@@ -41,12 +43,13 @@ import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RCaller;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.Utils;
+import com.oracle.truffle.r.runtime.VirtualEvalFrame;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.RExpression;
 import com.oracle.truffle.r.runtime.data.RFunction;
-import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RList;
 import com.oracle.truffle.r.runtime.data.RNull;
+import com.oracle.truffle.r.runtime.data.RPairList;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -64,7 +67,22 @@ public abstract class RfEvalNode extends FFIUpCallNode.Arg2 {
     private static RCaller createCall(REnvironment env) {
         // TODO: getActualCurrentFrame causes deopt
         Frame frame = Utils.getActualCurrentFrame();
-        RCaller originalCaller = RArguments.getCall(env.getFrame());
+        final MaterializedFrame envFrame = env.getFrame();
+        RCaller originalCaller = RArguments.getCall(envFrame);
+        if (!RCaller.isValidCaller(originalCaller) && env instanceof REnvironment.NewEnv) {
+            // Try to find the valid original caller stored in the original frame of a
+            // VirtualEvalFrame that is the same as envFrame
+            RCaller validOrigCaller = Utils.iterateRFrames(FrameAccess.READ_ONLY, (f) -> {
+                if (f instanceof VirtualEvalFrame && ((VirtualEvalFrame) f).getOriginalFrame() == envFrame) {
+                    return RArguments.getCall(f);
+                } else {
+                    return null;
+                }
+            });
+            if (validOrigCaller != null) {
+                originalCaller = validOrigCaller;
+            }
+        }
         RCaller currentCaller = RArguments.getCall(frame);
         if (env == REnvironment.globalEnv(RContext.getInstance())) {
             return RCaller.createForPromise(originalCaller, currentCaller);

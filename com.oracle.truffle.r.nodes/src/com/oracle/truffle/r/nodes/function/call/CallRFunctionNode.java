@@ -41,7 +41,7 @@ import com.oracle.truffle.r.runtime.data.RFunction;
  * node). Using {@link DirectCallNode} enables to inline the callee's AST.
  */
 @NodeInfo(cost = NodeCost.NONE)
-public final class CallRFunctionNode extends CallRFunctionBaseNode {
+public final class CallRFunctionNode extends CallerFrameClosureProvider {
 
     @Child private DirectCallNode callNode;
     @Child private SetVisibilityNode visibility = SetVisibilityNode.create();

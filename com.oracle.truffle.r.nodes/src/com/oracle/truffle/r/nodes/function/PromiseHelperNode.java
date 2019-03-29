@@ -43,6 +43,7 @@ import com.oracle.truffle.api.profiles.PrimitiveValueProfile;
 import com.oracle.truffle.api.profiles.ValueProfile;
 import com.oracle.truffle.r.nodes.InlineCacheNode;
 import com.oracle.truffle.r.nodes.function.PromiseHelperNodeFactory.GenerateValueNonDefaultOptimizedNodeGen;
+import com.oracle.truffle.r.nodes.function.call.CallerFrameClosureProvider;
 import com.oracle.truffle.r.nodes.function.opt.ShareObjectNode;
 import com.oracle.truffle.r.nodes.function.visibility.GetVisibilityNode;
 import com.oracle.truffle.r.nodes.function.visibility.SetVisibilityNode;
@@ -63,7 +64,7 @@ import com.oracle.truffle.r.runtime.nodes.RBaseNode;
  * Holds {@link RPromise}-related functionality that cannot be implemented in
  * "com.oracle.truffle.r.runtime.data" due to package import restrictions.
  */
-public final class PromiseHelperNode extends RBaseNode {
+public final class PromiseHelperNode extends CallerFrameClosureProvider {
 
     public static final class PromiseCheckHelperNode extends RBaseNode {
 
@@ -220,7 +221,7 @@ public final class PromiseHelperNode extends RBaseNode {
             // TODO: no wrapping of arguments here?, why we do not have to set visibility here?
             promise.setUnderEvaluation();
             boolean inOrigin = inOriginProfile.profile(isInOriginFrame(frame, promise));
-            Frame execFrame = inOrigin ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()));
+            Frame execFrame = inOrigin ? frame : wrapPromiseFrame(frame, promiseFrameProfile.profile(promise.getFrame()), getCallerFrameObject(frame));
             Object value = promiseClosureCache.execute(execFrame, promise.getClosure());
             if (visibleExec && !inOrigin && frame != null) {
                 if (setVisibility == null) {
@@ -318,16 +319,16 @@ public final class PromiseHelperNode extends RBaseNode {
             if (promise.isInOriginFrame(frame)) {
                 return promise.getClosure().eval(frame.materialize());
             } else {
-                return promise.getClosure().eval(wrapPromiseFrame(frame, promise.getFrame()));
+                return promise.getClosure().eval(wrapPromiseFrame(frame, promise.getFrame(), frame != null ? frame.materialize() : null));
             }
         } finally {
             promise.resetUnderEvaluation();
         }
     }
 
-    private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, MaterializedFrame promiseFrame) {
+    private static VirtualEvalFrame wrapPromiseFrame(VirtualFrame frame, MaterializedFrame promiseFrame, Object callerFrameObject) {
         assert promiseFrame != null;
-        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame)));
+        return VirtualEvalFrame.create(promiseFrame, RArguments.getFunction(promiseFrame), callerFrameObject, RCaller.createForPromise(RArguments.getCall(promiseFrame), RArguments.getCall(frame)));
     }
 
     private static Object generateValueEagerSlowPath(VirtualFrame frame, int state, EagerPromise promise) {

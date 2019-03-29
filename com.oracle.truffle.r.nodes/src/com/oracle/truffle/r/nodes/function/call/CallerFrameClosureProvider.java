@@ -43,7 +43,7 @@ import com.oracle.truffle.r.runtime.CallerFrameClosure;
  * the {@link CallerFrameClosure}, where we invalidate the assumption that we do not have to
  * materialize the current frame and pass it to the callee.
  */
-public abstract class CallRFunctionBaseNode extends Node {
+public abstract class CallerFrameClosureProvider extends Node {
 
     protected final Assumption needsNoCallerFrame = Truffle.getRuntime().createAssumption("no caller frame");
     protected final CallerFrameClosure invalidateNoCallerFrame = new InvalidateNoCallerFrame(needsNoCallerFrame);

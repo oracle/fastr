@@ -47,6 +47,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -445,6 +446,43 @@ public final class Utils {
                 return null;
             }
         });
+    }
+
+    /**
+     * Searches for the frame on the call stack whose caller is the same as the {@code target}
+     * argument. It uses the {@link RArguments#INDEX_CALLER_FRAME} frame argument to traverse the
+     * chain of frames, instead of iterating the stack using
+     * {@link TruffleRuntime#iterateFrames(FrameInstanceVisitor)}. A benefit of so doing is that
+     * this method does not have to be put beyond the Truffle boundary. This method returns null if
+     * no such frame is found or if the search loop encounters a frame not containing a frame in the
+     * {@link RArguments#INDEX_CALLER_FRAME} argument.
+     *
+     * @param frame the current frame
+     * @param target the target caller
+     */
+    public static Frame getStackFrame(Frame frame, RCaller target) {
+        Frame f = frame;
+        RCaller call = RArguments.getCall(f);
+        while (call != target) {
+            Object fObj = RArguments.getCallerFrame(f);
+            if (fObj instanceof Frame) {
+                assert fObj instanceof MaterializedFrame;
+                f = (Frame) fObj;
+            } else if (fObj instanceof CallerFrameClosure) {
+                CallerFrameClosure fc = (CallerFrameClosure) fObj;
+                fc.setNeedsCallerFrame();
+                f = fc.getMaterializedCallerFrame();
+                if (f == null) {
+                    return null;
+                }
+            } else {
+                assert fObj == null;
+                return null;
+            }
+            call = RArguments.getCall(f);
+        }
+
+        return f;
     }
 
     /**

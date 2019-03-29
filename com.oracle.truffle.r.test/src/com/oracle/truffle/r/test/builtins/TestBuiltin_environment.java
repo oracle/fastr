@@ -58,5 +58,6 @@ public class TestBuiltin_environment extends TestBase {
         assertEval("environment(NULL)");
         assertEval("{ f <- y~z; class(f) <- c('myclass', class(f)); environment(f) }");
         assertEval("{ x <- as.pairlist(c(1,2,3)); e <- as.environment(list(x=x)); print(x); print(e$x) }");
+        assertEval("{ env <- list2env(list(customenvvar = 42)); fst <- function(fstvar) do.call(environment, list(), envir = env); a <- fst(0); ls(a) }");
     }
 }

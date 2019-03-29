@@ -104,7 +104,7 @@ public class BrowserFunctions {
                     if (fun != null && fun.isBuiltin() && fun.getRBuiltin().getBuiltinNodeClass() == BrowserNode.class) {
                         if (getCallerFrame == null) {
                             CompilerDirectives.transferToInterpreterAndInvalidate();
-                            getCallerFrame = insert(new GetCallerFrameNode());
+                            getCallerFrame = insert(GetCallerFrameNode.create());
                         }
                         actualFrame = getCallerFrame.execute(mFrame);
                         caller = caller.getPrevious();
