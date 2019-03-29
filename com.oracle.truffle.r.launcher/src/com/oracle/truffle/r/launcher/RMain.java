@@ -36,6 +36,7 @@ import org.graalvm.launcher.AbstractLanguageLauncher;
 import org.graalvm.options.OptionCategory;
 import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Context.Builder;
+import org.graalvm.polyglot.HostAccess;
 import org.graalvm.polyglot.PolyglotException;
 import org.graalvm.polyglot.Source;
 
@@ -180,8 +181,8 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
         this.consoleHandler = ConsoleHandler.createConsoleHandler(options, null, inStream, outStream);
         Builder contextBuilder = contextBuilderIn;
-        if (!ignoreJvmArguments) {
-            contextBuilder = contextBuilder.allowHostAccess(useJVM);
+        if (!ignoreJvmArguments && !useJVM) {
+            contextBuilder.allowHostClassLookup(null);
         }
 
         Context context;

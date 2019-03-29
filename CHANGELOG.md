@@ -9,6 +9,7 @@ Bug fixes:
 * `rep.int` with value argument of length 0 just returns the value argument
 * `tcrossprod` called from `apply` did not give correct result #60
 * `Rf_lengthgets` can accept `NULL` argument
+* FastR does not allow Java interop when not started with `--jvm`
 
 Added missing R builtins and C APIa
 
