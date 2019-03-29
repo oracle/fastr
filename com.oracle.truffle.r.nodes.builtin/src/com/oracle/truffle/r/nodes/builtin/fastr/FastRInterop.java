@@ -118,6 +118,12 @@ public class FastRInterop {
         isTesting = true;
     }
 
+    private static void checkPolyglotAccess(Env env) {
+        if (!env.isPolyglotAccessAllowed()) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "Polyglot bindings are not accessible for this language. Use --polyglot or allowPolyglotAccess when building the context.");
+        }
+    }
+
     @RBuiltin(name = "eval.polyglot", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"languageId", "code", "path"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg3 {
 
@@ -170,6 +176,7 @@ public class FastRInterop {
         protected CallTarget parse(String languageId, String code) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
+            checkPolyglotAccess(env);
             LanguageInfo languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
             if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
                 throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
@@ -223,6 +230,7 @@ public class FastRInterop {
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
+            checkPolyglotAccess(env);
             TruffleFile tFile = env.getTruffleFile(Utils.tildeExpand(path, false)).getAbsoluteFile();
             LanguageInfo languageInfo = null;
             try {
@@ -273,7 +281,9 @@ public class FastRInterop {
             if (name == null) {
                 throw error(RError.Message.INVALID_ARGUMENT, "name");
             }
-            RContext.getInstance().getEnv().exportSymbol(name, value);
+            Env env = RContext.getInstance().getEnv();
+            checkPolyglotAccess(env);
+            env.exportSymbol(name, value);
             return RNull.instance;
         }
 
@@ -301,7 +311,9 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         protected Object importSymbol(String name) {
-            Object object = RContext.getInstance().getEnv().importSymbol(name);
+            Env env = RContext.getInstance().getEnv();
+            checkPolyglotAccess(env);
+            Object object = env.importSymbol(name);
             if (object == null) {
                 throw error(RError.Message.NO_IMPORT_OBJECT, name);
             }

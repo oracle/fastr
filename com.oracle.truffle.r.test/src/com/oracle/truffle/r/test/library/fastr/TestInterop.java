@@ -26,6 +26,9 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.graalvm.polyglot.Context;
+import org.graalvm.polyglot.PolyglotAccess;
+import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -39,6 +42,7 @@ import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestInterop extends TestBase {
 
@@ -83,6 +87,17 @@ public class TestInterop extends TestBase {
         if (f.exists()) {
             f.delete();
         }
+    }
+
+    @Test
+    public void testPolyglotAccessWhenPolyglotBindingsAreDisabled() {
+        String message = "no PolyglotException exception occurred";
+        try (org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R").allowPolyglotAccess(PolyglotAccess.NONE).build()) {
+            context.eval("R", "eval.polyglot('js', '1+3')");
+        } catch (PolyglotException ex) {
+            message = ex.getMessage();
+        }
+        assertTrue(message, message.contains("Polyglot bindings are not accessible for this language. Use --polyglot or allowPolyglotAccess when building the context."));
     }
 
     @Test
