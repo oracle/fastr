@@ -158,7 +158,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
             return "missing";
         }
         // primitive values are never produced by FastR so we don't print them as R vectors
-        if (unwrapped instanceof Number || unwrapped instanceof String || unwrapped instanceof Boolean) {
+        if (unwrapped instanceof Number || unwrapped instanceof String || unwrapped instanceof Boolean || unwrapped instanceof Character) {
             return unwrapped.toString();
         }
         // special class designated to exchange NA values with the outside world
