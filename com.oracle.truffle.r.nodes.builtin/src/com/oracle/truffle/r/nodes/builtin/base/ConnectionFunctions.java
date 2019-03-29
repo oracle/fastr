@@ -506,7 +506,7 @@ public abstract class ConnectionFunctions {
             BaseRConnection baseCon = RConnection.fromIndex(object);
             Object[] data = new Object[NAMES.getLength()];
             data[0] = baseCon.getSummaryDescription();
-            data[1] = baseCon.getConnectionClass();
+            data[1] = baseCon.getConnectionClassName();
             data[2] = baseCon.getOpenMode().summaryString();
             data[3] = baseCon.isTextMode() ? "text" : "binary";
             data[4] = baseCon.isOpen() ? "opened" : "closed";

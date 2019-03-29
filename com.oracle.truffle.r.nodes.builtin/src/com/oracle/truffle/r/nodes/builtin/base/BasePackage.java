@@ -580,6 +580,7 @@ public class BasePackage extends RBuiltinPackage {
         add(GrepFunctions.Regexec.class, GrepFunctionsFactory.RegexecNodeGen::create);
         add(GrepFunctions.Strsplit.class, GrepFunctionsFactory.StrsplitNodeGen::create);
         add(GrepFunctions.Sub.class, GrepFunctionsFactory.SubNodeGen::create);
+        add(GZCon.class, GZConNodeGen::create);
         add(HiddenInternalFunctions.GetRegisteredRoutines.class, HiddenInternalFunctionsFactory.GetRegisteredRoutinesNodeGen::create);
         add(HiddenInternalFunctions.ImportIntoEnv.class, HiddenInternalFunctionsFactory.ImportIntoEnvNodeGen::create);
         add(HiddenInternalFunctions.LazyLoadDBFetch.class, HiddenInternalFunctionsFactory.LazyLoadDBFetchNodeGen::create);

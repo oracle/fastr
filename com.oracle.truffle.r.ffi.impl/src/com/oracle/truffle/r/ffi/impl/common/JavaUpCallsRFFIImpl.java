@@ -1516,7 +1516,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object getConnectionClassString(Object x) {
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
-        return wrapString(conn.getConnectionClass());
+        return wrapString(conn.getConnectionClassName());
     }
 
     @Override

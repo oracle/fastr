@@ -25,16 +25,12 @@ package com.oracle.truffle.r.runtime.conn;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
 import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.channels.ByteChannel;
 import java.nio.file.OpenOption;
 import java.nio.file.StandardOpenOption;
 import java.util.EnumSet;
-import java.util.zip.GZIPInputStream;
-import java.util.zip.GZIPOutputStream;
 
 import org.tukaani.xz.LZMA2Options;
 import org.tukaani.xz.XZ;
@@ -50,6 +46,8 @@ import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedInputRConnection;
+import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedOutputRConnection;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import java.nio.channels.SeekableByteChannel;
@@ -58,7 +56,6 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class FileConnections {
-    public static final int GZIP_BUFFER_SIZE = (2 << 20);
 
     /**
      * Base class for all modes of file connections.
@@ -166,24 +163,6 @@ public class FileConnections {
         return delegate;
     }
 
-    private static DelegateRConnection createGZIPDelegateConnection(BasePathRConnection base) throws IOException {
-
-        switch (base.getOpenMode().abstractOpenMode) {
-            case Read:
-            case ReadBinary:
-                return new CompressedInputRConnection(base, new GZIPInputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newInputStream(), GZIP_BUFFER_SIZE));
-            case Append:
-            case AppendBinary:
-                return new CompressedOutputRConnection(base,
-                                new GZIPOutputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream(StandardOpenOption.APPEND), GZIP_BUFFER_SIZE), true);
-            case Write:
-            case WriteBinary:
-                return new CompressedOutputRConnection(base, new GZIPOutputStream(RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream(), GZIP_BUFFER_SIZE), true);
-            default:
-                throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
-        }
-    }
-
     private static DelegateRConnection createXZDelegateConnection(BasePathRConnection base) throws IOException {
 
         switch (base.getOpenMode().abstractOpenMode) {
@@ -248,7 +227,19 @@ public class FileConnections {
             case NONE:
                 return createUncompressedDelegateConnection(base);
             case GZIP:
-                return createGZIPDelegateConnection(base);
+                switch (base.getOpenMode().abstractOpenMode) {
+                    case Read:
+                    case ReadBinary:
+                        return DelegateRConnection.createGZIPDelegateInputConnection(base, RContext.getInstance().getEnv().getTruffleFile(base.path).newInputStream());
+                    case Append:
+                    case AppendBinary:
+                        return DelegateRConnection.createGZIPDelegateOutputConnection(base, RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream(StandardOpenOption.APPEND));
+                    case Write:
+                    case WriteBinary:
+                        return DelegateRConnection.createGZIPDelegateOutputConnection(base, RContext.getInstance().getEnv().getTruffleFile(base.path).newOutputStream());
+                    default:
+                        throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + base.getOpenMode());
+                }
             case XZ:
                 return createXZDelegateConnection(base);
             case BZIP2:
@@ -720,73 +711,9 @@ public class FileConnections {
         }
     }
 
-    private static class CompressedInputRConnection extends DelegateReadRConnection {
-        private final ByteChannel channel;
-
-        protected CompressedInputRConnection(BasePathRConnection base, InputStream is) {
-            super(base);
-            channel = ConnectionSupport.newChannel(is);
-        }
-
-        @Override
-        public ByteChannel getChannel() {
-            return channel;
-        }
-
-        @Override
-        public boolean isSeekable() {
-            return false;
-        }
-    }
-
     private static class ByteStreamCompressedInputRConnection extends CompressedInputRConnection {
         ByteStreamCompressedInputRConnection(BasePathRConnection base, ByteArrayInputStream is) {
             super(base, is);
-        }
-    }
-
-    private static class CompressedOutputRConnection extends DelegateWriteRConnection {
-        protected ByteChannel channel;
-        private final boolean seekable;
-        private long seekPosition = 0L;
-
-        protected CompressedOutputRConnection(BasePathRConnection base, OutputStream os, boolean seekable) {
-            super(base);
-            this.seekable = seekable;
-            this.channel = ConnectionSupport.newChannel(os);
-        }
-
-        @Override
-        public void closeAndDestroy() throws IOException {
-            base.closed = true;
-            close();
-        }
-
-        @Override
-        protected long seekInternal(long offset, SeekMode seekMode, SeekRWMode seekRWMode) throws IOException {
-            if (seekable) {
-                // TODO GZIP is basically seekable; however, the output stream does not allow any
-                // seeking
-                long oldPos = seekPosition;
-                seekPosition = offset;
-                return oldPos;
-            }
-            return super.seek(offset, seekMode, seekRWMode);
-        }
-
-        @Override
-        public boolean isSeekable() {
-            return seekable;
-        }
-
-        @Override
-        public ByteChannel getChannel() {
-            return channel;
-        }
-
-        @Override
-        public void truncate() throws IOException {
-            throw RError.nyi(RError.SHOW_CALLER, "truncating compressed file not");
         }
     }
 

@@ -1045,7 +1045,8 @@ public final class RError extends RuntimeException implements TruffleException {
         DATE_TIME_CONVERSION_SPEC_NOT_IMPLEMENTED("Date time conversion format '%s' is not implemented in FastR yet. Please submit an issue at https://github.com/oracle/fastr."),
         CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb"),
         INVALID_POLYNOMIAL_COEFFICIENT("invalid polynomial coefficient"),
-        ROOT_FINDING_FAILED("root finding code failed");
+        ROOT_FINDING_FAILED("root finding code failed"),
+        IS_GZCON("this is already a 'gzcon' connection");
 
         public final String message;
         final boolean hasArgs;
