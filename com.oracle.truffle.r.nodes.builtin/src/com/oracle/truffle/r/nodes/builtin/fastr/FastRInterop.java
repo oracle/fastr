@@ -118,12 +118,6 @@ public class FastRInterop {
         isTesting = true;
     }
 
-    private static void checkPolyglotAccess(Env env) {
-        if (!env.isPolyglotAccessAllowed()) {
-            throw RError.error(RError.SHOW_CALLER, RError.Message.GENERIC, "Polyglot bindings are not accessible for this language. Use --polyglot or allowPolyglotAccess when building the context.");
-        }
-    }
-
     @RBuiltin(name = "eval.polyglot", visibility = CUSTOM, kind = PRIMITIVE, parameterNames = {"languageId", "code", "path"}, behavior = COMPLEX)
     public abstract static class Eval extends RBuiltinNode.Arg3 {
 
@@ -176,7 +170,6 @@ public class FastRInterop {
         protected CallTarget parse(String languageId, String code) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
-            checkPolyglotAccess(env);
             LanguageInfo languageInfo = languageId != null ? env.getLanguages().get(languageId) : null;
             if ((languageId != null && languageInfo == null) || (languageInfo != null && languageInfo.isInternal())) {
                 throw error(RError.Message.LANGUAGE_NOT_AVAILABLE, languageId);
@@ -230,7 +223,6 @@ public class FastRInterop {
         protected CallTarget parseFile(String path, String languageIdArg) {
             CompilerAsserts.neverPartOfCompilation();
             Env env = RContext.getInstance().getEnv();
-            checkPolyglotAccess(env);
             TruffleFile tFile = env.getTruffleFile(Utils.tildeExpand(path, false)).getAbsoluteFile();
             LanguageInfo languageInfo = null;
             try {
@@ -263,6 +255,12 @@ public class FastRInterop {
         @TruffleBoundary
         protected Object eval(@SuppressWarnings("unused") RMissing code, @SuppressWarnings("unused") RMissing languageId, @SuppressWarnings("unused") RMissing path) {
             throw RError.error(this, RError.Message.WRONG_ARGS_COMBINATION, "eval.polyglot");
+        }
+    }
+
+    private static void checkPolyglotAccess(Env env) {
+        if (!env.isPolyglotAccessAllowed()) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.POLYGLOT_BINDING_NOT_AVAILABLE);
         }
     }
 

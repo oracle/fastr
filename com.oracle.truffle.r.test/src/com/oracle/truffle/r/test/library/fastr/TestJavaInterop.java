@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
-import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Before;
