@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -45,4 +45,10 @@ public class TestBuiltin_Syssetlocale extends TestBase {
         assertEval("Sys.setlocale(4, 42)");
         assertEval("Sys.setlocale('3L', 'C')");
     }
+
+    @Test
+    public void testSyslocaleconv() {
+        assertEval("names(Sys.localeconv())");
+    }
+
 }
