@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.context.Engine.ParseException;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.TruffleRLanguage;
 import com.oracle.truffle.r.runtime.data.RFunction;
+import com.oracle.truffle.r.runtime.data.RInteropScalar.RInteropNA;
 import com.oracle.truffle.r.runtime.data.RPromise;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.env.REnvironment;
@@ -140,6 +141,21 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
     @Override
     protected String toString(RContext context, Object value) {
+        // primitive values are never produced by FastR so we don't print them as R vectors
+        if (value instanceof Boolean) {
+            // boolean constants are capitalized like in R
+            return (boolean) value ? "TRUE" : "FALSE";
+        }
+        if (value instanceof Number || value instanceof String || value instanceof Character) {
+            return value.toString();
+        }
+
+        // special class designated to exchange NA values with the outside world
+        // this value is a scalar, the only way to get it is via getArrayMember on an R vector
+        if (value instanceof RInteropNA) {
+            return "NA";
+        }
+
         // the debugger also passes result of TruffleRLanguage.findMetaObject() to this method
         Object unwrapped = value;
         // print promises by other means than the "print" function to avoid evaluating them
@@ -155,8 +171,11 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         if (RMissingHelper.isMissing(unwrapped)) {
             return "missing";
         }
-        Object asVector = RRuntime.asAbstractVector(unwrapped);
-        if (!(asVector instanceof TruffleObject)) {
+
+        // the value unwrapped from an RPromise can be primitive Java type, but now we know that we
+        // are dealing with primitive that is supposed to be treated as R vector
+        unwrapped = RRuntime.asAbstractVector(unwrapped);
+        if (!(unwrapped instanceof TruffleObject)) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, String.format("Printing value of type '%s' is not supported by the R language.", unwrapped.getClass().getSimpleName()));
         }
         Object printObj = REnvironment.baseEnv(context).get("print");
@@ -171,7 +190,7 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         try {
             StringBuilder buffer = new StringBuilder();
             stateStdConnections.setBuffer(buffer);
-            RContext.getEngine().evalFunction((RFunction) printObj, callingFrame, RCaller.topLevel, false, ArgumentsSignature.empty(1), asVector);
+            RContext.getEngine().evalFunction((RFunction) printObj, callingFrame, RCaller.topLevel, false, ArgumentsSignature.empty(1), unwrapped);
             // remove the last "\n", which is useful for REPL, but not here
             if (buffer.length() > 0 && buffer.charAt(buffer.length() - 1) == '\n') {
                 buffer.setLength(buffer.length() - 1);

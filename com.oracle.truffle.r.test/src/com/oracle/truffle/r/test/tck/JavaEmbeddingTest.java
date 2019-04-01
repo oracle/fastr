@@ -59,6 +59,9 @@ public class JavaEmbeddingTest {
     public void testToString() {
         assertEquals("[1] 1", context.eval("R", "1").toString());
         assertEquals("[1] TRUE", context.eval("R", "TRUE").toString());
+        assertEquals("[1] NA", context.eval("R", "NA").toString());
+        // NA scalar value:
+        assertEquals("NA", context.eval("R", "NA").getArrayElement(0).toString());
         // @formatter:off
         String dataFrameExpected =
                 "  x y\n" +

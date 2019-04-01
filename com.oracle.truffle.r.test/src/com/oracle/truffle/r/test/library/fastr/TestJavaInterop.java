@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.test.library.fastr;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
+
 import java.lang.reflect.Array;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
@@ -31,6 +34,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 
+import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -40,6 +44,7 @@ import com.oracle.truffle.r.nodes.builtin.fastr.FastRInterop;
 import com.oracle.truffle.r.runtime.RRuntime;
 import com.oracle.truffle.r.runtime.RType;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.library.fastr.TestJavaInterop.TestClass.TestPOJO;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyArray;
@@ -280,14 +285,18 @@ public class TestJavaInterop extends TestBase {
     }
 
     @Test
-    @Ignore
     public void testNoJavaInterop() {
-        // TODO: create a brand new non-shared context to test this or find out how to configure
-        // host access in ".fastr.context.testing.new" built-in
-        assertEvalFastR(Context.NoJavaInterop, "new('integer'); ", "cat('integer(0)'");
-        assertEvalFastR(Context.NoJavaInterop, "new('" + Boolean.class.getName() + "');",
-                        errorIn("getClass(Class, where = topenv(parent.frame()))", "“" + Boolean.class.getName() + "” is not a defined class"));
-        assertEvalFastR(Context.NoJavaInterop, "new('__bogus_class_name__');", errorIn("getClass(Class, where = topenv(parent.frame()))", "“__bogus_class_name__” is not a defined class"));
+        org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R").allowHostClassLookup(null).build();
+        // new('integer') creates regular R object, no attempt to create a Java object
+        assertEquals("integer(0)", context.eval("R", "new('integer');").toString());
+        // cannot create Boolean object
+        String message = "no PolyglotException exception occurred";
+        try {
+            context.eval("R", "new('" + Boolean.class.getName() + "');");
+        } catch (PolyglotException ex) {
+            message = ex.getMessage();
+        }
+        assertTrue(message, message.contains("“" + Boolean.class.getName() + "” is not a defined class"));
     }
 
     @Test

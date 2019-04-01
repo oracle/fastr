@@ -258,6 +258,12 @@ public class FastRInterop {
         }
     }
 
+    private static void checkPolyglotAccess(Env env) {
+        if (!env.isPolyglotAccessAllowed()) {
+            throw RError.error(RError.SHOW_CALLER, RError.Message.POLYGLOT_BINDING_NOT_AVAILABLE);
+        }
+    }
+
     @RBuiltin(name = "export", visibility = OFF, kind = PRIMITIVE, parameterNames = {"name", "value"}, behavior = COMPLEX)
     public abstract static class Export extends RBuiltinNode.Arg2 {
 
@@ -273,7 +279,9 @@ public class FastRInterop {
             if (name == null) {
                 throw error(RError.Message.INVALID_ARGUMENT, "name");
             }
-            RContext.getInstance().getEnv().exportSymbol(name, value);
+            Env env = RContext.getInstance().getEnv();
+            checkPolyglotAccess(env);
+            env.exportSymbol(name, value);
             return RNull.instance;
         }
 
@@ -301,7 +309,9 @@ public class FastRInterop {
         @Specialization
         @TruffleBoundary
         protected Object importSymbol(String name) {
-            Object object = RContext.getInstance().getEnv().importSymbol(name);
+            Env env = RContext.getInstance().getEnv();
+            checkPolyglotAccess(env);
+            Object object = env.importSymbol(name);
             if (object == null) {
                 throw error(RError.Message.NO_IMPORT_OBJECT, name);
             }

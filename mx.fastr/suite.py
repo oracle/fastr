@@ -125,6 +125,9 @@ suite = {
         "truffle:TRUFFLE_TCK",
         "com.oracle.truffle.r.engine",
       ],
+      "annotationProcessors" : [
+          "truffle:TRUFFLE_DSL_PROCESSOR",
+      ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",
       "workingSets" : "Truffle,FastR,Test",
