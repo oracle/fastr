@@ -317,7 +317,15 @@ class TestFileStatus:
     def __init__(self, status, abspath):
         self.status = status
         self.abspath = abspath
-        self.report = 0, 1, 0
+        if status == "OK":
+            # At this point, status == "OK" means that we had no '.fail' output file and we will investigate the single
+            # test cases. So, initially we claim the test was skipped because if GnuR failed on the test, we state that
+            # we skipped it.
+            self.report = 0, 1, 0
+        elif status == "FAILED":
+            self.report = 0, 0, 1
+        else:
+            raise ValueError('Invalid test file status: %s (allowed: "OK", "FAILED")' % status)
 
 
 class TestStatus:
