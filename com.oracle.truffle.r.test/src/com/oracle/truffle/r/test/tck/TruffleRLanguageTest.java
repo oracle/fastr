@@ -30,6 +30,7 @@ import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
 import com.oracle.truffle.r.test.generate.FastRSession;
+import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.TestData;
 
 public class TruffleRLanguageTest extends TestBase {
 
@@ -47,13 +48,13 @@ public class TruffleRLanguageTest extends TestBase {
 
     @Test
     public void testToString() {
-        context.getEngine().getInstruments().get(ToStringTesterInstrument.ID).lookup(ToStringTesterInstrument.Initialize.class);
+        TestData testData = context.getEngine().getInstruments().get(ToStringTesterInstrument.ID).lookup(TestData.class);
         context.eval("R", "1+1");   // to trigger the instrument
-        assertEquals("42", ToStringTesterInstrument.intAsString);
-        assertEquals("42", ToStringTesterInstrument.byteAsString);
-        assertEquals("42.5", ToStringTesterInstrument.doubleAsString);
-        assertEquals("Hello", ToStringTesterInstrument.stringAsString);
-        assertEquals("true", ToStringTesterInstrument.booleanAsString);
+        assertEquals("42", testData.intAsString);
+        assertEquals("42", testData.byteAsString);
+        assertEquals("42.5", testData.doubleAsString);
+        assertEquals("Hello", testData.stringAsString);
+        assertEquals("true", testData.booleanAsString);
     }
 
 }

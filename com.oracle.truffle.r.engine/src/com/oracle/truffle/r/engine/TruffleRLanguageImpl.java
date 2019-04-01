@@ -47,7 +47,6 @@ import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags;
 import com.oracle.truffle.r.nodes.instrumentation.RSyntaxTags.FunctionBodyBlockTag;
 import com.oracle.truffle.r.runtime.ArgumentsSignature;
 import com.oracle.truffle.r.runtime.ExitException;
-import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.RAccuracyInfo;
 import com.oracle.truffle.r.runtime.RCaller;
@@ -142,6 +141,15 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
 
     @Override
     protected String toString(RContext context, Object value) {
+        // primitive values are never produced by FastR so we don't print them as R vectors
+        if (value instanceof Boolean) {
+            // boolean constants are capitalized like in R
+            return (boolean) value ? "TRUE" : "FALSE";
+        }
+        if (value instanceof Number || value instanceof String || value instanceof Character) {
+            return value.toString();
+        }
+
         // the debugger also passes result of TruffleRLanguage.findMetaObject() to this method
         Object unwrapped = value;
         // print promises by other means than the "print" function to avoid evaluating them
@@ -157,14 +165,14 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         if (RMissingHelper.isMissing(unwrapped)) {
             return "missing";
         }
-        // primitive values are never produced by FastR so we don't print them as R vectors
-        if (unwrapped instanceof Number || unwrapped instanceof String || unwrapped instanceof Boolean || unwrapped instanceof Character) {
-            return unwrapped.toString();
-        }
         // special class designated to exchange NA values with the outside world
         if (unwrapped instanceof RInteropNA) {
             unwrapped = ((RInteropNA) unwrapped).getValue();
         }
+
+        // the value unwrapped from an RPromise can be primitive Java type, but now we know that we
+        // are dealing with primitive that is supposed to be treated as R vector
+        unwrapped = RRuntime.asAbstractVector(unwrapped);
         if (!(unwrapped instanceof TruffleObject)) {
             throw RError.error(RError.NO_CALLER, Message.GENERIC, String.format("Printing value of type '%s' is not supported by the R language.", unwrapped.getClass().getSimpleName()));
         }

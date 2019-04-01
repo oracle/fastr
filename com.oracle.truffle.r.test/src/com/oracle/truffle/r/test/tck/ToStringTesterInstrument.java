@@ -23,42 +23,38 @@
 package com.oracle.truffle.r.test.tck;
 
 import com.oracle.truffle.api.frame.VirtualFrame;
-import com.oracle.truffle.api.instrumentation.EventContext;
 import com.oracle.truffle.api.instrumentation.ExecutionEventNode;
-import com.oracle.truffle.api.instrumentation.ExecutionEventNodeFactory;
 import com.oracle.truffle.api.instrumentation.SourceSectionFilter;
 import com.oracle.truffle.api.instrumentation.TruffleInstrument;
 import com.oracle.truffle.api.nodes.LanguageInfo;
-import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.Initialize;
+import com.oracle.truffle.r.test.tck.ToStringTesterInstrument.TestData;
 
-@TruffleInstrument.Registration(id = ToStringTesterInstrument.ID, name = ToStringTesterInstrument.ID, version = "1.0", services = Initialize.class)
+@TruffleInstrument.Registration(id = ToStringTesterInstrument.ID, name = ToStringTesterInstrument.ID, version = "1.0", services = TestData.class)
 public class ToStringTesterInstrument extends TruffleInstrument {
     public static final String ID = "ToStringTester";
 
-    static String intAsString;
-    static String byteAsString;
-    static String doubleAsString;
-    static String stringAsString;
-    static String booleanAsString;
-
     @Override
     protected void onCreate(Env env) {
-        env.registerService(new Initialize() {
-        });
-
+        TestData testData = new TestData();
+        env.registerService(testData);
         env.getInstrumenter().attachExecutionEventFactory(SourceSectionFilter.ANY, context -> new ExecutionEventNode() {
             @Override
             protected void onEnter(VirtualFrame frame) {
                 LanguageInfo rLanguage = env.getLanguages().get("R");
-                intAsString = env.toString(rLanguage, 42);
-                byteAsString = env.toString(rLanguage, (byte) 42);
-                doubleAsString = env.toString(rLanguage, 42.5);
-                stringAsString = env.toString(rLanguage, "Hello");
-                booleanAsString = env.toString(rLanguage, true);
+                testData.intAsString = env.toString(rLanguage, 42);
+                testData.byteAsString = env.toString(rLanguage, (byte) 42);
+                testData.doubleAsString = env.toString(rLanguage, 42.5);
+                testData.stringAsString = env.toString(rLanguage, "Hello");
+                testData.booleanAsString = env.toString(rLanguage, true);
             }
         });
     }
 
-    public interface Initialize {
+    public static final class TestData {
+        public String intAsString;
+        public String byteAsString;
+        public String doubleAsString;
+        public String stringAsString;
+        public String booleanAsString;
     }
 }
