@@ -54,7 +54,8 @@ public class TruffleRLanguageTest extends TestBase {
         assertEquals("42", testData.byteAsString);
         assertEquals("42.5", testData.doubleAsString);
         assertEquals("Hello", testData.stringAsString);
-        assertEquals("true", testData.booleanAsString);
+        assertEquals("TRUE", testData.trueAsString);
+        assertEquals("FALSE", testData.falseAsString);
     }
 
 }

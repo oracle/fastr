@@ -45,7 +45,8 @@ public class ToStringTesterInstrument extends TruffleInstrument {
                 testData.byteAsString = env.toString(rLanguage, (byte) 42);
                 testData.doubleAsString = env.toString(rLanguage, 42.5);
                 testData.stringAsString = env.toString(rLanguage, "Hello");
-                testData.booleanAsString = env.toString(rLanguage, true);
+                testData.trueAsString = env.toString(rLanguage, true);
+                testData.falseAsString = env.toString(rLanguage, false);
             }
         });
     }
@@ -55,6 +56,7 @@ public class ToStringTesterInstrument extends TruffleInstrument {
         public String byteAsString;
         public String doubleAsString;
         public String stringAsString;
-        public String booleanAsString;
+        public String trueAsString;
+        public String falseAsString;
     }
 }

@@ -150,6 +150,12 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
             return value.toString();
         }
 
+        // special class designated to exchange NA values with the outside world
+        // this value is a scalar, the only way to get it is via getArrayMember on an R vector
+        if (value instanceof RInteropNA) {
+            return "NA";
+        }
+
         // the debugger also passes result of TruffleRLanguage.findMetaObject() to this method
         Object unwrapped = value;
         // print promises by other means than the "print" function to avoid evaluating them
@@ -164,10 +170,6 @@ public final class TruffleRLanguageImpl extends TruffleRLanguage {
         // print missing explicitly, because "print" would report missing argument
         if (RMissingHelper.isMissing(unwrapped)) {
             return "missing";
-        }
-        // special class designated to exchange NA values with the outside world
-        if (unwrapped instanceof RInteropNA) {
-            unwrapped = ((RInteropNA) unwrapped).getValue();
         }
 
         // the value unwrapped from an RPromise can be primitive Java type, but now we know that we
