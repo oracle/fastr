@@ -64,6 +64,10 @@ public class PackagePatching {
                     new Patch("reinterpret_cast<.*>\\((.*)\\)->gp &= (\\w+|\\(.*\\))", "SETLEVELS($1, LEVELS($1) & ($2))"),
                     new Patch("reinterpret_cast<.*>\\((.*)\\)->gp \\|= (\\w+|\\(.*\\))", "SETLEVELS($1, LEVELS($1) | ($2))"),
                     new Patch("reinterpret_cast<.*>\\((.*)\\)->gp \\^= (\\w+|\\(.*\\))", "SETLEVELS($1, LEVELS($1) ^ ($2))"),
+                    // FastR does not support these global variables:
+                    new Patch("R_Interactive\\s*=\\s*[01]", ""),
+                    new Patch("R_isForkedChild\\s*=\\s*[01]", ""),
+                    new Patch("Rf_KillAllDevices\\s*\\(\\s*\\)", ""),
     };
 
     @TruffleBoundary
