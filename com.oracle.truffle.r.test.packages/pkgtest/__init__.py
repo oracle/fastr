@@ -50,9 +50,11 @@ def _create_libinstall(rvm, test_installed):
     if not test_installed:
         # make sure its empty
         shutil.rmtree(libinstall, ignore_errors=True)
-        os.mkdir(libinstall)
+        if os.path.exists(libinstall):
+            logging.warning("could not clean temporary library dir %s" % libinstall)
+        else:
+            os.mkdir(libinstall)
     install_tmp = join(get_fastr_repo_dir(), "install.tmp." + rvm)
-    #    install_tmp = join(_fastr_suite_dir(), "install.tmp")
     shutil.rmtree(install_tmp, ignore_errors=True)
     os.mkdir(install_tmp)
     _create_testdot(rvm)
@@ -62,7 +64,9 @@ def _create_libinstall(rvm, test_installed):
 def _create_testdot(rvm):
     testdir = join(get_fastr_repo_dir(), "test." + rvm)
     shutil.rmtree(testdir, ignore_errors=True)
-    os.mkdir(testdir)
+    # Note: The existence check still makes sense because 'shutil.rmtree' won't do anything if 'testdir' is a symlink.
+    if not os.path.exists(testdir):
+        os.mkdir(testdir)
     return testdir
 
 
