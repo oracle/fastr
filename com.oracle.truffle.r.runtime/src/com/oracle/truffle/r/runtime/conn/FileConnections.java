@@ -44,6 +44,7 @@ import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.TempPathName;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BasePathRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.conn.DelegateRConnection.CompressedInputRConnection;
@@ -63,6 +64,7 @@ public class FileConnections {
     public static class FileRConnection extends BasePathRConnection {
         private final boolean raw;
         private final boolean internal;
+        private Type cType = RCompression.Type.NONE;
 
         public FileRConnection(String description, String path, String modeString, boolean blocking, String encoding, boolean raw, boolean internal) throws IOException {
             super(description, checkTemp(path), ConnectionClass.File, modeString, blocking, encoding);
@@ -87,9 +89,61 @@ public class FileConnections {
         @Override
         @TruffleBoundary
         protected void createDelegateConnection() throws IOException {
+            setDelegate(createDelegateConnectionImpl());
+        }
 
-            DelegateRConnection delegate = FileConnections.createDelegateConnection(this, RCompression.Type.NONE, raw);
-            setDelegate(delegate);
+        private DelegateRConnection createDelegateConnectionImpl() throws IOException {
+            return FileConnections.createDelegateConnection(this, cType, raw);
+        }
+
+        @TruffleBoundary
+        @Override
+        public void setCompressionType(Type cType) throws IOException {
+            ConnectionSupport.OpenMode openMode = getOpenMode();
+            AbstractOpenMode mode = openMode.abstractOpenMode;
+            if (mode == Lazy) {
+                mode = AbstractOpenMode.getOpenMode(openMode.modeString);
+            }
+            if (canRead() && canWrite()) {
+                throw RError.error(RError.SHOW_CALLER2, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+            }
+            ConnectionSupport.OpenMode newOpenMode = null;
+            switch (mode) {
+                case ReadBinary:
+                case WriteBinary:
+                    newOpenMode = getOpenMode();
+                    break;
+                case Read:
+                    if (!"r".equals(openMode.modeString)) {
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+                    }
+                    newOpenMode = new ConnectionSupport.OpenMode(AbstractOpenMode.ReadBinary);
+                    break;
+                case Write:
+                    if (!"w".equals(openMode.modeString)) {
+                        throw RError.error(RError.SHOW_CALLER2, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+                    }
+                    newOpenMode = new ConnectionSupport.OpenMode(AbstractOpenMode.WriteBinary);
+                    break;
+                default:
+                    throw RError.error(RError.SHOW_CALLER2, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+            }
+            assert newOpenMode != null;
+
+            String modeString = openMode.modeString;
+            if ("w".equals(modeString)) {
+                RError.warning(RError.SHOW_CALLER, RError.Message.USING_TEXT_MODE_NOT_WORK_CORRECTLY, "file");
+            }
+            assert cType == RCompression.Type.GZIP;
+            this.cType = cType;
+            description = new StringBuilder().append("gzcon(").append(description).append(")").toString();
+            if (mode == AbstractOpenMode.ReadBinary || !canRead()) {
+                // see createDelegateConnection
+                // compressed mode isn't set implicitely for ReadBinary
+                setDelegate(createDelegateConnectionImpl(), opened, newOpenMode);
+            } else {
+                setOpenMode(newOpenMode);
+            }
         }
     }
 
