@@ -165,7 +165,7 @@ public abstract class ConnectionFunctions {
 
         private static HeadPhaseBuilder<String> openMode(Casts casts) {
             return open(casts).mustBe(equalTo("").or(equalTo("r")).or(equalTo("rt")).or(equalTo("rb")).or(equalTo("r+")).or(equalTo("r+b")).or(equalTo("w")).or(equalTo("wt")).or(equalTo("wb")).or(
-                            equalTo("w+")).or(equalTo("w+b")).or(equalTo("a")).or(equalTo("a+")), RError.Message.UNSUPPORTED_MODE);
+                            equalTo("wr")).or(equalTo("w+")).or(equalTo("w+b")).or(equalTo("a")).or(equalTo("at")).or(equalTo("a+")), RError.Message.UNSUPPORTED_MODE);
         }
 
         private static void encoding(Casts casts) {
