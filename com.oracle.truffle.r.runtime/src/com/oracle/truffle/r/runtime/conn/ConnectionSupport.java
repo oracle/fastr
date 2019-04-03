@@ -875,8 +875,8 @@ public class ConnectionSupport {
          */
         protected abstract void createDelegateConnection() throws IOException;
 
-        public void setCompressiontype(@SuppressWarnings("unused") RCompression.Type cType) throws IOException {
-            throw new IOException();
+        public void setCompressionType(@SuppressWarnings("unused") RCompression.Type cType) throws IOException {
+            throw new IOException("Not yet implemented");
         }
 
         /**

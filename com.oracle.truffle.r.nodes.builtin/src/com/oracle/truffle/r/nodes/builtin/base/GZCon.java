@@ -59,7 +59,7 @@ public abstract class GZCon extends RBuiltinNode.Arg4 {
             return base.asVector();
         }
         try {
-            base.setCompressiontype(GZIP);
+            base.setCompressionType(GZIP);
             base.updateConnectionClass(GZCon);
         } catch (IOException ex) {
             throw error(RError.Message.GENERIC, ex.getMessage());
