@@ -80,7 +80,8 @@ public class URLConnections {
 
         @TruffleBoundary
         @Override
-        public void setCompressiontype(RCompression.Type cType) throws IOException {
+        public void setCompressionType(RCompression.Type cType) throws IOException {
+            assert cType == RCompression.Type.GZIP;
             this.cType = cType;
             // changind the compression type delegate (as via the gzcon builtin)
             // should not change the opened state
