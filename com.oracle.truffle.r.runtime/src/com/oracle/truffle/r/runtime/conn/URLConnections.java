@@ -42,17 +42,19 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
 public class URLConnections {
     public static class URLRConnection extends BaseRConnection {
         protected final String urlString;
+        protected String description;
         private RCompression.Type cType;
 
         public URLRConnection(String url, String modeString, String encoding) throws IOException {
-            super(ConnectionClass.URL, modeString, AbstractOpenMode.Read, encoding);
+            super(url.startsWith("file://") ? ConnectionClass.File : ConnectionClass.URL, modeString, AbstractOpenMode.Read, encoding);
             this.urlString = url;
+            this.description = url.startsWith("file://") ? urlString.substring(7) : urlString;
             this.cType = NONE;
         }
 
         @Override
         public String getSummaryDescription() {
-            return urlString;
+            return description;
         }
 
         @Override
@@ -83,9 +85,34 @@ public class URLConnections {
         public void setCompressionType(RCompression.Type cType) throws IOException {
             assert cType == RCompression.Type.GZIP;
             this.cType = cType;
-            // changind the compression type delegate (as via the gzcon builtin)
-            // should not change the opened state
-            setDelegate(createDelegateConnectionImpl(), opened);
+
+            ConnectionSupport.OpenMode openMode = getOpenMode();
+            AbstractOpenMode mode = openMode.abstractOpenMode;
+            if (mode == Lazy) {
+                mode = AbstractOpenMode.getOpenMode(openMode.modeString);
+            }
+            ConnectionSupport.OpenMode newOpenMode = null;
+            switch (mode) {
+                case Read:
+                    if ("rt".equals(openMode.modeString)) {
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+                    }
+                    newOpenMode = new OpenMode(AbstractOpenMode.ReadBinary);
+                    break;
+                case ReadBinary:
+                    newOpenMode = getOpenMode();
+                    break;
+                default:
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+            }
+            assert newOpenMode != null;
+
+            setDelegate(createDelegateConnectionImpl(), opened, newOpenMode);
+            description = new StringBuilder().append("gzcon(").append(description).append(")").toString();
+            String modeString = openMode.modeString;
+            if ("r".equals(modeString) || "w".equals(modeString)) {
+                RError.warning(RError.SHOW_CALLER, RError.Message.USING_TEXT_MODE_NOT_WORK_CORRECTLY, "file");
+            }
         }
 
     }
