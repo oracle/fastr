@@ -75,13 +75,13 @@ public class ListMRTest extends AbstractMRTest {
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, "n") instanceof RNull);
 
         assertSingletonVector(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0));
+        assertSingletonVector(1, ForeignAccess.sendRead(Message.READ.createNode(), l, 0f));
         assertSingletonVector(2.1, ForeignAccess.sendRead(Message.READ.createNode(), l, 1));
         assertSingletonVector(4d, ForeignAccess.sendRead(Message.READ.createNode(), l, 5d));
         assertSingletonVector(true, ForeignAccess.sendRead(Message.READ.createNode(), l, 2));
         assertTrue(ForeignAccess.sendRead(Message.READ.createNode(), l, 4) instanceof RNull);
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, -1), UnknownIdentifierException.class);
-        assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 0f), UnknownIdentifierException.class);
 
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, "nnnoooonnne"), UnknownIdentifierException.class);
         assertInteropException(() -> ForeignAccess.sendRead(Message.READ.createNode(), l, 100), UnknownIdentifierException.class);
@@ -124,7 +124,7 @@ public class ListMRTest extends AbstractMRTest {
         assertFalse(KeyInfo.isExisting(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 1f);
-        assertFalse(KeyInfo.isExisting(info));
+        assertTrue(KeyInfo.isExisting(info));
 
         info = ForeignAccess.sendKeyInfo(Message.KEY_INFO.createNode(), l, 0);
         assertTrue(KeyInfo.isExisting(info));

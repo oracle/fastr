@@ -519,7 +519,7 @@ public final class MiscNodes {
                 RStringVector clazz = getClass((RSharingAttributeStorage) target);
                 if (clazz != null && clazz.getLength() != 0) {
                     CompilerDirectives.transferToInterpreter();
-                    throw RError.error(RError.NO_CALLER, Message.GENERIC, String.format("SET_OBJECT(SEXP, 0) not implemented for SEXP with 'class' attribute"));
+                    throw RError.error(RError.NO_CALLER, Message.GENERIC, "SET_OBJECT(SEXP, 0) not implemented for SEXP with 'class' attribute");
                 }
             }
             return RNull.instance;

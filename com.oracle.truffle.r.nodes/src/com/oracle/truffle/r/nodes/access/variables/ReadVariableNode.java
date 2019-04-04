@@ -294,7 +294,7 @@ public final class ReadVariableNode extends RBaseNode {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseHelper = insert(new PromiseHelperNode());
             }
-            return promiseHelper.evaluate(frame, (RPromise) result);
+            return promiseHelper.visibleEvaluate(frame, (RPromise) result);
         }
         if (isActiveBindingProfile.profile(ActiveBinding.isActiveBinding(result))) {
             if (readActiveBinding == null) {

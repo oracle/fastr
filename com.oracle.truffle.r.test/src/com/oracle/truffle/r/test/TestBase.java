@@ -61,6 +61,7 @@ import com.oracle.truffle.r.runtime.ResourceHandlerFactory;
 import com.oracle.truffle.r.runtime.context.FastROptions;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import com.oracle.truffle.r.test.generate.GnuROneShotRSession;
 import static com.oracle.truffle.r.test.generate.RSession.USE_DEFAULT_TIMEOUT;
@@ -1203,7 +1204,7 @@ public class TestBase {
      * Tests that require additional {@link Engine} global symbols should override this, which will
      * be called just prior to the evaluation.
      */
-    public void addPolyglotSymbols(@SuppressWarnings("unused") org.graalvm.polyglot.Context context) {
+    public void addPolyglotSymbols(@SuppressWarnings("unused") FastRContext context) {
     }
 
     private static final LocalDiagnosticHandler localDiagnosticHandler = new LocalDiagnosticHandler();

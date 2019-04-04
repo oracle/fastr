@@ -180,8 +180,8 @@ public final class RMain extends AbstractLanguageLauncher implements Closeable {
         }
         this.consoleHandler = ConsoleHandler.createConsoleHandler(options, null, inStream, outStream);
         Builder contextBuilder = contextBuilderIn;
-        if (!ignoreJvmArguments) {
-            contextBuilder = contextBuilder.allowHostAccess(useJVM);
+        if (!ignoreJvmArguments && !useJVM) {
+            contextBuilder.allowHostClassLookup(null);
         }
 
         Context context;

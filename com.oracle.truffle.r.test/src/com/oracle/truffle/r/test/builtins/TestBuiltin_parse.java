@@ -30,16 +30,12 @@ public class TestBuiltin_parse extends TestBase {
 
     @Test
     public void testSource() {
-        // FIXME
-        // FastR repeats file name twice in the warning in this way:
-        // cannot open file 'test/r/simple/data/tree2/setx.r': test/r/simple/data/tree2/setx.r (No
-        // such file or directory)
-        assertEval(Output.IgnoreWarningMessage, "{ source(\"test/r/simple/data/tree2/setx.r\") ; x }");
-        assertEval(Output.IgnoreWarningMessage, "{ source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x }");
-        assertEval(Output.IgnoreWarningMessage, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x } ; c(f(), x) }");
-        assertEval(Output.IgnoreWarningMessage, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=FALSE) ; x } ; c(f(), x) }");
-        assertEval(Output.IgnoreWarningMessage, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=FALSE) ; x } ; c(f(), x) }");
-        assertEval(Output.IgnoreWarningMessage, "{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
+        assertEval("{ source(\"test/r/simple/data/tree2/setx.r\") ; x }");
+        assertEval("{ source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=TRUE) ; x } ; c(f(), x) }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/setx.r\", local=FALSE) ; x } ; c(f(), x) }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=FALSE) ; x } ; c(f(), x) }");
+        assertEval("{ x <- 1; f <- function() { source(\"test/r/simple/data/tree2/incx.r\", local=TRUE) ; x } ; c(f(), x) }");
     }
 
     @Test

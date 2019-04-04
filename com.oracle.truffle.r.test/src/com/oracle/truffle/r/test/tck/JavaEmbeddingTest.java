@@ -28,20 +28,20 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.ByteArrayOutputStream;
 
-import org.graalvm.polyglot.Context;
 import org.graalvm.polyglot.Value;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 
 /**
  * Tests various aspects of the Java embedding interface.
  */
 public class JavaEmbeddingTest {
-    private Context context;
+    private FastRContext context;
     protected final ByteArrayOutputStream out = new ByteArrayOutputStream();
     protected final ByteArrayOutputStream err = new ByteArrayOutputStream();
 
@@ -59,6 +59,9 @@ public class JavaEmbeddingTest {
     public void testToString() {
         assertEquals("[1] 1", context.eval("R", "1").toString());
         assertEquals("[1] TRUE", context.eval("R", "TRUE").toString());
+        assertEquals("[1] NA", context.eval("R", "NA").toString());
+        // NA scalar value:
+        assertEquals("NA", context.eval("R", "NA").getArrayElement(0).toString());
         // @formatter:off
         String dataFrameExpected =
                 "  x y\n" +

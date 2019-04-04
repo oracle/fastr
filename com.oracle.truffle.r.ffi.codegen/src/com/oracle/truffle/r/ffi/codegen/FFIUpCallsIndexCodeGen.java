@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -23,6 +23,7 @@
 package com.oracle.truffle.r.ffi.codegen;
 
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 
@@ -47,19 +48,20 @@ public final class FFIUpCallsIndexCodeGen extends CodeGenBase {
         out.append("#ifndef RFFI_UPCALLSINDEX_H\n");
         out.append("#define RFFI_UPCALLSINDEX_H\n");
         out.append('\n');
-        Method[] methods = UpCallsRFFI.class.getMethods();
-        Arrays.sort(methods, new Comparator<Method>() {
+        ArrayList<Method> methods = new ArrayList<>(Arrays.asList(UpCallsRFFI.class.getMethods()));
+        methods.removeAll(Arrays.asList(UpCallsRFFI.class.getDeclaredMethods()));
+        methods.sort(new Comparator<Method>() {
             @Override
             public int compare(Method e1, Method e2) {
                 return e1.getName().toString().compareTo(e2.getName().toString());
             }
         });
-        for (int i = 0; i < methods.length; i++) {
-            Method method = methods[i];
+        for (int i = 0; i < methods.size(); i++) {
+            Method method = methods.get(i);
             out.append("#define ").append(method.getName()).append("_x ").append(Integer.toString(i)).append('\n');
         }
         out.append('\n');
-        out.append("#define ").append("UPCALLS_TABLE_SIZE ").append(Integer.toString(methods.length)).append('\n');
+        out.append("#define ").append("UPCALLS_TABLE_SIZE ").append(Integer.toString(methods.size())).append('\n');
         out.append('\n');
         out.append("#endif // RFFI_UPCALLSINDEX_H\n");
     }

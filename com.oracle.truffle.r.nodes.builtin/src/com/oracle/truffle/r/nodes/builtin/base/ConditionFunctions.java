@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995-2015, The R Core Team
  * Copyright (c) 2003, The R Foundation
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -34,8 +34,10 @@ import com.oracle.truffle.api.dsl.Specialization;
 import com.oracle.truffle.api.frame.FrameSlot;
 import com.oracle.truffle.api.frame.FrameSlotTypeException;
 import com.oracle.truffle.api.frame.VirtualFrame;
+import com.oracle.truffle.api.nodes.RootNode;
 import com.oracle.truffle.r.nodes.builtin.RBuiltinNode;
 import com.oracle.truffle.r.nodes.function.FunctionDefinitionNode;
+import com.oracle.truffle.r.runtime.RArguments;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RErrorHandling;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -69,7 +71,8 @@ public class ConditionFunctions {
         }
 
         protected FrameSlot createHandlerFrameSlot(VirtualFrame frame) {
-            return ((FunctionDefinitionNode) getRootNode()).getHandlerFrameSlot(frame);
+            RootNode rootNode = RArguments.getFunction(frame).getRootNode();
+            return ((FunctionDefinitionNode) rootNode).getHandlerFrameSlot(frame);
         }
 
         @Specialization
@@ -121,7 +124,8 @@ public class ConditionFunctions {
         }
 
         protected FrameSlot createRestartFrameSlot(VirtualFrame frame) {
-            return ((FunctionDefinitionNode) getRootNode()).getRestartFrameSlot(frame);
+            RootNode rootNode = RArguments.getFunction(frame).getRootNode();
+            return ((FunctionDefinitionNode) rootNode).getRestartFrameSlot(frame);
         }
 
         @Specialization
@@ -152,8 +156,7 @@ public class ConditionFunctions {
 
         @Specialization
         protected Object getRestart(int index) {
-            Object result = RErrorHandling.getRestart(index);
-            return result;
+            return RErrorHandling.getRestart(index);
         }
     }
 

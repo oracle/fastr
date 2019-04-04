@@ -1000,7 +1000,7 @@ public class FrameFunctions {
         private GetCallerFrameNode getCallerFrameNode() {
             if (getCaller == null) {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
-                getCaller = insert(new GetCallerFrameNode());
+                getCaller = insert(GetCallerFrameNode.create());
             }
             return getCaller;
         }

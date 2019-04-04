@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -130,14 +130,14 @@ public abstract class CastIntegerBaseNode extends CastBaseNode {
         naCheck.enable(d);
         if (naCheck.checkNAorNaN(d)) {
             if (naCheck.check(d)) {
-                warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION);
+                warning(warningContext(), RError.Message.NA_INTRODUCED_COERCION);
             }
             return RRuntime.INT_NA;
         }
         int result = naCheck.convertDoubleToInt(d);
         naCheck.enable(result);
         if (naCheck.check(result)) {
-            warning(warningContext() != null ? warningContext() : null, RError.Message.NA_INTRODUCED_COERCION_INT);
+            warning(warningContext(), RError.Message.NA_INTRODUCED_COERCION_INT);
         }
         return result;
     }

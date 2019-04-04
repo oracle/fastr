@@ -131,10 +131,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
      * GNU-R translates {@code do.call} simply to {@code eval}, which has consequences w.r.t. how
      * the stack should look like. The stack frame of {@code do.call} and all the frames underneath
      * it should be visible to {@code sys.frame}, so the caller frame passed to the callee via
-     * arguments (see {@link com.oracle.truffle.r.nodes.function.call.CallRFunctionBaseNode}) should
-     * be the execution frame of do.call (not the frame where the function should be evaluated given
-     * as an argument to do.call) so that the stack walking via caller frames does not skip
-     * {@code do.call}.
+     * arguments (see {@link com.oracle.truffle.r.nodes.function.call.CallerFrameClosureProvider})
+     * should be the execution frame of do.call (not the frame where the function should be
+     * evaluated given as an argument to do.call) so that the stack walking via caller frames does
+     * not skip {@code do.call}.
      */
     @ImportStatic(DSLConfig.class)
     protected abstract static class DoCallInternal extends Node {
@@ -174,9 +174,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             MaterializedFrame promiseFrame = frameProfile.profile(env.getFrame(frameAccessProfile)).materialize();
             RArgsValuesAndNames args = getArguments(languagesClosureCache, symbolsClosureCache, promiseFrame, quote, quoteProfile, containsRSymbolProfile, argsAsList);
             RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
-            MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
+            MaterializedFrame materializedFrame = virtualFrame.materialize();
+            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
 
-            Object resultValue = explicitCallNode.execute(evalFrame, func, args, caller, virtualFrame.materialize());
+            Object resultValue = explicitCallNode.execute(evalFrame, func, args, caller, materializedFrame);
             setVisibility(virtualFrame, getVisibilityNode.execute(evalFrame));
             return resultValue;
         }
@@ -194,9 +195,10 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
             RArgsValuesAndNames args = getArguments(null, null, promiseFrame, quote, quoteProfile,
                             containsRSymbolProfile, argsAsList);
             RCaller caller = getExplicitCaller(virtualFrame, promiseFrame, env, funcName, func, args);
-            MaterializedFrame evalFrame = getEvalFrame(virtualFrame, promiseFrame);
+            MaterializedFrame materializedFrame = virtualFrame.materialize();
+            MaterializedFrame evalFrame = getEvalFrame(materializedFrame, promiseFrame);
 
-            Object resultValue = slowPathExplicitCall.execute(evalFrame, virtualFrame.materialize(), caller, func, args);
+            Object resultValue = slowPathExplicitCall.execute(evalFrame, materializedFrame, caller, func, args);
             setVisibility(virtualFrame, getVisibilitySlowPath(evalFrame));
             return resultValue;
         }
@@ -206,9 +208,12 @@ public abstract class DoCall extends RBuiltinNode.Arg4 implements InternalRSynta
          * the same time some primitives expect to see {@code do.call(foo, ...)} as the caller, so
          * we create a frame the fakes caller, but otherwise delegates to the frame backing the
          * explicitly given environment.
+         *
+         * @param currentFrame the current materialized frame, which is set as the caller frame
+         * @param envFrame the frame from which the clone is made
          */
-        private static MaterializedFrame getEvalFrame(VirtualFrame virtualFrame, MaterializedFrame envFrame) {
-            return VirtualEvalFrame.create(envFrame, RArguments.getFunction(virtualFrame), RArguments.getCall(virtualFrame));
+        private static MaterializedFrame getEvalFrame(VirtualFrame currentFrame, MaterializedFrame envFrame) {
+            return VirtualEvalFrame.create(envFrame, RArguments.getFunction(currentFrame), currentFrame, RArguments.getCall(currentFrame));
         }
 
         /**

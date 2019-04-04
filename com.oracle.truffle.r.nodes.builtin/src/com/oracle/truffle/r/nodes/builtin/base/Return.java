@@ -104,7 +104,7 @@ public abstract class Return extends RBuiltinNode.Arg1 {
         if (x.isEvaluated()) {
             visibility.execute(frame, true);
         }
-        Object value = promiseHelper.evaluate(frame, x);
+        Object value = promiseHelper.visibleEvaluate(frame, x);
         throw doReturn(frame, value, unwrapCallerProfile);
     }
 

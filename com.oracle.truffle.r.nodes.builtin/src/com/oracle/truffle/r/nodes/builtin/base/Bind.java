@@ -341,7 +341,7 @@ public abstract class Bind extends RBaseNode {
                     if (resDimNames instanceof String) {
                         dimNamesArray[ind++] = (String) resDimNames;
                     } else {
-                        RStringVector names = (RStringVector) resDimNames;
+                        RAbstractStringVector names = (RAbstractStringVector) resDimNames;
                         assert names.getLength() == resDim;
                         for (int i = 0; i < names.getLength(); i++) {
                             dimNamesArray[ind++] = names.getDataAt(i);

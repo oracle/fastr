@@ -719,11 +719,11 @@ pkg.cache.full.install <- function(install.candidate.names, contriburl, lib.inst
 
     # override packages need to be installed differently
     if (length(pkgs.in.overrides) > 0) {
-        install.fastr.packages(as.character(pkgs.in.overrides), lib=lib.install, INSTALL_opts="--install-tests")
+        install.fastr.packages(as.character(pkgs.in.overrides), lib=lib.install, INSTALL_opts="--install-tests --no-clean-on-error")
     }
 
     if (length(pkgs.not.in.overrides) > 0) {
-        install.packages(as.character(pkgs.not.in.overrides), contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests")
+        install.packages(as.character(pkgs.not.in.overrides), contriburl=contriburl, type="source", lib=lib.install, INSTALL_opts="--install-tests --no-clean-on-error")
     }
 }
 

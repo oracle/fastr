@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -41,6 +41,7 @@ import java.util.List;
 
 import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
 import com.oracle.truffle.api.object.DynamicObject;
+import com.oracle.truffle.r.runtime.RCompression;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RError.Message;
 import com.oracle.truffle.r.runtime.RInternalError;
@@ -317,6 +318,7 @@ public class ConnectionSupport {
         Terminal("terminal"),
         File("file"),
         GZFile("gzfile"),
+        GZCon("gzcon"),
         BZFile("bzfile"),
         XZFile("xzfile"),
         Socket("sockconn"),
@@ -641,7 +643,11 @@ public class ConnectionSupport {
             this.openMode = mode;
         }
 
-        public String getConnectionClass() {
+        public ConnectionClass getConnectionClass() {
+            return conClass;
+        }
+
+        public String getConnectionClassName() {
             return conClass.getPrintName();
         }
 
@@ -743,8 +749,12 @@ public class ConnectionSupport {
         }
 
         protected void setDelegate(DelegateRConnection conn) {
+            setDelegate(conn, true);
+        }
+
+        protected void setDelegate(DelegateRConnection conn, boolean opened) {
             this.theConnection = conn;
-            opened = true;
+            this.opened = opened;
         }
 
         protected String[] readLinesInternal(int n, EnumSet<ReadLineWarning> warn, boolean skipNul) throws IOException {
@@ -864,6 +874,10 @@ public class ConnectionSupport {
          * delegate connection.
          */
         protected abstract void createDelegateConnection() throws IOException;
+
+        public void setCompressiontype(@SuppressWarnings("unused") RCompression.Type cType) throws IOException {
+            throw new IOException();
+        }
 
         /**
          * Return the value that is used in the "description" field by {@code summary.connection}.
@@ -1061,7 +1075,7 @@ public class ConnectionSupport {
         }
 
         public final RAbstractIntVector asVector() {
-            String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClass(), "connection"};
+            String[] classes = new String[]{ConnectionSupport.getBaseConnection(this).getConnectionClassName(), "connection"};
 
             RAbstractIntVector result = RDataFactory.createIntVector(new int[]{getDescriptor()}, true);
 

@@ -1032,7 +1032,8 @@ public final class RError extends RuntimeException implements TruffleException {
                         "SET_ATTRIB: tag in the attributes pairlist must be a symbol. %s given. It is possible that the code intends to set the TAG after the call to SET_ATTRIB, but this is not supported in FastR."),
         WRONG_ARGS_COMBINATION("Wrong arguments combination, please refer to ?%s for more details."),
         COULD_NOT_FIND_LANGUAGE("Could not find language corresponding to extension '%s', you can specify the language id explicitly, please refer to ?%s for more details."),
-        LANGUAGE_NOT_AVAILABLE("Language with id '%s' is not available. Did you start R with --polyglot?"),
+        LANGUAGE_NOT_AVAILABLE("Language with id '%s' is not available. Did you start R with --polyglot or use allowPolyglotAccess when building the context?"),
+        POLYGLOT_BINDING_NOT_AVAILABLE("Polyglot bindings are not accessible for this language. Use --polyglot or allowPolyglotAccess when building the context."),
         NO_LANGUAGE_PROVIDED("No language id provided, please refer to ?%s for more details."),
         NO_CODE_OR_PATH_PROVIDED("No code or path provided, please refer to ?%s for more details."),
         LENGTH_OF_NULL_UNCHANGED("length of NULL cannot be changed"),
@@ -1045,7 +1046,8 @@ public final class RError extends RuntimeException implements TruffleException {
         DATE_TIME_CONVERSION_SPEC_NOT_IMPLEMENTED("Date time conversion format '%s' is not implemented in FastR yet. Please submit an issue at https://github.com/oracle/fastr."),
         CANNOT_ALLOCATE_VECTOR_GB("cannot allocate vector of size %.1f Gb"),
         INVALID_POLYNOMIAL_COEFFICIENT("invalid polynomial coefficient"),
-        ROOT_FINDING_FAILED("root finding code failed");
+        ROOT_FINDING_FAILED("root finding code failed"),
+        IS_GZCON("this is already a 'gzcon' connection");
 
         public final String message;
         final boolean hasArgs;

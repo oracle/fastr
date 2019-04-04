@@ -319,6 +319,10 @@ public class REPL {
             PolyglotException.StackFrame s = iterator.previous();
             if (s.isHostFrame()) {
                 iterator.remove();
+            } else if (s.getLanguage().getId().equals("R") && s.getRootName() == null) {
+                // TODO: HOTFIX when LLVM
+                // first frame is "<R> null(<REPL>:1:0-13)" ???!!!
+                iterator.remove();
             } else {
                 break;
             }

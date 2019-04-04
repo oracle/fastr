@@ -418,7 +418,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
                     }
                 }
             }
-            type = classHierarchyNode.execute(promiseHelperNode.checkEvaluate(frame, dispatchObject));
+            type = classHierarchyNode.execute(promiseHelperNode.checkVisibleEvaluate(frame, dispatchObject));
         }
 
         S3Args s3Args;
@@ -507,7 +507,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
             typeXIdx = 1;
         }
 
-        Object dispatchObject = promiseHelperNode.checkEvaluate(frame, args[typeXIdx]);
+        Object dispatchObject = promiseHelperNode.checkVisibleEvaluate(frame, args[typeXIdx]);
 
         boolean isS4Dispatch = false;
 
@@ -527,7 +527,7 @@ public abstract class RCallNode extends RCallBaseNode implements RSyntaxNode, RS
         }
 
         if (isS4Dispatch) {
-            RList list = (RList) promiseHelperNode.checkEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
+            RList list = (RList) promiseHelperNode.checkVisibleEvaluate(frame, REnvironment.getRegisteredNamespace("methods").get(".BasicFunsList"));
             int index = list.getElementIndexByName(builtin.getName());
             if (index != -1) {
                 RFunction basicFun = (RFunction) list.getDataAt(index);

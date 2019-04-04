@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -47,6 +47,8 @@ import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
 import com.oracle.truffle.r.runtime.data.RObject;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 /**
  * Actually performs the I/O operations for a connections.<br>
@@ -628,4 +630,81 @@ abstract class DelegateRConnection extends RObject implements RConnection, ByteC
         base.closed = true;
         close();
     }
+
+    private static final int GZIP_BUFFER_SIZE = (2 << 20);
+
+    static DelegateRConnection createGZIPDelegateOutputConnection(BaseRConnection base, OutputStream os) throws IOException {
+        assert base.getOpenMode().canWrite();
+        return new CompressedOutputRConnection(base, new GZIPOutputStream(os, GZIP_BUFFER_SIZE), true);
+    }
+
+    static DelegateRConnection createGZIPDelegateInputConnection(BaseRConnection base, InputStream is) throws IOException {
+        assert base.getOpenMode().canRead();
+        return new CompressedInputRConnection(base, new GZIPInputStream(is, GZIP_BUFFER_SIZE));
+    }
+
+    static class CompressedOutputRConnection extends DelegateWriteRConnection {
+        protected ByteChannel channel;
+        private final boolean seekable;
+        private long seekPosition = 0L;
+
+        protected CompressedOutputRConnection(BaseRConnection base, OutputStream os, boolean seekable) {
+            super(base);
+            this.seekable = seekable;
+            this.channel = ConnectionSupport.newChannel(os);
+        }
+
+        @Override
+        public void closeAndDestroy() throws IOException {
+            base.closed = true;
+            close();
+        }
+
+        @Override
+        protected long seekInternal(long offset, RConnection.SeekMode seekMode, RConnection.SeekRWMode seekRWMode) throws IOException {
+            if (seekable) {
+                // TODO GZIP is basically seekable; however, the output stream does not allow any
+                // seeking
+                long oldPos = seekPosition;
+                seekPosition = offset;
+                return oldPos;
+            }
+            return super.seek(offset, seekMode, seekRWMode);
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return seekable;
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public void truncate() throws IOException {
+            throw RError.nyi(RError.SHOW_CALLER, "truncating compressed file not");
+        }
+    }
+
+    static class CompressedInputRConnection extends DelegateReadRConnection {
+        private final ByteChannel channel;
+
+        protected CompressedInputRConnection(BaseRConnection base, InputStream is) {
+            super(base);
+            channel = ConnectionSupport.newChannel(is);
+        }
+
+        @Override
+        public ByteChannel getChannel() {
+            return channel;
+        }
+
+        @Override
+        public boolean isSeekable() {
+            return false;
+        }
+    }
+
 }

@@ -190,7 +190,7 @@ public final class RASTBuilder implements RCodeBuilder<RSyntaxNode> {
             }
             switch (symbol) {
                 case "{":
-                    return new BlockNode(source, lhsLookup, toRNodeArray(args));
+                    return BlockNode.create(source, lhsLookup, toRNodeArray(args));
                 case "missing":
                     return new MissingNode(source, lhsLookup, createSignature(args), toSyntaxElementArray(args));
                 case "quote":

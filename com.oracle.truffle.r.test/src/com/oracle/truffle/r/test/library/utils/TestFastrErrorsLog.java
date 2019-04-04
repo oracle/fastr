@@ -33,6 +33,7 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import org.junit.Test;
 
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
@@ -47,7 +48,7 @@ import org.junit.BeforeClass;
 
 public class TestFastrErrorsLog extends TestBase {
 
-    private static org.graalvm.polyglot.Context context;
+    private static FastRContext context;
 
     @BeforeClass
     public static void setupClass() {
@@ -70,7 +71,7 @@ public class TestFastrErrorsLog extends TestBase {
                 String fastrErrorsLog = "fastr_errors"; // Copy of
                 // RInternalError.FASTR_ERRORS_LOG
                 int pid = RContext.getInitialPid();
-                String baseName = fastrErrorsLog + "_pid" + Integer.toString(pid) + ".log";
+                String baseName = fastrErrorsLog + "_pid" + pid + ".log";
                 if (RContext.isEmbedded()) {
                     String dir1 = System.getProperty("java.io.tmpdir");
                     Path path1 = FileSystems.getDefault().getPath(dir1, baseName);

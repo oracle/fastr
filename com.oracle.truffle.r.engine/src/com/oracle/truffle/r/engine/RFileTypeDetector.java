@@ -23,21 +23,24 @@
 package com.oracle.truffle.r.engine;
 
 import java.io.IOException;
-import java.nio.file.Path;
-import java.nio.file.spi.FileTypeDetector;
+import java.nio.charset.Charset;
+import com.oracle.truffle.api.TruffleFile;
 
 import com.oracle.truffle.r.runtime.RRuntime;
 
-public final class RFileTypeDetector extends FileTypeDetector {
+public final class RFileTypeDetector implements TruffleFile.FileTypeDetector {
+
     @Override
-    public String probeContentType(Path path) throws IOException {
-        Path fileNamePath = path.getFileName();
-        if (fileNamePath != null) {
-            String fileName = fileNamePath.toString();
-            if (fileName.endsWith(".R") || fileName.endsWith(".r")) {
-                return RRuntime.R_TEXT_MIME;
-            }
+    public String findMimeType(TruffleFile file) throws IOException {
+        String fileName = file.getName();
+        if (fileName != null && (fileName.endsWith(".R") || fileName.endsWith(".r"))) {
+            return RRuntime.R_TEXT_MIME;
         }
+        return null;
+    }
+
+    @Override
+    public Charset findEncoding(TruffleFile file) throws IOException {
         return null;
     }
 }

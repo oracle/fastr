@@ -14,7 +14,7 @@
  * Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
  *
  * Copyright (c) 2014, Purdue University
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates
  *
  * All rights reserved.
  */
@@ -160,7 +160,7 @@ public abstract class Switch extends RBuiltinNode.Arg2 {
             }
         }
         if (returnValueProfile.profile(currentDefault != null)) {
-            return promiseHelper.checkEvaluate(frame, currentDefault);
+            return promiseHelper.checkVisibleEvaluate(frame, currentDefault);
         } else {
             return null;
         }
@@ -193,7 +193,7 @@ public abstract class Switch extends RBuiltinNode.Arg2 {
         }
         Object[] optionalArgValues = optionalArgs.getArguments();
         if (index >= 1 && index <= optionalArgValues.length) {
-            Object value = promiseHelper.checkEvaluate(frame, optionalArgValues[index - 1]);
+            Object value = promiseHelper.checkVisibleEvaluate(frame, optionalArgValues[index - 1]);
             if (value != null) {
                 return value;
             }

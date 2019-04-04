@@ -68,7 +68,7 @@ public abstract class CopyOfRegAttributesNode extends RBaseNode {
         // nothing to do
     }
 
-    protected static final boolean emptyAttributes(RAttributeStorage source) {
+    protected static boolean emptyAttributes(RAttributeStorage source) {
         DynamicObject attributes = source.getAttributes();
         return attributes == null || attributes.isEmpty();
     }

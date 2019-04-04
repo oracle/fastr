@@ -32,6 +32,8 @@ import com.oracle.truffle.r.runtime.ffi.RFFIFactory;
 @RFFIUpCallRoot
 public interface UpCallsRFFI extends StdUpCallsRFFI, IDEUpCallsRFFI, VariableUpCallsRFFI, DLLUpCallsRFFI, MemoryUpCallsRFFI, FastRUpCalls {
 
+    // methods in here are not considered by FFIUpCallsIndexCodeGen
+
     interface HandleUpCallExceptionNode extends NodeInterface {
         void execute(Throwable ex);
     }

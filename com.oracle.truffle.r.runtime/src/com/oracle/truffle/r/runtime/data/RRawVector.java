@@ -194,7 +194,7 @@ public final class RRawVector extends RVector<byte[]> implements RAbstractRawVec
 
     @Override
     public RRawVector createEmptySameType(int newLength, boolean newIsComplete) {
-        assert newIsComplete == true;
+        assert newIsComplete;
         return RDataFactory.createRawVector(new byte[newLength]);
     }
 

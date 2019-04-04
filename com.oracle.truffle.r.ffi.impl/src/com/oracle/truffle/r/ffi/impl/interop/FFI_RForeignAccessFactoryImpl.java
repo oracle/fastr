@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2017, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,6 +26,8 @@ import com.oracle.truffle.api.interop.ForeignAccess;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapper;
 import com.oracle.truffle.r.runtime.data.CharSXPWrapperMRForeign;
 import com.oracle.truffle.r.runtime.data.RTruffleObject;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
+import com.oracle.truffle.r.runtime.data.RWeakRefMRForeign;
 import com.oracle.truffle.r.runtime.ffi.DLL;
 
 public class FFI_RForeignAccessFactoryImpl {
@@ -36,6 +38,8 @@ public class FFI_RForeignAccessFactoryImpl {
             return DLLDotSymbolMRForeign.ACCESS;
         } else if (obj instanceof CharSXPWrapper) {
             return CharSXPWrapperMRForeign.ACCESS;
+        } else if (obj instanceof RWeakRef) {
+            return RWeakRefMRForeign.ACCESS;
         } else {
             return null;
         }

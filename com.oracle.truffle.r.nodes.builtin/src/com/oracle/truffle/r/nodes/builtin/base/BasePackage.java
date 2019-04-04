@@ -457,7 +457,9 @@ public class BasePackage extends RBuiltinPackage {
         add(FastRContext.CreateChannel.class, FastRContextFactory.CreateChannelNodeGen::create);
         add(FastRContext.CreateForkChannel.class, FastRContextFactory.CreateForkChannelNodeGen::create);
         add(FastRContext.Eval.class, FastRContextFactory.EvalNodeGen::create);
-        add(FastRContext.Get.class, FastRContextFactory.GetNodeGen::create);
+        add(FastRContext.Get.class, FastRContext.Get::new);
+        add(FastRContext.FastRContextNew.class, FastRContext.FastRContextNew::new);
+        add(FastRContext.FastRContextClose.class, FastRContext.FastRContextClose::new);
         add(FastRContext.GetChannel.class, FastRContextFactory.GetChannelNodeGen::create);
         add(FastRContext.ChannelPoll.class, FastRContextFactory.ChannelPollNodeGen::create);
         add(FastRContext.ChannelReceive.class, FastRContextFactory.ChannelReceiveNodeGen::create);
@@ -578,6 +580,7 @@ public class BasePackage extends RBuiltinPackage {
         add(GrepFunctions.Regexec.class, GrepFunctionsFactory.RegexecNodeGen::create);
         add(GrepFunctions.Strsplit.class, GrepFunctionsFactory.StrsplitNodeGen::create);
         add(GrepFunctions.Sub.class, GrepFunctionsFactory.SubNodeGen::create);
+        add(GZCon.class, GZConNodeGen::create);
         add(HiddenInternalFunctions.GetRegisteredRoutines.class, HiddenInternalFunctionsFactory.GetRegisteredRoutinesNodeGen::create);
         add(HiddenInternalFunctions.ImportIntoEnv.class, HiddenInternalFunctionsFactory.ImportIntoEnvNodeGen::create);
         add(HiddenInternalFunctions.LazyLoadDBFetch.class, HiddenInternalFunctionsFactory.LazyLoadDBFetchNodeGen::create);

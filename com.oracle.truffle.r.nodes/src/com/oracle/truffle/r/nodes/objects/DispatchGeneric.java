@@ -120,11 +120,7 @@ public abstract class DispatchGeneric extends RBaseNode {
                 // anwyay
                 if (!Utils.fastPathIdentityEquals(cachedClasses.getDataAt(i), classes.getDataAt(i))) {
                     equalsMethodRequired.enter();
-                    if (cachedClasses.getDataAt(i).equals(classes.getDataAt(i))) {
-                        return true;
-                    } else {
-                        return false;
-                    }
+                    return cachedClasses.getDataAt(i).equals(classes.getDataAt(i));
                 }
             }
             return true;

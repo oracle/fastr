@@ -75,10 +75,12 @@ public abstract class S3DispatchFunctions {
         private final ConditionProfile isOpsGeneric = ConditionProfile.createBinaryProfile();
         @CompilationFinal private ValueProfile dotMethodClassProfile;
         @Child private LocalReadVariableNode rvnMethod;
+        private final boolean nextMethod;
 
         protected Helper(boolean nextMethod) {
-            methodLookup = S3FunctionLookupNode.create(true, nextMethod);
-            callMatcher = CallMatcherNode.create(false);
+            this.nextMethod = nextMethod;
+            this.methodLookup = S3FunctionLookupNode.create(true, nextMethod);
+            this.callMatcher = CallMatcherNode.create(false);
         }
 
         protected Object dispatch(VirtualFrame frame, RCaller parentCaller, String generic, RStringVector type, String group, MaterializedFrame callerFrame, MaterializedFrame genericDefFrame,
@@ -90,7 +92,27 @@ public abstract class S3DispatchFunctions {
                 dotMethod = patchDotMethod(frame, lookupResult, dotMethod);
             }
             S3Args s3Args = lookupResult.createS3Args(dotMethod, callerFrame, genericDefFrame, group);
-            Object result = callMatcher.execute(frame, parentCaller, RArguments.getCall(callerFrame), suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName,
+            RCaller dispatchCaller = RArguments.getCall(callerFrame);
+
+            if (!RCaller.isValidCaller(dispatchCaller)) {
+                // If callerFrame does not contain a valid caller, take the logical grand-parent of
+                // parentCaller as the dispatch parent
+                RCaller tmpCaller = parentCaller.getLogicalParent();
+                tmpCaller = tmpCaller != null ? tmpCaller.getLogicalParent() : null;
+                dispatchCaller = tmpCaller != null ? tmpCaller : dispatchCaller;
+            }
+            RCaller actualParentCaller = parentCaller;
+            if (!nextMethod && actualParentCaller.getPrevious() != dispatchCaller &&
+                            RCaller.isValidCaller(dispatchCaller) && !actualParentCaller.isPromise()) {
+                // If dispatchCaller differs from the previous caller of actualParentCaller, create
+                // a new actualParentCaller with the dispatchCaller as the logical parent. It
+                // guarantees that the S3 generic method and a specific method have the same logical
+                // parents. NB: In the case of NextMethod, the logical parent of parentCaller should
+                // be the same as dispatchCaller thanks to using
+                // RCaller.createForGenericFunctionCall.
+                actualParentCaller = actualParentCaller.withLogicalParent(dispatchCaller);
+            }
+            Object result = callMatcher.execute(frame, actualParentCaller, dispatchCaller, suppliedSignature, suppliedArguments, lookupResult.function, lookupResult.targetFunctionName,
                             s3Args);
             return result;
         }
@@ -145,7 +167,7 @@ public abstract class S3DispatchFunctions {
 
         @Child private ClassHierarchyNode classHierarchyNode = ClassHierarchyNode.createForDispatch(true);
         @Child private PromiseCheckHelperNode promiseCheckHelper;
-        @Child private GetCallerFrameNode getCallerFrameNode = new GetCallerFrameNode();
+        @Child private GetCallerFrameNode getCallerFrameNode = GetCallerFrameNode.create();
         @Child private Helper helper = new Helper(false);
 
         private final BranchProfile firstArgMissing = BranchProfile.create();
@@ -201,7 +223,7 @@ public abstract class S3DispatchFunctions {
                 CompilerDirectives.transferToInterpreterAndInvalidate();
                 promiseCheckHelper = insert(new PromiseCheckHelperNode());
             }
-            return promiseCheckHelper.checkEvaluate(frame, enclosingArg);
+            return promiseCheckHelper.checkVisibleEvaluate(frame, enclosingArg);
         }
 
         private static Object getFirstNonMissingArg(VirtualFrame frame, int startIdx) {

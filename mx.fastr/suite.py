@@ -7,7 +7,7 @@ suite = {
             {
                "name" : "truffle",
                "subdir" : True,
-               "version" : "c4bb8ed4ab9708486745b69ccb3f9f68a1bbf488",
+               "version" : "982c4186d869613d1e4fd00040b5bad86338ce2a",
                "urls" : [
                     {"url" : "https://github.com/graalvm/graal", "kind" : "git"},
                     {"url" : "https://curio.ssw.jku.at/nexus/content/repositories/snapshots", "kind" : "binary"},
@@ -74,6 +74,7 @@ suite = {
       "annotationProcessors" : ["TRUFFLE_R_PARSER_PROCESSOR"],
       "spotbugsIgnoresGenerated" : True,
       "workingSets" : "Truffle,FastR",
+      "jacoco" : "include",
     },
 
     "com.oracle.truffle.r.nodes" : {
@@ -123,6 +124,9 @@ suite = {
         "mx:JUNIT",
         "truffle:TRUFFLE_TCK",
         "com.oracle.truffle.r.engine",
+      ],
+      "annotationProcessors" : [
+          "truffle:TRUFFLE_DSL_PROCESSOR",
       ],
       "checkstyle" : "com.oracle.truffle.r.runtime",
       "javaCompliance" : "1.8",

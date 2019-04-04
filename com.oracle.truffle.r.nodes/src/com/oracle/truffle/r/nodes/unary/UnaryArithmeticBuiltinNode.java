@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -28,7 +28,7 @@ import com.oracle.truffle.r.runtime.ops.UnaryArithmeticFactory;
 
 public final class UnaryArithmeticBuiltinNode extends RBuiltinNode.Arg1 {
 
-    {
+    static {
         Casts casts = new Casts(UnaryArithmeticBuiltinNode.class);
         casts.arg(0).boxPrimitive();
     }

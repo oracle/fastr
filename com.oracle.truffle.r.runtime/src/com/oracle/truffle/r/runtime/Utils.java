@@ -47,6 +47,7 @@ import com.oracle.truffle.api.frame.FrameInstance;
 import com.oracle.truffle.api.frame.FrameInstance.FrameAccess;
 import com.oracle.truffle.api.frame.FrameInstanceVisitor;
 import com.oracle.truffle.api.frame.FrameSlot;
+import com.oracle.truffle.api.frame.MaterializedFrame;
 import com.oracle.truffle.api.profiles.ConditionProfile;
 import com.oracle.truffle.api.source.Source;
 import com.oracle.truffle.api.source.SourceSection;
@@ -259,7 +260,7 @@ public final class Utils {
         }
         int pid = RContext.getInitialPid();
         // Do not use PID if it was not set yet (logging/error during initialization)
-        String pidStr = pid == 0 ? "" : "_pid" + Integer.toString(pid);
+        String pidStr = pid == 0 ? "" : "_pid" + pid;
         String baseName = fileNamePrefix + pidStr + ".log";
         while (true) {
             if (dir != null) {
@@ -394,13 +395,13 @@ public final class Utils {
      */
     public static void printDebugInfo(StringBuilder sb, Object arg) {
         if (arg instanceof RSymbol) {
-            sb.append("\"" + arg.toString() + "\"");
+            sb.append("\"").append(arg.toString()).append("\"");
         } else if (arg instanceof RAbstractVector) {
             RAbstractVector vec = (RAbstractVector) arg;
             if (vec.getLength() == 0) {
                 sb.append("empty");
             } else {
-                sb.append("len:" + vec.getLength() + ";data:");
+                sb.append("len:").append(vec.getLength()).append(";data:");
                 for (int i = 0; i < Math.min(3, vec.getLength()); i++) {
                     String str = ((RAbstractVector) arg).getDataAtAsObject(0).toString();
                     str = str.length() > 30 ? str.substring(0, 27) + "..." : str;
@@ -445,6 +446,43 @@ public final class Utils {
                 return null;
             }
         });
+    }
+
+    /**
+     * Searches for the frame on the call stack whose caller is the same as the {@code target}
+     * argument. It uses the {@link RArguments#INDEX_CALLER_FRAME} frame argument to traverse the
+     * chain of frames, instead of iterating the stack using
+     * {@link TruffleRuntime#iterateFrames(FrameInstanceVisitor)}. A benefit of so doing is that
+     * this method does not have to be put beyond the Truffle boundary. This method returns null if
+     * no such frame is found or if the search loop encounters a frame not containing a frame in the
+     * {@link RArguments#INDEX_CALLER_FRAME} argument.
+     *
+     * @param frame the current frame
+     * @param target the target caller
+     */
+    public static Frame getStackFrame(Frame frame, RCaller target) {
+        Frame f = frame;
+        RCaller call = RArguments.getCall(f);
+        while (call != target) {
+            Object fObj = RArguments.getCallerFrame(f);
+            if (fObj instanceof Frame) {
+                assert fObj instanceof MaterializedFrame;
+                f = (Frame) fObj;
+            } else if (fObj instanceof CallerFrameClosure) {
+                CallerFrameClosure fc = (CallerFrameClosure) fObj;
+                fc.setNeedsCallerFrame();
+                f = fc.getMaterializedCallerFrame();
+                if (f == null) {
+                    return null;
+                }
+            } else {
+                assert fObj == null;
+                return null;
+            }
+            call = RArguments.getCall(f);
+        }
+
+        return f;
     }
 
     /**

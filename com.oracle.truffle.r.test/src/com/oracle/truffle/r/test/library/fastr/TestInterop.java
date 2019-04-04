@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -26,18 +26,22 @@ import com.oracle.truffle.api.interop.TruffleObject;
 import java.io.IOException;
 import java.nio.ByteBuffer;
 
+import org.graalvm.polyglot.PolyglotAccess;
+import org.graalvm.polyglot.PolyglotException;
 import org.junit.Assert;
 import org.junit.Test;
 
 import com.oracle.truffle.r.runtime.conn.SeekableMemoryByteChannel;
 import com.oracle.truffle.r.runtime.context.RContext;
 import com.oracle.truffle.r.test.TestBase;
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
 import java.io.File;
 import org.graalvm.polyglot.Value;
 import org.graalvm.polyglot.proxy.ProxyExecutable;
 import org.junit.After;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class TestInterop extends TestBase {
 
@@ -85,6 +89,17 @@ public class TestInterop extends TestBase {
     }
 
     @Test
+    public void testPolyglotAccessWhenPolyglotBindingsAreDisabled() {
+        try (org.graalvm.polyglot.Context context = FastRSession.getContextBuilder("R").allowPolyglotAccess(PolyglotAccess.NONE).build()) {
+            context.eval("R", "eval.polyglot('js', '1+3')");
+            Assert.fail("no PolyglotException exception occurred");
+        } catch (PolyglotException ex) {
+            String message = ex.getMessage();
+            assertTrue(message, message.contains("Language with id 'js' is not available. Did you start R with --polyglot or use allowPolyglotAccess when building the context?"));
+        }
+    }
+
+    @Test
     public void testInteropEval() {
         assertEvalFastR("eval.polyglot('R', '14 + 2')", "16");
         assertEvalFastR("eval.polyglot('R', '1')", "1");
@@ -99,14 +114,14 @@ public class TestInterop extends TestBase {
                         "cat('Error in eval.polyglot(, , \"bar\") :\\n  Could not find language corresponding to extension \\'bar\\', you can specify the language id explicitly, please refer to ?eval.polyglot for more details.\\n')");
         // Checkstyle: resume
         assertEvalFastR("eval.polyglot('foo', 'bar')",
-                        "cat('Error in eval.polyglot(\"foo\", \"bar\") :\\n  Language with id \\'foo\\' is not available. Did you start R with --polyglot?\\n')");
+                        "cat('Error in eval.polyglot(\"foo\", \"bar\") :\\n  Language with id \\'foo\\' is not available. Did you start R with --polyglot or use allowPolyglotAccess when building the context?\\n')");
         assertEvalFastR("eval.polyglot('nfi', 'foo.bar')",
-                        "cat('Error in eval.polyglot(\"nfi\", \"foo.bar\") :\\n  Language with id \\'nfi\\' is not available. Did you start R with --polyglot?\\n')");
+                        "cat('Error in eval.polyglot(\"nfi\", \"foo.bar\") :\\n  Language with id \\'nfi\\' is not available. Did you start R with --polyglot or use allowPolyglotAccess when building the context?\\n')");
         // Checkstyle: stop
         assertEvalFastR("eval.polyglot('foo',, 'bar')",
-                        "cat('Error in eval.polyglot(\"foo\", , \"bar\") :\\n  Language with id \\'foo\\' is not available. Did you start R with --polyglot?\\n')");
+                        "cat('Error in eval.polyglot(\"foo\", , \"bar\") :\\n  Language with id \\'foo\\' is not available. Did you start R with --polyglot or use allowPolyglotAccess when building the context?\\n')");
         assertEvalFastR("eval.polyglot('nfi',,'foo.bar')",
-                        "cat('Error in eval.polyglot(\"nfi\", , \"foo.bar\") :\\n  Language with id \\'nfi\\' is not available. Did you start R with --polyglot?\\n')");
+                        "cat('Error in eval.polyglot(\"nfi\", , \"foo.bar\") :\\n  Language with id \\'nfi\\' is not available. Did you start R with --polyglot or use allowPolyglotAccess when building the context?\\n')");
         // Checkstyle: resume
     }
 
@@ -144,7 +159,7 @@ public class TestInterop extends TestBase {
         assertEvalFastR("f<-paste0(tempfile(),'.nonLanguageExtension'); file.create(f); tryCatch(eval.polyglot(path=f), finally=file.remove(f))",
                         "cat('Error in eval.polyglot(path = f) :\n  Could not find language corresponding to extension \\'nonLanguageExtension\\', you can specify the language id explicitly, please refer to ?eval.polyglot for more details.\\n')");
         assertEvalFastR("eval.polyglot('nonExistentLanguage', 'code')",
-                        "cat('Error in eval.polyglot(\"nonExistentLanguage\", \"code\") :\n  Language with id \\'nonExistentLanguage\\' is not available. Did you start R with --polyglot?\\n')");
+                        "cat('Error in eval.polyglot(\"nonExistentLanguage\", \"code\") :\n  Language with id \\'nonExistentLanguage\\' is not available. Did you start R with --polyglot or use allowPolyglotAccess when building the context?\\n')");
         assertEvalFastR("eval.polyglot(code='')", "cat('Error in eval.polyglot(code = \"\") :\n  No language id provided, please refer to ?eval.polyglot for more details.\\n')");
         assertEvalFastR("eval.polyglot(languageId='js')", "cat('Error in eval.polyglot(languageId = \"js\") :\n  No code or path provided, please refer to ?eval.polyglot for more details.\\n')");
     }
@@ -187,7 +202,7 @@ public class TestInterop extends TestBase {
 
     // TODO: export/importSymbol
     @Override
-    public void addPolyglotSymbols(org.graalvm.polyglot.Context context) {
+    public void addPolyglotSymbols(FastRContext context) {
         FastRSession.execInContext(context, () -> {
             RContext rContext = RContext.getInstance();
             for (TestJavaObject t : TestInterop.testJavaObjects) {
@@ -195,10 +210,10 @@ public class TestInterop extends TestBase {
                 context.getPolyglotBindings().putMember(t.name, tobj);
             }
             for (TestVariable t : TestInterop.testVariables) {
-                context.getBindings("R").putMember(t.name, t.value);
+                context.getContext().getBindings("R").putMember(t.name, t.value);
                 context.getPolyglotBindings().putMember(t.name, t.value);
-                context.getBindings("R").putMember(t.name + "Read", (ProxyExecutable) (Value... args) -> {
-                    assertEquals(context.getBindings("R").getMember(t.name).as(t.clazz), t.value);
+                context.getContext().getBindings("R").putMember(t.name + "Read", (ProxyExecutable) (Value... args) -> {
+                    assertEquals(context.getContext().getBindings("R").getMember(t.name).as(t.clazz), t.value);
                     return true;
                 });
             }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -29,8 +29,9 @@ import com.oracle.truffle.r.runtime.context.RContext.ContextKind;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 
+import com.oracle.truffle.r.test.generate.FastRContext;
 import com.oracle.truffle.r.test.generate.FastRSession;
-import org.graalvm.polyglot.Context;
+
 import org.graalvm.polyglot.Source;
 import java.util.concurrent.Callable;
 import org.junit.internal.AssumptionViolatedException;
@@ -41,7 +42,7 @@ public class TestBase {
 
     // clear out warnings (which are stored in shared base env)
     private static final Source CLEAR_WARNINGS = FastRSession.createSource("assign('last.warning', NULL, envir = baseenv())", RSource.Internal.CLEAR_WARNINGS.string);
-    private static Context context;
+    private static FastRContext context;
 
     @BeforeClass
     public static void setupClass() {

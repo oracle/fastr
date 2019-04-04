@@ -205,6 +205,17 @@ def setREnvironment(env=None):
 
         env[lib_env] = lib_value
 
+def setUnitTestEnvironment(args):
+    env = os.environ
+    rOptions = []
+    for arg in args:
+        if arg.startswith("--R."):
+            ss = arg.split("=")
+            env['FASTR_OPTION_' + ss[0][4:]] = ss[1]
+            rOptions.append(arg)
+    for rOption in rOptions:
+        args.remove(rOption)
+
 def run_r(args, command, parser=None, extraVmArgs=None, jdk=None, **kwargs):
     '''
     Common function for running either R, Rscript (or rrepl).
@@ -327,19 +338,28 @@ def _unittest_config_participant(config):
     return (vmArgs, mainClass, mainClassArgs)
 
 def ut_simple(args):
+    setUnitTestEnvironment(args)
     return mx_unittest.unittest(args + _simple_unit_tests())
 
 def ut_noapps(args):
+    setUnitTestEnvironment(args)
     return mx_unittest.unittest(args + _gate_noapps_unit_tests())
 
 def ut_default(args):
+    setUnitTestEnvironment(args)
     return mx_unittest.unittest(args + _all_unit_tests())
 
 def ut_gate(args):
+    setUnitTestEnvironment(args)
     return mx_unittest.unittest(args + _gate_unit_tests())
 
 def ut_gen(args):
+    setUnitTestEnvironment(args)
     return mx_unittest.unittest(args + _all_generated_unit_tests())
+
+def ut(args):
+    setUnitTestEnvironment(args)
+    return mx_unittest.unittest(args)
 
 def _test_package():
     return 'com.oracle.truffle.r.test'
@@ -692,6 +712,7 @@ _commands = {
     'rutdefault' : [ut_default, ['options']],
     'rutgate' : [ut_gate, ['options']],
     'rutgen' : [ut_gen, ['options']],
+    'unittest' : [ut, ['options']],
     'rutnoapps' : [ut_noapps, ['options']],
     'rbcheck' : [rbcheck, '--filter [gnur-only,fastr-only,both,both-diff]'],
     'rbdiag' : [rbdiag, '(builtin)* [-v] [-n] [-m] [--sweep | --sweep=lite | --sweep=total] [--mnonly] [--noSelfTest] [--matchLevel=same | --matchLevel=error] [--maxSweeps=N] [--outMaxLev=N]'],

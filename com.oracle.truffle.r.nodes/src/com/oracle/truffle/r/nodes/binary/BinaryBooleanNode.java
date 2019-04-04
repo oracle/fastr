@@ -139,10 +139,8 @@ public abstract class BinaryBooleanNode extends RBuiltinNode.Arg2 {
         if (isLogicOp(factory) && left instanceof RAbstractRawVector && right instanceof RAbstractRawVector) {
             // for logic ops only both raw vectors are supported
             return true;
-        } else if (isSupportedVector(left) && isSupportedVector(right)) {
-            return true;
         }
-        return false;
+        return isSupportedVector(left) && isSupportedVector(right);
     }
 
     protected boolean isSupportedVector(Object value) {

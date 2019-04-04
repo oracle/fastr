@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,9 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
+import com.oracle.truffle.api.CompilerDirectives.TruffleBoundary;
+import com.oracle.truffle.r.runtime.RCompression;
+import static com.oracle.truffle.r.runtime.RCompression.Type.NONE;
 import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.net.MalformedURLException;
@@ -29,17 +32,22 @@ import java.net.URL;
 import java.nio.channels.ByteChannel;
 
 import com.oracle.truffle.r.runtime.RError;
+import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
+import com.oracle.truffle.r.runtime.conn.ConnectionSupport.OpenMode;
 
 public class URLConnections {
     public static class URLRConnection extends BaseRConnection {
         protected final String urlString;
+        private RCompression.Type cType;
 
         public URLRConnection(String url, String modeString, String encoding) throws IOException {
             super(ConnectionClass.URL, modeString, AbstractOpenMode.Read, encoding);
             this.urlString = url;
+            this.cType = NONE;
         }
 
         @Override
@@ -49,27 +57,55 @@ public class URLConnections {
 
         @Override
         protected void createDelegateConnection() throws IOException {
+            setDelegate(createDelegateConnectionImpl());
+        }
+
+        private DelegateRConnection createDelegateConnectionImpl() throws RError, IOException {
             DelegateRConnection delegate = null;
-            switch (getOpenMode().abstractOpenMode) {
+            OpenMode openMode = getOpenMode();
+            AbstractOpenMode mode = openMode.abstractOpenMode;
+            if (mode == Lazy) {
+                mode = AbstractOpenMode.getOpenMode(openMode.modeString);
+            }
+            switch (mode) {
                 case Read:
                 case ReadBinary:
-                    delegate = new URLReadRConnection(this);
+                    delegate = new URLReadRConnection(this, cType);
                     break;
                 default:
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode());
             }
-            setDelegate(delegate);
+            return delegate;
         }
+
+        @TruffleBoundary
+        @Override
+        public void setCompressiontype(RCompression.Type cType) throws IOException {
+            this.cType = cType;
+            // changind the compression type delegate (as via the gzcon builtin)
+            // should not change the opened state
+            setDelegate(createDelegateConnectionImpl(), opened);
+        }
+
     }
 
     private static class URLReadRConnection extends DelegateReadRConnection {
 
         private final ByteChannel rchannel;
 
-        protected URLReadRConnection(URLRConnection base) throws MalformedURLException, IOException {
+        protected URLReadRConnection(URLRConnection base, RCompression.Type cType) throws MalformedURLException, IOException {
             super(base);
             URL url = new URL(base.urlString);
-            rchannel = ConnectionSupport.newChannel(new BufferedInputStream(url.openStream()));
+            switch (cType) {
+                case GZIP:
+                    rchannel = createGZIPDelegateInputConnection(base, new BufferedInputStream(url.openStream()));
+                    break;
+                case NONE:
+                    rchannel = ConnectionSupport.newChannel(new BufferedInputStream(url.openStream()));
+                    break;
+                default:
+                    throw RInternalError.shouldNotReachHere("unsupported compression type. Can be GZIP or NONE");
+            }
         }
 
         @Override

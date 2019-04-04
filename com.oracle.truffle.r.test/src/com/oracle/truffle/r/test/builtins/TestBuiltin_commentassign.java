@@ -57,6 +57,10 @@ public class TestBuiltin_commentassign extends TestBase {
         assertEval(Output.IgnoreErrorContext, "x<-c(); comment(x) <- 'a'");
         assertEval(Output.IgnoreErrorContext, "x<-NULL; comment(x) <- 'a'");
         assertEval("x<-NA; comment(x) <- 'a'");
+        assertEval("x <- c(1,2); y <- x; comment(x) <- 'hello'; comment(x); comment(y)");
+        assertEval("x <- c(1,2); comment(x) <- 'hello'; y <- x; comment(x) <- NULL; comment(x); comment(y)");
+        assertEval("foo <- function(x) 3*x; bar <- foo; comment(foo) <- 'hello'; comment(foo); comment(bar)");
+        assertEval("foo <- function(x) 3*x; comment(foo) <- 'hello'; bar <- foo; comment(foo) <- NULL; comment(foo); comment(bar)");
     }
 
     @Test

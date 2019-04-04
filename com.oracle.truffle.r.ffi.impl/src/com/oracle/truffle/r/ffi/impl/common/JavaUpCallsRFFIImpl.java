@@ -97,6 +97,7 @@ import com.oracle.truffle.r.runtime.data.RSymbol;
 import com.oracle.truffle.r.runtime.data.RTypedValue;
 import com.oracle.truffle.r.runtime.data.RUnboundValue;
 import com.oracle.truffle.r.runtime.data.RVector;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.data.model.RAbstractAtomicVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractStringVector;
 import com.oracle.truffle.r.runtime.data.model.RAbstractVector;
@@ -375,6 +376,9 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object Rf_lengthgets(Object x, int newSize) {
+        if (x == RNull.instance) {
+            return RNull.instance;
+        }
         RAbstractVector vec = (RAbstractVector) RRuntime.asAbstractVector(x);
         return vec.resize(newSize);
     }
@@ -571,8 +575,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     public int LEVELS(Object x) {
         if (x instanceof RTypedValue) {
-            int gpBits = ((RTypedValue) x).getGPBits();
-            return gpBits;
+            return ((RTypedValue) x).getGPBits();
         }
         throw RInternalError.shouldNotReachHere();
     }
@@ -866,8 +869,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @Override
     @TruffleBoundary
     public Object R_FindNamespace(Object name) {
-        Object result = RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
-        return result;
+        return RContext.getInstance().stateREnvironment.getNamespaceRegistry().get(RRuntime.asString(name));
     }
 
     @Override
@@ -885,8 +887,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         // Works but not remotely efficient
         Source source = RSource.fromTextInternal("get(\"" + symbol.getName() + "\", mode=\"function\")", RSource.Internal.RF_FINDFUN);
         try {
-            Object result = RContext.getEngine().parseAndEval(source, env.getFrame(), false);
-            return result;
+            return RContext.getEngine().parseAndEval(source, env.getFrame(), false);
         } catch (ParseException ex) {
             throw RInternalError.shouldNotReachHere(ex);
         }
@@ -896,8 +897,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object Rf_GetOption1(Object tag) {
         guaranteeInstanceOf(tag, RSymbol.class);
-        Object result = RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
-        return result;
+        return RContext.getInstance().stateROptions.getValue(((RSymbol) tag).getName());
     }
 
     @Override
@@ -1278,7 +1278,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (RArguments.getCall(frame) == rCaller) {
             return REnvironment.frameToEnvironment(frame.materialize());
         } else {
-            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
+            return Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
                 public Object apply(Frame f) {
@@ -1290,7 +1290,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     }
                 }
             });
-            return result;
         }
     }
 
@@ -1305,7 +1304,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
         if (RArguments.getCall(frame) == rCaller) {
             return RArguments.getFunction(frame);
         } else {
-            Object result = Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
+            return Utils.iterateRFrames(FrameAccess.READ_ONLY, new Function<Frame, Object>() {
 
                 @Override
                 public Object apply(Frame f) {
@@ -1317,7 +1316,6 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
                     }
                 }
             });
-            return result;
         }
     }
 
@@ -1512,7 +1510,7 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object getConnectionClassString(Object x) {
         BaseRConnection conn = guaranteeInstanceOf(x, BaseRConnection.class);
-        return wrapString(conn.getConnectionClass());
+        return wrapString(conn.getConnectionClassName());
     }
 
     @Override
@@ -1543,6 +1541,32 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     @TruffleBoundary
     public Object R_MethodsNamespace() {
         return REnvironment.getRegisteredNamespace("methods");
+    }
+
+    // basic support for weak reference API - they are not actually weak and don't call finalizers
+
+    @Override
+    @TruffleBoundary
+    public Object R_MakeWeakRef(Object key, Object val, Object fin, long onexit) {
+        return new RWeakRef(key, val, fin, onexit != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_MakeWeakRefC(Object key, Object val, long fin, long onexit) {
+        return new RWeakRef(key, val, fin, onexit != 0);
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_WeakRefKey(Object w) {
+        return guaranteeInstanceOf(w, RWeakRef.class).getKey();
+    }
+
+    @Override
+    @TruffleBoundary
+    public Object R_WeakRefValue(Object w) {
+        return guaranteeInstanceOf(w, RWeakRef.class).getValue();
     }
 
     @Override
@@ -1587,9 +1611,18 @@ public abstract class JavaUpCallsRFFIImpl implements UpCallsRFFI {
     public void Rf_unprotect(int x) {
         RFFIContext context = getContext();
         ArrayList<RObject> stack = context.rffiContextState.protectStack;
-        for (int i = 0; i < x; i++) {
-            context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
+        try {
+            for (int i = 0; i < x; i++) {
+                context.registerReferenceUsedInNative(stack.remove(stack.size() - 1));
+            }
+        } catch (ArrayIndexOutOfBoundsException e) {
+            debugWarning("mismatched protect/unprotect (unprotect with empty protect stack)");
         }
+    }
+
+    private static boolean debugWarning(String message) {
+        RError.warning(RError.SHOW_CALLER, RError.Message.GENERIC, message);
+        return true;
     }
 
     @Override

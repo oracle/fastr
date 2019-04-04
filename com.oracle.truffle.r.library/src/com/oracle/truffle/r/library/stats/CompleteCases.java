@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 1995, 1996  Robert Gentleman and Ross Ihaka
  * Copyright (c) 1997-2013,  The R Core Team
- * Copyright (c) 2015, 2018, Oracle and/or its affiliates
+ * Copyright (c) 2015, 2019, Oracle and/or its affiliates
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -166,6 +166,8 @@ public final class CompleteCases extends RExternalBuiltinNode {
                     result[e % len] = RRuntime.LOGICAL_FALSE;
                 }
             }
+        } else if (entry == RNull.instance) {
+            // ignore NULL values
         } else {
             throw invalidType(entry);
         }

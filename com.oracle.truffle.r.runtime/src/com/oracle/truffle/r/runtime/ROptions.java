@@ -170,7 +170,7 @@ public class ROptions {
         map.put("continue", RDataFactory.createSharedStringVectorFromScalar("+ "));
         map.put("deparse.cutoff", RDataFactory.createSharedIntVectorFromScalar(60));
         map.put("digits", RDataFactory.createSharedIntVectorFromScalar(7));
-        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(startParams.isSlave() ? false : true));
+        map.put("echo", RDataFactory.createSharedLogicalVectorFromScalar(!startParams.isSlave()));
         map.put("encoding", RDataFactory.createSharedStringVectorFromScalar("native.enc"));
         map.put("expressions", RDataFactory.createSharedIntVectorFromScalar(5000));
         boolean keepPkgSource = optionFromEnvVar("R_KEEP_PKG_SOURCE", envVars);

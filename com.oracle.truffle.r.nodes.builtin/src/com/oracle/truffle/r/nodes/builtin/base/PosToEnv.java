@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2018, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -50,7 +50,7 @@ public abstract class PosToEnv extends RBuiltinNode.Arg1 {
 
     @Specialization(guards = "isMinusOne(x)")
     protected Object doPosToEnvMinusOne(VirtualFrame frame, @SuppressWarnings("unused") int x,
-                    @Cached("new()") GetCallerFrameNode callerFrameNode) {
+                    @Cached("create()") GetCallerFrameNode callerFrameNode) {
         if (REnvironment.isGlobalEnvFrame(frame)) {
             throw error(Message.NO_ENCLOSING_ENVIRONMENT);
         }

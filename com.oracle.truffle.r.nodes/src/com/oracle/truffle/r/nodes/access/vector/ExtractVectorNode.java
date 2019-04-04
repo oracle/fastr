@@ -162,7 +162,7 @@ public abstract class ExtractVectorNode extends RBaseNode {
         String name = positions.length == 1 ? extractName.execute(positions[0]) : null;
         if (name != null) {
             Object obj = env.get(name);
-            return obj == null ? RNull.instance : promiseHelper.checkEvaluate(null, obj);
+            return obj == null ? RNull.instance : promiseHelper.checkVisibleEvaluate(null, obj);
         }
         throw error(RError.Message.WRONG_ARGS_SUBSET_ENV);
     }

@@ -139,10 +139,10 @@ a2a4eb530691106fb68f4851182b66fb *man/transpose.Rd
 4d71404f8c7d5b3a9aa93195c22e8f97 *man/truelength.Rd
 142dc7a616c9c546ffb9f0bea81cc2d7 *man/tstrsplit.Rd
 b0073cd226e7dd5777da230830b48587 *src/Makevars
-359027a5655626317b2a5e36d25c0c4b *src/assign.c
+80e31d31132f3fbbf7e8202848972492 *src/assign.c
 059a1ee027698e97d5757cdc6493ba2d *src/between.c
 576274f3c51b47a561450f00e8a66999 *src/bmerge.c
-9904b8421ce1aa902e0f565034d0965c *src/chmatch.c
+ececaa24c7459263f0eb853940e4c2a3 *src/chmatch.c
 c330f42d232fba7e1871c589457092a2 *src/data.table.h
 d89a571cb1ac3548042db13a43fab6bc *src/dogroups.c
 e3d5b289ef4b511e4f89c9838b86cbd0 *src/fastmean.c

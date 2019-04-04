@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2013, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -54,6 +54,7 @@ import com.oracle.truffle.r.runtime.data.RInteropScalar;
 import com.oracle.truffle.r.runtime.data.RNull;
 import com.oracle.truffle.r.runtime.data.RRaw;
 import com.oracle.truffle.r.runtime.data.RStringVector;
+import com.oracle.truffle.r.runtime.data.RWeakRef;
 import com.oracle.truffle.r.runtime.env.REnvironment;
 import com.oracle.truffle.r.runtime.nodes.RBaseNode;
 
@@ -145,6 +146,11 @@ public abstract class ClassHierarchyNode extends UnaryNode {
     @Specialization
     protected RStringVector getClassHr(@SuppressWarnings("unused") CharSXPWrapper arg) {
         return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.Character, forDispatch) : null;
+    }
+
+    @Specialization
+    protected RStringVector getClassHr(@SuppressWarnings("unused") RWeakRef arg) {
+        return withImplicitTypes ? ImplicitClassHierarchyNode.getImplicitClass(RType.WeakRef, forDispatch) : null;
     }
 
     @Specialization

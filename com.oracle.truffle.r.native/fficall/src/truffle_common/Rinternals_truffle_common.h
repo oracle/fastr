@@ -1543,22 +1543,30 @@ void R_RunPendingFinalizers(void) {
 
 SEXP R_MakeWeakRef(SEXP key, SEXP val, SEXP fin, Rboolean onexit) {
     TRACE0();
-    unimplemented("R_MakeWeakRef");
+    SEXP result = ((call_R_MakeWeakRef) callbacks[R_MakeWeakRef_x])(key, val, fin, onexit);
+    checkExitCall();
+    return result;
 }
 
 SEXP R_MakeWeakRefC(SEXP key, SEXP val, R_CFinalizer_t fin, Rboolean onexit) {
     TRACE0();
-    unimplemented("R_MakeWeakRefC");
+    SEXP result = ((call_R_MakeWeakRefC) callbacks[R_MakeWeakRefC_x])(key, val, fin, onexit);
+    checkExitCall();
+    return result;
 }
 
 SEXP R_WeakRefKey(SEXP w) {
     TRACE0();
-    unimplemented("R_WeakRefKey");
+    SEXP result = ((call_R_WeakRefKey) callbacks[R_WeakRefKey_x])(w);
+    checkExitCall();
+    return result;
 }
 
 SEXP R_WeakRefValue(SEXP w) {
     TRACE0();
-    unimplemented("R_WeakRefValue");
+    SEXP result = ((call_R_WeakRefValue) callbacks[R_WeakRefValue_x])(w);
+    checkExitCall();
+    return result;
 }
 
 void R_RunWeakRefFinalizer(SEXP w) {

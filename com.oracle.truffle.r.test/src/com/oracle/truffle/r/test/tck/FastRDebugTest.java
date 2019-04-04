@@ -650,6 +650,7 @@ public class FastRDebugTest {
     }
 
     private void assertLocation(final int line, final int column, final SuspendAnchor anchor, final String code, boolean includeAncestors, boolean completeMatch, final Object... expectedFrame) {
+        final RuntimeException trace = new RuntimeException();
         run.addLast(() -> {
             try {
                 assertNotNull(suspendedEvent);
@@ -685,6 +686,7 @@ public class FastRDebugTest {
                 frame.getScope().getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
+                trace.printStackTrace();
                 throw e;
             }
         });
@@ -702,6 +704,7 @@ public class FastRDebugTest {
      * @param expectedFrame the key-value pairs (e.g. {@code "id0", 1, "id1", "strValue"})
      */
     private void assertScope(final int line, final String code, boolean includeAncestors, boolean completeMatch, final Object... expectedFrame) {
+        final RuntimeException trace = new RuntimeException();
         run.addLast(() -> {
             try {
                 compareScope(line, code, includeAncestors, completeMatch, expectedFrame);
@@ -711,12 +714,14 @@ public class FastRDebugTest {
                 frame.getScope().getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
+                trace.printStackTrace();
                 throw e;
             }
         });
     }
 
     private void assertArguments(final int line, final String code, final Object... expectedArgs) {
+        final RuntimeException trace = new RuntimeException();
         run.addLast(() -> {
             final DebugStackFrame frame = suspendedEvent.getTopStackFrame();
             DebugScope scope = frame.getScope();
@@ -746,6 +751,7 @@ public class FastRDebugTest {
                 scope.getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
+                trace.printStackTrace();
                 throw e;
             }
         });
@@ -838,6 +844,7 @@ public class FastRDebugTest {
      * @param nameAndValuePairs name followed by value (arbitrary number of times).
      */
     private void assertMetaObjectsOrStringValues(final Source expectedSource, boolean metaObjects, final String... nameAndValuePairs) {
+        final RuntimeException trace = new RuntimeException();
         run.addLast((Runnable) () -> {
             try {
                 DebugStackFrame frame = suspendedEvent.getTopStackFrame();
@@ -850,7 +857,6 @@ public class FastRDebugTest {
                             if (metaObjects) {
                                 DebugValue moDV = value.getMetaObject();
                                 if (moDV != null || expectedValue != null) {
-                                    expectedValue = "[1] \"" + expectedValue + "\"";
                                     String mo = moDV.as(String.class);
                                     Assert.assertEquals("MetaObjects of '" + name + "' differ:", expectedValue, mo);
                                 }
@@ -878,6 +884,7 @@ public class FastRDebugTest {
                 frame.getScope().getDeclaredValues().forEach(var -> {
                     System.out.println(var);
                 });
+                trace.printStackTrace();
                 throw e;
             }
         });

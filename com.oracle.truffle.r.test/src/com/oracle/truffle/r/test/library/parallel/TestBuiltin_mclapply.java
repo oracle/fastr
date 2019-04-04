@@ -29,25 +29,28 @@ public class TestBuiltin_mclapply extends TestBase {
 
     @Test
     public void testMCLapply() {
-        assertEval("l <- list(list(x=1, y=2)); parallel:::mclapply(l, function(ll) { ll$y })");
-        assertEval("l <- list(list(x=1, y=2), list(x=11, y=22)); parallel:::mclapply(l, function(ll) { ll$y })");
+        // race-conditions, easilly reproducible with LLVM
+        assertEval(Ignored.ImplementationError, "l <- list(list(x=1, y=2)); parallel:::mclapply(l, function(ll) { ll$y })");
+        assertEval(Ignored.ImplementationError, "l <- list(list(x=1, y=2), list(x=11, y=22)); parallel:::mclapply(l, function(ll) { ll$y })");
 
         String[] cores = {"1", "2", "3", "4", "5", "6"};
-        assertEval(template("l <- list(list(x=1, y=2), list(x=11, y=22), list(x=111, y=222), list(x=1111, y=2222), list(x=11111, y=22222), list(x=111111, y=222222)); " +
+        assertEval(Ignored.ImplementationError, template("l <- list(list(x=1, y=2), list(x=11, y=22), list(x=111, y=222), list(x=1111, y=2222), list(x=11111, y=22222), list(x=111111, y=222222)); " +
                         "parallel:::mclapply(l, function(ll) { ll$y }, mc.cores=%0)", cores));
 
-        assertEval("f <- function() { res <- parallel:::mclapply(1:2, function(i) i); print(res)}; f()");
-        assertEval("f <- function() { res <- parallel:::mclapply(1:3, function(i) i); print(res)}; f()");
-        assertEval("f <- function() { res <- parallel:::mclapply(1:10, function(i) i); print(res)}; f()");
+        assertEval(Ignored.ImplementationError, "f <- function() { res <- parallel:::mclapply(1:2, function(i) i); print(res)}; f()");
+        assertEval(Ignored.ImplementationError, "f <- function() { res <- parallel:::mclapply(1:3, function(i) i); print(res)}; f()");
+        assertEval(Ignored.ImplementationError, "f <- function() { res <- parallel:::mclapply(1:10, function(i) i); print(res)}; f()");
 
         // we are checking for functions env being properly unserialized in the second run
         // so yes, the test executes function f() twice
-        assertEval("f <- function() { res <- parallel:::mclapply(1:3, function(i) i)}; f() ; f()");
+        assertEval(Ignored.ImplementationError, "f <- function() { res <- parallel:::mclapply(1:3, function(i) i)}; f() ; f()");
     }
 
     @Test
     public void testMCLapplyNested() {
-        assertEval("parallel:::mclapply(1:3, function(i) { Sys.sleep(.2); parallel:::mclapply(1:3, function(ii) {ii}) })");
-        assertEval("parallel:::mclapply(1:3, function(i) { Sys.sleep(.1); parallel:::mclapply(1:3, function(i) { Sys.sleep(.1); parallel:::mclapply(1:3, function(i) {i}) }) })");
+        // race-conditions, easilly reproducible with LLVM
+        assertEval(Ignored.ImplementationError, "parallel:::mclapply(1:3, function(i) { Sys.sleep(.2); parallel:::mclapply(1:3, function(ii) {ii}) })");
+        assertEval(Ignored.ImplementationError,
+                        "parallel:::mclapply(1:3, function(i) { Sys.sleep(.1); parallel:::mclapply(1:3, function(i) { Sys.sleep(.1); parallel:::mclapply(1:3, function(i) {i}) }) })");
     }
 }

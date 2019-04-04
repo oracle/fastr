@@ -1,3 +1,25 @@
+# 1.0 RC 15
+
+* `ActiveBinding` objects do not support the `UNBOX` message anymore
+* new Truffle interop converts `double` values to `int` values if they fit in the integer range
+  * see the changes in the [spec tests](https://github.com/oracle/fastr/commit/e08e2b19571479dddb6167d9a1d492a14cb4c7b2#diff-c842fa11097793b19bd410589c36af99)
+
+Added missing R builtins and C APIa
+
+* simple support for the weak reference API functions (`R_MakeWeakRef`, `R_MakeWeakRefC`, `R_WeakRefKey`, `R_WeakRefValue`)
+* `Rf_i1mach`
+* `gzcon` builtin for `url` connections, e.g., `load(url('protocol://path'))` should work now
+* `Sys.localeconv` supports: `decimal_point`, `thousands_sep`, `grouping`, `int_curr_symbol`, `currency_symbol`, `mon_decimal_point`,
+  `mon_thousands_sep`, `mon_grouping`, `int_frac_digits`, `p_cs_precedes`, other fields are fixed to some meaningful but not culture
+  sensitive value for given field
+
+Bug fixes:
+
+* `rep.int` with value argument of length 0 just returns the value argument
+* `tcrossprod` called from `apply` did not give correct result #60
+* `Rf_lengthgets` can accept `NULL` argument
+* FastR does not allow Java interop when not started with `--jvm`
+
 # 1.0 RC 14
 
 * all FastR specific options (NOT those GNU-R compatible like `--save`) are experimental except for `--R.PrintErrorStacktracesToFile`,

@@ -232,10 +232,7 @@ public final class ArgumentsSignature implements Iterable<String> {
         if (length != other.length) {
             return false;
         }
-        if (!Arrays.equals(names, other.names)) {
-            return false;
-        }
-        return true;
+        return Arrays.equals(names, other.names);
     }
 
     @Override
