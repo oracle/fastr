@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2018, Oracle and/or its affiliates. All rights reserved.
+ * Copyright (c) 2014, 2019, Oracle and/or its affiliates. All rights reserved.
  * DO NOT ALTER OR REMOVE COPYRIGHT NOTICES OR THIS FILE HEADER.
  *
  * This code is free software; you can redistribute it and/or modify it
@@ -22,6 +22,7 @@
  */
 package com.oracle.truffle.r.runtime.conn;
 
+import com.oracle.truffle.r.runtime.RCompression;
 import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
@@ -32,6 +33,7 @@ import java.util.EnumSet;
 import com.oracle.truffle.r.runtime.RError;
 import com.oracle.truffle.r.runtime.RInternalError;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode;
+import static com.oracle.truffle.r.runtime.conn.ConnectionSupport.AbstractOpenMode.Lazy;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.BaseRConnection;
 import com.oracle.truffle.r.runtime.conn.ConnectionSupport.ConnectionClass;
 import com.oracle.truffle.r.runtime.data.RDataFactory;
@@ -126,6 +128,34 @@ public class TextConnections {
                     throw RError.nyi(RError.SHOW_CALLER2, "open mode: " + getOpenMode().modeString);
             }
             setDelegate(delegate);
+        }
+
+        @Override
+        public void setCompressionType(RCompression.Type arg0) throws IOException {
+            ConnectionSupport.OpenMode openMode = getOpenMode();
+            AbstractOpenMode mode = openMode.abstractOpenMode;
+            if (mode == Lazy) {
+                mode = AbstractOpenMode.getOpenMode(openMode.modeString);
+            }
+            if (canRead() && canWrite()) {
+                throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+            }
+            switch (mode) {
+                case Read:
+                case ReadBinary:
+                case ReadWrite:
+                case ReadWriteBinary:
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_ENABLED_FOR_THIS_CONN, "read");
+                case WriteBinary:
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.NOT_ENABLED_FOR_THIS_CONN, "write");
+                case Write:
+                    if ("w".equals(openMode.modeString)) {
+                        throw RError.error(RError.SHOW_CALLER, RError.Message.CANNOT_CREATE_GZCON, "gzcon", "textConnection", "rawConnection");
+                    }
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+                default:
+                    throw RError.error(RError.SHOW_CALLER, RError.Message.CAN_USE_ONLY_R_OR_W_CONNECTIONS);
+            }
         }
 
         public RAbstractStringVector getValue() {

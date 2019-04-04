@@ -348,7 +348,7 @@ public abstract class ConnectionFunctions {
             Casts casts = new Casts(TextConnection.class);
             CastsHelper.description(casts);
             casts.arg("text").allowNull().mustBe(stringValue());
-            CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("w").or(equalTo("a").or(equalTo("wr"))))), RError.Message.UNSUPPORTED_MODE);
+            CastsHelper.open(casts).mustBe(equalTo("").or(equalTo("r").or(equalTo("rt").or(equalTo("w").or(equalTo("wt").or(equalTo("a").or(equalTo("wr"))))))), RError.Message.UNSUPPORTED_MODE);
             casts.arg("env").mustNotBeNull(RError.Message.USE_NULL_ENV_DEFUNCT).mustBe(instanceOf(REnvironment.class));
             casts.arg("encoding").asIntegerVector().findFirst().mustNotBeNA();
         }
